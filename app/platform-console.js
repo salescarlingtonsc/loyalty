@@ -980,6 +980,18 @@
       'That receipt was already captured.':'该收据已被记录。',
       'Receipt uploaded and being read.':'收据已上传，正在读取。',
       'The receipt could not be uploaded.':'收据上传失败。',
+      'Enter manually':'手动输入','Cash overview & billing activity':'现金概览与账单活动',
+      'Date filters, cash totals, customer invoices, refunds and CSV export':'日期筛选、现金总额、客户发票、退款及 CSV 导出',
+      'Receipt or supplier invoice':'收据或供应商发票','JPG, PNG, WebP or PDF, up to 20 MB. Clear, flat, well-lit images give the best result.':'JPG、PNG、WebP 或 PDF，最大 20 MB。清晰、平整、光线充足的文件效果最佳。',
+      'Advanced accounting & sales invoices':'高级会计与销售发票','Policies, journals, period controls and invoices you issue to customers':'政策、日记账、期间控制及向客户开具的发票',
+      'Linked to expense':'已关联支出','View document':'查看文件','The stored document is unavailable.':'无法打开已存储的文件。',
+      'Expenses & documents':'支出与文件','Scan a receipt or supplier invoice, check the figures, and keep the original document linked to the expense.':'扫描收据或供应商发票，核对金额，并将原始文件关联到支出。',
+      'Scan or upload':'扫描或上传','Use a camera photo, receipt image, or supplier-invoice PDF. We read the supplier, date, total, reference and likely category; you confirm before posting.':'使用相机照片、收据图片或供应商发票 PDF。系统会读取供应商、日期、总额、编号及可能的分类；您确认后才会入账。',
+      'Documents awaiting review':'待审核文件','Nothing waiting for review':'没有待审核文件','Upload a receipt or supplier invoice and its figures will appear here for confirmation.':'上传收据或供应商发票后，读取的金额会显示在这里供您确认。',
+      'Document archive':'文件存档','Original receipts and supplier invoices stay private and linked to the expense they created.':'原始收据和供应商发票保持私密，并关联到其生成的支出。','Posted expense documents':'已入账支出文件','No stored expense documents yet':'尚无已存储的支出文件','Documents appear here after you review and post them.':'文件经您审核并入账后会显示在这里。',
+      'Recent document archive':'最近文件存档','Showing the latest {count} of {total} posted documents.':'显示最近 {count} 份，共 {total} 份已入账文件。','Allow pop-ups to view this document.':'请允许弹出窗口以查看此文件。',
+      'Showing the latest {count} of {total} documents needing review.':'显示最近 {count} 份，共 {total} 份待审核文件。',
+      'Sales invoices you issued':'您开具的销售发票','These are invoices sent to customers. Supplier invoices belong in the document archive above.':'这些是发送给客户的发票。供应商发票存放在上方的文件存档中。','Stored document':'已存储文件','Expense evidence':'支出凭证','Read total':'读取总额','Linked expense':'关联支出',
       'Discard':'丢弃',
       'AI report':'AI 报告',
       'Activate approved workspace':'启用已批准的工作区',
@@ -1342,6 +1354,18 @@
       'That receipt was already captured.':'Resit itu telah pun direkodkan.',
       'Receipt uploaded and being read.':'Resit dimuat naik dan sedang dibaca.',
       'The receipt could not be uploaded.':'Resit tidak dapat dimuat naik.',
+      'Enter manually':'Masukkan secara manual','Cash overview & billing activity':'Gambaran tunai & aktiviti pengebilan',
+      'Date filters, cash totals, customer invoices, refunds and CSV export':'Penapis tarikh, jumlah tunai, invois pelanggan, bayaran balik dan eksport CSV',
+      'Receipt or supplier invoice':'Resit atau invois pembekal','JPG, PNG, WebP or PDF, up to 20 MB. Clear, flat, well-lit images give the best result.':'JPG, PNG, WebP atau PDF, sehingga 20 MB. Imej yang jelas, rata dan terang memberikan hasil terbaik.',
+      'Advanced accounting & sales invoices':'Perakaunan lanjutan & invois jualan','Policies, journals, period controls and invoices you issue to customers':'Polisi, jurnal, kawalan tempoh dan invois yang anda keluarkan kepada pelanggan',
+      'Linked to expense':'Dipautkan kepada perbelanjaan','View document':'Lihat dokumen','The stored document is unavailable.':'Dokumen yang disimpan tidak tersedia.',
+      'Expenses & documents':'Perbelanjaan & dokumen','Scan a receipt or supplier invoice, check the figures, and keep the original document linked to the expense.':'Imbas resit atau invois pembekal, semak angka, dan kekalkan dokumen asal dipautkan kepada perbelanjaan.',
+      'Scan or upload':'Imbas atau muat naik','Use a camera photo, receipt image, or supplier-invoice PDF. We read the supplier, date, total, reference and likely category; you confirm before posting.':'Gunakan foto kamera, imej resit atau PDF invois pembekal. Kami membaca pembekal, tarikh, jumlah, rujukan dan kategori yang mungkin; anda mengesahkan sebelum dipos.',
+      'Documents awaiting review':'Dokumen menunggu semakan','Nothing waiting for review':'Tiada apa-apa menunggu semakan','Upload a receipt or supplier invoice and its figures will appear here for confirmation.':'Muat naik resit atau invois pembekal dan angkanya akan muncul di sini untuk pengesahan.',
+      'Document archive':'Arkib dokumen','Original receipts and supplier invoices stay private and linked to the expense they created.':'Resit asal dan invois pembekal kekal peribadi dan dipautkan kepada perbelanjaan yang dicipta.','Posted expense documents':'Dokumen perbelanjaan yang dipos','No stored expense documents yet':'Belum ada dokumen perbelanjaan disimpan','Documents appear here after you review and post them.':'Dokumen muncul di sini selepas anda menyemak dan mengeposnya.',
+      'Recent document archive':'Arkib dokumen terkini','Showing the latest {count} of {total} posted documents.':'Menunjukkan {count} terkini daripada {total} dokumen yang dipos.','Allow pop-ups to view this document.':'Benarkan tetingkap timbul untuk melihat dokumen ini.',
+      'Showing the latest {count} of {total} documents needing review.':'Menunjukkan {count} terkini daripada {total} dokumen yang memerlukan semakan.',
+      'Sales invoices you issued':'Invois jualan yang anda keluarkan','These are invoices sent to customers. Supplier invoices belong in the document archive above.':'Ini ialah invois yang dihantar kepada pelanggan. Invois pembekal berada dalam arkib dokumen di atas.','Stored document':'Dokumen disimpan','Expense evidence':'Bukti perbelanjaan','Read total':'Jumlah dibaca','Linked expense':'Perbelanjaan terpaut',
       'Discard':'Buang',
       'AI report':'Laporan AI',
       'Activate approved workspace':'Aktifkan ruang kerja yang diluluskan',
@@ -11111,15 +11135,24 @@
     const {main,CUI,sb}=context;
     main.innerHTML=loading(CUI,'Cash P&L','Loading provider cash and operating expenses…','reports');
     try{
-      const [payload,books,receiptPayload]=await Promise.all([
+      const [payload,books,uploadedPayload,processingPayload,extractedPayload,failedPayload,postedPayload]=await Promise.all([
         rpc(sb,'platform_get_finance_v146',{p_from:range.from,p_to:range.to,p_limit:5000}),
         rpc(sb,'platform_get_accounting_books_v147',{p_from:range.from,p_to:range.to,p_limit:5000}),
-        rpc(sb,'platform_list_receipts_v199',{p_status:null,p_limit:50}).catch(()=>({items:[]}))
+        ...['uploaded','processing','extracted','extraction_failed','posted'].map(status=>
+          rpc(sb,'platform_list_receipts_v199',{p_status:status,p_limit:200}).catch(()=>({items:[],counts:{}})))
       ]).then(results=>results.map(asObject));
-      const receipts=asArray(receiptPayload.items).filter(receipt=>receipt.status!=='posted');
+      const receipts=[...asArray(uploadedPayload.items),...asArray(processingPayload.items),
+        ...asArray(extractedPayload.items),...asArray(failedPayload.items)]
+        .sort((left,right)=>String(right.created_at).localeCompare(String(left.created_at)));
+      const postedReceipts=asArray(postedPayload.items);
+      const receiptCounts=asObject(postedPayload.counts);
+      const postedTotal=Number(receiptCounts.posted||postedReceipts.length);
+      const pendingTotal=['uploaded','processing','extracted','extraction_failed']
+        .reduce((total,status)=>total+Number(receiptCounts[status]||0),0);
       const summary=asObject(payload.summary),invoices=asArray(payload.invoices),adjustments=asArray(payload.adjustments),expenses=asArray(payload.expenses),complete=asObject(payload.complete),booksComplete=asObject(books.complete),completeAll=![...Object.values(complete),...Object.values(booksComplete)].some(value=>value===false);
       const booksSummary=asObject(books.summary),policy=asObject(books.policy),trialBalance=asArray(books.trial_balance),journals=asArray(books.journals),documents=asArray(books.documents);
-      main.innerHTML=`${CUI.pageHeader({title:'Cash P&L',subtitle:'Cash-basis platform view. Stripe-paid invoices and cash-affecting adjustments are automatic; Super Admin operating expenses are append-only and reversed, never edited.',iconName:'reports',actions:`<button type="button" class="btn ghost" id="platformFinanceExport"${completeAll?'':' disabled'}>${CUI.icon('download',{size:17})}<span>${escapeHtml(pt('Export CSV'))}</span></button><button type="button" class="btn" id="platformAddExpense">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add expense'))}</span></button>`})}
+      main.innerHTML=`${CUI.pageHeader({title:'Expenses & documents',subtitle:'Scan a receipt or supplier invoice, check the figures, and keep the original document linked to the expense.',iconName:'reports',actions:`<button type="button" class="btn ghost" id="platformAddExpense">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Enter manually'))}</span></button>`})}
+        <details class="card"><summary><b>${escapeHtml(pt('Cash overview & billing activity'))}</b><span class="muted small" style="display:block;margin-top:4px">${escapeHtml(pt('Date filters, cash totals, customer invoices, refunds and CSV export'))}</span></summary><div style="margin-top:18px"><div class="platform-actions" style="margin-bottom:14px"><button type="button" class="btn ghost" id="platformFinanceExport"${completeAll?'':' disabled'}>${CUI.icon('download',{size:17})}<span>${escapeHtml(pt('Export CSV'))}</span></button></div>
         <section class="card"><form id="platformFinanceRange" class="platform-filter-grid"><label>${escapeHtml(pt('From'))}<input type="date" name="from" value="${escapeHtml(range.from)}" required></label><label>${escapeHtml(pt('To'))}<input type="date" name="to" value="${escapeHtml(range.to)}" required></label><button class="btn" type="submit">${escapeHtml(pt('Apply'))}</button></form></section>
         <section class="platform-kpis" aria-label="${escapeHtml(pt('Cash P&L summary'))}">${[
           ['Money in',currency(summary.income_cents),'check'],
@@ -11131,11 +11164,15 @@
         ${completeAll?'':localizedRouteNoteHtml('Finance export incomplete','More than 5,000 records exist in at least one ledger. Narrow the date range before exporting.')}
         ${CUI.card({title:'Invoices and receipts',description:'Stripe supplies the invoice documents. A paid hosted invoice is the customer receipt when Stripe does not provide a separate charge receipt URL.',body:invoices.length?CUI.table({caption:'Platform invoices',headers:['Firm & invoice','Status','Amount','Recorded','Documents'],rows:financeInvoiceRows(invoices,CUI)}):CUI.emptyState({iconName:'reports',title:'No invoices in this period',body:'Paid and outstanding Stripe invoices will appear here after webhook processing.'})})}
         ${CUI.card({title:'Refunds and adjustments',description:'Every provider and reviewed adjustment remains visible. Credits, debits and write-offs are labelled non-cash and do not change net cash.',body:adjustments.length?CUI.table({caption:'Platform billing adjustments',headers:['Firm & invoice','Type','Cash effect','Reason','Recorded'],rows:financeAdjustmentRows(adjustments,CUI)}):CUI.emptyState({iconName:'reports',title:'No billing adjustments in this period',body:'Refunds, chargebacks and reviewed adjustments will appear here.'})})}
-        ${CUI.card({title:'Receipts to post',description:'Photograph or upload a receipt and it is read for you. Nothing reaches the books until you confirm the figures.',body:`
-          <div class="cui-field"><label for="platformReceiptFile">${escapeHtml(pt('Add a receipt'))}</label><input id="platformReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" capture="environment"><p class="muted small">${escapeHtml(pt('Photo or PDF, up to 20 MB. A PDF is stored as evidence but has to be keyed in.'))}</p></div>
+        </div></details>
+        ${CUI.card({title:'Scan or upload',description:'Use a camera photo, receipt image, or supplier-invoice PDF. We read the supplier, date, total, reference and likely category; you confirm before posting.',body:`
+          <div class="cui-field"><label for="platformReceiptFile">${escapeHtml(pt('Receipt or supplier invoice'))}</label><input id="platformReceiptFile" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment"><p class="muted small">${escapeHtml(pt('JPG, PNG, WebP or PDF, up to 20 MB. Clear, flat, well-lit images give the best result.'))}</p></div>
           <div data-receipt-progress aria-live="polite"></div>
-          ${receipts.length?CUI.table({caption:'Receipts awaiting review',headers:['File','Status','Read as','Action'],rows:receiptRows(receipts,CUI)}):CUI.emptyState({iconName:'reports',title:'No receipts waiting',body:'Uploaded receipts appear here with their amounts read out, ready for you to confirm.'})}`})}
+          ${pendingTotal>receipts.length?`<p class="platform-route-note">${escapeHtml(pt('Showing the latest {count} of {total} documents needing review.',{count:receipts.length,total:pendingTotal}))}</p>`:''}
+          ${receipts.length?CUI.table({caption:'Documents awaiting review',headers:['File','Status','Read as','Action'],rows:receiptRows(receipts,CUI)}):CUI.emptyState({iconName:'reports',title:'Nothing waiting for review',body:'Upload a receipt or supplier invoice and its figures will appear here for confirmation.'})}`})}
         ${CUI.card({title:'Operating expense ledger',description:'Entries are immutable. Use Reverse to correct a mistake and preserve the audit trail.',body:expenses.length?CUI.table({caption:'Platform expenses',headers:['Date','Category','Description','Cash effect','Action'],rows:financeExpenseRows(expenses,CUI)}):CUI.emptyState({iconName:'reports',title:'No operating expenses in this period',body:'Record a real platform expense to include it in net cash.'})})}
+        ${CUI.card({title:'Recent document archive',description:`${pt('Original receipts and supplier invoices stay private and linked to the expense they created.')} ${postedTotal>postedReceipts.length?pt('Showing the latest {count} of {total} posted documents.',{count:postedReceipts.length,total:postedTotal}):''}`,body:postedReceipts.length?CUI.table({caption:'Posted expense documents',headers:['Posted','Document','Read total','Linked expense','Action'],rows:receiptArchiveRows(postedReceipts)}):CUI.emptyState({iconName:'reports',title:'No stored expense documents yet',body:'Documents appear here after you review and post them.'})})}
+        <details class="card"><summary><b>${escapeHtml(pt('Advanced accounting & sales invoices'))}</b><span class="muted small" style="display:block;margin-top:4px">${escapeHtml(pt('Policies, journals, period controls and invoices you issue to customers'))}</span></summary><div style="margin-top:18px">
         ${CUI.card({title:'Accounting books',description:'Double-entry books post automatically from authoritative billing and expense events. Corrections create linked reversals; posted history is never edited.',body:`
           <div class="platform-actions" style="margin-bottom:14px"><button type="button" class="btn ghost" id="platformAccountingPolicy">${escapeHtml(pt(policy.id?'New policy version':'Configure accounting identity'))}</button>${policy.id?`<button type="button" class="btn" id="platformCreateInvoice">${escapeHtml(pt('Create financial invoice'))}</button>`:''}<button type="button" class="btn ghost" id="platformBooksExport"${completeAll?'':' disabled'}>${escapeHtml(pt('Export accounting books'))}</button><button type="button" class="btn ghost" id="platformPeriodLock">${escapeHtml(pt(books.period_locked?'Unlock period':'Lock period'))}</button></div>
           ${policy.id?`<div class="platform-route-note">${CUI.icon('check',{size:18})}<div><b>${escapeHtml(policy.legal_name)}</b><p class="small">${escapeHtml(policy.registration_number)} · ${escapeHtml(platformStatus(policy.gst_status))} · ${escapeHtml(pt('Policy version {version}',{version:policy.version}))}</p></div></div>`:localizedRouteNoteHtml('Accounting identity required','Configure the legal entity, tax status, financial year and document prefix before issuing financial documents.')}
@@ -11143,7 +11180,7 @@
           <h3 style="margin-top:18px">${escapeHtml(pt('Balance sheet'))}</h3><section class="platform-kpis" aria-label="${escapeHtml(pt('Balance sheet'))}" style="margin-top:10px">${[['Assets',booksSummary.assets_cents],['Liabilities',booksSummary.liabilities_cents],['Equity & current profit',booksSummary.equity_and_current_profit_cents]].map(([label,value])=>`<article class="card platform-kpi"><div class="platform-kpi-label"><span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(currency(value,'SGD'))}</div></article>`).join('')}</section>
           ${trialBalance.length?CUI.table({caption:'Trial balance',headers:['Code','Account','Type','Period debits','Period credits','Closing balance','Side'],rows:accountingTrialRows(trialBalance)}):''}
           <h3 style="margin-top:18px">${escapeHtml(pt('General ledger'))}</h3>${journals.length?CUI.table({caption:'General ledger',headers:['Date','Journal','Source','Account','Debit','Credit'],rows:accountingJournalRows(journals)}):CUI.emptyState({iconName:'reports',title:'No journal entries in this period',body:'Authoritative billing and expense events will post here automatically.'})}`})}
-        ${CUI.card({title:'Generated financial documents',description:'Issued documents are immutable snapshots. Use credit notes or reversal vouchers to correct them, then print or save the reviewed record as PDF.',body:documents.length?CUI.table({caption:'Financial documents',headers:['Document','Counterparty','Issued','Total','Outstanding / status','Actions'],rows:accountingDocumentRows(documents,CUI)}):CUI.emptyState({iconName:'reports',title:'No generated documents in this period',body:'Create an invoice after the accounting identity is reviewed.'})})}`;
+        ${CUI.card({title:'Sales invoices you issued',description:'These are invoices sent to customers. Supplier invoices belong in the document archive above.',body:documents.length?CUI.table({caption:'Financial documents',headers:['Document','Counterparty','Issued','Total','Outstanding / status','Actions'],rows:accountingDocumentRows(documents,CUI)}):CUI.emptyState({iconName:'reports',title:'No generated documents in this period',body:'Create an invoice after the accounting identity is reviewed.'})})}</div></details>`;
       main.querySelector('#platformFinanceRange').onsubmit=event=>{event.preventDefault();const form=new FormData(event.currentTarget);renderPlatformFinance(context,{from:String(form.get('from')),to:String(form.get('to'))})};
       main.querySelector('#platformAddExpense').onclick=()=>platformExpenseModal(context,range);
       main.querySelector('#platformAccountingPolicy').onclick=()=>accountingPolicyModal(context,range);
@@ -11169,6 +11206,21 @@
       };
       main.querySelectorAll('[data-post-receipt]').forEach(button=>button.onclick=()=>receiptPostModal(receipts.find(receipt=>String(receipt.id)===button.dataset.postReceipt),context,range));
       main.querySelectorAll('[data-discard-receipt]').forEach(button=>button.onclick=()=>receiptDiscardModal(button.dataset.discardReceipt,context,range));
+      main.querySelectorAll('[data-open-receipt]').forEach(button=>button.onclick=async()=>{
+        button.disabled=true;
+        try{await openStoredReceipt(postedReceipts.find(receipt=>String(receipt.id)===button.dataset.openReceipt),context)}
+        catch(error){CUI.announce(platformErrorMessage(error,pt('The stored document is unavailable.')),{assertive:true})}
+        finally{button.disabled=false}
+      });
+      const staleBefore=Date.now()-5*60*1000;
+      const readerNeedsKick=receipts.some(receipt=>receipt.status==='uploaded'||
+        (receipt.status==='processing'&&Date.parse(receipt.extraction_claimed_at||0)<staleBefore));
+      if(readerNeedsKick&&sb.functions?.invoke)globalObject.setTimeout?.(async()=>{
+        try{
+          const result=await sb.functions.invoke('accounting-receipt-ocr',{body:{}});
+          if(receiptReaderMadeProgress(result))await renderPlatformFinance(context,range);
+        }catch{}
+      },0);
       main.querySelectorAll('[data-reverse-expense]').forEach(button=>button.onclick=()=>platformExpenseReversalModal(button.dataset.reverseExpense,context,range));
       main.querySelectorAll('[data-print-document]').forEach(button=>button.onclick=()=>printFinancialDocument(documents.find(document=>String(document.id)===button.dataset.printDocument),CUI));
       main.querySelectorAll('[data-record-receipt]').forEach(button=>button.onclick=()=>accountingReceiptModal(documents.find(document=>String(document.id)===button.dataset.recordReceipt),context,range));
@@ -11184,6 +11236,9 @@
       if(retry)retry.onclick=()=>renderPlatformFinance(context,range);
       CUI.focusRoute(main);
     }
+  }
+  function receiptReaderMadeProgress(result) {
+    return !result?.error&&Number(result?.data?.processed)>0;
   }
   function marketingMonthRange(now=new Date()) {
     const partsOf=date=>Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date).filter(part=>part.type!=='literal').map(part=>[part.type,part.value]));
@@ -11675,6 +11730,30 @@
       return [escapeHtml(String(receipt.original_filename||receipt.storage_path)),
         escapeHtml(platformStatus(status)),readAs,action];
     });
+  }
+  function receiptArchiveRows(receipts) {
+    return receipts.map(receipt=>{
+      const extracted=asObject(receipt.extracted);
+      const amount=Number.isFinite(Number(extracted.total_cents))?currency(extracted.total_cents,extracted.currency||'SGD'):'—';
+      return [
+        escapeHtml(receipt.posted_at?dateTime(receipt.posted_at):dateTime(receipt.created_at)),
+        `<div><b>${escapeHtml(extracted.vendor_name||receipt.original_filename||'Document')}</b><p class="muted small">${escapeHtml(receipt.original_filename||'Stored document')}</p></div>`,
+        escapeHtml(amount),
+        `<div><b>${escapeHtml(extracted.description||'Expense evidence')}</b><p class="muted small">${escapeHtml(pt('Linked to expense'))}: ${escapeHtml(receipt.expense_entry_id||'—')}</p></div>`,
+        `<button type="button" class="btn ghost sm" data-open-receipt="${escapeHtml(receipt.id)}">${escapeHtml(pt('View document'))}</button>`
+      ];
+    });
+  }
+  async function openStoredReceipt(receipt,context) {
+    if(!receipt?.storage_path)throw new Error(pt('The stored document is unavailable.'));
+    const popup=globalObject.open?.('about:blank','_blank');
+    if(!popup)throw new Error(pt('Allow pop-ups to view this document.'));
+    try{popup.opener=null}catch{}
+    try{
+      const result=await context.sb.storage.from('accounting-private').createSignedUrl(receipt.storage_path,300);
+      if(result?.error||!result?.data?.signedUrl)throw result?.error||new Error(pt('The stored document is unavailable.'));
+      popup.location.replace(result.data.signedUrl);
+    }catch(error){try{popup.close()}catch{}throw error}
   }
   // Everything posted is the figure the operator confirmed. The model's reading
   // only pre-fills the form; it never posts on its own.
@@ -14508,7 +14587,7 @@
     renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
     prospectingProject,prospectingClusters,prospectingFilterPayload,
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
-    receiptRows,receiptUnreadableReason,
+    receiptRows,receiptArchiveRows,openStoredReceipt,receiptReaderMadeProgress,receiptUnreadableReason,
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
@@ -14546,7 +14625,7 @@
       renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
       prospectingProject,prospectingClusters,prospectingFilterPayload,
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
-    receiptRows,receiptUnreadableReason,
+    receiptRows,receiptArchiveRows,openStoredReceipt,receiptReaderMadeProgress,receiptUnreadableReason,
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,

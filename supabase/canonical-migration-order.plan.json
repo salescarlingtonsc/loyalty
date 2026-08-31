@@ -3226,6 +3226,12 @@
       "version": "20260831140000",
       "name": "nestly_v660_owner_rulings",
       "sourcePath": "db/migrations/20260831_nestly_v660_owner_rulings.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260831150000",
+      "name": "nestly_v661_receipt_ocr_claim_lease",
+      "sourcePath": "db/migrations/20260831_nestly_v661_receipt_ocr_claim_lease.sql"
     }
   ]
 }

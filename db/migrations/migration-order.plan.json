@@ -3231,6 +3231,12 @@
       "path": "db/migrations/20260831_nestly_v660_owner_rulings.sql",
       "semanticVersion": "v660",
       "proposedDeployVersion": "20260831140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v661_receipt_ocr_claim_lease.sql",
+      "semanticVersion": "v661",
+      "proposedDeployVersion": "20260831150000"
     }
   ]
 }

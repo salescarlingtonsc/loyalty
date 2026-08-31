@@ -1,4 +1,4 @@
-// NESTLY v199 — reads a scanned receipt and PROPOSES the bookkeeping entry.
+// NESTLY v199 — reads a receipt or supplier invoice and PROPOSES the bookkeeping entry.
 //
 // It never posts. The worker fills in what it can read (vendor, date, total, GST,
 // a suggested category) and stops; a super admin confirms or corrects every figure,
@@ -34,7 +34,7 @@ const CATEGORIES = [
 ] as const;
 
 const SYSTEM_PROMPT = [
-  'You read a single receipt or invoice image and report only what is printed on it.',
+  'You read a single receipt or supplier invoice and report only what is printed on it.',
   'The business is in Singapore; amounts are Singapore dollars unless stated otherwise.',
   '',
   'Rules:',
@@ -42,9 +42,13 @@ const SYSTEM_PROMPT = [
   '- Any field you cannot read must be null. A null is useful; a guess is harmful.',
   '- Money is integer CENTS. SGD 42.10 is 4210. Never return dollars.',
   '- total_cents is the amount actually payable, after discounts, including GST.',
+  '- Do not use subtotal, amount before tax, cash tendered, change, balance carried',
+  '  forward, or a line-item price as total_cents.',
   '- gst_cents is the GST/tax line only, null when the receipt does not show one.',
   '- document_date is the transaction date in YYYY-MM-DD. Singapore receipts are',
   '  usually DD/MM/YYYY, so 03/08/2026 is 2026-08-03, not 8 March.',
+  '- For a supplier invoice, use the invoice date and the invoice number as the',
+  '  payment_reference. Do not use a due date as the document date.',
   '- confidence is your own honest 0-1 reading of how legible this document was.',
   '  Report low confidence for a blurred, cropped or partial image.',
   `- category must be one of: ${CATEGORIES.join(', ')}. Use "other" when unsure.`,
@@ -72,9 +76,43 @@ const EXTRACTION_SCHEMA = {
   },
 } as const;
 
-function mediaType(mime: string): string {
+function imageMediaType(mime: string): string {
   // Claude accepts these image types; anything else is refused before the call.
   return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mime) ? mime : '';
+}
+
+function sourceBlock(mime: string, data: string): Record<string, unknown> | null {
+  const imageType = imageMediaType(mime);
+  if (imageType) return { type: 'image', source: { type: 'base64', media_type: imageType, data } };
+  if (mime === 'application/pdf') {
+    return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } };
+  }
+  return null;
+}
+
+function normalizeExtraction(input: unknown): Record<string, unknown> {
+  const raw = input && typeof input === 'object' ? input as Record<string, unknown> : {};
+  const nullableText = (value: unknown, max: number) =>
+    typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null;
+  const nullableCents = (value: unknown) =>
+    Number.isSafeInteger(value) && Number(value) >= 0 && Number(value) <= 100_000_000_00
+      ? Number(value) : null;
+  const date = typeof raw.document_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.document_date) &&
+      !Number.isNaN(Date.parse(`${raw.document_date}T00:00:00Z`)) ? raw.document_date : null;
+  const category = CATEGORIES.includes(raw.category as typeof CATEGORIES[number]) ? raw.category : 'other';
+  const confidence = Number(raw.confidence);
+  return {
+    vendor_name: nullableText(raw.vendor_name, 200),
+    vendor_registration_number: nullableText(raw.vendor_registration_number, 40),
+    document_date: date,
+    total_cents: nullableCents(raw.total_cents),
+    gst_cents: nullableCents(raw.gst_cents),
+    currency: nullableText(raw.currency, 3)?.toUpperCase() || null,
+    payment_reference: nullableText(raw.payment_reference, 200),
+    description: nullableText(raw.description, 240),
+    category,
+    confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0,
+  };
 }
 
 async function base64Of(bytes: Uint8Array): Promise<string> {
@@ -109,16 +147,17 @@ async function processQueue(): Promise<Record<string, unknown>> {
     };
 
     try {
-      const type = mediaType(receipt.mime_type);
-      if (!type) {
-        // A PDF still uploads and is still valid evidence; it just cannot be
-        // machine-read here, so it waits for the operator to key it in.
+      if (!imageMediaType(receipt.mime_type) && receipt.mime_type !== 'application/pdf') {
         await fail(`unsupported_for_reading:${receipt.mime_type}`);
         continue;
       }
       const { data: file, error: downloadError } = await admin.storage
         .from(BUCKET).download(receipt.storage_path);
       if (downloadError || !file) { await fail('download_failed'); continue; }
+
+      const encoded = await base64Of(new Uint8Array(await file.arrayBuffer()));
+      const document = sourceBlock(receipt.mime_type, encoded);
+      if (!document) { await fail(`unsupported_for_reading:${receipt.mime_type}`); continue; }
 
       const message = await anthropic.messages.create({
         model: MODEL,
@@ -128,17 +167,7 @@ async function processQueue(): Promise<Record<string, unknown>> {
         tool_choice: { type: 'tool', name: 'receipt_extraction' },
         messages: [{
           role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: type as 'image/jpeg',
-                data: await base64Of(new Uint8Array(await file.arrayBuffer())),
-              },
-            },
-            { type: 'text', text: 'Read this receipt. Leave unreadable fields null.' },
-          ],
+          content: [document, { type: 'text', text: 'Read this receipt or supplier invoice. Leave unreadable fields null.' }] as Anthropic.ContentBlockParam[],
         }],
       });
 
@@ -149,7 +178,7 @@ async function processQueue(): Promise<Record<string, unknown>> {
 
       const { error: writeError } = await admin.rpc(
         'internal_record_receipt_extraction_v199',
-        { p_receipt: receipt.id, p_extracted: use.input, p_error: null },
+        { p_receipt: receipt.id, p_extracted: normalizeExtraction(use.input), p_error: null },
       );
       if (writeError) { await fail('extraction_store_failed'); continue; }
       processed.push({ receipt: receipt.id, status: 'extracted' });
