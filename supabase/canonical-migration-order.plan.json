@@ -3169,6 +3169,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260831045202",
+      "name": "nestly_v661_receipt_ocr_claim_lease",
+      "sourcePath": "db/migrations/20260831_nestly_v661_receipt_ocr_claim_lease.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260831050000",
       "name": "nestly_v649_category_snapshot_at_sale",
       "sourcePath": "db/migrations/20260831_nestly_v649_category_snapshot_at_sale.sql"
@@ -3226,12 +3232,6 @@
       "version": "20260831140000",
       "name": "nestly_v660_owner_rulings",
       "sourcePath": "db/migrations/20260831_nestly_v660_owner_rulings.sql"
-    },
-    {
-      "kind": "pending",
-      "version": "20260831150000",
-      "name": "nestly_v661_receipt_ocr_claim_lease",
-      "sourcePath": "db/migrations/20260831_nestly_v661_receipt_ocr_claim_lease.sql"
     }
   ]
 }

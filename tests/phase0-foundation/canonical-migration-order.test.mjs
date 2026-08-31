@@ -116,7 +116,7 @@ test('materializer creates one byte-preserving 527-file chain and deterministic 
   assert.equal(manifest.items[45].version, '20260721000001');
   assert.equal(
     manifest.items.at(-1).name,
-    'nestly_v661_receipt_ocr_claim_lease' // tail — v661 receipt OCR claim lease
+    'nestly_v660_owner_rulings' // tail — v660 owner rulings; v661 was applied earlier at its real ledger timestamp
     // tail was previously — v659 edit means edit
     // tail was previously — v657 discount two shapes
     // tail was previously — v656 tier discount scope

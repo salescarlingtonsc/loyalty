@@ -4994,13 +4994,21 @@
     {
       "order": 527,
       "kind": "executable",
+      "path": "db/migrations/20260831_nestly_v661_receipt_ocr_claim_lease.sql",
+      "semanticVersion": "v661",
+      "proposedDeployVersion": "20260831045202",
+      "sha256": "03ab51bf2f7567440f73887859a0b960efe0ca8b5671eafcec267ae5d102a0d8"
+    },
+    {
+      "order": 528,
+      "kind": "executable",
       "path": "db/migrations/20260831_nestly_v649_category_snapshot_at_sale.sql",
       "semanticVersion": "v649",
       "proposedDeployVersion": "20260831050000",
       "sha256": "d224a1f0d1cc836a5a616923e1a9198864c3d897dd099643abcd7b47fc480cd8"
     },
     {
-      "order": 528,
+      "order": 529,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v650_ci_read_layer.sql",
       "semanticVersion": "v650",
@@ -5008,7 +5016,7 @@
       "sha256": "b37b70523c3256a70e30356dcfdae4fa3eb4baef15d7e08802f1f380cea239f5"
     },
     {
-      "order": 529,
+      "order": 530,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v651_canonical_cadence.sql",
       "semanticVersion": "v651",
@@ -5016,7 +5024,7 @@
       "sha256": "2499eda839aaf2d0a459cb95cfdff85fe91ce1ae638214cc7f99014163e5bc7b"
     },
     {
-      "order": 530,
+      "order": 531,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v652_evidence_contract.sql",
       "semanticVersion": "v652",
@@ -5024,7 +5032,7 @@
       "sha256": "1ddb60419b1ef1d19605734f22b471c59e213ee9ddcb3d05ba90da1217cfa77f"
     },
     {
-      "order": 531,
+      "order": 532,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v654_receipt_identity_and_perk_date.sql",
       "semanticVersion": "v654",
@@ -5032,7 +5040,7 @@
       "sha256": "c60b9d59e5a8237152ce8b57f6798929346bfdee4977de329e396676f39f0f68"
     },
     {
-      "order": 532,
+      "order": 533,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v655_cancel_and_package_edit.sql",
       "semanticVersion": "v655",
@@ -5040,7 +5048,7 @@
       "sha256": "a4f01b025bf0380b6ab6e9b8e8f9fa44e0156356db0c304839b63f61a8867852"
     },
     {
-      "order": 533,
+      "order": 534,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v656_tier_discount_scope.sql",
       "semanticVersion": "v656",
@@ -5048,7 +5056,7 @@
       "sha256": "152e5a3bf79f11d74d77401d828461dceda44975686156df477759c44a449832"
     },
     {
-      "order": 534,
+      "order": 535,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v657_discount_two_shapes.sql",
       "semanticVersion": "v657",
@@ -5056,7 +5064,7 @@
       "sha256": "5c1f80fbb68a6fe5233bd14e1adb1918508a7399894fe7acfb30246023360baf"
     },
     {
-      "order": 535,
+      "order": 536,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v659_edit_means_edit.sql",
       "semanticVersion": "v659",
@@ -5064,20 +5072,12 @@
       "sha256": "adafc6b56308890bcc24e73e895a9a1c4021c7d1a3b70bd00e3a33fa09935c16"
     },
     {
-      "order": 536,
+      "order": 537,
       "kind": "executable",
       "path": "db/migrations/20260831_nestly_v660_owner_rulings.sql",
       "semanticVersion": "v660",
       "proposedDeployVersion": "20260831140000",
       "sha256": "3c3bd63dcc8ab18bd29226c4ba1f6428f055f7cd85d0206d903f60a14fd32974"
-    },
-    {
-      "order": 537,
-      "kind": "executable",
-      "path": "db/migrations/20260831_nestly_v661_receipt_ocr_claim_lease.sql",
-      "semanticVersion": "v661",
-      "proposedDeployVersion": "20260831150000",
-      "sha256": "03ab51bf2f7567440f73887859a0b960efe0ca8b5671eafcec267ae5d102a0d8"
     }
   ]
 }
