@@ -98,9 +98,16 @@ reading the sidebar's actual routes (`/reports/payroll`, `/storefront/orders`,
 ## Current phase
 **Phase 1 MVP — shipped.** Canonical product name: **Frenly** (owner confirmed; "Avocado"
 in older docs = same product). App: `app/index.html`. **DEPLOYMENT (corrected 2026-07-18):**
-the LIVE, current app is the **git-connected `loyalty` Vercel project**, auto-deploying
-`github.com/salescarlingtonsc/loyalty` (branch that the push targets) on every push —
-currently served at `https://loyalty-pi-seven.vercel.app`. The old separate
+the LIVE, current app is the **git-connected `loyalty` Vercel project**, which builds
+`github.com/salescarlingtonsc/loyalty` on every push and serves `main`.
+
+**The canonical address is `https://peekaa.asia` (owner, 2026-08-31): the customer and business
+app is `https://peekaa.asia/app`.** Vercel is hosting, not the product's address — the
+`loyalty-pi-seven.vercel.app` origin still answers and is useful for probing a deploy, but note
+that `loyalty-pi-seven.vercel.app/app/` (with the trailing slash) 404s while `/app` does not, so
+verification scripts should use the domain. Root `/` is the marketing landing page, never the app.
+
+The old separate
 `frenly-app` project is **being retired** (it was a manual, non-git deploy that drifted to
 v14 while `loyalty` moved to v16 — a stale frontend against the shared DB). Do NOT treat
 `frenly-app.vercel.app` as canonical; if the name is reclaimed, it will be by renaming the

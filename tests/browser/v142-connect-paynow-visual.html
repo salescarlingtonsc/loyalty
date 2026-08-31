@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="4de46d23a32c633a2bba6c96a7b3a19f41775dea1e003a2f4d2db9d3e99618a6"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="954f6c59fd78ada72458280e3f27e269a7a1aab49d424ff0a469cee16b338e72"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5676,7 +5676,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 4de46d23a32c633a2bba6c96a7b3a19f41775dea1e003a2f4d2db9d3e99618a6</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 954f6c59fd78ada72458280e3f27e269a7a1aab49d424ff0a469cee16b338e72</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -7140,7 +7140,7 @@ async function tillPage(){
     // A walk-in has no customer, so no plan can be sold to one and no entitlement can exist.
     const wantPackages=branchCanWrite(tillBranchId,'packages')&&!walkin;
     const wantMemberships=branchCanWrite(tillBranchId,'memberships')&&!walkin;
-    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365,giftCatalogueV392,recentItemsV392]=await Promise.all([
+    const [checkout,pkg,mem,preferences,entitlements,serviceMeta,bundleRows,tierBenefitsV365,giftCatalogueV392,givenGiftsV665,recentItemsV392]=await Promise.all([
       /* Server returns only checkout-active items effective at this branch. In particular,
          services configured in service_branches must include p_branch; the browser never
          reconstructs or broadens that availability rule. */
@@ -7196,6 +7196,15 @@ async function tillPage(){
          catalogue and still not claimable. */
       walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_get_customer_actionable_loyalty_v145',{
         p_business:S.biz.id,p_client:cust.client_id,p_branch:tillBranchId
+      }),
+      /* nestly_v665 (owner ruling 2026-08-31: "for rewards redeemed > i need to reverse it in the
+         event of wrong redemption", and "the vouchers is not reflected in record sale"). What this
+         customer has ALREADY been given — tier perks, welcome, bring-back and referral gifts — so
+         the Rewards tab can say so on the screen where the mistake is made, and offer to hand it
+         back. Rides this same load for the same reason every read above does. Fail-soft: a server
+         without v665 simply yields no list. */
+      walkin?Promise.resolve({data:null,error:null}):sb.rpc('staff_gift_reversal_workflows_v665',{
+        p_business:S.biz.id,p_client:cust.client_id,p_limit:20
       }),
       walkin?Promise.resolve({data:null,error:null}):sb.from('sale_items')
         .select('item_type,ref_id,created_at,sales!inner(client_id,business_id)')
@@ -7263,6 +7272,10 @@ async function tillPage(){
       customerReferralOffer:entitlements.error?null:(entitlements.data?.referral_offer||null),
       /* V365: the customer's claimable tier benefits, each with what is left this period. */
       customerTierBenefits:tierBenefitsV365?.error?null:(tierBenefitsV365?.data||null),
+      /* nestly_v665: what has already been given to this customer, and whether this member of
+         staff may hand it back. `may_reverse` is the SERVER's answer about this actor's
+         permission, never a role name this screen decided for itself. */
+      customerGivenGiftsV665:givenGiftsV665?.error?null:(givenGiftsV665?.data||null),
       packageEarnsPoints:preferenceState.packageEarnsPoints,
       /* A bundle is offered only when EVERY member in it is sellable at this branch — a bundle
          missing a member is not the deal the customer was quoted, so it is withheld rather than
@@ -7983,6 +7996,30 @@ async function tillPage(){
         <p class="muted small" style="margin:5px 0">Ready to give now. Peekaa counts each one against its limit.</p>
         ${autoRow}${giveRows}</div>`
       :'';
+    /* nestly_v665 (owner ruling 2026-08-31: "for rewards redeemed > i need to reverse it in the
+       event of wrong redemption"). Everything already handed to this customer, on the screen where
+       it was handed over. Two things it fixes at once: a gift or perk settled by a QR scan is now
+       VISIBLE on Record sale instead of silently vanishing from the "ready to give" list, and the
+       counter can put it back the moment they realise they scanned the wrong person.
+       `can_reverse` and `refusal_reason` are the server's, per row — a cashier without refund
+       permission sees the list and is told why they cannot undo, rather than being shown a button
+       that would fail. Reversed rows stay listed, greyed, because "it was given and handed back"
+       is a different fact from "it was never given". */
+    const givenGiftsV665=Array.isArray(catalog.customerGivenGiftsV665?.gifts)
+      ?catalog.customerGivenGiftsV665.gifts:[];
+    const givenKindLabelV665={tier_perk:'Tier perk',welcome:'Welcome gift',
+      bringback:'Bring-back voucher',referral:'Referral gift'};
+    const givenBannerV665=givenGiftsV665.length
+      ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px" data-given-gifts-v665><b>Already given</b>
+        <p class="muted small" style="margin:5px 0">Scanned or handed over for this customer. Undo puts it straight back.</p>
+        ${givenGiftsV665.map(gift=>`<div class="till-tier-benefit-row-v369${gift.reversed_at?' till-benefit-auto-v373':''}">
+          <span><b class="small">${esc(gift.reward_label||givenKindLabelV665[gift.gift_kind]||'Reward')}</b>
+          <span class="muted small">${esc(givenKindLabelV665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}</span></span>
+          ${gift.can_reverse===true
+            ?`<button type="button" class="btn ghost sm" data-gift-undo-v665="${esc(String(gift.id||''))}" data-kind-v665="${esc(String(gift.gift_kind||''))}" data-label-v665="${esc(gift.reward_label||'')}">Undo</button>`
+            :`<span class="muted small">${esc(gift.reversed_at?'Handed back':(gift.refusal_reason||''))}</span>`}
+        </div>`).join('')}</div>`
+      :'';
     /* V392: what this customer's points can actually take home today.
        Affordable gifts lead; the next one up is shown too, with how many points are still needed,
        because "you are 5 away" is the sentence that sells the next visit. Nothing here issues
@@ -8059,7 +8096,7 @@ async function tillPage(){
            control must not shrink what a screen reader is told about it. */''}
         ${(affordableV392.length&&canScanRedemption())?`<button type="button" class="btn ghost sm till-gift-scan-v399" id="tGiftScanV392" aria-label="Scan customer QR" title="Scan customer QR">${CUI.icon('scan',{size:18})}</button>`:''}</div>`
       :'';
-    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${redemptionOffHintV435}${giftsBannerV392}${pendingVouchers}`;
+    const rewards=`${welcomeBanner}${bringbackBanner}${referralBanner}${tierBanner}${givenBannerV665}${redemptionOffHintV435}${giftsBannerV392}${pendingVouchers}`;
     /* V374: what the Benefits tab counts. An automatic discount is NOT counted — nobody has to
        do anything about it — so the badge means "this many things need a hand", which is the
        only reading that would make a cashier open the tab. */
@@ -8758,6 +8795,26 @@ async function tillPage(){
       draw();
       toast(wasApplied?'Discount removed':'Discount applied to this sale');
     });
+    /* nestly_v665: Undo, on the row of the thing that was given. The catalogue is dropped and the
+       screen redrawn afterwards so the perk reappears in "Ready to give now" — the allowance is
+       genuinely back, and a panel still showing it as spent would be the lie this whole change
+       exists to remove. */
+    document.querySelectorAll('[data-gift-undo-v665]').forEach(button=>button.onclick=()=>{
+      if(busy)return;
+      openGiftUndoDialogV665({
+        businessId:S.biz.id,
+        giftKind:button.dataset.kindV665,
+        targetId:button.dataset.giftUndoV665,
+        rewardLabel:button.dataset.labelV665||'',
+        customerName:cust?.name||'',
+        onDone:async()=>{
+          if(!isTillCurrent())return;
+          catalog=null;await refreshTillCustomerStandingV408();
+          if(!isTillCurrent())return;
+          draw();
+        }
+      });
+    });
     document.querySelectorAll('[data-tier-benefit-give-v365]').forEach(button=>button.onclick=async()=>{
       if(busy||!cust?.client_id)return;
       const benefitId=button.dataset.tierBenefitGiveV365;
@@ -8806,8 +8863,33 @@ async function tillPage(){
       const type=b.dataset.plan, list=type==='package'?catalog.packages:catalog.memberships;
       const item=(list||[]).find(x=>x.id===b.dataset.id);if(item)addPlanLine(type,item);
     });
+    /* nestly_v665: what a STAGED tier perk does to this screen. It is deliberately the same three
+       lines the Apply button runs — one perk chosen, one re-price through evaluate_checkout, one
+       redraw — so a perk that arrived by QR and a perk the counter picked by hand are the same
+       state, and the panel shows it with Remove beside it exactly as photo 2 does. Nothing here
+       spends the allowance: record_cart_sale does that when the money is taken. */
+    async function applyStagedTierPerkV665(staged){
+      const benefitId=String(staged?.benefit_id||'');
+      if(!benefitId)return;
+      const previous=appliedTierBenefitV656;
+      appliedTierBenefitV656=benefitId;
+      const ok=await runEvaluate();
+      if(!isTillCurrent())return;
+      if(ok===false){
+        appliedTierBenefitV656=previous;
+        await runEvaluate();
+        if(!isTillCurrent())return;
+        return toast('That perk could not be applied to this sale.');
+      }
+      /* The catalogue is dropped so the benefits panel repaints from the server — the perk must
+         read as applied (Remove beside it), which is the state photo 2 shows. */
+      catalog=null;
+      draw();
+      toast(workspaceTemplateTextV97('tierPerkStaged',{item:staged?.reward_label||'Discount'}));
+    }
     if($('tEntitlementScan'))$('tEntitlementScan').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
+      stageClientId:cust?.client_id||null,onGiftStaged:applyStagedTierPerkV665,
       isCurrent:isTillCurrent,onComplete:()=>{catalog=null;draw()}
     });
     /* V392: the claimable-gifts banner hands over to the SAME scanner — one redemption path, one
@@ -8816,6 +8898,7 @@ async function tillPage(){
        one screen, one number, and a cashier cannot be expected to know which door they used. */
     if($('tGiftScanV392'))$('tGiftScanV392').onclick=()=>openMerchantRedemptionScanner({
       businessId:S.biz.id,branchId:tillBranchId,
+      stageClientId:cust?.client_id||null,onGiftStaged:applyStagedTierPerkV665,
       isCurrent:isTillCurrent,onComplete:async()=>{catalog=null;await refreshTillCustomerStandingV408();draw()}
     });
     /* V404: the stepper writes the number straight into the <output> rather than re-rendering the
@@ -9370,7 +9453,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'4de46d23a32c633a2bba6c96a7b3a19f41775dea1e003a2f4d2db9d3e99618a6',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'954f6c59fd78ada72458280e3f27e269a7a1aab49d424ff0a469cee16b338e72',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

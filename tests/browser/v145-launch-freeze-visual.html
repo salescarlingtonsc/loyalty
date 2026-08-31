@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="92ac28101977c28c46f4ffebad704a4e4ceb8db87b4d64d78d31be456eba4766"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="fa7e4d51def3366e6000386323b35768cae5f7b466244f446a6fd451f09be8b3"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5676,7 +5676,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 92ac28101977c28c46f4ffebad704a4e4ceb8db87b4d64d78d31be456eba4766</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · fa7e4d51def3366e6000386323b35768cae5f7b466244f446a6fd451f09be8b3</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6887,7 +6887,22 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       reversalActionsUnavailable=true;
     }
   }
+  /* nestly_v665 (owner ruling 2026-08-31, photos 3 and 5: the Activity history ringed, with "for
+     rewards redeemed > i need to reverse it"). A welcome, bring-back or referral gift is recorded
+     as a $0 sale, and staff_get_reversal_workflows correctly refuses to reverse one — a
+     zero-dollar sale reversal has no money to compensate and app.enforce_sale_reversal_bounds
+     would refuse it. What CAN be given back is the GRANT behind that row, which is what this
+     second, sibling read answers. Keyed by the sale it wrote, so the row the owner is looking at
+     is the row that grows the control. Fail-soft: no list simply means no Give-back buttons. */
+  let giftWorkflowV665=null;
+  if(canReadSales||canReadLoyalty){
+    const {data:giftsV665,error:giftsErrorV665}=await sb.rpc('staff_gift_reversal_workflows_v665',
+      {p_business:S.biz.id,p_client:id,p_limit:200});
+    if(!isClientDetailCurrent())return;
+    if(!giftsErrorV665)giftWorkflowV665=giftsV665||null;
+  }
   if(!isClientDetailCurrent())return;
+  const giftRowsV665=Array.isArray(giftWorkflowV665?.gifts)?giftWorkflowV665.gifts:[];
   const saleWorkflow=Object.fromEntries((reversalData?.sales||[]).map(x=>[x.id,x]));
   const redemptionWorkflow=Object.fromEntries((reversalData?.redemptions||[]).map(x=>[x.id,x]));
   const saleById=Object.fromEntries((allSl||[]).map(sale=>[sale.id,sale]));
@@ -7483,6 +7498,30 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         :`<span class="muted small">${esc(g.display_label||'Reward')} · ${g.display_amount_cents!=null?money(g.display_amount_cents):g.display_discount_percent!=null?g.display_discount_percent+'% off':esc(g.display_item||'free item')} · ${g.granted_at.slice(0,10)}</span>`}</div>`}).join('')
       :'<p class="muted small" style="margin-top:6px">No retention reward history yet.</p>'}
     </div>`:'';
+  /* nestly_v665 (owner ruling 2026-08-31, photos 3 and 5: the Activity history ringed, with "for
+     rewards redeemed > i need to reverse it in the event of wrong redemption").
+     Its own card, immediately above Activity history, rather than a control grafted onto the
+     activity table. Three reasons. A welcome, bring-back or referral gift shows in that table as
+     a $0 SALE, and a sale is exactly the thing that cannot be reversed here — the reversible
+     object is the grant behind it, so a Reverse button on the sale row would be pointing at the
+     wrong record and would collide with the row's own, correct, "no package-session provenance"
+     refusal. A tier perk has no sale row at all and would otherwise have no path anywhere but the
+     till. And a reversed gift must keep reading as given-then-returned, which a single dated list
+     says far better than a table cell. */
+  const GIFT_KIND_LABEL_V665=Object.freeze({tier_perk:'Tier perk',welcome:'Welcome gift',
+    bringback:'Bring-back voucher',referral:'Referral gift'});
+  const giftsGivenMarkupV665=giftRowsV665.length
+    ?`<div class="card" id="c360GiftsGivenV665"><b>Rewards and perks given</b>
+      <p class="muted small" style="margin-top:5px">Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.</p>
+      ${giftRowsV665.map(gift=>`<div class="row" style="margin-top:10px;align-items:flex-start" data-gift-row-v665="${esc(String(gift.id||''))}">
+        <span class="inline-status">${CUI.icon('giftcard',{size:16})}<span data-merchant-content>${esc(gift.reward_label||GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}</span></span><span class="spacer"></span>
+        <span class="muted small" style="text-align:right">${esc(GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}${gift.reversed_at?`<br><span class="pill off">given back ${esc(activityWhenTextV267(gift.reversed_at))}</span>`:''}</span>
+        ${gift.can_reverse===true
+          ?`<button class="btn danger sm" style="margin-left:10px" data-gift-undo-v665="${esc(String(gift.id||''))}" data-kind-v665="${esc(String(gift.gift_kind||''))}" data-label-v665="${esc(gift.reward_label||'')}">Give back</button>`
+          :(gift.reversed_at?'':`<span class="muted small" style="margin-left:10px">${esc(gift.refusal_reason||'')}</span>`)}
+      </div>`).join('')}
+      </div>`
+    :'';
   const activitySources=[canReadSales&&'sales and visits',canReadAppointments&&'appointments',canReadLoyalty&&'reward redemptions',canReadRetention&&'retention rewards',canReadMemberships&&'memberships',canReadPackages&&'packages'].filter(Boolean);
   /* V267: the Type and Team member menus are built from the rows THIS customer actually has,
      through the same activityTypeOfV267 the cells use, so the menu can never offer a type the
@@ -7574,6 +7613,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
            also where it reads. */''}
       ${canReadLoyalty?limitedOfferCardV319:''}
       ${retentionMarkup}
+      ${giftsGivenMarkupV665}
       ${birthdayCardMarkup}${feedbackStripMarkup}
       </div>
       <div class="c360-col-v476">
@@ -9810,7 +9850,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'92ac28101977c28c46f4ffebad704a4e4ceb8db87b4d64d78d31be456eba4766',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'fa7e4d51def3366e6000386323b35768cae5f7b466244f446a6fd451f09be8b3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

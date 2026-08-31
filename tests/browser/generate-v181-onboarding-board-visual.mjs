@@ -30,8 +30,34 @@ export async function readOnboardingBoardSources() {
   };
 }
 
+/* nestly_v665: the fixture's CLOCK is pinned, and that is what makes this file's parity test
+   meaningful at all.
+
+   The seed rows below carry absolute dates (2026-08-08 and friends) and the console renders them
+   through relativeActivity(), which is `Math.round((time - Date.now()) / 86400000)`. So the
+   checked-in fixture said "23 days ago" on the day it was generated, "24 days ago" the next
+   morning, and the byte-equality test failed EVERY DAY from then on — not because
+   platform-console.js had drifted, but because the calendar had. A test that fails daily for a
+   reason nobody changed is a test everybody learns to regenerate past, which is the opposite of
+   what V448 built it for.
+
+   The instant is 2026-08-31T02:00:00Z, chosen because it reproduces the fixture exactly as it was
+   last committed (2026-08-08 is 23 days before it), so pinning changes not one byte of the
+   expected output — it only stops tomorrow changing it. A real edit to the board's markup, its
+   drag wiring or its CSS still fails this test, which is the signal the file is for. */
+const FIXTURE_NOW_V665 = Date.parse('2026-08-31T02:00:00Z');
+
 export function buildOnboardingBoardVisualFixture(consoleSource, consoleCss, baseCss = '') {
-  const ctx = { Object, Map, Set };
+  /* Shadows the sandbox realm's own Date. `new Date(value)` still parses normally — only "what
+     time is it now" is frozen, which is the single nondeterministic input this build had. */
+  class PinnedDateV665 extends Date {
+    constructor(...args) {
+      if (args.length === 0) super(FIXTURE_NOW_V665);
+      else super(...args);
+    }
+    static now() { return FIXTURE_NOW_V665; }
+  }
+  const ctx = { Object, Map, Set, Date: PinnedDateV665 };
   ctx.globalThis = ctx;
   vm.runInNewContext(consoleSource, ctx, { filename: 'platform-console.js' });
   const C = ctx.NestlyPlatformConsole;
