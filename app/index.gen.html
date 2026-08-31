@@ -284,9 +284,20 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      "content is coming" cue. -->
 <div id="root"><div class="wallet-shell customer-surface" data-boot-skeleton><div class="wallet-inner" style="padding-top:26px;max-width:560px">
   <div aria-busy="true" data-boot-panel><p class="sr-only" role="status">Loading Peekaa…</p>
-    <video class="boot-mark-v577" autoplay muted loop playsinline width="540" height="540" poster="/media/peekaa-loading-poster.png" aria-hidden="true">
-      <source src="/media/peekaa-loading.mp4" type="video/mp4">
-    </video>
+    <!-- nestly_v666 (owner, photo 1: a play button on the boot screen, "it should auto play - not
+         showing this play button for customer to press - that is wrong interface").
+         The screenshot's battery is YELLOW: Low Power Mode. iOS refuses video autoplay there
+         however muted and playsinline the element is, and Safari then draws its own tap-to-play
+         overlay on top of the poster — so the first thing a customer met was a control that
+         invited them to press it before the app would appear. Nothing in the markup could turn
+         that overlay off, because the overlay IS the browser saying "this will not play".
+         So the boot mark is the still logo, which is what a boot mark is for. It cannot be
+         refused, cannot be pressed, needs no codec and no gesture, and is a smaller download
+         than the 67KB loop it replaces. The animation is a nicety; a control the customer has to
+         press before the app appears is a broken front door. The poster is the loop's own first
+         frame, so the mark on screen is unchanged for everyone who could see it before. -->
+    <img class="boot-mark-v577" src="/media/peekaa-loading-poster.png" width="540" height="540"
+         alt="" aria-hidden="true" decoding="async" fetchpriority="high">
     <!-- nestly_v583 (owner, photo 13: the loading word ringed, "remove this"). v578 added
          "peekaaaaaa......." at the owner's request; this photo withdraws it. The logo animation
          above stays and is now the whole boot screen, with the sr-only status line still doing
