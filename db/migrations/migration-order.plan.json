@@ -3261,6 +3261,12 @@
       "path": "db/migrations/20260901_nestly_v665_branch_subscription_choice.sql",
       "semanticVersion": "v665",
       "proposedDeployVersion": "20260901000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v666_add_branch_tier_capacity.sql",
+      "semanticVersion": "v666",
+      "proposedDeployVersion": "20260901010000"
     }
   ]
 }

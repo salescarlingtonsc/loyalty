@@ -295,7 +295,10 @@ test('the advertised prices are the ones the product actually charges', async ()
 
 test('the landing page does not contradict the in-app per-branch pricing caveat', async () => {
   const app = await read('app/app.js');
-  assert.match(app, /An extra branch is charged like another shop\./);
+  /* nestly_v666: the app states the per-branch rule on the Subscription card ("Every branch is
+     charged this tier once") and prices it on the add-branch form; the landing page keeps its own
+     sentence. What must not happen is the landing page promising free branches. */
+  assert.match(app, /Every branch is charged this tier once\./);
   assert.match(landing, /extra branch is charged like another shop/i,
     'the branch caveat must be repeated, not silently dropped');
   assert.doesNotMatch(landing, /unlimited branches|branches? (?:are |is )?free|no extra cost/i);

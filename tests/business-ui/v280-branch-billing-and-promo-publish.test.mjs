@@ -67,16 +67,16 @@ test('the numbers are stated where branches are listed, bought, and paid for', (
   // the list
   assert.match(app, /\$\('brList'\)\.innerHTML=`<p class="muted small"[^`]*branchBillingSentenceV280\(branchCountsV280\)/);
   // the create form, before the owner is sent to Stripe
-  assert.match(app, /Your plan already covers your main branch, so adding this one takes you to/);
+  /* nestly_v666: the create form now prices the branch instead of explaining the policy. */
+  assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
   /* nestly_v664: the subscription card no longer quotes one unit and explains the rest in prose —
      the Amount due IS the tier amount times the billable branch count, and the sentence beside it
      states the rule and the proration the owner asked for. */
   assert.match(app, /Every branch is charged this tier once\./);
   assert.match(app, /A branch added part-way through a paid period is charged only for the time left in it\./);
   assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
-  // V202's promises are still made
-  assert.match(app, /An extra branch is charged like another shop\./);
-  assert.match(app, /shown on the secure payment page before anything is charged/);
+  // V202's promise is still made, in the shorter v666 wording
+  assert.match(app, /Charged from the secure payment page; the branch stays switched off until that payment confirms\./);
 });
 
 test('the branch checkout stops charging for the base plan a second time', () => {

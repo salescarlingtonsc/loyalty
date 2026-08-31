@@ -3256,6 +3256,12 @@
       "version": "20260901000000",
       "name": "nestly_v665_branch_subscription_choice",
       "sourcePath": "db/migrations/20260901_nestly_v665_branch_subscription_choice.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260901010000",
+      "name": "nestly_v666_add_branch_tier_capacity",
+      "sourcePath": "db/migrations/20260901_nestly_v666_add_branch_tier_capacity.sql"
     }
   ]
 }

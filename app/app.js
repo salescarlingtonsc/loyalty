@@ -48734,6 +48734,38 @@ function branchBillingCountsV280(list){
     unsubscribed:rows.filter(branch=>branch.billing_state==='unsubscribed').length
   };
 }
+/* nestly_v666: "your 2nd branch" reads better than "branch #2" and is the owner's own phrasing. */
+function branchOrdinalWordV666(position){
+  const words=['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth'];
+  const index=Number(position)-1;
+  if(index>=0&&index<words.length)return words[index];
+  const number=Number(position),tens=number%100,ones=number%10;
+  const suffix=(tens>=11&&tens<=13)?'th':ones===1?'st':ones===2?'nd':ones===3?'rd':'th';
+  return `${number}${suffix}`;
+}
+/* The per-branch amount and the resulting total, read from the SAME billing projection the
+   Subscription page prices from. Fail-soft: a read that does not come back leaves the counts
+   sentence in place rather than printing a number nobody can stand behind. */
+async function branchAddPriceNoteV666(branchList){
+  const {data,error}=await sb.rpc('get_business_billing_v125',{p_business:S.biz.id});
+  if(error||!data)return null;
+  const tiers=Array.isArray(data.capacity_tiers)?data.capacity_tiers:[];
+  const cadence=data.terms?.cadence==='monthly'?'monthly':'annual';
+  const capacity=Math.max(Number(data.terms?.customer_capacity||0),Number(data.current_customer_count||0),1);
+  const tier=tiers.filter(item=>item.cadence===cadence)
+    .sort((left,right)=>Number(left.capacity_ceiling)-Number(right.capacity_ceiling))
+    .find(item=>Number(item.capacity_ceiling)>=capacity);
+  if(!tier)return null;
+  const period=cadence==='annual'?'year':'month';
+  const unitsNow=1+Math.max(0,branchBillingCountsV280(branchList).billable);
+  const price=cents=>'SGD '+(Number(cents)/100).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return {
+    period,
+    unit:price(tier.amount_cents),
+    total:price(Number(tier.amount_cents)*(unitsNow+1)),
+    branches:unitsNow+1
+  };
+}
 function branchBillingSentenceV280(counts){
   const total=Number(counts?.total||0),included=Number(counts?.included||0),
     billable=Number(counts?.billable||0),lapsed=Number(counts?.lapsed||0);
@@ -48865,9 +48897,17 @@ async function branchesPage(){
            ${branchList.filter(item=>item.active).map(item=>`<option value="${esc(item.id)}"${item.is_default?' selected':''}>${esc(item.name)}</option>`).join('')}
          </select>
          <p class="muted small" style="margin-top:6px">Copies opening hours, which services it offers, who works there, and any loyalty settings that branch overrides. Prices and products are already shared across every branch.</p>
-         <div class="imp-note" style="margin-top:14px"><b>An extra branch is charged like another shop.</b>
-           <p class="small" style="margin-top:6px">${esc(branchBillingSentenceV280(branchBillingCountsV280(branchList)))}. Your plan already covers your main branch, so adding this one takes you to ${branchBillingCountsV280(branchList).billable+1} billable ${branchBillingCountsV280(branchList).billable+1===1?'branch':'branches'} — you are never charged again for the branch your plan includes.</p>
-           <p class="small" style="margin-top:6px">The exact amount and billing date are shown on the secure payment page before anything is charged. The branch stays switched off until that payment confirms.</p></div>`}
+         ${/* nestly_v666 (owner: "the wordings too chunky - just indicate this new branch is the
+              second branch - Jess Salon (Tampines) = $1,188 / year and total = $xx / year"). The
+              note was three sentences of policy; what an owner needs before pressing Create is
+              which branch this is, what it costs, and what they will pay in total. The figures
+              come from the same tier the Subscription page prices from — a promise made here and
+              a price charged there cannot have two sources — and the name updates as they type
+              it. Until the tier read returns, the box shows the counts and no invented number. */''}
+         <div class="imp-note" style="margin-top:14px" id="brBillingNoteV666">
+           <b>This is your ${branchOrdinalWordV666(branchList.length+1)} branch.</b>
+           <p class="small" style="margin-top:6px" id="brBillingLinesV666">Checking your plan…</p>
+           <p class="small" style="margin-top:6px">Charged from the secure payment page; the branch stays switched off until that payment confirms.</p></div>`}
       <div class="row" style="margin-top:16px"><button class="btn" id="brSave">${b?'Save changes':'Create branch'}</button>
       <button class="btn ghost sm" id="brCancel">Cancel</button></div>`;
     /* nestly_v658: the branch form is the only one of the five that serves BOTH create and edit,
@@ -48875,6 +48915,25 @@ async function branchesPage(){
        after, so the focus target below exists when it is asked for. */
     presentFormModalV658($('brForm'),{initialFocus:'#brName',onCancel:()=>dismissFormModalV658($('brForm'))});
     $('brCancel').onclick=()=>dismissFormModalV658($('brForm'));
+    /* nestly_v666: the note names this branch and prices it. The name is whatever is in the field
+       at the moment they read it, so it follows their typing; the amounts arrive once from the
+       billing projection and are then reused, and a failed read leaves the counts sentence. */
+    const priceLines=$('brBillingLinesV666');
+    if(priceLines&&!b){
+      let quote=null;
+      const paint=()=>{
+        if(!priceLines.isConnected)return;
+        const typed=($('brName')?.value||'').trim();
+        if(!quote){
+          priceLines.textContent=branchBillingSentenceV280(branchBillingCountsV280(branchList))+'.';
+          return;
+        }
+        priceLines.innerHTML=`<b data-merchant-content>${esc(typed||'This branch')}</b> · ${esc(quote.unit)} / ${esc(quote.period)}`
+          +`<br>Total for ${quote.branches} ${quote.branches===1?'branch':'branches'}: <b>${esc(quote.total)} / ${esc(quote.period)}</b>`;
+      };
+      if($('brName'))$('brName').addEventListener('input',paint);
+      branchAddPriceNoteV666(branchList).then(result=>{quote=result;paint()}).catch(()=>paint());
+    }
     $('brSave').onclick=async()=>{
       const name=$('brName').value.trim();
       if(name.length<2) return toast('Branch name required');

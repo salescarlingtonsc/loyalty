@@ -49,8 +49,14 @@ test('a branch is not usable until the payment confirms', () => {
 });
 
 test('the owner is told a charge is coming before it happens', () => {
-  assert.match(app, /An extra branch is charged like another shop\./);
-  assert.match(app, /shown on the secure payment page before anything is charged/);
+  /* nestly_v666 (owner: "the wordings too chunky - just indicate this new branch is the second
+     branch ... = $1,188 / year and total = $xx / year"). The warning is the same warning, said in
+     figures instead of paragraphs: which branch this is, what it costs, what the total becomes,
+     and that the payment page charges it. Assert those, not the retired sentences. */
+  assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
+  assert.match(app, /Charged from the secure payment page; the branch stays switched off until that payment confirms\./);
+  assert.match(app, /branchAddPriceNoteV666/);
+  assert.match(app, /Total for \$\{quote\.branches\}/);
 });
 
 test('the copy picker offers the branches, and says what copies', () => {
