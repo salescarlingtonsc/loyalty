@@ -48727,13 +48727,20 @@ function branchBillingCountsV280(list){
     total:rows.length,
     included:rows.filter(branch=>branch.billing_state==='included').length,
     billable:rows.filter(branch=>branch.billing_state==='pending_payment'||branch.billing_state==='active').length,
-    lapsed:rows.filter(branch=>branch.billing_state==='suspended').length
+    lapsed:rows.filter(branch=>branch.billing_state==='suspended').length,
+    /* nestly_v665: a branch the owner switched off is neither billable nor lapsed. Counted on its
+       own so the sentence never implies it is still charged, nor that a payment failed. */
+    stopping:rows.filter(branch=>branch.billing_state==='canceling').length,
+    unsubscribed:rows.filter(branch=>branch.billing_state==='unsubscribed').length
   };
 }
 function branchBillingSentenceV280(counts){
   const total=Number(counts?.total||0),included=Number(counts?.included||0),
     billable=Number(counts?.billable||0),lapsed=Number(counts?.lapsed||0);
+  const stopping=Number(counts?.stopping||0),unsubscribed=Number(counts?.unsubscribed||0);
   return `${total} ${total===1?'branch':'branches'} · ${included} included in your plan · ${billable} billable`
+    +(stopping?` · ${stopping} stopping at the billing date`:'')
+    +(unsubscribed?` · ${unsubscribed} unsubscribed`:'')
     +(lapsed?` · ${lapsed} payment lapsed`:'');
 }
 /* V325 (owner-authorized exception #2, 2026-08-14 Customer Interface cosmetics brief). The
@@ -48938,7 +48945,7 @@ async function branchesPage(){
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
-          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${statusOnOff(b.active)}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':''}
+          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${statusOnOff(b.active)}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':b.billing_state==='canceling'?` <span class="pill off">Stops ${esc(b.billing_cancel_at?sgt(b.billing_cancel_at):'at the billing date')}</span>`:b.billing_state==='unsubscribed'?' <span class="pill no">Unsubscribed</span>':''}
           <div data-merchant-content class="muted small" style="margin-top:4px">${esc(b.address||'No address set')}${b.phone?' · '+esc(b.phone):''}${b.email?' · '+esc(b.email):''}</div></div>
           <span class="spacer"></span>
           <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>
@@ -53351,12 +53358,76 @@ function openSubscriptionBranchDetailV628(payload){
          the answer to "why does every row look the same", which is a question you only ask while
          looking at one row. */''}
     <p class="muted small" style="margin-top:14px">One subscription covers the whole company, so every branch shares this plan, billing date and payment method.</p>
+    ${subscriptionBranchBillingActionsV665(record)}
   </section>`;
   document.body.appendChild(modal);
   let deactivate=null;
   const close=()=>{if(deactivate){const done=deactivate;deactivate=null;done({restoreFocus:true})}else modal.remove()};
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#subscriptionBranchCloseV628'});
   document.getElementById('subscriptionBranchCloseV628').onclick=close;
+  wireSubscriptionBranchBillingActionsV665(modal,record,close);
+}
+/* nestly_v665 (owner: "all branches must be charged - unless user switch it off. (there must be a
+   unsubscribe button) and ask for confirmation").
+   Two states, two controls, and never both: a branch that is being paid for can be switched off,
+   and a branch already stopping can be kept. The confirmation names the branch, the money and the
+   date the branch actually stops — an owner who presses this must know they keep the shop working
+   until the day they have paid to, and that nothing is refunded. */
+function subscriptionBranchBillingActionsV665(record){
+  const state=String(record?.billing_state||'');
+  if(state==='canceling'){
+    return `<div class="imp-note" style="margin-top:16px" role="status">
+      <b>Stopping on ${esc(record.cancel_at||'the next billing date')}.</b>
+      <p class="small" style="margin-top:6px">It keeps taking bookings and sales until then, and is not charged again after it.</p>
+      <button type="button" class="btn ghost sm" id="branchKeepV665" style="margin-top:10px">Keep this branch</button>
+      <p class="muted small" id="branchBillingStatusV665" role="status" aria-live="polite" style="margin-top:8px"></p></div>`;
+  }
+  if(!['included','pending_payment','active'].includes(state))return '';
+  if(Number(record?.others_subscribed||0)<1){
+    return `<p class="muted small" style="margin-top:16px">This is your only subscribed branch. To stop paying altogether, cancel the subscription from the plan below rather than switching this branch off.</p>`;
+  }
+  return `<hr style="border:none;border-top:1px solid var(--line);margin:16px 0 12px">
+    <button type="button" class="btn ghost sm" id="branchUnsubscribeV665">Unsubscribe this branch</button>
+    <p class="muted small" style="margin-top:8px">Stops the charge for this branch from your next billing date. It keeps working until then.</p>
+    <p class="muted small" id="branchBillingStatusV665" role="status" aria-live="polite" style="margin-top:8px"></p>`;
+}
+function wireSubscriptionBranchBillingActionsV665(modal,record,close){
+  const status=()=>modal.querySelector('#branchBillingStatusV665');
+  const run=async(rpc,button,busyLabel)=>{
+    CUI.setButtonBusy(button,{busy:true,label:busyLabel});
+    const {data,error}=await sb.rpc(rpc,{
+      p_business:S.biz.id,p_branch:record.branch_id,p_idempotency_key:crypto.randomUUID()});
+    if(error){
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      const host=status();if(host)host.textContent=ownerErrorText(error);
+      return null;
+    }
+    return data;
+  };
+  const unsubscribe=modal.querySelector('#branchUnsubscribeV665');
+  if(unsubscribe)unsubscribe.onclick=async()=>{
+    const money=String(record.unit_amount||'').trim();
+    const confirmed=confirm(`Unsubscribe "${record.branch}"?\n\n`
+      +`It keeps taking bookings and sales until ${record.billed_until&&record.billed_until!=='—'?record.billed_until:'the end of the period you have paid for'}, then switches off.\n`
+      +(money?`You stop paying ${money} for this branch from the next billing date.\n`:'')
+      +`Nothing is refunded for the time already paid, and its customers, sales and bookings stay in your reports.`);
+    if(!confirmed)return;
+    const result=await run('business_unsubscribe_branch_v665',unsubscribe,'Unsubscribing…');
+    if(!result)return;
+    toast(result.status==='replayed'
+      ?'That branch is already stopping'
+      :`${record.branch} stops on ${result.effective_at?sgt(result.effective_at):'your next billing date'}`);
+    close();loadBillingConfig();
+  };
+  const keep=modal.querySelector('#branchKeepV665');
+  if(keep)keep.onclick=async()=>{
+    const result=await run('business_resubscribe_branch_v665',keep,'Keeping…');
+    if(!result)return;
+    toast(result.billing_state==='included'
+      ?`${record.branch} stays on your plan`
+      :`${record.branch} is back — pay for it from Branches to switch it on`);
+    close();loadBillingConfig();
+  };
 }
 function subscriptionBranchTableV612(billing){
   const branches=Array.isArray(billing?.__branchesV612)?billing.__branchesV612:[];
@@ -53386,17 +53457,44 @@ function subscriptionBranchTableV612(billing){
   /* nestly_v662: a branch's own state, in the words the Branches page already uses, so the same
      branch does not read as "Payment lapsed" there and "Ongoing" here. Only a branch that is
      genuinely running falls through to the subscription-level pill above. */
+  /* nestly_v665: a branch the owner has switched off is not "Ongoing" and is not "lapsed" — it is
+     paid up to a date and stopping, or already stopped. Both say which. */
   const branchStatusV662=branch=>branch.billing_state==='suspended'
     ?'<span class="pill no">Payment lapsed</span>'
+    :branch.billing_state==='canceling'
+    ?`<span class="pill off">Stops ${esc(branch.billing_cancel_at?sgt(branch.billing_cancel_at):'at the billing date')}</span>`
+    :branch.billing_state==='unsubscribed'
+    ?'<span class="pill no">Unsubscribed</span>'
     :branch.billing_state==='pending_payment'
     ?'<span class="pill new">Awaiting payment</span>'
     :branch.active===false
     ?'<span class="pill no">Deactivated</span>'
     :status;
+  /* nestly_v665: the pop-up is where a branch's own money lives, so it is where the owner turns
+     that money off. It carries the branch's id and billing state, and how many OTHER branches are
+     still subscribed — the server refuses to leave a company with none, and the button must say
+     so before it is pressed rather than after. */
+  /* The per-branch amount, taken from the tier the company is actually on, so the confirmation
+     can name the money being switched off instead of describing it. */
+  const unitAmountLabelV665=(()=>{
+    const tiers=Array.isArray(billing?.capacity_tiers)?billing.capacity_tiers:[];
+    const cadenceKey=billing?.terms?.cadence,capacityNow=Number(billing?.terms?.customer_capacity||0);
+    const tier=tiers.filter(item=>item.cadence===cadenceKey)
+      .sort((left,right)=>Number(left.capacity_ceiling)-Number(right.capacity_ceiling))
+      .find(item=>Number(item.capacity_ceiling)>=capacityNow);
+    return tier?`${money(tier.amount_cents)}${cadenceKey==='annual'?' / year':' / month'}`:'';
+  })();
+  const subscribedStatesV665=['included','pending_payment','active'];
+  const subscribedCountV665=branches
+    .filter(branch=>subscribedStatesV665.includes(branch.billing_state)).length;
   const detailPayload=branch=>esc(JSON.stringify({
     branch:branch.name||'',address:branch.address||'',phone:branch.phone||'',email:branch.email||'',
     is_default:branch.is_default===true,active:branch.active!==false,
-    frequency:plan,billed_until:expires,method:methodPlain
+    frequency:plan,billed_until:expires,method:methodPlain,
+    branch_id:branch.id||'',billing_state:branch.billing_state||'',
+    cancel_at:branch.billing_cancel_at?sgt(branch.billing_cancel_at):'',
+    unit_amount:unitAmountLabelV665,others_subscribed:Math.max(0,subscribedCountV665-
+      (subscribedStatesV665.includes(branch.billing_state)?1:0))
   }));
   /* nestly_v664 (owner: "hide all the information about the subscription per branch inside the
      individual branches > only click into the branches then will pop up the info"). Payment
@@ -53437,7 +53535,9 @@ async function loadBillingConfig(){
        table said 2 while the sentence said 3 with 1 payment lapsed, and the missing one was the
        only row that needed an owner's attention. Every branch is listed now; billing_state and
        active come back with it so each row can say which it is. */
-    sb.from('branches').select('id,name,is_default,active,billing_state,address,phone,email')
+    /* nestly_v665: billing_cancel_at travels with the row so a stopping branch can say WHEN, both
+       in its status pill and in the pop-up that offers to keep it. */
+    sb.from('branches').select('id,name,is_default,active,billing_state,billing_cancel_at,address,phone,email')
       .eq('business_id',S.biz.id)
       .order('is_default',{ascending:false}).order('active',{ascending:false}).order('name')
   ]);

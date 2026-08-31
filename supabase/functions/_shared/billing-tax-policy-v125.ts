@@ -42,6 +42,21 @@ type StripeSubscriptionClientLike = {
 const hasTaxReferences = (value: StripeTaxReference[] | null | undefined): boolean =>
   Array.isArray(value) && value.length > 0;
 
+/* nestly_v665: the same item shape with the OTHER proration rule. A branch (or a capacity tier)
+   being REMOVED must not invoice and must not credit — the owner has paid to the billing date and
+   keeps the branch until then, so the only thing that changes is the size of the next invoice.
+   Adding keeps always_invoice above, which is the owner's "prorate the remaining months" rule. */
+export function stripeReductionUpdateParamsV665(
+  items: StripePendingUpdateItemV125[],
+  metadata: StripePendingUpdateMetadataV125,
+) {
+  return {
+    items,
+    proration_behavior: 'none' as const,
+    metadata,
+  };
+}
+
 export function stripePendingUpdateParamsV125(
   items: StripePendingUpdateItemV125[],
   metadata: StripePendingUpdateMetadataV125,

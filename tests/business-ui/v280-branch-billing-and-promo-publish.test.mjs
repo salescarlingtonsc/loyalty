@@ -41,7 +41,7 @@ test('one added branch is one billable branch, and the screen says all three num
     { billing_state: 'included' },
     { billing_state: 'active' },
   ]);
-  assert.deepEqual(bistro, { total: 2, included: 1, billable: 1, lapsed: 0 });
+  assert.deepEqual(bistro, { total: 2, included: 1, billable: 1, lapsed: 0, stopping: 0, unsubscribed: 0 });
   assert.equal(branchBillingSentenceV280(bistro), '2 branches · 1 included in your plan · 1 billable');
 
   /* A firm that has bought nothing pays for no branch at all. */

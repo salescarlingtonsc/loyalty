@@ -11,6 +11,7 @@ import { billingCommandFailureDisposition } from '../_shared/billing-command-rec
 import {
   enforceProviderNoTaxV125,
   stripePendingUpdateParamsV125,
+  stripeReductionUpdateParamsV665,
   stripeSubscriptionHasNoTaxV125,
   stripeSubscriptionMatchesCommandV125,
 } from '../_shared/billing-tax-policy-v125.ts';
@@ -399,6 +400,22 @@ Deno.serve(async (req) => {
         });
       }
       const items = [...itemsById.values()];
+      /* nestly_v665: proration follows DIRECTION. The owner's two rules are opposites — a branch
+         added part-way through a paid period is invoiced for the time left in it, and a branch
+         unsubscribed is not refunded, it simply stops renewing. Reading the quantity Stripe holds
+         right now is the only way to know which of the two this update is; a failed read falls
+         through to the existing always_invoice path, which is the one that cannot lose money. */
+      let reducesQuantity = false;
+      try {
+        const current = await stripe.subscriptions.retrieve(subscriptionId);
+        const currentBase = (current.items?.data || []).find(
+          (item) => item.id === String(data.provider_base_item_id || ''),
+        );
+        reducesQuantity = typeof currentBase?.quantity === 'number' &&
+          planUnits < currentBase.quantity;
+      } catch {
+        reducesQuantity = false;
+      }
       const metadata = {
         business_id: businessId,
         cadence,
@@ -408,7 +425,9 @@ Deno.serve(async (req) => {
       const subscription = await stripe.subscriptions.update(
         subscriptionId,
         capacityModel
-          ? stripePendingUpdateParamsV125(items, metadata)
+          ? (reducesQuantity
+              ? stripeReductionUpdateParamsV665(items, metadata)
+              : stripePendingUpdateParamsV125(items, metadata))
           : { items, proration_behavior: 'none', metadata },
         { idempotencyKey },
       );

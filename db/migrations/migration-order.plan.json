@@ -3255,6 +3255,12 @@
       "path": "db/migrations/20260831_nestly_v665_gift_staging_and_reversal.sql",
       "semanticVersion": "v665",
       "proposedDeployVersion": "20260831170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v665_branch_subscription_choice.sql",
+      "semanticVersion": "v665",
+      "proposedDeployVersion": "20260901000000"
     }
   ]
 }

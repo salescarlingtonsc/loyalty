@@ -3250,6 +3250,12 @@
       "version": "20260831170000",
       "name": "nestly_v665_gift_staging_and_reversal",
       "sourcePath": "db/migrations/20260831_nestly_v665_gift_staging_and_reversal.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260901000000",
+      "name": "nestly_v665_branch_subscription_choice",
+      "sourcePath": "db/migrations/20260901_nestly_v665_branch_subscription_choice.sql"
     }
   ]
 }
