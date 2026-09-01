@@ -38,6 +38,42 @@
       }
       return false;
     },
+    /* nestly_v670 — Face ID sign-in for the shell, backed by the app-local BiometricCredential
+       plugin (Keychain item behind a biometry-gated access control; reading it IS the Face ID
+       prompt). Passkeys cannot run in a WKWebView (v669), so this is the native equivalent.
+       Every method degrades to an inert answer on the web and on a native build without the
+       plugin, so callers never need a try/catch ladder. The password passes through here for
+       exactly one call and is never retained, logged, or attached to anything. */
+    biometricSignIn: {
+      async availability() {
+        if (!isNative || !plugins.BiometricCredential?.availability) return { available: false, biometry: 'none' };
+        try { return await plugins.BiometricCredential.availability(); }
+        catch { return { available: false, biometry: 'none' }; }
+      },
+      async enrolled() {
+        if (!isNative || !plugins.BiometricCredential?.enrolled) return false;
+        try { return (await plugins.BiometricCredential.enrolled())?.enrolled === true; }
+        catch { return false; }
+      },
+      async store({ phone, password } = {}) {
+        if (!isNative || !plugins.BiometricCredential?.store) return false;
+        if (!phone || !password) return false;
+        try { return (await plugins.BiometricCredential.store({ phone, password }))?.status === 'ok'; }
+        catch { return false; }
+      },
+      async retrieve() {
+        if (!isNative || !plugins.BiometricCredential?.retrieve) return { status: 'unavailable' };
+        try {
+          const result = await plugins.BiometricCredential.retrieve();
+          return ['ok', 'missing', 'canceled', 'failed'].includes(result?.status) ? result : { status: 'failed' };
+        } catch { return { status: 'failed' }; }
+      },
+      async clear() {
+        if (!isNative || !plugins.BiometricCredential?.clear) return true;
+        try { return (await plugins.BiometricCredential.clear())?.status === 'ok'; }
+        catch { return false; }
+      },
+    },
     /* The status bar follows the APP's surface, not the device's appearance. Peekaa's theme is a
        stored preference that defaults to light (v190), so on a dark-mode phone the two disagree
        and iOS would paint white icons over Peekaa's light page. Called from

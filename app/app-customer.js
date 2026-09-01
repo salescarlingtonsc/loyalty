@@ -919,14 +919,89 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   const nativeShell=globalThis.Capacitor?.isNativePlatform?.()===true;
   const installedApp=globalThis.navigator?.standalone===true
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
-  if(!passkeySupported){
-    /* In the app the button would only ever fail, so it goes away entirely; the password path
-       keeps the customer signed in between launches, so day-to-day the app opens unlocked. */
-    if(nativeShell)passkeyButton.hidden=true;
-    passkeyStatus.textContent=nativeShell
-      ?'Face ID sign-in is coming to the app. Use your password — the app keeps you signed in.'
-      :'Passkeys are not supported in this browser. Sign in with your password.';
+  /* nestly_v670: in the shell the Face ID button is real again — not WebAuthn (impossible in a
+     WKWebView, v669) but the native Keychain credential: reading it IS the Face ID prompt, and
+     what comes back signs in through the same signInWithPassword as the form. All state lives
+     in this closure; the only external surface is NestlyNativeBridge.biometricSignIn, which
+     answers inertly wherever the plugin is absent. */
+  const biometric=globalThis.NestlyNativeBridge?.biometricSignIn;
+  const biometricDeclineKey=phone=>`peekaa.customer.biometric.declined.${String(phone||'').replace(/\D/g,'')}`;
+  let biometricEnrolled=false;
+  const refreshBiometricUi=async()=>{
+    if(!nativeShell||!biometric)return;
+    const [{available},enrolled]=await Promise.all([biometric.availability(),biometric.enrolled()]);
+    if(!passkeyButton.isConnected)return;
+    biometricEnrolled=enrolled===true;
+    if(available&&biometricEnrolled){
+      passkeyButton.hidden=false;passkeyButton.disabled=false;
+      passkeyStatus.textContent='Sign in with Face ID.';
+    }else{
+      passkeyButton.hidden=true;
+      passkeyStatus.textContent=available
+        ?'After you sign in, you can turn on Face ID for next time.'
+        :'';
+    }
+  };
+  const runBiometricSignIn=async()=>{
+    if(!biometric)return;
+    passkeyButton.disabled=true;signIn.disabled=true;
+    passkeyStatus.textContent='Waiting for Face ID…';
+    const saved=await biometric.retrieve();
+    if(!isRouteCurrent()||!passkeyButton.isConnected)return;
+    if(saved.status!=='ok'){
+      signIn.disabled=false;passkeyButton.disabled=false;
+      if(saved.status==='missing'){biometricEnrolled=false;refreshBiometricUi();return}
+      passkeyStatus.textContent=saved.status==='canceled'
+        ?'Sign in with Face ID.'
+        :'Face ID could not be checked. Use your password.';
+      return;
+    }
+    passkeyStatus.textContent='Signing in…';
+    const {data,error}=await sb.auth.signInWithPassword({phone:saved.phone,password:saved.password});
+    if(!isRouteCurrent()||!passkeyButton.isConnected)return;
+    if(error||!data?.user){
+      /* The stored credential no longer matches — almost always a password changed on the web.
+         Keeping it would fail forever, so it is removed and the setup is offered again after the
+         next password sign-in. */
+      await biometric.clear();biometricEnrolled=false;
+      signIn.disabled=false;refreshBiometricUi();
+      errorHost.innerHTML='<div class="err">Your saved Face ID sign-in no longer matches. Sign in with your password to set it up again.</div>';
+      return;
+    }
+    resetClientSessionState({preserveInvitation:true});route();
+  };
+  /* After a password sign-in in the shell, offer to save the credential — once per phone until
+     declined, and never as a modal the customer must dismiss to proceed: declining routes on. */
+  const offerBiometricSetup=async(phone,password)=>{
+    if(!nativeShell||!biometric||biometricEnrolled)return;
+    try{if(localStorage.getItem(biometricDeclineKey(phone)))return}catch{}
+    const {available}=await biometric.availability();
+    if(!available||await biometric.enrolled())return;
+    if(!isRouteCurrent()||!errorHost.isConnected)return;
+    await new Promise(resolve=>{
+      errorHost.innerHTML=`<div class="card" style="margin-top:10px;padding:14px" data-biometric-offer>
+        <b>Sign in with Face ID next time?</b>
+        <p class="muted small" style="margin-top:4px">Your sign-in is kept only on this phone, locked by Face ID. You can turn it off any time in Profile.</p>
+        <div class="row" style="gap:8px;margin-top:10px">
+          <button class="btn sm" type="button" data-biometric-yes>Use Face ID</button>
+          <button class="btn ghost sm" type="button" data-biometric-no>Not now</button>
+        </div></div>`;
+      errorHost.querySelector('[data-biometric-yes]').onclick=async(event)=>{
+        event.currentTarget.disabled=true;
+        const stored=await biometric.store({phone,password});
+        if(errorHost.isConnected)errorHost.innerHTML=stored?'':'<div class="err">Face ID could not be set up. You can try again at your next sign-in.</div>';
+        resolve();
+      };
+      errorHost.querySelector('[data-biometric-no]').onclick=()=>{
+        try{localStorage.setItem(biometricDeclineKey(phone),'1')}catch{}
+        errorHost.innerHTML='';resolve();
+      };
+    });
+  };
+  if(!passkeySupported&&!nativeShell){
+    passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
   }
+  if(nativeShell){passkeyButton.hidden=true;refreshBiometricUi()}
   /* V286: renderCustomerOtpStart awaits the phone-OTP capability RPC before it paints anything,
      so on a slow connection the most important tap on this screen looked like nothing happened —
      and every further tap started another render racing to overwrite the same shell. */
@@ -969,6 +1044,9 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
         await navigator.credentials.store(new globalThis.PasswordCredential({id:phone,password,name:phone}));
       }
     }catch{}
+    /* nestly_v670: the shell's counterpart of the credentials.store above — offered, never
+       imposed, and the customer proceeds either way. */
+    try{await offerBiometricSetup(phone,password)}catch{}
     resetCustomerRegistrationState({phone});
     resetClientSessionState({preserveInvitation:true});
     route();
@@ -997,7 +1075,9 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     }
     resetClientSessionState({preserveInvitation:true});route();
   };
-  passkeyButton.onclick=()=>runPasskeySignIn();
+  /* One button, two backends: the shell unlocks the Keychain credential, the web runs the real
+     WebAuthn ceremony. Which one a tap gets is decided by the surface, never by the customer. */
+  passkeyButton.onclick=()=>nativeShell?runBiometricSignIn():runPasskeySignIn();
   /* V388: declared above as a const, so this trigger must sit after it — calling it from where
      the Turnstile callback used to live would hit the temporal dead zone. */
   if(installedApp&&passkeySupported&&!customerAutomaticPasskeyAttempted){
@@ -3198,11 +3278,30 @@ async function renderCustomerProfile(requestedView){
   const loadPasskeys=async()=>{
     if(!passkeySupported){
       passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
-      /* nestly_v669: in the iOS app the honest reason, not a browser-blame — the ceremony cannot
-         run in the shell, and passkeys added here still work on peekaa.asia in Safari. */
-      passkeyList.innerHTML=globalThis.Capacitor?.isNativePlatform?.()
-        ?'<p class="muted small">Face ID sign-in is coming to the Peekaa app. Passkeys you add on peekaa.asia in Safari keep working there, and the app keeps you signed in with your password.</p>'
-        :'<p class="muted small">Passkeys are not supported in this browser. Sign in with your mobile number and password.</p>';return;
+      /* nestly_v669/v670: the shell is not a WebAuthn surface — its Face ID sign-in is the
+         native Keychain credential, managed here. Passkeys added on peekaa.asia in Safari are a
+         separate, coexisting thing and keep working there. */
+      const biometric=globalThis.NestlyNativeBridge?.biometricSignIn;
+      if(!globalThis.Capacitor?.isNativePlatform?.()||!biometric){
+        passkeyList.innerHTML='<p class="muted small">Passkeys are not supported in this browser. Sign in with your mobile number and password.</p>';return;
+      }
+      const [{available},enrolled]=await Promise.all([biometric.availability(),biometric.enrolled()]);
+      if(!isCurrent()||!passkeyHost.isConnected)return;
+      if(!available){
+        passkeyList.innerHTML='<p class="muted small">This device does not offer Face ID or Touch ID. Sign in with your mobile number and password.</p>';return;
+      }
+      passkeyList.innerHTML=enrolled
+        ?'<div class="wallet-line"><div><b>Face ID sign-in is on for this phone</b><p class="muted small" style="margin-top:3px">Your sign-in is kept only on this device, locked by Face ID.</p></div><span class="spacer"></span><button class="btn danger sm" type="button" data-biometric-off>Turn off</button></div>'
+        :'<p class="muted small">Face ID sign-in is off. Turn it on when the app offers it at your next password sign-in.</p>';
+      const off=passkeyList.querySelector('[data-biometric-off]');
+      if(off)off.onclick=async()=>{
+        off.disabled=true;passkeyStatus.textContent='Turning off Face ID sign-in…';
+        const cleared=await biometric.clear();
+        if(!isCurrent()||!passkeyHost.isConnected)return;
+        passkeyStatus.textContent=cleared?'Face ID sign-in is off. Your saved sign-in was removed from this phone.':'Face ID sign-in could not be turned off. Try again.';
+        if(cleared)loadPasskeys();else off.disabled=false;
+      };
+      return;
     }
     const {data,error}=await sb.auth.passkey.list();
     if(!isCurrent()||!passkeyHost.isConnected)return;

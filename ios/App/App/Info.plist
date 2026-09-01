@@ -26,6 +26,8 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Peekaa uses Face ID only to unlock your saved sign-in on this device.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Peekaa uses the camera only when you choose to scan a business, customer, or redemption QR code.</string>
 	<key>UIApplicationSceneManifest</key>
