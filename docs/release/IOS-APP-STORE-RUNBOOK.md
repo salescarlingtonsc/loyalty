@@ -45,7 +45,7 @@ App Store Connect → **My Apps → + → New App**
 ## Step 3 — Build and upload (on this Mac)
 
 ```bash
-cd /Users/cs/Downloads/loyalty-fable-gaps && npm run mobile:sync && npm run mobile:open:ios
+cd /Users/cs/Downloads/loyalty-main && npm run mobile:sync && npm run mobile:open:ios
 ```
 
 That refreshes the web bundle into the iOS project and opens Xcode. Then, in Xcode:
@@ -70,7 +70,10 @@ your own iPhone and run the real journeys for a few days:
 
 ## Step 5 — Store listing
 
-- **Screenshots**: 6.7" (1290×2796) and 6.5" are the required sizes. Take them on your device or
+- **Screenshots**: take the largest iPhone size the upload panel asks for — Apple has moved the
+  required set to the 6.9" display (1290×2796 is still accepted, 6.5" no longer required), and it
+  scales the rest down for you. Treat App Store Connect's own panel as authoritative on the day
+  rather than this line. Take them on your device or
   the simulator: Home, My Rewards, an offer, Bookings, Profile.
 - **Description**: lead with the customer benefit — real spendable rewards at shops you already
   visit, no plastic cards. Mention that businesses subscribe separately at peekaa.asia.
