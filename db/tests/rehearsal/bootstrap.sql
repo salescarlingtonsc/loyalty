@@ -34,7 +34,27 @@ create table if not exists cron.job (
   jobid bigint generated always as identity primary key,
   schedule text not null,
   command text not null,
-  jobname text unique
+  jobname text unique,
+  /* Real pg_cron carries `active`, and the chain depends on it: v601 pauses featureless jobs
+     with cron.alter_job(active=>false) and selects `... and active`. Without the column the
+     migration raises 42703 and every later migration is skipped. */
+  active boolean not null default true
+);
+
+/* pg_cron writes one row per execution here; 9 migrations read it (retention sweeps, the
+   run-history retention job). A table with the real column names is enough — nothing in the
+   chain depends on rows appearing by themselves. */
+create table if not exists cron.job_run_details (
+  jobid bigint,
+  runid bigint generated always as identity primary key,
+  job_pid integer,
+  database text,
+  username text,
+  command text,
+  status text,
+  return_message text,
+  start_time timestamptz,
+  end_time timestamptz
 );
 create or replace function cron.schedule(job_name text, schedule text, command text)
 returns bigint language sql as $$
@@ -49,6 +69,24 @@ $$;
 create or replace function cron.unschedule(job_name text)
 returns boolean language sql as $$
   delete from cron.job where jobname = job_name returning true;
+$$;
+
+/* Deactivate-in-place, the shape v601 relies on: the registration and its history survive so a
+   paused job reactivates with one call when its feature ships. Argument names and defaults match
+   real pg_cron, because the callers use named notation (active => false). */
+create or replace function cron.alter_job(
+  job_id bigint,
+  schedule text default null,
+  command text default null,
+  database text default null,
+  username text default null,
+  active boolean default null
+) returns void language sql as $$
+  update cron.job j set
+    schedule = coalesce(alter_job.schedule, j.schedule),
+    command  = coalesce(alter_job.command,  j.command),
+    active   = coalesce(alter_job.active,   j.active)
+  where j.jobid = alter_job.job_id;
 $$;
 
 -- supabase_vault equivalent (stub)

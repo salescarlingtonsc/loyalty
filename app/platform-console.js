@@ -1611,6 +1611,9 @@
     'Assigned consultant ID':'分配的顾问 ID',
     'Assigned person':'指定人员',
     'Attach rate is calculated only from canonical, non-reversed sale lines.':'附加率仅根据规范的非反向销售线计算。',
+    'No customers in scope':'范围内没有顾客',
+    'How this group is defined':'此群组的定义',
+    'Of orders':'占订单数',
     'Attempt at':'尝试',
     'Attendees':'出席者',
     'Attribute':'属性',
@@ -2033,6 +2036,9 @@
     'Assigned consultant ID':'ID perunding yang ditugaskan',
     'Assigned person':'Orang yang ditugaskan',
     'Attach rate is calculated only from canonical, non-reversed sale lines.':'Kadar lampiran dikira hanya daripada baris jualan berkanun, tidak berbalik.',
+    'No customers in scope':'Tiada pelanggan dalam skop',
+    'How this group is defined':'Cara kumpulan ini ditakrifkan',
+    'Of orders':'Daripada pesanan',
     'Attempt at':'Percubaan pada',
     'Attendees':'Hadirin',
     'Attribute':'Atribut',
@@ -5522,35 +5528,59 @@
     const quality=asObject(report.data_quality),pairs=asArray(affinity.pairs);
     const actions=asArray(recommendations.recommendations);
     const confidence=quality.confidence||quality.status||'not_enough_data';
-    const cohortRows=asArray(intelligence.cohorts||intelligence.segments||intelligence.customer_groups);
+    /* nestly_v667. This block read key names that platform_get_assigned_firm_report_v94 has
+       never emitted, so four of the six surfaces below rendered fallback zeros or an empty
+       state no matter what the firm's real numbers were. The names come from a v94 definition
+       that was superseded inside the same migration; nothing compared them against the live one.
+         cohorts    lives at the TOP LEVEL as {definitions,counts}, not under customer_intelligence
+         visits     is the transaction count; `transaction_count` does not exist
+         returning  is a COUNT (returning_customers), not a precomputed `returning_rate_pct`
+       The rate is therefore derived here, and shown with its numerator and denominator rather
+       than as a bare percentage, so the reader can see what it is a rate OF. */
+    const cohorts=asObject(report.cohorts),cohortCounts=asObject(cohorts.counts),
+      cohortDefs=asObject(cohorts.definitions);
+    const cohortRows=Object.keys(cohortCounts).map(key=>({
+      key,customers:Number(cohortCounts[key]||0),definition:cohortDefs[key]||''
+    })).sort((a,b)=>b.customers-a.customers);
+    const activeCustomers=Number(kpis.active_customers??0),
+      returningCustomers=Number(kpis.returning_customers??0),
+      returningRate=activeCustomers>0?(returningCustomers*100)/activeCustomers:null;
     return `<section class="card platform-report-sheet platform-consultative-report" aria-labelledby="consultativeReportTitle">
       <div class="platform-list-row"><div><h2 id="consultativeReportTitle">${escapeHtml(pt("Monthly consultant brief"))}</h2>
         <p class="muted small">${escapeHtml(pt("Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence."))}</p></div>
         ${CUI.status(platformStatus(confidence),confidence==='high'||confidence==='ready'?'ok':confidence==='medium'?'new':'off')}
       </div>
       <section class="platform-kpis" aria-label="${escapeHtml(pt('Consultant brief KPIs'))}">${[
-        ['Customers',kpis.customer_count??kpis.active_customers??0,'customers'],
-        ['Returning rate',`${Number(kpis.returning_rate_pct||0).toFixed(1)}%`,'retention'],
-        ['Transactions',kpis.transaction_count??kpis.completed_transactions??0,'till'],
-        ['Revenue',currency(kpis.net_revenue_cents??kpis.revenue_cents??0,kpis.currency||'SGD'),'reports']
+        ['Customers',String(activeCustomers),'customers'],
+        ['Returning rate',returningRate===null
+          ?pt('No customers in scope')
+          :`${returningRate.toFixed(1)}% (${returningCustomers}/${activeCustomers})`,'retention'],
+        ['Transactions',String(Number(kpis.visits??0)),'till'],
+        ['Revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports']
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?CUI.table({
-          caption:'Customer group performance',headers:['Group','Customers','Orders','Revenue','Return rate'],
+          /* Only the count and the definition are emitted per cohort. Columns for orders,
+             revenue or a per-cohort return rate would have to be invented, so they are gone
+             rather than shown as zero. */
+          caption:'Customer group performance',headers:['Group','Customers','How this group is defined'],
           rows:cohortRows.map(row=>[
-            escapeHtml(row.label||platformStatus(row.cohort||row.segment||row.group_key)),
-            String(row.customer_count??row.customers??0),String(row.order_count??row.transactions??0),
-            currency(row.revenue_cents??row.net_revenue_cents??0,row.currency||kpis.currency||'SGD'),
-            `${Number(row.returning_rate_pct||0).toFixed(1)}%`
+            escapeHtml(platformStatus(row.key)),
+            String(row.customers),
+            escapeHtml(row.definition)
           ])
         }):localizedEmptyHtml('The selected scope does not yet have enough customer-group data.')})}
         ${CUI.card({title:'Products bought with services',description:'Attach rate is calculated only from canonical, non-reversed sale lines.',body:affinity.enabled===false
           ?localizedEmptyHtml('Item-level intelligence is disabled for this firm.')
           :pairs.length?CUI.table({
-            caption:'Product and service affinity',headers:['Service','Product','Together','Attach rate','Units','Paired revenue'],
+            /* support_orders / confidence_pct are the live v94 names; orders_together and
+               attach_rate_pct belonged to the superseded definition and were always undefined.
+               sample_orders is the denominator the confidence is a share of, so it is shown. */
+            caption:'Product and service affinity',headers:['Service','Product','Together','Of orders','Attach rate','Units','Paired revenue'],
             rows:pairs.map(row=>[
               escapeHtml(row.service_name||'—'),escapeHtml(row.product_name||'—'),
-              String(row.orders_together??0),`${Number(row.attach_rate_pct||0).toFixed(1)}%`,
+              String(row.support_orders??0),String(row.sample_orders??0),
+              `${Number(row.confidence_pct??0).toFixed(1)}%`,
               String(row.product_units??0),currency(row.paired_revenue_cents??0,kpis.currency||'SGD')
             ])
           }):localizedEmptyHtml('No reliable product/service pair is available in this scope yet.')})}

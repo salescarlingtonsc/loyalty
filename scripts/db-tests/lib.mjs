@@ -24,6 +24,10 @@ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..
 export const SNAPSHOT_WATERMARK_VERSION = 422;
 
 export const SNAPSHOT_PATH = join(REPO_ROOT, 'tests/fixtures/db-schema-snapshot.sql');
+/* The snapshot is dumped with --no-privileges, so the roles it restores hold no grants at all.
+   Applied immediately after it to restore Supabase's baseline posture, without which the
+   migration chain halts at v599 and no v6xx migration reaches the harness — see the file. */
+export const BASELINE_GRANTS_PATH = join(REPO_ROOT, 'scripts/db-tests/baseline-grants.sql');
 export const EXECUTED_TESTS_DIR = join(REPO_ROOT, 'db/tests/executed');
 
 const PG_ENV = (port) => ({

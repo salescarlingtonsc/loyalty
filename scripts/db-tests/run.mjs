@@ -52,7 +52,7 @@ import { mkdirSync, existsSync, rmSync , readFileSync} from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import {
-  SNAPSHOT_PATH, SNAPSHOT_WATERMARK_VERSION, ScratchCluster, applyBootstrap,
+  SNAPSHOT_PATH, BASELINE_GRANTS_PATH, SNAPSHOT_WATERMARK_VERSION, ScratchCluster, applyBootstrap,
   discoverPendingMigrations, discoverExecutedTests, requirePostgresBinaries,
   isolatedWorkdir, pickFreePort,
 } from './lib.mjs';
@@ -172,6 +172,7 @@ async function main() {
     cluster.createDatabase(BASELINE_DB);
     await applyBootstrap(cluster, BASELINE_DB);
     await cluster.psqlFile(BASELINE_DB, SNAPSHOT_PATH);
+    await cluster.psqlFile(BASELINE_DB, BASELINE_GRANTS_PATH);
     const tables = cluster.scalar(BASELINE_DB,
       "select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace "
       + "where n.nspname in ('public','app') and c.relkind='r'");
