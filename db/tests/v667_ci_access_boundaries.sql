@@ -25,6 +25,14 @@
 --       suppressed or anonymised.
 --   B7  FAIL CLOSED. Every refusal above must raise 42501. Returning an empty or zero-valued
 --       payload would read as "this firm has no data" — the misleading-output failure mode.
+--   B8  THE OWNER RULING IS IN FORCE (nestly_v668). v523 recorded an owner ruling of 2026-08-26
+--       that Customer Intelligence "resolve[s] exactly like every other one", but it removed the
+--       hand-placed override from only one of the two resolvers, so app.can_module(b,
+--       'customerintel') stayed false for every caller and the ruling never took effect. B8
+--       asserts the module now follows entitlement in BOTH directions: a firm that LISTS
+--       'customerintel' resolves true for its owner, and a firm that does not still resolves
+--       false for its own (equally operational) owner. A one-directional assertion would pass
+--       against a resolver that simply says yes to everybody.
 --
 -- Named for v667: every assertion must FAIL against the frozen baseline. One transaction,
 -- rolled back. No production access.
@@ -62,6 +70,8 @@ declare
   v_a1_rev   bigint;
   v_all_rev  bigint;
   v_names    int;
+  v_ci_a     boolean;
+  v_ci_b     boolean;
   v_err      text;
 begin
   ---------------------------------------------------------------------------
@@ -80,17 +90,17 @@ begin
   ---------------------------------------------------------------------------
   /* enabled_modules must actually contain 'reports': the resolver reads it to decide a module's
      mode, so a firm with an empty set has no reports access and B1/B1b would prove nothing.
-     'customerintel' is deliberately NOT listed, and the reason is a live defect rather than a
-     fixture choice: nestly_v523 (owner ruling 2026-08-26) removed the hand-placed override so
-     the module would resolve normally, but it removed it only from
-     app.staff_module_perms_at_v115 — app.effective_platform_module_mode_v94 still answers
-     'disabled' / 'global_platform_only_policy' for 'customerintel', and v537 re-pointed the
-     capability gate at that resolver. Verified by probe: with 'customerintel' present in
-     enabled_modules and has_perm(view_finance) true, app.can_module(b,'customerintel') is still
-     false. Listing it here would therefore imply an entitlement no firm can actually hold. */
+     'customerintel' USED to be deliberately omitted here, because listing it would have implied
+     an entitlement no firm could actually hold: nestly_v523 (owner ruling 2026-08-26) removed
+     the hand-placed override only from app.staff_module_perms_at_v115, while
+     app.effective_platform_module_mode_v94 went on answering 'disabled' /
+     'global_platform_only_policy', and v537 re-pointed the capability gate at that resolver.
+     nestly_v668 completes v523 by removing the short-circuit from that resolver too, so the
+     entitlement now means what it says. Firm A therefore CARRIES 'customerintel' and firm B
+     deliberately does not — that contrast is what B8 measures, in both directions. */
   insert into public.businesses (id, name, slug, enabled_modules) values
     (biz_a,'ZZ v667 firm A','zz-v667-a',
-      array['dashboard','clients','sales','reports']),
+      array['dashboard','clients','sales','reports','customerintel']),
     (biz_b,'ZZ v667 firm B','zz-v667-b',
       array['dashboard','clients','sales','reports']);
   insert into public.branches (id, business_id, name, is_default, active) values
@@ -382,6 +392,66 @@ begin
     get stacked diagnostics v_err = returned_sqlstate;
     insert into _fail values ('B7', format('above-floor read raised %s', v_err));
   end;
+
+  ---------------------------------------------------------------------------
+  -- B8 — nestly_v668: customerintel follows entitlement, both ways.
+  --       Firm A lists it, firm B does not; both firms are equally operational and both
+  --       owners are equally approved, so the only difference between the two answers is
+  --       the entitlement itself.
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_owner_a,'role','authenticated')::text, true);
+
+  /* PRECONDITIONS. Owner A must genuinely be an operating member holding another module, or a
+     true answer below could come from something other than the entitlement, and a false one
+     from a closed workspace. */
+  if not app.is_salon_member(biz_a) then
+    insert into _fail values ('B8-pre','owner A is not a member; B8 would measure membership, not entitlement');
+  end if;
+  if not app.can_module(biz_a,'reports') then
+    insert into _fail values ('B8-pre',
+      'owner A cannot resolve the reports module either, so a customerintel refusal would prove '
+      'nothing about the v523 ruling');
+  end if;
+  if not exists (select 1 from public.businesses b
+                  where b.id = biz_a
+                    and 'customerintel' = any(coalesce(b.enabled_modules,'{}'::text[]))) then
+    insert into _fail values ('B8-pre',
+      'firm A does not carry customerintel in enabled_modules; B8 would assert nothing');
+  end if;
+
+  v_ci_a := app.can_module(biz_a,'customerintel');
+  if v_ci_a is distinct from true then
+    insert into _fail values ('B8',
+      'an entitled firm''s owner still cannot resolve customerintel; the owner ruling recorded '
+      'in nestly_v523 (2026-08-26) is not in force — app.effective_platform_module_mode_v94 is '
+      'still short-circuiting the module to disabled ahead of the entitlement');
+  end if;
+
+  /* The other direction. Firm B is operational and its owner is approved; it simply is not
+     entitled. Without this, B8 would also pass against a resolver that grants the module to
+     everybody, which is the opposite defect. */
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_owner_b,'role','authenticated')::text, true);
+  if not app.is_salon_member(biz_b) then
+    insert into _fail values ('B8-pre','owner B is not a member; the negative half of B8 would be vacuous');
+  end if;
+  if not app.can_module(biz_b,'reports') then
+    insert into _fail values ('B8-pre',
+      'owner B cannot resolve any module, so a customerintel refusal is not about entitlement');
+  end if;
+  if exists (select 1 from public.businesses b
+              where b.id = biz_b
+                and 'customerintel' = any(coalesce(b.enabled_modules,'{}'::text[]))) then
+    insert into _fail values ('B8-pre','firm B was entitled after all; the negative half of B8 is void');
+  end if;
+
+  v_ci_b := app.can_module(biz_b,'customerintel');
+  if v_ci_b is distinct from false then
+    insert into _fail values ('B8',
+      'a firm that is NOT entitled to customerintel resolved it anyway; v523 rules that "a '
+      'business that is not entitled still does not get it"');
+  end if;
 
   perform set_config('request.jwt.claims', null, true);
 end

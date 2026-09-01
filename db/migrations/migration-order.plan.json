@@ -3273,6 +3273,24 @@
       "path": "db/migrations/20260901_nestly_v666_gift_scan_opens_the_sale.sql",
       "semanticVersion": "v666",
       "proposedDeployVersion": "20260901090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v667_ci_access_boundaries.sql",
+      "semanticVersion": "v667",
+      "proposedDeployVersion": "20260901100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v668_complete_v523_entitlement.sql",
+      "semanticVersion": "v668",
+      "proposedDeployVersion": "20260901110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v669_numeric_honesty.sql",
+      "semanticVersion": "v669",
+      "proposedDeployVersion": "20260901120000"
     }
   ]
 }

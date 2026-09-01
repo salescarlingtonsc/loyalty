@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 543,
-  "executableCount": 529,
+  "itemCount": 546,
+  "executableCount": 532,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -786,11 +786,14 @@
     },
     {
       "sourceDeployVersion": "20260901",
-      "count": 3,
+      "count": 6,
       "paths": [
         "db/migrations/20260901_nestly_v665_branch_subscription_choice.sql",
         "db/migrations/20260901_nestly_v666_add_branch_tier_capacity.sql",
-        "db/migrations/20260901_nestly_v666_gift_scan_opens_the_sale.sql"
+        "db/migrations/20260901_nestly_v666_gift_scan_opens_the_sale.sql",
+        "db/migrations/20260901_nestly_v667_ci_access_boundaries.sql",
+        "db/migrations/20260901_nestly_v668_complete_v523_entitlement.sql",
+        "db/migrations/20260901_nestly_v669_numeric_honesty.sql"
       ]
     }
   ],
@@ -5138,6 +5141,30 @@
       "semanticVersion": "v666",
       "proposedDeployVersion": "20260901090000",
       "sha256": "46fb520ca54f48bf5e5bcaaf18a8bb200ce0d6f459d34332df43e0526c0dd3f9"
+    },
+    {
+      "order": 544,
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v667_ci_access_boundaries.sql",
+      "semanticVersion": "v667",
+      "proposedDeployVersion": "20260901100000",
+      "sha256": "72c13ba99de046269713322075f530c70e690ce59cc6d93cde19fb0c0c4ecaa3"
+    },
+    {
+      "order": 545,
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v668_complete_v523_entitlement.sql",
+      "semanticVersion": "v668",
+      "proposedDeployVersion": "20260901110000",
+      "sha256": "2854dee8bcebacee7c876289efc4a42e41add614c7441ce5526d146eb0b84de5"
+    },
+    {
+      "order": 546,
+      "kind": "executable",
+      "path": "db/migrations/20260901_nestly_v669_numeric_honesty.sql",
+      "semanticVersion": "v669",
+      "proposedDeployVersion": "20260901120000",
+      "sha256": "6e817e69de2c73d94a4bfdc883fdc4b052df0e0ef91db68359a8d69fcc32744d"
     }
   ]
 }

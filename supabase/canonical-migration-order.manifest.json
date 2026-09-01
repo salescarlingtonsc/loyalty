@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 499,
-  "itemCount": 544,
+  "pendingCount": 502,
+  "itemCount": 547,
   "items": [
     {
       "order": 1,
@@ -5447,6 +5447,36 @@
       "path": "supabase/migrations/20260901090000_nestly_v666_gift_scan_opens_the_sale.sql",
       "octetLength": 11955,
       "sha256": "46fb520ca54f48bf5e5bcaaf18a8bb200ce0d6f459d34332df43e0526c0dd3f9",
+      "provenance": "local-source"
+    },
+    {
+      "order": 545,
+      "kind": "pending",
+      "version": "20260901100000",
+      "name": "nestly_v667_ci_access_boundaries",
+      "path": "supabase/migrations/20260901100000_nestly_v667_ci_access_boundaries.sql",
+      "octetLength": 20820,
+      "sha256": "72c13ba99de046269713322075f530c70e690ce59cc6d93cde19fb0c0c4ecaa3",
+      "provenance": "local-source"
+    },
+    {
+      "order": 546,
+      "kind": "pending",
+      "version": "20260901110000",
+      "name": "nestly_v668_complete_v523_entitlement",
+      "path": "supabase/migrations/20260901110000_nestly_v668_complete_v523_entitlement.sql",
+      "octetLength": 11801,
+      "sha256": "2854dee8bcebacee7c876289efc4a42e41add614c7441ce5526d146eb0b84de5",
+      "provenance": "local-source"
+    },
+    {
+      "order": 547,
+      "kind": "pending",
+      "version": "20260901120000",
+      "name": "nestly_v669_numeric_honesty",
+      "path": "supabase/migrations/20260901120000_nestly_v669_numeric_honesty.sql",
+      "octetLength": 12589,
+      "sha256": "6e817e69de2c73d94a4bfdc883fdc4b052df0e0ef91db68359a8d69fcc32744d",
       "provenance": "local-source"
     }
   ]
