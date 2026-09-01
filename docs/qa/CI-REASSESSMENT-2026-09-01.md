@@ -169,3 +169,61 @@ exact equality. Representative values:
 
 The gap to the target is now four named defects, not an unknown. D1 and the PRODUCT-TRUTH conflict
 need an owner decision before anything else moves.
+
+---
+
+# Addendum — closure wave of 2026-09-01 (v667/v668/v669)
+
+Written after the owner's "proceed" directive. Branch `claude/ci-proof-100`, rebuilt on
+`origin/main` @ `f31f5fe3` after an upstream `nestly_v666` name-and-slot collision forced a
+renumber (v666 → v667; old tip preserved at `archive/ci-proof-pre-renumber`).
+
+## Revised score
+
+| Status | Count | Δ |
+|---|---:|---:|
+| **Proven** | **17** | +5 |
+| Implemented but unproven | 3 | — |
+| Partially implemented | 33 | −1 |
+| Confirmed defective | **0** | −2 |
+| Proof written but blocked | **0** | −2 |
+| Absent | 47 | — |
+
+**Proof coverage 17/100 · functional coverage 53/100.** Newly proven: checks 3 and 5
+(identified/anonymous reconciliation and refund/reversal correctness — unblocked when D1 fell),
+6 and 7 (package-once revenue, zero-value visits), and 63 (bounded uncertainty intervals).
+Check 45 moves from *defective* to *partial*: the fabricated `0.0` median is gone; dispersion is
+still not computed.
+
+## Defect ledger
+
+| # | Was | Now |
+|---|---|---|
+| D1 owner ruling unapplied | P0 latent | **Closed** — v668 removes the surviving short-circuit, proves its own minimality via a `pg_get_functiondef` before/after equality, and `PRODUCT-TRUTH.md:228` now states the v523 rule. All six revenue-truth proofs unblocked, in both harness phases. |
+| D2 impossible interval | P0 | **Closed** — v669 replaces Wald with the Newcombe hybrid Wilson interval, bounded by construction. `[53.7, 106.3]` → `[37.0, 91.6]` on the same inputs. The three Wald-pinned corpus values were re-pinned to independently hand-computed Newcombe values (matched live output to 0.1pp). |
+| D3 zero-day rhythm | P1 | **Closed** — v669 emits null for a single-visit customer's median; no callers assumed otherwise. |
+| D4 chain-exposure failures | P1 process | **Resolved** — 14 of 15 were fixtures predating v620 (paid-subscription requirement) or v625 (Google-SSO platform sessions); repaired without touching any assertion (all 23 removed lines are bare-claims `set_config`s replaced by their Google-claims form). The 15th became D6. The regression floor passes in both phases again. |
+| D5 no demographic coverage | P2 | Open — unchanged; awaits the analytics build phase. |
+| **D6 sessionless drain path broken by v625** | **new, P1** | Open, held red by `v552_gated_evidence_isolation`. `app.v176_gated_evidence`'s cron-path impersonation sets only `sub`/`role`/`aud`, which can never satisfy post-v625 `is_super_admin()`, so every background consultative-evidence call fails 42501. The fix is an auth-design decision — a dedicated internal authority, not a wider Google exemption — left for review. |
+
+**For an owner call, not a defect:** `app.v32_customer_wallet_context` still inlines its own
+`customerintel → disabled` clause on the *customer wallet* path. Removing it changes
+customer-visible payload while unlocking nothing a wallet uses, so v668 left it alone.
+
+## Suite state
+
+Full executed suite: **25 failures → 8.** The remaining eight are the six files plus the
+concurrency lane that already failed on *unmodified* `origin/main`, plus v552 (D6, held red
+deliberately). This branch introduces zero failures of its own.
+
+## Against the owner's acceptance target — updated
+
+| Target | Status |
+|---|---|
+| Zero known access-boundary failures | **Met on this branch.** Tenant, branch, small-cell and entitlement boundaries all proven by executing tests; the v523 ruling is now actually in force. |
+| Zero fabricated or misleading outputs | **Met for every confirmed case.** D2 and D3 fixed and proven; the consultant-brief zeros fixed in the v667 wave. D6 is an *availability* failure (fail-closed), not a misleading output. |
+| All implemented capabilities covered by deterministic tests | **Partial** — 17 proven; 3 unproven; 33 partial. The corpus now covers revenue truth, cadence, acquisition, statistics and access boundaries end to end. |
+| A trustworthy revised baseline | **Met.** |
+
+Remaining before the shadow window: Sol review of this branch, an owner ruling on D6 and the
+wallet-context clause, and the shadow window's own start/duration/method/stop definition.
