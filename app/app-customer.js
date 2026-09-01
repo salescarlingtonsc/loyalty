@@ -913,10 +913,20 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   const signIn=$('customerPasswordSignIn'),phoneInput=$('customerPasswordPhone');
   const passwordInput=$('customerPassword'),errorHost=$('customerPasswordError');
   const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
-  const passkeySupported=isSecureContext&&'PublicKeyCredential' in globalThis&&typeof sb.auth.signInWithPasskey==='function';
+  /* nestly_v669: one capability answer for every surface — this inline check used to duplicate
+     customerPasskeySupported() and so missed its native-shell gate. */
+  const passkeySupported=customerPasskeySupported()&&typeof sb.auth.signInWithPasskey==='function';
+  const nativeShell=globalThis.Capacitor?.isNativePlatform?.()===true;
   const installedApp=globalThis.navigator?.standalone===true
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
-  if(!passkeySupported)passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
+  if(!passkeySupported){
+    /* In the app the button would only ever fail, so it goes away entirely; the password path
+       keeps the customer signed in between launches, so day-to-day the app opens unlocked. */
+    if(nativeShell)passkeyButton.hidden=true;
+    passkeyStatus.textContent=nativeShell
+      ?'Face ID sign-in is coming to the app. Use your password — the app keeps you signed in.'
+      :'Passkeys are not supported in this browser. Sign in with your password.';
+  }
   /* V286: renderCustomerOtpStart awaits the phone-OTP capability RPC before it paints anything,
      so on a slow connection the most important tap on this screen looked like nothing happened —
      and every further tap started another render racing to overwrite the same shell. */
@@ -1477,6 +1487,15 @@ function applyCustomerNavCountsV194(counts={}){
   return customerNavCountsV194;
 }
 function customerPasskeySupported({management=false}={}){
+  /* nestly_v669: the iOS shell is NOT a passkey surface, and saying so beats failing. Inside the
+     Capacitor WKWebView the WebAuthn ceremony can never complete, for two independent reasons:
+     Apple only allows platform passkey prompts in Safari-class apps (WKWebView throws
+     NotAllowedError), and the credential's relying-party domain can never match the shell's
+     capacitor://localhost origin. The feature detection below is all true in the WebView, so
+     without this gate the Face ID button armed itself, showed "Waiting for your device…" and
+     failed on every tap. Native Face ID needs native APIs and is scheduled work, like APNs push
+     (v295 precedent: say so honestly rather than render a broken control). */
+  if(globalThis.Capacitor?.isNativePlatform?.())return false;
   return isSecureContext&&'PublicKeyCredential' in globalThis
     &&typeof sb.auth.registerPasskey==='function'
     &&(!management||typeof sb.auth.passkey?.list==='function');
@@ -3179,7 +3198,11 @@ async function renderCustomerProfile(requestedView){
   const loadPasskeys=async()=>{
     if(!passkeySupported){
       passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
-      passkeyList.innerHTML='<p class="muted small">Passkeys are not supported in this browser. Sign in with your mobile number and password.</p>';return;
+      /* nestly_v669: in the iOS app the honest reason, not a browser-blame — the ceremony cannot
+         run in the shell, and passkeys added here still work on peekaa.asia in Safari. */
+      passkeyList.innerHTML=globalThis.Capacitor?.isNativePlatform?.()
+        ?'<p class="muted small">Face ID sign-in is coming to the Peekaa app. Passkeys you add on peekaa.asia in Safari keep working there, and the app keeps you signed in with your password.</p>'
+        :'<p class="muted small">Passkeys are not supported in this browser. Sign in with your mobile number and password.</p>';return;
     }
     const {data,error}=await sb.auth.passkey.list();
     if(!isCurrent()||!passkeyHost.isConnected)return;
