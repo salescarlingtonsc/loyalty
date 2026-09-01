@@ -21,6 +21,11 @@ import {
   billingJson,
   billingPreflight,
 } from '../_shared/billing-service.ts';
+// v677: the deterministic output validator. Plain .mjs with no imports of its own, so the exact
+// same code runs here under Deno and under `node --test` in
+// tests/ai-reports/v677-evidence-safe-generation.test.mjs — the pattern already used by
+// _shared/whatsapp-send-boundaries.mjs. There is one copy of these rules, not two.
+import { validateNarrative } from './validate.mjs';
 
 const MAX_REPORTS_PER_INVOCATION = 5;
 const MAX_OUTPUT_TOKENS = 4000;
@@ -93,8 +98,11 @@ const SYSTEM_PROMPT = [
   'Exactly three numbered actions for the next period. Each action must be concrete',
   '(who does what, and by when), must name the evidence number that justifies it, and -',
   'whenever the evidence allows - must state the expected value in SGD with the working',
-  'shown, for example: "4 regulars x SGD 27.00 usual spend = about SGD 108 from one',
-  'win-back message each."',
+  'shown. Show the working as a DIVISION of evidence figures, never a multiplication that',
+  'introduces a per-customer number the evidence does not carry - for example:',
+  '"SGD 108.00 recovery value / 4 regulars = SGD 27.00 each from one win-back message."',
+  '(The evidence has the total; a per-customer average you compute must be shown as',
+  'total / count so every number in your sentence is traceable to the evidence.)',
   '',
   'Hard rules:',
   '- NEVER invent a number. Every figure must come from the evidence pack, or be simple',
@@ -172,6 +180,20 @@ function narrativeFrom(message: Anthropic.Message): string {
   return text;
 }
 
+// v677: a validation failure is a machine-readable reason, not prose. The rule ids are stable
+// (V1_NUMERIC_CLAIM ... V6_ENTITY_GROUNDING) so the platform console can group and count them
+// without parsing English. Truncated well inside failureReason()'s own 400-character slice.
+function validationFailureReason(
+  violations: Array<{ rule: string; detail: string }>,
+): string {
+  const listed = violations
+    .slice(0, 3)
+    .map((violation) => `${violation.rule}: ${violation.detail}`)
+    .join(' | ');
+  const extra = violations.length > 3 ? ` (+${violations.length - 3} more)` : '';
+  return `narrative_validation: ${listed}${extra}`.slice(0, 380);
+}
+
 function failureReason(error: unknown): string {
   if (error instanceof Anthropic.APIError) {
     return `anthropic_${error.status ?? 'error'}: ${String(error.message).slice(0, 400)}`;
@@ -205,12 +227,22 @@ async function processQueue(): Promise<Record<string, unknown>> {
         messages: [{ role: 'user', content: userPrompt(report) }],
       });
       if (message.stop_reason === 'refusal') throw new Error('model_refused');
+      const narrative = narrativeFrom(message);
+
+      // v677: the narrative is checked against the SAME evidence object the model was given
+      // (userPrompt serialises report.evidence, and so does this call — one source of truth, so
+      // the validator can never be judging a different pack than the model saw). The prompt's
+      // "NEVER invent a number" was an instruction; this is the control. A narrative that fails
+      // takes the existing failed path below and is never stored as a good report.
+      const verdict = validateNarrative(narrative, report.evidence ?? {});
+      if (!verdict.ok) throw new Error(validationFailureReason(verdict.violations));
+
       const { error: completeError } = await admin.rpc(
         'internal_complete_ai_firm_report_v176',
         {
           p_report: report.id,
           p_status: 'succeeded',
-          p_narrative_md: narrativeFrom(message),
+          p_narrative_md: narrative,
           p_error: null,
           p_model: model,
         },
