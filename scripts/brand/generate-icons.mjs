@@ -43,6 +43,13 @@ export const ICONS = [
   { file: 'app/icons/peekaa-192.png', size: 192, padding: 0.14 },
   { file: 'app/icons/peekaa-512.png', size: 512, padding: 0.14 },
   { file: 'app/icons/peekaa-512-maskable.png', size: 512, padding: 0.26 },
+  /* The App Store marketing icon. It was hand-made in the 2026-08-02 rebrand and then missed by
+     v549, so it still carried the EYES ONLY while the home-screen tile beside it carried the
+     wordmark — the exact drift this script exists to end, and the owner's v549 photo named the
+     "app icon" explicitly. It lives here rather than in a second script because there is one
+     lockup, one cream, one padding; Apple's rules are only that it be 1024² and opaque, and the
+     PY step already flattens to RGB. iOS masks the corners itself, so no rounding here. */
+  { file: 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', size: 1024, padding: 0.14 },
 ];
 
 const PY = `
