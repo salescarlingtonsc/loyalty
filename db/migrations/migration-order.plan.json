@@ -3291,6 +3291,42 @@
       "path": "db/migrations/20260901_nestly_v669_numeric_honesty.sql",
       "semanticVersion": "v669",
       "proposedDeployVersion": "20260901120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v672_statistical_authority.sql",
+      "semanticVersion": "v672",
+      "proposedDeployVersion": "20260902010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v673_retention_funnels.sql",
+      "semanticVersion": "v673",
+      "proposedDeployVersion": "20260902020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v674_demographic_intelligence.sql",
+      "semanticVersion": "v674",
+      "proposedDeployVersion": "20260902030000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v675_behaviour_service_package.sql",
+      "semanticVersion": "v675",
+      "proposedDeployVersion": "20260902040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v676_internal_drain_authority.sql",
+      "semanticVersion": "v676",
+      "proposedDeployVersion": "20260902050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v678_consultant_spine.sql",
+      "semanticVersion": "v678",
+      "proposedDeployVersion": "20260902060000"
     }
   ]
 }

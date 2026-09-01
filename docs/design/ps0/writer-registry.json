@@ -3883,6 +3883,18 @@
       "reason": "Phase A/B Customer Intelligence category drill-in, fired on demand when an owner/manager expands a category row in 'What they buy' (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns the customer list for one node_key. Writes nothing."
     },
     {
+      "id": "browser.rpc:app/app.js:get_ci_funnel_conversion_v1",
+      "reason": "Phase CI-A Customer Intelligence lifecycle funnel card (nestly_v673, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667 (business-membership + reports-module for a merchant, or the platform firm-report authority for an assigned consultant), read-only — returns 1st->2nd->3rd visit conversion with maturity-gated stages, embedding the frozen v672 statistical-authority evidence/rate-block contract. Unlike the v650 quartet above it takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_demographics_v1",
+      "reason": "Phase CI-A Customer Intelligence demographic grid card (nestly_v674, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns the (age_band x gender) revenue/frequency/ATV grid plus an 'unclassified' bucket and coverage rates, reusing v638's classification verbatim and the v672 statistical-authority contract for small-cell suppression. Takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_daypart_v1",
+      "reason": "Phase CI-A Customer Intelligence behaviour card (nestly_v675, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns weekday and hour-of-day behaviour with an honest exposure denominator, using app.analytics_sale_class_v1 (v628) for sale qualification and the v672 statistical-authority contract for evidence-gated verdicts (busiest_weekday stays a raw count; most_valuable_weekday is evidence-gated). Takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
       "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",
       "reason": "Service mapping board (#/servicemapping, nestly_v650), reached from Customer Intelligence's category-mix withhold state and from Services. SECURITY DEFINER, business-membership + services-module-READ gated, read-only — returns the service list joined to v647/v648 canonical nodes plus each service's suggested_node_key. Writes nothing; the page renders only when this call succeeds, which is the whole client-side gate."
     },

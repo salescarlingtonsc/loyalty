@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 546,
-  "executableCount": 532,
+  "itemCount": 552,
+  "executableCount": 538,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -794,6 +794,18 @@
         "db/migrations/20260901_nestly_v667_ci_access_boundaries.sql",
         "db/migrations/20260901_nestly_v668_complete_v523_entitlement.sql",
         "db/migrations/20260901_nestly_v669_numeric_honesty.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260902",
+      "count": 6,
+      "paths": [
+        "db/migrations/20260902_nestly_v672_statistical_authority.sql",
+        "db/migrations/20260902_nestly_v673_retention_funnels.sql",
+        "db/migrations/20260902_nestly_v674_demographic_intelligence.sql",
+        "db/migrations/20260902_nestly_v675_behaviour_service_package.sql",
+        "db/migrations/20260902_nestly_v676_internal_drain_authority.sql",
+        "db/migrations/20260902_nestly_v678_consultant_spine.sql"
       ]
     }
   ],
@@ -5165,6 +5177,54 @@
       "semanticVersion": "v669",
       "proposedDeployVersion": "20260901120000",
       "sha256": "d6793b62d859dc27a893f1601d800459e9ddc2bce885f72a0b40291a411d486a"
+    },
+    {
+      "order": 547,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v672_statistical_authority.sql",
+      "semanticVersion": "v672",
+      "proposedDeployVersion": "20260902010000",
+      "sha256": "a2f5b77f5dea5121440eaa9c448954fd11d46c0cae2718bc48f069f76caa94cb"
+    },
+    {
+      "order": 548,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v673_retention_funnels.sql",
+      "semanticVersion": "v673",
+      "proposedDeployVersion": "20260902020000",
+      "sha256": "e381789210725aac09beff6368bb54fcc61a90d7273b522d3a6014d71c84a43c"
+    },
+    {
+      "order": 549,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v674_demographic_intelligence.sql",
+      "semanticVersion": "v674",
+      "proposedDeployVersion": "20260902030000",
+      "sha256": "a72e1ae007096b37120df3bd2f9c4d0cf799aae1fe42860651b078f4b438a5d7"
+    },
+    {
+      "order": 550,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v675_behaviour_service_package.sql",
+      "semanticVersion": "v675",
+      "proposedDeployVersion": "20260902040000",
+      "sha256": "524b1556c0cd13226a62da18c21f87b47cec84f80b6a87043b472995c873efe9"
+    },
+    {
+      "order": 551,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v676_internal_drain_authority.sql",
+      "semanticVersion": "v676",
+      "proposedDeployVersion": "20260902050000",
+      "sha256": "f7614d3f91d0f4956c6408aada28b75e8d148ad296560659128fec2a6c9f7c31"
+    },
+    {
+      "order": 552,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v678_consultant_spine.sql",
+      "semanticVersion": "v678",
+      "proposedDeployVersion": "20260902060000",
+      "sha256": "be91143c43e08ffeb7f6daae45eb3640afbf0aa0e9ba1ee88420d7d3e537a893"
     }
   ]
 }

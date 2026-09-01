@@ -3286,6 +3286,42 @@
       "version": "20260901120000",
       "name": "nestly_v669_numeric_honesty",
       "sourcePath": "db/migrations/20260901_nestly_v669_numeric_honesty.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902010000",
+      "name": "nestly_v672_statistical_authority",
+      "sourcePath": "db/migrations/20260902_nestly_v672_statistical_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902020000",
+      "name": "nestly_v673_retention_funnels",
+      "sourcePath": "db/migrations/20260902_nestly_v673_retention_funnels.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902030000",
+      "name": "nestly_v674_demographic_intelligence",
+      "sourcePath": "db/migrations/20260902_nestly_v674_demographic_intelligence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902040000",
+      "name": "nestly_v675_behaviour_service_package",
+      "sourcePath": "db/migrations/20260902_nestly_v675_behaviour_service_package.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902050000",
+      "name": "nestly_v676_internal_drain_authority",
+      "sourcePath": "db/migrations/20260902_nestly_v676_internal_drain_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902060000",
+      "name": "nestly_v678_consultant_spine",
+      "sourcePath": "db/migrations/20260902_nestly_v678_consultant_spine.sql"
     }
   ]
 }
