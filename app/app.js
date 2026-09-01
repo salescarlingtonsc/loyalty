@@ -49287,6 +49287,17 @@ async function customerIntelligencePage(){
   let lastAcquisitionBundle=null,lastAcquisitionError='',lastFunnelBundle=null,lastFunnelError='',
     lastContactabilityBundle=null,lastContactabilityError='',lastCategoryMixBundle=null,
     lastCategoryMixError='',lastCategoryMixPeriod=null;
+  /* nestly_v679: three CI-A readers (retention funnel v673, demographics v674, weekday
+     behaviour/daypart v675) land on this same page, same independent-bundle-per-section
+     discipline as the v650 block above — a failure in one never blanks the others. Each is
+     rendered by a pure top-level function (funnelConversionPanelHtmlV679/demographicsPanelHtmlV679/
+     behaviourPanelHtmlV679, defined after this page function closes) so a test can execute the
+     renderer directly against a fixture shaped like the RPC's real output; the small wrapper
+     functions just below reuse this page's own ciQuietErrorV650 idiom for the error case, exactly
+     like acquisitionMarkupV650 and its siblings. */
+  let lastFunnelConversionBundle=null,lastFunnelConversionError='',
+    lastDemographicsBundle=null,lastDemographicsError='',
+    lastBehaviourBundle=null,lastBehaviourError='';
   const categoryCustomersCacheV650=new Map();// node_key -> {loading,error,data}
   const expandedCategoryNodesV650=new Set();
   const CUSTOMER_INTELLIGENCE_PAGE_SIZE=100;
@@ -49454,6 +49465,22 @@ async function customerIntelligencePage(){
     });
     CUI.enhance(wrap);
   }
+  /* nestly_v679: same shape as acquisitionMarkupV650/funnelMarkupV650/contactabilityMarkupV650/
+     categoryMixMarkupV650 above — check this section's own error string first (ciQuietErrorV650,
+     already defined on this page), else hand the bundle to the pure top-level renderer. The
+     renderer itself never sees lastXError, so it stays a plain function of its payload. */
+  function ciFunnelConversionMarkupV679(){
+    if(lastFunnelConversionError)return ciQuietErrorV650('Retention funnel could not load.',lastFunnelConversionError);
+    return funnelConversionPanelHtmlV679(lastFunnelConversionBundle);
+  }
+  function ciDemographicsMarkupV679(){
+    if(lastDemographicsError)return ciQuietErrorV650('Demographics could not load.',lastDemographicsError);
+    return demographicsPanelHtmlV679(lastDemographicsBundle);
+  }
+  function ciBehaviourMarkupV679(){
+    if(lastBehaviourError)return ciQuietErrorV650('When customers come in could not load.',lastBehaviourError);
+    return behaviourPanelHtmlV679(lastBehaviourBundle);
+  }
   const forecastMarkup=(forecast,currency)=>{
     if(forecast?.status!=='available'){
       const unmet=Array.isArray(forecast?.unmet_thresholds)?forecast.unmet_thresholds:[];
@@ -49521,7 +49548,7 @@ async function customerIntelligencePage(){
     const economicsMarkupV522=economicsGatedOffV522
       ?''
       :window.NestlySectorEconomics.render(economicsView);
-    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}`;
+    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -49606,7 +49633,8 @@ async function customerIntelligencePage(){
     const [
       truthResponse,lifecycleResponse,briefingResponse,customerResponse,
       economicsResponse,driversResponse,policyResponse,
-      acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse
+      acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse,
+      funnelConversionResponse,demographicsResponse,behaviourResponse
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -49646,7 +49674,20 @@ async function customerIntelligencePage(){
       sb.rpc('get_ci_acquisition_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
       sb.rpc('get_ci_funnel_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
       sb.rpc('get_ci_contactability_v1',{p_business:S.biz.id}),
-      sb.rpc('get_ci_category_mix_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate})
+      sb.rpc('get_ci_category_mix_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
+      /* nestly_v679: unlike the v650 quartet above, these three CI-A readers DO take p_branch
+         (app.ci_access_gate_v667(p_business,p_branch)) and respect the top bar's branch scope,
+         same convention as truthRequest/lifecycleResponse. p_window_days is passed explicitly
+         rather than relying on the SQL default so a future UI control has somewhere to plug in. */
+      sb.rpc('get_ci_funnel_conversion_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_window_days:60,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_demographics_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_daypart_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      })
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -49696,6 +49737,12 @@ async function customerIntelligencePage(){
     lastContactabilityBundle=contactabilityResponse.data||null;
     lastCategoryMixError=categoryMixResponse.error?.message||'';
     lastCategoryMixBundle=categoryMixResponse.data||null;
+    lastFunnelConversionError=funnelConversionResponse.error?.message||'';
+    lastFunnelConversionBundle=funnelConversionResponse.data||null;
+    lastDemographicsError=demographicsResponse.error?.message||'';
+    lastDemographicsBundle=demographicsResponse.data||null;
+    lastBehaviourError=behaviourResponse.error?.message||'';
+    lastBehaviourBundle=behaviourResponse.data||null;
     paint(lastPayload);
   };
   $('ciRun').onclick=run;
@@ -49761,6 +49808,146 @@ async function customerIntelligencePage(){
   };
   renderReportScopeNoteV272(isCurrent);
   await run();
+}
+
+/* nestly_v679 — Customer intelligence gets three more evidence-safe panels: the lifecycle funnel
+   (get_ci_funnel_conversion_v1, v673), demographics (get_ci_demographics_v1, v674) and weekday
+   behaviour (get_ci_daypart_v1, v675). Each renderer below is a pure TOP-LEVEL function — same
+   posture as recoveryReportHtmlV550 — so a test can extract this block and EXECUTE it against a
+   fixture shaped exactly like the deployed RPC's own output, without touching the DOM or any
+   customerIntelligencePage closure state. Error/empty wiring (ciFunnelConversionMarkupV679 and
+   its two siblings) stays inside customerIntelligencePage, reusing its existing ciQuietErrorV650
+   idiom exactly, so a failed RPC withholds the panel the same way every other section on this
+   page already does — never a zero-stuffed table pretending to be a real answer. */
+function ciMeasuredSinceInlineV679(observedSince){
+  return observedSince
+    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    :'';
+}
+function ciEmptyPanelV679(headingId,eyebrow,title,message){
+  return `<section class="revenue-truth-section" aria-labelledby="${headingId}">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">${esc(eyebrow)}</span>
+    <h2 id="${headingId}">${esc(title)}</h2></div></div>
+    <div class="empty">${esc(message)}</div></section>`;
+}
+/* A rate that always carries its own counts — the app.rate_block_v1 shape (numerator/denominator/
+   pct). pct is null when the denominator is zero OR the evidence floor was not cleared; this
+   NEVER renders as 0.0%, only as the page's own not-enough-data idiom. */
+function ciRateBlockV679(block){
+  const b=block&&typeof block==='object'?block:{};
+  const num=Number(b.numerator)||0,den=Number(b.denominator)||0;
+  const pctText=(b.pct===null||b.pct===undefined)?'Not enough data yet':`${Number(b.pct).toFixed(1)}%`;
+  return {num,den,pctText};
+}
+/* app.subgroup_evidence_v1 shape: {n,floor,status}. Only ever used for a caption next to a value
+   the SQL has already nulled out below its own floor — never to re-derive the null itself. */
+function ciEvidenceInsufficientV679(evidence){
+  const ev=evidence&&typeof evidence==='object'?evidence:{};
+  return ev.status==='insufficient';
+}
+function ciEvidenceCaptionV679(evidence){
+  const ev=evidence&&typeof evidence==='object'?evidence:{};
+  if(ev.status!=='insufficient')return '';
+  const floor=Number(ev.floor)||5;
+  return `Not enough data yet (fewer than ${floor}).`;
+}
+
+/* 1. get_ci_funnel_conversion_v1 (nestly_v673) — 1st->2nd->3rd visit conversion, maturity-gated. */
+function funnelConversionPanelHtmlV679(payload){
+  if(!payload||typeof payload!=='object')
+    return ciEmptyPanelV679('ciFunnelConversionHeadingV679','How customers return','Retention funnel','Run this report to load the retention funnel.');
+  const p=payload;
+  const windowDays=Number(p.window_days)||0;
+  const stage1=ciRateBlockV679(p.stage_1_to_2);
+  const stage2=ciRateBlockV679(p.stage_2_to_3);
+  const immature=p.immature&&typeof p.immature==='object'?p.immature:{};
+  const firstImmature=Number(immature.first_stage)||0,secondImmature=Number(immature.second_stage)||0;
+  const bottleneckLabel=p.bottleneck==='first_to_second'?'First to second visit'
+    :p.bottleneck==='second_to_third'?'Second to third visit':null;
+  const bottleneckLine=bottleneckLabel
+    ?`Bottleneck: <b>${esc(bottleneckLabel)}</b>`
+    :(ciEvidenceInsufficientV679(p.evidence)
+      ?`${ciEvidenceCaptionV679(p.evidence)} No bottleneck can be named yet.`
+      :'No bottleneck — the two stages convert about equally.');
+  return `<section class="revenue-truth-section" aria-labelledby="ciFunnelConversionHeadingV679">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">How customers return</span>
+    <h2 id="ciFunnelConversionHeadingV679">Retention funnel</h2></div></div>
+    <p class="muted small">Each stage is measured over a ${windowDays}-day window from the customer's own prior visit, based on ${esc(p.time_basis||'sale_occurred_at')}.</p>
+    <div class="revenue-truth-metrics">
+      <article class="revenue-truth-metric"><span>First to second visit</span><strong>${stage1.num} of ${stage1.den} returned (${stage1.pctText})</strong></article>
+      <article class="revenue-truth-metric"><span>Second to third visit</span><strong>${stage2.num} of ${stage2.den} returned (${stage2.pctText})</strong></article>
+    </div>
+    <p class="muted small" style="margin-top:10px">${firstImmature} customer${firstImmature===1?'':'s'} too recent to judge for the first stage; ${secondImmature} too recent for the second.</p>
+    <p class="muted small">${bottleneckLine}</p>
+    ${ciMeasuredSinceInlineV679(p.observed_since)}
+  </section>`;
+}
+
+/* 2. get_ci_demographics_v1 (nestly_v674) — (age_band x gender) revenue/frequency/ATV grid. */
+const CI_AGE_BAND_LABELS_V679={under_20:'Under 20','20_24':'20–24','25_30':'25–30',
+  '31_40':'31–40','41_50':'41–50','51_plus':'51+'};
+function demographicsPanelHtmlV679(payload){
+  if(!payload||typeof payload!=='object')
+    return ciEmptyPanelV679('ciDemographicsHeadingV679','Who they are','Demographics','Run this report to load demographics.');
+  const p=payload;
+  const cells=Array.isArray(p.cells)?p.cells:[];
+  const unclassified=p.unclassified&&typeof p.unclassified==='object'?p.unclassified:{};
+  const coverage=p.coverage&&typeof p.coverage==='object'?p.coverage:{};
+  const rows=cells.map(cell=>{
+    const atvText=(cell.atv_cents===null||cell.atv_cents===undefined)
+      ?(ciEvidenceCaptionV679(cell.evidence)||'Not enough data yet')
+      :esc(money(cell.atv_cents));
+    const genderLabel=cell.gender==='female'?'Female':cell.gender==='male'?'Male':cell.gender==='other'?'Other':(cell.gender||'—');
+    return `<tr><td data-label="Age band">${esc(CI_AGE_BAND_LABELS_V679[cell.age_band]||cell.age_band||'—')}</td><td data-label="Gender">${esc(genderLabel)}</td><td data-label="Customers">${Number(cell.customers)||0}</td><td data-label="Revenue">${esc(money(cell.revenue_cents))}</td><td data-label="Cell visits">${Number(cell.visits)||0}</td><td data-label="Average transaction value">${atvText}</td></tr>`;
+  }).join('');
+  const unclassifiedCustomers=Number(unclassified.customers)||0,unclassifiedRevenue=Number(unclassified.revenue_cents)||0;
+  const demCoverage=ciRateBlockV679(coverage.demographics);
+  const revCoverage=ciRateBlockV679(coverage.revenue);
+  return `<section class="revenue-truth-section" aria-labelledby="ciDemographicsHeadingV679">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Who they are</span>
+    <h2 id="ciDemographicsHeadingV679">Demographics</h2></div></div>
+    ${(cells.length||unclassifiedCustomers)?`<div class="cui-table-wrap" role="region" aria-label="Demographics"><table class="cui-table"><thead><tr><th>Age band</th><th>Gender</th><th>Customers</th><th>Revenue</th><th>Cell visits</th><th>Average transaction value</th></tr></thead><tbody>${rows}<tr><td data-label="Age band">Unclassified</td><td data-label="Gender">—</td><td data-label="Customers">${unclassifiedCustomers}</td><td data-label="Revenue">${esc(money(unclassifiedRevenue))}</td><td data-label="Cell visits">—</td><td data-label="Average transaction value">—</td></tr></tbody></table></div>`
+      :'<div class="empty">No identified customers in this scope yet.</div>'}
+    <p class="muted small" style="margin-top:10px">Demographics known for ${demCoverage.num} of ${demCoverage.den} identified customers (${demCoverage.pctText}).</p>
+    <p class="muted small">Revenue explained by known demographics: ${esc(money(revCoverage.num))} of ${esc(money(revCoverage.den))} (${revCoverage.pctText}).</p>
+    ${ciMeasuredSinceInlineV679(p.observed_since)}
+  </section>`;
+}
+
+/* 3. get_ci_daypart_v1 (nestly_v675) — weekday behaviour with an honest exposure denominator;
+   busiest (a raw count) and most-valuable (evidence-gated) are reported separately (check 36). */
+function behaviourPanelHtmlV679(payload){
+  if(!payload||typeof payload!=='object')
+    return ciEmptyPanelV679('ciBehaviourHeadingV679','When customers come in','Weekday behaviour','Run this report to load weekday behaviour.');
+  const p=payload;
+  const weekdays=Array.isArray(p.weekdays)?p.weekdays:[];
+  const busiest=p.busiest_weekday&&typeof p.busiest_weekday==='object'?p.busiest_weekday:null;
+  const mostValuable=p.most_valuable_weekday&&typeof p.most_valuable_weekday==='object'?p.most_valuable_weekday:null;
+  const rows=weekdays.map(weekday=>{
+    const perVisit=(weekday.revenue_per_visit_cents===null||weekday.revenue_per_visit_cents===undefined)
+      ?(ciEvidenceCaptionV679(weekday.evidence)||'Not enough data yet')
+      :esc(money(weekday.revenue_per_visit_cents));
+    const occurrence=ciRateBlockV679(weekday.visits_per_occurrence);
+    return `<tr><td data-label="Weekday">${esc(weekday.label||'')}</td><td data-label="Weekday visits">${Number(weekday.visits)||0}</td><td data-label="Revenue">${esc(money(weekday.revenue_cents))}</td><td data-label="Revenue per visit">${perVisit}</td><td data-label="Occurrences in range">${Number(weekday.weekday_occurrences)||0}</td><td data-label="Visited on">${occurrence.num} of ${occurrence.den} (${occurrence.pctText})</td></tr>`;
+  }).join('');
+  const busiestLine=busiest
+    ?`<b>${esc(busiest.label||'')}</b> — ${Number(busiest.visits)||0} visits`
+    :'Not enough data yet';
+  const mostValuableLine=mostValuable
+    ?`<b>${esc(mostValuable.label||'')}</b> — ${esc(money(mostValuable.revenue_per_visit_cents))} per visit`
+    :'Not enough data yet — no weekday has cleared the evidence floor.';
+  return `<section class="revenue-truth-section" aria-labelledby="ciBehaviourHeadingV679">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">When customers come in</span>
+    <h2 id="ciBehaviourHeadingV679">Weekday behaviour</h2></div></div>
+    <div class="revenue-truth-metrics">
+      <article class="revenue-truth-metric"><span>Busiest day (by visits)</span><strong>${busiestLine}</strong></article>
+      <article class="revenue-truth-metric"><span>Most valuable day (by revenue per visit)</span><strong>${mostValuableLine}</strong></article>
+    </div>
+    ${weekdays.length?`<div class="cui-table-wrap" role="region" aria-label="Weekday behaviour"><table class="cui-table"><thead><tr><th>Weekday</th><th>Weekday visits</th><th>Revenue</th><th>Revenue per visit</th><th>Occurrences in range</th><th>Visited on</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No weekday activity in this scope yet.</div>'}
+    <p class="muted small" style="margin-top:10px">Time basis: ${esc(p.time_basis||'sale_occurred_at')}.</p>
+    <p class="muted small">${esc(p.basis_note||'')}</p>
+    ${ciMeasuredSinceInlineV679(p.observed_since)}
+  </section>`;
 }
 
 /* nestly_v650: Service mapping board. Reached from Customer Intelligence's "What they buy"
