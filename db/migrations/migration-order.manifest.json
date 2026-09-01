@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 546,
-  "executableCount": 532,
+  "itemCount": 547,
+  "executableCount": 533,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -5165,6 +5165,14 @@
       "semanticVersion": "v669",
       "proposedDeployVersion": "20260901120000",
       "sha256": "d6793b62d859dc27a893f1601d800459e9ddc2bce885f72a0b40291a411d486a"
+    },
+    {
+      "order": 547,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v672_public_support_desk.sql",
+      "semanticVersion": "v672",
+      "proposedDeployVersion": "20260902000000",
+      "sha256": "26af3f1a703d6b99d4890e63aab44fd7cd747827aa6334d994f6c1a6bf572be1"
     }
   ]
 }

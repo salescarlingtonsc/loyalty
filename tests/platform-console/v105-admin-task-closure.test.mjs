@@ -108,7 +108,7 @@ test('Today is the first task destination while all authorised deep links remain
     // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
     // companies merged into a sibling route as a tab/mode; their deep links
     // still resolve (see legacyRouteRedirects / phase1-brand-platform-console).
-    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','access'],
+    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access'],
     'task-first navigation must not delete an authorised route or its deep link'
   );
 });

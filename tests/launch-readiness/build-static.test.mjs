@@ -19,6 +19,7 @@ test('release artifact contract contains the public pages and offline fallback',
     'landing.html',
     'offline.html',
     'privacy.html',
+    'support.html',
     'terms.html'
   ]);
   assert.doesNotThrow(() => assertStaticHtmlArtifacts(requiredStaticHtmlEntries));

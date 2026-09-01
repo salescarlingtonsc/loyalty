@@ -3608,6 +3608,51 @@
       'Retention hold released.':'Penggantungan pengekalan telah dilepaskan.'
     })
   });
+  /* V672 — the public support desk. */
+  const PLATFORM_COPY_V672=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Support requests':'支持请求','Support':'支持',
+      'Support requests unavailable':'支持请求不可用',
+      'Loading messages from the public support page…':'正在加载公开支持页面的留言…',
+      'Messages sent from the public support page at peekaa.asia/support.':'通过 peekaa.asia/support 公开支持页面发送的留言。',
+      'Everyone who wrote in, newest first. Every reply is sent by email.':'所有来信者，最新优先。所有回复均通过电子邮件发送。',
+      'No support requests':'暂无支持请求',
+      'Messages sent from the public support page will appear here.':'通过公开支持页面发送的留言将显示在此处。',
+      'Support summary':'支持摘要','Open requests':'待处理请求','Shown here':'此处显示',
+      'All requests':'全部请求','In progress':'处理中','Resolved':'已解决','Closed':'已关闭',
+      'Support request':'支持请求','Open request':'打开请求',
+      'Received':'收到时间','Who':'身份','Name':'姓名','Email':'电子邮件','Phone':'电话',
+      'Reference':'参考编号','Status':'状态','Action':'操作',
+      'Business owner':'商户负责人',
+      'What happened':'发生了什么','Last note':'最新备注',
+      'Set status':'设置状态','What you did':'你做了什么',
+      'Recorded against the ticket. Write what was actually done, not a placeholder.':'将记录在此请求下。请写下实际处理内容，不要填写占位文字。',
+      'Save update':'保存更新','Support request updated.':'支持请求已更新。',
+      'Peekaa promises a reply within 7 business days':'Peekaa 承诺在 7 个工作日内回复',
+      'The public page tells people to email hello@peekaa.asia if nobody has replied by then.':'公开页面告知用户，如届时仍未收到回复，请发送电子邮件至 hello@peekaa.asia。'
+    }),
+    ms:Object.freeze({
+      'Support requests':'Permintaan sokongan','Support':'Sokongan',
+      'Support requests unavailable':'Permintaan sokongan tidak tersedia',
+      'Loading messages from the public support page…':'Memuatkan mesej daripada halaman sokongan awam…',
+      'Messages sent from the public support page at peekaa.asia/support.':'Mesej yang dihantar daripada halaman sokongan awam di peekaa.asia/support.',
+      'Everyone who wrote in, newest first. Every reply is sent by email.':'Semua yang menghubungi kami, terbaharu dahulu. Setiap balasan dihantar melalui e-mel.',
+      'No support requests':'Tiada permintaan sokongan',
+      'Messages sent from the public support page will appear here.':'Mesej yang dihantar daripada halaman sokongan awam akan dipaparkan di sini.',
+      'Support summary':'Ringkasan sokongan','Open requests':'Permintaan terbuka','Shown here':'Dipaparkan di sini',
+      'All requests':'Semua permintaan','In progress':'Sedang diuruskan','Resolved':'Selesai','Closed':'Ditutup',
+      'Support request':'Permintaan sokongan','Open request':'Buka permintaan',
+      'Received':'Diterima','Who':'Siapa','Name':'Nama','Email':'E-mel','Phone':'Telefon',
+      'Reference':'Rujukan','Status':'Status','Action':'Tindakan',
+      'Business owner':'Pemilik perniagaan',
+      'What happened':'Apa yang berlaku','Last note':'Nota terakhir',
+      'Set status':'Tetapkan status','What you did':'Apa yang anda lakukan',
+      'Recorded against the ticket. Write what was actually done, not a placeholder.':'Direkodkan pada permintaan ini. Tulis apa yang benar-benar dilakukan, bukan teks sementara.',
+      'Save update':'Simpan kemas kini','Support request updated.':'Permintaan sokongan telah dikemas kini.',
+      'Peekaa promises a reply within 7 business days':'Peekaa berjanji membalas dalam masa 7 hari bekerja',
+      'The public page tells people to email hello@peekaa.asia if nobody has replied by then.':'Halaman awam memberitahu pengguna untuk menghantar e-mel ke hello@peekaa.asia jika tiada balasan menjelang tarikh tersebut.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3630,6 +3675,7 @@
       ??PLATFORM_COPY_V513[platformLocale]?.[key]
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
+      ??PLATFORM_COPY_V672[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3741,6 +3787,10 @@
     /* V282: super-admin only and deliberately NOT given a moduleKey. The partner register is
        cross-tenant obligation evidence; no tenant-scoped grant may ever open it. */
     {key:'partners',label:'Partner obligations',shortLabel:'Partners',hash:'#/platform/partners',icon:'setup',superAdminOnly:true},
+    /* V672: the public support desk. Super-admin only and deliberately without a moduleKey,
+       for the same reason partners has none — these are messages from members of the public
+       about any tenant, so no tenant-scoped grant may open the queue. */
+    {key:'support',label:'Support requests',shortLabel:'Support',hash:'#/platform/support',icon:'customers',superAdminOnly:true},
     {key:'access',label:'Platform access',shortLabel:'Access',hash:'#/platform/access',icon:'staff',superAdminOnly:true}
   ]);
   /* Four routes retired in the operating-system IA pass. isRoute()/routeKey()
@@ -3997,7 +4047,7 @@
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','pnl','commissions'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
-    Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','partners','access'])})
+    Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','partners','support','access'])})
   ]);
   function platformNavigationGroups(allowedRoutes=[]) {
     const allowedByKey=new Map(allowedRoutes.map(route=>[route.key,route]));
@@ -11683,6 +11733,135 @@
     }
   }
 
+  /* V672 support desk. Anyone — a customer of one of our firms, or a business owner — can
+     write to Peekaa from the public /support page without an account. The page promises a
+     reply within 7 business days; this queue is how that promise is kept, so it is a route
+     of its own rather than a tab inside something else, and it leads with the open count.
+
+     Super-admin only, and deliberately without a moduleKey: a support ticket is cross-tenant
+     text written by a member of the public, and no tenant-scoped grant may open it. */
+  const SUPPORT_TICKET_CEILING=250;
+  const SUPPORT_TICKET_STATUSES=Object.freeze(['open','in_progress','resolved','closed']);
+  function supportRequesterLabel(kind){
+    return pt(kind==='business_owner'?'Business owner':'Customer');
+  }
+  function supportStatusLabel(status){
+    const key=String(status||'');
+    return pt(key==='in_progress'?'In progress'
+      :key==='resolved'?'Resolved'
+      :key==='closed'?'Closed'
+      :'Open');
+  }
+  /* The queue shows the first line of the message, never the whole thing: a support desk is
+     read by scanning, and the full text is one click away in the ticket itself. */
+  function supportMessagePreview(text,limit=90){
+    const flat=String(text||'').replace(/\s+/g,' ').trim();
+    return flat.length>limit?`${flat.slice(0,limit-1)}…`:(flat||'—');
+  }
+  function supportTicketRows(tickets,CUI){
+    return asArray(tickets).map(ticket=>[
+      escapeHtml(ticket.submitted_at?dateTime(ticket.submitted_at):'—'),
+      escapeHtml(supportRequesterLabel(ticket.requester_kind)),
+      escapeHtml(String(ticket.contact_name||'—')),
+      escapeHtml(String(ticket.business_name||'—')),
+      escapeHtml(supportMessagePreview(ticket.what_happened)),
+      escapeHtml(supportStatusLabel(ticket.status)),
+      `<button type="button" class="btn ghost sm" data-support-ticket="${escapeHtml(ticket.id)}">${escapeHtml(pt('Open request'))}</button>`
+    ]);
+  }
+  function supportTicketModal(context,ticket,reload){
+    const {CUI,sb}=context;
+    if(!ticket)return;
+    const canWrite=context.canWrite===true;
+    const email=String(ticket.contact_email||'');
+    const phone=String(ticket.contact_phone||'');
+    const detail=`<dl class="platform-context-list">
+      <div><dt>${escapeHtml(pt('Received'))}</dt><dd>${escapeHtml(ticket.submitted_at?dateTime(ticket.submitted_at):'—')}</dd></div>
+      <div><dt>${escapeHtml(pt('Who'))}</dt><dd>${escapeHtml(supportRequesterLabel(ticket.requester_kind))}</dd></div>
+      <div><dt>${escapeHtml(pt('Name'))}</dt><dd>${escapeHtml(String(ticket.contact_name||'—'))}</dd></div>
+      <div><dt>${escapeHtml(pt('Email'))}</dt><dd><a href="mailto:${escapeHtml(email)}">${escapeHtml(email||'—')}</a></dd></div>
+      <div><dt>${escapeHtml(pt('Phone'))}</dt><dd>${phone?`<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>`:'—'}</dd></div>
+      <div><dt>${escapeHtml(pt('Business'))}</dt><dd>${escapeHtml(String(ticket.business_name||'—'))}</dd></div>
+      <div><dt>${escapeHtml(pt('Reference'))}</dt><dd>${escapeHtml(String(ticket.public_reference||'—'))}</dd></div>
+      <div><dt>${escapeHtml(pt('Status'))}</dt><dd>${escapeHtml(supportStatusLabel(ticket.status))}</dd></div>
+    </dl>
+    <p class="muted small">${escapeHtml(pt('What happened'))}</p>
+    <p class="platform-support-message">${escapeHtml(String(ticket.what_happened||''))}</p>
+    ${ticket.resolution_note?`<p class="muted small">${escapeHtml(pt('Last note'))}</p><p class="platform-support-message">${escapeHtml(String(ticket.resolution_note))}</p>`:''}`;
+
+    if(!canWrite){
+      modal({title:'Support request',submitLabel:'Close',CUI,body:detail,
+        onSubmit:async(form,controls)=>{controls.close()}});
+      return;
+    }
+    modal({title:'Support request',submitLabel:'Save update',CUI,body:`${detail}
+      <div class="platform-form-grid">
+        ${CUI.field({id:'supportTicketStatusV672',label:'Set status',control:'select',required:true,
+          options:['in_progress','resolved','closed'].map(value=>({value,label:supportStatusLabel(value)})),
+          attributes:'name="status"'})}
+        <div class="wide">${CUI.field({id:'supportTicketNoteV672',label:'What you did',control:'textarea',required:true,
+          hint:'Recorded against the ticket. Write what was actually done, not a placeholder.',
+          attributes:'name="note" minlength="3" maxlength="2000" rows="3"'})}</div>
+      </div>`,
+      onSubmit:async(form,controls)=>{
+        await rpc(sb,'platform_update_support_ticket_v672',{
+          p_ticket:ticket.id,p_status:form.get('status'),p_note:form.get('note'),
+          p_expected_version:Number(ticket.version)
+        });
+        controls.close();
+        await reload();
+        CUI.announce('Support request updated.');
+      }});
+  }
+  async function renderSupportRequests(context,limit=100,status=null){
+    const {main,CUI,sb}=context;
+    const windowLimit=Math.min(SUPPORT_TICKET_CEILING,Math.max(1,Number(limit)||100));
+    const activeStatus=SUPPORT_TICKET_STATUSES.includes(String(status||''))?String(status):null;
+    main.innerHTML=loading(CUI,'Support requests','Loading messages from the public support page…','customers');
+    try{
+      const payload=asObject(await rpc(sb,'platform_list_support_tickets_v672',{
+        p_status:activeStatus,p_search:null,p_limit:windowLimit
+      }));
+      const tickets=asArray(payload.tickets);
+      const ticketWindow=platformWindowState({
+        loaded:tickets.length,limit:windowLimit,
+        ceiling:SUPPORT_TICKET_CEILING,reported:payload.has_more===true});
+      const reload=()=>renderSupportRequests(context,windowLimit,activeStatus);
+      const filters=[['','All requests'],['open','Open'],['in_progress','In progress'],
+        ['resolved','Resolved'],['closed','Closed']];
+      main.innerHTML=`${CUI.pageHeader({title:'Support requests',subtitle:'Messages sent from the public support page at peekaa.asia/support.',iconName:'customers'})}
+        <section class="platform-kpis" aria-label="${escapeHtml(pt('Support summary'))}">${[
+          ['Open requests',Number(payload.open_count||0),'customers'],
+          ['Shown here',tickets.length,'reports']
+        ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
+        <section class="card"><div class="platform-actions">${filters.map(([value,label])=>
+          `<button type="button" class="btn ghost sm" data-support-filter="${escapeHtml(value)}"${(activeStatus||'')===value?' aria-current="true"':''}>${escapeHtml(pt(label))}</button>`
+        ).join('')}</div></section>
+        ${tickets.length
+          ? CUI.card({title:'Support requests',description:'Everyone who wrote in, newest first. Every reply is sent by email.',
+              body:`${CUI.table({caption:'Support requests',headers:['Received','Who','Name','Business','What happened','Status','Action'],rows:supportTicketRows(tickets,CUI)})}${platformWindowHtml(ticketWindow,{buttonId:'supportLoadMoreV672'})}`})
+          : CUI.emptyState({iconName:'customers',title:'No support requests',body:'Messages sent from the public support page will appear here.'})}
+        ${localizedRouteNoteHtml('Peekaa promises a reply within 7 business days','The public page tells people to email hello@peekaa.asia if nobody has replied by then.')}`;
+      const more=main.querySelector('#supportLoadMoreV672');
+      if(more)more.onclick=()=>renderSupportRequests(context,ticketWindow.nextLimit,activeStatus);
+      main.querySelectorAll('[data-support-filter]').forEach(button=>button.onclick=()=>{
+        renderSupportRequests(context,windowLimit,button.dataset.supportFilter||null);
+      });
+      main.querySelectorAll('[data-support-ticket]').forEach(button=>button.onclick=()=>{
+        supportTicketModal(context,
+          tickets.find(entry=>String(entry.id)===button.dataset.supportTicket)||null,reload);
+      });
+      CUI.focusRoute(main);
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,'Support requests')
+        :CUI.errorState({title:'Support requests unavailable',message:platformErrorMessage(error,'Please try again.'),retryId:'supportRetryV672'});
+      const retry=main.querySelector('#supportRetryV672');
+      if(retry)retry.onclick=()=>renderSupportRequests(context,windowLimit,activeStatus);
+      CUI.focusRoute(main);
+    }
+  }
+
   function platformExpenseModal(context,range) {
     const {CUI,sb}=context;const attemptKey=idempotencyKey();
     modal({title:'Add operating expense',submitLabel:'Record expense',CUI,body:`<div class="platform-form-grid">
@@ -14586,6 +14765,7 @@
     if(!task&&activeKey==='sectors')task=renderSectors(context);
     if(!task&&activeKey==='automation')task=renderAutomation(context);
     if(!task&&activeKey==='partners')task=renderPartnerObligations(context);
+    if(!task&&activeKey==='support')task=renderSupportRequests(context);
     if(!task){
       main.innerHTML=disconnectedRouteHtml(activeKey,CUI);CUI.focusRoute(main);
     }else await task;

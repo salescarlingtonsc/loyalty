@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F4F2EE">
+<meta name="application-name" content="Peekaa">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Peekaa">
+<meta name="description" content="Get help with Peekaa. Tell us what happened and we will reply within 7 business days.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; worker-src 'self'; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co https://challenges.cloudflare.com; upgrade-insecure-requests">
+<title>Support — Peekaa</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/peekaa-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pwa.css">
+<script src="/native-bridge.js"></script>
+<script src="/pwa.js?v=v321-no-self-refresh" defer></script>
+<style>
+/* ==== copied from app/join.html (:root + base + .card/.btn/.muted/.small system) ==== */
+:root{
+  --bg:#F7F5F1; --card:#FFFFFF; --ink:#1C1A22; --muted:#75717E;
+  --line:#E8E4DD; --coral:#FF6B5E; --amber:#FFB86B; --green:#2FA36B;
+  --grad:linear-gradient(100deg,#FF6B5E,#FFB86B);
+  --r:14px; --shadow:0 1px 3px rgba(28,26,34,.06),0 8px 24px rgba(28,26,34,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;font-size:16px}
+input,textarea,select{font-family:inherit;font-size:16px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%;min-height:48px}
+textarea{min-height:132px;resize:vertical;line-height:1.5}
+input:focus,textarea:focus{outline:2px solid rgba(255,107,94,.35);border-color:var(--coral)}
+label{display:block;font-size:14px;font-weight:600;color:var(--ink);margin:16px 0 6px}
+.btn{background:var(--grad);color:#fff;font-weight:700;padding:14px 22px;border-radius:100px;transition:transform .15s, box-shadow .15s;font-size:16px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,107,94,.35)}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn:focus-visible,.challenge-retry:focus-visible,.legal-links a:focus-visible,.choice:focus-visible,.linkbtn:focus-visible{outline:3px solid rgba(255,107,94,.45);outline-offset:3px}
+.btn.secondary{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.secondary:hover{border-color:var(--coral);box-shadow:0 6px 16px rgba(28,26,34,.08)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:26px 22px}
+.muted{color:var(--muted)} .small{font-size:12.5px}
+.err{background:#FBEAE7;color:#C0392B;padding:12px 14px;border-radius:10px;font-size:14px;margin-top:14px}
+.icon{display:block;flex:0 0 auto}
+.state-icon{width:48px;height:48px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#FFF1EF;color:var(--coral)}
+.state-icon.success{background:#EAF6F0;color:var(--green)}
+/* ==== page-specific: public support desk, no login, mobile-first, capped ~440px ==== */
+.wrap{min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;
+  padding:max(36px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right))
+    max(36px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.support{width:440px;max-width:100%}
+.shead{text-align:center;margin-bottom:18px}
+.logo{display:inline-flex;align-items:center;min-height:44px;margin-bottom:16px}
+.brand-logo{display:block;width:auto;height:58px;max-width:145px;object-fit:contain}
+.shead h1{font-size:1.6rem;color:var(--coral);margin-bottom:4px}
+.help{font-size:12.5px;color:var(--muted);margin-top:6px}
+.legal-links{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin-top:18px;color:var(--muted);font-size:11.5px}
+.legal-links a{text-decoration:underline;text-underline-offset:2px}
+/* the two identity cards — the whole tile is the tap target, never a bare radio */
+.choices{display:flex;flex-direction:column;gap:12px;margin-top:20px}
+.choice{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#FBFAF7;
+  border:1px solid var(--line);border-radius:var(--r);padding:18px 16px;min-height:76px;
+  transition:border-color .15s, box-shadow .15s, transform .15s}
+.choice:hover{border-color:var(--coral);box-shadow:0 6px 16px rgba(28,26,34,.08);transform:translateY(-1px)}
+.choice-badge{width:44px;height:44px;flex:0 0 auto;border-radius:50%;background:#FFF1EF;color:var(--coral);
+  display:flex;align-items:center;justify-content:center}
+.choice-title{display:block;font-size:15.5px;font-weight:700;color:var(--ink)}
+.choice-sub{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+.linkbtn{background:none;color:var(--coral);font-size:13.5px;font-weight:600;padding:8px 0;text-decoration:underline;min-height:44px}
+.whoami{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:#FBFAF7;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:4px}
+.whoami-label{font-size:13.5px;font-weight:600}
+.counter{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
+.challenge{margin-top:18px;min-height:82px}
+.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.challenge-retry{background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
+/* the reply promise — the whole reason this page exists is that it is kept */
+.promise{margin-top:20px;padding:16px 16px;background:#FBFAF7;border:1px solid var(--line);
+  border-radius:var(--r);font-size:13.5px;line-height:1.55;color:var(--ink)}
+.promise strong{font-weight:700}
+.promise a{color:var(--coral);text-decoration:underline;text-underline-offset:2px;font-weight:600}
+.reference{margin-top:16px;padding:14px;background:#FBFAF7;border:1px dashed var(--line);border-radius:10px;text-align:center}
+.reference-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+  font-weight:600;word-break:break-all;margin-top:4px}
+@media(max-width:400px){.support{width:100%}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="/brand-config.js"></script>
+<script src="/runtime-config.js?v=2"></script>
+<script src="/runtime-config-loader.js?v=2"></script>
+<script>
+/* ============ Peekaa — public support desk (nestly_v672) ============
+   No login, no account lookup, no tenant context. A person who cannot get into Peekaa is
+   exactly the person who needs this page, so it asks for nothing they would have to sign in
+   to know. Everything posts to the Turnstile-gated public gateway; the browser never touches
+   the support table. */
+const RUNTIME_CONFIG=(()=>{try{return window.FrenlyRuntimeConfig.require(window)}catch{
+  window.FrenlyRuntimeConfig?.renderFailure(document.getElementById('root'));
+  throw new Error('Peekaa runtime configuration is unavailable.');
+}})();
+const BRAND=window.NestlyBrand;
+const SB_URL=RUNTIME_CONFIG.supabaseUrl;
+const SUPPORT_EMAIL='hello@peekaa.asia';
+const REPLY_WINDOW_DAYS=7;
+const MESSAGE_MAX=4000;
+const MESSAGE_MIN=10;
+
+/* The gateway accepts exactly three locale tags. A browser reports 'en-US', 'zh-Hant-SG' and
+   worse, and an unrecognised tag is a hard refusal server-side — so the tag is folded here
+   rather than posted raw. Anything we do not publish in falls back to English. */
+function pageLocale(){
+  const tag=String(navigator.language||'en').toLowerCase();
+  if(tag.startsWith('zh')) return 'zh-CN';
+  if(tag.startsWith('ms')) return 'ms';
+  return 'en';
+}
+
+const $=(id)=>document.getElementById(id);
+const root=$('root');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const ICONS={
+  person:'<svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  store:'<svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg>',
+  check:'<svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>',
+  help:'<svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a3 3 0 0 1 5.6 1c0 2-2.8 2.5-2.8 4"/><path d="M12 17.5h.01"/></svg>',
+};
+
+const brandWordmark=()=>{
+  const productName=String(BRAND?.productName||'Peekaa');
+  const logoPath=String(BRAND?.logoPath||'/brand/peekaa-logo.png');
+  return `<img class="brand-logo" src="${esc(logoPath)}" alt="${esc(productName)}">`;
+};
+const legalLinks=()=>`<div class="legal-links"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/data-request.html">Data request</a></div>`;
+const replyPromiseHtml=()=>`<div class="promise">
+  Please allow up to <strong>${REPLY_WINDOW_DAYS} business days</strong> for a reply.
+  If you have not heard from us by then, email us at
+  <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.
+</div>`;
+
+/* ---- Turnstile: same explicit-render lifecycle the join page uses, including the expiry,
+   timeout and error callbacks, so a stalled challenge offers a retry instead of a dead form. */
+let turnstileLoader;
+function loadTurnstile(){
+  if(window.turnstile) return Promise.resolve(window.turnstile);
+  if(turnstileLoader) return turnstileLoader;
+  turnstileLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async=true;script.defer=true;
+    script.onload=()=>window.turnstile?resolve(window.turnstile):reject(new Error('Security check unavailable.'));
+    script.onerror=()=>{turnstileLoader=null;script.remove();reject(new Error('Security check unavailable.'))};
+    document.head.appendChild(script);
+  });
+  return turnstileLoader;
+}
+async function mountTurnstile(siteKey,{container,status,retry,action,onToken}){
+  const statusEl=$(status),retryEl=$(retry);
+  let api,widgetId,destroyed=false;
+  const message=(text,isError=false)=>{statusEl.textContent=text;statusEl.style.color=isError?'#C0392B':''};
+  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
+  const logTurnstileError=(errorCode)=>{
+    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
+    console.warn('Turnstile error code:',code);
+  };
+  const removeWidget=()=>{
+    const host=document.getElementById(container);
+    if(api&&widgetId!==undefined&&host){
+      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
+    }
+    widgetId=undefined;
+    host?.replaceChildren();
+  };
+  const render=async()=>{
+    if(destroyed)return;
+    message('Loading security check…');retryEl.hidden=true;
+    try{
+      api=await loadTurnstile();
+      if(destroyed||!document.getElementById(container)) return;
+      removeWidget();
+      if(destroyed)return;
+      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,
+        callback:(token)=>{if(destroyed)return;onToken(token);message('Security check complete.');retryEl.hidden=true},
+        'expired-callback':()=>{if(destroyed)return;clear('Security check expired. Please try again.',true);retryEl.hidden=false},
+        'timeout-callback':()=>{if(destroyed)return;clear('Security check timed out. Please try again.',true);retryEl.hidden=false},
+        'error-callback':(errorCode)=>{if(destroyed)return true;logTurnstileError(errorCode);clear('Security check could not connect. Please retry, or check your browser and network settings.',true);retryEl.hidden=false;return true}});
+    }catch{if(!destroyed){clear('Security check could not load. Check your connection and try again.',true);retryEl.hidden=false}}
+  };
+  const retryRender=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;render()};
+  const reset=()=>{if(destroyed)return;clear('Complete the security check to continue.');retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
+  const destroy=()=>{if(destroyed)return;destroyed=true;retryEl.onclick=null;removeWidget()};
+  retryEl.onclick=retryRender;
+  await render();
+  return {reset,destroy};
+}
+
+/* The gateway's status code is the only thing separating "we cannot take this" from "your
+   train went into a tunnel", so it travels with the error rather than being flattened. */
+async function publicSupport({method='POST',body=null}={}){
+  const response=await fetch(`${SB_URL}/functions/v1/public-support-ticket`,{
+    method,headers:body?{'content-type':'application/json'}:undefined,
+    body:body?JSON.stringify(body):undefined,credentials:'omit'});
+  let payload=null;
+  try{payload=await response.json()}catch{}
+  if(!response.ok){
+    const error=new Error(payload?.error||'We could not send that message.');
+    error.status=response.status;
+    error.retryAfter=Number(payload?.retry_after)||0;
+    throw error;
+  }
+  return payload;
+}
+
+const state={
+  kind:null,            // 'customer' | 'business_owner'
+  siteKey:'',
+  idempotencyKey:'',    // minted once per composed message, so a double tap is one ticket
+  turnstileToken:'',
+  turnstileControl:null,
+};
+
+function pageShell(inner){
+  return `<div class="wrap"><div class="support">
+    <div class="shead">
+      <div class="logo">${brandWordmark()}</div>
+      <h1>Support</h1>
+      <p class="muted small">We are here to help.</p>
+    </div>
+    ${inner}
+    ${legalLinks()}
+  </div></div>`;
+}
+
+/* ---- Step 1: who is asking. The answer changes what we need from them and, on the console
+   side, who the ticket has to be routed to — so it is asked first and asked plainly. */
+function renderChooser(){
+  state.turnstileControl?.destroy();
+  state.turnstileControl=null;
+  root.innerHTML=pageShell(`<div class="card">
+    <div class="state-icon">${ICONS.help}</div>
+    <h2 style="text-align:center;font-size:1.15rem">What happened?</h2>
+    <p class="muted small" style="text-align:center;margin-top:6px">First, tell us who you are.</p>
+    <div class="choices">
+      <button class="choice" type="button" id="asCustomer">
+        <span class="choice-badge">${ICONS.person}</span>
+        <span>
+          <span class="choice-title">I am a customer</span>
+          <span class="choice-sub">I collect rewards at a shop that uses Peekaa.</span>
+        </span>
+      </button>
+      <button class="choice" type="button" id="asOwner">
+        <span class="choice-badge">${ICONS.store}</span>
+        <span>
+          <span class="choice-title">I am a business owner</span>
+          <span class="choice-sub">I run a business on Peekaa, or want to.</span>
+        </span>
+      </button>
+    </div>
+    ${replyPromiseHtml()}
+  </div>`);
+  $('asCustomer').onclick=()=>startForm('customer');
+  $('asOwner').onclick=()=>startForm('business_owner');
+}
+
+function kindLabel(kind){
+  return kind==='business_owner'?'Business owner':'Customer';
+}
+
+async function startForm(kind){
+  state.kind=kind;
+  state.idempotencyKey=crypto.randomUUID();
+  state.turnstileToken='';
+  renderForm();
+  if(!state.siteKey){
+    try{
+      const config=await publicSupport({method:'GET'});
+      state.siteKey=String(config?.turnstile_site_key||'');
+    }catch{ state.siteKey=''; }
+  }
+  if(!$('supportForm')) return;         // the person navigated away while we were fetching
+  if(!state.siteKey){
+    $('turnstileStatus').textContent='Security check could not load. Please reload the page.';
+    $('turnstileStatus').style.color='#C0392B';
+    return;
+  }
+  state.turnstileControl=await mountTurnstile(state.siteKey,{
+    container:'turnstileWidget',status:'turnstileStatus',retry:'turnstileRetry',
+    action:'support_ticket',
+    onToken:(token)=>{state.turnstileToken=token;refreshSubmit()},
+  });
+}
+
+function renderForm(){
+  const isOwner=state.kind==='business_owner';
+  root.innerHTML=pageShell(`<div class="card">
+    <div class="whoami">
+      <span class="whoami-label">${esc(kindLabel(state.kind))}</span>
+      <button class="linkbtn" type="button" id="changeKind">Change</button>
+    </div>
+    <form id="supportForm" novalidate>
+      <label for="contactName">Your name</label>
+      <input id="contactName" name="name" type="text" autocomplete="name" maxlength="120" required>
+
+      <label for="contactEmail">Email</label>
+      <input id="contactEmail" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+      <p class="help">This is where our reply goes, so please check it.</p>
+
+      <label for="contactPhone">Phone <span class="muted" style="font-weight:400">(optional)</span></label>
+      <input id="contactPhone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="+65 8123 4567">
+
+      ${isOwner?`<label for="businessName">Business name</label>
+      <input id="businessName" name="business" type="text" autocomplete="organization" maxlength="160" required>`:''}
+
+      <label for="whatHappened">What happened</label>
+      <textarea id="whatHappened" name="message" maxlength="${MESSAGE_MAX}" required
+        placeholder="Tell us what you were doing and what went wrong. Dates, the shop's name and amounts all help."></textarea>
+      <p class="counter" id="messageCounter">0 / ${MESSAGE_MAX}</p>
+
+      <div class="challenge">
+        <div id="turnstileWidget"></div>
+        <p class="challenge-status" id="turnstileStatus" role="status" aria-live="polite">Loading security check…</p>
+        <button class="challenge-retry" type="button" id="turnstileRetry" hidden>Retry security check</button>
+      </div>
+
+      <div id="formError" hidden></div>
+      <button class="btn" type="submit" id="submitBtn" style="width:100%;margin-top:18px" disabled>Send to Peekaa</button>
+    </form>
+    ${replyPromiseHtml()}
+  </div>`);
+
+  $('changeKind').onclick=()=>renderChooser();
+  const message=$('whatHappened');
+  message.addEventListener('input',()=>{
+    $('messageCounter').textContent=`${message.value.length} / ${MESSAGE_MAX}`;
+    refreshSubmit();
+  });
+  ['contactName','contactEmail','contactPhone','businessName'].forEach(id=>{
+    $(id)?.addEventListener('input',refreshSubmit);
+  });
+  $('supportForm').addEventListener('submit',onSubmit);
+  refreshSubmit();
+}
+
+function readForm(){
+  const phone=($('contactPhone')?.value||'').replace(/[\s-]/g,'').trim();
+  return {
+    requester_kind:state.kind,
+    contact_name:($('contactName')?.value||'').trim(),
+    contact_email:($('contactEmail')?.value||'').trim().toLowerCase(),
+    contact_phone:phone,
+    business_name:($('businessName')?.value||'').trim(),
+    what_happened:($('whatHappened')?.value||'').trim(),
+  };
+}
+
+/* Mirrors the gateway's validator and the RPC's CHECK constraints. Kept deliberately in step
+   with them: a Send button that enables on a payload the server will refuse is a worse
+   experience than one that stays greyed out. */
+function formValid(){
+  const form=readForm();
+  if(form.contact_name.length<2||form.contact_name.length>120) return false;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact_email)||form.contact_email.length>254) return false;
+  if(form.contact_phone&&!/^\+[1-9][0-9]{7,14}$/.test(form.contact_phone)) return false;
+  if(state.kind==='business_owner'&&(form.business_name.length<2||form.business_name.length>160)) return false;
+  if(form.what_happened.length<MESSAGE_MIN||form.what_happened.length>MESSAGE_MAX) return false;
+  return true;
+}
+
+function refreshSubmit(){
+  const button=$('submitBtn');
+  if(button) button.disabled=!(formValid()&&state.turnstileToken);
+}
+
+function showFormError(text){
+  const host=$('formError');
+  if(!host) return;
+  host.className='err';
+  host.textContent=text;
+  host.hidden=false;
+}
+
+async function onSubmit(event){
+  event.preventDefault();
+  if(!formValid()||!state.turnstileToken) return;
+  const button=$('submitBtn');
+  button.disabled=true;
+  button.textContent='Sending…';
+  $('formError').hidden=true;
+  const form=readForm();
+  try{
+    const result=await publicSupport({body:{
+      ...form,
+      contact_phone:form.contact_phone||undefined,
+      business_name:form.business_name||undefined,
+      locale:pageLocale(),
+      idempotency_key:state.idempotencyKey,
+      turnstile_token:state.turnstileToken,
+    }});
+    renderSent(result);
+  }catch(error){
+    button.textContent='Send to Peekaa';
+    /* A captcha token is single-use: whatever went wrong, the old one is spent, so it is
+       cleared and re-issued before the person can try again. */
+    state.turnstileToken='';
+    state.turnstileControl?.reset();
+    if(error.status===429){
+      const wait=error.retryAfter?` Please try again in about ${Math.ceil(error.retryAfter/60)} minute(s).`:'';
+      showFormError(`We have had a lot of messages from your connection.${wait} You can also email ${SUPPORT_EMAIL}.`);
+    }else if(error.status===403){
+      showFormError(`This page could not reach Peekaa support. Please email ${SUPPORT_EMAIL} instead.`);
+    }else{
+      showFormError(`We could not send that message. Please check your details and try again, or email ${SUPPORT_EMAIL}.`);
+    }
+    refreshSubmit();
+  }
+}
+
+function renderSent(result){
+  state.turnstileControl?.destroy();
+  state.turnstileControl=null;
+  const reference=String(result?.public_reference||'');
+  root.innerHTML=pageShell(`<div class="card">
+    <div class="state-icon success">${ICONS.check}</div>
+    <h2 style="text-align:center;font-size:1.15rem">Message received</h2>
+    <p class="muted small" style="text-align:center;margin-top:8px;line-height:1.55">
+      Thank you. A person at Peekaa will read this and reply by email.
+    </p>
+    ${reference?`<div class="reference">
+      <span class="small muted">Your reference</span>
+      <div class="reference-code">${esc(reference)}</div>
+    </div>`:''}
+    ${replyPromiseHtml()}
+    <button class="btn secondary" type="button" id="sendAnother" style="width:100%;margin-top:18px">Send another message</button>
+  </div>`);
+  $('sendAnother').onclick=()=>renderChooser();
+}
+
+renderChooser();
+</script>
+</body>
+</html>

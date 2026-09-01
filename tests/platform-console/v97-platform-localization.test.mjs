@@ -351,9 +351,9 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
      they shipped had no zh-CN or ms entry at all, which is what the coverage test above caught;
      both dictionaries carry them now, and these counts are re-pinned to what the console actually
      renders. */
-  assert.equal(explicit.length,1110,'update the audited explicit-copy inventory when adding runtime UI'); // v667
-  assert.equal(metadata.length,848,'update the audited CUI metadata inventory when adding UI metadata'); // v667
-  assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
+  assert.equal(explicit.length,1118,'update the audited explicit-copy inventory when adding runtime UI'); // v667
+  assert.equal(metadata.length,859,'update the audited CUI metadata inventory when adding UI metadata'); // v667
+  assert.equal(announcements.length,48,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]

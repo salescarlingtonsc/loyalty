@@ -56,6 +56,9 @@ test('root is customer-first and business sign-in is a separate clean entry path
     /* nestly_v606: the counter QR lands on /join — a small standalone page that paints
        "Join <business>?" immediately, before the SPA is involved at all. */
     {source:'/join',destination:'/join.html'},
+    /* nestly_v672: /support is the public support desk — a standalone page, because the person
+       who needs it is often the person who cannot get into the app. */
+    {source:'/support',destination:'/support.html'},
     /* v268: /o/<offer-id> is the server-rendered shared-offer page — the ONE route that must
        NOT fall through to the SPA shell, because link-preview crawlers never run JavaScript
        and can only read tags a server actually sent. */

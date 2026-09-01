@@ -3286,6 +3286,12 @@
       "version": "20260901120000",
       "name": "nestly_v669_numeric_honesty",
       "sourcePath": "db/migrations/20260901_nestly_v669_numeric_honesty.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902000000",
+      "name": "nestly_v672_public_support_desk",
+      "sourcePath": "db/migrations/20260902_nestly_v672_public_support_desk.sql"
     }
   ]
 }

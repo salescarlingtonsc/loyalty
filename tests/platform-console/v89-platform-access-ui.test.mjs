@@ -33,7 +33,7 @@ test('super admin sees every module plus grant management with write access',asy
     // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
     // companies merged into a sibling route as a tab/mode (see
     // legacyRouteRedirects), so they no longer appear as their own routes.
-    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','access']
+    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access']
   );
 });
 

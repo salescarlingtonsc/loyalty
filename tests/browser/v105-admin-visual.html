@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="009eb3fa6a462733b27753d3666d4c516ddd671ff0e1de62ad4257b597f5afcd">
+<meta name="v105-production-component-sha256" content="d66db7974d30da6e9d297a3a6460532d813ae517622d1bd704909b7c4b120b05">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -5912,6 +5912,13 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .platform-drawer-close{min-width:44px;padding:10px}
 .platform-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .platform-detail-section{margin-top:14px}.platform-detail-section h2{font-size:15px;margin-bottom:8px}
+/* V672: a support message is free text a member of the public typed. It keeps their line
+   breaks, wraps rather than stretching the dialog, and scrolls once it is long. */
+.platform-support-message{
+  white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;margin:4px 0 14px;
+  background:#F8F6F2;border:1px solid var(--line);border-radius:10px;padding:12px;
+  max-height:320px;overflow-y:auto
+}
 .platform-detail-section pre{
   white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;
   background:#F8F6F2;border:1px solid var(--line);border-radius:10px;padding:12px
@@ -6490,7 +6497,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 009eb3fa6a46</span>
+<span class="v105-provenance">v105 production-component harness · d66db7974d30</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6615,7 +6622,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'009eb3fa6a462733b27753d3666d4c516ddd671ff0e1de62ad4257b597f5afcd',
+  sourceHash:'d66db7974d30da6e9d297a3a6460532d813ae517622d1bd704909b7c4b120b05',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

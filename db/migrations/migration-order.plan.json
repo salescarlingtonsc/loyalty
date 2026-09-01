@@ -3291,6 +3291,12 @@
       "path": "db/migrations/20260901_nestly_v669_numeric_honesty.sql",
       "semanticVersion": "v669",
       "proposedDeployVersion": "20260901120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v672_public_support_desk.sql",
+      "semanticVersion": "v672",
+      "proposedDeployVersion": "20260902000000"
     }
   ]
 }
