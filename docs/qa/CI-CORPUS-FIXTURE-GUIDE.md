@@ -145,6 +145,7 @@ Known so far:
 | `public.clients` (acquisition path) | `app.first_acquired_via` |
 | `public.customer_profiles` | `app.c42_profile_identity` |
 | `public.customer_links` | `app.customer_link_insert_id` |
+| `public.sales` (reversal rows) | **a two-GUC token pair**: `app.sale_reversal_insert_id` (= the new row's own id) AND `app.sale_reversal_original_id` (= the id being reversed) — the v20 guard checks both, unlike the single-GUC pattern above |
 
 Add to this table when you find another, rather than working around the guard.
 
