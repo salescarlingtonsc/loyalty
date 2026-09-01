@@ -51,6 +51,12 @@ on conflict (business_id) do update set approval_status='approved',
   decided_by=excluded.decided_by, decided_at=excluded.decided_at, decision_reason=excluded.decision_reason;
 insert into public.business_subscription_lifecycle_v94(business_id,workspace_paused)
 select biz,false from _c on conflict (business_id) do update set workspace_paused=false;
+-- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+-- row on top of the approved+unpaused workspace above.
+insert into public.subscriptions(business_id,status,payment_status,current_period_end)
+select biz,'active','paid',now() + interval '30 days' from _c
+on conflict (business_id) do update
+  set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
 
 with i as (insert into public.clients(business_id,full_name,phone)
   select biz,'ZZ V403 Customer','8'||substr((random()*90000000+10000000)::bigint::text,1,7) from _c returning id)

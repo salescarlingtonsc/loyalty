@@ -67,6 +67,12 @@ begin
   insert into public.business_subscription_lifecycle_v94(business_id,workspace_paused)
   values(v_business,false)
   on conflict(business_id) do update set workspace_paused=false;
+  -- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+  -- row on top of the approved+unpaused workspace above.
+  insert into public.subscriptions(business_id,status,payment_status,current_period_end)
+  values(v_business,'active','paid',now() + interval '30 days')
+  on conflict(business_id) do update
+    set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
 
   perform set_config('request.jwt.claim.sub',v_owner::text,true);
   perform set_config('request.jwt.claims',json_build_object('sub',v_owner,'role','authenticated')::text,true);

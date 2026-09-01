@@ -48,6 +48,12 @@ begin
   update public.business_workspace_controls_v94
      set approval_status='approved', decided_at=now(), decision_reason='v555 fixture approval'
    where business_id=b;
+  -- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+  -- row on top of the approved workspace above.
+  insert into public.subscriptions (business_id, status, payment_status, current_period_end)
+  values (b, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
   insert into public.staff (business_id, user_id, role, full_name, active)
   values (b, u, 'owner', 'Fixture Owner', true);
   insert into public.clients (id, business_id, full_name) values (c1,b,'Fixture Prue');

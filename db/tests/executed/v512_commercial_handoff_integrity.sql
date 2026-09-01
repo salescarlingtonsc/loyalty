@@ -81,7 +81,13 @@ begin
   values(v_junior,'V512 Junior Seller','junior',current_date,v_admin) returning id into v_junior_consultant;
 
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
 
   -- =====================================================================
   -- FIXTURE 1 -- the real v510 chain: lead, CLOSED_WON, conversion, payment.
@@ -98,8 +104,13 @@ begin
   insert into public.sme_prospect_assignments(prospect_id,consultant_id,assigned_by,reason,created_at)
   values(v_prospect,v_source_consultant,v_admin,'originated the lead',clock_timestamp()-interval '1 day');
 
+  -- v625: app.v89_platform_role() returns null on a non-Google session. v_sales is a genuine
+  -- platform_access_grants_v89 sales_staff actor (inserted above), so add the same claims a
+  -- real platform login would present.
   perform set_config('request.jwt.claim.sub',v_sales::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_sales,'role','authenticated')::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_sales,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   select version into v_version from public.sme_prospects where id=v_prospect;
   v_claim:=public.platform_claim_lead_v510(v_prospect,v_version,'51200000-0000-4000-8000-000000000011');
   if (v_claim->>'owner')::uuid<>v_consultant then raise exception 'FAIL claim did not take ownership';end if;
@@ -145,7 +156,13 @@ begin
   exception when sqlstate '23514' then null;end;
 
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   v_conversion:=public.convert_sme_prospect_v79(v_prospect,(v_transition->>'version')::bigint,
     'v512-payment-ready-account');
   v_business:=(v_conversion->>'business_id')::uuid;
@@ -176,8 +193,13 @@ begin
   v_payment_result:=public.platform_record_manual_payment_v156(v_invoice,240000,'V512-PAYMENT-PROOF',
     current_date,'6357',v_upload->>'object_path','51200000-0000-4000-8000-000000000021');
   v_payment:=(v_payment_result#>>'{payment,id}')::uuid;
+  -- v625: is_super_admin() now additionally requires a Google-SSO session. v_verifier IS a
+  -- genuine super_admins row (inserted above), so add the same claims a real platform login
+  -- would present.
   perform set_config('request.jwt.claim.sub',v_verifier::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_verifier,'role','authenticated')::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_verifier,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   perform public.platform_verify_manual_payment_v156(v_payment,'verified','Independent synthetic verification',
     '51200000-0000-4000-8000-000000000022');
 
@@ -226,7 +248,13 @@ begin
   -- FIXTURE 2 -- immutability, amendment and the maker-checker mechanism.
   -- =====================================================================
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   insert into public.sme_companies(legal_name,registration_number)
   values('V512 Terms Proof','T25LL5121B') returning id into v_p2_company;
   insert into public.sme_prospects(company_id,current_stage_key,assigned_consultant_id,
@@ -341,14 +369,25 @@ begin
     'ungated again','owner-v512@example.invalid','accepted',clock_timestamp(),v_consultant,v_admin);
 
   -- Only a super admin may price the platform's own approval threshold.
+  -- v625: app.v89_platform_role() returns null on a non-Google session. v_sales is a genuine
+  -- platform_access_grants_v89 sales_staff actor (inserted above), so add the same claims a
+  -- real platform login would present.
   perform set_config('request.jwt.claim.sub',v_sales::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_sales,'role','authenticated')::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_sales,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   begin
     perform public.platform_set_discount_policy_v512(null,50,'a salesperson raising their own ceiling');
     raise exception 'FAIL a salesperson configured the discount threshold';
   exception when sqlstate '42501' then null;end;
   perform set_config('request.jwt.claim.sub',v_admin::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
 
   -- =====================================================================
   -- FIXTURE 3 -- verified payment with no applicable v78 rate.
@@ -400,8 +439,13 @@ begin
   v_payment_result:=public.platform_record_manual_payment_v156(v_invoice3,120000,'V512-UNRATED-PROOF',
     current_date,'6357',v_upload3->>'object_path','51200000-0000-4000-8000-000000000034');
   v_payment3:=(v_payment_result#>>'{payment,id}')::uuid;
+  -- v625: is_super_admin() now additionally requires a Google-SSO session. v_verifier IS a
+  -- genuine super_admins row (inserted above), so add the same claims a real platform login
+  -- would present.
   perform set_config('request.jwt.claim.sub',v_verifier::text,true);
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_verifier,'role','authenticated')::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_verifier,'role','authenticated',
+    'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+    'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   perform public.platform_verify_manual_payment_v156(v_payment3,'verified','Independent synthetic verification',
     '51200000-0000-4000-8000-000000000035');
 

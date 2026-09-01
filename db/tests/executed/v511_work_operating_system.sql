@@ -48,8 +48,14 @@ begin
   insert into public.platform_consultants(user_id,display_name,tier,employment_started_on,created_by)
   values(v_peer,'V511 Peer Seller','junior',current_date,v_admin) returning id into v_other;
 
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
   perform set_config('request.jwt.claims',
-    jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+    jsonb_build_object('sub',v_admin,'role','authenticated',
+      'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+      'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
 
   insert into public.businesses(name,slug,legal_name,is_synthetic)
   values('V511 Work Proof','v511-work-proof','V511 Work Proof',true) returning id into v_business;
@@ -204,8 +210,13 @@ begin
     raise exception 'FAIL business 360 returned no timeline';end if;
 
   -- 12. A salesperson sees their own work, and may not claim another's.
+  -- v625: app.v89_platform_role() returns null on a non-Google session. v_sales is a genuine
+  -- platform_access_grants_v89 sales_staff actor (inserted above), so add the same claims a
+  -- real platform login would present.
   perform set_config('request.jwt.claims',
-    jsonb_build_object('sub',v_sales,'role','authenticated')::text,true);
+    jsonb_build_object('sub',v_sales,'role','authenticated',
+      'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+      'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   v_json:=public.platform_list_work_v511('mine',null,50);
   if jsonb_array_length(v_json->'items')=0 then
     raise exception 'FAIL the salesperson could not see their own work';end if;
