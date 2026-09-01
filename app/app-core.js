@@ -2179,6 +2179,10 @@ function applyCustomerThemeV190(preference=customerThemePreferenceV190()){
   /* Keep the browser chrome with the surface rather than with the device. */
   const meta=globalThis.document?.querySelector('meta[name="theme-color"]:not([media])');
   if(meta)meta.setAttribute('content',dark?'#0F1115':'#F4F2EE');
+  /* The native status bar is the same promise as theme-color, kept for the iOS shell: the bar
+     belongs to the surface, so a light Peekaa on a dark-mode phone gets dark icons. No-op on web
+     and on a native build without the plugin. */
+  try{globalThis.NestlyNativeBridge?.syncStatusBar?.(dark)}catch{}
   return preference;
 }
 /* A device-following customer must track a change made while the app is open. */

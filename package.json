@@ -31,8 +31,8 @@
     "build": "node scripts/quality/build-static.mjs",
     "validate": "npm run quality && npm run icons:check && npm run bundle-stamp:check && npm run app-css:check && npm run runtime-config:check && npm run migration-manifest:check && npm run canonical-migrations:check && npm test && npm run build",
     "icons": "node scripts/brand/generate-icons.mjs",
-  "icons:check": "node scripts/brand/generate-icons.mjs --check",
-  "bundle-stamp": "node scripts/quality/stamp-app-bundle.mjs --write",
+    "icons:check": "node scripts/brand/generate-icons.mjs --check",
+    "bundle-stamp": "node scripts/quality/stamp-app-bundle.mjs --write",
     "bundle-stamp:check": "node scripts/quality/stamp-app-bundle.mjs --check",
     "workspace-copy": "node scripts/quality/generate-workspace-copy-v97.mjs --write",
     "workspace-copy:check": "node scripts/quality/generate-workspace-copy-v97.mjs",
@@ -47,7 +47,8 @@
     "@capacitor/haptics": "8.0.0",
     "@capacitor/ios": "8.5.0",
     "@capacitor/network": "8.0.0",
-    "@capacitor/share": "8.0.0"
+    "@capacitor/share": "8.0.0",
+    "@capacitor/status-bar": "^8.0.3"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.0",

@@ -38,6 +38,17 @@
       }
       return false;
     },
+    /* The status bar follows the APP's surface, not the device's appearance. Peekaa's theme is a
+       stored preference that defaults to light (v190), so on a dark-mode phone the two disagree
+       and iOS would paint white icons over Peekaa's light page. Called from
+       applyCustomerThemeV190(), which is the one place the surface flips.
+       Capacitor's Style.Light means "dark icons, for a light background" — the naming describes
+       the background, not the icons, and reading it the other way inverts the fix. */
+    async syncStatusBar(dark = false) {
+      if (!isNative || !plugins.StatusBar?.setStyle) return false;
+      await plugins.StatusBar.setStyle({ style: dark ? 'DARK' : 'LIGHT' });
+      return true;
+    },
     async openExternal(url) {
       const target = new URL(url, global.location.href);
       if (target.protocol !== 'https:') throw new Error('Only HTTPS links are allowed');
