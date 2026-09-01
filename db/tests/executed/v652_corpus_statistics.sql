@@ -58,11 +58,11 @@
 -- S3   A CI THAT SPANS ZERO CANNOT BE A PATTERN, even with both arms comfortably over the floor.
 --      treated 26/50 (52%), comparison 24/50 (48%). n=50 per arm, well over min_arm=10.
 --        p1=0.52, p2=0.48, diff=0.04
---        var1 = 0.52*0.48/50 = 0.004992, var2 = 0.48*0.52/50 = 0.004992, sum = 0.009984
---        se = sqrt(0.009984) ≈ 0.0999200
---        1.96*se ≈ 0.1958432
---        lo ≈ 0.04 - 0.1958432 = -0.1558432  => -15.6pp (rounded)
---        hi ≈ 0.04 + 0.1958432 =  0.2358432  =>  23.6pp (rounded)
+--        Newcombe hybrid Wilson (v669), z=1.96, z^2/n = 0.076832, denom = 1.076832:
+--          arm1 Wilson: centre .51857, adjsd .13346 -> [.38511, .65203]
+--          arm2 Wilson: centre .48143, adjsd .13346 -> [.34797, .61489]
+--        lo = .04 - sqrt((.52-.38511)^2 + (.61489-.48)^2) = .04 - .19076 = -.15076 => -15.1pp
+--        hi = .04 + sqrt((.65203-.52)^2 + (.48-.34797)^2) = .04 + .18672 =  .22672 =>  22.7pp
 --      lo <= 0 <= hi (the interval straddles zero: 52% cannot be told apart from 48% at n=50
 --      per arm) => verdict MUST be 'insufficient', never 'strong_pattern'.
 --
@@ -70,16 +70,16 @@
 --      treated 100/200 (50%), comparison 60/200 (30%). n=200 per arm.
 --        p1=0.5, p2=0.3, diff=0.2 exactly => absolute_pp = 20.0 exactly
 --        relative = p1/p2 = 0.5/0.3 = 1.6666... => round(.,2) = 1.67
---        var1 = 0.5*0.5/200 = 0.00125, var2 = 0.3*0.7/200 = 0.00105, sum = 0.0023
---        se = sqrt(0.0023) ≈ 0.0479583
---        1.96*se ≈ 0.0939983
---        lo ≈ 0.2 - 0.0939983 = 0.1060017 => 10.6pp (rounded)
---        hi ≈ 0.2 + 0.0939983 = 0.2939983 => 29.4pp (rounded)
---      Interval is strictly positive (10.6..29.4), doesn't span zero, both arms over the floor
+--        Newcombe hybrid Wilson (v669), z^2/n = 0.019208, denom = 1.019208:
+--          arm1 Wilson (p=.5, symmetric): [.43136, .56864]
+--          arm2 Wilson: centre .30377, adjsd .06302 -> [.24075, .36679]
+--        lo = .2 - sqrt((.5-.43136)^2 + (.36679-.3)^2) = .2 - .09577 = .10423 => 10.4pp
+--        hi = .2 + sqrt((.56864-.5)^2 + (.3-.24075)^2) = .2 + .09068 = .29068 => 29.1pp
+--      Interval is strictly positive (10.4..29.1), doesn't span zero, both arms over the floor
 --      => under the default ceiling ('strong_pattern') this is the one case in the whole fixture
 --      that is allowed to say 'strong_pattern'. S4 asserts the numeric payload (rates.treated_pct
 --      =50.0, rates.comparison_pct=30.0, difference.absolute_pp=20.0 exactly, difference.relative
---      =1.67 exactly, difference.confidence_95_pp within 0.1pp of [10.6, 29.4]) travels alongside
+--      =1.67 exactly, difference.confidence_95_pp within 0.1pp of [10.4, 29.1]) travels alongside
 --      the verdict word, and that `sample` echoes the exact input counts.
 --
 -- S5   THE VERDICT CEILING IS HONOURED — reusing S4's exact data (the one dataset in this fixture
@@ -91,33 +91,47 @@
 --      v550's own call site relies on (it always passes 'early_signal' because its baseline is
 --      never a holdout).
 --
--- S6   THE INTERVAL METHOD IS DISCLOSED, AND ITS KNOWN LIMITATION IS RECORDED.
---      S6a asserts difference.method equals the exact string the migration hardcodes:
---        'normal approximation, 95% interval on the difference in rates'
---      i.e. an UNADJUSTED NORMAL-APPROXIMATION (WALD) INTERVAL — no continuity correction, no
---      Wilson/Agresti-Coull adjustment. Wald intervals are known to misbehave at small n or at
---      rates near 0%/100%, because the variance estimate p(1-p)/n collapses toward zero exactly
---      where the true sampling uncertainty is largest.
+-- S6   THE INTERVAL METHOD IS DISCLOSED, AND THE FORMER DEFECT NOW STAYS LEGAL.
+--      v669 (db/migrations/20260901_nestly_v669_numeric_honesty.sql) replaced the interval
+--      arithmetic with Newcombe's hybrid Wilson score method: a Wilson score interval computed
+--      independently on each arm (bounded to [0,1] by construction), then combined into a
+--      difference interval that is therefore bounded to [-1,1] by construction. This closes the
+--      defect these two assertions used to hold red (an unadjusted Wald interval could exceed the
+--      only legal range for a percentage-point difference, [-100,100]).
 --
---      S6b is the constructed extreme case: treated 9/10 (90%), comparison 1/10 (10%), n=10 per
---      arm (AT the default floor, not below it, so the floor does not intervene):
---        p1=0.9, p2=0.1, diff=0.8
---        var1 = 0.9*0.1/10 = 0.009, var2 = 0.1*0.9/10 = 0.009, sum = 0.018
---        se = sqrt(0.018) ≈ 0.1341641
---        1.96*se ≈ 0.2629616
---        lo ≈ 0.8 - 0.2629616 = 0.5370384 =>  53.7pp (rounded)
---        hi ≈ 0.8 + 0.2629616 = 1.0629616 => 106.3pp (rounded)
---      A percentage-point DIFFERENCE between two rates can never legally exceed 100pp in
---      magnitude (100% minus 0% is the most extreme gap that exists). 106.3pp is outside that
---      legal range. This is NOT an endorsement of the method and NOT something to special-case
---      away in the fixture — it is exactly the failure mode the v652 migration's own comment
---      warns about ("no non-randomised comparison ... may ever report strong_pattern" is a
---      verdict-level safeguard; it does nothing to keep the numeric interval itself inside
---      [-100, 100]pp). The assertion below is intentionally left to FAIL if the product's Wald
---      interval produces an out-of-range bound, per the standing instruction not to weaken a
---      finding that is real. A Wilson or Agresti-Coull interval would not do this (both are
---      bounded to [0,1] on each arm by construction and only asymptotically approach a Wald
---      interval as n grows), which is the recorded limitation, not a suggested fix.
+--      S6a asserts difference.method equals the exact string the migration now hardcodes:
+--        'Newcombe hybrid Wilson score, 95% interval on the difference in rates'
+--
+--      S6b is the same constructed extreme case as before: treated 9/10 (90%), comparison 1/10
+--      (10%), n=10 per arm (AT the default floor, not below it, so the floor does not intervene).
+--      Hand-computed Newcombe bounds (z=1.96, z^2=3.8416), worked by hand before this assertion
+--      was written:
+--        Wilson per arm — denom = 1 + z^2/n = 1.38416 for both arms (n=10 each).
+--        Arm1 (p=0.9): centre = 0.9 + z^2/20 = 1.09208
+--          adjvar = 0.9*0.1/10 + z^2/400 = 0.009 + 0.009604 = 0.018604, adjsd ≈ 0.1363962
+--          l1 = (1.09208 - 1.96*0.1363962)/1.38416 ≈ 0.595844
+--          u1 = (1.09208 + 1.96*0.1363962)/1.38416 ≈ 0.982123
+--        Arm2 (p=0.1): centre = 0.1 + z^2/20 = 0.29208 (same adjvar/adjsd as arm1, by symmetry
+--          of p(1-p) under p -> 1-p)
+--          l2 = (0.29208 - 1.96*0.1363962)/1.38416 ≈ 0.017879
+--          u2 = (0.29208 + 1.96*0.1363962)/1.38416 ≈ 0.404156
+--        (sanity check: l1+u2 = 1.000000, u1+l2 = 1.000002 — exact under this p/1-p symmetry)
+--        diff = 0.9 - 0.1 = 0.8
+--        lower = diff - sqrt((p1-l1)^2 + (u2-p2)^2) = 0.8 - sqrt(0.304156^2 + 0.304156^2)
+--              = 0.8 - 0.304156*sqrt(2) ≈ 0.8 - 0.430154 = 0.369846 => 37.0pp (rounded)
+--        upper = diff + sqrt((u1-p1)^2 + (p2-l2)^2) = 0.8 + sqrt(0.082123^2 + 0.082121^2)
+--              ≈ 0.8 + 0.116138 = 0.916138 => 91.6pp (rounded)
+--      Both bounds must lie within [-100,100] (they do, by construction), and the upper bound
+--      must be strictly less than 100 (91.6 < 100). Asserted at a stated tolerance of ±0.2pp
+--      against the hand-computed [37.0, 91.6], per the same discipline as every other truth-table
+--      check in this fixture: predetermined numbers, not `> 0` spot checks.
+--
+--      NOTE (updated with v669): S1b, S3 and S4 originally pinned WALD-specific interval
+--      numbers, deliberately, so a change of method would surface here rather than pass
+--      silently. It did: switching to the Newcombe hybrid Wilson interval turned all three
+--      red, and they were then RE-PINNED to independently hand-computed Newcombe values by
+--      the verifying session (not copied from function output). The arithmetic lives beside
+--      each assertion.
 
 \set ON_ERROR_STOP on
 
@@ -208,15 +222,21 @@ begin
     insert into _fail values ('S1b',
       format('expected a 100.0pp gap (100%% vs 0%%), got %s', g->'difference'->>'absolute_pp'));
   end if;
-  -- Recorded Wald limitation: a perfect 5/5 split against a perfect 0/5 collapses se to zero,
-  -- so the 95% interval is a single point (100.0, 100.0) at n=5 per arm. That IS today's
-  -- documented behaviour (see file header) — not asserted as a failure, just pinned so a future
-  -- change to the method is visible here.
+  /* Re-pinned for v669 (Newcombe hybrid Wilson). Under Wald a perfect 5/5 vs 0/5 collapsed the
+     se to zero and produced the degenerate point interval [100.0, 100.0] — the old pin, kept
+     exactly so a method change would show up here, which it did. Newcombe's per-arm Wilson
+     bounds give a REAL lower bound at n=5:
+       arm1 p=1, n=5: denom 1.76832, centre .78272, adjsd .21725 -> l1 .56547, u1 .99997
+       arm2 p=0, n=5: symmetric                          -> l2 0,      u2 .43450
+       lower = 1 - sqrt((1-.56547)^2 + (.43450-0)^2) = 1 - .61450 = .38550 -> 38.6pp
+       upper = 1 + sqrt((~0)^2 + 0^2)                                       = 100.0pp
+     A certain-looking 100pp gap at five per arm now honestly admits it could be as low as
+     ~39pp — which is the entire point of the change. */
   v_lo := (g->'difference'->'confidence_95_pp'->>0)::numeric;
   v_hi := (g->'difference'->'confidence_95_pp'->>1)::numeric;
-  if v_lo <> 100.0 or v_hi <> 100.0 then
-    insert into _fail values ('S1b-limitation',
-      format('expected the documented zero-width degenerate interval [100.0,100.0] at n=5 with a perfect split, got [%s,%s]', v_lo, v_hi));
+  if abs(v_lo - 38.6) > 0.1 or abs(v_hi - 100.0) > 0.1 then
+    insert into _fail values ('S1b-interval',
+      format('hand-computed Newcombe CI is [38.6, 100.0] pp +/-0.1, got [%s,%s]', v_lo, v_hi));
   end if;
 
   ---------------------------------------------------------------------------
@@ -249,9 +269,11 @@ begin
     insert into _fail values ('S3',
       format('expected an interval straddling zero, got [%s,%s] which does not', v_lo, v_hi));
   end if;
-  if abs(v_lo - (-15.6)) > 0.1 or abs(v_hi - 23.6) > 0.1 then
+  /* Re-pinned for v669: Wald gave [-15.6, 23.6]; Newcombe (Wilson l/u per arm at n=50:
+     arm1 .38511/.65203, arm2 .34797/.61489; diff .04 -/+ .19076/.18672) gives [-15.1, 22.7]. */
+  if abs(v_lo - (-15.1)) > 0.1 or abs(v_hi - 22.7) > 0.1 then
     insert into _fail values ('S3',
-      format('hand-computed CI is [-15.6, 23.6] pp +/-0.1, got [%s,%s]', v_lo, v_hi));
+      format('hand-computed Newcombe CI is [-15.1, 22.7] pp +/-0.1, got [%s,%s]', v_lo, v_hi));
   end if;
 
   ---------------------------------------------------------------------------
@@ -278,9 +300,11 @@ begin
   end if;
   v_lo := (g->'difference'->'confidence_95_pp'->>0)::numeric;
   v_hi := (g->'difference'->'confidence_95_pp'->>1)::numeric;
-  if abs(v_lo - 10.6) > 0.1 or abs(v_hi - 29.4) > 0.1 then
+  /* Re-pinned for v669: Wald gave [10.6, 29.4]; Newcombe (Wilson bounds at n=200:
+     arm1 .43136/.56864, arm2 .24075/.36679; diff .20 - .09577 / + .09068) gives [10.4, 29.1]. */
+  if abs(v_lo - 10.4) > 0.1 or abs(v_hi - 29.1) > 0.1 then
     insert into _fail values ('S4',
-      format('hand-computed CI is [10.6, 29.4] pp +/-0.1, got [%s,%s]', v_lo, v_hi));
+      format('hand-computed Newcombe CI is [10.4, 29.1] pp +/-0.1, got [%s,%s]', v_lo, v_hi));
   end if;
   if g->>'verdict' <> 'strong_pattern' then
     insert into _fail values ('S4',
@@ -338,16 +362,15 @@ begin
   g := app.evidence_block_v1(
     'ZZ v652 S6a population', 'ZZ v652 S6a denominator', current_date-60, current_date,
     200, 100, 200, 60, 'ZZ v652 S6a comparison');
-  if g->'difference'->>'method' <> 'normal approximation, 95% interval on the difference in rates' then
+  if g->'difference'->>'method' <> 'Newcombe hybrid Wilson score, 95% interval on the difference in rates' then
     insert into _fail values ('S6a',
-      format('difference.method changed from the documented Wald disclosure: %s', g->'difference'->>'method'));
+      format('difference.method changed from the documented Newcombe/Wilson disclosure: %s', g->'difference'->>'method'));
   end if;
 
   ---------------------------------------------------------------------------
   -- S6b — extreme small-n, near-boundary rates (90% vs 10%, n=10/arm, AT not below the floor).
-  -- RECORDED LIMITATION, not a fix: an unadjusted Wald interval on the difference can produce a
-  -- bound outside the only legally possible range for a percentage-point difference, [-100,100].
-  -- This assertion is deliberately left able to fail — see file header. It is NOT weakened.
+  -- v669 CLOSED this defect: Newcombe hybrid Wilson score bounds are legal by construction. Both
+  -- returned bounds must lie within [-100,100], and the upper bound must be strictly < 100.
   ---------------------------------------------------------------------------
   g := app.evidence_block_v1(
     'ZZ v652 S6b population', 'ZZ v652 S6b denominator', current_date-10, current_date,
@@ -357,17 +380,21 @@ begin
   end if;
   v_lo := (g->'difference'->'confidence_95_pp'->>0)::numeric;
   v_hi := (g->'difference'->'confidence_95_pp'->>1)::numeric;
-  if abs(v_lo - 53.7) > 0.2 or abs(v_hi - 106.3) > 0.2 then
+  if abs(v_lo - 37.0) > 0.2 or abs(v_hi - 91.6) > 0.2 then
     insert into _fail values ('S6b',
-      format('hand-computed CI is [53.7, 106.3] pp +/-0.2 for 90%% vs 10%% at n=10/arm, got [%s,%s] -- recompute the truth table before trusting the next check', v_lo, v_hi));
+      format('hand-computed Newcombe CI is [37.0, 91.6] pp +/-0.2 for 90%% vs 10%% at n=10/arm, got [%s,%s] -- recompute the truth table before trusting the next check', v_lo, v_hi));
   end if;
   if v_lo < -100 or v_lo > 100 or v_hi < -100 or v_hi > 100 then
     insert into _fail values ('S6b-defect',
-      format('SUSPECTED PRODUCT DEFECT: app.evidence_block_v1 returned a percentage-point difference bound of [%s,%s], outside the only legal range [-100,100] for a difference between two rates. This is the unadjusted-Wald-interval limitation the v652 migration comment does not disclose numerically -- a Wilson/Agresti-Coull interval is bounded by construction and would not do this. Not fixed here per instructions; do not weaken this assertion.', v_lo, v_hi));
+      format('app.evidence_block_v1 returned a percentage-point difference bound of [%s,%s], outside the only legal range [-100,100] for a difference between two rates. The Newcombe hybrid Wilson score fix (v669) is bounded by construction and must never do this.', v_lo, v_hi));
+  end if;
+  if v_hi >= 100 then
+    insert into _fail values ('S6b-boundary',
+      format('upper bound %s is not strictly less than 100 -- the whole point of the Wilson fix is that even this extreme 90%% vs 10%% case stays inside the legal range with room to spare', v_hi));
   end if;
   if g->>'verdict' = 'insufficient' then
     insert into _fail values ('S6b-context',
-      'expected this n=10/arm, non-overlapping-CI case to clear the floor and NOT be capped to insufficient, which would have hidden the out-of-range interval behind a floor refusal instead of exposing it');
+      'expected this n=10/arm, non-overlapping-CI case to clear the floor and NOT be capped to insufficient, which would have hidden the corrected interval behind a floor refusal instead of exposing it');
   end if;
 
   reset role;
