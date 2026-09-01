@@ -212,9 +212,14 @@ customer-visible payload while unlocking nothing a wallet uses, so v668 left it 
 
 ## Suite state
 
-Full executed suite: **25 failures → 8.** The remaining eight are the six files plus the
-concurrency lane that already failed on *unmodified* `origin/main`, plus v552 (D6, held red
-deliberately). This branch introduces zero failures of its own.
+Full executed suite: **25 failures → 7** (corrected 2026-09-02; an earlier revision said
+"→ 8" and claimed the concurrency lane "already failed on unmodified origin/main", which
+independent verification disproved — the lane never RAN there, because the v599 migration
+failure suppressed it; it was the 16th chain-exposure failure, since triaged and green).
+The remaining seven are the six executed tests that already failed on unmodified
+`origin/main`, plus v552 (D6, held red deliberately). Four of those six now fail under the
+full chain with the same v620 fixture-class error the triage repaired elsewhere — cheap
+follow-up candidates, though their original causes may still lie beneath.
 
 ## Against the owner's acceptance target — updated
 
