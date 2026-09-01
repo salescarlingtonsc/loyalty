@@ -1,0 +1,18 @@
+# v667 regression evidence — BEFORE the fix (v650 as shipped)
+# commit: dbb9d4dc  date: 2026-08-31T17:16:31Z
+
+── MIGRATED (against peekaa_migrated) ──────────────────────
+  FAIL  v667_ci_access_boundaries.sql
+        psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v667_ci_access_boundaries.sql:367: ERROR:  v667: 9 assertion(s) failed:
+          B1: a firm owner reached get_ci_acquisition_v1; CI is platform/consulting only (PRODUCT-TRUTH:228)
+          B1: a firm owner reached get_ci_category_mix_v1
+          B1: a firm owner reached get_ci_contactability_v1
+          B3: the assigned consultant was refused (42501)
+          B3: the super admin was refused (42501)
+          B4: get_ci_category_mix_v1 takes no branch argument; branch scope is absent
+          B5: no branch argument exists to validate
+          B6: small-cell read raised 42501
+          B7: above-floor read raised 42501
+        CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
+
+── summary ────────────────────────────────────────────

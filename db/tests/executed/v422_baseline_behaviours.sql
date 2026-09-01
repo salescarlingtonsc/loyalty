@@ -90,6 +90,18 @@ begin
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_biz, false)
   on conflict (business_id) do update set workspace_paused = false;
+  /* v620 (nestly_v620_entitlement_authority): business_operational_v620 additionally requires
+     a paid (or trialing) subscriptions row, not merely an approved+unpaused workspace. Without
+     this the fixture fails with "owner loyalty configuration access required" under the
+     migrated schema, which reads like a Rewards bug and is not one — it is the same
+     operational-business precondition this fixture already sets up, just one clause
+     stricter. The table exists at the v422 baseline watermark too, so this insert is a no-op
+     precondition there. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
 
   -- Act as the owner from here on: every RPC below resolves the caller through auth.uid().
   perform set_config('request.jwt.claims',

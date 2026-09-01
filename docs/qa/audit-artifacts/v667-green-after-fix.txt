@@ -1,0 +1,7 @@
+# v667 regression evidence — AFTER the fix
+# commit: dbb9d4dc  date: 2026-08-31T17:16:48Z
+
+── MIGRATED (against peekaa_migrated) ──────────────────────
+  ok    v667_ci_access_boundaries.sql  (768ms)
+
+── summary ────────────────────────────────────────────

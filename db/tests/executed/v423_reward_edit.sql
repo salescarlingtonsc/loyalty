@@ -94,6 +94,12 @@ begin
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_biz, false)
   on conflict (business_id) do update set workspace_paused=false;
+  -- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+  -- row on top of the approved+unpaused workspace above.
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
   -- v423 fix at integration: the customer readers gate on platform feature flags.
   insert into app.platform_feature_flags(feature_key, enabled)
   values ('customer_wallet', true), ('customer_claims', true)

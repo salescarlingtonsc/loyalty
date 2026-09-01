@@ -360,6 +360,12 @@ begin
    where business_id = v_biz_v;
   update public.business_subscription_lifecycle_v94
      set workspace_paused = false where business_id = v_biz_v;
+  -- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+  -- row on top of the approved+unpaused workspace above.
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz_v, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
   insert into app.platform_feature_flags(feature_key,enabled) values ('customer_wallet',true)
     on conflict (feature_key) do update set enabled = true;
 
@@ -419,6 +425,12 @@ begin
    where business_id = v_biz_p;
   update public.business_subscription_lifecycle_v94
      set workspace_paused = false where business_id = v_biz_p;
+  -- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+  -- row on top of the approved+unpaused workspace above.
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz_p, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
 
   -- A16 — the module guard on the customer screen is unchanged, in both phases. With the
   -- workspace approved and the module enabled, the ONLY remaining reason to refuse is the

@@ -1,0 +1,23 @@
+# v667 consultant-payload test — BEFORE the fix (renderer as shipped)
+# date: 2026-08-31T17:26:37Z
+
+✖ v667 the KPI tiles read the emitted keys, not the superseded ones (1.077041ms)
+✖ v667 the returning rate is derived and shows its numerator and denominator (0.294375ms)
+✖ v667 an empty firm reports no customers rather than a 0.0% rate (0.256625ms)
+✖ v667 customer groups render from the top-level cohorts object (0.277084ms)
+✖ v667 groups are ordered by size and invent no columns the server never sent (0.260208ms)
+✖ v667 the affinity table renders support and confidence, with the denominator (0.249542ms)
+✖ v667 CONTRACT: every payload key the renderer reads is one the SQL emits (0.269084ms)
+✖ v667 the renderer no longer references any superseded key name (0.048333ms)
+ℹ tests 8
+ℹ pass 0
+ℹ fail 8
+✖ failing tests:
+✖ v667 the KPI tiles read the emitted keys, not the superseded ones (1.077041ms)
+✖ v667 the returning rate is derived and shows its numerator and denominator (0.294375ms)
+✖ v667 an empty firm reports no customers rather than a 0.0% rate (0.256625ms)
+✖ v667 customer groups render from the top-level cohorts object (0.277084ms)
+✖ v667 groups are ordered by size and invent no columns the server never sent (0.260208ms)
+✖ v667 the affinity table renders support and confidence, with the denominator (0.249542ms)
+✖ v667 CONTRACT: every payload key the renderer reads is one the SQL emits (0.269084ms)
+✖ v667 the renderer no longer references any superseded key name (0.048333ms)

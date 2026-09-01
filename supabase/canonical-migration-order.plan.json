@@ -3268,6 +3268,24 @@
       "version": "20260901090000",
       "name": "nestly_v666_gift_scan_opens_the_sale",
       "sourcePath": "db/migrations/20260901_nestly_v666_gift_scan_opens_the_sale.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260901100000",
+      "name": "nestly_v667_ci_access_boundaries",
+      "sourcePath": "db/migrations/20260901_nestly_v667_ci_access_boundaries.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260901110000",
+      "name": "nestly_v668_complete_v523_entitlement",
+      "sourcePath": "db/migrations/20260901_nestly_v668_complete_v523_entitlement.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260901120000",
+      "name": "nestly_v669_numeric_honesty",
+      "sourcePath": "db/migrations/20260901_nestly_v669_numeric_honesty.sql"
     }
   ]
 }

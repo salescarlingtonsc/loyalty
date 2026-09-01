@@ -81,6 +81,16 @@ begin
    where business_id=v_biz;
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_biz, false) on conflict (business_id) do update set workspace_paused=false;
+  -- v620: business_operational_v620 additionally requires a paid (or trialing) subscriptions
+  -- row. app.v32_customer_wallet_context ANDs the customer's enabled_modules against
+  -- app.business_workspace_open_v94, so without this the wallet context silently comes back
+  -- with enabled_modules = '{}' and customer_get_stamp_card_v323 returns {"enabled": false} —
+  -- no exception, just a card with no milestones, which is why the slot-3 lookup below reads
+  -- back <NULL> instead of raising something that names the real cause.
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
   insert into app.platform_feature_flags(feature_key, enabled)
   values ('customer_wallet', true), ('customer_claims', true), ('customer_qr_redemption', true)
   on conflict (feature_key) do update set enabled = true;

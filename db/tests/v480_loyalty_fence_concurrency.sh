@@ -117,9 +117,21 @@ on conflict(business_id) do update set approval_status='approved',decided_by=exc
  decided_at=excluded.decided_at,decision_reason=excluded.decision_reason;
 insert into public.business_subscription_lifecycle_v94(business_id,workspace_paused)
 values('$business',false) on conflict(business_id) do update set workspace_paused=false;
+insert into public.subscriptions(business_id,status,payment_status,current_period_end)
+values('$business','active','paid',now() + interval '30 days')
+on conflict(business_id) do update
+ set status='active',payment_status='paid',current_period_end=now() + interval '30 days';
 select set_config('request.jwt.claims','$claims',true);
 select public.business_set_earning_rule_v359('$business',1.0,null,'none',null);
-select public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id='$business' limit 1));
+-- v507/v565 (born live): a fresh business's first config version is seeded already
+-- 'published' by app.seed_loyalty_config_version, and business_set_earning_rule_v359
+-- edits that live version in place for a points-only business (no stamps split), so
+-- there is no draft left for an unconditional publish_loyalty_config call to publish.
+-- Guard rather than assume: only publish if the version genuinely is still a draft.
+select case when (select status from public.firm_config_versions
+                    where id=(select current_config_version_id from public.loyalty_programs where business_id='$business')) = 'draft'
+  then (select public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id='$business'))::text)
+  else null end;
 select public.set_programmes_v314('$business','{\"points\":true}'::jsonb,gen_random_uuid());
 insert into public.clients(id,business_id,full_name) values
  ('$sale_client','$business','sale writer'),('$adjust_client','$business','adjust writer'),
@@ -230,8 +242,11 @@ race_referrer="$(q -c 'select gen_random_uuid()')"
 race_friend="$(q -c 'select gen_random_uuid()')"
 race_referral="$(q -c 'select gen_random_uuid()')"
 q -c "begin; select set_config('request.jwt.claims','$claims',true);
- select public.set_programmes_v314('$business','{\"referral\":true}'::jsonb,gen_random_uuid());
+ -- v565: set_programmes_v314 now refuses to switch referral ON with no public.referral_programs
+ -- row behind it ('referral_needs_configuration'). save_referral_program_v421 must run first to
+ -- create that row; the Point programme it references was already switched on above.
  select public.save_referral_program_v421('$business',true,'points',100,null,0,true,100,null);
+ select public.set_programmes_v314('$business','{\"referral\":true}'::jsonb,gen_random_uuid());
  insert into public.clients(id,business_id,full_name) values
   ('$race_referrer','$business','race referrer'),('$race_friend','$business','race friend');
  insert into public.referrals(id,business_id,referrer_client_id,referred_client_id,status)

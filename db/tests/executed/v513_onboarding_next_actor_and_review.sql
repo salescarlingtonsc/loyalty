@@ -59,8 +59,14 @@ begin
   insert into public.platform_consultants(user_id,display_name,tier,employment_started_on,created_by)
   values(v_ops,'V513 Synthetic Operator','senior',current_date,v_admin) returning id into v_consultant;
 
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
   perform set_config('request.jwt.claims',
-    jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+    jsonb_build_object('sub',v_admin,'role','authenticated',
+      'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+      'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
 
   -- The business is deliberately NOT converted (source_prospect_id stays null) so
   -- the v510 inactive-shell rails do not demand a verified payment for the fixture
@@ -196,8 +202,14 @@ begin
     raise exception 'FAIL re-submitting spawned a second review work item (%)',v_count;end if;
 
   -- 5. A turn nobody takes surfaces by itself, and twice a day is still once.
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
   perform set_config('request.jwt.claims',
-    jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+    jsonb_build_object('sub',v_admin,'role','authenticated',
+      'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+      'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   update public.business_onboarding_checklists
      set updated_at=clock_timestamp()-interval '48 hours' where id=v_checklist;
   update public.business_onboarding_checklists
@@ -285,8 +297,14 @@ begin
     raise exception 'FAIL a sales operator read the platform onboarding metrics';
   exception when insufficient_privilege then null;end;
 
+  -- v625: is_super_admin() now additionally requires a Google-SSO session (amr method 'oauth'
+  -- plus app_metadata.providers containing 'google'), not merely a super_admins row. v_admin IS
+  -- a genuine platform/super-admin actor in this fixture (inserted into super_admins above), so
+  -- this is the same session, just carrying the claims a real platform login would present.
   perform set_config('request.jwt.claims',
-    jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+    jsonb_build_object('sub',v_admin,'role','authenticated',
+      'amr',jsonb_build_array(jsonb_build_object('method','oauth')),
+      'app_metadata',jsonb_build_object('providers',jsonb_build_array('google')))::text,true);
   v_json:=public.platform_get_onboarding_metrics_v513(100);
   if not exists(select 1 from jsonb_array_elements(v_json->'businesses') entry
     where (entry->>'business_id')::uuid=v_business
