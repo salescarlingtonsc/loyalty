@@ -148,10 +148,32 @@ test('v667 the affinity table renders support and confidence, with the denominat
     'a qualifying pair must not render the empty state');
 });
 
-test('v667 CONTRACT: every payload key the renderer reads is one the SQL emits', () => {
+test('v667 CONTRACT: every payload key the renderer reads is one the LIVE SQL emits', () => {
   /* The defect class, guarded directly: collect the keys the renderer reads off the server
-     objects, then require each to appear as an emitted key in the v94 migration. */
-  const emitted = new Set([...v94.matchAll(/'([a-z_]+)'\s*,/g)].map(m => m[1]));
+     objects, then require each to appear as an emitted key in the v94 migration.
+
+     LIVE DEFINITIONS ONLY. Independent verification found the original file-wide scan also
+     harvested keys from the SUPERSEDED definitions earlier in the same migration — including
+     orders_together and attach_rate_pct, two of the four keys the original defect shipped on —
+     so half the defect class slipped through this test and was caught only by the hardcoded
+     blacklist below. Each function's LAST definition in the file is the one PostgreSQL keeps,
+     so keys are extracted from the final definition of each consumed function only. */
+  const liveBody = (fn) => {
+    const header = `create or replace function public.${fn}(`;
+    const start = v94.lastIndexOf(header);
+    assert.ok(start > -1, `v94 must define ${fn}`);
+    const end = v94.indexOf('$$;', start);
+    assert.ok(end > start, `unterminated body for ${fn}`);
+    return v94.slice(start, end);
+  };
+  const liveSql = liveBody('platform_get_assigned_firm_report_v94')
+                + liveBody('platform_get_catalogue_affinity_v94');
+  const emitted = new Set([...liveSql.matchAll(/'([a-z_]+)'\s*,/g)].map(m => m[1]));
+  /* Sanity: the superseded names must NOT be in the live emitted set, or the slice is wrong. */
+  for (const dead of ['orders_together', 'attach_rate_pct']) {
+    assert.ok(!emitted.has(dead),
+      `"${dead}" was harvested into the emitted set — the live-definition slice is not working`);
+  }
 
   const readsKpis = [...code.matchAll(/\bkpis\.([a-z_]+)/g)].map(m => m[1]);
   const readsPair = [...code.matchAll(/\brow\.([a-z_]+)\s*\?\?/g)].map(m => m[1]);

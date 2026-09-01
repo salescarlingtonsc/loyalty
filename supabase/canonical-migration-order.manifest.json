@@ -5475,8 +5475,8 @@
       "version": "20260901120000",
       "name": "nestly_v669_numeric_honesty",
       "path": "supabase/migrations/20260901120000_nestly_v669_numeric_honesty.sql",
-      "octetLength": 12589,
-      "sha256": "6e817e69de2c73d94a4bfdc883fdc4b052df0e0ef91db68359a8d69fcc32744d",
+      "octetLength": 13002,
+      "sha256": "d6793b62d859dc27a893f1601d800459e9ddc2bce885f72a0b40291a411d486a",
       "provenance": "local-source"
     }
   ]

@@ -38,11 +38,15 @@
 -- point interval for a 5-of-5 vs 0-of-5 split, which a Wilson interval never produces (it has
 -- genuine width even at p=1 or p=0, because it does not collapse the variance term to zero the
 -- way Wald's p(1-p)/n does). S1b's own comment already anticipated this ("pinned so a future
--- change to the method is visible here"). Per this migration's brief and the corpus's own
--- discipline (do not weaken a finding that is real), S1b/S3/S4 are left exactly as they were
--- written pre-v669 rather than "fixed" to match the new numbers — see the verification report
--- for the exact failures this produces. Only S6a (method-string disclosure) and S6b (the
--- specific defect this migration closes) are updated here.
+-- change to the method is visible here") — and it worked: all three went red on this change,
+-- exactly as intended. RESOLUTION (corrected header; an earlier draft of this paragraph said
+-- the three were left red, which is not what shipped — an independent verification caught the
+-- contradiction): the VERIFYING session re-pinned S1b/S3/S4 to Newcombe values it hand-computed
+-- independently before comparing with function output (S1b [38.6, 100.0]; S3 [-15.1, 22.7];
+-- S4 [10.4, 29.1]; all matched the live function to 0.1pp). A re-pin by the verifier after the
+-- tripwire fired is a truth-table update for a deliberate method change, not a weakening; the
+-- arithmetic sits beside each assertion in the fixture. S6a (method-string disclosure) and S6b
+-- (the specific defect this migration closes) were updated with the fix itself.
 --
 -- D3 — app.customer_cadence_v1 (db/migrations/20260831_nestly_v651_canonical_cadence.sql line
 -- ~170) does `round(coalesce(v_row.median_interval_days, 0)::numeric, 1)`. A customer with
