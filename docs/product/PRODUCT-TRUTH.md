@@ -225,9 +225,13 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   the sector template. Owners may control staff access only within the firm's
   effective module set.
 - Inventory is not part of the default firm experience.
-- Customer Intelligence is a Peekaa platform/consulting capability, not a
-  self-service owner module. Authorized Peekaa consultants can generate it for
-  assigned firms.
+- Owner ruling 2026-08-26: Customer Intelligence follows normal module
+  entitlement, like every other module. It rides with Reports in the sector
+  bundle, and inside an entitled firm it is limited to roles holding finance
+  permission. A firm that is not entitled still does not get it. Authorized
+  Peekaa consultants and super admins can additionally generate it for their
+  assigned firms. (Supersedes the 2026-08-02 line calling it a
+  platform/consulting capability and not a self-service owner module.)
 - A business can enable or disable catalogue-led Quick Earn. When enabled,
   Quick Earn uses the firm's products, services, packages, and variants rather
   than replacing them with payment-method choices.

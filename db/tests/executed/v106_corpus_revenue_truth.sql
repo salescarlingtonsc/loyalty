@@ -39,7 +39,17 @@
 -- below are therefore in the FUTURE relative to the fixture's own transaction start, so they
 -- postdate the auto-created contract's effective_from and are genuinely evaluated.
 --
--- SUSPECTED PRODUCT DEFECT (found while writing this file, reported not bent around — see
+-- THE DEFECT THIS FILE FOUND, AND ITS FIX (kept in full, because the reasoning is the evidence).
+-- Everything from here to the truth table was written when the defect was still open and all six
+-- assertions were red. It is now CLOSED by db/migrations/20260901_nestly_v668_complete_v523_
+-- entitlement.sql, which removes the customerintel short-circuit from
+-- app.effective_platform_module_mode_v94 and so completes the owner ruling nestly_v523 recorded
+-- on 2026-08-26. The only fixture change that accompanied the fix is that this business now
+-- lists 'customerintel' in its enabled_modules — which is what v573's gate asks for, and which
+-- an operating firm entitled to Reports genuinely holds (nestly_v171 appends customerintel to
+-- every published bundle carrying 'reports'). The expected numbers below are untouched.
+--
+-- ORIGINAL REPORT (found while writing this file, reported not bent around — see
 -- "Rules that decide whether this is worth anything" in the task). db/migrations/20260828_
 -- nestly_v573_module_off_reaches_the_rpcs.sql added `and app.can_module(p_business,
 -- 'customerintel')` to get_revenue_truth_v106's authorization gate, alongside get_customer_
@@ -58,10 +68,11 @@
 -- 42501 'finance permission required'; the identical call under a super-admin session (with the
 -- v625 Google-SSO claim shape) succeeds. R1/R2/R4/R5/R6 below call get_revenue_truth_v106 as
 -- the OWNER, because that is the RPC's own documented caller (baseline/pre-v573 behaviour, and
--- the only caller that makes "Dashboard/P&L truth" a coherent claim) — so they are EXPECTED to
--- keep failing in the MIGRATED phase until v573's gate is corrected (e.g. dropped for this RPC,
--- or moved to a module that is not globally hard-disabled). This file does not route around it
--- by calling as a super admin: doing so would hide the regression instead of proving it.
+-- the only caller that makes "Dashboard/P&L truth" a coherent claim) — so they were EXPECTED to
+-- keep failing in the MIGRATED phase until the hard-disable was corrected. This file does not
+-- route around it by calling as a super admin: doing so would hide the regression instead of
+-- proving it. v668 corrected the resolver rather than v573's gate, so the gate still means what
+-- it says — an unentitled firm is still refused — and an entitled one is now served.
 --
 -- TRUTH TABLE (all amounts in cents; window bounds are half-open dates [p_from, p_to)):
 --   R1  window [D+1, D+4). Identified: 3 x 5000 = 15000. Anonymous: 2 x 2500 = 5000.
@@ -147,9 +158,15 @@ begin
     (u_owner, 'zz-v106-owner@example.test')
     on conflict (id) do nothing;
 
+  /* 'customerintel' is listed because v573 gates get_revenue_truth_v106 on it, and because a
+     firm entitled to 'reports' genuinely carries it: nestly_v171 appended customerintel to every
+     published sector bundle that contains 'reports' and resynced every business. Before v668 the
+     entitlement bought nothing (the resolver short-circuited it to 'disabled' for every caller),
+     which is the defect described above; listing it is what makes the six assertions below a
+     test of revenue-truth arithmetic rather than a test of a hard-disabled module. */
   insert into public.businesses (id, name, slug, enabled_modules)
   values (biz, 'ZZ v106 revenue truth', 'zz-v106-revenue-truth',
-          array['dashboard','clients','sales','reports']);
+          array['dashboard','clients','sales','reports','customerintel']);
 
   insert into public.branches (id, business_id, name, is_default, active)
   values (br, biz, 'ZZ v106 branch', true, true);
@@ -190,12 +207,14 @@ begin
 
   -- Diagnostic only (does not gate anything): if a get_revenue_truth_v106 call below raises
   -- 42501 while this is true, the owner genuinely holds view_finance and the workspace is open
-  -- — the refusal is coming from the 'customerintel' can_module leg specifically, i.e. the
-  -- suspected v573 defect documented at the top of this file, not from an under-built fixture.
+  -- — the refusal is coming from the 'customerintel' can_module leg specifically. Post-v668 that
+  -- combination should be impossible for this business, because it now carries the module in
+  -- enabled_modules; if it reappears, the resolver has been short-circuited again rather than
+  -- the fixture being under-built.
   if app.has_perm(biz, 'view_finance') and not app.can_module(biz, 'customerintel') then
-    v_defect_hint := ' -- diagnosed: has_perm(view_finance)=true, can_module(customerintel)=false; '
-      || 'this matches the suspected v573 "customerintel is globally hard-disabled" defect '
-      || 'documented at the top of this file, not a fixture problem';
+    v_defect_hint := ' -- diagnosed: has_perm(view_finance)=true, can_module(customerintel)=false '
+      || 'even though this business lists customerintel in enabled_modules; that is the v523/v668 '
+      || '"customerintel is globally hard-disabled" defect returning, not a fixture problem';
   else
     v_defect_hint := '';
   end if;
