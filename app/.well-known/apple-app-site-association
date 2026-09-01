@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["7P44JG77UF.asia.peekaa.app"],
+        "components": [
+          { "/": "/business*" },
+          { "/": "/join*" },
+          { "/": "/customer*" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["7P44JG77UF.asia.peekaa.app"]
+  }
+}

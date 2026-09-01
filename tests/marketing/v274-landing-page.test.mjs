@@ -243,7 +243,11 @@ test('every security header block survives the rewrite change untouched', () => 
        it takes the same immutable rule. That rule IS the win — without it the stylesheet would
        inherit the default and be revalidated on every visit, which is the state we just left. */
     '/app.css',
-    '/manifest.webmanifest'
+    '/manifest.webmanifest',
+    /* nestly_v671: Apple fetches the association file for universal links and AutoFill and
+       requires application/json on the unsigned form; the file is extensionless, so the type
+       must be declared. Deliberate list growth, not drift. */
+    '/.well-known/apple-app-site-association'
   ]);
   const global = new Map(
     vercel.headers.find((block) => block.source === '/(.*)').headers.map((h) => [h.key, h.value])
