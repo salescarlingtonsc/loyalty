@@ -11,8 +11,8 @@ a literal slice of the committed fixture file, so the expected answers a reviewe
 against live in exactly one place (the fixture itself) and this document, not two places
 that can drift apart.
 
-Fixtures with an extracted truth table: **41**. Flagged (no truth-table
-marker found): **13**.
+Fixtures with an extracted truth table: **42**. Flagged (no truth-table
+marker found): **14**.
 
 ## Flagged — no truth-table marker found
 
@@ -35,6 +35,7 @@ values.
 * `db/tests/executed/v726_corpus_period_validation.sql`
 * `db/tests/executed/v730_corpus_category_customers_window.sql`
 * `db/tests/executed/v732_corpus_coverage_shown.sql`
+* `db/tests/executed/v734_corpus_synthetic_exclusion.sql`
 
 ## Truth tables, verbatim
 
@@ -3048,5 +3049,79 @@ rollback;
 -- PHASE E -- app.ci_metric_dictionary_v1's 'visit' entry no longer claims the drill-down dialog
 --   is an owed client-side fix, and names RETENTION-VISIT-UNIT-001.
 -- ============================================================================================
+```
+
+### `db/tests/executed/v733_corpus_best_customers_campaign.sql`
+
+```
+-- ===========================================================================================
+--   Ranking precondition: min(R union M prior_spend) = 60000 cents > max(O prior_spend) = 10000
+--     cents (both in cents: 6*10000=60000 vs 2*5000=10000). R union M cadence (10 days) <
+--     O cadence (60 days). So R (the campaign's actual recipients) is a subset of the strict
+--     top spend/cadence tier -- the campaign genuinely went to (among) the best customers.
+--   get_ci_marketing_funnel_v1(biz, d_send, d_send):
+--     stages.sent.count = 5 (only R has a send record; M and O have none).
+--     stages.associated_purchase.evidence = {"n":5,"floor":5,"status":"ok"} (5 mature sends,
+--       n>=floor 5).
+--     stages.associated_purchase.immature = 0 (all 5 sends are >=30 days old).
+--     stages.associated_purchase.rate = {"numerator":5,"denominator":5,"pct":100.0} -- ALL 5
+--       recipients "returned" within 30 days (the d_send+10 visit).
+--     incremental.status = 'unavailable' (no public.growth_execution_results_v108 row for this
+--       business -- no measured experiment exists, so no lift figure can or does appear).
+--   get_ci_opportunities_v1(biz, d_send, d_send, null, now(), p_extended=>true):
+--     'ranked' contains a candidate id='campaigns', evidence_class='ASSOCIATION' (frozen by
+--       app.ci_verdict_class_v696, nestly_v705), whose 'limitation' names the missing
+--       incrementality in plain language, and whose 'impact.expected_value.status' =
+--       'unavailable' (no behavioural model backs it -- never a manufactured cents figure).
+--   MATCHED-COHORT DEMONSTRATION (computed directly from public.sales, not through an RPC --
+--     there is no dedicated "campaign lift" RPC in this schema, which is itself the point:
+--     nothing here computes incrementality):
+--     R's post-send return rate = 5/5 = 100.0%. M's (never-sent) return rate = 5/5 = 100.0%.
+--     |100.0 - 100.0| = 0.0pp <= 5pp -- the two cohorts return at the SAME rate whether or not
+--     they were sent anything, which is exactly why crediting the campaign for R's purchases
+--     would be wrong.
+--   NEVER-CAUSAL SCAN: neither get_ci_marketing_funnel_v1's nor get_ci_opportunities_v1's
+--     (extended) full payload text contains the exact token 'CAUSAL' (case-sensitive -- the
+--     classification vocabulary is 'DIRECT_FACT'/'ASSOCIATION', 'CAUSAL' never appears as a
+--     value), nor 'drove' or 'lift of' anywhere. The campaigns candidate's own fixed action copy
+--     legitimately contains the word "caused" exactly once, inside a correct DENIAL ("...is not
+--     proof the campaign caused it.") -- discovered while first running this fixture (see the
+--     captured red-then-fixed note below). That is the same shape as the header's carved-out
+--     "never causal": a correct statement that something is NOT causal necessarily uses ordinary
+--     causal vocabulary to say so. The assertion therefore requires every occurrence of "caused"
+--     to sit inside that exact known-correct denial clause, so an affirmative causal claim
+--     slipped in anywhere else still fails the check.
+--
+-- ===========================================================================================
+-- ONE DISCOVERED, DOCUMENTED DEVIATION FROM THE TASK BRIEF'S WORDING
+-- ===========================================================================================
+-- The brief asks to "assert the v713 evidence pack's findings carry that ASSOCIATION class for
+-- the campaigns candidate." Read against the live code (db/migrations/20260902_nestly_v713_
+-- evidence_pack_typed_findings.sql line 173 and 20260902_nestly_v685_shadow_reconciliation.sql
+-- line 98 -- the only two call sites of public.get_ci_opportunities_v1 with a 3-arg or narrower
+-- shape in this repo), app.v176_gated_evidence calls
+-- `public.get_ci_opportunities_v1(p_business, p_from, v_to_effective)` -- THREE positional
+-- arguments, so `p_extended` takes its default of `false`. The 'campaigns' generator (nestly
+-- v705) only fires when `p_extended = true` (see "EXTENDED MODE STARTS HERE" in
+-- db/migrations/20260902_nestly_v688_consultant_spine_v2.sql, guarded by
+-- `if not p_extended or v_stale then return ... end if;` before that generator ever runs). No
+-- migration after v713 changes this call site. So under the code as it actually ships today,
+-- the AI firm-report evidence pack's `findings.ranked` array CANNOT carry the 'campaigns'
+-- candidate -- asserting that it does would be asserting something the shipped code cannot
+-- produce, which would make this fixture pass for the wrong reason (or fail forever on correct
+-- code). This fixture instead proves the true, verifiable claim: the 'campaigns' ASSOCIATION
+-- candidate exists and is correctly typed when produced the only way it is ever produced
+-- (`p_extended=>true`, PART C below), and separately proves (PART E) that it is, as the code
+-- shows, genuinely absent from the non-extended pack on this exact seed -- turning the
+-- documented gap into a positive, checked fact rather than a silent assumption.
+--
+-- MUTATION-CHECKED (2026-09-02, this session, --filter=v733_corpus --migrated-only): PART D's
+-- expected M-group return rate was temporarily changed from 5 to 4 (matched-cohort numerator)
+-- with the seed untouched. Captured failure:
+--   ERROR:  v733: 1 assertion(s) failed:
+--     D-matched-n: matched (M) returned count = 5, expected 4
+-- Reverting the literal back to 5 restored PASS.
+--
+-- One transaction, rolled back. No production access.
 ```
 

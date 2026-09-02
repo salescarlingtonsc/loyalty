@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 54,
+  "itemCount": 56,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -697,6 +697,34 @@
       "clients_seeded": 7,
       "sha256": "f25720cbac896e1e3e18f753be8d02a32ddd9018f7129d79e669a02118b8c611",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v732_corpus_coverage_shown --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v733_corpus_best_customers_campaign.sql",
+      "migrations": [
+        "db/migrations/20260902_nestly_v688_consultant_spine_v2.sql"
+      ],
+      "checks": [
+        53,
+        58,
+        85
+      ],
+      "businesses_seeded": 1,
+      "clients_seeded": 1,
+      "sha256": "0f3bc7f16a45d4e698fbb42b695a1ac86519c628be08bb7c795a39525c783bce",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v733_corpus_best_customers_campaign --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v734_corpus_synthetic_exclusion.sql",
+      "migrations": [
+        "db/migrations/20260902_nestly_v734_synthetic_excluded_everywhere.sql"
+      ],
+      "checks": [
+        1
+      ],
+      "businesses_seeded": 1,
+      "clients_seeded": 1,
+      "sha256": "9fa9014c042b67a094046b05647fce547eb1890ffa576508cebea3b483f1f147",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v734_corpus_synthetic_exclusion --migrated-only"
     }
   ]
 }

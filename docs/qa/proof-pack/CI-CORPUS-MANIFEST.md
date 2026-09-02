@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **54**.
+Fixture count: **56**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -71,6 +71,8 @@ Fixture count: **54**.
 | `db/tests/executed/v729_corpus_visit_days_estate_3.sql` | _(none named by path in this file — see checks/domain notes in the file's own header)_ | _(none)_ | 1 | 1 | `018c84ec4d0f35d3747245ddd6d40b3016281dc35e25196962b4dd7f61b3dc4b` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v729_corpus_visit_days_estate_3 --migrated-only` |
 | `db/tests/executed/v730_corpus_category_customers_window.sql` | `db/migrations/20260902_nestly_v730_category_customers_window.sql` | 98 | 1 | 0 | `3b5fe913a57faba001a6eb05e3b44f5ad4a75cdf68ed85cf40e6393422ff6d43` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v730_corpus_category_customers_window --migrated-only` |
 | `db/tests/executed/v732_corpus_coverage_shown.sql` | _(none named by path in this file — see checks/domain notes in the file's own header)_ | 15, 58, 59 | 5 | 7 | `f25720cbac896e1e3e18f753be8d02a32ddd9018f7129d79e669a02118b8c611` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v732_corpus_coverage_shown --migrated-only` |
+| `db/tests/executed/v733_corpus_best_customers_campaign.sql` | `db/migrations/20260902_nestly_v688_consultant_spine_v2.sql` | 53, 58, 85 | 1 | 1 | `0f3bc7f16a45d4e698fbb42b695a1ac86519c628be08bb7c795a39525c783bce` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v733_corpus_best_customers_campaign --migrated-only` |
+| `db/tests/executed/v734_corpus_synthetic_exclusion.sql` | `db/migrations/20260902_nestly_v734_synthetic_excluded_everywhere.sql` | 1 | 1 | 1 | `9fa9014c042b67a094046b05647fce547eb1890ffa576508cebea3b483f1f147` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v734_corpus_synthetic_exclusion --migrated-only` |
 
 ## Notes
 
