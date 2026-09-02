@@ -113,6 +113,15 @@
       "status": "DECLARED_LIMIT",
       "owner": "engineering (consultant spine)",
       "detail": "materiality_class 'minor' is reachable only for scenario-only candidates below the 1% bar; an expected-value candidate below the bar ABSTAINS with reason below_materiality (the v688 contract, frozen by fixture A4-promoted) and is listed in the payload's abstentions rather than ranked as minor. Making 'minor' reachable for EV candidates would flip that frozen assertion; recorded in nestly_v718's header. The single threshold lives in app.ci_materiality_threshold_bps_v705()."
+    },
+    {
+      "id": "MANUAL-GOV-WRITER-REGISTRY-001",
+      "checks": [],
+      "hard_gate": false,
+      "hard_gate_reason": "Governance tooling, not a checklist item; no customer-facing figure depends on it.",
+      "status": "OPEN",
+      "owner": "engineering (ps0 governance)",
+      "detail": "scripts/ps0/discover-writers.mjs only tracks DML against its VALUE_TABLES map, so writes to public.bringback_grants_v361 (app.issue_bringback_for_business_v361, re-emitted by nestly_v743) and to app.ci_synthetic_scan_allowlist_v743 are invisible to the writer registry; the registry test passes without knowing they exist. Follow-up: add those tables to VALUE_TABLES and curate the entries."
     }
   ]
 }
