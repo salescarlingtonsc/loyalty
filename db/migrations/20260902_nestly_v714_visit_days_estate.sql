@@ -248,7 +248,7 @@ end
 $v714blk_ccc_1$;
 -- ACL restated verbatim from the live proacl (unchanged by this migration -- same argument list).
 revoke all on function app.ci_customer_classes_v1(uuid,uuid,timestamptz) from public, anon;
-grant execute on function app.ci_customer_classes_v1(uuid,uuid,timestamptz) to authenticated, service_role;
+grant execute on function app.ci_customer_classes_v1(uuid,uuid,timestamptz) to service_role;
 
 do $v714blk_ci83_7$
 declare
@@ -1591,7 +1591,7 @@ end
 $v714blk_registry_1$;
 -- ACL restated verbatim from the live proacl (unchanged by this migration -- same argument list).
 revoke all on function app.ci_visit_registry_v699() from public, anon;
-grant execute on function app.ci_visit_registry_v699() to authenticated, service_role;
+grant execute on function app.ci_visit_registry_v699() to service_role;
 do $v714blk_dict_6$
 declare
   v_def text;
@@ -1745,6 +1745,6 @@ end
 $v714blk_dict_6$;
 -- ACL restated verbatim from the live proacl (unchanged by this migration -- same argument list).
 revoke all on function app.ci_metric_dictionary_v1() from public, anon;
-grant execute on function app.ci_metric_dictionary_v1() to authenticated, service_role;
+grant execute on function app.ci_metric_dictionary_v1() to service_role;
 
 commit;

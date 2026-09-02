@@ -496,6 +496,6 @@ as $$
   );
 $$;
 revoke all on function app.ci_floor_registry_v690() from public, anon;
-grant execute on function app.ci_floor_registry_v690() to authenticated, service_role;
+grant execute on function app.ci_floor_registry_v690() to service_role;
 
 commit;

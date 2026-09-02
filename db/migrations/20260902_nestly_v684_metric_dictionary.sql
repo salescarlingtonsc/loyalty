@@ -358,7 +358,7 @@ as $$
   );
 $$;
 revoke all on function app.ci_metric_dictionary_v1() from public, anon, authenticated;
-grant execute on function app.ci_metric_dictionary_v1() to authenticated, service_role;
+grant execute on function app.ci_metric_dictionary_v1() to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- 2. public.get_ci_dictionary_v1() — the caller-facing wrapper. Gated only on auth.uid() not
@@ -542,6 +542,6 @@ $$;
 revoke all on function app.ci_customer_classes_v1(uuid, uuid, timestamptz)
   from public, anon, authenticated;
 grant execute on function app.ci_customer_classes_v1(uuid, uuid, timestamptz)
-  to authenticated, service_role;
+  to service_role;
 
 commit;

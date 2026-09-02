@@ -26,8 +26,13 @@
 -- by reading public.get_ci_category_mix_v1's live definition end to end and by grep across every
 -- migration for a services<->taxonomy linkage column — none exists). Inventing a "this category ==
 -- this one service" mapping would be exactly the fabrication v680's own header forbade ("no assumed
--- uplift smuggled in") — so category_concentration's margin_guard stays 'unavailable' with reason
--- 'no service specified for this incentive', UNCHANGED, honestly, rather than guessing a service.
+-- uplift smuggled in") — so category_concentration is left alone. Its own incentive.kind is 'none'
+-- (never 'credit'/'discount'), so anchor 2's lateral (g.mg) resolves to null for it exactly as
+-- before this migration, its top-level margin_guard key is therefore null (NOT the string
+-- 'unavailable' — that status belongs to app.ci_margin_guard_v705's own no-service-id path, which
+-- this candidate never reaches, since g.mg is never even called for it), and nestly_v712's own
+-- coalesce fallback reports impact.margin as {status:'not_applicable', reason:'no incentive spend
+-- for this candidate'}. UNCHANGED, honestly, rather than guessing a service.
 -- package_leakage:<plan_id> similarly names a public.package_plans.id, not a public.services.id — a
 -- package plan is not looked up by app.ci_margin_guard_v705 (which joins public.services), so it is
 -- ALSO left alone. strength:service:<service_id> DOES carry a real service_id, but (post-nestly_v712)
@@ -41,7 +46,19 @@
 -- 'margin_guard' key. Both are now REAL app.ci_margin_guard_v705(business, service_id, cents) calls,
 -- keyed off the service_id embedded in the candidate's own id ('gateway_followthrough:' ||
 -- service_id) — so 'ok'/'blocked' are both reachable from real data (a real price/cost pair), never
--- fabricated, and the pre-existing generic demotion pass (nestly_v705's own "when g.mg is blocked,
+-- fabricated. A second refuter finding on this same check (finding 2): the standard 4000-cent figure
+-- the guard is scored against was previously disclosed only inside the 'blocked' branch's free-text
+-- 'reason' prose — a reader would never see it on 'ok' or 'unavailable'. Both call sites now merge a
+-- structured 'assumed_incentive_cents' (== app.ci_standard_incentive_cents_v718(), so it can never
+-- drift from the figure actually used) and a one-line 'assumption' note into the guard's jsonb
+-- result, on EVERY status branch — blocked, ok and unavailable alike — since the merge (||) applies
+-- to whatever app.ci_margin_guard_v705 returns, not to one branch's shape. Every pre-existing key
+-- (status/margin_cents/reason) is untouched, byte-identical to what app.ci_margin_guard_v705 itself
+-- already returns. Only the two gateway_followthrough call sites are touched; the pre-existing
+-- v_margin_guard_cannibal constant (called with incentive=0, not the standard 4000 — a different,
+-- unrelated amount for a different candidate) and c_incentive_unavailable (never a margin_guard
+-- call at all, a static "no cost coverage" fallback predating cost_cents) are left exactly as they
+-- were, and the pre-existing generic demotion pass (nestly_v705's own "when g.mg is blocked,
 -- demote to unquantified with the guard's reason appended to limitation" — untouched by this
 -- migration) picks the new per-candidate result up automatically, with no further wiring needed.
 --
@@ -194,7 +211,7 @@ as $ci718inc$
   select 4000::bigint;   -- the standard "no declared amount" proposed incentive, in cents.
 $ci718inc$;
 revoke all on function app.ci_standard_incentive_cents_v718() from public, anon, authenticated;
-grant execute on function app.ci_standard_incentive_cents_v718() to authenticated, service_role;
+grant execute on function app.ci_standard_incentive_cents_v718() to service_role;
 
 -- ================================================================================================
 -- 2 · Capture the LIVE public.get_ci_opportunities_v1 body (post-v712) and assert every anchor
@@ -273,11 +290,16 @@ declare
             'what', 'Offer a discount or loyalty credit to prompt a second visit.',
             -- NESTLY v718 (check 74) — gateway_followthrough is the only base-generator candidate
             -- that names a real public.services.id (embedded in its own id); resolve the guard for
-            -- real instead of the static c_incentive_unavailable fallback.
+            -- real instead of the static c_incentive_unavailable fallback. The guard result is
+            -- merged with the standard incentive figure it was scored against (refuter finding 2)
+            -- so every branch (blocked/ok/unavailable) discloses it structurally, not only inside
+            -- blocked-case prose.
             'cost_basis', case when v_id like 'gateway_followthrough:%' then
               app.ci_margin_guard_v705(p_business,
                 nullif(split_part(v_id, ':', 2), '')::uuid,
                 app.ci_standard_incentive_cents_v718())
+              || jsonb_build_object('assumed_incentive_cents', app.ci_standard_incentive_cents_v718(),
+                   'assumption', 'Scored against the standard proposed incentive amount, not this candidate''s own declared spend.')
             else c_incentive_unavailable end))$n1$;
 
   a2 constant text := $a2$    cross join lateral (
@@ -289,7 +311,8 @@ declare
       -- above (JC2 in this migration's header: computed twice, both calls agree by construction
       -- since app.ci_margin_guard_v705 is stable and both use identical arguments), so
       -- gateway_followthrough's top-level margin_guard key and its alternative's cost_basis are
-      -- never out of step. Every other candidate is untouched: loyalty_cannibalisation_gap (the
+      -- never out of step, including the merged assumed_incentive_cents/assumption keys (refuter
+      -- finding 2). Every other candidate is untouched: loyalty_cannibalisation_gap (the
       -- only OTHER incentive.kind in ('credit','discount')) still resolves via the pre-existing
       -- v_margin_guard_cannibal constant (nestly_v705 JC3 — it names no service, stays
       -- 'unavailable'); every remaining candidate still resolves to null (impact.margin
@@ -299,6 +322,8 @@ declare
                  app.ci_margin_guard_v705(p_business,
                    nullif(split_part(t.c->>'id', ':', 2), '')::uuid,
                    app.ci_standard_incentive_cents_v718())
+                 || jsonb_build_object('assumed_incentive_cents', app.ci_standard_incentive_cents_v718(),
+                      'assumption', 'Scored against the standard proposed incentive amount, not this candidate''s own declared spend.')
                when t.c->'incentive'->>'kind' in ('credit', 'discount') then v_margin_guard_cannibal
                else null
              end as mg
@@ -376,11 +401,16 @@ declare
             'what', 'Offer a discount or loyalty credit to prompt a second visit.',
             -- NESTLY v718 (check 74) — gateway_followthrough is the only base-generator candidate
             -- that names a real public.services.id (embedded in its own id); resolve the guard for
-            -- real instead of the static c_incentive_unavailable fallback.
+            -- real instead of the static c_incentive_unavailable fallback. The guard result is
+            -- merged with the standard incentive figure it was scored against (refuter finding 2)
+            -- so every branch (blocked/ok/unavailable) discloses it structurally, not only inside
+            -- blocked-case prose.
             'cost_basis', case when v_id like 'gateway_followthrough:%' then
               app.ci_margin_guard_v705(p_business,
                 nullif(split_part(v_id, ':', 2), '')::uuid,
                 app.ci_standard_incentive_cents_v718())
+              || jsonb_build_object('assumed_incentive_cents', app.ci_standard_incentive_cents_v718(),
+                   'assumption', 'Scored against the standard proposed incentive amount, not this candidate''s own declared spend.')
             else c_incentive_unavailable end))$n1$;
 
   a2 constant text := $a2$    cross join lateral (
@@ -392,7 +422,8 @@ declare
       -- above (JC2 in this migration's header: computed twice, both calls agree by construction
       -- since app.ci_margin_guard_v705 is stable and both use identical arguments), so
       -- gateway_followthrough's top-level margin_guard key and its alternative's cost_basis are
-      -- never out of step. Every other candidate is untouched: loyalty_cannibalisation_gap (the
+      -- never out of step, including the merged assumed_incentive_cents/assumption keys (refuter
+      -- finding 2). Every other candidate is untouched: loyalty_cannibalisation_gap (the
       -- only OTHER incentive.kind in ('credit','discount')) still resolves via the pre-existing
       -- v_margin_guard_cannibal constant (nestly_v705 JC3 — it names no service, stays
       -- 'unavailable'); every remaining candidate still resolves to null (impact.margin
@@ -402,6 +433,8 @@ declare
                  app.ci_margin_guard_v705(p_business,
                    nullif(split_part(t.c->>'id', ':', 2), '')::uuid,
                    app.ci_standard_incentive_cents_v718())
+                 || jsonb_build_object('assumed_incentive_cents', app.ci_standard_incentive_cents_v718(),
+                      'assumption', 'Scored against the standard proposed incentive amount, not this candidate''s own declared spend.')
                when t.c->'incentive'->>'kind' in ('credit', 'discount') then v_margin_guard_cannibal
                else null
              end as mg
@@ -477,6 +510,9 @@ begin
   end if;
   if position('Review what changed for' in v_after) = 0 then
     raise exception 'v718: the change operational_change alternative did not make it into the new body';
+  end if;
+  if position('assumed_incentive_cents' in v_after) = 0 then
+    raise exception 'v718: assumed_incentive_cents did not make it into the new body';
   end if;
 end
 $v718post$;

@@ -98,7 +98,7 @@ as $$
   select (p_occurred_at at time zone 'Asia/Singapore')::date;
 $$;
 revoke all on function app.ci_visit_day_v699(timestamptz) from public, anon;
-grant execute on function app.ci_visit_day_v699(timestamptz) to authenticated, service_role;
+grant execute on function app.ci_visit_day_v699(timestamptz) to service_role;
 
 comment on function app.ci_visit_day_v699(timestamptz) is
   'The one visit-day authority (nestly_v699): a visit is one distinct Asia/Singapore calendar '
@@ -606,6 +606,6 @@ as $$
   );
 $$;
 revoke all on function app.ci_visit_registry_v699() from public, anon;
-grant execute on function app.ci_visit_registry_v699() to authenticated, service_role;
+grant execute on function app.ci_visit_registry_v699() to service_role;
 
 commit;

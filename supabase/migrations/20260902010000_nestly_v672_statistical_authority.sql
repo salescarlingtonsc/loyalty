@@ -40,7 +40,7 @@ as $$
                    then 'ok' else 'insufficient' end);
 $$;
 revoke all on function app.subgroup_evidence_v1(integer,integer) from public, anon, authenticated;
-grant execute on function app.subgroup_evidence_v1(integer,integer) to authenticated, service_role;
+grant execute on function app.subgroup_evidence_v1(integer,integer) to service_role;
 
 create or replace function app.rate_block_v1(p_num bigint, p_den bigint)
 returns jsonb
@@ -55,7 +55,7 @@ as $$
                 else null end);
 $$;
 revoke all on function app.rate_block_v1(bigint,bigint) from public, anon, authenticated;
-grant execute on function app.rate_block_v1(bigint,bigint) to authenticated, service_role;
+grant execute on function app.rate_block_v1(bigint,bigint) to service_role;
 
 create or replace function app.distribution_block_v1(p_values numeric[])
 returns jsonb
@@ -95,7 +95,7 @@ as $$
   from agg;
 $$;
 revoke all on function app.distribution_block_v1(numeric[]) from public, anon, authenticated;
-grant execute on function app.distribution_block_v1(numeric[]) to authenticated, service_role;
+grant execute on function app.distribution_block_v1(numeric[]) to service_role;
 
 create or replace function app.comparisons_note_v1(p_examined integer, p_promoted integer)
 returns jsonb
@@ -108,6 +108,6 @@ as $$
     'note', 'Promoted findings were selected from the examined set; treat borderline results as exploratory.');
 $$;
 revoke all on function app.comparisons_note_v1(integer,integer) from public, anon, authenticated;
-grant execute on function app.comparisons_note_v1(integer,integer) to authenticated, service_role;
+grant execute on function app.comparisons_note_v1(integer,integer) to service_role;
 
 commit;

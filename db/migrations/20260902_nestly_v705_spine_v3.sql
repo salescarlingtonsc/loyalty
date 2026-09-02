@@ -185,7 +185,7 @@ as $ci705mat$
   select 100;  -- 1% of period revenue, in basis points.
 $ci705mat$;
 revoke all on function app.ci_materiality_threshold_bps_v705() from public, anon, authenticated;
-grant execute on function app.ci_materiality_threshold_bps_v705() to authenticated, service_role;
+grant execute on function app.ci_materiality_threshold_bps_v705() to service_role;
 
 -- ================================================================================================
 -- 2 · app.ci_margin_guard_v705 — margin protection before recommending an incentive (check 74).
@@ -336,7 +336,7 @@ end;
 $ci696v705$;
 
 revoke all on function app.ci_verdict_class_v696(text) from public, anon, authenticated;
-grant execute on function app.ci_verdict_class_v696(text) to authenticated, service_role;
+grant execute on function app.ci_verdict_class_v696(text) to service_role;
 
 -- ================================================================================================
 -- 5 · Capture the LIVE public.get_ci_opportunities_v1 body and assert every anchor occurs exactly

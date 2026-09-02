@@ -195,13 +195,10 @@ $patch_rebooking$;
 revoke all on function public.get_ci_rebooking_v1(uuid,date,date,uuid) from public, anon;
 grant execute on function public.get_ci_rebooking_v1(uuid,date,date,uuid) to authenticated, service_role;
 
-commit;
-
 -- ============================================================================================
 -- 3. get_ci_loyalty_programmes_v1 — floor-gate participation (finding 3a) and exclude synthetic
 --    clients from all seven redemption-event queries (finding 3b)
 -- ============================================================================================
-begin;
 
 do $patch_loyalty$
 declare
@@ -393,8 +390,6 @@ $patch_loyalty$;
 revoke all on function public.get_ci_loyalty_programmes_v1(uuid,date,date,uuid) from public, anon;
 grant execute on function public.get_ci_loyalty_programmes_v1(uuid,date,date,uuid) to authenticated, service_role;
 
-commit;
-
 -- ============================================================================================
 -- 4. THE SHARED CI ENVELOPE (finding 4 / check 16) — none of the three readers above ever
 --    called app.ci_envelope_v680, so their payload carried no generated_at/as_of/period/
@@ -406,7 +401,6 @@ commit;
 --    get_ci_opportunities_v1 feature-detects and calls literally) — clock_timestamp() is used
 --    for p_as_of internally instead.
 -- ============================================================================================
-begin;
 
 -- --------------------------------------------------------------------------------------------
 -- 4a. get_ci_staff_identity_v1
@@ -610,12 +604,9 @@ $patch_envelope_rebooking$;
 revoke all on function public.get_ci_rebooking_v1(uuid,date,date,uuid) from public, anon;
 grant execute on function public.get_ci_rebooking_v1(uuid,date,date,uuid) to authenticated, service_role;
 
-commit;
-
 -- --------------------------------------------------------------------------------------------
 -- 4c. get_ci_loyalty_programmes_v1
 -- --------------------------------------------------------------------------------------------
-begin;
 
 do $patch_envelope_loyalty$
 declare

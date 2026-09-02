@@ -119,7 +119,7 @@ end;
 $ci696$;
 
 revoke all on function app.ci_verdict_class_v696(text) from public, anon, authenticated;
-grant execute on function app.ci_verdict_class_v696(text) to authenticated, service_role;
+grant execute on function app.ci_verdict_class_v696(text) to service_role;
 
 -- ================================================================================================
 -- 2 · Capture the live public.get_ci_opportunities_v1 body and refuse to run against a shape this

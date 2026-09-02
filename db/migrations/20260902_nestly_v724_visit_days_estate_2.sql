@@ -434,7 +434,7 @@ $v724a176_5$);
 end
 $v724blk_v176_1$;
 revoke all on function app.v176_sales_window(uuid,date,date) from public, anon, authenticated, service_role;
-grant execute on function app.v176_sales_window(uuid,date,date) to public, service_role;
+grant execute on function app.v176_sales_window(uuid,date,date) to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- 2 · app.v177_sales_window (branch-scoped twin of (1))
@@ -764,7 +764,7 @@ $v724a177sw_5$);
 end
 $v724blk_v177sw_1$;
 revoke all on function app.v177_sales_window(uuid,uuid,date,date) from public, anon, authenticated, service_role;
-grant execute on function app.v177_sales_window(uuid,uuid,date,date) to public, service_role;
+grant execute on function app.v177_sales_window(uuid,uuid,date,date) to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- 3 · app.v177_customers
@@ -842,7 +842,7 @@ $v724a177c_5$);
 end
 $v724blk_v177c_1$;
 revoke all on function app.v177_customers(uuid) from public, anon, authenticated, service_role;
-grant execute on function app.v177_customers(uuid) to public, service_role;
+grant execute on function app.v177_customers(uuid) to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- 4 · app.v666_till_customer_card
@@ -1624,16 +1624,16 @@ $v724areg_2$, $v724rreg_3$      'platform_get_enterprise_hierarchy_v82', jsonb_b
         'note', 'computes no visit count of its own; the returned customer card is built entirely by app.v666_till_customer_card, so this reader inherits without its own patch (nestly_v724, estate sweep 2)'),
       'public.get_attention_list_v548', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits (the >=3 eligibility floor) and cadence_days (the lag() interval sequence feeding the due/overdue/slipping thresholds) are both computed over distinct visit-days, anchored at each day''s first qualifying sale -- the same anchor rule as nestly_v709/v711/v714 (nestly_v724, estate sweep 2)'),
+        'note', 'prior_visits (the >=3 eligibility floor) and cadence_days (the lag() interval sequence feeding the due/overdue/slipping thresholds) are both computed over distinct visit-days, anchored at each day''s first qualifying sale; the same anchor rule as nestly_v709/v711/v714 (nestly_v724, estate sweep 2)'),
       'public.get_ci_acquisition_v1', jsonb_build_object(
         'uses_authority', true,
-        'note', 'repeat_customers counts distinct visit-days, not raw revenue transactions -- a same-day split bill no longer flips a one-visit customer to repeat (nestly_v724, estate sweep 2)'),
+        'note', 'repeat_customers counts distinct visit-days, not raw revenue transactions; a same-day split bill no longer flips a one-visit customer to repeat (nestly_v724, estate sweep 2)'),
       'public.get_ci_demographics_v1', jsonb_build_object(
         'uses_authority', true,
         'note', 'each demographic cell''s visits figure sums distinct visit-days per customer, not raw sale rows (nestly_v724, estate sweep 2)'),
       'public.staff_list_returned_customers_v300', jsonb_build_object(
         'uses_authority', true,
-        'note', 'previous_visit_at / away_days are computed over distinct visit-days -- a same-day split bill on the return visit itself can no longer become its own previous_visit_at and zero away_days, hiding a real lapse (nestly_v724, estate sweep 2)')
+        'note', 'previous_visit_at / away_days are computed over distinct visit-days; a same-day split bill on the return visit itself can no longer become its own previous_visit_at and zero away_days, hiding a real lapse (nestly_v724, estate sweep 2)')
     )
   );
 $function$
@@ -1672,16 +1672,16 @@ $v724rreg_3$);
         'note', 'computes no visit count of its own; the returned customer card is built entirely by app.v666_till_customer_card, so this reader inherits without its own patch (nestly_v724, estate sweep 2)'),
       'public.get_attention_list_v548', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits (the >=3 eligibility floor) and cadence_days (the lag() interval sequence feeding the due/overdue/slipping thresholds) are both computed over distinct visit-days, anchored at each day''s first qualifying sale -- the same anchor rule as nestly_v709/v711/v714 (nestly_v724, estate sweep 2)'),
+        'note', 'prior_visits (the >=3 eligibility floor) and cadence_days (the lag() interval sequence feeding the due/overdue/slipping thresholds) are both computed over distinct visit-days, anchored at each day''s first qualifying sale; the same anchor rule as nestly_v709/v711/v714 (nestly_v724, estate sweep 2)'),
       'public.get_ci_acquisition_v1', jsonb_build_object(
         'uses_authority', true,
-        'note', 'repeat_customers counts distinct visit-days, not raw revenue transactions -- a same-day split bill no longer flips a one-visit customer to repeat (nestly_v724, estate sweep 2)'),
+        'note', 'repeat_customers counts distinct visit-days, not raw revenue transactions; a same-day split bill no longer flips a one-visit customer to repeat (nestly_v724, estate sweep 2)'),
       'public.get_ci_demographics_v1', jsonb_build_object(
         'uses_authority', true,
         'note', 'each demographic cell''s visits figure sums distinct visit-days per customer, not raw sale rows (nestly_v724, estate sweep 2)'),
       'public.staff_list_returned_customers_v300', jsonb_build_object(
         'uses_authority', true,
-        'note', 'previous_visit_at / away_days are computed over distinct visit-days -- a same-day split bill on the return visit itself can no longer become its own previous_visit_at and zero away_days, hiding a real lapse (nestly_v724, estate sweep 2)')
+        'note', 'previous_visit_at / away_days are computed over distinct visit-days; a same-day split bill on the return visit itself can no longer become its own previous_visit_at and zero away_days, hiding a real lapse (nestly_v724, estate sweep 2)')
     )
   );
 $function$
@@ -1698,6 +1698,6 @@ $v724areg_5$);
 end
 $v724blk_reg_1$;
 revoke all on function app.ci_visit_registry_v699() from public, anon, authenticated, service_role;
-grant execute on function app.ci_visit_registry_v699() to authenticated, service_role;
+grant execute on function app.ci_visit_registry_v699() to service_role;
 
 commit;

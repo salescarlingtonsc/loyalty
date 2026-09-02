@@ -1,9 +1,10 @@
 -- EXECUTED acceptance fixture for nestly_v718 — margin guard made live for service-bound
--- candidates (check 74) and a second, non-incentive alternative kind for discovery/change
--- (check 77). Check 23 is investigated and deliberately NOT changed by nestly_v718 (see that
--- migration's own header/body comment "CHECK 23 — INVESTIGATION AND DELIBERATE NON-FIX") — this
--- fixture therefore asserts NOTHING new about materiality_class 'minor'; that ground stays covered
--- by nestly_v705's own BIZ_MINOR section.
+-- candidates (check 74), the structured assumed_incentive_cents/assumption disclosure on every
+-- margin_guard status branch (check 74, refuter finding 2), and a second, non-incentive
+-- alternative kind for discovery/change (check 77). Check 23 is investigated and deliberately NOT
+-- changed by nestly_v718 (see that migration's own header/body comment "CHECK 23 —
+-- INVESTIGATION AND DELIBERATE NON-FIX") — this fixture therefore asserts NOTHING new about
+-- materiality_class 'minor'; that ground stays covered by nestly_v705's own BIZ_MINOR section.
 --
 -- Above the v422 watermark: reported n/a in the BASELINE phase, gated on the MIGRATED run
 -- (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
@@ -32,7 +33,9 @@
 --    is STILL present in ranked (rank_class was already 'unquantified' by the generator's own
 --    design — the guard's demotion clause writes the SAME value, so this is not itself evidence of
 --    demotion; the limitation text is) — and, per nestly_v712's own generic invariant (still in
---    force, untouched by this migration), impact.margin equals margin_guard exactly.
+--    force, untouched by this migration), impact.margin equals margin_guard exactly. Asserted
+--    ADDITIONALLY (refuter finding 2): margin_guard.assumed_incentive_cents = 4000 on the SAME
+--    'blocked' object, structurally, not merely inferrable from the reason text.
 --
 -- C. BIZ_GW_NOCOST: the IDENTICAL funnel recipe, isolated business, svc_gw carries price_cents=5000
 --    and NO cost_cents (null). app.ci_margin_guard_v705(biz, svc_gw, 4000) resolves to
@@ -41,7 +44,18 @@
 --    candidate.margin_guard matches that shape; candidate.limitation does NOT contain the
 --    "would exceed" blocked-reason wording (proving the demotion clause did NOT fire for
 --    'unavailable', only for 'blocked' — the two branches are genuinely distinguished, not
---    collapsed).
+--    collapsed). Asserted ADDITIONALLY (refuter finding 2): margin_guard.assumed_incentive_cents =
+--    4000 on this 'unavailable' object too — the disclosure is NOT status-conditional.
+--
+-- E. BIZ_GW_OK: the IDENTICAL funnel recipe, isolated business, svc_gw carries price_cents=5000,
+--    cost_cents=500 (margin=4500). Because app.ci_standard_incentive_cents_v718() = 4000 <= margin
+--    4500, app.ci_margin_guard_v705(biz, svc_gw, 4000) resolves to status='ok', margin_cents=4500
+--    (the SAME arithmetic shape nestly_v705's own A2-ok assertion already proves for the function
+--    directly, wired through the live candidate for the first time here). Asserted:
+--    candidate.margin_guard.status='ok', margin_cents=4500, assumed_incentive_cents=4000 (refuter
+--    finding 2, on the THIRD and last status branch); the alternatives[*] entry with kind='incentive'
+--    carries the IDENTICAL cost_basis object; candidate.limitation does NOT contain the "would
+--    exceed" blocked-reason wording (the demotion clause must not fire when the guard says 'ok').
 --
 -- D. BIZ_DISC_CHANGE (check 77): ONE business, ONE window, THREE first_acquired_via cohorts under
 --    the SAME 'acquisition_source' dimension get_ci_discovery_v1 already scans. NOTE: public.
@@ -107,6 +121,7 @@ insert into auth.users (id, email) values
   ('00000000-0000-4000-8000-000000718ee1', 'zz-v718-owner1@example.test'),
   ('00000000-0000-4000-8000-000000718ee2', 'zz-v718-owner2@example.test'),
   ('00000000-0000-4000-8000-000000718ee3', 'zz-v718-owner3@example.test'),
+  ('00000000-0000-4000-8000-000000718ee4', 'zz-v718-owner4@example.test'),
   ('00000000-0000-4000-8000-000000718eee', 'zz-v718-sa@example.test')
   on conflict (id) do nothing;
 insert into public.super_admins (user_id, email) values
@@ -234,6 +249,11 @@ begin
       insert into _fail values ('B-reason', format('margin_guard.reason did not name both figures: %s',
         cand->'margin_guard'->>'reason'));
     end if;
+    if cand->'margin_guard'->>'assumed_incentive_cents' is distinct from '4000' then
+      insert into _fail values ('B-assumed-incentive',
+        format('margin_guard.assumed_incentive_cents was %s, expected 4000',
+               cand->'margin_guard'->>'assumed_incentive_cents'));
+    end if;
 
     -- the incentive-kind alternative carries the IDENTICAL cost_basis.
     select a into alt from jsonb_array_elements(cand->'alternatives') a where a->>'kind' = 'incentive';
@@ -350,12 +370,138 @@ begin
     if cand->'margin_guard'->>'reason' <> 'no cost recorded for this service; enter costs in Settings' then
       insert into _fail values ('C-reason', format('reason was not verbatim: %s', cand->'margin_guard'->>'reason'));
     end if;
+    if cand->'margin_guard'->>'assumed_incentive_cents' is distinct from '4000' then
+      insert into _fail values ('C-assumed-incentive',
+        format('margin_guard.assumed_incentive_cents was %s, expected 4000 (disclosure must not be status-conditional)',
+               cand->'margin_guard'->>'assumed_incentive_cents'));
+    end if;
     if position('would exceed' in coalesce(cand->>'limitation','')) > 0 then
       insert into _fail values ('C-wrongly-demoted', 'limitation carries a blocked-style reason despite an unavailable guard');
     end if;
   end if;
 end
 $v718c$;
+
+-- =================================================================================================
+-- E · BIZ_GW_OK — identical funnel, service margin (4500) meets/exceeds the standard incentive
+--     (4000): the guard's 'ok' branch, previously unreachable through the live candidate (nestly_v705
+--     A2-ok only proved the function directly), wired through for the first time by this migration.
+-- =================================================================================================
+do $v718e$
+declare
+  biz     uuid := '00000000-0000-4000-8000-000000718004';
+  br      uuid := '00000000-0000-4000-8000-000000718014';
+  u_owner uuid := '00000000-0000-4000-8000-000000718ee4';
+  svc_gw  uuid := '00000000-0000-4000-8000-0000007180a4';
+  d1      date := current_date - 200;
+  as_of   timestamptz := ((d1 + 150)::timestamp + time '12:00') at time zone 'Asia/Singapore';
+  g       jsonb;
+  cand    jsonb;
+  alt     jsonb;
+begin
+  insert into public.businesses (id, name, slug, enabled_modules) values
+    (biz, 'ZZ v718 gw ok', 'zz-v718-gw-ok', array['dashboard','clients','sales','reports']);
+  insert into public.branches (id, business_id, name, is_default, active) values
+    (br, biz, 'ZZ v718 gw ok main', true, true);
+  insert into public.reporting_contract_versions_v106
+    (business_id, branch_id, version_no, effective_from, timezone, currency, legacy_assumption)
+  select biz, br, 2, '2000-01-01T00:00:00+08'::timestamptz, 'Asia/Singapore', upper(b.currency), true
+    from public.businesses b where b.id = biz;
+  insert into public.staff (business_id, user_id, role, full_name, active, access_state) values
+    (biz, u_owner, 'owner', 'ZZ v718 gw ok owner', true, 'approved');
+  insert into public.business_workspace_controls_v94
+    (business_id, approval_status, decided_at, decision_reason)
+  values (biz, 'approved', now(), 'v718 fixture')
+    on conflict (business_id) do update set approval_status='approved', decided_at=now();
+  insert into public.business_subscription_lifecycle_v94 (business_id, state, workspace_paused)
+  values (biz, 'current', false)
+    on conflict (business_id) do update set state='current', workspace_paused=false;
+  insert into public.subscriptions (business_id, status, payment_status, current_period_end)
+  values (biz, 'active', 'paid', now() + interval '30 days')
+    on conflict (business_id) do update
+      set status='active', payment_status='paid', current_period_end=now() + interval '30 days';
+
+  -- svc_gw: price 5000 / cost 500 -> margin 4500. The standard incentive (4000) does NOT exceed it.
+  insert into public.services (id, business_id, name, price_cents, duration_min, cost_cents) values
+    (svc_gw, biz, 'ZZ v718 gateway service (ok)', 5000, 30, 500);
+
+  -- SAME proven funnel shape as nestly_v688's own BIZ1: F1..F20 first visit at d1, ALL return at
+  -- d1+10, 18 of 20 return at d1+20.
+  insert into public.clients (id, business_id, full_name)
+  select ('00000000-0000-4000-8000-000000718' || lpad((300+s)::text,3,'0'))::uuid,
+         biz, 'ZZ v718 gwo funnel ' || s from generate_series(1,20) s;
+
+  insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents, occurred_at, created_at)
+  select ('00000000-0000-4000-8000-000000718' || lpad((700+s)::text,3,'0'))::uuid,
+         biz, br, ('00000000-0000-4000-8000-000000718' || lpad((300+s)::text,3,'0'))::uuid,
+         'service', 5000,
+         (d1::timestamp + time '09:00') at time zone 'Asia/Singapore',
+         (d1::timestamp + time '09:00') at time zone 'Asia/Singapore'
+    from generate_series(1,20) s;
+  insert into public.sale_items (business_id, sale_id, item_type, ref_id, qty, unit_cents, line_cents)
+  select biz, ('00000000-0000-4000-8000-000000718' || lpad((700+s)::text,3,'0'))::uuid,
+         'service', svc_gw, 1, 5000, 5000 from generate_series(1,20) s;
+
+  insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents, occurred_at, created_at)
+  select ('00000000-0000-4000-8000-000000718' || lpad((720+s)::text,3,'0'))::uuid,
+         biz, br, ('00000000-0000-4000-8000-000000718' || lpad((300+s)::text,3,'0'))::uuid,
+         'service', 5000,
+         ((d1+10)::timestamp + time '09:00') at time zone 'Asia/Singapore',
+         ((d1+10)::timestamp + time '09:00') at time zone 'Asia/Singapore'
+    from generate_series(1,20) s;
+  insert into public.sale_items (business_id, sale_id, item_type, ref_id, qty, unit_cents, line_cents)
+  select biz, ('00000000-0000-4000-8000-000000718' || lpad((720+s)::text,3,'0'))::uuid,
+         'service', svc_gw, 1, 5000, 5000 from generate_series(1,20) s;
+
+  insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents, occurred_at, created_at)
+  select ('00000000-0000-4000-8000-000000718' || lpad((740+s)::text,3,'0'))::uuid,
+         biz, br, ('00000000-0000-4000-8000-000000718' || lpad((300+s)::text,3,'0'))::uuid,
+         'service', 5000,
+         ((d1+20)::timestamp + time '09:00') at time zone 'Asia/Singapore',
+         ((d1+20)::timestamp + time '09:00') at time zone 'Asia/Singapore'
+    from generate_series(1,18) s;   -- only 18 of 20
+  insert into public.sale_items (business_id, sale_id, item_type, ref_id, qty, unit_cents, line_cents)
+  select biz, ('00000000-0000-4000-8000-000000718' || lpad((740+s)::text,3,'0'))::uuid,
+         'service', svc_gw, 1, 5000, 5000 from generate_series(1,18) s;
+
+  g := public.get_ci_opportunities_v1(biz, d1, d1, null, as_of, true);
+
+  select c into cand from jsonb_array_elements(g->'ranked') c
+   where c->>'id' = 'gateway_followthrough:' || svc_gw::text;
+  if cand is null then
+    insert into _fail values ('E-missing', 'gateway_followthrough:svc_gw was not promoted');
+  else
+    if cand->'margin_guard'->>'status' <> 'ok' then
+      insert into _fail values ('E-status', format('margin_guard.status was %s, expected ok',
+        cand->'margin_guard'->>'status'));
+    end if;
+    if (cand->'margin_guard'->>'margin_cents')::int <> 4500 then
+      insert into _fail values ('E-margin', format('margin_guard.margin_cents was %s, expected 4500',
+        cand->'margin_guard'->>'margin_cents'));
+    end if;
+    if cand->'margin_guard'->>'assumed_incentive_cents' is distinct from '4000' then
+      insert into _fail values ('E-assumed-incentive',
+        format('margin_guard.assumed_incentive_cents was %s, expected 4000',
+               cand->'margin_guard'->>'assumed_incentive_cents'));
+    end if;
+
+    -- the incentive-kind alternative carries the IDENTICAL cost_basis.
+    select a into alt from jsonb_array_elements(cand->'alternatives') a where a->>'kind' = 'incentive';
+    if alt is null then
+      insert into _fail values ('E-alt-missing', 'no incentive-kind alternative on gateway_followthrough');
+    elsif alt->'cost_basis' is distinct from cand->'margin_guard' then
+      insert into _fail values ('E-alt-mismatch',
+        format('alternative cost_basis %s does not match candidate margin_guard %s',
+               alt->'cost_basis', cand->'margin_guard'));
+    end if;
+
+    -- the guard said 'ok': the demotion clause must NOT fire.
+    if position('would exceed' in coalesce(cand->>'limitation','')) > 0 then
+      insert into _fail values ('E-wrongly-demoted', 'limitation carries a blocked-style reason despite an ok guard');
+    end if;
+  end if;
+end
+$v718e$;
 
 -- =================================================================================================
 -- D · BIZ_DISC_CHANGE — acquisition_source: referral/walk_in (discovery) + ads (deteriorating).

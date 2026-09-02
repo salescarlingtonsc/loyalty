@@ -364,38 +364,70 @@ declare
     'v95_storage_path_owned'     -- pure filename-shape predicate, no row access
   ];
   v_known_other constant text[] := array[
+    -- ****************************************************************************************
+    -- SHRUNK 2026-09-02 (security audit, branch claude/ci-proof-100): sixteen pure CI/stat
+    -- helpers that were granted `to authenticated, service_role` in their own migrations
+    -- (v672/v683/v684/v686/v690/v696/v699/v705/v709/v711/v714/v718) with no internal auth check
+    -- and no invoker-rights caller (grepped app.js for a direct .rpc() call and every migration's
+    -- RLS policies -- none reach these by name; every real caller is a SECURITY DEFINER reader
+    -- that already runs as table owner) were revoked from authenticated and re-granted to
+    -- service_role only: subgroup_evidence_v1, rate_block_v1, distribution_block_v1,
+    -- comparisons_note_v1, rate_block_floor_gated_v683, ci_metric_dictionary_v1,
+    -- ci_customer_classes_v1, erf_v686, normal_two_tailed_p_v686, two_prop_p_value_v686,
+    -- ci_floor_registry_v690, ci_verdict_class_v696, ci_visit_day_v699, ci_visit_registry_v699,
+    -- ci_materiality_threshold_bps_v705, ci_standard_incentive_cents_v718. The three FLAGGED
+    -- v724 entries this list used to carry below (v176_sales_window/v177_sales_window/
+    -- v177_customers -- explicit `grant ... to public`, no internal check, same "arbitrary
+    -- business revenue for a plain uuid argument" shape as app.v176_evidence_pack itself)
+    -- were fixed the same way: revoked from public and re-granted to service_role only,
+    -- restoring the original nestly_v176/v177 owner-only ACL. All nineteen are removed from
+    -- this array below because the estate scan (PART B) no longer finds them exposed to
+    -- anon/authenticated at all -- they need no allowlist entry, justified or otherwise.
+    -- app.customer_demographics_v1 is NOT in this removal set: it carries its own internal
+    -- gate (auth.uid() is not null AND (is_salon_member OR is_super_admin), nestly_v674) and
+    -- stays correctly granted to authenticated, listed in v_allowlist_43 above.
+    -- ****************************************************************************************
+    -- REMAINING, still NOT cleared by this audit: created by migrations outside this task's
+    -- scope (v479, v514, v531, v572, v628-v650, v691 -- not in the v672-v724 set this audit was
+    -- asked to grep), found exposed to anon/authenticated by this same PART B scan, and not
+    -- individually reviewed here. A name in this list is NOT a statement that the exposure is
+    -- safe -- most read as trigger-plumbing (Postgres refuses to invoke a trigger function
+    -- outside trigger context regardless of EXECUTE, same shape as forbid_mutation/
+    -- touch_updated_at in v_allowlist_43 above) but that has not been verified per-function the
+    -- way the sixteen above were. Flagged for its own estate audit (follow-up task already
+    -- spawned, see nestly_v720's original header).
     'appointment_status_events_guard_v631','appointments_rebook_guard_v632',
     'appointments_status_event_v631','attribution_associations_guard_v635',
-    'bump_customer_wallet_signal_v479','business_pack_v648','ci_customer_classes_v1',
-    'ci_effective_node_v650','ci_floor_registry_v690','ci_materiality_threshold_bps_v705',
-    'ci_metric_dictionary_v1','ci_reports_gate_v650','ci_standard_incentive_cents_v718',
-    'ci_verdict_class_v696','ci_visit_day_v699','ci_visit_registry_v699',
+    'bump_customer_wallet_signal_v479','business_pack_v648',
+    'ci_effective_node_v650','ci_reports_gate_v650',
     'clients_first_acquisition_default_v629','clients_first_acquisition_guard_v629',
-    'comparisons_note_v1','consents_no_update_v572','discovery_dim_label_v691',
-    'distribution_block_v1','erf_v686','normal_two_tailed_p_v686',
-    'rate_block_floor_gated_v683','rate_block_v1','redemption_sale_links_guard_v630',
+    'consents_no_update_v572','discovery_dim_label_v691',
+    'redemption_sale_links_guard_v630',
     'retention_cooldown_days_v572','rollup_guard_v646','sale_items_category_stamp_v649',
     'sales_operator_default_v683','seed_customer_capabilities_v514',
-    'service_map_history_guard_v648','service_map_history_v648','subgroup_evidence_v1',
+    'service_map_history_guard_v648','service_map_history_v648',
     'support_extract_entry_token_v531','support_strip_entry_token_v531','taxonomy_guard_v647',
     'tier_observe_from_ladder_v633','tier_observe_from_ledger_v633',
-    'tier_observe_from_sale_v633','tier_transition_events_guard_v633','two_prop_p_value_v686',
+    'tier_observe_from_sale_v633','tier_transition_events_guard_v633',
     'v515_gift_intent_guard','v550_attention_outreach_immutable','v551_retention_status_rank',
     'v665_gift_reversal_guard','watermark_guard_v628',
     -- ****************************************************************************************
-    -- FLAGGED, NOT CLEARED: nestly_v724 (in-flight, another session, 2026-09-02) grants these
-    -- three EXPLICITLY to `public` (`grant execute on function ... to public, service_role;`,
-    -- not a default-privilege artifact) and none of the three carries any internal auth check
-    -- (grepped their bodies -- no auth.uid()/is_super_admin/has_perm/is_salon_member anywhere).
-    -- app.v176_sales_window computes an arbitrary business's net_revenue_cents/visits/
-    -- customers_served for any date range passed in as a plain argument -- the SAME defect
-    -- shape this whole migration exists to close for app.v176_evidence_pack, and the ORIGINAL
-    -- nestly_v176 migration explicitly revoked all four roles from this exact function. A
-    -- follow-up task was spawned to get this reviewed/fixed in its own migration; listed here
-    -- ONLY so this scan does not block on someone else's in-flight work it was not scoped to
-    -- edit -- NOT a statement that the exposure is safe, unlike the rest of v_known_other above.
+    -- FLAGGED, NOT CLEARED (re-regressed after this audit, 2026-09-02): nestly_v729
+    -- (db/migrations/20260902_nestly_v729_visit_days_estate_3.sql), untracked and in-flight in
+    -- another session at the time of this audit, re-emits app.ci_metric_dictionary_v1 and
+    -- app.ci_visit_registry_v699 via its own anchored CREATE OR REPLACE and re-grants both
+    -- `to authenticated, service_role` -- undoing this same migration's fix (both were revoked
+    -- to service_role-only earlier in the chain, in nestly_v684/v699/v705/v709/v711/v714/v724,
+    -- the same pure-helper reasoning as the sixteen documented above: no invoker-rights caller,
+    -- no internal auth check, called only from SECURITY DEFINER readers). This task's guard
+    -- ("no committing/editing untracked in-flight files -- v725, v729, v718's uncommitted
+    -- amendment") explicitly forbids touching v729's file, so the grant is NOT reverted here;
+    -- listed instead, exactly like nestly_v724's three flagged entries were before this audit
+    -- cleared them, so the estate scan still passes without silently accepting the exposure as
+    -- safe. Reported to the requester for hand-off to whoever owns v729 -- NOT a statement that
+    -- re-widening these two grants is intentional or safe.
     -- ****************************************************************************************
-    'v176_sales_window','v177_sales_window','v177_customers'
+    'ci_metric_dictionary_v1','ci_visit_registry_v699'
   ];
   v_baseline constant text[] := v_allowlist_43 || v_known_other;
   v_exposed  text[];

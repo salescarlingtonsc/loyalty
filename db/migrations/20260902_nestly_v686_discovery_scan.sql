@@ -155,7 +155,7 @@ as $$
   from t;
 $$;
 revoke all on function app.erf_v686(numeric) from public, anon, authenticated;
-grant execute on function app.erf_v686(numeric) to authenticated, service_role;
+grant execute on function app.erf_v686(numeric) to service_role;
 
 create or replace function app.normal_two_tailed_p_v686(p_z numeric)
 returns numeric
@@ -169,7 +169,7 @@ as $$
   ));
 $$;
 revoke all on function app.normal_two_tailed_p_v686(numeric) from public, anon, authenticated;
-grant execute on function app.normal_two_tailed_p_v686(numeric) to authenticated, service_role;
+grant execute on function app.normal_two_tailed_p_v686(numeric) to service_role;
 
 create or replace function app.two_prop_p_value_v686(p_x1 bigint, p_n1 bigint, p_x2 bigint, p_n2 bigint)
 returns numeric
@@ -194,7 +194,7 @@ as $$
   from se;
 $$;
 revoke all on function app.two_prop_p_value_v686(bigint,bigint,bigint,bigint) from public, anon, authenticated;
-grant execute on function app.two_prop_p_value_v686(bigint,bigint,bigint,bigint) to authenticated, service_role;
+grant execute on function app.two_prop_p_value_v686(bigint,bigint,bigint,bigint) to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- 1 · The discovery engine itself.

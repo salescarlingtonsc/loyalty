@@ -69,7 +69,7 @@ as $$
          end
 $$;
 revoke all on function app.rate_block_floor_gated_v683(bigint,bigint,jsonb) from public, anon, authenticated;
-grant execute on function app.rate_block_floor_gated_v683(bigint,bigint,jsonb) to authenticated, service_role;
+grant execute on function app.rate_block_floor_gated_v683(bigint,bigint,jsonb) to service_role;
 
 alter table public.sales add column operator_user_id uuid;
 alter table public.sales

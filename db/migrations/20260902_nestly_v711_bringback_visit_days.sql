@@ -265,6 +265,6 @@ end
 $patch_registry$;
 -- ACL restated verbatim from the live proacl (unchanged by this migration — same argument list).
 revoke all on function app.ci_visit_registry_v699() from public, anon;
-grant execute on function app.ci_visit_registry_v699() to authenticated, service_role;
+grant execute on function app.ci_visit_registry_v699() to service_role;
 
 commit;
