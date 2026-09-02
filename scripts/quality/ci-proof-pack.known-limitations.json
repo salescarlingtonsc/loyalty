@@ -8,9 +8,9 @@
       ],
       "hard_gate": true,
       "hard_gate_reason": "Section J check 98 requires RPC/partial/model/export failure to surface an explicit unavailable state, never a silent zero — the checklist's own hard-gate list names 'incorrect financial truth' and a masked failure reading as a real zero is exactly that shape.",
-      "status": "PARTIAL",
+      "status": "SUPERSEDED — closed by MANUAL-CHECK-98-EXECUTED (commit 663d6907)",
       "owner": "engineering (AI report + export pipeline)",
-      "detail": "docs/qa/CI-PROOF-EVIDENCE-MAP-2026-09-02.md check 98 row: 'every refusal asserted as 42501, never an empty payload. Model/export failure paths still unproven' — db/tests/executed/v667_ci_access_boundaries.sql proves the RPC-refusal half only. Model-failure and export-failure proof is pending."
+      "detail": "docs/qa/CI-PROOF-EVIDENCE-MAP-2026-09-02.md check 98 row: 'every refusal asserted as 42501, never an empty payload. Model/export failure paths still unproven' — db/tests/executed/v667_ci_access_boundaries.sql proves the RPC-refusal half only. Model-failure and export-failure proof is pending. SUPERSEDED 2026-09-02: model-failure and export-failure paths now have executing tests (see MANUAL-CHECK-98-EXECUTED); kept as the record of the gap, no longer open."
     },
     {
       "id": "MANUAL-CHECK-80-001",
@@ -134,6 +134,29 @@
       "status": "DECLARED_LIMIT",
       "owner": "engineering (estate-wide synthetic-exclusion sweeps)",
       "detail": "app.ci_synthetic_scan_v743 (hardened by nestly_v744 with view names, extra aggregate forms and a per-statement mixed pass) cannot see a population built by calling ANOTHER function (e.g. app.customer_cadence_batch_v1, the shape that hid v744's first fix): the caller's own source contains no literal table name for the regex to match. Mitigation is procedural — grep every caller of a population-shaped kernel by name at review time — and the five adversarial estate sweeps of 2026-09-02/03 are the executed baseline."
+    },
+    {
+      "id": "MANUAL-CHECK-17-NARRATIVE-REVERDICT",
+      "checks": [
+        17
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Evidence classification labels are DIRECT_FACT/ASSOCIATION/ESTIMATE only (app.ci_verdict_class_v696 never emits CAUSAL); the readers' verdicts are proven by executed fixtures (v693/v695/v696/v713) and the narrative side is validator-enforced (V10/V10b/V10c, V3 shared list). This item is about the proof record, not about an unsupported causal claim reaching a customer.",
+      "status": "PARTIAL — proof record",
+      "owner": "engineering (CI proof programme, next wave)",
+      "detail": "The last adversarial refuter round that named check 17 held it PARTIAL pending two closures: the V3 shared causal-construction list (landed in commit 3473f36a) and the production evidence-pack shape carrying typed findings (nestly_v713). Both landed with executing tests (tests/ai-reports/v712-causal-inflection-and-grounding-fixes.test.mjs, tests/ai-reports/v713-findings-ranked-binding.test.mjs, db/tests/executed/v713_corpus_evidence_pack.sql) and are green in the final sweep, but no refuter round re-verdicted check 17 by name after they landed. Under the programme's own rule (a check is PROVEN only after the LAST refuter round on its final commit said CONFIRMED) it is scored zero at closure. Next wave: one refuter pass on check 17 at the frozen commit."
+    },
+    {
+      "id": "MANUAL-SQLSTATE-INVERTED-WINDOW-V155",
+      "checks": [
+        13,
+        98
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "The reader fails closed with an explicit message on an inverted date window; no silent zero or empty payload is produced, so none of the hard-gate classes (financial truth, misleading coverage) applies.",
+      "status": "DECLARED_LIMIT — consistency",
+      "owner": "engineering (next wave)",
+      "detail": "Found by the final adversarial verification at HEAD 8799bbad (2026-09-02): public.get_dashboard_summary_v155 raises SQLSTATE 22007 ('a valid report date range is required') on an inverted window, while get_revenue_truth_v106 and platform_get_assigned_firm_report_v94 raise 22023 invalid_report_window via app.ci_period_validate_v726. Behaviourally equivalent (fails closed, explicit reason); the SQLSTATE differs. Not fixed in this programme by the owner's frozen-scope ruling (not a release blocker); aligning it to 22023 is a one-anchor re-emit for the next wave."
     }
   ]
 }

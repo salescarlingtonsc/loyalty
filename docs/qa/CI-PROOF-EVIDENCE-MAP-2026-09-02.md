@@ -1,5 +1,7 @@
 # Capability-to-evidence map — full 100-check pass (2026-09-02)
 
+> **FINAL TALLY (2026-09-03, frozen commit `b02dfc61`):** the status column below is the provisional ledger read and is superseded by the closure addendum in `docs/qa/CI-ACCEPTANCE-VERDICT-2026-09-02.md` — 92 PROVEN, 5 PARTIAL-declared (4, 8, 13, 17, 23), 3 EXTERNAL (80, 99, 100), 0 absent. Machine-readable: `docs/qa/proof-pack/CI-ACTUAL-RESULTS.json`.
+
 Proof-pack artifact #2, full edition. `docs/qa/CI-PROOF-EVIDENCE-MAP.md` only covered the checks
 that changed in the v667 P0 wave and the first corpus fixture; this file walks all 100 checks in
 `docs/qa/CI-100-CHECKLIST.md`'s own numbering and wording, one row per check, naming:
