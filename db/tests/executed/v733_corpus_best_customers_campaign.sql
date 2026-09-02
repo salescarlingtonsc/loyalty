@@ -50,6 +50,11 @@
 --       app.ci_verdict_class_v696, nestly_v705), whose 'limitation' names the missing
 --       incrementality in plain language, and whose 'impact.expected_value.status' =
 --       'unavailable' (no behavioural model backs it -- never a manufactured cents figure).
+--   app.v176_evidence_pack(biz, 'monthly', d_send, d_send), sessionless (internal drain open --
+--     the real production call shape, since nestly_v735): findings.ranked ALSO contains a
+--     candidate id='campaigns', evidence_class='ASSOCIATION', with the same non-incrementality
+--     limitation -- the wiring gap PART E originally documented as absent is now closed, and this
+--     is the checked, positive fact that closure produced (PART E).
 --   MATCHED-COHORT DEMONSTRATION (computed directly from public.sales, not through an RPC --
 --     there is no dedicated "campaign lift" RPC in this schema, which is itself the point:
 --     nothing here computes incrementality):
@@ -70,27 +75,32 @@
 --     slipped in anywhere else still fails the check.
 --
 -- ===========================================================================================
--- ONE DISCOVERED, DOCUMENTED DEVIATION FROM THE TASK BRIEF'S WORDING
+-- CLOSED BY NESTLY_V735 (2026-09-02) -- PART E's ORIGINAL DOCUMENTED DEVIATION IS NOW RESOLVED
 -- ===========================================================================================
--- The brief asks to "assert the v713 evidence pack's findings carry that ASSOCIATION class for
--- the campaigns candidate." Read against the live code (db/migrations/20260902_nestly_v713_
--- evidence_pack_typed_findings.sql line 173 and 20260902_nestly_v685_shadow_reconciliation.sql
--- line 98 -- the only two call sites of public.get_ci_opportunities_v1 with a 3-arg or narrower
--- shape in this repo), app.v176_gated_evidence calls
+-- This fixture originally documented a deviation from its own task brief: the brief asked to
+-- "assert the v713 evidence pack's findings carry that ASSOCIATION class for the campaigns
+-- candidate," but app.v176_gated_evidence called
 -- `public.get_ci_opportunities_v1(p_business, p_from, v_to_effective)` -- THREE positional
--- arguments, so `p_extended` takes its default of `false`. The 'campaigns' generator (nestly
--- v705) only fires when `p_extended = true` (see "EXTENDED MODE STARTS HERE" in
--- db/migrations/20260902_nestly_v688_consultant_spine_v2.sql, guarded by
--- `if not p_extended or v_stale then return ... end if;` before that generator ever runs). No
--- migration after v713 changes this call site. So under the code as it actually ships today,
--- the AI firm-report evidence pack's `findings.ranked` array CANNOT carry the 'campaigns'
--- candidate -- asserting that it does would be asserting something the shipped code cannot
--- produce, which would make this fixture pass for the wrong reason (or fail forever on correct
--- code). This fixture instead proves the true, verifiable claim: the 'campaigns' ASSOCIATION
--- candidate exists and is correctly typed when produced the only way it is ever produced
--- (`p_extended=>true`, PART C below), and separately proves (PART E) that it is, as the code
--- shows, genuinely absent from the non-extended pack on this exact seed -- turning the
--- documented gap into a positive, checked fact rather than a silent assumption.
+-- arguments, so `p_extended` took its default of `false`. The 'campaigns' generator (nestly v705)
+-- only fires when `p_extended = true` (see "EXTENDED MODE STARTS HERE" in db/migrations/20260902_
+-- nestly_v688_consultant_spine_v2.sql, guarded by `if not p_extended or v_stale then return ...
+-- end if;` before that generator ever runs), so under the code as it shipped through v713 the AI
+-- firm-report evidence pack's `findings.ranked` array could never carry the 'campaigns' candidate.
+-- PART E (below) originally proved that absence as a positive, checked fact rather than a silent
+-- assumption -- and closed with "either the wiring changed (update this fixture's header) or this
+-- assertion is wrong."
+--
+-- db/migrations/20260902_nestly_v735_evidence_pack_extended.sql (proven by db/tests/executed/
+-- v735_corpus_evidence_pack_extended.sql) is that wiring change: one anchored, comment-free
+-- substitution, so app.v176_gated_evidence's call becomes `public.get_ci_opportunities_v1
+-- (p_business, p_from, v_to_effective, null, clock_timestamp(), true)`. PART E below now asserts
+-- the corrected, positive claim -- the 'campaigns' ASSOCIATION candidate IS present in
+-- findings.ranked, with a limitation naming non-incrementality, through the REAL, production
+-- app.v176_evidence_pack path (sessionless, internal drain open) -- exactly the wiring change this
+-- note anticipated. PART C (below, unchanged) already proved the candidate exists and is correctly
+-- typed when produced via a direct p_extended=>true call to the underlying RPC; PART E now proves
+-- the SAME claim through the actual gated pack a real AI firm report reads, closing the gap
+-- between "the RPC can produce this" and "the pack a report actually gets contains this."
 --
 -- MUTATION-CHECKED (2026-09-02, this session, --filter=v733_corpus --migrated-only): PART D's
 -- expected M-group return rate was temporarily changed from 5 to 4 (matched-cohort numerator)
@@ -350,22 +360,37 @@ begin
   end if;
 
   ---------------------------------------------------------------------------
-  -- PART E -- the documented deviation, checked rather than assumed: through the REAL,
-  -- non-extended production evidence-pack path, the campaigns candidate is genuinely absent
-  -- (see this file's header). Proves the header's claim empirically instead of leaving it as an
-  -- unverified code-reading assertion.
+  -- PART E -- CLOSED BY NESTLY_V735: through the REAL, production evidence-pack path
+  -- (app.v176_evidence_pack, sessionless, internal drain open -- the actual shape the AI
+  -- firm-report worker calls it in), the campaigns candidate IS present, typed ASSOCIATION, and
+  -- names non-incrementality -- the wiring change this fixture's header originally anticipated.
+  -- Proves the header's (now-updated) claim empirically instead of leaving it as an unverified
+  -- code-reading assertion.
   ---------------------------------------------------------------------------
   begin
     perform app.v676_open_internal_drain();
     declare
       v_pack jsonb;
+      e_cand jsonb;
     begin
       v_pack := app.v176_evidence_pack(biz, 'monthly', d_send, d_send);
-      if exists (select 1 from jsonb_array_elements(v_pack->'findings'->'ranked') c
-                  where c->>'id' = 'campaigns') then
-        insert into _fail values ('E-unexpected-present',
-          'the campaigns candidate appeared in the non-extended evidence pack -- either the wiring '
-          'changed (update this fixture''s header) or this assertion is wrong');
+      select c into e_cand from jsonb_array_elements(v_pack->'findings'->'ranked') c
+        where c->>'id' = 'campaigns';
+      if e_cand is null then
+        insert into _fail values ('E-missing', format(
+          'no campaigns candidate in the production evidence pack''s findings.ranked; ranked=%s',
+          v_pack->'findings'->'ranked'));
+      else
+        if (e_cand->>'evidence_class') <> 'ASSOCIATION' then
+          insert into _fail values ('E-class', format(
+            'campaigns evidence_class in the pack = %s, expected ASSOCIATION', e_cand->>'evidence_class'));
+        end if;
+        if position('incremental' in lower(e_cand->>'limitation')) = 0
+           and position('causal' in lower(e_cand->>'limitation')) = 0 then
+          insert into _fail values ('E-limitation', format(
+            'campaigns limitation in the pack does not name non-incrementality/non-causality: %s',
+            e_cand->>'limitation'));
+        end if;
       end if;
     end;
     perform app.v676_close_internal_drain();
