@@ -504,8 +504,11 @@ function scanNumberWords(text) {
 //     SAME +/-0.5 tolerance groundNumbers already applies to any percent, per renders()).
 //   - "a dozen"/"two dozen" states a plain COUNT (numerator * 12, "a dozen" -> 12) and grounds
 //     against the pack's ordinary numeric leaves, not a percent at all.
-//   - "one in five" states a RATIO, converted the same way as a fraction (100 * a / b -> 20) since
-//     a rate expressed as "1 in 5" and "20%" are the same claim about the evidence.
+//   - "one in five" (or its digit form, "1 in 5", or mixed, "one in 12") states a RATIO, converted
+//     the same way as a fraction (100 * a / b -> 20) since a rate expressed as "1 in 5" and "20%"
+//     are the same claim about the evidence — EXCEPT when the denominator is itself a calendar
+//     year ("1 in 2026"), which is refused outright as ungroundable rather than converted; see
+//     DATE_SHAPED_RATIO_DENOMINATOR_RE below.
 //
 // STAYS OUT, declared rather than silently missing: a vague quantity word that names no number at
 // all - "several", "many", "most", "a few", "plenty" - is not converted here and never will be;
@@ -542,10 +545,29 @@ const FRACTION_RE = new RegExp(
 const DOZEN_RE = new RegExp(
   `\\b(${alternation(Object.keys(FRACTION_NUMERATOR_WORDS))})\\s+dozen\\b`, 'gi',
 );
-const RATIO_RE = new RegExp(
-  `\\b(${alternation(Object.keys(NUM_WORDS))})\\s+in\\s+(${alternation(Object.keys(NUM_WORDS))})\\b`,
-  'gi',
-);
+// Check 83 (v735 follow-up): a ratio's numerator and denominator are each EITHER a spelled-out
+// cardinal ("one") OR a bare digit run ("5"), independently — "5 in 11", "one in 12" and
+// "1 in 2026" all match, same as the all-words "one in five" the original rule covered. Digit
+// support closes a gap the word-only rule left wide open: a model that writes the ratio in digits
+// (the far more natural way to write "5 in 11 customers came back") produced no V1 numeric
+// violation at all — the bare digits fell through as two unrelated, individually-groundable
+// mentions, and a denominator that happened to equal some unrelated pack number (worse, a
+// date-shaped one — see DATE_SHAPED_RATIO_DENOMINATOR_RE below) could ground the pair by
+// coincidence.
+const RATIO_SIDE_SRC = `(?:\\d+|${alternation(Object.keys(NUM_WORDS))})`;
+const RATIO_RE = new RegExp(`\\b(${RATIO_SIDE_SRC})\\s+in\\s+(${RATIO_SIDE_SRC})\\b`, 'gi');
+
+// A ratio side is either all-digits or a NUM_WORDS key (never both, and RATIO_RE cannot match
+// anything else), so trying the digit form first and falling back to the word table is exhaustive.
+function ratioSideValue(raw) {
+  return /^\d+$/.test(raw) ? Number(raw) : NUM_WORDS[raw.toLowerCase()];
+}
+
+// Check 83: a digit-form denominator shaped like a calendar year (1900-2099) — "1 in 2026
+// customers" — is not a population size; it is the report's own period year sitting one word away
+// from an unrelated "in". A spelled-out denominator can never collide with this (NUM_WORDS tops
+// out at "twenty"), so the check only needs to look at the digit form.
+const DATE_SHAPED_RATIO_DENOMINATOR_RE = /^(?:19|20)\d{2}$/;
 
 function scanQuantityPhrases(text) {
   const tokens = [];
@@ -579,13 +601,20 @@ function scanQuantityPhrases(text) {
 
   RATIO_RE.lastIndex = 0;
   while ((m = RATIO_RE.exec(text)) !== null) {
-    const a = NUM_WORDS[m[1].toLowerCase()];
-    const b = NUM_WORDS[m[2].toLowerCase()];
+    const aRaw = m[1];
+    const bRaw = m[2];
+    const a = ratioSideValue(aRaw);
+    const b = ratioSideValue(bRaw);
     if (!b) continue; // "... in zero" — nothing to divide by, and not a claim this file has seen
     const pct = Math.round((100 * a / b) * 10) / 10;
     if (!Number.isFinite(pct)) continue;
+    // Check 83: a date-shaped denominator ("1 in 2026") never grounds, no matter what the pack
+    // holds — see DATE_SHAPED_RATIO_DENOMINATOR_RE and groundedAgainstPack's forceUngrounded check.
+    // The span is still recorded (below) either way so the digit/word scans don't ALSO fire on it.
+    const forceUngrounded = DATE_SHAPED_RATIO_DENOMINATOR_RE.test(bRaw);
     tokens.push({
       raw: m[0], value: pct, decimals: 0, isPercent: true, index: m.index, end: m.index + m[0].length,
+      forceUngrounded,
     });
     spans.push([m.index, m.index + m[0].length]);
   }
@@ -639,14 +668,18 @@ function overlapsAnyRange(ranges, from, to) {
 
 function groundNumbers(narrative, packInfo, derivedPct) {
   const masked = maskStructuralNumbers(narrative, packInfo.dateStrings);
-  const digitTokens = scanNumbers(masked, false);
   // Check 83: fraction/ordinal/dozen/"X in Y" quantity phrases are extracted FIRST, from the same
-  // masked text, and their spans blanked out of a COPY before the ordinary cardinal-word scan runs
-  // — "three quarters" would otherwise ALSO surface a bare "three"=3 token (NUMBER_WORD_RUN_RE has
-  // no idea "quarters" changes what "three" means), and "one in five" would surface "one"=1 and
-  // "five"=5 as two unrelated claims alongside the ratio's own 20%. Blanking prevents the same
-  // phrase being counted twice under two different, disagreeing interpretations.
+  // masked text, and their spans excluded from BOTH the ordinary digit scan and the ordinary
+  // cardinal-word scan that follow — "three quarters" would otherwise ALSO surface a bare
+  // "three"=3 word-token (NUMBER_WORD_RUN_RE has no idea "quarters" changes what "three" means),
+  // "one in five" would surface "one"=1 and "five"=5 as two unrelated word-claims alongside the
+  // ratio's own 20%, and (since RATIO_RE now accepts digits too — v735 follow-up) "2 in 5" would
+  // likewise surface bare DIGIT tokens 2 and 5 via scanNumbers unless those spans are excluded from
+  // the digit scan as well. Excluding prevents the same phrase being counted twice under two
+  // different, disagreeing interpretations.
   const { tokens: quantityTokens, spans: quantitySpans } = scanQuantityPhrases(masked);
+  const digitTokens = scanNumbers(masked, false)
+    .filter((t) => !overlapsAnyRange(quantitySpans, t.index, t.end));
   let maskedForWords = masked;
   if (quantitySpans.length) {
     const chars = [...masked];
@@ -674,6 +707,14 @@ function groundNumbers(narrative, packInfo, derivedPct) {
   const CURRENCY_TOKEN_PREFIX_RE = /^\s*(?:S\$|SGD\s|\$)/;
   const dateNumbers = packInfo.dateNumbers || new Set();
   const groundedAgainstPack = (tok) => {
+    // Check 83 (digit-form ratios): a "N in M" claim whose denominator M is itself a calendar year
+    // (scanQuantityPhrases flags this on the token as forceUngrounded — see RATIO_RE there) is
+    // refused outright, before any lookup runs. Nothing in the pack can ground it "correctly" —
+    // even a coincidental match would be laundering a year the model misread as a headcount into a
+    // rate claim, the same failure mode v735 already closed on the PACK side (a period year must
+    // never ground a percentage via the cents-as-dollars heuristic); this closes the matching gap
+    // on the CLAIM side.
+    if (tok.forceUngrounded) return false;
     const excludeDateNumbers = tok.isPercent || CURRENCY_TOKEN_PREFIX_RE.test(tok.raw);
     for (const n of packInfo.numbers) {
       const isDateNumber = dateNumbers.has(n);

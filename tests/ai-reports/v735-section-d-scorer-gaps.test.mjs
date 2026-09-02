@@ -226,6 +226,74 @@ test('check 83: a bare year is still a legitimate date mention (non-firing)', ()
   assert.deepEqual(only(result, RULES.NUMERIC), []);
 });
 
+/* ---------------------------------------------------------- check 83 (digit-form ratios) */
+
+// v735 patched RATIO_RE to fire on "one in five" — but RATIO_RE only ever matched spelled-out
+// number words on BOTH sides. A model writing the far more natural digit form, "5 in 11 customers
+// came back", produced no V1 numeric violation at all: the bare digits "5" and "11" fell through
+// scanNumbers as two individually-plausible, individually-groundable mentions instead of being
+// read as one ratio claim of 45.5%, and a digit denominator that happened to look like a year
+// (2026) could ground the pair on a coincidence no human would accept as "the pack states this
+// rate". These tests extend RATIO_RE to accept digits, words, or a mix on either side, prove the
+// resulting percentage is checked with the SAME +/-0.5 tolerance as every other percent claim, and
+// prove a date-shaped ("N in 20XX") denominator is refused outright rather than converted.
+
+test('check 83: a digit-form ratio with no matching percentage in the pack is caught (firing)', () => {
+  // 100 * 5 / 13 = 38.5, rounded to one decimal — nowhere in this pack, directly or derived (the
+  // pack's own "45-180 days" at_risk.definition text puts 45 within tolerance of a NEARBY ratio
+  // like "5 in 11" = 45.5, which is exactly why this test picks a value with no such coincidence —
+  // the point being proven is "an invented ratio is caught", not "this specific wording is caught").
+  const narrative = '## Summary\n5 in 13 customers came back this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(
+    only(result, RULES.NUMERIC).some((v) => v.detail.includes('38.5') && v.detail.includes('5 in 13')),
+    explain(result),
+  );
+});
+
+test('check 83: a digit-form ratio matching the pack\'s own derived percentage passes (non-firing)', () => {
+  // sales.prior carries customers_served:8 and visits:20 — 100*8/20 = 40.0 is one of
+  // derivedPercentages' sibling ratios for that object. "2 in 5" states the same rate (100*2/5 =
+  // 40.0), so it must ground exactly like a digit "40%" claim would.
+  const narrative = '## Summary\n2 in 5 customers returned this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.NUMERIC), [], explain(result));
+});
+
+test('check 83: a mixed word/digit ratio still converts and grounds (non-firing, mutation guard)', () => {
+  // Same claim as above, spelled numerator / digit denominator — proves RATIO_RE's two sides are
+  // matched independently, not as an all-digits-or-all-words pair.
+  const narrative = '## Summary\none in 5 customers returned this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.NUMERIC), [], explain(result));
+});
+
+test('check 83: "1 in 2026 customers" is refused as ungroundable — a date-shaped denominator is never a population size (firing)', () => {
+  // 2026 here is not a headcount; it is the report's own period year sitting next to an unrelated
+  // "in". Converting it to 100*1/2026 = 0.0% and grounding that tiny figure against a coincidental
+  // pack zero would launder the same failure mode v735 already closed on the PACK side (a period
+  // year must never ground a rate via the cents-as-dollars heuristic) — this is the matching gap on
+  // the narrative's own claim. The denominator is a real 4-digit year in THIS pack's own period
+  // (2026) to prove the exclusion holds even when the number is otherwise completely legitimate
+  // evidence elsewhere in the same report.
+  const narrative = '## Summary\n1 in 2026 customers redeemed a reward.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(
+    only(result, RULES.NUMERIC).some((v) => v.detail.includes('1 in 2026')),
+    explain(result),
+  );
+});
+
+test('check 83: a digit-form ratio with a non-date-shaped denominator that merely resembles a count still converts normally (non-firing, mutation guard)', () => {
+  // Mutation guard for the date-shaped-denominator exclusion: "9 in 20" is NOT a year (20 is two
+  // digits), so it must still convert and ground normally — proving the exclusion is scoped to
+  // 4-digit 19XX/20XX denominators, not digit denominators in general. 100*9/20 = 45.0, which is
+  // literally in this pack's evidence (at_risk.definition: "... 45-180 days ...").
+  const narrative = '## Summary\n9 in 20 customers came back this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.NUMERIC), [], explain(result));
+});
+
 /* -------------------------------------------------------------------- check 86 */
 
 test('check 86: sentence-initial "This may…" is not misread as an out-of-period month (non-firing)', () => {
