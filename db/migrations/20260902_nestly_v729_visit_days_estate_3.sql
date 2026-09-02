@@ -368,8 +368,8 @@ begin
   end if;
 end
 $v729_registry$;
-revoke all on function app.ci_visit_registry_v699() from public, anon, authenticated, service_role;
-grant execute on function app.ci_visit_registry_v699() to authenticated, service_role;
+revoke all on function app.ci_visit_registry_v699() from public, anon, authenticated;
+grant execute on function app.ci_visit_registry_v699() to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- (e) app.ci_metric_dictionary_v1 -- replace only the 'visit' entry's 'notes' value.
@@ -430,7 +430,7 @@ begin
 end
 $v729_dictionary$;
 -- ACL restated verbatim from the live proacl (unchanged by this migration -- same argument list).
-revoke all on function app.ci_metric_dictionary_v1() from public, anon;
-grant execute on function app.ci_metric_dictionary_v1() to authenticated, service_role;
+revoke all on function app.ci_metric_dictionary_v1() from public, anon, authenticated;
+grant execute on function app.ci_metric_dictionary_v1() to service_role;
 
 commit;

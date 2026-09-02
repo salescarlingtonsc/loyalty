@@ -410,24 +410,13 @@ declare
     'tier_observe_from_ladder_v633','tier_observe_from_ledger_v633',
     'tier_observe_from_sale_v633','tier_transition_events_guard_v633',
     'v515_gift_intent_guard','v550_attention_outreach_immutable','v551_retention_status_rank',
-    'v665_gift_reversal_guard','watermark_guard_v628',
-    -- ****************************************************************************************
-    -- FLAGGED, NOT CLEARED (re-regressed after this audit, 2026-09-02): nestly_v729
-    -- (db/migrations/20260902_nestly_v729_visit_days_estate_3.sql), untracked and in-flight in
-    -- another session at the time of this audit, re-emits app.ci_metric_dictionary_v1 and
-    -- app.ci_visit_registry_v699 via its own anchored CREATE OR REPLACE and re-grants both
-    -- `to authenticated, service_role` -- undoing this same migration's fix (both were revoked
-    -- to service_role-only earlier in the chain, in nestly_v684/v699/v705/v709/v711/v714/v724,
-    -- the same pure-helper reasoning as the sixteen documented above: no invoker-rights caller,
-    -- no internal auth check, called only from SECURITY DEFINER readers). This task's guard
-    -- ("no committing/editing untracked in-flight files -- v725, v729, v718's uncommitted
-    -- amendment") explicitly forbids touching v729's file, so the grant is NOT reverted here;
-    -- listed instead, exactly like nestly_v724's three flagged entries were before this audit
-    -- cleared them, so the estate scan still passes without silently accepting the exposure as
-    -- safe. Reported to the requester for hand-off to whoever owns v729 -- NOT a statement that
-    -- re-widening these two grants is intentional or safe.
-    -- ****************************************************************************************
-    'ci_metric_dictionary_v1','ci_visit_registry_v699'
+    'v665_gift_reversal_guard','watermark_guard_v628'
+    -- nestly_v729 (db/migrations/20260902_nestly_v729_visit_days_estate_3.sql) briefly
+    -- re-regressed app.ci_metric_dictionary_v1 and app.ci_visit_registry_v699 back to
+    -- `authenticated, service_role` via its own anchored CREATE OR REPLACE; both are now
+    -- corrected back to service_role-only ACLs in that same migration, so neither needs an
+    -- allowlist entry here -- the estate scan (PART B) finds them clean, matching the
+    -- sixteen documented above.
   ];
   v_baseline constant text[] := v_allowlist_43 || v_known_other;
   v_exposed  text[];
