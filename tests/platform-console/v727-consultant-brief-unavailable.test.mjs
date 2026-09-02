@@ -36,6 +36,15 @@ assert.ok(blockStart > -1 && blockEnd > blockStart,
   'consultativeIntelligenceHtml must be a top-level function before renderEnterpriseReport');
 const block = console_js.slice(blockStart, blockEnd);
 
+/* nestly_v734 (check 97): consultativeIntelligenceHtml now calls ciFreshnessCaptionHtmlV734,
+   defined earlier in the file (next to dateTime), outside this block slice — so it is pulled in
+   verbatim here, same "execute the real helper" posture as the rest of this file. */
+const freshnessStart = console_js.indexOf('function ciFreshnessCaptionHtmlV734(payload) {');
+const freshnessEnd = console_js.indexOf('\n  }', freshnessStart) + '\n  }'.length;
+assert.ok(freshnessStart > -1 && freshnessEnd > freshnessStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessBlock = console_js.slice(freshnessStart, freshnessEnd);
+
 function render(report, affinity, recommendations) {
   const esc = (x) => String(x ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -44,6 +53,7 @@ function render(report, affinity, recommendations) {
     asObject: (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {},
     asArray: (x) => Array.isArray(x) ? x : [],
     currency: (c, cur) => `${cur || 'SGD'} ${((Number(c) || 0) / 100).toFixed(2)}`,
+    dateTime: (v) => `DT:${v}`,
     pt: (s, vars) => vars
       ? Object.keys(vars).reduce((out, k) => out.replaceAll(`{${k}}`, String(vars[k])), s)
       : s,
@@ -61,7 +71,7 @@ function render(report, affinity, recommendations) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(block + '\n__exports.render = consultativeIntelligenceHtml;', context);
+  vm.runInContext(freshnessBlock + '\n' + block + '\n__exports.render = consultativeIntelligenceHtml;', context);
   return context.__exports.render(report, affinity, recommendations, sandbox.CUI);
 }
 

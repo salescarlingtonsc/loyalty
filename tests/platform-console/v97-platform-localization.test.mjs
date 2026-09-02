@@ -362,7 +362,11 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // called as pt(known[key]) — a variable, not a literal — so this regex-based inventory does
   // not see them; they still carry real zh-CN/ms dictionary entries (added alongside these two),
   // just outside what this particular static scan can detect.
-  assert.equal(explicit.length,1117,'update the audited explicit-copy inventory when adding runtime UI'); // check 98
+  // nestly_v734 (check 97, freshness and stale states): +7 distinct explicit pt() strings from
+  // ciFreshnessCaptionHtmlV734 — 'age unknown', 'under an hour old', '{hours} hours old',
+  // 'Data as of {date} · {age}', 'no recorded sale yet',
+  // 'Data may be out of date — last sale {date}.' and 'never recorded'.
+  assert.equal(explicit.length,1124,'update the audited explicit-copy inventory when adding runtime UI'); // v734
   // nestly_v727: +2 distinct metadata strings (the new Customer intelligence card's title and
   // description).
   assert.equal(metadata.length,850,'update the audited CUI metadata inventory when adding UI metadata'); // v727

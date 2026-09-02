@@ -50,7 +50,7 @@ test('CI proof-pack: the state list covers both answer states and failure/absten
   const ids = manifest.map((s) => s.id);
   // Answer states (checklist item 11).
   for (const id of [
-    'funnel-conversion-mature', 'demographics-cells', 'behaviour-weekday',
+    'funnel-conversion-mature', 'stale-freshness-envelope', 'demographics-cells', 'behaviour-weekday',
     'opportunities-extended', 'category-mix-whale', 'visit-day-drilldown',
     'dashboard-revenue-tile', 'consultative-brief-ok'
   ]) {
@@ -65,20 +65,27 @@ test('CI proof-pack: the state list covers both answer states and failure/absten
   }
 });
 
-test('CI proof-pack: the documented not-renderable gap is still accurately grepped against current source', () => {
-  assert.ok(notRenderable.some((g) => g.id === 'stale-freshness-envelope'));
+/* nestly_v734 (check 97): the "stale-freshness-envelope" state used to be a documented
+ * NOT-RENDERABLE gap (see git history) — no renderer read app.ci_envelope_v680's `freshness`
+ * block. app/app.js and app/platform-console.js each now carry a ciFreshnessCaptionHtmlV734
+ * renderer, wired into every CI panel and the consultant brief, so the gap is closed: this test
+ * proves BOTH halves of that — the source really does read the freshness envelope now (so the
+ * old gap documentation would be a false claim if left in place), and `notRenderable` is empty
+ * (not simply missing the one entry) so a future real gap still has somewhere to be recorded
+ * honestly rather than silently dropped.
+ */
+test('CI proof-pack: the stale-freshness-envelope gap is closed — source reads freshness, notRenderable is empty', () => {
+  assert.deepEqual(notRenderable, []);
   const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
-  const appBusiness = existsSync(join(root, 'app', 'app-business.js'))
-    ? readFileSync(join(root, 'app', 'app-business.js'), 'utf8') : '';
   const consoleJs = readFileSync(join(root, 'app', 'platform-console.js'), 'utf8');
-  const readsFreshnessKey = /\bfreshness\.[a-z_]+|\.freshness\b(?!\s*[=:]\s*(?:jsonb_build_object|null))/i;
-  for (const [label, src] of [['app.js', app], ['app-business.js', appBusiness], ['platform-console.js', consoleJs]]) {
-    assert.ok(
-      !/payload\.freshness|report\.freshness|\.freshness\.(?:stale|data_as_of|age_hours|note)/.test(src),
-      `${label} now appears to read the v722 freshness envelope — the "stale-freshness-envelope" ` +
-      'state is no longer a documented gap and should be built as a real screenshot instead'
-    );
-  }
+  assert.match(app, /function ciFreshnessCaptionHtmlV734\(payload\)\{/,
+    'app.js must carry the freshness caption renderer');
+  assert.match(consoleJs, /function ciFreshnessCaptionHtmlV734\(payload\) \{/,
+    'platform-console.js must carry its own copy of the freshness caption renderer');
+  assert.match(app, /payload\.freshness|p\.freshness|bundle\.freshness/,
+    'app.js renderers must actually read a freshness field off their payload');
+  assert.match(consoleJs, /payload\.freshness|report\.freshness/,
+    'platform-console.js must actually read a freshness field off its payload');
 });
 
 /* -------------------------------------------------------------------------------------------

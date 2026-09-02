@@ -46,6 +46,16 @@ assert.ok(blockStart > -1 && blockEnd > blockStart,
   'consultativeIntelligenceHtml must be a top-level function before renderEnterpriseReport');
 const block = console_js.slice(blockStart, blockEnd);
 
+/* nestly_v734 (check 97): consultativeIntelligenceHtml now calls ciFreshnessCaptionHtmlV734,
+   defined earlier in the file, outside this block slice — pulled in verbatim so this vm context
+   can actually resolve it (see tests/business-ui/v734-ci-freshness-caption.test.mjs for the same
+   pattern used against app.js). */
+const freshnessStart = console_js.indexOf('function ciFreshnessCaptionHtmlV734(payload) {');
+const freshnessEnd = console_js.indexOf('\n  }', freshnessStart) + '\n  }'.length;
+assert.ok(freshnessStart > -1 && freshnessEnd > freshnessStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessBlock = console_js.slice(freshnessStart, freshnessEnd);
+
 /* The two static guards below scan the renderer for key names. They must read CODE, not prose:
    the fix's own comment names the superseded keys in order to explain them, and a scan that
    cannot tell the difference would either fail on the documentation or be silenced by deleting
@@ -60,7 +70,10 @@ function render(report, affinity, recommendations) {
     asObject: (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {},
     asArray: (x) => Array.isArray(x) ? x : [],
     currency: (c, cur) => `${cur || 'SGD'} ${((Number(c) || 0) / 100).toFixed(2)}`,
-    pt: (s) => s,
+    dateTime: (v) => `DT:${v}`,
+    pt: (s, vars) => vars
+      ? Object.keys(vars).reduce((out, k) => out.replaceAll(`{${k}}`, String(vars[k])), s)
+      : s,
     platformStatus: (s) => String(s ?? ''),
     localizedEmptyHtml: (msg) => `<div class="empty">${esc(msg)}</div>`,
     localizedRouteNoteHtml: (t, b) => `<div class="note"><b>${esc(t)}</b><p>${esc(b)}</p></div>`,
@@ -75,7 +88,7 @@ function render(report, affinity, recommendations) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(block + '\n__exports.render = consultativeIntelligenceHtml;', context);
+  vm.runInContext(freshnessBlock + '\n' + block + '\n__exports.render = consultativeIntelligenceHtml;', context);
   return context.__exports.render(report, affinity, recommendations, sandbox.CUI);
 }
 

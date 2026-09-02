@@ -64,6 +64,15 @@ assert.ok(rendererBlock.includes('function ciCategoryDistributionRowMarkupV704('
 
 const closureBlock = stateBlock + '\n' + rendererBlock;
 
+/* nestly_v734 (check 97): categoryMixMarkupV650 calls the real top-level ciFreshnessCaptionHtmlV734
+   defined further down app.js (outside this closure slice) — pulled in verbatim, same pattern
+   tests/business-ui/v685-ci-surfaces.test.mjs uses. */
+const freshnessHelperStart = app.indexOf('function ciFreshnessCaptionHtmlV734(payload){');
+const freshnessHelperEnd = app.indexOf('\n}', freshnessHelperStart) + 2;
+assert.ok(freshnessHelperStart > -1 && freshnessHelperEnd > freshnessHelperStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessHelperBlock = app.slice(freshnessHelperStart, freshnessHelperEnd);
+
 function makePage() {
   const sandbox = {
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
@@ -73,6 +82,7 @@ function makePage() {
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
+    freshnessHelperBlock + '\n' +
     closureBlock +
     `\n__exports.categoryMix=()=>categoryMixMarkupV650();` +
     `__exports.setCategoryMix=(bundle,err)=>{lastCategoryMixBundle=bundle;lastCategoryMixError=err||'';};`,

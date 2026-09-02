@@ -41,14 +41,14 @@
  * browser-default/inherited styling only. That is evidence of a real gap (flagged in the index),
  * not a bug in this script.
  *
- * KNOWN GAP — deliberately NOT produced as a screenshot: the "stale-freshness envelope" state.
- * db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql adds a `freshness` block
- * (data_as_of/age_hours/stale/note) to app.ci_envelope_v680's payload shape, but as of this run
- * NO renderer in app/app.js, app/app-business.js or app/platform-console.js reads a `freshness`
- * key at all (grepped; zero hits outside comments). There is therefore no real renderer to execute
- * for this state — producing a screenshot would mean hand-drawing HTML nobody ships, which is
- * exactly the "mock HTML" this proof pack exists to rule out. Recorded in the index as
- * NOT-RENDERABLE with the reason, rather than faked.
+ * FORMERLY A KNOWN GAP, NOW CLOSED (nestly_v734, check 97): the "stale-freshness envelope" state.
+ * db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql added a `freshness` block
+ * (data_as_of/age_hours/stale/note) to app.ci_envelope_v680's payload shape, but no renderer read
+ * it — recorded below (`notRenderable`) as NOT-RENDERABLE rather than faked. app/app.js and
+ * app/platform-console.js each now carry a ciFreshnessCaptionHtmlV734 renderer, wired into every
+ * CI panel and the consultant brief, so this is a real rendered screenshot (id
+ * 'stale-freshness-envelope' in `states` below) — never a bare disclosure line on its own, always
+ * the full panel underneath it, since a stale envelope discloses, it never withholds.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
@@ -105,6 +105,15 @@ const ciRendererBlock = slice(app, "const scopeMoney=(cents,currency=S.biz.curre
   'function ciCategoryMixWrapV650(){', 'ci closure renderers');
 const ciClosureBlock = ciStateBlock + '\n' + ciRendererBlock;
 
+// nestly_v734 (check 97): ciFreshnessCaptionHtmlV734 is called by opportunitiesPanelHtmlV685 and
+// the v650 quartet, but is defined outside both oppBlock and ciClosureBlock's anchor ranges (it
+// lives between ciMeasuredSinceInlineV679 and funnelConversionPanelHtmlV679, i.e. inside v679Block
+// only) — pulled in verbatim here, same pattern the executing tests use for the same gap.
+const freshnessHelperStart = app.indexOf('function ciFreshnessCaptionHtmlV734(payload){');
+if (freshnessHelperStart < 0) throw new Error('ciFreshnessCaptionHtmlV734 not found');
+const freshnessHelperEnd = app.indexOf('\n}', freshnessHelperStart) + 2;
+const freshnessBlock = app.slice(freshnessHelperStart, freshnessHelperEnd);
+
 // groupVisitDaysV719 / visitDaySummaryV719 (+ validVisitSales, sgt) — anchors from
 // tests/business-ui/v719-visits-drilldown-days.test.mjs.
 const sgtLine = app.match(/^const sgt=.*$/m);
@@ -129,6 +138,15 @@ const errorMapBlock = slice(app, 'const OWNER_ERROR_NOISE_RULES_V170=[', 'const 
 const consultativeBlock = slice(consoleJs, 'function consultativeIntelligenceHtml(',
   'async function renderEnterpriseReport(', 'consultative brief');
 
+// nestly_v734 (check 97): consultativeIntelligenceHtml calls platform-console.js's own copy of
+// ciFreshnessCaptionHtmlV734, defined earlier in the file (next to dateTime), outside
+// consultativeBlock's anchor range — pulled in verbatim, same pattern as
+// tests/platform-console/v727-consultant-brief-unavailable.test.mjs's own fix for this gap.
+const consoleFreshnessStart = consoleJs.indexOf('function ciFreshnessCaptionHtmlV734(payload) {');
+if (consoleFreshnessStart < 0) throw new Error('platform-console.js ciFreshnessCaptionHtmlV734 not found');
+const consoleFreshnessEnd = consoleJs.indexOf('\n  }', consoleFreshnessStart) + '\n  }'.length;
+const consoleFreshnessBlock = consoleJs.slice(consoleFreshnessStart, consoleFreshnessEnd);
+
 /* ---------------------------------------------------------------------------------------------
    VM RUNNERS
    --------------------------------------------------------------------------------------------- */
@@ -137,6 +155,7 @@ function runCiClosure() {
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
+    freshnessBlock + '\n' +
     ciClosureBlock +
     `\n__exports.acquisition=()=>acquisitionMarkupV650();` +
     `__exports.funnel=()=>funnelMarkupV650();` +
@@ -178,7 +197,7 @@ function renderOpportunities(payload) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(oppBlock + '\n__exports.render=opportunitiesPanelHtmlV685;', context);
+  vm.runInContext(freshnessBlock + '\n' + oppBlock + '\n__exports.render=opportunitiesPanelHtmlV685;', context);
   return context.__exports.render(payload);
 }
 
@@ -220,6 +239,7 @@ function renderConsultativeBrief(report, affinity, recommendations) {
     asObject: (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {},
     asArray: (x) => Array.isArray(x) ? x : [],
     currency: (c, cur) => `${cur || 'SGD'} ${((Number(c) || 0) / 100).toFixed(2)}`,
+    dateTime: (v) => walletDate(v, true) || String(v ?? ''),
     pt: (s, vars) => vars ? Object.keys(vars).reduce((out, k) => out.replaceAll(`{${k}}`, String(vars[k])), s) : s,
     platformStatus: (s) => String(s ?? ''),
     localizedEmptyHtml: (msg) => `<div class="empty">${esc(msg)}</div>`,
@@ -235,7 +255,9 @@ function renderConsultativeBrief(report, affinity, recommendations) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(consultativeBlock + '\n__exports.render=consultativeIntelligenceHtml;', context);
+  vm.runInContext(
+    consoleFreshnessBlock + '\n' + consultativeBlock + '\n__exports.render=consultativeIntelligenceHtml;',
+    context);
   return context.__exports.render(report, affinity, recommendations, sandbox.CUI);
 }
 
@@ -253,6 +275,22 @@ const FUNNEL_MAIN = {
   bottleneck: 'second_to_third',
   evidence: { n: 6, floor: 5, status: 'ok' },
   observed_since: '2026-08-01T00:00:00Z'
+};
+
+// nestly_v734 (check 97) — the shared envelope `freshness` block (data_as_of/observed_since/
+// generated_at/age_hours/stale/note), now rendered by ciFreshnessCaptionHtmlV734. Value lifted
+// verbatim from db/tests/executed/v722_corpus_freshness_brief.sql's F2 scenario (one sale ~100
+// hours old: stale=true, age_hours>48) and from
+// tests/business-ui/v734-ci-freshness-caption.test.mjs's own FRESHNESS_STALE fixture. Layered
+// onto FUNNEL_MAIN so the screenshot shows a real, fully-rendered panel with the stale disclosure
+// underneath it, not a bare caption in isolation.
+const FUNNEL_MAIN_STALE = {
+  ...FUNNEL_MAIN,
+  freshness: {
+    data_as_of: '2026-08-29T06:00:00Z', observed_since: FUNNEL_MAIN.observed_since,
+    generated_at: '2026-09-02T10:00:00Z', age_hours: 100.0, stale: true,
+    note: 'data_as_of is the most recent recorded sale for this scope, not the requested reporting period; stale means that sale is more than 48 hours old.'
+  }
 };
 
 // demographicsPanelHtmlV679 — v674_corpus_demographics.sql R1 block, lifted verbatim from the
@@ -584,6 +622,21 @@ states.push({
   hash: () => hashOf(v679Block, JSON.stringify(FUNNEL_MAIN))
 });
 
+// nestly_v734 (check 97): the shared envelope `freshness` block now has a real renderer
+// (ciFreshnessCaptionHtmlV734), closing the gap this file used to record as NOT-RENDERABLE
+// ('stale-freshness-envelope', see git history) — same panel/fixture as funnel-conversion-mature
+// above, with a stale freshness block layered on top, so the screenshot proves both the panel's
+// real numbers AND the "Data may be out of date" disclosure render together, never one instead
+// of the other.
+states.push({
+  id: 'stale-freshness-envelope',
+  title: 'CI Funnel Conversion — stale freshness envelope disclosed, panel still renders in full',
+  source: 'funnelConversionPanelHtmlV679(FUNNEL_MAIN_STALE) via ciFreshnessCaptionHtmlV734; freshness block lifted from db/tests/executed/v722_corpus_freshness_brief.sql F2 and tests/business-ui/v734-ci-freshness-caption.test.mjs FRESHNESS_STALE',
+  css: BUSINESS_CSS,
+  body: () => renderV679(FUNNEL_MAIN_STALE, 'funnel'),
+  hash: () => hashOf(freshnessBlock, v679Block, JSON.stringify(FUNNEL_MAIN_STALE))
+});
+
 states.push({
   id: 'demographics-cells',
   title: 'CI Demographics — evidence-ok + below-floor cells',
@@ -729,12 +782,13 @@ states.push({
    --------------------------------------------------------------------------------------------- */
 const outDir = P('tests', 'browser', 'ci-proof');
 
-// Known gap, documented rather than faked (see script header).
-export const notRenderable = [{
-  id: 'stale-freshness-envelope',
-  title: 'NOT RENDERABLE — stale freshness envelope',
-  reason: 'db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql adds a `freshness` block to app.ci_envelope_v680\'s payload, but no renderer in app/app.js, app/app-business.js or app/platform-console.js reads a `freshness` key (grepped 2026-09-02, zero hits). There is no real renderer to execute for this state.'
-}];
+// nestly_v734 (check 97): this used to be a documented NOT-RENDERABLE gap
+// ('stale-freshness-envelope') — no renderer read app.ci_envelope_v680's `freshness` block, so
+// there was no real renderer to execute. ciFreshnessCaptionHtmlV734 closes that gap; the state is
+// now a real screenshot (see the 'stale-freshness-envelope' entry in `states` below), so this
+// list is empty rather than removed outright — kept as the documented mechanism for any future
+// gap, per the same "stop rather than fabricate" instruction this file's header describes.
+export const notRenderable = [];
 
 export function buildCiProofPages() {
   return states.map((state) => {
@@ -802,12 +856,14 @@ function writeIndex(manifest, screenshotStatus) {
     }
   }
   lines.push('');
-  lines.push('## Not renderable (documented gap, no screenshot produced)');
-  lines.push('');
-  for (const gap of notRenderable) {
-    lines.push(`- **${gap.id}** — ${gap.reason}`);
+  if (notRenderable.length) {
+    lines.push('## Not renderable (documented gap, no screenshot produced)');
+    lines.push('');
+    for (const gap of notRenderable) {
+      lines.push(`- **${gap.id}** — ${gap.reason}`);
+    }
+    lines.push('');
   }
-  lines.push('');
   writeFileSync(P('docs', 'qa', 'proof-pack', 'SCREENSHOTS.md'), lines.join('\n') + '\n');
 }
 

@@ -46,13 +46,25 @@ const brief_end = console_js.indexOf('async function renderEnterpriseReport(', b
 assert.ok(brief_start > -1 && brief_end > brief_start, 'consultativeIntelligenceHtml must be a top-level function');
 const briefBlock = console_js.slice(brief_start, brief_end);
 
+/* nestly_v734 (check 97): consultativeIntelligenceHtml now calls ciFreshnessCaptionHtmlV734,
+   defined earlier in the file, outside this block slice — pulled in verbatim so this vm context
+   can actually resolve it. */
+const freshnessStart = console_js.indexOf('function ciFreshnessCaptionHtmlV734(payload) {');
+const freshnessEnd = console_js.indexOf('\n  }', freshnessStart) + '\n  }'.length;
+assert.ok(freshnessStart > -1 && freshnessEnd > freshnessStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessBlock = console_js.slice(freshnessStart, freshnessEnd);
+
 function renderBrief(report, affinity, recommendations) {
   const sandbox = {
     escapeHtml: esc,
     asObject: (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {},
     asArray: (x) => Array.isArray(x) ? x : [],
     currency,
-    pt: (s) => s,
+    dateTime: (v) => `DT:${v}`,
+    pt: (s, vars) => vars
+      ? Object.keys(vars).reduce((out, k) => out.replaceAll(`{${k}}`, String(vars[k])), s)
+      : s,
     platformStatus: (s) => String(s ?? ''),
     localizedEmptyHtml: (msg) => `<div class="empty">${esc(msg)}</div>`,
     localizedRouteNoteHtml: (t, b) => `<div class="note"><b>${esc(t)}</b><p>${esc(b)}</p></div>`,
@@ -67,7 +79,7 @@ function renderBrief(report, affinity, recommendations) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(briefBlock + '\n__exports.render = consultativeIntelligenceHtml;', context);
+  vm.runInContext(freshnessBlock + '\n' + briefBlock + '\n__exports.render = consultativeIntelligenceHtml;', context);
   return context.__exports.render(report, affinity, recommendations, sandbox.CUI);
 }
 

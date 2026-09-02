@@ -262,6 +262,16 @@ const V650_ACQUISITION_FUNNEL_CONTACTABILITY_BLOCK = extractBlock(
   'const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;',
 );
 
+/* nestly_v734 (check 97): the v650 quartet now calls ciFreshnessCaptionHtmlV734, defined much
+   further down app.js (outside V650_ACQUISITION_FUNNEL_CONTACTABILITY_BLOCK and outside
+   categoryMixMarkupV650's own extracted range below) — pulled in verbatim so these vm sandboxes
+   can resolve it, same posture as tests/business-ui/v734-ci-freshness-caption.test.mjs. */
+const FRESHNESS_HELPER_START = appJs.indexOf('function ciFreshnessCaptionHtmlV734(payload){');
+const FRESHNESS_HELPER_END = appJs.indexOf('\n}', FRESHNESS_HELPER_START) + 2;
+assert.ok(FRESHNESS_HELPER_START > -1 && FRESHNESS_HELPER_END > FRESHNESS_HELPER_START,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const FRESHNESS_HELPER_BLOCK = appJs.slice(FRESHNESS_HELPER_START, FRESHNESS_HELPER_END);
+
 function runBlock(block, exportName, args) {
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -285,7 +295,9 @@ function runV650Block(exportName, closureVars) {
   const sandbox = { esc, walletDate, console, ...closureVars };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(`${V650_ACQUISITION_FUNNEL_CONTACTABILITY_BLOCK}\n__exports.fn = ${exportName};`, context);
+  vm.runInContext(
+    `${FRESHNESS_HELPER_BLOCK}\n${V650_ACQUISITION_FUNNEL_CONTACTABILITY_BLOCK}\n__exports.fn = ${exportName};`,
+    context);
   return context.__exports.fn();
 }
 
@@ -461,18 +473,21 @@ test('v723 categoryMixMarkupV650 renders the minimal contract fixture cleanly', 
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
   const scopeMoney = (c) => 'SGD ' + ((Number(c) || 0) / 100).toFixed(2);
+  const walletDate = (v) => String(v ?? '');
   const ciMeasuredSinceV650 = (since) => (since ? `<p>Measured since ${esc(since)}</p>` : '');
   const CI_CATEGORY_DISTRIBUTION_FLOOR_V704 = 5;
   // Real value at app/app.js:49450 — categoryMixMarkupV650 reads it directly (module scope, not
   // passed as a parameter), so the sandbox must supply the same constant.
   const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650 = 9000;
   const sandbox = {
-    esc, scopeMoney, ciMeasuredSinceV650, CI_CATEGORY_DISTRIBUTION_FLOOR_V704,
+    esc, scopeMoney, walletDate, ciMeasuredSinceV650, CI_CATEGORY_DISTRIBUTION_FLOOR_V704,
     CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650, console,
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(`${distSource}\n${fnSource}\n__exports.fn = categoryMixMarkupV650;`, context);
+  vm.runInContext(
+    `${FRESHNESS_HELPER_BLOCK}\n${distSource}\n${fnSource}\n__exports.fn = categoryMixMarkupV650;`,
+    context);
   const html = context.__exports.fn(fixture);
 
   assert.ok(typeof html === 'string' && html.length > 0);

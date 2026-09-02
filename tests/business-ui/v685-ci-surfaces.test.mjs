@@ -60,6 +60,15 @@ const rendererBlock = app.slice(rendererStart, rendererEnd);
 
 const closureBlock = stateBlock + '\n' + rendererBlock;
 
+/* nestly_v734 (check 97): the four v650 renderers call the real top-level ciFreshnessCaptionHtmlV734
+   defined further down app.js (outside this closure slice), so it is pulled in verbatim here — the
+   same "execute the real renderer, not a stub" posture the rest of this file already uses. */
+const freshnessHelperStart = app.indexOf('function ciFreshnessCaptionHtmlV734(payload){');
+const freshnessHelperEnd = app.indexOf('\n}', freshnessHelperStart) + 2;
+assert.ok(freshnessHelperStart > -1 && freshnessHelperEnd > freshnessHelperStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessHelperBlock = app.slice(freshnessHelperStart, freshnessHelperEnd);
+
 function makePage() {
   const sandbox = {
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
@@ -69,6 +78,7 @@ function makePage() {
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
+    freshnessHelperBlock + '\n' +
     closureBlock +
     `\n__exports.acquisition=()=>acquisitionMarkupV650();` +
     `__exports.funnel=()=>funnelMarkupV650();` +
@@ -324,6 +334,15 @@ const oppEnd = app.indexOf('/* nestly_v679 — Customer intelligence gets three 
 assert.ok(oppStart > -1 && oppEnd > oppStart, 'opportunitiesPanelHtmlV685 and its helpers must be top-level functions');
 const oppBlock = app.slice(oppStart, oppEnd);
 
+/* nestly_v734 (check 97): opportunitiesPanelHtmlV685 now calls ciFreshnessCaptionHtmlV734,
+   defined after the v679 comment marker (outside oppBlock's range) — pulled in verbatim so this
+   vm context can resolve it, same pattern as tests/business-ui/v734-ci-freshness-caption.test.mjs. */
+const freshnessStart = app.indexOf('function ciFreshnessCaptionHtmlV734(payload){');
+const freshnessEnd = app.indexOf('\n}', freshnessStart) + 2;
+assert.ok(freshnessStart > -1 && freshnessEnd > freshnessStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessBlock = app.slice(freshnessStart, freshnessEnd);
+
 function renderOpportunities(payload) {
   const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const sandbox = {
@@ -339,7 +358,7 @@ function renderOpportunities(payload) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(oppBlock + '\n__exports.render=opportunitiesPanelHtmlV685;', context);
+  vm.runInContext(freshnessBlock + '\n' + oppBlock + '\n__exports.render=opportunitiesPanelHtmlV685;', context);
   return context.__exports.render(payload);
 }
 

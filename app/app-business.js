@@ -31348,6 +31348,7 @@ async function customerIntelligencePage(){
       ${sources.length?`<div class="cui-table-wrap" role="region" aria-label="Acquisition mix"><table class="cui-table"><thead><tr><th>Source</th><th>Evidence</th><th>Customers</th><th>New this period</th><th>Repeat</th></tr></thead><tbody>${sources.map(source=>`<tr><td data-label="Source"><b>${ciViaLabelV650(source.via)}</b></td><td data-label="Evidence" class="muted small">${esc(source.evidence||'')}</td><td data-label="Customers">${Number(source.customers||0)}</td><td data-label="New this period">${Number(source.new_in_period||0)}</td><td data-label="Repeat">${Number(source.repeat_customers||0)}</td></tr>`).join('')}</tbody></table></div>`
         :'<div class="empty">No acquisition activity recorded in this scope yet.</div>'}
       ${ciMeasuredSinceV650(bundle?.observed_since)}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   function ciFunnelStepsMarkupV650(steps){
@@ -31368,6 +31369,7 @@ async function customerIntelligencePage(){
       <h3 class="small" style="margin-top:16px;font-weight:700">Booking</h3>
       ${booking?ciFunnelStepsMarkupV650([['Page views',booking.page_view],['Availability checks',booking.started],['Completed',booking.completed]]):'<div class="empty">No booking funnel data in this scope yet.</div>'}
       ${ciMeasuredSinceV650(bundle?.observed_since)}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   function ciContactabilityGroupMarkupV650(label,group){
@@ -31392,6 +31394,7 @@ async function customerIntelligencePage(){
       ${ciContactabilityGroupMarkupV650('Business offers',bundle.business_offers)}
       ${ciContactabilityGroupMarkupV650('Rewards &amp; points',bundle.rewards_and_points)}
       ${bundle.note?`<p class="muted small" style="margin-top:12px">${esc(bundle.note)}</p>`:''}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;
@@ -31461,6 +31464,7 @@ async function customerIntelligencePage(){
         :'<div class="empty">No categorised revenue in this scope yet.</div>'}
       <p class="muted small" style="margin-top:10px">Category view covers ${classifiedPct.toFixed(1)}% of service &amp; retail revenue.${projectedPct>0?` ${projectedPct.toFixed(1)}% projected through current mappings, not snapshots.`:''}</p>
       ${ciMeasuredSinceV650(bundle.observed_since)}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   function ciCategoryMixWrapV650(){return `<div id="ciCategoryMixWrapV650">${categoryMixMarkupV650()}</div>`}
@@ -32076,6 +32080,7 @@ function opportunitiesPanelHtmlV685(payload){
     ${ciReportSectionsHtmlV696(payload.report_sections)}
     <p class="muted small ci-opportunities-comparisons" style="margin-top:10px">${esc(comparisonsLine)}</p>
     ${ciMeasuredSinceInlineV685(payload.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(payload)}
   </section>`;
 }
 function ciMeasuredSinceInlineV685(observedSince){
@@ -32097,6 +32102,37 @@ function ciMeasuredSinceInlineV679(observedSince){
   return observedSince
     ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
     :'';
+}
+/* nestly_v734 (check 97): every CI reader's shared envelope (app.ci_envelope_v680, v722) now
+   carries a top-level `freshness` block -- {data_as_of, observed_since, generated_at, age_hours,
+   stale, note}. v722 shipped that disclosure and nothing on this page ever read it. This is the
+   ONE renderer, reused by every CI panel below (funnelConversionPanelHtmlV679,
+   demographicsPanelHtmlV679, behaviourPanelHtmlV679, opportunitiesPanelHtmlV685) and the v650
+   markups (categoryMixMarkupV650, acquisitionMarkupV650, funnelMarkupV650,
+   contactabilityMarkupV650), plus the platform-console.js consultant brief's own copy.
+   Age is always the server's own age_hours -- never recomputed from the client clock, which
+   cannot be trusted and could silently drift from whatever staleness rule the server enforces.
+   Disclosure only: a stale payload still renders in full underneath this caption, it is never a
+   reason to withhold the panel. A payload from a reader that predates v722 (or a reader that
+   never carries freshness, like an older cached fixture) has no `freshness` key at all -- this
+   renders nothing, not a crash, not a fabricated "data as of never". */
+function ciFreshnessCaptionHtmlV734(payload){
+  const freshness=payload&&typeof payload==='object'?payload.freshness:null;
+  /* get_ci_opportunities_v1 keeps its OWN bespoke `freshness` shape (observed_since_min etc.,
+     v680/v688) that app.ci_envelope_v680 deliberately passes through untouched (v722 -- see the
+     "reader that already sets freshness" branch). That shape has no `stale` key at all, so this
+     guard is what stops this shared helper from misreading it and fabricating "age unknown". */
+  if(!freshness||typeof freshness!=='object'||!('stale' in freshness))return '';
+  const dataAsOfText=freshness.data_as_of?walletDate(freshness.data_as_of,true):null;
+  const ageHours=(freshness.age_hours===null||freshness.age_hours===undefined)?null:Number(freshness.age_hours);
+  const ageText=ageHours===null?'age unknown'
+    :ageHours<1?'under an hour old'
+    :`${ageHours.toFixed(1)} hour${ageHours===1?'':'s'} old`;
+  const freshLine=`Data as of ${dataAsOfText||'no recorded sale yet'} · ${ageText}`;
+  const staleLine=freshness.stale
+    ?`<p class="muted small ci-freshness-stale-v734" role="status">Data may be out of date — last sale ${esc(dataAsOfText||'never recorded')}.${freshness.note?` ${esc(String(freshness.note))}`:''}</p>`
+    :'';
+  return `<p class="muted small ci-freshness-caption-v734">${esc(freshLine)}</p>${staleLine}`;
 }
 function ciEmptyPanelV679(headingId,eyebrow,title,message){
   return `<section class="revenue-truth-section" aria-labelledby="${headingId}">
@@ -32154,6 +32190,7 @@ function funnelConversionPanelHtmlV679(payload){
     <p class="muted small" style="margin-top:10px">${firstImmature} customer${firstImmature===1?'':'s'} too recent to judge for the first stage; ${secondImmature} too recent for the second.</p>
     <p class="muted small">${bottleneckLine}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(p)}
   </section>`;
 }
 
@@ -32185,6 +32222,7 @@ function demographicsPanelHtmlV679(payload){
     <p class="muted small" style="margin-top:10px">Demographics known for ${demCoverage.num} of ${demCoverage.den} identified customers (${demCoverage.pctText}).</p>
     <p class="muted small">Revenue explained by known demographics: ${esc(money(revCoverage.num))} of ${esc(money(revCoverage.den))} (${revCoverage.pctText}).</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(p)}
   </section>`;
 }
 
@@ -32221,6 +32259,7 @@ function behaviourPanelHtmlV679(payload){
     <p class="muted small" style="margin-top:10px">Time basis: ${esc(p.time_basis||'sale_occurred_at')}.</p>
     <p class="muted small">${esc(p.basis_note||'')}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(p)}
   </section>`;
 }
 

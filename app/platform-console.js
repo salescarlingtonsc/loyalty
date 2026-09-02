@@ -3647,6 +3647,28 @@
       'Top customer revenue':'Hasil pelanggan teratas'
     })
   });
+  /* nestly_v734 (check 97: freshness and stale states) — the consultant brief's shared
+     freshness caption (ciFreshnessCaptionHtmlV734). */
+  const PLATFORM_COPY_V734=Object.freeze({
+    'zh-CN':Object.freeze({
+      'age unknown':'时间未知',
+      'under an hour old':'不到一小时前',
+      '{hours} hours old':'{hours} 小时前',
+      'Data as of {date} · {age}':'数据截至 {date} · {age}',
+      'no recorded sale yet':'尚无记录的销售',
+      'Data may be out of date — last sale {date}.':'数据可能已过时 — 最近一笔销售于 {date}。',
+      'never recorded':'从未记录'
+    }),
+    ms:Object.freeze({
+      'age unknown':'usia tidak diketahui',
+      'under an hour old':'kurang daripada sejam yang lalu',
+      '{hours} hours old':'{hours} jam yang lalu',
+      'Data as of {date} · {age}':'Data setakat {date} · {age}',
+      'no recorded sale yet':'belum ada jualan direkodkan',
+      'Data may be out of date — last sale {date}.':'Data mungkin sudah lapuk — jualan terakhir {date}.',
+      'never recorded':'tidak pernah direkodkan'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3670,6 +3692,7 @@
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
       ??PLATFORM_COPY_V727[platformLocale]?.[key]
+      ??PLATFORM_COPY_V734[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -4071,6 +4094,30 @@
       throw error;
     }
     return result?.data;
+  }
+  /* nestly_v734 (check 97): app.ci_envelope_v680's shared `freshness` block (v722) never had a
+     reader on this side either. This mirrors app.js's ciFreshnessCaptionHtmlV734 renderer
+     exactly -- same fields, same disclosure-only posture, same "no key, no crash" behaviour for
+     a report from a server that predates v722 -- but lives here rather than being imported,
+     because platform-console.js is its own bundle with no shared module boundary with app.js.
+     Wired into consultativeIntelligenceHtml's consultant brief. Age always comes from the
+     server's own freshness.age_hours, never recomputed from this browser's clock. */
+  function ciFreshnessCaptionHtmlV734(payload) {
+    const freshness = payload && typeof payload === 'object' ? payload.freshness : null;
+    /* get_ci_opportunities_v1 keeps its OWN bespoke `freshness` shape (observed_since_min etc.)
+       that app.ci_envelope_v680 passes through untouched (v722) -- it has no `stale` key at all,
+       so this guard is what stops the helper from misreading it as the shared envelope shape. */
+    if (!freshness || typeof freshness !== 'object' || !('stale' in freshness)) return '';
+    const dataAsOfText = freshness.data_as_of ? dateTime(freshness.data_as_of) : null;
+    const ageHours = (freshness.age_hours === null || freshness.age_hours === undefined) ? null : Number(freshness.age_hours);
+    const ageText = ageHours === null ? pt('age unknown')
+      : ageHours < 1 ? pt('under an hour old')
+      : pt('{hours} hours old', { hours: ageHours.toFixed(1) });
+    const freshLine = pt('Data as of {date} · {age}', { date: dataAsOfText || pt('no recorded sale yet'), age: ageText });
+    const staleLine = freshness.stale
+      ? `<p class="muted small ci-freshness-stale-v734" role="status">${escapeHtml(pt('Data may be out of date — last sale {date}.', { date: dataAsOfText || pt('never recorded') }))}${freshness.note ? ` ${escapeHtml(String(freshness.note))}` : ''}</p>`
+      : '';
+    return `<p class="muted small ci-freshness-caption-v734">${escapeHtml(freshLine)}</p>${staleLine}`;
   }
   function dateTime(value) {
     if (!value) return '—';
@@ -5620,6 +5667,7 @@
         <p class="muted small">${escapeHtml(pt("Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence."))}</p></div>
         ${CUI.status(platformStatus(confidence),confidence==='high'||confidence==='ready'?'ok':confidence==='medium'?'new':'off')}
       </div>
+      ${ciFreshnessCaptionHtmlV734(report)}
       <section class="platform-kpis" aria-label="${escapeHtml(pt('Consultant brief KPIs'))}">${[
         ['Customers',String(activeCustomers),'customers'],
         ['Returning rate',returningRate===null
