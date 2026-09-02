@@ -365,6 +365,7 @@
         "comparisons.subgroups_promoted": "number",
         "observed_since": "string",
         "__optional": [
+          "scope.currency",
           "ranked.*.impact.expected_value",
           "ranked.*.impact.expected_value.status",
           "ranked.*.impact.expected_value.reason",
@@ -454,6 +455,15 @@
           "forecast.next_90_days.lower_cents",
           "forecast.next_90_days.expected_cents",
           "forecast.next_90_days.upper_cents",
+          "forecast.months",
+          "forecast.months.*.month_index",
+          "forecast.months.*.from",
+          "forecast.months.*.to",
+          "forecast.months.*.lower_cents",
+          "forecast.months.*.expected_cents",
+          "forecast.months.*.upper_cents",
+          "forecast.weekly_average_cents",
+          "forecast.caution",
           "pagination.next_cursor",
           "pagination.next_cursor.customer_since",
           "pagination.next_cursor.client_id"

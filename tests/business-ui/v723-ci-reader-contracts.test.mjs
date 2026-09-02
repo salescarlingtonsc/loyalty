@@ -21,6 +21,26 @@
  * clearly-marked rewrite that substitutes a `bundle` parameter for the closure reads; every
  * substitution is listed at CATEGORY_MIX_REWRITES below so a reviewer can see exactly what was
  * changed and why).
+ *
+ * GAP CLOSURE (this pass, check 92 §a): four more consuming renderers, same posture as
+ * categoryMixMarkupV650 above — each reads its own `lastXBundle`/`lastXError` page-closure
+ * state rather than taking a payload parameter, so each is exercised the same way: extract the
+ * real source, supply the closure variables (and the small in-page helpers the block calls,
+ * e.g. ciQuietErrorV650/ciMeasuredSinceV650) as vm sandbox globals, run it unmodified.
+ *   - acquisitionMarkupV650   (public.get_ci_acquisition_v1)
+ *   - funnelMarkupV650        (public.get_ci_funnel_v1)
+ *   - contactabilityMarkupV650(public.get_ci_contactability_v1)
+ *   - ciCategoryCustomersRowsMarkupV650 (public.get_ci_category_customers_v1) — reads a
+ *     `categoryCustomersCacheV650.get(nodeKey)` cache entry rather than a bundle directly;
+ *     exercised with a real Map holding `{data: <fixture>}`, same idea, one more layer of
+ *     indirection.
+ * ciOpportunityCardHtmlV685's execution above already calls every nestly_v716 impact-
+ * translation helper (ciOpportunityMaterialityChipHtmlV716/ciOpportunityMarginHtmlV716/
+ * ciOpportunityCapacityHtmlV716/ciOpportunityRetentionRiskHtmlV716/
+ * ciOpportunityConcentrationHtmlV716/ciOpportunityAlternativesListHtmlV716) as plain calls in
+ * its own body — no separate wiring needed; a dedicated assertion below checks their markup
+ * actually appears in the rendered HTML so this stays proven, not assumed. There are no
+ * v719-named helpers anywhere in app/app.js (grepped at the time of this pass) — nothing to add.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -230,6 +250,18 @@ const OPPORTUNITIES_BLOCK = extractBlock(
   'async function serviceMappingBoardPage(){',
 );
 
+/* nestly_v723 gap-closure (a): the "revenue truth" v650 quartet — acquisitionMarkupV650,
+   ciFunnelStepsMarkupV650+funnelMarkupV650, ciContactabilityGroupMarkupV650+
+   contactabilityMarkupV650 — plus their shared helpers (CI_ACQUISITION_VIA_LABELS_V650,
+   ciViaLabelV650, ciQuietErrorV650, ciMeasuredSinceV650). All read page-closure `let
+   lastXBundle/lastXError` variables rather than taking a payload parameter (see the block's own
+   nestly_v650 comment in app/app.js just above CI_ACQUISITION_VIA_LABELS_V650), so the vm
+   sandbox supplies those as plain globals instead of rewriting the functions into pure ones. */
+const V650_ACQUISITION_FUNNEL_CONTACTABILITY_BLOCK = extractBlock(
+  'const CI_ACQUISITION_VIA_LABELS_V650={',
+  'const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;',
+);
+
 function runBlock(block, exportName, args) {
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -241,6 +273,20 @@ function runBlock(block, exportName, args) {
   context.__exports = {};
   vm.runInContext(`${block}\n__exports.fn = ${exportName};`, context);
   return context.__exports.fn(...args);
+}
+
+/* Same idea as runBlock, but for the v650 quartet: it also seeds the page-closure `lastXBundle`/
+   `lastXError` globals the block reads instead of passing a fixture as a function argument. */
+function runV650Block(exportName, closureVars) {
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+  const walletDate = (v) => String(v ?? '');
+  const sandbox = { esc, walletDate, console, ...closureVars };
+  const context = vm.createContext(sandbox);
+  context.__exports = {};
+  vm.runInContext(`${V650_ACQUISITION_FUNNEL_CONTACTABILITY_BLOCK}\n__exports.fn = ${exportName};`, context);
+  return context.__exports.fn();
 }
 
 /* ------------------------------------------------------------------------------ the tests */
@@ -283,6 +329,96 @@ test('v723 ciOpportunityCardHtmlV685 renders a single ranked item cleanly, calle
   const fixture = buildFixture(contract.nested, contract.required);
   const item = fixture.ranked[0];
   const html = runBlock(OPPORTUNITIES_BLOCK, 'ciOpportunityCardHtmlV685', [item, fixture.scope.currency]);
+  assert.ok(!/\bundefined\b/.test(html), `renders "undefined": ${html.slice(0, 4000)}`);
+  assert.ok(!/\bNaN\b/.test(html), `renders "NaN": ${html.slice(0, 4000)}`);
+});
+
+test('v723 ciOpportunityCardHtmlV685 actually invokes every nestly_v716 impact helper (not vestigial)', () => {
+  // Same fixture/call as the test above — this just proves each v716 helper's own markup
+  // reached the output, not merely that the card rendered without "undefined"/"NaN".
+  const contract = CONTRACTS['public.get_ci_opportunities_v1'];
+  const fixture = buildFixture(contract.nested, contract.required);
+  const item = fixture.ranked[0];
+  item.materiality_class = 'material';
+  item.margin_guard = { status: 'ok', margin_cents: 1000, reason: '' };
+  item.impact.capacity = { status: 'ok', pct: 50, booked_minutes: 30, available_minutes: 60, reason: '' };
+  item.impact.retention_risk = { status: 'ok', at_risk_n: 2, reason: '' };
+  item.concentration = { skew_note: 'x' };
+  item.alternatives = [{ primary: true, what: 'x', kind: 'incentive' }];
+  const html = runBlock(OPPORTUNITIES_BLOCK, 'ciOpportunityCardHtmlV685', [item, fixture.scope.currency]);
+  assert.ok(html.includes('ci-opportunity-materiality-chip'), 'ciOpportunityMaterialityChipHtmlV716 did not render');
+  assert.ok(html.includes('Margin ok'), 'ciOpportunityMarginHtmlV716 did not render');
+  assert.ok(html.includes('min booked'), 'ciOpportunityCapacityHtmlV716 did not render');
+  assert.ok(html.includes('at risk'), 'ciOpportunityRetentionRiskHtmlV716 did not render');
+  assert.ok(html.includes('ci-opportunity-concentration'), 'ciOpportunityConcentrationHtmlV716 did not render');
+  assert.ok(html.includes('ci-opportunity-alternatives'), 'ciOpportunityAlternativesListHtmlV716 did not render');
+});
+
+test('v723 acquisitionMarkupV650 renders the minimal contract fixture cleanly', () => {
+  const contract = CONTRACTS['public.get_ci_acquisition_v1'];
+  const fixture = buildFixture(contract.nested, contract.required);
+  const html = runV650Block('acquisitionMarkupV650', {
+    lastAcquisitionError: '', lastAcquisitionBundle: fixture,
+  });
+  assert.ok(typeof html === 'string' && html.length > 0);
+  assert.ok(!/\bundefined\b/.test(html), `renders "undefined": ${html.slice(0, 4000)}`);
+  assert.ok(!/\bNaN\b/.test(html), `renders "NaN": ${html.slice(0, 4000)}`);
+});
+
+test('v723 funnelMarkupV650 renders the minimal contract fixture cleanly', () => {
+  const contract = CONTRACTS['public.get_ci_funnel_v1'];
+  const fixture = buildFixture(contract.nested, contract.required);
+  // `funnel.join`/`funnel.booking` are __optional (nestly_v698's envelope omits them entirely
+  // when the funnel-counter table has zero rows for this scope) so buildFixture leaves `funnel`
+  // as `{}` — populate both here so the populated-data branch (ciFunnelStepsMarkupV650), not
+  // just the "no join/booking funnel data yet" empty branch, is actually exercised.
+  fixture.funnel.join = { page_view: 10, started: 5, completed: 2 };
+  fixture.funnel.booking = { page_view: 8, started: 4, completed: 1 };
+  const html = runV650Block('funnelMarkupV650', {
+    lastFunnelError: '', lastFunnelBundle: fixture,
+  });
+  assert.ok(typeof html === 'string' && html.length > 0);
+  assert.ok(!/\bundefined\b/.test(html), `renders "undefined": ${html.slice(0, 4000)}`);
+  assert.ok(!/\bNaN\b/.test(html), `renders "NaN": ${html.slice(0, 4000)}`);
+});
+
+test('v723 contactabilityMarkupV650 renders the minimal contract fixture cleanly', () => {
+  const contract = CONTRACTS['public.get_ci_contactability_v1'];
+  const fixture = buildFixture(contract.nested, contract.required);
+  const html = runV650Block('contactabilityMarkupV650', {
+    lastContactabilityError: '', lastContactabilityBundle: fixture,
+  });
+  assert.ok(typeof html === 'string' && html.length > 0);
+  assert.ok(!/\bundefined\b/.test(html), `renders "undefined": ${html.slice(0, 4000)}`);
+  assert.ok(!/\bNaN\b/.test(html), `renders "NaN": ${html.slice(0, 4000)}`);
+});
+
+/* ciCategoryCustomersRowsMarkupV650 is the category-mix drill-down (public.get_ci_category_
+   customers_v1) — one layer more indirect than the three above: it reads
+   `categoryCustomersCacheV650.get(nodeKey)`, a page-closure Map of {loading|error|data}, not a
+   bundle variable directly. Exercised with a real Map holding the minimal contract fixture under
+   `data`, same "supply the closure state, run the unmodified function" posture. */
+const CATEGORY_CUSTOMERS_ROWS_BLOCK = extractBlock(
+  'function ciCategoryCustomersRowsMarkupV650(nodeKey,expectedCustomerCount){',
+  '/* nestly_v704 (check 66)',
+);
+
+test('v723 ciCategoryCustomersRowsMarkupV650 renders the minimal contract fixture cleanly', () => {
+  const contract = CONTRACTS['public.get_ci_category_customers_v1'];
+  const fixture = buildFixture(contract.nested, contract.required);
+  fixture.suppressed = null; // exercise the customer-listing branch, not the suppressed-cohort one
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+  const scopeMoney = (c) => 'SGD ' + ((Number(c) || 0) / 100).toFixed(2);
+  const walletDate = (v) => String(v ?? '');
+  const categoryCustomersCacheV650 = new Map([['node1', { data: fixture }]]);
+  const sandbox = { esc, scopeMoney, walletDate, categoryCustomersCacheV650, console };
+  const context = vm.createContext(sandbox);
+  context.__exports = {};
+  vm.runInContext(`${CATEGORY_CUSTOMERS_ROWS_BLOCK}\n__exports.fn = ciCategoryCustomersRowsMarkupV650;`, context);
+  const html = context.__exports.fn('node1', fixture.customers.length);
+  assert.ok(typeof html === 'string' && html.length > 0);
   assert.ok(!/\bundefined\b/.test(html), `renders "undefined": ${html.slice(0, 4000)}`);
   assert.ok(!/\bNaN\b/.test(html), `renders "NaN": ${html.slice(0, 4000)}`);
 });
@@ -380,4 +516,33 @@ test('v723 CONTRACT: category mix renderer reads only contract-declared paths', 
   const fnEnd = appJs.indexOf('function ciCategoryMixWrapV650()', fnStart);
   const src = appJs.slice(fnStart, fnEnd).replace(/\blastCategoryMixBundle\b/g, 'bundle');
   assertAccessesDeclared('public.get_ci_category_mix_v1', src, {bundle:''});
+});
+
+test('v723 CONTRACT: acquisitionMarkupV650 reads only contract-declared paths', () => {
+  const fnStart = appJs.indexOf('function acquisitionMarkupV650(){');
+  const fnEnd = appJs.indexOf('function ciFunnelStepsMarkupV650(', fnStart);
+  const src = appJs.slice(fnStart, fnEnd).replace(/\blastAcquisitionBundle\b/g, 'bundle');
+  assertAccessesDeclared('public.get_ci_acquisition_v1', src, {bundle:''});
+});
+
+test('v723 CONTRACT: funnelMarkupV650 reads only contract-declared paths', () => {
+  const fnStart = appJs.indexOf('function funnelMarkupV650(){');
+  const fnEnd = appJs.indexOf('function ciContactabilityGroupMarkupV650(', fnStart);
+  const src = appJs.slice(fnStart, fnEnd).replace(/\blastFunnelBundle\b/g, 'bundle');
+  assertAccessesDeclared('public.get_ci_funnel_v1', src, {bundle:''});
+});
+
+test('v723 CONTRACT: contactabilityMarkupV650 reads only contract-declared paths', () => {
+  const fnStart = appJs.indexOf('function contactabilityMarkupV650(){');
+  const fnEnd = appJs.indexOf('const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;', fnStart);
+  const src = appJs.slice(fnStart, fnEnd).replace(/\blastContactabilityBundle\b/g, 'bundle');
+  assertAccessesDeclared('public.get_ci_contactability_v1', src, {bundle:''});
+});
+
+test('v723 CONTRACT: ciCategoryCustomersRowsMarkupV650 reads only contract-declared paths', () => {
+  const src = CATEGORY_CUSTOMERS_ROWS_BLOCK
+    .replace('const customers=Array.isArray(cached.data?.customers)?cached.data.customers:[];',
+      'const customers=data.customers;')
+    .replace('const suppressed=cached.data?.suppressed||null;', 'const suppressed=data.suppressed||null;');
+  assertAccessesDeclared('public.get_ci_category_customers_v1', src, {data:''});
 });

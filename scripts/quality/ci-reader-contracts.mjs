@@ -22,6 +22,49 @@
  *      side can assert against the SAME contract the UI side asserts against, rather than a
  *      hand-copied — and driftable — second version of it.
  *
+ * WHAT EACH SIDE PROVES (updated for the check-92 gap closure recorded below).
+ *   - JS side (tests/business-ui/v723-ci-reader-contracts.test.mjs): executes the REAL page
+ *     renderer against a minimal fixture built from this contract, for every one of the 9
+ *     get_ci_* readers (plus get_customer_intelligence_v83) that has a `nested` block — as of
+ *     this pass that is all nine: acquisitionMarkupV650, funnelMarkupV650,
+ *     contactabilityMarkupV650 and ciCategoryMixWrapV650/categoryMixMarkupV650 (the "revenue
+ *     truth" v650 panels), ciCategoryCustomersRowsMarkupV650 (the category-mix drill-down),
+ *     funnelConversionPanelHtmlV679/demographicsPanelHtmlV679/behaviourPanelHtmlV679 (the v679
+ *     trio) and opportunitiesPanelHtmlV685/ciOpportunityCardHtmlV685 (which, by executing the
+ *     real function body, also exercises every nestly_v716 impact-translation helper —
+ *     ciOpportunityMaterialityChipHtmlV716/ciOpportunityMarginHtmlV716/
+ *     ciOpportunityCapacityHtmlV716/ciOpportunityRetentionRiskHtmlV716/
+ *     ciOpportunityConcentrationHtmlV716/ciOpportunityAlternativesListHtmlV716 — since those are
+ *     plain calls inside ciOpportunityCardHtmlV685's own body, not a separate code path). Grepped
+ *     at the time of this pass: no v719-named helpers exist anywhere in app/app.js — the task
+ *     that named them was speculative; there is nothing to wire up.
+ *   - SQL side (db/tests/executed/v723_corpus_reader_contracts.sql): proves the TOP-LEVEL
+ *     `required` map (as before) AND now walks every dotted `nested` path against the SAME live
+ *     payload — `.*` means "the first element of the preceding array", the identical convention
+ *     the JS extractor uses. A `nested` path that runs through an array which is EMPTY in the
+ *     fixture is recorded as a SKIP (printed by name, never a silent pass) rather than a FAIL,
+ *     because a minimal fixture cannot prove a shape it never produced; the fixture seeds enough
+ *     rows (see its own header) that this should not fire for the readers it can control, and
+ *     documents by name the ones (mainly get_ci_opportunities_v1's evidence-gated `ranked`/
+ *     `top_actions`) where the underlying reader may legitimately emit nothing from a
+ *     below-every-floor corpus.
+ *   - VERSION TAG (the `version` field below): checked by the SQL fixture against
+ *     pg_get_functiondef() of the live function — specifically, whether the EXACT declared tag
+ *     string (e.g. "nestly_v717") appears anywhere in the body. Every one of these 27 readers is
+ *     maintained by the extract-and-diff patching convention (v668/v690/v698/v706/v717…), which
+ *     edits the LIVE function body via anchored string replacement and does not insert a
+ *     `-- nestly_vNNN` marker comment naming its OWN last-touched version into the body — verified
+ *     empirically 2026-09-02: none of the 27 reader bodies carries its own declared tag. (An
+ *     earlier draft of the SQL check matched ANY `nestly_v[0-9]+`-shaped text and treated a
+ *     mismatch as drift — that produced real false positives, since several bodies incidentally
+ *     mention an UNRELATED version number in a historical comment or even inside a returned
+ *     `note`/`limitation` string literal, e.g. get_ci_service_intelligence_v1's own payload text
+ *     cites "nestly_v699"/"nestly_v710" while its CONTRACTS-declared tag here is "nestly_v691" —
+ *     see the fixture's own header for the specific readers that surfaced this.) So today every
+ *     reader is honestly reported in the fixture's `version_unverifiable` list rather than a
+ *     fabricated pass; if a future migration DOES leave a reader's OWN exact tag in its body, the
+ *     fixture stops listing it there — that is the only signal this check currently proves.
+ *
  * A test (tests/business-ui/v723-ci-reader-contracts.test.mjs) asserts the embedded literal and
  * the JSON file parse to deeply-equal objects, so this generator is the only place either can be
  * edited; hand-editing one without the other fails CI.
@@ -221,6 +264,15 @@ const CONTRACTS = {
     nested: {
       'scope.currency': 'string',
       ranked: 'array',
+      /* 'scope.currency' is declared __optional below (nestly_v723 gap-closure (b) finding): the
+         renderer's own defensive read is `payload?.scope?.currency||'SGD'`
+         (opportunitiesPanelHtmlV685, app/app.js) and grepping every migration that ever built
+         get_ci_opportunities_v1's `scope` object (v650 through the current v717/v705 lineage)
+         shows it has never once included a `currency` key — the renderer was written
+         defensively for a field the reader has never emitted. Declaring it required made the
+         new SQL-side nested-path assertion fail on a gap that has existed since this reader's
+         very first version, not a regression; __optional here matches both the renderer's own
+         code and the reader's actual, unbroken history. */
       'ranked.*.rank': 'number', 'ranked.*.rank_class': 'string', 'ranked.*.pattern': 'string',
       'ranked.*.evidence_class': 'string', 'ranked.*.limitation': 'string',
       'ranked.*.confidence.n': 'number', 'ranked.*.confidence.floor': 'number',
@@ -253,7 +305,8 @@ const CONTRACTS = {
       'report_sections.change': 'array|object',
       'comparisons.subgroups_examined': 'number', 'comparisons.subgroups_promoted': 'number',
       observed_since: 'string',
-      __optional: ['ranked.*.impact.expected_value', 'ranked.*.impact.expected_value.status',
+      __optional: ['scope.currency',
+        'ranked.*.impact.expected_value', 'ranked.*.impact.expected_value.status',
         'ranked.*.impact.expected_value.reason', 'ranked.*.impact.expected_value.cents',
         'ranked.*.impact.expected_value.inputs', 'ranked.*.impact.expected_value.inputs.scored',
         'ranked.*.impact.expected_value.inputs.abstained',
@@ -295,8 +348,27 @@ const CONTRACTS = {
       'pagination.next_cursor': 'object|null', 'pagination.next_cursor.customer_since': 'string',
       'pagination.next_cursor.client_id': 'string',
       snapshot_at: 'string',
+      /* nestly_v723 gap-closure (b) finding: get_customer_intelligence_v83's forecast object has
+         TWO shapes (20260726180000_nestly_v83_customer_intelligence.sql lines ~220-283) — an
+         `available` branch (status/method/…/next_90_days/months/weekly_average_cents/caution)
+         and an `insufficient_data` branch (status/message/unmet_thresholds/required_thresholds
+         only, no next_90_days/months/weekly_average_cents/caution at all). forecast.next_90_days
+         was already marked __optional for exactly this reason; forecast.months/.caution/.
+         weekly_average_cents were not, so the new SQL-side nested-path assertion (which runs
+         this deliberately below-every-floor fixture, always landing in insufficient_data) failed
+         on a real, pre-existing contract gap, not a regression. app/app.js's own forecastMarkup
+         already reads all three defensively (`Array.isArray(forecast.months)?...:[]`,
+         `forecast.caution||'...'`, guarded behind `forecast?.status!=='available'` first) — the
+         renderer already knew; the contract had not caught up. NOT touched here (a richer,
+         evidence-above-floor fixture would still need to prove this, out of this pass's scope):
+         forecast.message and forecast.unmet_thresholds are the MIRROR gap — both are only in the
+         `insufficient_data` branch, never in `available` — so a rich-data fixture would need the
+         reverse __optional treatment for those two. */
       __optional: ['forecast.next_90_days', 'forecast.next_90_days.lower_cents',
         'forecast.next_90_days.expected_cents', 'forecast.next_90_days.upper_cents',
+        'forecast.months', 'forecast.months.*.month_index', 'forecast.months.*.from',
+        'forecast.months.*.to', 'forecast.months.*.lower_cents', 'forecast.months.*.expected_cents',
+        'forecast.months.*.upper_cents', 'forecast.weekly_average_cents', 'forecast.caution',
         'pagination.next_cursor', 'pagination.next_cursor.customer_since', 'pagination.next_cursor.client_id'],
     },
   },
