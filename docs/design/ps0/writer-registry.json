@@ -2627,6 +2627,17 @@
       "idempotency": "gift_redemption_reversals_v665_idem_uk on (business_id, idempotency_key) returns the first reversal on replay; gift_redemption_reversals_v665_target_uk allows one reversal per thing reversed, ever; an advisory lock on (business, target) serialises concurrent attempts",
       "value": "NON-VALUE. Every reachable table is a free-gift entitlement or an allowance counter — none is a VALUE_TABLE, and nothing here touches credit_ledger, points_ledger, sales or stock_batches. The $0 sale written when the gift was handed over is deliberately LEFT STANDING: app.enforce_sale_reversal_bounds refuses a zero-dollar reversal without package-session provenance, and no money is misstated by a zero row. The reversal records that sale's id beside it instead.",
       "kernel_migratability": "portable — restoring an entitlement is business-scoped and append-only in its evidence; the money path is untouched by design."
+    },
+    {
+      "id": "db.fn:app.seed_golden_business_v682/3",
+      "surface": "db_function",
+      "latest_file": "20260902090000_nestly_v682_golden_corpus.sql",
+      "rows_written": "sales:INSERT",
+      "detected_signals": "sale-policy-ref",
+      "entry_point": "app.seed_golden_business_v682(p_index, p_sector, p_owner) — the v682 golden reconciliation corpus seeder. Deterministic, keyed only on (p_index, p_sector) with no randomness anywhere; provisions one fully-operational synthetic business (businesses, branches, staff, business_workspace_controls_v94, business_subscription_lifecycle_v94, subscriptions, a -infinity reporting_contract_versions_v106 row) plus a deterministic customer/sales population, and returns the independently hand-computed expected headline values BEFORE any row it just inserted is read back. Called only from db/tests/executed/v682_golden_reconciliation.sql and its rollback-suite mirror db/tests/v682_golden_corpus.sql — not reachable from the browser, an Edge Function, or any other product RPC.",
+      "idempotency": "None, and none is needed — a test-fixture seeder, not a customer-facing operation. Re-running with the same (p_index, p_sector) inserts a fresh set of rows each call; only rolled-back SQL test transactions call it, and every call is followed by ROLLBACK.",
+      "kernel": "OUT OF KERNEL SCOPE — test-fixture population only. The one tracked-value-table write (public.sales) is ordinary synthetic transaction history inserted so a reconciliation suite has real rows to check product RPCs against; no ledger, no stored-value or points row, nothing a real checkout kernel would ever call.",
+      "value": "Synthetic-corpus INSERT into public.sales only, priced by closed-form arithmetic from (p_index, p_sector, c) so the function's own returned 'expected' block can be independently checked against get_revenue_truth_v106 / get_ci_daypart_v1 / get_customer_lifecycle_v107 reading those same rows (db/tests/executed/v682_golden_reconciliation.sql). Also inserts non-tracked scaffolding rows (businesses, branches, staff, clients, subscriptions, workspace controls, subscription lifecycle, reporting contract version) so the seeded business is genuinely operational, per docs/qa/CI-CORPUS-FIXTURE-GUIDE.md."
     }
   ],
   "allowlist": [
@@ -3893,6 +3904,10 @@
     {
       "id": "browser.rpc:app/app.js:get_ci_daypart_v1",
       "reason": "Phase CI-A Customer Intelligence behaviour card (nestly_v675, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns weekday and hour-of-day behaviour with an honest exposure denominator, using app.analytics_sale_class_v1 (v628) for sale qualification and the v672 statistical-authority contract for evidence-gated verdicts (busiest_weekday stays a raw count; most_valuable_weekday is evidence-gated). Takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_opportunities_v1",
+      "reason": "Pre-existing gap found while governing the v680-v690 wave (this call site and the function it names were already committed in the v672-v678 wave / nestly_v679, not introduced here). Customer Intelligence ranked-opportunities card (nestly_v678, wired to the page in nestly_v679, re-emitted verbatim by nestly_v680's envelope wrap). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns ranked, evidence-citing opportunities (each verdict backed by the v672 statistical-authority evidence/rate-block contract). Writes nothing."
     },
     {
       "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",

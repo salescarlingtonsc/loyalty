@@ -3327,6 +3327,60 @@
       "path": "db/migrations/20260902_nestly_v678_consultant_spine.sql",
       "semanticVersion": "v678",
       "proposedDeployVersion": "20260902060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v680_ci_envelope.sql",
+      "semanticVersion": "v680",
+      "proposedDeployVersion": "20260902070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v681_return_probability.sql",
+      "semanticVersion": "v681",
+      "proposedDeployVersion": "20260902080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v682_golden_corpus.sql",
+      "semanticVersion": "v682",
+      "proposedDeployVersion": "20260902090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v684_metric_dictionary.sql",
+      "semanticVersion": "v684",
+      "proposedDeployVersion": "20260902100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v685_shadow_reconciliation.sql",
+      "semanticVersion": "v685",
+      "proposedDeployVersion": "20260902110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v686_discovery_scan.sql",
+      "semanticVersion": "v686",
+      "proposedDeployVersion": "20260902120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v687_revenue_truth_synthetic_exclusion.sql",
+      "semanticVersion": "v687",
+      "proposedDeployVersion": "20260902130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v689_ci_gate_alignment.sql",
+      "semanticVersion": "v689",
+      "proposedDeployVersion": "20260902140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v690_dispersion_and_one_floor.sql",
+      "semanticVersion": "v690",
+      "proposedDeployVersion": "20260902150000"
     }
   ]
 }

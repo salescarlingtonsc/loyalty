@@ -3322,6 +3322,60 @@
       "version": "20260902060000",
       "name": "nestly_v678_consultant_spine",
       "sourcePath": "db/migrations/20260902_nestly_v678_consultant_spine.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902070000",
+      "name": "nestly_v680_ci_envelope",
+      "sourcePath": "db/migrations/20260902_nestly_v680_ci_envelope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902080000",
+      "name": "nestly_v681_return_probability",
+      "sourcePath": "db/migrations/20260902_nestly_v681_return_probability.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902090000",
+      "name": "nestly_v682_golden_corpus",
+      "sourcePath": "db/migrations/20260902_nestly_v682_golden_corpus.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902100000",
+      "name": "nestly_v684_metric_dictionary",
+      "sourcePath": "db/migrations/20260902_nestly_v684_metric_dictionary.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902110000",
+      "name": "nestly_v685_shadow_reconciliation",
+      "sourcePath": "db/migrations/20260902_nestly_v685_shadow_reconciliation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902120000",
+      "name": "nestly_v686_discovery_scan",
+      "sourcePath": "db/migrations/20260902_nestly_v686_discovery_scan.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902130000",
+      "name": "nestly_v687_revenue_truth_synthetic_exclusion",
+      "sourcePath": "db/migrations/20260902_nestly_v687_revenue_truth_synthetic_exclusion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902140000",
+      "name": "nestly_v689_ci_gate_alignment",
+      "sourcePath": "db/migrations/20260902_nestly_v689_ci_gate_alignment.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902150000",
+      "name": "nestly_v690_dispersion_and_one_floor",
+      "sourcePath": "db/migrations/20260902_nestly_v690_dispersion_and_one_floor.sql"
     }
   ]
 }
