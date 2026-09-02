@@ -150,6 +150,21 @@ export function assembleUserPrompt(report) {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/;
+// Check 88 (numeric-ID coincidence): a pack key that names an identifier rather than a quantity.
+// Matches "customer_id", "order_ref", "ticket_number", "invoice_no", "member_id", "ref" — "id",
+// "ref" or "number" anywhere in the key, or "no" specifically at the end (anchored, so "none"/
+// "normal" are not swept in by a bare substring match). Deliberately keyed on the FIELD NAME, not
+// the value's shape: an id is still a fact about the pack's own record-keeping, but it is never a
+// quantity a narrative should be doing arithmetic on or citing as a count.
+//
+// HONEST LIMIT, declared rather than hidden: "id"/"ref"/"number" are matched as bare SUBSTRINGS of
+// the key, not whole words, so a key that merely CONTAINS one of them without naming an identifier
+// ("identified_revenue_cents", "paid_amount", "avoid_charge") is swept into idNumbers too. That
+// widens the grounding set for an ID-cued token (a false NEGATIVE for this specific check — a
+// coincidental key match can still launder a fabricated id), never the other way around; it never
+// takes anything OUT of the general `numbers` pool this same value is still grounded against for
+// every ordinary (non-ID-cued) numeric claim.
+const ID_KEY_RE = /id|ref|number|no$/i;
 
 // Walks every leaf of the pack once. Everything the rules need is collected here so the rules
 // themselves stay readable and the traversal cost is paid a single time.
@@ -209,7 +224,21 @@ function readPack(pack) {
     addNumber(Number(m[3]));            // day
   }
 
-  return { numbers: [...numbers], strings, dateStrings: [...dateStrings], objects };
+  // Check 88 (numeric-ID coincidence): every numeric leaf that lives under an ID-shaped key
+  // ("customer_id", "order_ref", "ticket_number", "invoice_no" ...). Kept SEPARATE from the
+  // general `numbers` set above rather than folded into it - see ID_CUE_RE / groundNumbers below
+  // for why a number introduced by an ID cue must ground against THIS set specifically, not any
+  // numeric leaf in the pack.
+  const idNumbers = new Set();
+  for (const obj of objects) {
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === 'number' && Number.isFinite(value) && ID_KEY_RE.test(key)) {
+        idNumbers.add(value);
+      }
+    }
+  }
+
+  return { numbers: [...numbers], strings, dateStrings: [...dateStrings], objects, idNumbers: [...idNumbers] };
 }
 
 // round(100*a/b, 0|1) for numeric leaves a, b of the SAME object — the one derivation the model is
@@ -423,6 +452,33 @@ const OPERATORS = [
 // result. Kept tight so unrelated adjacent numbers are never read as an equation.
 const EQUALS_BRIDGE = /^[^\d]{0,28}?(?:=|equals|is|gives|makes|comes to)[^\d]{0,14}$/i;
 
+// Check 88 (numeric-ID coincidence): a numerals-only token introduced by one of these cue words
+// names an IDENTIFIER, not a quantity - "customer #4471", "order 1092", "ticket no. 55". A model
+// that writes such a number is making a record-lookup claim, not a count or an amount, so it must
+// ground against the pack's own ID-typed fields (idNumbers, from readPack/ID_KEY_RE above), never
+// against any numeric leaf in the pack. Without this, an invented "customer #4471" would pass
+// clean any time 4471 happens to be SOME unrelated number in the pack (a revenue figure, a stamp
+// count) that was never an identifier at all - the coincidence this rule closes.
+const ID_CUE_RE = /\b(?:customer|order|ticket|invoice|receipt|member|ref)\s*#?\s*(\d+)/gi;
+
+// The [start, end) character range of the DIGITS ONLY in each ID-cued match above (not the cue
+// word itself) - used to line the cue up with the digit token scanNumbers() already produced at
+// the same offset, rather than re-parsing the number a second, independent way.
+function idCuedDigitRanges(masked) {
+  const ranges = [];
+  ID_CUE_RE.lastIndex = 0;
+  let m;
+  while ((m = ID_CUE_RE.exec(masked)) !== null) {
+    const start = m.index + m[0].length - m[1].length;
+    ranges.push([start, start + m[1].length]);
+  }
+  return ranges;
+}
+
+function overlapsAnyRange(ranges, from, to) {
+  return ranges.some(([start, end]) => from < end && to > start);
+}
+
 function groundNumbers(narrative, packInfo, derivedPct) {
   const masked = maskStructuralNumbers(narrative, packInfo.dateStrings);
   const digitTokens = scanNumbers(masked, false);
@@ -434,6 +490,8 @@ function groundNumbers(narrative, packInfo, derivedPct) {
   // byte-for-byte.
   const tokens = digitTokens;
   const grounded = new Array(tokens.length).fill(false);
+  const idCuedRanges = idCuedDigitRanges(masked);
+  const idNumbers = packInfo.idNumbers || [];
 
   const groundedAgainstPack = (tok) => {
     for (const n of packInfo.numbers) {
@@ -448,7 +506,15 @@ function groundNumbers(narrative, packInfo, derivedPct) {
     return false;
   };
 
-  for (let i = 0; i < tokens.length; i += 1) grounded[i] = groundedAgainstPack(tokens[i]);
+  // A numeral introduced by an ID cue is judged ONLY against the pack's ID-typed fields, never
+  // against the general `numbers` pool - see ID_CUE_RE above for why a coincidental match there
+  // (a revenue figure, a stamp count) must not launder an invented ID.
+  const groundedAsId = (tok) => idNumbers.some((n) => renders(tok.value, tok.decimals, n));
+
+  for (let i = 0; i < tokens.length; i += 1) {
+    const cued = overlapsAnyRange(idCuedRanges, tokens[i].index, tokens[i].end);
+    grounded[i] = cued ? groundedAsId(tokens[i]) : groundedAgainstPack(tokens[i]);
+  }
 
   // Second pass: a still-ungrounded token may be the RESULT of shown working whose operands are
   // grounded. Iterated so chained working ("a + b = c ... c x d = e") settles.
@@ -1378,13 +1444,21 @@ function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
 //
 // HONEST LIMITS, stated plainly because firing a false positive costs a regenerated report and
 // missing a true positive costs an owner reading a fabricated claim:
-//   * An invented name that COLLIDES with a common English word used as a starter here (e.g.
-//     "Grace", "Summer", "May", "June", "August", "March", "Will", "Faith") is NOT caught by V9b —
-//     it reads as the ordinary word, same false-negative shape V9's own comment already accepts
-//     for V6. "May"/"June"/"March"/"August" are month names in COMMON_SENTENCE_STARTERS already;
-//     "Grace"/"Summer"/"Faith"/"Will" are ordinary-English words this file cannot tell apart from
-//     an invented name without a name database, which V6's own banner already explains cannot
-//     exist here.
+//   * An invented name that COLLIDES with a MONTH name is NOT caught by V9b — it reads as the
+//     ordinary month word, same false-negative shape V9's own comment already accepts for V6.
+//     "May", "June", "March" and "August" are the false negatives here, because MONTHS is folded
+//     into COMMON_SENTENCE_STARTERS (below) unconditionally. (This comment previously named
+//     "Grace", "Summer", "Faith" and "Will" alongside them as if they shared the same exemption —
+//     they do not. None of those four is a month name, a day name, or in COMMON_SENTENCE_STARTERS
+//     at all, so an invented "Grace"/"Summer"/"Faith"/"Will" opening a sentence IS caught by V9b,
+//     proven by a dedicated test pinning exactly this so the claim cannot silently drift back to
+//     the wrong one. "Will" has one narrow, DELIBERATE exemption of a different kind, unrelated to
+//     COMMON_SENTENCE_STARTERS: check 17/88's isInterrogativeModalOpening (below) treats a
+//     sentence-initial modal — "Will", "Would", "Could", "Should", "Can", "May", "Might", "Do",
+//     "Does", "Did", "Is", "Are" — followed within two tokens by "you"/"we"/"they"/"customers"/
+//     "clients"/"it"/"this" as an ordinary QUESTION, not a naming claim: "Will you visit us again
+//     this month?" must validate clean. "Will" used as an invented PERSON name — no such
+//     question shape around it — is still caught.)
 //   * A pruned word (see above) is exempted ONLY for the pack it came from, via condition (a),
 //     never globally — an invented "Tan" in a pack that has no Tan is now caught (proven by a
 //     dedicated test against 01-normal-firm.json, which names no Tan).
@@ -1441,6 +1515,25 @@ const COMMON_SENTENCE_STARTERS = new Set([
   ...DAY_NAMES,
 ]);
 
+// Check 17/88 (false-positive fix): a sentence-initial modal is not always a naming claim's
+// missing subject - "Will you visit us again this month?" is an ordinary QUESTION, and "Will"
+// there is the modal auxiliary, not an invented person. Scoped narrowly on purpose: ONLY these
+// eleven modal/auxiliary words, ONLY when one of a fixed set of question subjects follows within
+// two tokens. "Will Marcus visit again?" still needs a different subject to read as interrogative
+// under this rule and is NOT exempted by it - it falls back to V9b's ordinary judgement of
+// "Marcus" (a separate, later token in that sentence), same as today.
+const INTERROGATIVE_MODALS = new Set([
+  'will', 'would', 'could', 'should', 'can', 'may', 'might', 'do', 'does', 'did', 'is', 'are',
+]);
+const INTERROGATIVE_SUBJECT_RE =
+  /^\s*(?:[A-Za-z']+\s+){0,2}(?:you|we|they|customers?|clients?|it|this)\b/i;
+
+function isInterrogativeModalOpening(narrative, tok) {
+  if (!INTERROGATIVE_MODALS.has(tok.word.toLowerCase())) return false;
+  const after = narrative.slice(tok.end, tok.end + 40);
+  return INTERROGATIVE_SUBJECT_RE.test(after);
+}
+
 function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, opts) {
   const allowlist = buildOrphanAllowlist(opts);
   const ranges = orphanSkipRanges(narrative);
@@ -1454,6 +1547,7 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // heading/code lines
     if (hasCapitalisedRunPartner(narrative, words, i)) continue;     // (d), still V6's territory
     if (!isOrphanSentenceInitial(narrative, tok.index)) continue;    // V9b only judges what V9 skips
+    if (isInterrogativeModalOpening(narrative, tok)) continue;       // check 17/88: a question, not a name
     if (allowlist.has(tok.word)) continue;                           // (b)
     const plain = tok.word.toLowerCase();
     if (COMMON_SENTENCE_STARTERS.has(plain)) continue;                // (c)
@@ -1488,22 +1582,58 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
 // Chinese given name) is indistinguishable from a one-character common word or particle without a
 // name database, the same limit V6's own banner already states for Latin script; a single
 // character therefore never fires V11, by design, not by oversight.
+//
+// (check 88, round 3): grounding used to be a raw SUBSTRING test (`haystack.includes(run)`), and a
+// refuter proved that collides two different people who share characters. A pack customer named
+// "陈美玲" grounds ANY substring of it under the old test, including "美玲" written in the narrative
+// to mean a DIFFERENT person the pack never names - the narrative's own run is real Chinese text,
+// two-plus Han characters, invented as far as the pack is concerned, and the substring test passed
+// it clean anyway. Grounding is now a WHOLE-TOKEN match against the set of CJK runs the pack's own
+// strings actually contain (buildCjkTokenSet, below) - "美玲" is only grounded when the pack itself
+// contains "美玲" as its own bounded run (equal to a whole pack string, or bounded by non-CJK
+// characters/string edges on both sides within a pack string), not merely as a piece of a longer
+// pack run like "陈美玲".
+//
+// HONEST LIMIT, declared rather than hidden, because whole-token matching is stricter than the old
+// substring test in the OTHER direction too: this file has no way to know that "美玲" in the
+// narrative and "陈美玲" in the pack denote the SAME real person (a nickname, a given-name-only
+// reference, a family name dropped in casual prose) versus two different people who happen to
+// share the same two characters. Firing on a genuine same-person nickname reference costs a
+// regenerated report - the same asymmetry as every other rule in this file - and is accepted
+// deliberately rather than reverting to the substring test that let a genuinely different,
+// invented person hide behind a real one's name.
 const CJK_RUN_RE = /[\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}]{2,}/gu;
 
+// The pack's own CJK runs, extracted the same way CJK_RUN_RE finds them in a narrative: a maximal
+// run of 2+ Han/Hangul/Kana characters, bounded by non-CJK characters or the string's own edges.
+// Reusing CJK_RUN_RE against each pack string leaf means "a whole pack string" and "a run bounded
+// by non-CJK on both sides within a longer pack string" are the SAME extraction - there is no
+// separate boundary-finding logic to keep in step with the one the regex already expresses.
+function buildCjkTokenSet(strings) {
+  const tokens = new Set();
+  for (const s of strings) {
+    CJK_RUN_RE.lastIndex = 0;
+    let hit;
+    while ((hit = CJK_RUN_RE.exec(s)) !== null) tokens.add(hit[0]);
+  }
+  return tokens;
+}
+
 function checkCjkEntities(narrative, packInfo, violations) {
-  const haystack = packInfo.strings.join('\n');
+  const packCjkTokens = buildCjkTokenSet(packInfo.strings);
   const reported = new Set();
   CJK_RUN_RE.lastIndex = 0;
   let m;
   while ((m = CJK_RUN_RE.exec(narrative)) !== null) {
     const run = m[0];
-    if (haystack.includes(run)) continue;
+    if (packCjkTokens.has(run)) continue;
     if (reported.has(run)) continue;
     reported.add(run);
     violations.push({
       rule: RULES.ENTITY,
       detail: `V11: "${run}" is a run of 2+ Han/Hangul/Kana characters naming a person or entity ` +
-        `but appears nowhere in the evidence pack (a single-character name is a known limit of ` +
+        `but matches no whole CJK token in the evidence pack (a single-character name, and a ` +
+        `narrative nickname that is a true substring of a longer pack name, are known limits of ` +
         `this check - see the file's own note on CJK), near ` +
         `"${contextAround(narrative, m.index, m.index + run.length)}"`,
     });
@@ -1839,6 +1969,24 @@ export function classifyCohortMentions(narrativeMd, evidencePack) {
 // refuter proved could evade a narrower list (see v706's own note, preserved below the marker list)
 // - so the two rules can never quietly diverge on what counts as a causal construction, the same
 // discipline this file already applies to "what counts as a finding" (typedFindings, below).
+//
+// (check 17, round 3): a THIRD refuter proved a still-narrower gap in the list above: several
+// entries only matched ONE inflection of an ordinary English verb or a single fixed copula, so a
+// plain tense change or number change slipped past clean - "It appears to be the case that weekend
+// visits ARE WHY customers come back sooner" evaded the old bare /\bis\s+why\b/i entirely (the
+// copula was "are", not "is"), and nothing on the list caught "accounted for" (only "accounts for"),
+// "explained" (only "explains"), "produces" without "produced", "led to" without only "leads to",
+// and several more of the same shape. Every entry that was a FIXED copula ("is X") or a single
+// verb inflection is now generalised to every ordinary inflection of the same construction
+// (present/past/participle, singular/plural, is/are/was/were) - not a new idiom, the SAME idiom
+// written the way English actually conjugates it. A round-3 refuter also proved a causal
+// construction the prompt explicitly forbids (EVIDENCE_CLASS_INSTRUCTION's own "if you keep X, Y
+// will...") was never actually CHECKED here: a conditional ("if you keep pushing weekend visits,
+// returns may rise") and the "the more X, the more/faster/sooner Y" comparative construction both
+// state a cause without using any word on the list above. Both are added below, narrowly - the
+// conditional only fires when the modal sits within a short window of the "if you/we/they keep/
+// continue/stop/start/push/run" opener, so an unrelated "if" elsewhere in the sentence is not
+// swept in.
 export const CAUSAL_CONSTRUCTIONS = [
   // The original V10 blacklist, unchanged, folded into the one shared constant.
   /\bbecause\b/i,
@@ -1850,42 +1998,92 @@ export const CAUSAL_CONSTRUCTIONS = [
   /\bdrives\b/i,
   /\bdriven\b/i,
   /\bdriving\b/i,
+  // round 3: "leads to"/"leading to" generalised to include the past tense "led to".
   /\bleads?\s+to\b/i,
   /\bleading\s+to\b/i,
+  /\bled\s+to\b/i,
+  // round 3: "results in"/"resulting in" generalised to include "resulted in".
   /\bresults?\s+in\b/i,
   /\bresulting\s+in\b/i,
+  /\bresulted\s+in\b/i,
   /\bthanks\s+to\b/i,
   /\bas\s+a\s+result\b/i,
   /\bwhich\s+means\s+(?:customers|clients)\s+will\b/i,
   // v706/v707: idioms a refuter proved evade a narrower blacklist entirely.
   /\bmakes?\b[\s\S]{0,30}?\b(?:return|come\s+back)\b/i,
   /\bmade\b[\s\S]{0,30}?\b(?:return|come\s+back)\b/i,
-  /\bis\s+why\b/i,
-  /\bthat\s+is\s+why\b/i,
-  /\baccounts?\s+for\b/i,
-  /\bexplains?\b/i,
-  /\bis\s+behind\b/i,
+  // round 3 (check 17, item 1): "is why" was a FIXED copula - "are why"/"was why"/"were why"/"'s
+  // why" (e.g. "that's why") state the exact same construction and evaded it entirely. Every
+  // copula inflection is listed once here instead of "is why" plus a hand-written "that is why"
+  // special case, because "that is why"/"that are why"/etc are already substrings this single
+  // pattern matches.
+  /\b(?:is|are|was|were)\s+why\b/i,
+  /\w's\s+why\b/i,
+  // round 3: "accounts for" generalised to "accounted for" (past tense of the same verb).
+  /\baccounts?(?:ed)?\s+for\b/i,
+  // round 3: "explains" generalised to "explained"/"explaining".
+  /\bexplain(?:s|ed|ing)?\b/i,
+  // round 3: "is behind" was a fixed copula, same shape as "is why" above.
+  /\b(?:is|are|was|were)\s+behind\b/i,
   /\bowing\s+to\b/i,
+  // round 3: "stems from" generalised to "stemmed from".
   /\bstems?\s+from\b/i,
+  /\bstemmed\s+from\b/i,
+  // round 3: "means that" generalised to "meant that".
   /\bmeans?\s+that\b/i,
+  /\bmeant\s+that\b/i,
+  // round 3: "translates into" generalised to "translated into".
   /\btranslates?\s+into\b/i,
+  /\btranslated\s+into\b/i,
   // "so ... that" with anything between the two words, not just the adjacent "so that" above.
   /\bso\b[\s\S]{1,40}?\bthat\b/i,
   /\bas\s+a\s+consequence\b/i,
+  // round 3: "paves the way" generalised to "paved the way".
   /\bpaves?\s+the\s+way\b/i,
+  /\bpaved\s+the\s+way\b/i,
   /\bsets?\s+up\b/i,
+  // round 3: "follows from" generalised to "followed from".
   /\bfollows?\s+from\b/i,
-  /\bis\s+the\s+reason\b/i,
-  /\bproduces?\b/i,
+  /\bfollowed\s+from\b/i,
+  // round 3: "is the reason" was a fixed copula, same shape as "is why"/"is behind" above.
+  /\b(?:is|are|was|were)\s+the\s+reason\b/i,
+  // round 3: "produces" generalised to "produced"/"producing".
+  /\bproduc(?:e|es|ed|ing)\b/i,
+  // round 3: "results from" generalised to "resulted from".
   /\bresults?\s+from\b/i,
+  /\bresulted\s+from\b/i,
   /\bon\s+account\s+of\b/i,
+  // round 3: "brings about" generalised to "brought about".
   /\bbrings?\s+about\b/i,
+  /\bbrought\s+about\b/i,
+  // round 3: "spurs" generalised to "spurred".
   /\bspurs?\b/i,
+  /\bspurred\b/i,
+  // round 3: "prompts" generalised to "prompted".
   /\bprompts?\b/i,
+  /\bprompted\b/i,
+  // round 3: "boosts" generalised to "boosted".
   /\bboosts?\b/i,
+  /\bboosted\b/i,
+  // round 3: "fuels" generalised to "fuelled"/"fueled" (both spellings).
   /\bfuels?\b/i,
+  /\bfuell?ed\b/i,
+  // round 3: "triggers" generalised to "triggered".
   /\btriggers?\b/i,
+  /\btriggered\b/i,
+  // round 3: "pushes" generalised to "pushed".
   /\bpushes?\b/i,
+  /\bpushed\b/i,
+  // round 3 (check 17, item 2): a conditional causal claim the prompt itself forbids
+  // (EVIDENCE_CLASS_INSTRUCTION's own "if you keep X, Y will...") but that nothing here actually
+  // checked - "if you keep pushing weekend visits, returns may rise" states a cause with no word
+  // from the list above at all. Narrow on purpose: only fires when a modal follows the "if you/we/
+  // they keep/continue/stop/start/push/run" opener within a short window, so an unrelated "if"
+  // elsewhere in the sentence is not swept in.
+  /\bif\s+(?:you|we|they)\s+(?:keep|continue|stop|start|push|run)\b[\s\S]{0,60}?\b(?:will|would|may|might|should)\b/i,
+  // round 3: the comparative "the more X, the more/faster/sooner Y" construction states the same
+  // kind of cause without any causal verb at all.
+  /\bthe\s+more\b[\s\S]{0,60}?\bthe\s+(?:more|faster|sooner)\b/i,
 ];
 
 function hasCausalConstruction(text) {
