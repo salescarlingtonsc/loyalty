@@ -74,21 +74,23 @@ begin
   -- A DRAFT cloned from that stale state: its loyalty_program_versions row says points_tiers,
   -- and it satisfies every stamps-spine publish validation (per-stamp spend, target, a gift AT
   -- the target on the stamps programme).
-  select id into v_draft from public.firm_config_versions
-   where business_id = v_biz and status = 'draft'
-   order by version_no desc limit 1;
-  if v_draft is null then
-    v_draft := gen_random_uuid();
-    insert into public.firm_config_versions(id, business_id, version_no, status, snapshot_hash)
-    select v_draft, v_biz, coalesce(max(version_no),0)+1, 'draft', md5('v431-draft')
-      from public.firm_config_versions where business_id = v_biz;
-  end if;
-  insert into public.loyalty_program_versions(config_version_id, business_id, loyalty_model, kind,
-    active, earn_points_per_dollar, redeem_points, reward_credit_cents, stamp_target, stamp_per_cents,
-    tier_basis, expiry_mode, expiry_days)
-  values (v_draft, v_biz, 'points_tiers', 'points', true, 1, 800, 500, 5, 500, 'visits', 'none', null)
-  on conflict (config_version_id) do update
-    set loyalty_model='points_tiers', kind='points', active=true, stamp_target=5, stamp_per_cents=500;
+  --
+  -- nestly_v565 ("every business born the same"): the loyalty_programs insert above fires
+  -- trg_seed_loyalty_config_version, which seeds AND PUBLISHES config version 1 for this
+  -- business in the same transaction -- so businesses.active_config_version_id is already
+  -- non-null by this point. A hand-built firm_config_versions row (the old code below, with no
+  -- based_on_version_id) is therefore neither the active pointer nor based on it, and v564's
+  -- publish_loyalty_config now refuses it up front with 'stale_draft' before this test's own
+  -- 01 assertion ever runs. Post-v565 fixtures (see v433_v436_stamp_lifecycle.sql phase F)
+  -- obtain their draft through the real create_loyalty_config_draft RPC instead, which resolves
+  -- based_on_version_id against the live active pointer. It clones the LIVE loyalty_programs
+  -- row, which the insert above already declared as the stale points_tiers/points state, so the
+  -- clone reproduces exactly the scenario this test needs -- the explicit update below just makes
+  -- that declaration unmistakable rather than relying on the clone alone.
+  v_draft := ((public.create_loyalty_config_draft(v_biz, null, 'v431 acceptance'))::jsonb ->> 'version_id')::uuid;
+  update public.loyalty_program_versions
+     set loyalty_model='points_tiers', kind='points', active=true, stamp_target=5, stamp_per_cents=500
+   where config_version_id = v_draft and business_id = v_biz;
 
   insert into public.loyalty_rewards(id, business_id, name, internal_name, customer_name,
     fulfillment_kind, cost_points, credit_cents, estimated_cost_cents, active, paused, sort, programme_id)

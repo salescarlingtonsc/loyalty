@@ -26,6 +26,14 @@
 --     table without its rows, and businesses.enabled_modules is validated against it.
 --   * points_ledger is append-guarded, so nothing here writes points directly — every balance in
 --     this file arrives through a real sale and the real triggers.
+--   * nestly_v565 ("every business born the same") seeds AND PUBLISHES loyalty config version 1
+--     at business creation, so businesses.loyalty_programs.current_config_version_id already
+--     points at a PUBLISHED version by the time this fixture runs. Calling
+--     publish_loyalty_config directly on that id therefore fails with 'only a draft may be
+--     published'. Fixed by obtaining a real draft first through public.create_loyalty_config_draft
+--     (the flow post-v565 fixtures use, e.g. v433_v436_stamp_lifecycle.sql phase F) and
+--     publishing that instead — it clones the live row business_set_earning_rule_v359 just wrote,
+--     so publishing it is a no-op re-affirmation of the same values, not a behaviour change.
 
 begin;
 
@@ -111,7 +119,7 @@ begin
   -- Points firm: a published, running points programme, exactly as a live tenant has one.
   perform set_config('request.jwt.claims', json_build_object('sub',v_powner,'role','authenticated')::text, true);
   perform public.business_set_earning_rule_v359(v_pbiz, 1.0, null, 'none', null);
-  perform public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id=v_pbiz limit 1));
+  perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_pbiz, null, 'v425 acceptance'))::jsonb ->> 'version_id')::uuid);
   perform public.set_programmes_v314(v_pbiz,'{"points":true}'::jsonb,gen_random_uuid());
   update public.loyalty_programs set active=true where business_id=v_pbiz;
 
@@ -119,7 +127,7 @@ begin
   -- loyalty_programs.loyalty_model follows the spine without being written by hand.
   perform set_config('request.jwt.claims', json_build_object('sub',v_sowner,'role','authenticated')::text, true);
   perform public.business_set_earning_rule_v359(v_sbiz, 1.0, null, 'none', null);
-  perform public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id=v_sbiz limit 1));
+  perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_sbiz, null, 'v425 acceptance'))::jsonb ->> 'version_id')::uuid);
   perform public.set_programmes_v314(v_sbiz,'{"stamps":true}'::jsonb,gen_random_uuid());
   update public.loyalty_programs set active=true, stamp_per_cents=1000 where business_id=v_sbiz;
 
