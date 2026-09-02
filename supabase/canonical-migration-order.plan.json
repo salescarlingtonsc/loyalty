@@ -3298,6 +3298,42 @@
       "version": "20260902010000",
       "name": "nestly_v673_staff_insert_owner_only",
       "sourcePath": "db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902020000",
+      "name": "nestly_v674_birthday_gift_type_change",
+      "sourcePath": "db/migrations/20260902_nestly_v674_birthday_gift_type_change.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902030000",
+      "name": "nestly_v675_stale_stamp_draft_superseded",
+      "sourcePath": "db/migrations/20260902_nestly_v675_stale_stamp_draft_superseded.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902040000",
+      "name": "nestly_v676_gift_intent_reopen",
+      "sourcePath": "db/migrations/20260902_nestly_v676_gift_intent_reopen.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902050000",
+      "name": "nestly_v677_reversal_is_not_a_visit",
+      "sourcePath": "db/migrations/20260902_nestly_v677_reversal_is_not_a_visit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902070000",
+      "name": "nestly_v679_tier_edits_survive_publish",
+      "sourcePath": "db/migrations/20260902_nestly_v679_tier_edits_survive_publish.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902080000",
+      "name": "nestly_v680_manual_payment_reopens_workspace",
+      "sourcePath": "db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql"
     }
   ]
 }
