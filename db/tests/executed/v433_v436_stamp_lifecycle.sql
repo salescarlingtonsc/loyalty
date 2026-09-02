@@ -467,13 +467,22 @@ begin
     raise exception 'D FAIL: no expired cycle with slots=4 was recorded for client 2';
   end if;
 
-  -- Rule 7: programme OFF — the earned milestone must still be listed and claimable.
+  -- OWNER DECISION PENDING — v435 rule 7 (earned milestone survives deactivation) vs v495
+  -- (stopped programme's gifts leave every surface); current behaviour since v495: no
+  -- availability row. See docs/qa/OWNER-ISSUE-LEDGER.md — "Earned stamp milestone when the
+  -- programme is switched off: v435 rule 7 vs v495". v495's outer `where rows.programme_active`
+  -- filter drops the survivor-arm row entirely once the stamps spine is inactive (arm 1 reports
+  -- `coalesce((select ss.active from stamps_spine ss), false)`), so no row at all comes back for
+  -- this reward — not a different availability value. This block pins that CURRENT behaviour
+  -- only, so a silent change in either direction (a row reappears, or its availability value
+  -- changes) is caught here and must be reconciled against the ledger entry above, not silently
+  -- re-asserted.
   update public.business_programmes set active = false where id = v_spine_stamps;
   select core.availability into v_txt
     from app.reward_availability_v432(v_biz, v_client2, now()) core
    where core.reward_id = v_reward_free;
-  if v_txt is distinct from 'available_at_counter' then
-    raise exception 'D FAIL: with the programme OFF, the earned milestone reads % (expected available_at_counter — rule 7)', v_txt;
+  if v_txt is not null then
+    raise exception 'D FAIL: OWNER DECISION PENDING (docs/qa/OWNER-ISSUE-LEDGER.md — Earned stamp milestone when the programme is switched off: v435 rule 7 vs v495) — expected NO availability row for the earned milestone with the programme OFF (current behaviour since v495), got %', v_txt;
   end if;
   if exists (select 1 from app.reward_availability_v432(v_biz, v_client2, now()) core
               where core.reward_id = v_reward_big) then
@@ -545,6 +554,15 @@ begin
    where business_id=v_pbiz;
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_pbiz, false) on conflict (business_id) do update set workspace_paused=false;
+  /* v620 (nestly_v620_entitlement_authority): business_operational_v620 additionally requires a
+     paid (or trialing) subscriptions row, not merely an approved+unpaused workspace. Without this
+     the fixture fails with "owner loyalty configuration access required" under the migrated
+     schema — see the same note in Phase 0 above / v422_baseline_behaviours.sql. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_pbiz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
   perform set_config('request.jwt.claims', json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
   insert into public.loyalty_programs(business_id, active, loyalty_model, kind, configuration_status,
                                       earn_points_per_dollar, expiry_mode, expiry_days)
