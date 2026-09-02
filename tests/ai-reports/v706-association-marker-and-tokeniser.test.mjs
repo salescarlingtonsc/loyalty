@@ -131,9 +131,19 @@ test('v706 check 17 (V10b): every known-good narrative in the corpus is free of 
   }
 });
 
-test('v706 check 17 (V10b): 02-sparse-firm.json and 06-adversarial-firm.json carry the only ' +
-  'two ASSOCIATION findings in the corpus, and both good narratives already carry an approved ' +
-  'marker ("also tend") — no fixture rewrite was needed', () => {
+test('v706 check 17 (V10b): 02-sparse-firm.json and 06-adversarial-firm.json carry the ' +
+  'ASSOCIATION findings whose narratives actually TALK ABOUT them, and both good narratives ' +
+  'already carry an approved marker ("also tend") — no fixture rewrite was needed', () => {
+  // nestly_v713 (check 17, evidence half) additively gave 01-normal-firm.json and
+  // 05-whale-firm.json their own findings.ranked ASSOCIATION candidates (gateway_followthrough,
+  // daypart_shift) so V10/V10b bind against a REAL production shape (app.v176_evidence_pack),
+  // not only the two hand-picked synthetic opportunities.candidates fixtures below — see
+  // v713-findings-ranked-binding.test.mjs. Those two packs' shipped good/bad narratives never
+  // discuss either new finding (no sentence shares two of its distinctive keywords), so neither
+  // rule ever looks at them here; the corpus-wide "no known-good narrative trips V10b" test above
+  // already proves that silence is harmless. This test's own scope stays what it always was:
+  // the two packs whose narratives DO reference an ASSOCIATION finding by name must use an
+  // approved marker for it.
   const withAssociation = corpus.filter(({ pack }) => {
     const stack = [pack];
     let found = false;
@@ -147,9 +157,10 @@ test('v706 check 17 (V10b): 02-sparse-firm.json and 06-adversarial-firm.json car
   });
   assert.deepEqual(
     withAssociation.map((c) => c.file).sort(),
-    ['02-sparse-firm.json', '06-adversarial-firm.json'],
+    ['01-normal-firm.json', '02-sparse-firm.json', '05-whale-firm.json', '06-adversarial-firm.json'],
   );
-  for (const { file, good } of withAssociation) {
+  const narrativelyReferenced = ['02-sparse-firm.json', '06-adversarial-firm.json'];
+  for (const { file, good } of withAssociation.filter((c) => narrativelyReferenced.includes(c.file))) {
     assert.match(good, /also tend/i, `${file}'s good narrative must carry an approved marker`);
   }
 });

@@ -56,7 +56,23 @@ function loadCorpus() {
   return files.map((file) => ({ file, ...JSON.parse(readFileSync(join(CORPUS_DIR, file), 'utf8')) }));
 }
 const corpus = loadCorpus();
-const pack01 = corpus.find((c) => c.file === '01-normal-firm.json');
+const pack01Raw = corpus.find((c) => c.file === '01-normal-firm.json');
+// nestly_v713 (check 17, evidence half) additively gave 01-normal-firm.json's pack its own
+// findings.ranked block (gateway_followthrough/contactability_gap) so the golden corpus exercises
+// V10/V10b against a REAL production shape, not only hand-built fixtures — see
+// v713-findings-ranked-binding.test.mjs. This file's own point is the OPPOSITE precondition: V3's
+// unconditional CAUSAL_CONSTRUCTIONS check must catch a bare causal idiom even with ZERO typed
+// findings anywhere in the pack. A deep-cloned, findings-stripped copy of pack01 keeps that
+// precondition true regardless of what the shared golden fixture carries.
+const pack01 = {
+  ...pack01Raw,
+  pack: (() => {
+    const stripped = JSON.parse(JSON.stringify(pack01Raw.pack));
+    delete stripped.findings;
+    if (stripped.evidence_completeness) delete stripped.evidence_completeness.findings_version;
+    return stripped;
+  })(),
+};
 
 const explain = (result) =>
   result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ') || '(none)';

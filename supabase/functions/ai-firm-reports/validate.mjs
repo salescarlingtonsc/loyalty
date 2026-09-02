@@ -22,8 +22,16 @@
 // THE EVIDENCE PACK it validates against is app.v176_evidence_pack as it stands after v179 (the
 // `insights` block), v545 (loyalty.active_programme / historical_programmes, and the
 // existing_customer_return_rate_pct rename), v548 (the `identification` block and
-// scope:'identified_customers_only' markers), v551 (top1/top5 shares that name their denominator)
-// and v552 (evidence_completeness.unavailable_sections as [{section, sqlstate}]).
+// scope:'identified_customers_only' markers), v551 (top1/top5 shares that name their denominator),
+// v552 (evidence_completeness.unavailable_sections as [{section, sqlstate}]), and v713 (a new
+// top-level `findings` key: `findings.ranked[]` — public.get_ci_opportunities_v1's own promoted
+// candidates, each a plain object carrying its own string `evidence_class` ('ASSOCIATION' or
+// 'DIRECT_FACT', never 'CAUSAL') alongside `id`/`domain`/`pattern`/`comparison`/`impact`/`action`/
+// `evidence`/`confidence`/`limitation` — `findings.top_actions[]` (populated in extended mode), and
+// `evidence_completeness.findings_version`). V10/V10b (below) do not key on that specific path by
+// name; they walk the WHOLE pack for ANY object with its own `evidence_class`, so findings.ranked[]
+// is simply the first REAL production location such an object lives — see
+// tests/ai-reports/v713-findings-ranked-binding.test.mjs, which proves both rules bind against it.
 //
 // FAILURE MODE BY DESIGN. index.ts routes !ok to the existing status='failed' path. A false
 // positive therefore costs a regenerated report, never a wrong report shown to an owner. Every

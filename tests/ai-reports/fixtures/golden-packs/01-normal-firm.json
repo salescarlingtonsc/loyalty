@@ -44,8 +44,80 @@
     "account_opens": {
       "report_range": { "requested_to": "2026-08-31", "effective_to": "2026-08-31", "clamped": false }
     },
+    "findings": {
+      "source_rpc": "public.get_ci_opportunities_v1",
+      "ranked": [
+        {
+          "id": "gateway_followthrough:svc_seasonal_special",
+          "domain": "service_intelligence",
+          "pattern": "\"Seasonal Special\" is how 14 customers first arrived, but only 22.0% of its 18 buyers bought it again, against a firm-wide first-to-second rate of 45.0% — 23.0 points behind.",
+          "comparison": {
+            "kind": "baseline",
+            "detail": "this service's repeat rate (4 of 18 buyers) against the firm's own first-to-second conversion (45.0%, n=30) as the baseline"
+          },
+          "impact": {
+            "cents": null,
+            "reason": "no incremental model: the gap says the first experience under-converts, not how much revenue a better one would add"
+          },
+          "action": {
+            "who": "the owner, with the staff who deliver this service",
+            "what": "Fix the first-visit experience for \"Seasonal Special\": watch the appointment end to end, decide what the next step should be for someone who has only ever had this one thing, and make offering it part of the service rather than an afterthought.",
+            "when": "within the month",
+            "channel": "in_person_at_the_appointment"
+          },
+          "evidence": {
+            "source_rpc": "public.get_ci_service_intelligence_v1 + public.get_ci_funnel_conversion_v1",
+            "refs": {
+              "service_id": "svc_seasonal_special",
+              "service_name": "Seasonal Special",
+              "buyers": 18,
+              "gateway_count": 14,
+              "repeat_rate": { "numerator": 4, "denominator": 18, "pct": 22.0 },
+              "firm_stage_1_to_2": { "numerator": 14, "denominator": 30, "pct": 45.0 }
+            }
+          },
+          "evidence_class": "ASSOCIATION",
+          "confidence": { "n": 18, "floor": 5, "status": "ok" },
+          "limitation": "Whoever chooses this service is not a random draw from the firm's first-timers, so the gap may be who they are rather than what happened to them.",
+          "rank_class": "unquantified"
+        },
+        {
+          "id": "contactability_gap",
+          "domain": "contactability",
+          "pattern": "Only 4 of 10 customers (40.0%) can lawfully be sent a business offer on the best available channel (whatsapp); the rest have no affirmative consent on record.",
+          "comparison": {
+            "kind": "threshold",
+            "detail": "best single-channel reachable share (4 of 10) against the 50.0% bar"
+          },
+          "impact": {
+            "cents": null,
+            "reason": "no incremental model: the value of being able to contact someone depends on what would be said to them, which does not exist yet"
+          },
+          "action": {
+            "who": "front desk",
+            "what": "Ask for consent at checkout, in person, with the notice shown — one question at the point of payment, recorded per channel.",
+            "when": "starting immediately, reviewed in 30 days",
+            "channel": "in_person_at_checkout"
+          },
+          "evidence": {
+            "source_rpc": "public.get_ci_contactability_v1",
+            "refs": {
+              "business_offers": { "customers": 10, "allowed_by_channel": { "whatsapp": 4 } },
+              "best_channel": "whatsapp",
+              "best_channel_allowed": 4
+            }
+          },
+          "evidence_class": "DIRECT_FACT",
+          "confidence": { "n": 10, "floor": 5, "status": "ok" },
+          "limitation": "A customer unreachable for marketing is still reachable for a booking they asked for; this counts consent for proactive offers only.",
+          "rank_class": "unquantified"
+        }
+      ],
+      "top_actions": []
+    },
     "evidence_completeness": {
-      "unavailable_sections": []
+      "unavailable_sections": [],
+      "findings_version": "v713"
     }
   },
   "good": "## Summary\nSales were steady this month for Normal Cafe at the Tampines branch. Revenue was SGD 5,000.00, and 3 regular customers are at risk of slipping away.\n\n## What went well\n- 7 of 10 customers this month had already bought before, a returning-customer share of 70.0%.\n- Of the 6 customers who first bought in July, 4 came back this month (66.7%).\n\n## What needs attention\n- 3 regulars have not been seen in a while. One returned visit each is worth SGD 90.00.\n- About 80% of revenue came from identified customers; the customer figures describe them.\n\n## Your customers\nYour largest customer, Alan T., carried 16.0% of all revenue, SGD 800.00.\n\n## Do these three things next\n1. Send one win-back message to the 3 at-risk regulars this week. SGD 90.00 / 3 customers = SGD 30.00 each.\n2. Review the Tampines branch roster next month.\n3. Ask the 4 customers who returned in August what brought them back.\n",
