@@ -2453,6 +2453,26 @@
       "call_site_finding": "none - the grant is keyed one-per-referral by unique constraint, expiry is checked before it is offered and again before it is handed over, and the branch must be one the caller may see."
     },
     {
+      "id": "browser.rpc:app/app.js:staff_update_my_profile_v687",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_update_my_profile_v687",
+      "latest_file": "20260902150000_nestly_v687_staff_self_profile.sql",
+      "resolves_to": "staff_update_my_profile_v687/2 (any approved, active member of the business; nestly_v687, audit F131). Sets full_name on the CALLER'S OWN staff row and nothing else. Exists because policy staff_update is owner-only, so a non-owner's display-name save silently matched zero rows while the UI printed 'Name saved.'.",
+      "rows_written": "exactly one public.staff row (user_id = auth.uid(), active), column full_name only; one public.audit_log row (action staff.rename_self). No other column, no other row, in any branch.",
+      "call_site_finding": "OK. The browser supplies its business id and the new name. auth.uid() must exist (anon revoked), app.is_salon_member(p_business) gates reach (the same predicate as staff_select, carrying open-workspace and approved+active), and the UPDATE is keyed on user_id = auth.uid() so a colleague's row is unreachable. Policy staff_update is deliberately NOT widened: an UPDATE policy is per-row, so a self-row policy would also hand every staff member their own role, modules and access_state; the migration's verify block asserts the policy stays owner-only. Proven as the real roles in db/tests/v687_staff_self_profile.sql (8 assertions, incl. raw UPDATE still 0 rows).",
+      "kernel_migratability": "non-value - a display name on a roster row. It touches no credit_ledger, points_ledger, sales, stock or stored-value row and changes no permission, so it can never reach the value kernel."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_support_mark_read_v688",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_support_mark_read_v688",
+      "latest_file": "20260902160000_nestly_v688_support_mark_read.sql",
+      "resolves_to": "business_support_mark_read_v688/2 (support write access in an open workspace; nestly_v688, audit F101). Clears the unread counter of one support conversation the business owns when staff open it. Exists because unread_count was only ever zeroed inside app.support_reply_v535, so a thread that needed no reply stayed 'N new' forever.",
+      "rows_written": "at most one public.support_conversations_v530 row - unread_count = 0, updated_at = now() - and only when unread_count > 0 (a re-open writes nothing and does not churn updated_at, which the inbox sort and the v479 realtime signal watch). handoff_state and assigned_staff_id are untouched: reading is not taking ownership.",
+      "call_site_finding": "OK. Same guard as support_reply_v535 steps (1) and (2): app.business_workspace_open_v94 then app.can_module_write(p_business,'support') (a read-only viewer must not erase a colleague's queue); the conversation is selected FOR UPDATE with business_id in the predicate, so another tenant's id answers 42704. Fail-soft in the browser: an error is logged and the thread still renders. Proven in db/tests/v688_support_mark_read.sql (6 assertions across two self-built tenants).",
+      "kernel_migratability": "non-value - an inbox read marker. No ledger, sale, stock or stored-value row is reachable from it."
+    },
+    {
       "id": "browser.rpc:app/app.js:business_set_featured_offer_v462",
       "surface": "browser_rpc_binding",
       "rpc": "business_set_featured_offer_v462",

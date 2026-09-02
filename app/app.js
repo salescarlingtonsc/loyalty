@@ -12565,7 +12565,7 @@ function customerRewardReadyTotalV465(cards=[]){
   }
   return {total,known};
 }
-/* nestly_v428 (item 6), corrected by the F109 audit (2026-09-02).
+/* nestly_v428 (item 6) — "2 REWARDS READY", corrected by the F109 audit (2026-09-02).
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
    (v323:968 — `'slot', rung.cost_points`). At v323, public.stamp_milestone_claims carried a
    unique key on (business, client, programme, cycle, slot_position) — "one gift per milestone
@@ -45054,7 +45054,8 @@ async function appointmentsPage(){
       if(pendingWaitlistBookIdV571){
         const waitlistIdV571=pendingWaitlistBookIdV571;pendingWaitlistBookIdV571='';
         sb.from('waitlist').select('client_id').eq('id',waitlistIdV571).eq('business_id',S.biz.id).maybeSingle()
-          .then(({data:waitlistRowV571,error:waitlistRowErrorV571})=>{
+          .then(waitlistResV571=>{
+            const waitlistRowV571=waitlistResV571?.data,waitlistRowErrorV571=waitlistResV571?.error;
             if(waitlistRowErrorV571||!waitlistRowV571)return;
             if(waitlistRowV571.client_id&&waitlistRowV571.client_id!==request.p_client)return;
             sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)

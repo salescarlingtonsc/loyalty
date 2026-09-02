@@ -5198,7 +5198,7 @@ function customerRewardReadyTotalV465(cards=[]){
   }
   return {total,known};
 }
-/* nestly_v428 (item 6), corrected by the F109 audit (2026-09-02).
+/* nestly_v428 (item 6) — "2 REWARDS READY", corrected by the F109 audit (2026-09-02).
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
    (v323:968 — `'slot', rung.cost_points`). At v323, public.stamp_milestone_claims carried a
    unique key on (business, client, programme, cycle, slot_position) — "one gift per milestone

@@ -26904,7 +26904,8 @@ async function appointmentsPage(){
       if(pendingWaitlistBookIdV571){
         const waitlistIdV571=pendingWaitlistBookIdV571;pendingWaitlistBookIdV571='';
         sb.from('waitlist').select('client_id').eq('id',waitlistIdV571).eq('business_id',S.biz.id).maybeSingle()
-          .then(({data:waitlistRowV571,error:waitlistRowErrorV571})=>{
+          .then(waitlistResV571=>{
+            const waitlistRowV571=waitlistResV571?.data,waitlistRowErrorV571=waitlistResV571?.error;
             if(waitlistRowErrorV571||!waitlistRowV571)return;
             if(waitlistRowV571.client_id&&waitlistRowV571.client_id!==request.p_client)return;
             sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
