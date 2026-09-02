@@ -3586,6 +3586,18 @@
       "version": "20260904020000",
       "name": "nestly_v730_category_customers_window",
       "sourcePath": "db/migrations/20260902_nestly_v730_category_customers_window.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260904030000",
+      "name": "nestly_v734_synthetic_excluded_everywhere",
+      "sourcePath": "db/migrations/20260902_nestly_v734_synthetic_excluded_everywhere.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260904040000",
+      "name": "nestly_v735_evidence_pack_extended",
+      "sourcePath": "db/migrations/20260902_nestly_v735_evidence_pack_extended.sql"
     }
   ]
 }
