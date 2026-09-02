@@ -699,9 +699,9 @@ begin
   end if;
 
   select count(*) into v_allowlist_size from app.ci_synthetic_scan_allowlist_v743;
-  if v_allowlist_size <> 89 then
+  if v_allowlist_size <> 120 then  -- 89 seeded by v743 + 31 added by nestly_v744's widened scan
     insert into _fail values ('SCANNER_allowlist_size',
-      format('allowlist has %s rows (expected 89)', v_allowlist_size));
+      format('allowlist has %s rows (expected 120: 89 from v743 + 31 from v744)', v_allowlist_size));
   end if;
   raise notice 'v743 scanner | allowlist size = % | eleven functions fixed | scan rows = %',
     v_allowlist_size, n;

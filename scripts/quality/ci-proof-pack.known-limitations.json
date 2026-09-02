@@ -122,6 +122,18 @@
       "status": "OPEN",
       "owner": "engineering (ps0 governance)",
       "detail": "scripts/ps0/discover-writers.mjs only tracks DML against its VALUE_TABLES map, so writes to public.bringback_grants_v361 (app.issue_bringback_for_business_v361, re-emitted by nestly_v743) and to app.ci_synthetic_scan_allowlist_v743 are invisible to the writer registry; the registry test passes without knowing they exist. Follow-up: add those tables to VALUE_TABLES and curate the entries."
+    },
+    {
+      "id": "SCANNER-BLINDSPOT-V744-001",
+      "checks": [
+        1,
+        10
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Not a defect in the shipped fixes; a structural limit of a static source-regex scanner over the caller's own text.",
+      "status": "DECLARED_LIMIT",
+      "owner": "engineering (estate-wide synthetic-exclusion sweeps)",
+      "detail": "app.ci_synthetic_scan_v743 (hardened by nestly_v744 with view names, extra aggregate forms and a per-statement mixed pass) cannot see a population built by calling ANOTHER function (e.g. app.customer_cadence_batch_v1, the shape that hid v744's first fix): the caller's own source contains no literal table name for the regex to match. Mitigation is procedural — grep every caller of a population-shaped kernel by name at review time — and the five adversarial estate sweeps of 2026-09-02/03 are the executed baseline."
     }
   ]
 }
