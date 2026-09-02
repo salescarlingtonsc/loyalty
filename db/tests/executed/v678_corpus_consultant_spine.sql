@@ -612,10 +612,15 @@ begin
              aux->>'deviation_state', aux->>'evidence_source', aux->>'median_interval_days'));
   end if;
   aux := app.customer_cadence_v1(biz, '00000000-0000-4000-8000-000000678101');
-  if aux->>'evidence_source' <> 'business_fallback' then
+  -- v695 inserted pooled service/segment tiers above the sector constant, so F1 (one visit)
+  -- now resolves to a pooled tier rather than business_fallback. What this precondition
+  -- guards is unchanged: F1 must NOT be an own-cadence regular, or the lapsed-regulars
+  -- filter below would have nobody to exclude.
+  if aux->>'evidence_source' not in ('service_median','segment_median','business_fallback') then
     insert into _fail values ('A-pre-cadence',
-      format('F1 evidence_source was %s, expected business_fallback — the lapsed-regulars filter '
-             'is only meaningful if some overdue customers are excluded by it', aux->>'evidence_source'));
+      format('F1 evidence_source was %s, expected a pooled or policy tier (not the customer''s own '
+             'intervals) — the lapsed-regulars filter is only meaningful if some overdue customers '
+             'are excluded by it', aux->>'evidence_source'));
   end if;
 
   ---------------------------------------------------------------------------
