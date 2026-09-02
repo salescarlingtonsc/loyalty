@@ -48,10 +48,22 @@ export const RULES = {
   // a bare conditional, and more - passed V10 clean). V10b inverts the burden: for a sentence that
   // references an ASSOCIATION finding's own vocabulary, the sentence must POSITIVELY carry one of
   // a fixed, approved set of association-marker phrases (ASSOCIATION_MARKERS, below) - silence is
-  // now a failure, not a pass. V10 (the blacklist) is UNCHANGED and stays wired as a second line:
-  // a sentence can carry a marker AND still use a blacklisted verb ("X tends to cause Y"), and V10
-  // alone still catches a causal sentence that names no ASSOCIATION finding's vocabulary at all
-  // (V10b never fires without a keyword match, same abstention shape as V10 itself).
+  // now a failure, not a pass. V10 (the blacklist) stays wired as a second line: a sentence can
+  // carry a marker AND still use a blacklisted verb ("X tends to cause Y"), and V10 alone still
+  // catches a causal sentence that names no ASSOCIATION finding's vocabulary at all (V10b never
+  // fires without a keyword match, same abstention shape as V10 itself).
+  // v707 (check 17, round 2): a SECOND refuter proved the inversion itself still had a laundering
+  // gap - a sentence can carry BOTH an approved marker AND an unlisted causal construction in the
+  // same breath ("we observe that weekends make customers return"), and the marker alone used to
+  // satisfy V10b regardless. V10 and V10b now share ONE causal-construction list
+  // (CAUSAL_CONSTRUCTIONS, below, exported once) instead of V10 keeping its own narrower one, and
+  // V10b fails a referencing window that carries a marker AND a construction from that shared list,
+  // not merely a window with no marker at all. The SAME refuter also proved the finding-attribution
+  // step itself could false-positive: a DIRECT_FACT finding sharing two ordinary words with an
+  // ASSOCIATION finding could make V10b flag a plain factual sentence. Both rules now attribute a
+  // sentence to the best-scoring finding(s) on each finding's DISTINCTIVE keywords (typedFindings/
+  // associationOwnersOf, below) - a DIRECT_FACT finding that ties or wins a sentence takes it away
+  // from every ASSOCIATION finding, and a shared word can never manufacture that tie on its own.
   ASSOCIATION_MARKER: 'V10B_ASSOCIATION_MARKER',
 };
 
@@ -106,12 +118,17 @@ const EVIDENCE_CLASS_INSTRUCTION = [
   '  customers, its own coverage) - you may state it directly.',
   '- "ASSOCIATION" is a pattern observed across customers, staff, or segments, never a proven',
   '  cause. Phrase it as an observed pattern ("customers who X also tend to Y"), and NEVER as a',
-  '  cause ("X causes/drives/leads to/results in Y", "because of X, Y happened", "thanks to X",',
-  '  "X boosts/fuels/triggers Y", "is why", "means that", "so X that Y", "this pushes...", "if you',
-  '  keep X, Y will..."). Every sentence about an ASSOCIATION finding must use one of these words:',
-  '  "tend to", "is associated with", "we observe", "we see", "pattern", "correlate", "alongside",',
-  '  "in the same period", "at the same time", "coincide", "more likely", "less likely", "more',
-  '  often", "less often", "appears to", "seems to".',
+  '  cause - not with an obvious word ("causes/drives/leads to/results in/because of/thanks to") and',
+  '  not with a less obvious one either ("X boosts/fuels/triggers/prompts/spurs Y", "is why", "is',
+  '  behind", "owing to", "stems from", "means that", "translates into", "accounts for", "explains",',
+  '  "so X that Y", "as a consequence", "pushes", "sets up", "follows from", "is the reason",',
+  '  "produces", "results from", "brings about", "if you keep X, Y will..."). Every sentence about',
+  '  an ASSOCIATION finding must use one of these words: "tend to", "is associated with", "we',
+  '  observe", "we see", "an observed pattern", "a pattern where", "correlate", "alongside", "in the',
+  '  same period", "at the same time", "coincide", "more likely", "less likely", "more often", "less',
+  '  often", "appears to", "seems to" - and using one of these words does NOT excuse a causal word',
+  '  sitting in the same sentence: a sentence that both observes a pattern AND states a cause is',
+  '  still wrong, because the causal half is still an invented cause.',
   '- No entry is ever "CAUSAL" - this product runs no controlled experiment, so a causal claim is',
   '  never supported here regardless of what an entry says.',
 ].join('\n');
@@ -1493,6 +1510,72 @@ function checkCjkEntities(narrative, packInfo, violations) {
   }
 }
 
+/* --------------------------------------------------------- V11b: caseless-script entities */
+
+// Check 88 (tokeniser gap #5). V11 (above) closes the CJK case, but Han/Hangul/Hiragana/Katakana
+// are not the only scripts with no letter case: Thai ("สมชาย"), Arabic, Devanagari, Tamil, Bengali,
+// Hebrew and others have none either, and none of V6/V9/V9b/V11's tests catch a name in any of
+// them - V6/V9/V9b look for a Latin capital letter, V11 looks for a Han/Hangul/Kana run, and a
+// Thai or Arabic word matches neither.
+//
+// V11b fires on a RUN OF 3+ letters (or combining marks, so a base letter plus its own attached
+// vowel/tone sign in a script like Thai counts as one run, not several) that is NOT Latin, Han,
+// Hangul, Hiragana or Katakana script (the negated check the task itself sanctions as an
+// alternative to naming every caseless script individually) and does not appear, verbatim,
+// anywhere among the pack's own string leaves - the same "found in the pack" grounding principle
+// V6/V9/V11 already use.
+//
+// GATED to a narrative that is PREDOMINANTLY LATIN-SCRIPT (>=80% of its own letters): this
+// product's reports are written in English, so a name from a caseless script sitting inside an
+// otherwise-English report is exactly the shape V6/V9's Latin-capitalisation tests were built to
+// catch and structurally cannot. A narrative that is NOT predominantly Latin - i.e. one actually
+// WRITTEN in Thai, Tamil, Arabic etc, a declared product goal (CLAUDE.md: "EN/ZH/MS/TA") - is a
+// different problem V11b does not attempt: this file has no pack-grounded vocabulary for those
+// languages' own ORDINARY words (the same "no name database" limit V6's own banner states for
+// Latin script), so a blanket "any caseless-script run not in the pack" test over a wholly Tamil
+// or Thai narrative would flag the narrative's own ordinary prose, not an invented name.
+//
+// HONEST LIMIT, declared rather than hidden: a Tamil (or Thai, Arabic, ...) narrative disables V11b
+// entirely, by the 80% gate above. Shipping AI reports in those languages - a real product goal,
+// not a hypothetical - will need its own pack-grounded vocabulary (a list of ordinary words in that
+// language this file can treat the way STOPWORDS treats English) before V11b, or something like
+// it, can apply to them. That work is not done here and is not pretended to be.
+const ANY_LETTER_RE = /\p{L}/gu;
+const LATIN_LETTER_RE = /\p{Script=Latin}/gu;
+const LATIN_SCRIPT_THRESHOLD = 0.8;
+
+function isPredominantlyLatinScript(narrative) {
+  const totalLetters = (narrative.match(ANY_LETTER_RE) || []).length;
+  if (totalLetters === 0) return false;
+  const latinLetters = (narrative.match(LATIN_LETTER_RE) || []).length;
+  return latinLetters / totalLetters >= LATIN_SCRIPT_THRESHOLD;
+}
+
+const CASELESS_SCRIPT_RUN_RE =
+  /(?:(?!\p{Script=Latin})(?!\p{Script=Han})(?!\p{Script=Hangul})(?!\p{Script=Hiragana})(?!\p{Script=Katakana})[\p{L}\p{M}]){3,}/gu;
+
+function checkCaselessScriptEntities(narrative, packInfo, violations) {
+  if (!isPredominantlyLatinScript(narrative)) return; // declared limit — see the note above
+  const haystack = packInfo.strings.join('\n');
+  const reported = new Set();
+  CASELESS_SCRIPT_RUN_RE.lastIndex = 0;
+  let m;
+  while ((m = CASELESS_SCRIPT_RUN_RE.exec(narrative)) !== null) {
+    const run = m[0];
+    if (haystack.includes(run)) continue;
+    if (reported.has(run)) continue;
+    reported.add(run);
+    violations.push({
+      rule: RULES.ENTITY,
+      detail: `V11b: "${run}" is a run of 3+ letters in a non-Latin, non-CJK script (e.g. Thai, ` +
+        `Arabic, Devanagari, Tamil, Bengali, Hebrew) but appears nowhere in the evidence pack ` +
+        `(this check only applies when the narrative is predominantly Latin-script - see the ` +
+        `file's own note on caseless scripts), near ` +
+        `"${contextAround(narrative, m.index, m.index + run.length)}"`,
+    });
+  }
+}
+
 /* -------------------------------------------------------------- V7: structure */
 
 // Check 82: the report is a fixed template, not free-form prose. SYSTEM_PROMPT (index.ts) spells
@@ -1558,7 +1641,16 @@ function checkStructure(narrative, violations) {
  */
 export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   const violations = [];
-  const narrative = typeof narrativeMd === 'string' ? narrativeMd : '';
+  // v707 (check 88, tokeniser gap #4): NFKC-normalise the narrative before ANY check runs, so a
+  // fullwidth character a model may write (U+FF0F fullwidth solidus, "Tan／Wong"; fullwidth digits,
+  // parens, etc) collapses to its ordinary ASCII form before every regex above ever sees it -
+  // v705/v706 already taught the tokeniser to split "Tan/Wong" on an ASCII slash; a fullwidth one
+  // was invisible to that fix for the same reason a fullwidth digit is invisible to NUMBER_TOKEN_RE.
+  // Offsets stay meaningful because every check that uses one (contextAround, maskStructuralNumbers)
+  // slices THIS SAME normalised string - there is no second, unnormalised copy to keep in step with
+  // it, so mapping back to the model's raw bytes is deliberately not attempted (the file's own
+  // check-88 notes already treat "violations name tokens, not offsets" as the working contract).
+  const narrative = typeof narrativeMd === 'string' ? narrativeMd.normalize('NFKC') : '';
   const pack = evidencePack && typeof evidencePack === 'object' ? evidencePack : {};
   const options = opts && typeof opts === 'object' ? opts : {};
 
@@ -1603,6 +1695,7 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   checkOrphanProperNouns(narrative, packInfo, violations, options); // V9 (check 83/88 gap closure)
   checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, options); // V9b (sentence-initial gap)
   checkCjkEntities(narrative, packInfo, violations);    // V11 (check 88, CJK/Hangul/Kana gap)
+  checkCaselessScriptEntities(narrative, packInfo, violations); // V11b (check 88, caseless-script gap)
   checkStructure(narrative, violations);                // V7 (check 82)
   checkCohortContradiction(narrative, pack, violations); // V8 (check 89)
   checkAssociationCausalBinding(narrative, packInfo, violations); // V10 (check 17, causal blacklist, second line)
@@ -1736,8 +1829,68 @@ export function classifyCohortMentions(narrativeMd, evidencePack) {
 // prose to a machine record without a shared vocabulary between them. And the causal-construction
 // list below is fixed and cannot enumerate every way English expresses causation; it is not meant
 // to replace V3, only to narrow one specific, checkable slice of it to the right findings.
-const V10_CAUSAL_RE =
-  /\b(?:because|due to|caused?|causes|causing|drive|drives|driven|driving|leads?\s+to|leading\s+to|results?\s+in|resulting\s+in|thanks\s+to|as\s+a\s+result|so\s+that|which\s+means\s+(?:customers|clients)\s+will)\b/i;
+//
+// v707 (check 17, round 2): this used to be V10's OWN short list (V10_CAUSAL_RE), separate from
+// V10b's approved-marker list below. A refuter proved that split let a sentence launder a causal
+// claim past V10b simply by ALSO carrying an approved marker ("we observe that weekends make
+// customers return") - V10b's own blacklist-free design means it never looked for a causal
+// construction at all, so nothing stopped the marker from covering for it. CAUSAL_CONSTRUCTIONS is
+// now the ONE list both V10 and V10b test against - V10's original phrases plus every idiom a prior
+// refuter proved could evade a narrower list (see v706's own note, preserved below the marker list)
+// - so the two rules can never quietly diverge on what counts as a causal construction, the same
+// discipline this file already applies to "what counts as a finding" (typedFindings, below).
+export const CAUSAL_CONSTRUCTIONS = [
+  // The original V10 blacklist, unchanged, folded into the one shared constant.
+  /\bbecause\b/i,
+  /\bdue\s+to\b/i,
+  /\bcauses?\b/i,
+  /\bcaused\b/i,
+  /\bcausing\b/i,
+  /\bdrive\b/i,
+  /\bdrives\b/i,
+  /\bdriven\b/i,
+  /\bdriving\b/i,
+  /\bleads?\s+to\b/i,
+  /\bleading\s+to\b/i,
+  /\bresults?\s+in\b/i,
+  /\bresulting\s+in\b/i,
+  /\bthanks\s+to\b/i,
+  /\bas\s+a\s+result\b/i,
+  /\bwhich\s+means\s+(?:customers|clients)\s+will\b/i,
+  // v706/v707: idioms a refuter proved evade a narrower blacklist entirely.
+  /\bmakes?\b[\s\S]{0,30}?\b(?:return|come\s+back)\b/i,
+  /\bmade\b[\s\S]{0,30}?\b(?:return|come\s+back)\b/i,
+  /\bis\s+why\b/i,
+  /\bthat\s+is\s+why\b/i,
+  /\baccounts?\s+for\b/i,
+  /\bexplains?\b/i,
+  /\bis\s+behind\b/i,
+  /\bowing\s+to\b/i,
+  /\bstems?\s+from\b/i,
+  /\bmeans?\s+that\b/i,
+  /\btranslates?\s+into\b/i,
+  // "so ... that" with anything between the two words, not just the adjacent "so that" above.
+  /\bso\b[\s\S]{1,40}?\bthat\b/i,
+  /\bas\s+a\s+consequence\b/i,
+  /\bpaves?\s+the\s+way\b/i,
+  /\bsets?\s+up\b/i,
+  /\bfollows?\s+from\b/i,
+  /\bis\s+the\s+reason\b/i,
+  /\bproduces?\b/i,
+  /\bresults?\s+from\b/i,
+  /\bon\s+account\s+of\b/i,
+  /\bbrings?\s+about\b/i,
+  /\bspurs?\b/i,
+  /\bprompts?\b/i,
+  /\bboosts?\b/i,
+  /\bfuels?\b/i,
+  /\btriggers?\b/i,
+  /\bpushes?\b/i,
+];
+
+function hasCausalConstruction(text) {
+  return CAUSAL_CONSTRUCTIONS.some((re) => re.test(text));
+}
 
 function findingKeywords(finding) {
   const texts = [];
@@ -1754,42 +1907,83 @@ function findingKeywords(finding) {
   return [...words];
 }
 
-function sentenceMentionsFinding(sentenceLower, keywords) {
-  if (keywords.length === 0) return false;
-  const need = keywords.length === 1 ? 1 : 2;
-  let hits = 0;
-  for (const kw of keywords) {
-    if (sentenceLower.includes(kw)) hits += 1;
-    if (hits >= need) return true;
-  }
-  return false;
-}
-
-// Shared by V10 and V10b: every plain object the pack carries with its own evidence_class of
-// 'ASSOCIATION' (DIRECT_FACT is exempt from both rules; CAUSAL never ships, per v696), reduced to
-// its identifying keywords. One traversal, one definition of "a finding", so the two rules can
-// never quietly drift apart on what counts as one.
-function associationFindings(packInfo) {
+// v707 (check 17, false-positive half): a refuter proved the OLD naive "does this sentence mention
+// >=2 (or, for a one-word finding, >=1) of ITS keywords" test (the prior sentenceMentionsFinding)
+// could misattribute a sentence: a DIRECT_FACT finding sharing two ordinary words with an
+// ASSOCIATION finding made V10b flag a plain, factual DIRECT_FACT sentence for carrying no
+// "association marker" it was never making an association claim in the first place.
+//
+// Fixed by SCORING every sentence against EVERY typed finding in the pack - both classes, not just
+// ASSOCIATION, so a DIRECT_FACT finding is in the running to WIN a sentence, not merely invisible -
+// on each finding's DISTINCTIVE keywords only: a keyword shared by 2+ findings is dropped before
+// scoring starts, so a common word neither finding uniquely owns can never manufacture a tie. The
+// sentence "belongs" only to whichever finding(s) score highest; a DIRECT_FACT finding that ties or
+// beats every ASSOCIATION finding for a sentence means the sentence is judged to be about that
+// fact, and neither V10 nor V10b look at it further for any ASSOCIATION finding.
+//
+// The match threshold is now a FLAT two distinctive keywords, dropping the old "a one-keyword
+// finding only needs its one keyword" exception - a finding left with a single distinctive word
+// (either because it only ever had one, or because sharing dropped the rest) can never be
+// referenced by either rule any more. That is the conservative side of the same trade this file
+// makes everywhere else: a stricter attribution rule abstains more, it never asserts more.
+function typedFindings(packInfo) {
   const findings = [];
   for (const obj of packInfo.objects) {
-    if (obj.evidence_class !== 'ASSOCIATION') continue;
+    const evidenceClass = obj.evidence_class;
+    if (evidenceClass !== 'ASSOCIATION' && evidenceClass !== 'DIRECT_FACT') continue;
     const keywords = findingKeywords(obj);
     if (keywords.length === 0) continue;
     const label = obj.label || obj.pattern || obj.name || obj.id || 'unlabelled finding';
-    findings.push({ label, keywords });
+    findings.push({ label, evidenceClass, keywords });
   }
-  return findings;
+  // Words shared by 2+ findings are not DISTINCTIVE to any one of them - dropped from every
+  // finding's own scoring set up front, so a common word can never manufacture a tie neither
+  // finding actually owns.
+  const counts = new Map();
+  for (const f of findings) {
+    for (const kw of new Set(f.keywords)) counts.set(kw, (counts.get(kw) || 0) + 1);
+  }
+  return findings.map((f) => ({
+    ...f,
+    distinctive: [...new Set(f.keywords)].filter((kw) => counts.get(kw) === 1),
+  }));
+}
+
+const MIN_DISTINCTIVE_KEYWORD_MATCH = 2;
+
+function distinctiveScore(sentenceLower, distinctiveKeywords) {
+  let hits = 0;
+  for (const kw of distinctiveKeywords) {
+    if (sentenceLower.includes(kw)) hits += 1;
+  }
+  return hits;
+}
+
+// The ASSOCIATION finding(s), if any, that best explain this sentence - [] when nothing scores
+// high enough to count as a reference at all, or when a DIRECT_FACT finding ties or beats every
+// ASSOCIATION finding for it (see the honesty note above typedFindings).
+function associationOwnersOf(sentenceLower, findings) {
+  let best = 0;
+  const scored = [];
+  for (const f of findings) {
+    const score = distinctiveScore(sentenceLower, f.distinctive);
+    if (score > 0) scored.push({ f, score });
+    if (score > best) best = score;
+  }
+  if (best < MIN_DISTINCTIVE_KEYWORD_MATCH) return [];
+  const winners = scored.filter((s) => s.score === best).map((s) => s.f);
+  if (winners.some((f) => f.evidenceClass === 'DIRECT_FACT')) return [];
+  return winners.filter((f) => f.evidenceClass === 'ASSOCIATION');
 }
 
 function checkAssociationCausalBinding(narrative, packInfo, violations) {
-  const findings = associationFindings(packInfo);
-  if (findings.length === 0) return;
+  const findings = typedFindings(packInfo);
+  if (!findings.some((f) => f.evidenceClass === 'ASSOCIATION')) return;
 
   for (const sentence of sentencesOf(narrative)) {
-    if (!V10_CAUSAL_RE.test(sentence)) continue;
+    if (!hasCausalConstruction(sentence)) continue;
     const lower = sentence.toLowerCase();
-    for (const finding of findings) {
-      if (!sentenceMentionsFinding(lower, finding.keywords)) continue;
+    for (const finding of associationOwnersOf(lower, findings)) {
       violations.push({
         rule: RULES.CAUSAL_BINDING,
         detail: `causal construction used for an ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") ` +
@@ -1801,39 +1995,41 @@ function checkAssociationCausalBinding(narrative, packInfo, violations) {
 
 /* ------------------------------------------ V10b: ASSOCIATION positive marker */
 
-// Check 17 (typed verdicts, POSITIVE half). A refuter proved V10's causal-phrase BLACKLIST
-// (V10_CAUSAL_RE, above) is a fixed list that can always be evaded by one more idiom it does not
-// yet name - 27/27 of "boosts", "fuels", "triggers", "explains", "is behind", "owing to", "stems
-// from", "is why", "means that", "translates into", "so ... that" (with words between "so" and
-// "that" - the blacklist's own "so\s+that" only matches the two words adjacent), "as a consequence
-// of", a pronoun continuation ("Weekend visits build momentum. This pushes customers to return
-// sooner."), a bare conditional ("If you keep encouraging weekend visits, customers will return
-// sooner"), "pave the way", "sets up", "follows from", "accounts for", "is the reason" and
-// "produces" all passed V10 clean, because none of them is "because/due to/cause/drive/leads
-// to/results in/thanks to/as a result/so that/which means...will" - the exact, finite list V10
-// tests for. A blacklist of English causal idioms can never be exhaustive.
+// Check 17 (typed verdicts, POSITIVE half). A refuter proved V10's original causal-phrase
+// BLACKLIST is a fixed list that can always be evaded by one more idiom it does not yet name -
+// 27/27 of "boosts", "fuels", "triggers", "explains", "is behind", "owing to", "stems from", "is
+// why", "means that", "translates into", "so ... that" (with words between "so" and "that" - the
+// blacklist's own "so\s+that" only matches the two words adjacent), "as a consequence of", a
+// pronoun continuation ("Weekend visits build momentum. This pushes customers to return sooner."),
+// a bare conditional ("If you keep encouraging weekend visits, customers will return sooner"),
+// "pave the way", "sets up", "follows from", "accounts for", "is the reason" and "produces" all
+// passed the narrower blacklist clean. A blacklist of English causal idioms can never be
+// exhaustive.
 //
 // V10b inverts the burden instead of extending the list further: for a sentence that references an
-// ASSOCIATION finding's own vocabulary (the SAME keyword-extraction and sentence-matching V10
-// already uses - associationFindings/sentenceMentionsFinding, above - so the two rules can never
-// disagree on WHICH sentences are "about" a finding), the sentence (plus the immediately following
-// sentence, if IT opens with a pronoun continuation - "This/That/It/Which" - referring back to the
-// same claim) must POSITIVELY carry at least one of the approved ASSOCIATION_MARKERS below.
-// Silence is now a failure, not a pass - the exact opposite failure mode from V10's own blacklist.
-// V10 stays wired as a SECOND, independent line (validateNarrative runs both): a sentence can carry
-// an approved marker and STILL use a blacklisted verb in the same breath ("customers who visit on
-// a weekend tend to be caused to return sooner" - contrived, but V10 alone catches it), and V10
-// alone still catches an unrelated causal sentence that names no ASSOCIATION finding's vocabulary
-// at all (out of V10b's reach, since V10b - like V10 - never fires without a keyword match).
+// ASSOCIATION finding's own vocabulary (the SAME keyword-extraction and sentence-attribution V10
+// already uses - typedFindings/associationOwnersOf, above - so the two rules can never disagree on
+// WHICH sentences are "about" a finding), the sentence (plus the immediately following sentence, if
+// IT opens with a pronoun continuation - "This/That/It/Which" - referring back to the same claim)
+// must POSITIVELY carry at least one of the approved ASSOCIATION_MARKERS below, AND must carry NO
+// construction from the SAME CAUSAL_CONSTRUCTIONS list V10 tests (see the v707 note above
+// typedFindings): a marker does not launder a causal claim sitting in the same window ("we observe
+// that weekends make customers return" carries "we observe" AND "make ... return" at once, and the
+// marker must not excuse the causal half). Silence, and laundering-by-marker, are now BOTH
+// failures - the opposite failure mode from a blacklist, which only ever fails on presence.
+// V10 stays wired as a SECOND, independent line (validateNarrative runs both): a causal sentence
+// that names no ASSOCIATION finding's vocabulary at all is out of V10b's reach (V10b never fires
+// without a keyword match, same abstention shape as V10 itself), and V10 alone still catches it.
 //
 // HONEST LIMIT, stated plainly because this is the inverse failure mode from every other rule in
 // this file: a sentence that PARAPHRASES the same finding using NONE of its own vocabulary (no
 // word findingKeywords() would extract from the finding's label/pattern/name) is invisible to
-// sentenceMentionsFinding and therefore invisible to V10b - exactly the same "no shared vocabulary,
-// no way to bind free English to a machine record" limit V6's own entity-grounding banner and V10's
-// own header already state for their respective jobs. V10's unconditional causal-word blacklist is
-// what still catches a causal paraphrase that keeps none of the finding's own words; V10b narrows
-// one specific, checkable slice (silence where a marker is required), it does not replace V10's
+// associationOwnersOf and therefore invisible to V10b - exactly the same "no shared vocabulary, no
+// way to bind free English to a machine record" limit V6's own entity-grounding banner and V10's
+// own header already state for their respective jobs. V10's unconditional causal-word list is what
+// still catches a causal paraphrase that keeps none of the finding's own words; V10b narrows one
+// specific, checkable slice (a referencing window with no marker, or a marker riding alongside an
+// unlisted-to-the-model-but-listed-here causal construction), it does not replace V10's
 // unconditional check, which is why both stay wired into validateNarrative independently.
 //
 // THE MARKER LIST is the single source of truth for what counts as an approved association phrase,
@@ -1842,6 +2038,13 @@ function checkAssociationCausalBinding(narrative, packInfo, violations) {
 // quoting this list verbatim (a model does not read regexes) - but every phrase named there is
 // present here, so a model that follows the instruction always passes, and this list is the one
 // place to add a marker if the model's own phrasing drifts.
+//
+// v707 (check 17, round 2): bare "pattern" is REMOVED from this list - it is common enough English
+// that "Weekend visiting accounts for the sooner return pattern we see" satisfied the old marker
+// test on the word "pattern" alone while "accounts for" (now on CAUSAL_CONSTRUCTIONS) laundered the
+// actual cause right next to it. "an observed pattern" and "a pattern where" replace it: specific
+// enough that a model following EVIDENCE_CLASS_INSTRUCTION still passes easily, too specific to be
+// satisfied by an unrelated "pattern" sitting near an invented cause.
 export const ASSOCIATION_MARKERS = [
   /\btend(?:s)?\s+to\b/i,
   /\bis\s+associated\s+with\b/i,
@@ -1853,7 +2056,8 @@ export const ASSOCIATION_MARKERS = [
   /\balso\s+tend/i,
   /\bwe\s+observe/i,
   /\bwe\s+see\b/i,
-  /\bpattern/i,
+  /\bobserved\s+pattern\b/i,
+  /\ba\s+pattern\s+where\b/i,
   /\bcorrelat/i,
   /\bgoes\s+together\s+with\b/i,
   /\balongside\b/i,
@@ -1874,14 +2078,15 @@ function hasAssociationMarker(text) {
 
 // A sentence opening with one of these pronouns, right after a sentence that named the finding, is
 // read as continuing the SAME claim ("Weekend visits build momentum. This pushes customers to
-// return sooner.") - so the marker may live in either sentence and the pair still passes. Anything
-// looser (a pronoun three sentences later, or one that opens a genuinely new topic) is out of
-// scope, the same conservative-window trade this file makes everywhere else.
+// return sooner.") - so the marker (and, as of v707, a laundering causal construction) may live in
+// either sentence and the pair is judged together. Anything looser (a pronoun three sentences
+// later, or one that opens a genuinely new topic) is out of scope, the same conservative-window
+// trade this file makes everywhere else.
 const PRONOUN_CONTINUATION_RE = /^(?:This|That|It|Which)\b/;
 
 function checkAssociationPositiveMarker(narrative, packInfo, violations) {
-  const findings = associationFindings(packInfo);
-  if (findings.length === 0) return;
+  const findings = typedFindings(packInfo);
+  if (!findings.some((f) => f.evidenceClass === 'ASSOCIATION')) return;
 
   const sentences = sentencesOf(narrative);
   const reported = new Set();
@@ -1889,21 +2094,32 @@ function checkAssociationPositiveMarker(narrative, packInfo, violations) {
   for (let i = 0; i < sentences.length; i += 1) {
     const sentence = sentences[i];
     const lower = sentence.toLowerCase();
-    for (const finding of findings) {
-      if (!sentenceMentionsFinding(lower, finding.keywords)) continue;
-      let window = sentence;
-      if (i + 1 < sentences.length && PRONOUN_CONTINUATION_RE.test(sentences[i + 1])) {
-        window = `${sentence} ${sentences[i + 1]}`;
-      }
-      if (hasAssociationMarker(window)) continue;
+    const owners = associationOwnersOf(lower, findings);
+    if (owners.length === 0) continue;
+
+    let window = sentence;
+    if (i + 1 < sentences.length && PRONOUN_CONTINUATION_RE.test(sentences[i + 1])) {
+      window = `${sentence} ${sentences[i + 1]}`;
+    }
+    const marker = hasAssociationMarker(window);
+    // v707: a marker no longer saves the window if an unlisted-by-the-model-but-listed-here causal
+    // construction rides along in it - see the file-level note above this function.
+    const laundered = hasCausalConstruction(window);
+    if (marker && !laundered) continue;
+
+    for (const finding of owners) {
       const key = `${finding.label}::${i}`;
       if (reported.has(key)) continue;
       reported.add(key);
       violations.push({
         rule: RULES.ASSOCIATION_MARKER,
-        detail: `sentence references ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") ` +
-          `but carries no approved association marker (e.g. "tend to", "is associated with", ` +
-          `"we observe", "more likely"), near "${sentence.slice(0, 90)}"`,
+        detail: marker
+          ? `sentence references ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") with ` +
+            `an approved association marker AND a causal construction in the same window - the ` +
+            `marker does not launder the causal claim, near "${sentence.slice(0, 90)}"`
+          : `sentence references ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") ` +
+            `but carries no approved association marker (e.g. "tend to", "is associated with", ` +
+            `"we observe", "more likely"), near "${sentence.slice(0, 90)}"`,
       });
     }
   }

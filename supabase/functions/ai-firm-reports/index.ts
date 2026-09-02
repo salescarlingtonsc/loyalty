@@ -48,7 +48,11 @@ const FALLBACK_MODEL = 'claude-sonnet-5';
 // association-marker phrases the model must use for an ASSOCIATION finding, enforced by the new
 // V10b (checkAssociationPositiveMarker) — bump this on any SYSTEM_PROMPT or model change, same as
 // always; see the file header note.
-export const PROMPT_VERSION = 'v706';
+// v707 (check 17, round 2): EVIDENCE_CLASS_INSTRUCTION's wording changed again — bare "pattern" is
+// no longer offered as an approved word (replaced by "an observed pattern" / "a pattern where"),
+// and a new line tells the model a marker does not excuse a causal word sitting in the same
+// sentence. Bumped for the same reason v706 was.
+export const PROMPT_VERSION = 'v707';
 
 type ClaimedReport = {
   id: string;

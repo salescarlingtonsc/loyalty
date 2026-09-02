@@ -109,15 +109,16 @@ for (const [label, sentence] of CAUSAL_IDIOM_SENTENCES) {
       `expected V10b to name the ASSOCIATION finding for "${label}":\n  ` +
       `${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
     );
-    // The whole point of these 27: none of them is one of V10's own fixed blacklist phrases, so
-    // V10 (the causal-BINDING rule specifically, not V3's separate unconditional causal gate)
-    // must NOT be the rule that catches this sentence — proving V10b is doing new work, not
-    // riding on a blacklist hit that already existed.
-    assert.ok(
-      result.violations.every((v) => v.rule !== RULES.CAUSAL_BINDING),
-      `"${label}" was expected to evade V10 (that is the refuter's point) but V10 fired anyway:\n  ` +
-      `${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
-    );
+    // v707 (check 17, round 2): this used to also assert V10 (CAUSAL_BINDING) never fires for any
+    // of the 27 — true under v706, where V10's blacklist and V10b's approved-marker check were two
+    // independent lists. A second refuter proved that split itself was the gap (a marker could
+    // launder an unlisted causal phrase past V10b, since V10b never looked for one), and the fix
+    // unifies V10 and V10b onto the SAME CAUSAL_CONSTRUCTIONS list (./validate.mjs) — so most of
+    // these 27 idioms are now correctly caught by BOTH rules at once, not smuggled past one of them.
+    // The assertion that mattered is the one above: V10b still names this finding for every one of
+    // the 27, independent of whatever else also fires. Not asserting on RULES.CAUSAL_BINDING
+    // one way or the other here is deliberate — V10 catching more is a strict improvement, not a
+    // regression to guard against.
   });
 }
 
@@ -167,7 +168,10 @@ test('v706 check 17: PROMPT_VERSION was bumped for the EVIDENCE_CLASS_INSTRUCTIO
   const indexTs = readFileSync(INDEX_TS, 'utf8');
   const declared = /PROMPT_VERSION\s*=\s*'([^']+)'/.exec(indexTs);
   assert.ok(declared, 'index.ts must declare PROMPT_VERSION');
-  assert.equal(declared[1], 'v706');
+  // v707 (check 17, round 2) narrowed the approved-marker wording again (bare "pattern" removed,
+  // "observed pattern"/"a pattern where" added, plus the new "a marker does not excuse a causal
+  // word in the same sentence" line) — bumped again, same rule as v706's own note above.
+  assert.equal(declared[1], 'v707');
 });
 
 /* ============================================================ B. check 88, tokeniser round 4 = */
