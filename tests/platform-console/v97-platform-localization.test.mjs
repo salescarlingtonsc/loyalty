@@ -351,6 +351,24 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
      they shipped had no zh-CN or ms entry at all, which is what the coverage test above caught;
      both dictionaries carry them now, and these counts are re-pinned to what the console actually
      renders. */
+  // F130 (Extend trial / Pause workspace console UI, platform_adjust_subscription_v622 /
+  // platform_set_workspace_pause_v622): +17 distinct explicit pt() strings — the trial-end
+  // summary template and its 'Not set' fallback, the new-trial-end-date field label, the
+  // invalid-date error, the extend confirmation, the pause/unpause description pair, the
+  // pause/unpause confirmation pair, the Extend trial / Pause workspace / Unpause workspace
+  // labels (each used as both a modal title/submitLabel and a button label), and the four
+  // named RPC-rejection branches platformErrorMessage() gained so the two modals' catch
+  // blocks route the server's exact wording through the normal translated path instead of
+  // inspecting error.message directly (nothing to adjust / trial runway beyond 180 days /
+  // no subscription exists / no lifecycle row exists).
+  // Merged 2026-09-03: main's F130 (+17) and the CI-100 wave's v727/check-98/v734 strings (+14, itemised
+  // below) are both live, so the inventory is the sum of the two sides' additions.
+  assert.equal(explicit.length,1149,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734
+  // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
+  // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
+  // submitLabel are a ternary expression, not a literal, so they are not metadata matches).
+  assert.equal(metadata.length,862,'update the audited CUI metadata inventory when adding UI metadata'); // F130 (+1) + v727 (+2), merged 2026-09-03
+  assert.equal(announcements.length,48,'update the audited static announcement inventory when adding announcements'); // V503
   // nestly_v727 (consultant brief evidence gating, check 93): +5 distinct explicit pt() strings
   // (Average order, the insufficient-evidence note template, Identified customers, With a
   // purchase, Inactive 90+ days). 'Top customer revenue' dedupes against an identical string
@@ -366,11 +384,11 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // ciFreshnessCaptionHtmlV734 — 'age unknown', 'under an hour old', '{hours} hours old',
   // 'Data as of {date} · {age}', 'no recorded sale yet',
   // 'Data may be out of date — last sale {date}.' and 'never recorded'.
-  assert.equal(explicit.length,1124,'update the audited explicit-copy inventory when adding runtime UI'); // v734
+  // (merged 2026-09-03; the live numbers are below) explicit 1124,'update the audited explicit-copy inventory when adding runtime UI'); // v734
   // nestly_v727: +2 distinct metadata strings (the new Customer intelligence card's title and
   // description).
-  assert.equal(metadata.length,850,'update the audited CUI metadata inventory when adding UI metadata'); // v727
-  assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
+  // (merged) metadata 850,'update the audited CUI metadata inventory when adding UI metadata'); // v727
+  // (merged) announcements 47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]

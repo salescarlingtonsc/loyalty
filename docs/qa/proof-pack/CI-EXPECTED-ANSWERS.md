@@ -2690,7 +2690,7 @@ rollback;
 --      pct=1.0, class='material').
 --
 -- MUTATION PROOF (external, not embedded — see the task's own report, not this file): reverting
--- db/migrations/20260902_nestly_v712_spine_wording_closures.sql (dropping it from db/migrations/
+-- db/migrations/20260920_nestly_v712_spine_wording_closures.sql (dropping it from db/migrations/
 -- and re-running this same fixture against a migrated database that stops at nestly_v711) turns
 -- every section-B/C/D assertion below RED: the strength alternatives are back to a single
 -- reminder_only kind (B fails), impact never carries affected_customers/revenue_cents/margin/
@@ -3140,7 +3140,7 @@ rollback;
 -- assumption -- and closed with "either the wiring changed (update this fixture's header) or this
 -- assertion is wrong."
 --
--- db/migrations/20260902_nestly_v735_evidence_pack_extended.sql (proven by db/tests/executed/
+-- db/migrations/20260920_nestly_v735_evidence_pack_extended.sql (proven by db/tests/executed/
 -- v735_corpus_evidence_pack_extended.sql) is that wiring change: one anchored, comment-free
 -- substitution, so app.v176_gated_evidence's call becomes `public.get_ci_opportunities_v1
 -- (p_business, p_from, v_to_effective, null, clock_timestamp(), true)`. PART E below now asserts

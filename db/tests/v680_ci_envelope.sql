@@ -1,7 +1,7 @@
 -- v680 corpus — the shared CI envelope (generated_at/as_of/period/exclusions/trace_id), the
 -- immutable-snapshot as_of gate, and get_ci_opportunities_v1's stale-evidence refusal.
 --
--- Reads db/migrations/20260902_nestly_v680_ci_envelope.sql. Runs ABOVE the v422 baseline
+-- Reads db/migrations/20260920_nestly_v680_ci_envelope.sql. Runs ABOVE the v422 baseline
 -- watermark, so it is reported `n/a` in the pre-migration phase and gated on the migrated run.
 --
 -- TRUTH TABLE (numbers computed before running anything, per CI-CORPUS-FIXTURE-GUIDE):

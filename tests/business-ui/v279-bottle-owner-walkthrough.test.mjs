@@ -282,9 +282,12 @@ test('V279 the customer Scan button is feature-detected and fails soft to search
 });
 
 test('V279 Bought on defaults to today in Singapore, and stays editable', () => {
-  assert.match(app, /const sgtTodayV279=\(\)=>String\(sgt\(new Date\(\)\.toISOString\(\)\)\|\|''\)\.slice\(0,10\);/,
+  // nestly_tz-client: the bespoke sgtTodayV279 duplicate was redirected to the single
+  // canonical "today in SG" helper (sgDateInputValue, Intl formatToParts on Asia/Singapore)
+  // rather than its own fixed-offset new Date()+8h reimplementation.
+  assert.match(app, /const sgDateInputValue=\(date=new Date\(\)\)=>\{/,
     "the default must be the bar's own day, not the browser's");
-  assert.match(bottlesPage, /id="parkPurchased" type="date" value="\$\{esc\(sgtTodayV279\(\)\)\}"/);
+  assert.match(bottlesPage, /id="parkPurchased" type="date" value="\$\{esc\(sgDateInputValue\(\)\)\}"/);
   assert.match(bottlesPage, /p_purchased_on:\$\('parkPurchased'\)\.value\|\|null,/,
     'and it is still whatever the bartender leaves in the field');
 });

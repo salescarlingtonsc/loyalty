@@ -228,7 +228,18 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
       errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
       return;
     }
-    const cadence='annual';
+    /* W3B/F096: this button used to hardcode annual, so a MONTHLY business whose payment lapsed
+       was sent to a Stripe Checkout for the annual price with no cadence control on the screen to
+       correct it. The business's own provider-confirmed cadence lives in billing.terms.cadence
+       (billing_subscription_terms_v124.cadence, which a lapse never clears), and it is already
+       being fetched here for `capacity`. Same resolution as loadBillingConfig()'s
+       `initialCadence`: use the stored cadence when the payload still offers a plan for it, and
+       fall back to annual only when there is no prior cadence to honour. */
+    const plansV620=Array.isArray(billing.plans)?billing.plans:[];
+    const byCadenceV620=Object.fromEntries(plansV620.map(plan=>[plan.cadence,plan]));
+    const storedCadenceV620=String(billing.terms?.cadence||'');
+    const cadence=(plansV620.length?byCadenceV620[storedCadenceV620]:storedCadenceV620==='annual'||storedCadenceV620==='monthly')
+      ?storedCadenceV620:'annual';
     const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
     const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
     const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};

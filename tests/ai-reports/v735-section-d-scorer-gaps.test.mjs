@@ -20,7 +20,7 @@
  *       treats a weekday/month/allowlisted neighbour as a run partner — matching V6's own
  *       run-builder, which already refuses to let a weekday/month word anchor a run.
  *   89. checkCohortContradiction's cohort vocabulary now covers `frequent` and `valuable`
- *       (`high_ltv` in db/migrations/20260902_nestly_v684_metric_dictionary.sql's
+ *       (`high_ltv` in db/migrations/20260920_nestly_v684_metric_dictionary.sql's
  *       app.ci_customer_classes_v1), not only loyal/returning/at-risk/new.
  *
  * No source-regex assertions — every check below calls the real validateNarrative.

@@ -29,7 +29,7 @@
         99
       ],
       "hard_gate": false,
-      "hard_gate_reason": "EXTERNAL by the checklist's own text; the machinery (app.ci_shadow_capture_v685, db/migrations/20260902_nestly_v685_shadow_reconciliation.sql) is built and proven, but a shadow PERIOD is a calendar event, not a code defect.",
+      "hard_gate_reason": "EXTERNAL by the checklist's own text; the machinery (app.ci_shadow_capture_v685, db/migrations/20260920_nestly_v685_shadow_reconciliation.sql) is built and proven, but a shadow PERIOD is a calendar event, not a code defect.",
       "status": "EXTERNAL — machinery built, period not run",
       "owner": "owner (schedules the shadow period) / engineering (monitors it)",
       "detail": "Check 99: production-shadow reconciliation for a defined period. db/tests/executed/v685_corpus_shadow.sql proves the capture machinery works; no live shadow period has been scheduled or run."
@@ -157,6 +157,15 @@
       "status": "DECLARED_LIMIT — consistency",
       "owner": "engineering (next wave)",
       "detail": "Found by the final adversarial verification at HEAD 8799bbad (2026-09-02): public.get_dashboard_summary_v155 raises SQLSTATE 22007 ('a valid report date range is required') on an inverted window, while get_revenue_truth_v106 and platform_get_assigned_firm_report_v94 raise 22023 invalid_report_window via app.ci_period_validate_v726. Behaviourally equivalent (fails closed, explicit reason); the SQLSTATE differs. Not fixed in this programme by the owner's frozen-scope ruling (not a release blocker); aligning it to 22023 is a one-anchor re-emit for the next wave."
+    },
+    {
+      "id": "MAIN-CRM-FIXTURES-PREEXISTING-20260903",
+      "checks": [],
+      "hard_gate": false,
+      "hard_gate_reason": "Outside the Customer Intelligence surface: the three suites cover the ops-os CRM foundation (v510 contractual entitlement after partial payment, v512 consultant invoice accrual after a verified payment, v513 onboarding stall sweep). None reads a CI reader, a customer/business financial-intelligence output, or a revenue/visit calculation the checklist scores.",
+      "status": "PRE-EXISTING ON MAIN — recorded, not fixed",
+      "owner": "the audit-wave session that owns main's v672-v688 (Singapore-day authority v685 touched app.v510_verified_initial_payment and platform_sweep_stalled_onboarding_v513)",
+      "detail": "Found by the 2026-09-03 merge sweep: db/tests/executed/v510_operating_system_crm_foundation.sql ('unrelated partial payment unlocked the contractual entitlement'), v512_commercial_handoff_integrity.sql ('expected exactly 1 accrual after verified payment, found 0') and v513_onboarding_next_actor_and_review.sql ('a 48h-old Peekaa turn did not become a stall work item') fail identically on UNMODIFIED origin/main 3ef53a4a (scratch worktree, `scripts/db-tests/run.mjs --migrated-only --filter=v51`, log kept as docs/qa/proof-pack/MAIN-BASELINE-CRM-3ef53a4a.log). The CI branch neither touches those functions nor changes the failure text, so they are recorded here per the frozen-scope ruling and left to main's owner; they do not gate the CI acceptance."
     }
   ]
 }

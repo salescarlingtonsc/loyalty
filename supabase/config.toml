@@ -10,6 +10,9 @@ verify_jwt = false
 [functions.public-business-application]
 verify_jwt = false
 
+[functions.public-support-ticket]
+verify_jwt = false
+
 [functions.stripe-billing-webhook]
 verify_jwt = false
 

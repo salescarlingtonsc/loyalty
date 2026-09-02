@@ -40,9 +40,16 @@ const server=spawn('python3',['-m','http.server',String(PORT),'--bind','127.0.0.
 await new Promise(r=>setTimeout(r,1500));
 
 const BIZ='b6080000-0000-4000-8000-000000000608', SLUG='v608co';
+/* F013: no production tenant's enabled_modules/platform_module_overrides_v94 ever contains
+   'settings' (it is not a module_registry key at all — Settings, Branches and Reminder &
+   Notification are all owner-role-gated surfaces, not sector entitlements). This fixture used
+   to include 'settings' anyway, which let the walkthrough open #/remindernotify against an
+   entitlement the server can never produce and mask the real bug (F013: the route was gated on
+   canReadModule('settings'), unreachable for every real tenant including the owner). Kept to a
+   real sector-bundle-shaped list so this walkthrough proves the real gate. */
 const MODULES=['dashboard','till','clients','appointments','sales','services','bookings','waitlist',
   'inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports',
-  'customerintel','staffperf','dailyreport','pnl','expenses','settings','branch','staff'];
+  'customerintel','staffperf','dailyreport','pnl','expenses'];
 const stub=`(()=>{
  const MOD=${JSON.stringify(MODULES)};
  const BIZ='${BIZ}';

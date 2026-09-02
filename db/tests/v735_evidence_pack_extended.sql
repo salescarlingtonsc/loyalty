@@ -1,4 +1,4 @@
--- EXECUTED acceptance fixture for db/migrations/20260902_nestly_v735_evidence_pack_extended.sql:
+-- EXECUTED acceptance fixture for db/migrations/20260920_nestly_v735_evidence_pack_extended.sql:
 -- the AI firm-report evidence pack's ci_opportunities section now runs public.get_ci_
 -- opportunities_v1 with p_extended=>true, so the consultant spine's extended-only content
 -- (campaigns, report_sections, top_actions, alternatives diversity, the five impact keys) reaches

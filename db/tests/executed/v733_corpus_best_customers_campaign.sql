@@ -90,7 +90,7 @@
 -- assumption -- and closed with "either the wiring changed (update this fixture's header) or this
 -- assertion is wrong."
 --
--- db/migrations/20260902_nestly_v735_evidence_pack_extended.sql (proven by db/tests/executed/
+-- db/migrations/20260920_nestly_v735_evidence_pack_extended.sql (proven by db/tests/executed/
 -- v735_corpus_evidence_pack_extended.sql) is that wiring change: one anchored, comment-free
 -- substitution, so app.v176_gated_evidence's call becomes `public.get_ci_opportunities_v1
 -- (p_business, p_from, v_to_effective, null, clock_timestamp(), true)`. PART E below now asserts

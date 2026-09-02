@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="913f0e8b5dbb5eec931e3c2cf8f31688afb98765dc549e447153808e8c83797b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="6aabf3f556e606c39cfcef1f556fa27ddf926c8ee0ef809e18c75cb1349b1c79"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -872,7 +872,6 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
-.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -5676,7 +5675,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 913f0e8b5dbb5eec931e3c2cf8f31688afb98765dc549e447153808e8c83797b</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 6aabf3f556e606c39cfcef1f556fa27ddf926c8ee0ef809e18c75cb1349b1c79</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7802,10 +7801,12 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
     else if(type==='boolean')payload.boolean_value=raw==='true';
     else payload.select_value=raw;
     const {error}=await sb.from('client_field_values').upsert(payload,{onConflict:'business_id,client_id,field_definition_id'});
+    if(!isClientDetailCurrent())return;
     if(error)return fail(error);toast('Customer detail saved');clientDetail(id);
   });
   document.querySelectorAll('.cfvClear').forEach(b=>b.onclick=async()=>{
     const {error}=await sb.from('client_field_values').delete().eq('business_id',S.biz.id).eq('client_id',id).eq('field_definition_id',b.dataset.id);
+    if(!isClientDetailCurrent())return;
     if(error)return fail(error);toast('Customer detail cleared');clientDetail(id);
   });
   const birthdayRedeem=$('birthdayRedeem');
@@ -7839,6 +7840,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
     aj.disabled=true;
     const {data,error}=await sb.rpc('adjust_points_v480',{p_business:S.biz.id,p_client:id,
       p_points:v,p_reason:$('adjR').value||null,p_idempotency_key:adjustmentIdem});
+    if(!isClientDetailCurrent()||!aj.isConnected)return;
     aj.disabled=false;
     if(error) return fail(error);
     adjustmentIdem=crypto.randomUUID();
@@ -9119,6 +9121,51 @@ async function tillPage(){
       onGiftIdentified:async(data,token)=>{
         cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();
         const labelV666=data?.gift_label||'';
+        /* nestly_v681 (owner ruling 2026-09-02, keypad screenshot with Scan circled): "when
+           redeeming free gift - without any requirements to spend > after scan should pop up to
+           ask to confirm redeeming the said gifts ... staff press yes / no. unless the rewards
+           requires purchases - example (20% off whole bill / 1 item) - then it will be the usual
+           process."
+           The server decides which gift this is (settle_now), because only it can see the quoted
+           minimum spend and the perk's own benefit_kind. A gift that needs no purchase is handed
+           over right here on a Yes — there is no bill to wait for, and sending the counter off to
+           find the same gift again on the Rewards tab was the detour the owner is removing. No
+           leaves the QR untouched and pending: the customer keeps the gift, and the Rewards tab
+           is still there. Everything that DOES need a purchase — a min-spend welcome gift, a
+           percentage discount — falls through to the staging path below, unchanged. */
+        if(data?.settle_now===true){
+          const confirmedV681=await confirmActionV386(
+            `Give "${labelV666||'this reward'}" to ${data?.full_name||'this customer'} now? This reward needs no purchase, so confirming hands it over and uses it up.`,
+            {confirmLabel:'Yes, give it',cancelLabel:'No',danger:false});
+          if(!isTillCurrent())return;
+          if(!confirmedV681)return toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
+          const {data:givenV681,error:giveErrorV681}=await sb.rpc('staff_scan_gift_qr_v515',{
+            p_business:S.biz.id,p_branch:tillBranchId,p_qr_token:token,p_sale:null,
+            p_idempotency_key:crypto.randomUUID()});
+          if(!isTillCurrent())return;
+          if(giveErrorV681||givenV681?.status!=='completed'){
+            /* The same three sentences the scanner's own gift arm uses, because this is the same
+               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
+               counter. Anything unrecognised keeps the scanner's catch-all. */
+            const rawV681=String(giveErrorV681?.message||'');
+            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
+              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
+              :/period rolled over/i.test(rawV681)
+              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
+              :giveErrorV681
+              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
+              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+          }
+          /* V408's rule: a gift handed over changes what this customer holds, so the card and the
+             catalogue both repaint before the counter reads either of them again. */
+          catalog=null;
+          await refreshTillCustomerStandingV408();
+          if(!isTillCurrent())return;
+          draw();
+          return toast(givenV681?.replayed===true
+            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
+        }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
            not the allowance, and appliedTierBenefitV656 is only ever sent to evaluate_checkout,
            so nothing is priced until the counter adds the first item — at which point the
@@ -11712,7 +11759,7 @@ async function salesPage(){
   /* V291: the filtered answer in full (counts, export, payment-state filtering) and how much of
      it is currently painted. */
   const SALES_PAGE_SIZE_V291=50;
-  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291;
+  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false;
   M().innerHTML=`${salesHeadHtmlV291(true)}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
@@ -11764,8 +11811,16 @@ async function salesPage(){
     if(type)query=query.eq('kind',type);
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
     if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
-    const workflow=await loadReversalWorkflows(null,Math.max(100,(sl||[]).length)).catch(e=>{fail(e);return null});
+    /* V291 audit fix (F001): the server clamps any non-zero p_limit to 100
+       (least(greatest(coalesce(p_limit,50),1),100)) with NO date/staff/type/branch predicate —
+       so asking for Math.max(100,sl.length) is never more than the 100 newest sales across the
+       whole business, no matter how large the filtered ledger `sl` is. Once a business passes
+       100 lifetime sales, older painted rows silently lost Reverse/Amend and painted the wrong
+       status/Net (falling back to `w={}`). Pass 0 — the RPC's explicit "unbounded" value,
+       already used by Customer 360 above — so every painted row has real reversal/status data. */
+    const workflow=await loadReversalWorkflows(null,0).catch(e=>{fail(e);return null});
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
+    salesWorkflowMayHaveMoreV291=!!workflow?.may_have_more;
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
     let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
     /* V266: Payment state used to filter on `sales.paid`, a column that does not exist —
@@ -11795,10 +11850,14 @@ async function salesPage(){
        nothing at all on screen, which reads as a broken button. State the range that is now in
        force and how many rows it matched, next to the control that set it. */
     const period=`${from?dashboardScheduleDayLabelV252(from):'the earliest sale'} to ${to?dashboardScheduleDayLabelV252(to):'the latest sale'}`;
+    /* F001: the RPC still reports may_have_more/bounded even though this page now asks for
+       0 (unbounded) — surface it instead of silently painting rows with no reversal/status
+       data if that ever changes underneath us. */
+    const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows':'';
     salesFilterNoteV266(paymentStateApplied
-      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}`
-      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied`,
-      paymentStateApplied?'':'warn');
+      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
+      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied${workflowWarning}`,
+      (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
       if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
     }
@@ -11873,6 +11932,12 @@ async function servicesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
+  /* nestly_v682 (audit finding F068). Permanently deleting a service is the owner's alone —
+     policy services_delete_v636 says so and business_manage_catalogue_item_v660 now enforces it
+     rather than routing around it as SECURITY DEFINER. Gate the button on the same test this
+     page already uses for catalogue photos, so a non-owner sees Edit alone instead of a button
+     the server refuses. Turning a service OFF stays open to anyone with Services write. */
+  const canDeleteServiceV682=S.myRole==='owner';
   M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
     <div class="v150-title-actions">${canWrite?`<a class="btn ghost sm" href="#/servicemapping">Map categories</a>`:''}${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
@@ -11939,7 +12004,7 @@ async function servicesPage(){
              this row: a service or product that anything refers to — a past appointment or sale, a
              booking, a package, a reward, a bundle, a tier discount — is switched off and kept,
              because deleting it would either be refused by the database or silently rewrite a
-             bundle's economics. Only something nothing refers to is actually removed. */''}<button type="button" class="btn ghost sm" data-catalogue-delete-v660="${s.id}" data-catalogue-kind-v660="service" data-catalogue-name-v660="${esc(serviceDisplayName(s))}">Delete</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+             bundle's economics. Only something nothing refers to is actually removed. */''}${canDeleteServiceV682?`<button type="button" class="btn ghost sm" data-catalogue-delete-v660="${s.id}" data-catalogue-kind-v660="service" data-catalogue-name-v660="${esc(serviceDisplayName(s))}">Delete</button>`:''}</div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add your first service so customers can book and staff can select it during checkout.'});
     const editingRowV584=canWrite&&editingServiceId?(sv||[]).find(row=>row.id===editingServiceId):null;
@@ -12170,6 +12235,7 @@ async function servicesPage(){
         <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
         <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
         <label>Included services</label><div id="bsv" class="small"></div>
+        <label>Included products</label><div id="bpvV488" class="small"></div>
         <div style="margin-top:12px" class="row"><button class="btn ghost sm" id="cancelBundleForm">Cancel</button><span class="spacer"></span><button class="btn sm" id="badd3">Save bundle</button></div>
       </section></div>`:''}</div>`);
   /* One door in, one door out, so Esc, the backdrop and Cancel cannot leave the overlay up with
@@ -13113,14 +13179,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       :1;
   const pointCostLabelV262=(cents)=>`${S.biz.currency||'SGD'} ${(Number(cents)/100).toFixed(3)}`;
   const tierBenefitLines=tier=>String(tier?.perk_note||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
-  const boundaryInputValue=(value)=>{
-    if(!value)return '';
-    const parts=new Intl.DateTimeFormat('sv-SE',{
-      timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',
-      hour:'2-digit',minute:'2-digit',hourCycle:'h23'
-    }).formatToParts(new Date(value)).reduce((out,part)=>({...out,[part.type]:part.value}),{});
-    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
-  };
+  const boundaryInputValue=(value)=>value?sgLocalInputValue(value):'';
   const boundaryInstant=(value)=>value?`${value}:00+08:00`:null;
   const boundaryState=(item,startKey,endKey,now=Date.now())=>{
     if(item?.active===false)return {label:'Paused',tone:'off'};
@@ -14924,7 +14983,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error)return fail(error);refreshRetentionPanel(draftVersionId,null,'Bring-back rule status updated.')});
   }
   if(isOwner){
-    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
+    $('rtAdd').onclick=async()=>{const button=$('rtAdd');if(button.disabled)return;const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');CUI.setButtonBusy(button,{busy:true,label:'Adding…'});const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(button.isConnected)CUI.setButtonBusy(button,{busy:false});if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
@@ -15827,6 +15886,21 @@ function promotionPublishLimitRefusalV462(error){
    published — and scheduled to start two days later — but every owner-facing label said only
    "Published", so an offer that no customer could yet see looked live. Customers were right;
    the owner screen was not. One helper now decides the state everywhere it is shown. */
+/* F027: business_get_promotion_editor_v155 (last def db/migrations/20260823_nestly_v462_
+   featured_offer_and_live_cap.sql, prod-confirmed) reports a promotion's branch scope as mode
+   'selected_branches' / 'all_branches' — the editor used to compare only against the WRITE-side
+   wire value 'selected' (what the radios post), so no server-returned mode could ever match and
+   every scoped offer reopened as "All branches"; the next Save/Publish/Unpublish then deleted
+   the scope rows. Accept both vocabularies on read. */
+function promotionScopeIsSelectedV155(mode){return mode==='selected'||mode==='selected_branches'}
+/* The server also never returns a `label` key (checked live), so the list row always printed
+   the fallback "All branches" even for a genuinely scoped offer. Derive the label from the
+   server's own branch_names instead of trusting a field it never sends. */
+function promotionScopeLabelV155(scope){
+  if(!promotionScopeIsSelectedV155(scope?.mode))return 'All branches';
+  const names=(scope.branch_names||scope.branchNames||[]).filter(Boolean);
+  return names.length?`Selected branches: ${names.join(', ')}`:'Selected branches';
+}
 function promotionLifecycleV186(item,now=new Date()){
   if(!item?.active)return {state:'draft',label:'Draft',live:false};
   const starts=item.starts_at?new Date(item.starts_at):null;
@@ -15994,7 +16068,7 @@ async function promotionsPage(selectedPromotionId=null){
   const selectedScope=selected?.branchScope||{mode:'all',branch_ids:[],branch_names:[],label:'All branches'};
   const operationalPromotionBranch=reportingOperationalBranchIdV155(promotionBranches);
   const selectedScopeBranchIds=(selectedScope.branch_ids||selectedScope.branchIds||[]).filter(id=>promotionBranches.some(branch=>branch.id===id));
-  const initialScopeMode=selectedScope.mode==='selected'&&selectedScopeBranchIds.length===1&&selectedScopeBranchIds[0]===operationalPromotionBranch?'current':(selectedScope.mode==='selected'?'selected':'all');
+  const initialScopeMode=promotionScopeIsSelectedV155(selectedScope.mode)&&selectedScopeBranchIds.length===1&&selectedScopeBranchIds[0]===operationalPromotionBranch?'current':(promotionScopeIsSelectedV155(selectedScope.mode)?'selected':'all');
   const promotionScopeModeV155=initialScopeMode;
   const initial={
     id:selected?.id||'',branch_id:null,name:selected?.name||'',
@@ -16011,7 +16085,7 @@ async function promotionsPage(selectedPromotionId=null){
     imageCustomerVisible:selected?.imageCustomerVisible===true,
     mediaVersionsByScope:selected?.mediaVersionsByScope||{},
     scopeMode:promotionScopeModeV155,
-    scopeBranchIds:selectedScope.mode==='selected'?selectedScopeBranchIds:[]
+    scopeBranchIds:promotionScopeIsSelectedV155(selectedScope.mode)?selectedScopeBranchIds:[]
   };
   const canPublishThis=initial.active||Boolean(initial.metadata?.published_once_at)||canPublishNew,
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
@@ -16077,7 +16151,7 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn danger sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):CUI.emptyState({iconName:'giftcard',title:'No promotions yet',body:'Start with one timely offer — it appears here as a draft you can publish.'})}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(promotionScopeLabelV155(item.branchScope))}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn danger sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):CUI.emptyState({iconName:'giftcard',title:'No promotions yet',body:'Start with one timely offer — it appears here as a draft you can publish.'})}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -18057,7 +18131,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      typed, the page defaults to the last month rather than to everything. Typing either date
      replaces that default outright, so the filter can still reach any row ever recorded — the
      default narrows the FIRST view, it is not a cap. */
-  const growHistoryDefaultFromV382=(()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.getTime()})();
+  const growHistoryDefaultFromV382=Date.parse(`${shiftSgDateInput(sgDateInputValue(),-30)}T00:00:00+08:00`);
   const growHistoryInWindowV375=row=>{
     const typedFrom=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
     const to=growHistoryToV375?Date.parse(`${growHistoryToV375}T23:59:59+08:00`):null;
@@ -18400,7 +18474,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      database, and the notice below says exactly that rather than promising a deletion the app
      does not perform. */
   const GROW_HISTORY_WINDOW_YEARS_V375=5;
-  const growHistoryCutoffV375=(()=>{const d=new Date();d.setFullYear(d.getFullYear()-GROW_HISTORY_WINDOW_YEARS_V375);return d})();
+  const growHistoryCutoffV375=(()=>{
+    const match=sgDateInputValue().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const day=new Date(Date.UTC(Number(match[1])-GROW_HISTORY_WINDOW_YEARS_V375,Number(match[2])-1,Number(match[3])))
+      .toISOString().slice(0,10);
+    return new Date(Date.parse(`${day}T00:00:00+08:00`));
+  })();
   const growWithinHistoryWindowV375=row=>{
     const added=new Date(row?.created_at||'');
     return !Number.isFinite(added.getTime())||added>=growHistoryCutoffV375;
@@ -21106,9 +21185,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growStampsPickedV416=stamp;
     growPointsAddOpenV326='form';
     growPointsEditingV326=reward?String(reward.id):null;
+    /* nestly_p2-F036: this MUST prefill exactly like the chip/row edit handler above (37408) —
+       dropping whereItWorks/endsOn/expiryDays here left the draft blank, so any Save from this
+       grid (even a pure rename) sent p_where_it_works:'' and the server read that as an explicit
+       clear, silently wiping the owner's stored "Where it works" text. See app/app.js:37408-37416
+       for the same four keys built the same way; keep the two in sync. */
     growPointsAddDraftV326=reward
-      ?{name:reward.customer_name||reward.name||'',points:String(stamp),description:reward.description||''}
-      :{name:'',points:String(stamp),description:''};
+      ?{name:reward.customer_name||reward.name||'',points:String(stamp),description:reward.description||'',
+        endsOn:growPointsEndDateInputV472(reward.claim_available_until),
+        whereItWorks:String(reward.where_it_works||''),
+        expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''}
+      :{name:'',points:String(stamp),description:'',endsOn:'',whereItWorks:'',expiryDays:''};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -21219,11 +21306,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    /* nestly_v487: there is no field to read any more, and the empty string is load-bearing -
-       p_clear_end_date below is `!endsOnV472`, so '' makes every save an EXPLICIT clear. That is
-       what turns "delete this for all gifts" into something true rather than cosmetic: a gift
-       that already had a date loses it the next time it is saved, instead of keeping an expiry
-       the owner can no longer see or change. */
+    /* nestly_v487 tried to remove the per-gift end date by sending an unconditional explicit clear
+       on every save from this dialog. That went further than "no field to read": the date is
+       still SET by the deep reward editor's "Ends at" field (app/app.js, growPointsGiftEndsTextV476
+       renders it right there on the row), so a save from THIS dialog for any reason — a rename, a
+       photo, a description tweak — silently deleted a date the owner could still see and had not
+       touched (audit F082). This dialog has no end-date field at all, so it can never represent
+       "the owner cleared it" — the only correct behaviour for a field this form doesn't show is to
+       leave it exactly where it is, the same contract the inline stamp-row editor
+       (growStampsSaveRowV356) already uses by omitting both arguments. */
     const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
     /* nestly_v520: only the points form draws this field. On the Stamp Card page the raw value is
@@ -21273,11 +21364,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
         p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
-        /* nestly_v472: p_clear_end_date is the ONLY way to remove a date. Sending null for
-           p_claim_available_until means "say nothing" — the writer keeps whatever is stored — so
-           an empty field has to be an EXPLICIT clear, not an absent value. */
-        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
-        p_clear_end_date:!endsOnV472,
+        /* nestly_p2-F082: this dialog draws no end-date field, so it must never claim the owner
+           cleared one. null + false is "say nothing" — the writer keeps whatever claim_available_until
+           is already stored on the reward, exactly like growStampsSaveRowV356's inline row editor,
+           which omits both arguments for the same reason. Previously this unconditionally sent
+           p_clear_end_date:true, so ANY save from this dialog (even a pure rename) wiped a date set
+           through the deep reward editor. */
+        p_claim_available_until:null,
+        p_clear_end_date:false,
         /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
            stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
            to be an explicit clear, and '' is what the writer reads as one. */
@@ -27638,6 +27732,51 @@ async function svRunTopupFlow({branches,state,testOnly}){
       onGiftIdentified:async(data,token)=>{
         cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();
         const labelV666=data?.gift_label||'';
+        /* nestly_v681 (owner ruling 2026-09-02, keypad screenshot with Scan circled): "when
+           redeeming free gift - without any requirements to spend > after scan should pop up to
+           ask to confirm redeeming the said gifts ... staff press yes / no. unless the rewards
+           requires purchases - example (20% off whole bill / 1 item) - then it will be the usual
+           process."
+           The server decides which gift this is (settle_now), because only it can see the quoted
+           minimum spend and the perk's own benefit_kind. A gift that needs no purchase is handed
+           over right here on a Yes — there is no bill to wait for, and sending the counter off to
+           find the same gift again on the Rewards tab was the detour the owner is removing. No
+           leaves the QR untouched and pending: the customer keeps the gift, and the Rewards tab
+           is still there. Everything that DOES need a purchase — a min-spend welcome gift, a
+           percentage discount — falls through to the staging path below, unchanged. */
+        if(data?.settle_now===true){
+          const confirmedV681=await confirmActionV386(
+            `Give "${labelV666||'this reward'}" to ${data?.full_name||'this customer'} now? This reward needs no purchase, so confirming hands it over and uses it up.`,
+            {confirmLabel:'Yes, give it',cancelLabel:'No',danger:false});
+          if(!isTillCurrent())return;
+          if(!confirmedV681)return toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
+          const {data:givenV681,error:giveErrorV681}=await sb.rpc('staff_scan_gift_qr_v515',{
+            p_business:S.biz.id,p_branch:tillBranchId,p_qr_token:token,p_sale:null,
+            p_idempotency_key:crypto.randomUUID()});
+          if(!isTillCurrent())return;
+          if(giveErrorV681||givenV681?.status!=='completed'){
+            /* The same three sentences the scanner's own gift arm uses, because this is the same
+               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
+               counter. Anything unrecognised keeps the scanner's catch-all. */
+            const rawV681=String(giveErrorV681?.message||'');
+            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
+              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
+              :/period rolled over/i.test(rawV681)
+              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
+              :giveErrorV681
+              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
+              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+          }
+          /* V408's rule: a gift handed over changes what this customer holds, so the card and the
+             catalogue both repaint before the counter reads either of them again. */
+          catalog=null;
+          await refreshTillCustomerStandingV408();
+          if(!isTillCurrent())return;
+          draw();
+          return toast(givenV681?.replayed===true
+            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
+        }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
            not the allowance, and appliedTierBenefitV656 is only ever sent to evaluate_checkout,
            so nothing is priced until the counter adds the first item — at which point the
@@ -30302,7 +30441,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{
       const status=action.dataset.status;
-      if(!await setStatus(item.id,status))return;
+      if(!await setStatus(item.id,status,item))return;
       if(status!=='completed'){close();return}
       /* A4 (owner: rebooking should be one tap after checkout). The completed appointment is
          remembered so the NEXT appointment booked for this same client can be linked to it via
@@ -30395,6 +30534,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'913f0e8b5dbb5eec931e3c2cf8f31688afb98765dc549e447153808e8c83797b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'6aabf3f556e606c39cfcef1f556fa27ddf926c8ee0ef809e18c75cb1349b1c79',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

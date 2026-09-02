@@ -27,7 +27,7 @@
 -- gate.
 --
 -- Named for v730 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
--- migrated run. Proves db/migrations/20260902_nestly_v730_category_customers_window.sql.
+-- migrated run. Proves db/migrations/20260920_nestly_v730_category_customers_window.sql.
 --
 -- One transaction, rolled back. No production access.
 

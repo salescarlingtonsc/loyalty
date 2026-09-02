@@ -60,23 +60,23 @@
     {
       "file": "db/tests/executed/v672_corpus_stat_authority.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v672_statistical_authority.sql"
+        "db/migrations/20260920_nestly_v672_statistical_authority.sql"
       ],
       "checks": [],
       "businesses_seeded": 0,
       "clients_seeded": 0,
-      "sha256": "14ea916026bc0a540adabc0d4f133473e350643253e5e1afb441d7c5e766ef0c",
+      "sha256": "ef3e538d4790c4043de444e47853ce9b227283381395221da28a18701ca2c809",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v672_corpus_stat_authority --migrated-only"
     },
     {
       "file": "db/tests/executed/v673_corpus_funnels.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v673_retention_funnels.sql"
+        "db/migrations/20260920_nestly_v673_retention_funnels.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 3,
-      "sha256": "afecb0a3900801650d8bb8e02a775a0b661f8285e687bf0e7fc5ba154e6ea056",
+      "sha256": "977a40d9507baac406e96f46d4e26cf4cf56a1f8ab138d6349931b55e2ee1e46",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v673_corpus_funnels --migrated-only"
     },
     {
@@ -103,7 +103,7 @@
     {
       "file": "db/tests/executed/v678_corpus_consultant_spine.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v678_consultant_spine.sql"
+        "db/migrations/20260920_nestly_v678_consultant_spine.sql"
       ],
       "checks": [
         30,
@@ -111,13 +111,13 @@
       ],
       "businesses_seeded": 2,
       "clients_seeded": 9,
-      "sha256": "316ac0000db341970fd0a19a426617f5205be2df9b9edc975f71989b32ad44db",
+      "sha256": "55cd6da4ebd76ec019e4eb8c4bae08f892d5c977ddb01e153b4702418b69b6d4",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v678_corpus_consultant_spine --migrated-only"
     },
     {
       "file": "db/tests/executed/v680_corpus_envelope.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v680_ci_envelope.sql"
+        "db/migrations/20260920_nestly_v680_ci_envelope.sql"
       ],
       "checks": [
         9,
@@ -125,13 +125,13 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 3,
-      "sha256": "dc5b392969fbe783e467724ed941f604ab6d514398200e587ae7675df84ee757",
+      "sha256": "0fe9f96bb37e3195bf36e7a9439d4e9b60849a004023a8289acb7fb71bc95435",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v680_corpus_envelope --migrated-only"
     },
     {
       "file": "db/tests/executed/v681_corpus_calibration.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v681_return_probability.sql"
+        "db/migrations/20260920_nestly_v681_return_probability.sql"
       ],
       "checks": [
         49,
@@ -139,7 +139,7 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 2,
-      "sha256": "bb75aad263fd8a07aad2ceb6587711ac2f6d576555a7e26b53b99886b9221dde",
+      "sha256": "2ed5a52c25e12f48a4117378da938de62031f1f752e74099570a8e9b02f1fbdb",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v681_corpus_calibration --migrated-only"
     },
     {
@@ -165,12 +165,12 @@
     {
       "file": "db/tests/executed/v684_corpus_dictionary.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v684_metric_dictionary.sql"
+        "db/migrations/20260920_nestly_v684_metric_dictionary.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "5e2ee5390146fb797cbacc37e68da2bbf9df4c6e3a7a6192993e14c02a922009",
+      "sha256": "048cf01fc53a68f973302afeb8c77f2aa9faf2dfec146b8f8796f81882a36580",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v684_corpus_dictionary --migrated-only"
     },
     {
@@ -207,7 +207,7 @@
     {
       "file": "db/tests/executed/v688_corpus_spine_v2.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v688_consultant_spine_v2.sql"
+        "db/migrations/20260920_nestly_v688_consultant_spine_v2.sql"
       ],
       "checks": [
         22,
@@ -218,7 +218,7 @@
       ],
       "businesses_seeded": 4,
       "clients_seeded": 7,
-      "sha256": "003b166d992981da1c1c4bb112b31ca2148d6d0f755ed7b23ef9df74778b18f5",
+      "sha256": "ecba8282ee4c11fac748cd6dead8f96f2a74232899df6c8d161c13c0795a9966",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v688_corpus_spine_v2 --migrated-only"
     },
     {
@@ -248,7 +248,7 @@
     {
       "file": "db/tests/executed/v692_corpus_lineage.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v692_lineage_and_visit_dedupe.sql"
+        "db/migrations/20260920_nestly_v692_lineage_and_visit_dedupe.sql"
       ],
       "checks": [
         4,
@@ -256,18 +256,18 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "47e96bf24a8106f6f801db6b7cdff7dfba8e09251ce8b940a0bdcf4581a40ec7",
+      "sha256": "12a2bc66dc3b7db1a058a5f627a4edaf0bfed89ec0a46455bae806f9aa473428",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v692_corpus_lineage --migrated-only"
     },
     {
       "file": "db/tests/executed/v693_corpus_exclusions_verdicts.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v693_exclusions_and_typed_verdicts.sql"
+        "db/migrations/20260920_nestly_v693_exclusions_and_typed_verdicts.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 6,
-      "sha256": "8abf22fea4e4ea5f7260208e463e54bb3053081b47565e11f342489402ccc82c",
+      "sha256": "2c43dcc19c97e9d5328e37127dd2901f3b43ad4818b06eae9b84e377e8faecd9",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v693_corpus_exclusions_verdicts --migrated-only"
     },
     {
@@ -284,7 +284,7 @@
       "migrations": [
         "db/migrations/20260717_frenly_v10_sale_policy.sql",
         "db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql",
-        "db/migrations/20260902_nestly_v695_service_cadence_fallback.sql"
+        "db/migrations/20260920_nestly_v695_service_cadence_fallback.sql"
       ],
       "checks": [
         17,
@@ -292,13 +292,13 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 2,
-      "sha256": "29bf541fe26b10f4c0e8b533b610c305b0fcbe7bcfa49705ff35a3363a84dc95",
+      "sha256": "6b3aebd7d6324a2f917b88d89fffbd6d44898d3f8880c92ad5518f6c3be6082c",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v695_corpus_service_cadence --migrated-only"
     },
     {
       "file": "db/tests/executed/v696_corpus_spine_verdicts.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v688_consultant_spine_v2.sql"
+        "db/migrations/20260920_nestly_v688_consultant_spine_v2.sql"
       ],
       "checks": [
         17,
@@ -306,7 +306,7 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 2,
-      "sha256": "e26bbc3f02f617a116766cbfaba7867c42c106951f6232c77dfbb243316975c9",
+      "sha256": "b764428411adb21e7412284a18b678768303a5be81591f8a003b4994b8a73b9d",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v696_corpus_spine_verdicts --migrated-only"
     },
     {
@@ -323,7 +323,7 @@
     {
       "file": "db/tests/executed/v698_corpus_weekend_timezone.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v698_weekend_split_and_branch_timezone.sql"
+        "db/migrations/20260920_nestly_v698_weekend_split_and_branch_timezone.sql"
       ],
       "checks": [
         8,
@@ -331,13 +331,13 @@
       ],
       "businesses_seeded": 2,
       "clients_seeded": 2,
-      "sha256": "9c04b11d3314beb46f735245997a7744118db624e4c93cfb21a3b61724975ce0",
+      "sha256": "5a7af09e53c19b251791f4fb2c229e1f6441b9f8dd2b54e4daef4c3ed6706116",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v698_corpus_weekend_timezone --migrated-only"
     },
     {
       "file": "db/tests/executed/v699_corpus_visit_days.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v699_visit_day_authority.sql"
+        "db/migrations/20260920_nestly_v699_visit_day_authority.sql"
       ],
       "checks": [
         4,
@@ -345,7 +345,7 @@
       ],
       "businesses_seeded": 3,
       "clients_seeded": 3,
-      "sha256": "44d7131010ddf41477710aba4107c2028575ac4ef177683d8c537b1eeba0e6e0",
+      "sha256": "97638da285d185d6ff783bc8fb4c19e6d2f8d6d2266154f307e3f505b2919d2d",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v699_corpus_visit_days --migrated-only"
     },
     {
@@ -374,20 +374,20 @@
     {
       "file": "db/tests/executed/v703_corpus_envelope_everywhere.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v703_envelope_everywhere.sql"
+        "db/migrations/20260920_nestly_v703_envelope_everywhere.sql"
       ],
       "checks": [
         61
       ],
       "businesses_seeded": 1,
       "clients_seeded": 6,
-      "sha256": "ed8d0b39be9c182fee80895059c3f8a74581ef0315abf2a8c7d912122b84729d",
+      "sha256": "d186bec2ca3c4481054a8a74aa391d582e5bd145befa7a7c118140174df6d21a",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v703_corpus_envelope_everywhere --migrated-only"
     },
     {
       "file": "db/tests/executed/v705_corpus_spine_v3.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v705_spine_v3.sql"
+        "db/migrations/20260920_nestly_v705_spine_v3.sql"
       ],
       "checks": [
         22,
@@ -400,13 +400,13 @@
       ],
       "businesses_seeded": 8,
       "clients_seeded": 14,
-      "sha256": "d603a5adc0969f3d4fa0f1f966589c2505b5f0fc157d0cd1dc783df661e2ebb0",
+      "sha256": "d73de4f1d9e29c9b229978f71d1639e6b0dd959af1283172113595a8f4344d77",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v705_corpus_spine_v3 --migrated-only"
     },
     {
       "file": "db/tests/executed/v706_corpus_branch_clock.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v706_branch_clock_everywhere.sql"
+        "db/migrations/20260920_nestly_v706_branch_clock_everywhere.sql"
       ],
       "checks": [
         8,
@@ -414,7 +414,7 @@
       ],
       "businesses_seeded": 6,
       "clients_seeded": 11,
-      "sha256": "ae870125b794c555afa1ad65ca943fd4805be9e4d393336ab42dbd0af10d610b",
+      "sha256": "fdc4d6b3ffeeba0aaf7350d81cafbe5706a68228126a57c590d624336ed0da18",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v706_corpus_branch_clock --migrated-only"
     },
     {
@@ -479,7 +479,7 @@
     {
       "file": "db/tests/executed/v712_corpus_spine_closures.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v712_spine_wording_closures.sql"
+        "db/migrations/20260920_nestly_v712_spine_wording_closures.sql"
       ],
       "checks": [
         23,
@@ -488,24 +488,24 @@
       ],
       "businesses_seeded": 3,
       "clients_seeded": 6,
-      "sha256": "d40551db0bf20cbc3d3691a4f86b51d453b24c275ad2a472dcf51bd5efe50127",
+      "sha256": "bcb35c214023b5551a29a03d15834cabb665f2e252b8fb6069fdd0f15c182dab",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v712_corpus_spine_closures --migrated-only"
     },
     {
       "file": "db/tests/executed/v713_corpus_evidence_pack.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v720_evidence_pack_grants.sql"
+        "db/migrations/20260920_nestly_v720_evidence_pack_grants.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "7b4b9465aec1cc5695ecc45fcc010af8d2507145ecd26041e7d0fe4a1370c18b",
+      "sha256": "4e6c0ebf77c4a5d8a643a755138d501b5d01b69059c31a46e6e8cc6519dec555",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v713_corpus_evidence_pack --migrated-only"
     },
     {
       "file": "db/tests/executed/v714_corpus_visit_days_estate.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v714_visit_days_estate.sql"
+        "db/migrations/20260920_nestly_v714_visit_days_estate.sql"
       ],
       "checks": [
         1,
@@ -522,18 +522,18 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "0a34a693c2b82220af01d94960b4a6291f4615b4445294be1b93ad70f80beea0",
+      "sha256": "68ea2ac6309bd068fe9e287a2facb2319aab26ab9435d678f72436a89519a597",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v714_corpus_visit_days_estate --migrated-only"
     },
     {
       "file": "db/tests/executed/v715_corpus_v179_weekday.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v715_v179_weekday_visit_days.sql"
+        "db/migrations/20260920_nestly_v715_v179_weekday_visit_days.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "c163d56e557cde7011130da2eaec3be0547641bbe6c3f9454a3faa68f2653c48",
+      "sha256": "a6a9dd2918a7b823a2f5b46d41ba3bb3638598d11233af991933309221653686",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v715_corpus_v179_weekday --migrated-only"
     },
     {
@@ -567,13 +567,13 @@
     {
       "file": "db/tests/executed/v720_corpus_evidence_pack_grants.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v720_evidence_pack_grants.sql",
-        "db/migrations/20260902_nestly_v729_visit_days_estate_3.sql"
+        "db/migrations/20260920_nestly_v720_evidence_pack_grants.sql",
+        "db/migrations/20260920_nestly_v729_visit_days_estate_3.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 0,
-      "sha256": "6d4468ed0336d375896bcdeff89479e9b95f55578f8c6631588414fbb7fa388b",
+      "sha256": "8706339ae10ed6bf707484a4e2e50cc213224da97f257be439c3ffec951089bb",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v720_corpus_evidence_pack_grants --migrated-only"
     },
     {
@@ -591,7 +591,7 @@
     {
       "file": "db/tests/executed/v722_corpus_freshness_brief.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql"
+        "db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql"
       ],
       "checks": [
         93,
@@ -600,7 +600,7 @@
       ],
       "businesses_seeded": 7,
       "clients_seeded": 5,
-      "sha256": "d7eb37f0dc7a91ba8534d0aa1046d003a3225b456462049fbe8ff4ea189c0074",
+      "sha256": "3bf0143033e74147717d47cb775174212bce93a0c2fa4e773da5010357820c3a",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v722_corpus_freshness_brief --migrated-only"
     },
     {
@@ -617,7 +617,7 @@
     {
       "file": "db/tests/executed/v724_corpus_visit_days_estate_2.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v724_visit_days_estate_2.sql"
+        "db/migrations/20260920_nestly_v724_visit_days_estate_2.sql"
       ],
       "checks": [
         1,
@@ -634,7 +634,7 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 2,
-      "sha256": "e11d0c7abd5025a908a256aafe6a0e1a7b828e8ad76a908775cb40beb1e3915e",
+      "sha256": "5d5df404549d29e6ebc06cee4dbbf40288d3a161278a1f2899c56cbaec578b47",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v724_corpus_visit_days_estate_2 --migrated-only"
     },
     {
@@ -653,14 +653,14 @@
     {
       "file": "db/tests/executed/v726_corpus_period_validation.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v726_period_validation.sql"
+        "db/migrations/20260920_nestly_v726_period_validation.sql"
       ],
       "checks": [
         98
       ],
       "businesses_seeded": 1,
       "clients_seeded": 0,
-      "sha256": "ebbd2ffd412834fb1fddbf13bd1b2edd198e196a33f30c35ecfb780b7536d583",
+      "sha256": "cc535d5018d4d9afcffd335bceeeb82c95074e6c9334ea452722d4d2574598d3",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v726_corpus_period_validation --migrated-only"
     },
     {
@@ -675,14 +675,14 @@
     {
       "file": "db/tests/executed/v730_corpus_category_customers_window.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v730_category_customers_window.sql"
+        "db/migrations/20260920_nestly_v730_category_customers_window.sql"
       ],
       "checks": [
         98
       ],
       "businesses_seeded": 1,
       "clients_seeded": 0,
-      "sha256": "3b5fe913a57faba001a6eb05e3b44f5ad4a75cdf68ed85cf40e6393422ff6d43",
+      "sha256": "8ac6ed9a447d7b9ef31d6426c64f44ce91df774f25c964528192a019bcc12db6",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v730_corpus_category_customers_window --migrated-only"
     },
     {
@@ -701,7 +701,7 @@
     {
       "file": "db/tests/executed/v733_corpus_best_customers_campaign.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v735_evidence_pack_extended.sql"
+        "db/migrations/20260920_nestly_v735_evidence_pack_extended.sql"
       ],
       "checks": [
         53,
@@ -710,26 +710,26 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "ff82b4656a6d8c40aa8a60ead7aaace0cec193acb75d92fe446b136d85f3ff16",
+      "sha256": "e0d34ed70d1fda256a5c962c61619fcfa6bc0d6f4be259f0bf0aeb04649c9c27",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v733_corpus_best_customers_campaign --migrated-only"
     },
     {
       "file": "db/tests/executed/v734_corpus_synthetic_exclusion.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v734_synthetic_excluded_everywhere.sql"
+        "db/migrations/20260920_nestly_v734_synthetic_excluded_everywhere.sql"
       ],
       "checks": [
         1
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "e60a9bbd8f21397379bd561ebc0d93c8e3a086ae1479cde42781793890728dfe",
+      "sha256": "92a7b0beaa32d0981ed183c978a8f5cc956ba6ebd536ef0d49f0baf245dea829",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v734_corpus_synthetic_exclusion --migrated-only"
     },
     {
       "file": "db/tests/executed/v735_corpus_evidence_pack_extended.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v735_evidence_pack_extended.sql"
+        "db/migrations/20260920_nestly_v735_evidence_pack_extended.sql"
       ],
       "checks": [
         25,
@@ -737,7 +737,7 @@
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "8a729cb4403a90b2cecca228d1d0b966e2564cdc8b96cbb69f7e299c575e720d",
+      "sha256": "2c55ab22f587da36e95ceb7e0dd7abc28322c5e59eb77d6ca3ae16977e2faa45",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v735_corpus_evidence_pack_extended --migrated-only"
     },
     {
@@ -754,23 +754,23 @@
     {
       "file": "db/tests/executed/v737_corpus_synthetic_v83_shadow.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v737_synthetic_excluded_v83_shadow.sql"
+        "db/migrations/20260920_nestly_v737_synthetic_excluded_v83_shadow.sql"
       ],
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "ef55ec975337aa829398d02470b1a88de9aeac24dd15028caa774d74cb793a99",
+      "sha256": "68b9f2dddadf9b9ce4389f308ed0ae9dd992b368617d3c2b17cb203a1da64855",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v737_corpus_synthetic_v83_shadow --migrated-only"
     },
     {
       "file": "db/tests/executed/v738_corpus_pack_report_sections.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v738_pack_report_sections.sql"
+        "db/migrations/20260920_nestly_v738_pack_report_sections.sql"
       ],
       "checks": [],
       "businesses_seeded": 0,
       "clients_seeded": 0,
-      "sha256": "1754b5d95e8bef27791913b0da41b6a79b6782544f13c855c1492839d231e7c1",
+      "sha256": "f76da63c88c2c1a29eb54ea4abcda2aba33de18bea7dd03606c16835695d0086",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v738_corpus_pack_report_sections --migrated-only"
     },
     {
@@ -787,64 +787,64 @@
     {
       "file": "db/tests/executed/v740_corpus_synthetic_estate_3.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v740_synthetic_excluded_estate_3.sql"
+        "db/migrations/20260920_nestly_v740_synthetic_excluded_estate_3.sql"
       ],
       "checks": [
         1
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "d22288f7d18f9365292571cb8ec0ce15a982c76c4fe8b084811c7b1cdf3e6333",
+      "sha256": "c0fafcc83bd1a0b0d7b33274f0be8fd8baae2d6c319ff676f05fde7c4c87d8b0",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v740_corpus_synthetic_estate_3 --migrated-only"
     },
     {
       "file": "db/tests/executed/v741_corpus_roster_read_audit.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v741_roster_read_audit.sql"
+        "db/migrations/20260920_nestly_v741_roster_read_audit.sql"
       ],
       "checks": [
         96
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "3aae6524ab47afce9b23caec64c940f669188a5a29d9a1a3ef36297f6d7dc6c4",
+      "sha256": "185ed08bb595eaa023d188a73e6d7b6d762e4602dadc4dcf8775f130c2a0e557",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v741_corpus_roster_read_audit --migrated-only"
     },
     {
       "file": "db/tests/executed/v742_corpus_synthetic_estate_4.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql"
+        "db/migrations/20260920_nestly_v742_synthetic_excluded_estate_4.sql"
       ],
       "checks": [
         1
       ],
       "businesses_seeded": 1,
       "clients_seeded": 1,
-      "sha256": "e1af91e9f64334a48908273c7de2c2ad8391b1fee61046fb7c4bd32c92e30b8e",
+      "sha256": "841421d3fe2cb5724287d4525ed2fd82c06fb0ca9ecca9069f4ec858586d232c",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v742_corpus_synthetic_estate_4 --migrated-only"
     },
     {
       "file": "db/tests/executed/v743_corpus_synthetic_scanner.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v743_synthetic_scanner.sql"
+        "db/migrations/20260920_nestly_v743_synthetic_scanner.sql"
       ],
       "checks": [
         1
       ],
       "businesses_seeded": 5,
       "clients_seeded": 5,
-      "sha256": "c4a1569cf7178a1e674f3b8be5cc77556086d94f8dfe549518ee8804a558fb31",
+      "sha256": "3279d9b169588892db0d8efc8f681551be80f0137148fb2acbf1baa062ed4322",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus_synthetic_scanner --migrated-only"
     },
     {
       "file": "db/tests/executed/v744_corpus_scanner_blind_spots.sql",
       "migrations": [
-        "db/migrations/20260902_nestly_v744_scanner_blind_spots.sql"
+        "db/migrations/20260920_nestly_v744_scanner_blind_spots.sql"
       ],
       "checks": [],
       "businesses_seeded": 2,
       "clients_seeded": 2,
-      "sha256": "7383f897aede9f1dfe3a24381364d893e02167ce037b74cfdeeeba0f24389781",
+      "sha256": "2b759ea4ba04083f10bb0c24de14653d6c773c3446bb89d8cf03542866e6f794",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v744_corpus_scanner_blind_spots --migrated-only"
     }
   ]

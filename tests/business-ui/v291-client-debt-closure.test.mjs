@@ -89,7 +89,7 @@ test('V291 the erasure writer is curated in the PS0 registry as non-value',()=>{
 
 test('V291 the sales ledger paints a bounded window of the full filtered answer',()=>{
   assert.match(code,/const SALES_PAGE_SIZE_V291=50;/);
-  assert.match(code,/let salesFilteredRowsV291=\[\],salesWorkflowV291=\{\},salesVisibleCountV291=SALES_PAGE_SIZE_V291;/);
+  assert.match(code,/let salesFilteredRowsV291=\[\],salesWorkflowV291=\{\},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false;/); // audit F001: the reversal map is unbounded and reports may_have_more
   const render=section('function renderSalesRowsV291(','/* V291: the export mirrors');
   // Only the window is turned into markup...
   assert.match(render,/const shown=rows\.slice\(0,salesVisibleCountV291\);/);

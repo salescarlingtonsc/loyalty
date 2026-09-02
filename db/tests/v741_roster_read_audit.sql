@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v741
--- (db/migrations/20260902_nestly_v741_roster_read_audit.sql).
+-- (db/migrations/20260920_nestly_v741_roster_read_audit.sql).
 --
 -- Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v741_corpus --migrated-only
 --

@@ -1,0 +1,516 @@
+FINAL reconciled tree 2026-09-02T18:43:21Z
+  workdir /var/folders/hb/ngsyjpbs2gv757_fvmlwljxr0000gn/T/peekaa-db-tests-ltaGU2  ·  port 64330
+
+── building baseline ──────────────────────────────────
+  422 tables, 1365 routines (snapshot watermark v422)  1.9s
+
+── BASELINE (against peekaa_baseline) ──────────────────────
+  ok    v106_corpus_revenue_truth.sql  (543ms)
+  ok    v422_baseline_behaviours.sql  (435ms)
+  ok    v422_customer_intelligence_scale.sql  (7449ms)
+  n/a   v423_reward_edit.sql  (needs v423; not in the baseline)
+  n/a   v424_birthday_window.sql  (needs v424; not in the baseline)
+  ok?   v425_referral_typed_payout.sql  (passed before its migration)
+  ok?   v426_tier_resolver.sql  (passed before its migration)
+  isolated v427_entitlements.sql  (own scratch schema, 143ms)
+  ok?   v431_publish_spine_model.sql  (passed before its migration)
+  n/a   v432_staff_redeem_list_matches_customer.sql  (needs v432; not in the baseline)
+  n/a   v433_v436_stamp_lifecycle.sql  (needs v433; not in the baseline)
+  n/a   v464_earned_reward_expiry.sql  (needs v464; not in the baseline)
+  n/a   v480_conversion_atomicity.sql  (needs v480; not in the baseline)
+  n/a   v480_loyalty_value_integrity_fence.sql  (needs v480; not in the baseline)
+  n/a   v480_referral_reversal.sql  (needs v480; not in the baseline)
+  n/a   v482_loyalty_fence_null_guard.sql  (needs v482; not in the baseline)
+  n/a   v510_operating_system_crm_foundation.sql  (needs v510; not in the baseline)
+  n/a   v511_work_operating_system.sql  (needs v511; not in the baseline)
+  n/a   v512_commercial_handoff_integrity.sql  (needs v512; not in the baseline)
+  n/a   v513_onboarding_next_actor_and_review.sql  (needs v513; not in the baseline)
+  n/a   v544_loyalty_current_balance_truth.sql  (needs v544; not in the baseline)
+  n/a   v545_programme_aware_loyalty_evidence.sql  (needs v545; not in the baseline)
+  n/a   v548_insights_partition_scope.sql  (needs v548; not in the baseline)
+  n/a   v551_top_share_denominator.sql  (needs v551; not in the baseline)
+  n/a   v552_gated_evidence_isolation.sql  (needs v552; not in the baseline)
+  n/a   v554_v154_family_provenance.sql  (needs v554; not in the baseline)
+  n/a   v555_business_pot_fails_closed.sql  (needs v555; not in the baseline)
+  n/a   v556_policy_read_is_strict.sql  (needs v556; not in the baseline)
+  n/a   v629_corpus_acquisition_demographics.sql  (needs v629; not in the baseline)
+  n/a   v651_corpus_cadence.sql  (needs v651; not in the baseline)
+  n/a   v652_corpus_statistics.sql  (needs v652; not in the baseline)
+  n/a   v667_ci_access_boundaries.sql  (needs v667; not in the baseline)
+  n/a   v672_corpus_stat_authority.sql  (needs v672; not in the baseline)
+  n/a   v673_corpus_funnels.sql  (needs v673; not in the baseline)
+  n/a   v674_birthday_gift_type_change.sql  (needs v674; not in the baseline)
+  n/a   v674_corpus_demographics.sql  (needs v674; not in the baseline)
+  n/a   v675_corpus_behaviour.sql  (needs v675; not in the baseline)
+  n/a   v675_stale_stamp_draft_superseded.sql  (needs v675; not in the baseline)
+  n/a   v676_gift_intent_reopen.sql  (needs v676; not in the baseline)
+  n/a   v677_reversal_is_not_a_visit.sql  (needs v677; not in the baseline)
+  n/a   v678_auto_approve_after_choice.sql  (needs v678; not in the baseline)
+  n/a   v678_corpus_consultant_spine.sql  (needs v678; not in the baseline)
+  n/a   v679_tier_edits_survive_publish.sql  (needs v679; not in the baseline)
+  n/a   v680_corpus_envelope.sql  (needs v680; not in the baseline)
+  n/a   v680_manual_payment_reopens_workspace.sql  (needs v680; not in the baseline)
+  n/a   v681_corpus_calibration.sql  (needs v681; not in the baseline)
+  n/a   v682_golden_reconciliation.sql  (needs v682; not in the baseline)
+  n/a   v683_corpus_behavioural_authorities.sql  (needs v683; not in the baseline)
+  n/a   v683_referral_new_customers_only.sql  (needs v683; not in the baseline)
+  n/a   v684_corpus_dictionary.sql  (needs v684; not in the baseline)
+  n/a   v684_delete_retired_offer.sql  (needs v684; not in the baseline)
+  n/a   v685_corpus_shadow.sql  (needs v685; not in the baseline)
+  n/a   v685_singapore_day_authority.sql  (needs v685; not in the baseline)
+  n/a   v686_corpus_discovery.sql  (needs v686; not in the baseline)
+  n/a   v686_service_delete_owner_only_rpc.sql  (needs v686; not in the baseline)
+  n/a   v687_corpus_synthetic_exclusion.sql  (needs v687; not in the baseline)
+  n/a   v687_staff_self_profile.sql  (needs v687; not in the baseline)
+  n/a   v688_corpus_spine_v2.sql  (needs v688; not in the baseline)
+  n/a   v688_support_mark_read.sql  (needs v688; not in the baseline)
+  n/a   v690_corpus_dispersion_floor.sql  (needs v690; not in the baseline)
+  n/a   v691_corpus_outliers_confounders.sql  (needs v691; not in the baseline)
+  n/a   v692_corpus_lineage.sql  (needs v692; not in the baseline)
+  n/a   v693_corpus_exclusions_verdicts.sql  (needs v693; not in the baseline)
+  n/a   v694_corpus_preference.sql  (needs v694; not in the baseline)
+  n/a   v695_corpus_service_cadence.sql  (needs v695; not in the baseline)
+  n/a   v696_corpus_spine_verdicts.sql  (needs v696; not in the baseline)
+  n/a   v697_corpus_service_promotion.sql  (needs v697; not in the baseline)
+  n/a   v698_corpus_weekend_timezone.sql  (needs v698; not in the baseline)
+  n/a   v699_corpus_visit_days.sql  (needs v699; not in the baseline)
+  n/a   v700_corpus_behavioural_hardening.sql  (needs v700; not in the baseline)
+  n/a   v702_corpus_discovery_rigor.sql  (needs v702; not in the baseline)
+  n/a   v703_corpus_envelope_everywhere.sql  (needs v703; not in the baseline)
+  n/a   v705_corpus_spine_v3.sql  (needs v705; not in the baseline)
+  n/a   v706_corpus_branch_clock.sql  (needs v706; not in the baseline)
+  n/a   v707_corpus_promotion_population.sql  (needs v707; not in the baseline)
+  n/a   v708_corpus_discovery_ties.sql  (needs v708; not in the baseline)
+  n/a   v709_corpus_visit_days_cadence_tiers.sql  (needs v709; not in the baseline)
+  n/a   v710_corpus_service_visit_units.sql  (needs v710; not in the baseline)
+  n/a   v711_corpus_bringback_visit_days.sql  (needs v711; not in the baseline)
+  n/a   v712_corpus_spine_closures.sql  (needs v712; not in the baseline)
+  n/a   v713_corpus_evidence_pack.sql  (needs v713; not in the baseline)
+  n/a   v714_corpus_visit_days_estate.sql  (needs v714; not in the baseline)
+  n/a   v715_corpus_v179_weekday.sql  (needs v715; not in the baseline)
+  n/a   v717_corpus_time_basis.sql  (needs v717; not in the baseline)
+  n/a   v718_corpus_spine_margin.sql  (needs v718; not in the baseline)
+  n/a   v720_corpus_evidence_pack_grants.sql  (needs v720; not in the baseline)
+  n/a   v721_corpus_one_ci_gate.sql  (needs v721; not in the baseline)
+  n/a   v722_corpus_freshness_brief.sql  (needs v722; not in the baseline)
+  n/a   v723_corpus_reader_contracts.sql  (needs v723; not in the baseline)
+  n/a   v724_corpus_visit_days_estate_2.sql  (needs v724; not in the baseline)
+  n/a   v725_corpus_time_basis_shadow_gate.sql  (needs v725; not in the baseline)
+  n/a   v726_corpus_period_validation.sql  (needs v726; not in the baseline)
+  n/a   v728_retention_visit_unit_pin.sql  (needs v728; not in the baseline)
+  n/a   v729_corpus_visit_days_estate_3.sql  (needs v729; not in the baseline)
+  n/a   v730_corpus_category_customers_window.sql  (needs v730; not in the baseline)
+  n/a   v731_reconciliation_report.sql  (needs v731; not in the baseline)
+  n/a   v732_corpus_coverage_shown.sql  (needs v732; not in the baseline)
+  n/a   v733_corpus_best_customers_campaign.sql  (needs v733; not in the baseline)
+  n/a   v734_corpus_synthetic_exclusion.sql  (needs v734; not in the baseline)
+  n/a   v735_corpus_evidence_pack_extended.sql  (needs v735; not in the baseline)
+  n/a   v736_corpus_small_cell_principals.sql  (needs v736; not in the baseline)
+  n/a   v737_corpus_synthetic_v83_shadow.sql  (needs v737; not in the baseline)
+  n/a   v738_corpus_pack_report_sections.sql  (needs v738; not in the baseline)
+  n/a   v739_corpus_top_customers_floor.sql  (needs v739; not in the baseline)
+  n/a   v740_corpus_synthetic_estate_3.sql  (needs v740; not in the baseline)
+  n/a   v741_corpus_roster_read_audit.sql  (needs v741; not in the baseline)
+  n/a   v742_corpus_synthetic_estate_4.sql  (needs v742; not in the baseline)
+  n/a   v743_corpus_synthetic_scanner.sql  (needs v743; not in the baseline)
+  n/a   v744_corpus_scanner_blind_spots.sql  (needs v744; not in the baseline)
+  n/a   v744_merge_v685_semantics.sql  (needs v744; not in the baseline)
+
+── applying pending migrations ────────────────────────
+  applied  v423  20260822_nestly_v423_reward_edit_reaches_customers.sql
+  applied  v424  20260822_nestly_v424_birthday_window_honoured.sql
+  applied  v425  20260822_nestly_v425_referral_explicit_reward_type.sql
+  applied  v426  20260822_nestly_v426_canonical_tier_resolver.sql
+  applied  v427  20260822_nestly_v427_entitlements_reach_customers.sql
+  applied  v431  20260822_nestly_v431_publish_keeps_the_spine_model.sql
+  applied  v432  20260822_nestly_v432_staff_redeem_list_matches_customer.sql
+  applied  v433  20260822_nestly_v433_stamp_edit_version_split.sql
+  applied  v434  20260822_nestly_v434_switch_publish_guard.sql
+  applied  v435  20260822_nestly_v435_stamp_cycle_expiry.sql
+  applied  v436  20260822_nestly_v436_stamp_earn_pinned_and_lazy_close.sql
+  applied  v437  20260822_nestly_v437_history_rows_keep_their_unit.sql
+  applied  v454  20260822_nestly_v454_audit_log_detail_column.sql
+  applied  v455  20260822_nestly_v455_stock_follows_sale_items.sql
+  applied  v460  20260822_nestly_v460_business_kpi_pot_scope.sql
+  applied  v463  20260823_nestly_v463_stamp_card_max_length.sql
+  applied  v465  20260823_nestly_v465_home_ready_count.sql
+  applied  v464  20260823_nestly_v464_earned_reward_expiry.sql
+  applied  v462  20260823_nestly_v462_featured_offer_and_live_cap.sql
+  applied  v468  20260823_nestly_v468_programme_usage_counts.sql
+  applied  v469  20260823_nestly_v469_grant_sales_name_themselves.sql
+  applied  v472  20260823_nestly_v472_reward_end_date_and_menu_gallery.sql
+  applied  v473  20260823_nestly_v473_erasure_unlinks_the_customer.sql
+  applied  v474  20260823_nestly_v474_staff_reads_the_stamp_card.sql
+  applied  v475  20260823_nestly_v475_stamp_card_hides_switched_off_gifts.sql
+  applied  v477  20260823_nestly_v477_per_gift_where_it_works.sql
+  applied  v478  20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql
+  applied  v479  20260824_nestly_v479_customer_wallet_realtime_signal.sql
+  applied  v480  20260824_nestly_v480_loyalty_value_integrity_fence.sql
+  applied  v481  20260824_nestly_v481_legacy_referral_credit_fail_closed.sql
+  applied  v482  20260824_nestly_v482_loyalty_fence_null_guard.sql
+  applied  v488  20260824_nestly_v488_product_bundles_and_bottle_checkpoints.sql
+  applied  v489  20260824_nestly_v489_stamp_card_auto_rollover.sql
+  applied  v494  20260824_nestly_v494_wallet_signal_visits_and_grants.sql
+  applied  v495  20260824_nestly_v495_stopped_programme_gifts_not_offered.sql
+  applied  v496  20260825_nestly_v496_full_card_rolls_and_gifts_stack.sql
+  applied  v501  20260825_nestly_v501_customer_sees_tier_benefits.sql
+  applied  v504  20260825_nestly_v504_whatsapp_webhook_inbox.sql
+  applied  v505  20260825_nestly_v505_first_gift_before_go_live.sql
+  applied  v507  20260825_nestly_v507_a_business_is_born_live.sql
+  applied  v508  20260825_nestly_v508_reschedule_is_a_fresh_request.sql
+  applied  v510  20260825_nestly_v510_operating_system_crm_foundation.sql
+  applied  v511  20260825_nestly_v511_work_operating_system.sql
+  applied  v512  20260825_nestly_v512_adjust_follows_the_running_programme.sql
+  applied  v512  20260825_nestly_v512_commercial_handoff_integrity.sql
+  applied  v513  20260825_nestly_v513_welcome_gift_on_every_signup.sql
+  applied  v514  20260825_nestly_v514_one_authority_for_on_means_live.sql
+  applied  v513  20260825_nestly_v513_onboarding_next_actor_and_review.sql
+  applied  v515  20260825_nestly_v515_a_qr_on_every_gift.sql
+  applied  v516  20260825_nestly_v516_stamp_qr_asks_the_availability_core.sql
+  applied  v517  20260826_nestly_v517_whatsapp_foundations.sql
+  applied  v518  20260826_nestly_v518_capability_grants_and_quota.sql
+  applied  v520  20260826_nestly_v520_a_points_gift_can_expire.sql
+  applied  v521  20260826_nestly_v521_redemption_off_is_a_decision.sql
+  applied  v523  20260826_nestly_v523_customer_intelligence_follows_entitlement.sql
+  applied  v528  20260826_nestly_v528_whatsapp_webhook_retention.sql
+  applied  v530  20260826_nestly_v530_support_inbox_foundations.sql
+  applied  v531  20260826_nestly_v531_support_inbound_router.sql
+  applied  v535  20260826_nestly_v535_support_reply_chokepoint.sql
+  applied  v536  20260826_nestly_v536_support_dispatch_driver.sql
+  applied  v537  20260826_nestly_v537_capability_module_gate_uses_effective_mode.sql
+  applied  v542  20260827_nestly_v542_pending_business_may_ask_to_pay_manually.sql
+  applied  v544  20260827_nestly_v544_one_current_loyalty_balance.sql
+  applied  v539  20260826_nestly_v539_dispatch_url_secret_name.sql
+  applied  v545  20260827_nestly_v545_programme_aware_loyalty_evidence.sql
+  applied  v548  20260827_nestly_v548_insights_partition_scope.sql
+  applied  v548  20260827_nestly_v548_attention_list.sql
+  applied  v550  20260827_nestly_v550_recovery_report.sql
+  applied  v551  20260827_nestly_v551_top_share_denominator.sql
+  applied  v552  20260827_nestly_v552_gated_evidence_isolation.sql
+  applied  v554  20260827_nestly_v554_v154_family_provenance.sql
+  applied  v551  20260827_nestly_v551_whatsapp_bringback_sends.sql
+  applied  v555  20260827_nestly_v555_business_pot_fails_closed.sql
+  applied  v556  20260827_nestly_v556_policy_read_is_strict.sql
+  applied  v557  20260827_nestly_v557_whatsapp_appointment_notifications.sql
+  applied  v559  20260827_nestly_v559_publish_never_flips_loyalty_off.sql
+  applied  v560  20260827_nestly_v560_welcome_and_birthday_reach_customers.sql
+  applied  v563  20260827_nestly_v563_stamps_publish_needs_length.sql
+  applied  v564  20260827_nestly_v564_draft_cannot_time_machine.sql
+  applied  v565  20260827_nestly_v565_every_business_born_the_same.sql
+  applied  v566  20260827_nestly_v566_one_claimable_answer.sql
+  applied  v568  20260828_nestly_v568_survivor_arm_stays_in_its_pot.sql
+  applied  v569  20260828_nestly_v569_login_active_only_when_approved.sql
+  applied  v570  20260828_nestly_v570_dashboard_off_means_off.sql
+  applied  v571  20260828_nestly_v571_referral_attribution_and_inbox_provenance.sql
+  applied  v571  20260828_nestly_v571_retention_dispatch_inert_repair.sql
+  applied  v572  20260828_nestly_v572_module_off_cannot_write.sql
+  applied  v573  20260828_nestly_v573_module_off_reaches_the_rpcs.sql
+  applied  v572  20260828_nestly_v572_retention_safety_hardening.sql
+  applied  v574  20260828_nestly_v574_retention_control_plane.sql
+  applied  v575  20260828_nestly_v575_waitlist_preferred_at.sql
+  applied  v577  20260828_nestly_v577_publish_preserves_tier_identity.sql
+  applied  v579  20260828_nestly_v579_inbox_backfill_promotion_ref.sql
+  applied  v580  20260828_nestly_v580_appointment_send_follows_the_appointment.sql
+  applied  v590  20260828_nestly_v590_cron_run_history_retention.sql
+  applied  v590  20260828_nestly_v590_cron_run_history_retention_fn.sql
+  applied  v581  20260828_nestly_v581_appointment_branch_address.sql
+  applied  v592  20260828_nestly_v592_support_tick_dispatcher.sql
+  applied  v581  20260828_nestly_v581_short_notice_and_reschedule.sql
+  applied  v582  20260828_nestly_v582_whatsapp_feeds_recovery_attribution.sql
+  applied  v583  20260828_nestly_v583_owner_automation_toggles.sql
+  applied  v599  20260829_nestly_v599_browser_write_boundaries.sql
+  applied  v600  20260829_nestly_v600_register_v361_bringback_cron.sql
+  applied  v586  20260829_nestly_v586_tier_basis_reaches_the_draft.sql
+  applied  v601  20260829_nestly_v601_pause_featureless_cron.sql
+  applied  v602  20260829_nestly_v602_same_business_references.sql
+  applied  v587  20260829_nestly_v587_join_qr_names_its_business.sql
+  applied  v588  20260829_nestly_v588_staff_signup_flow_integrity.sql
+  applied  v589  20260829_nestly_v589_referral_switch_is_one_switch.sql
+  applied  v603  20260829_nestly_v603_one_relationship_per_pair.sql
+  applied  v611  20260829_nestly_v611_guard_honours_shop_hours_default.sql
+  applied  v593  20260829_nestly_v593_package_expiry.sql
+  applied  v598  20260829_nestly_v598_shop_hours_are_the_default.sql
+  applied  v601  20260829_nestly_v601_package_edit_retire_and_switch.sql
+  applied  v613  20260830_nestly_v613_bespoke_customer_package.sql
+  applied  v603  20260829_nestly_v603_package_history_and_dates.sql
+  applied  v612  20260830_nestly_v612_referral_immediate_when_no_floor.sql
+  applied  v620  20260830_nestly_v620_entitlement_authority.sql
+  applied  v621  20260830_nestly_v621_branch_payment_truth.sql
+  applied  v622  20260830_nestly_v622_sa_writes_become_rpcs.sql
+  applied  v623  20260830_nestly_v623_pii_read_audit.sql
+  applied  v624  20260830_nestly_v624_billing_ops_visibility.sql
+  applied  v625  20260830_nestly_v625_platform_google_only.sql
+  applied  v626  20260830_nestly_v626_automation_writers_sa_only.sql
+  applied  v627  20260830_nestly_v627_package_product_branches_and_request_amend.sql
+  applied  v628  20260830_nestly_v628_analytics_exclusions_watermarks.sql
+  applied  v629  20260830_nestly_v629_first_acquisition.sql
+  applied  v630  20260830_nestly_v630_behaviour_time_and_direct_links.sql
+  applied  v631  20260830_nestly_v631_appointment_lifecycle_events.sql
+  applied  v632  20260830_nestly_v632_rebooking_link.sql
+  applied  v633  20260830_nestly_v633_tier_transition_history.sql
+  applied  v634  20260830_nestly_v634_sale_items_all_paths.sql
+  applied  v635  20260830_nestly_v635_attribution_associations.sql
+  applied  v636  20260830_nestly_v636_services_delete_owner_only.sql
+  applied  v637  20260830_nestly_v637_public_funnel_counters.sql
+  applied  v638  20260830_nestly_v638_demographics_authority.sql
+  applied  v639  20260830_nestly_v639_appointment_status_backfill_keys.sql
+  applied  v640  20260830_nestly_v640_funnel_hit_resolvers.sql
+  applied  v629  20260830_nestly_v629_customer_lifetime_spend.sql
+  applied  v632  20260830_nestly_v632_inbox_mark_all_read.sql
+  applied  v634  20260830_nestly_v634_reconcile_failure_visibility.sql
+  applied  v641  20260830_nestly_v641_inbox_mark_all_read_through_the_guard.sql
+  applied  v644  20260831_nestly_v644_can_contact_authority.sql
+  applied  v645  20260831_nestly_v645_messaging_retention.sql
+  applied  v646  20260831_nestly_v646_engagement_rollups.sql
+  applied  v647  20260831_nestly_v647_canonical_taxonomy.sql
+  applied  v648  20260831_nestly_v648_service_canonical_map.sql
+  applied  v661  20260831_nestly_v661_receipt_ocr_claim_lease.sql
+  applied  v649  20260831_nestly_v649_category_snapshot_at_sale.sql
+  applied  v650  20260831_nestly_v650_ci_read_layer.sql
+  applied  v651  20260831_nestly_v651_canonical_cadence.sql
+  applied  v652  20260831_nestly_v652_evidence_contract.sql
+  applied  v654  20260831_nestly_v654_receipt_identity_and_perk_date.sql
+  applied  v655  20260831_nestly_v655_cancel_and_package_edit.sql
+  applied  v656  20260831_nestly_v656_tier_discount_scope.sql
+  applied  v657  20260831_nestly_v657_discount_two_shapes.sql
+  applied  v659  20260831_nestly_v659_edit_means_edit.sql
+  applied  v660  20260831_nestly_v660_owner_rulings.sql
+  applied  v663  20260831_nestly_v663_customer_appointment_changes.sql
+  applied  v664  20260831_nestly_v664_capacity_tiers_and_manual_payment.sql
+  applied  v665  20260831_nestly_v665_gift_staging_and_reversal.sql
+  applied  v665  20260901_nestly_v665_branch_subscription_choice.sql
+  applied  v666  20260901_nestly_v666_add_branch_tier_capacity.sql
+  applied  v666  20260901_nestly_v666_gift_scan_opens_the_sale.sql
+  applied  v667  20260901_nestly_v667_ci_access_boundaries.sql
+  applied  v668  20260901_nestly_v668_complete_v523_entitlement.sql
+  applied  v669  20260901_nestly_v669_numeric_honesty.sql
+  applied  v672  20260902_nestly_v672_public_support_desk.sql
+  applied  v673  20260902_nestly_v673_staff_insert_owner_only.sql
+  applied  v674  20260902_nestly_v674_birthday_gift_type_change.sql
+  applied  v675  20260902_nestly_v675_stale_stamp_draft_superseded.sql
+  applied  v676  20260902_nestly_v676_gift_intent_reopen.sql
+  applied  v677  20260902_nestly_v677_reversal_is_not_a_visit.sql
+  applied  v678  20260902_nestly_v678_auto_approve_after_choice.sql
+  applied  v679  20260902_nestly_v679_tier_edits_survive_publish.sql
+  applied  v680  20260902_nestly_v680_manual_payment_reopens_workspace.sql
+  applied  v681  20260902_nestly_v681_free_gift_confirm_at_scan.sql
+  applied  v682  20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql
+  applied  v683  20260902_nestly_v683_referral_new_customers_only.sql
+  applied  v684  20260902_nestly_v684_delete_retired_offer.sql
+  applied  v685  20260902_nestly_v685_singapore_day_authority.sql
+  applied  v686  20260902_nestly_v686_service_delete_owner_only_rpc.sql
+  applied  v687  20260902_nestly_v687_staff_self_profile.sql
+  applied  v688  20260902_nestly_v688_support_mark_read.sql
+  applied  v672  20260920_nestly_v672_statistical_authority.sql
+  applied  v673  20260920_nestly_v673_retention_funnels.sql
+  applied  v674  20260920_nestly_v674_demographic_intelligence.sql
+  applied  v675  20260920_nestly_v675_behaviour_service_package.sql
+  applied  v676  20260920_nestly_v676_internal_drain_authority.sql
+  applied  v678  20260920_nestly_v678_consultant_spine.sql
+  applied  v680  20260920_nestly_v680_ci_envelope.sql
+  applied  v681  20260920_nestly_v681_return_probability.sql
+  applied  v682  20260920_nestly_v682_golden_corpus.sql
+  applied  v684  20260920_nestly_v684_metric_dictionary.sql
+  applied  v685  20260920_nestly_v685_shadow_reconciliation.sql
+  applied  v686  20260920_nestly_v686_discovery_scan.sql
+  applied  v687  20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql
+  applied  v689  20260920_nestly_v689_ci_gate_alignment.sql
+  applied  v690  20260920_nestly_v690_dispersion_and_one_floor.sql
+  applied  v683  20260920_nestly_v683_staff_rebooking_loyalty_discount.sql
+  applied  v688  20260920_nestly_v688_consultant_spine_v2.sql
+  applied  v691  20260920_nestly_v691_outliers_and_confounders.sql
+  applied  v692  20260920_nestly_v692_lineage_and_visit_dedupe.sql
+  applied  v693  20260920_nestly_v693_exclusions_and_typed_verdicts.sql
+  applied  v694  20260920_nestly_v694_demographic_preference.sql
+  applied  v695  20260920_nestly_v695_service_cadence_fallback.sql
+  applied  v696  20260920_nestly_v696_spine_typed_verdicts.sql
+  applied  v697  20260920_nestly_v697_service_promotion_dependency.sql
+  applied  v698  20260920_nestly_v698_weekend_split_and_branch_timezone.sql
+  applied  v699  20260920_nestly_v699_visit_day_authority.sql
+  applied  v700  20260920_nestly_v700_behavioural_hardening.sql
+  applied  v702  20260920_nestly_v702_discovery_verdict_rigor.sql
+  applied  v703  20260920_nestly_v703_envelope_everywhere.sql
+  applied  v705  20260920_nestly_v705_spine_v3.sql
+  applied  v706  20260920_nestly_v706_branch_clock_everywhere.sql
+  applied  v707  20260920_nestly_v707_promotion_population.sql
+  applied  v708  20260920_nestly_v708_discovery_tie_strata.sql
+  applied  v709  20260920_nestly_v709_visit_days_cadence_and_tiers.sql
+  applied  v710  20260920_nestly_v710_service_visit_units.sql
+  applied  v711  20260920_nestly_v711_bringback_visit_days.sql
+  applied  v712  20260920_nestly_v712_spine_wording_closures.sql
+  applied  v713  20260920_nestly_v713_evidence_pack_typed_findings.sql
+  applied  v714  20260920_nestly_v714_visit_days_estate.sql
+  applied  v715  20260920_nestly_v715_v179_weekday_visit_days.sql
+  applied  v717  20260920_nestly_v717_time_basis_and_category_floor.sql
+  applied  v721  20260920_nestly_v721_one_ci_gate.sql
+  applied  v725  20260920_nestly_v725_time_basis_and_shadow_gate.sql
+  applied  v718  20260920_nestly_v718_spine_margin_and_alternatives.sql
+  applied  v720  20260920_nestly_v720_evidence_pack_grants.sql
+  applied  v722  20260920_nestly_v722_freshness_and_brief_evidence.sql
+  applied  v724  20260920_nestly_v724_visit_days_estate_2.sql
+  applied  v726  20260920_nestly_v726_period_validation.sql
+  applied  v729  20260920_nestly_v729_visit_days_estate_3.sql
+  applied  v730  20260920_nestly_v730_category_customers_window.sql
+  applied  v734  20260920_nestly_v734_synthetic_excluded_everywhere.sql
+  applied  v735  20260920_nestly_v735_evidence_pack_extended.sql
+  applied  v737  20260920_nestly_v737_synthetic_excluded_v83_shadow.sql
+  applied  v738  20260920_nestly_v738_pack_report_sections.sql
+  applied  v739  20260920_nestly_v739_top_customers_floor.sql
+  applied  v740  20260920_nestly_v740_synthetic_excluded_estate_3.sql
+  applied  v741  20260920_nestly_v741_roster_read_audit.sql
+  applied  v742  20260920_nestly_v742_synthetic_excluded_estate_4.sql
+  applied  v743  20260920_nestly_v743_synthetic_scanner.sql
+  applied  v744  20260920_nestly_v744_scanner_blind_spots.sql
+
+── MIGRATED (against peekaa_migrated) ──────────────────────
+  ok    v106_corpus_revenue_truth.sql  (742ms)
+  ok    v422_baseline_behaviours.sql  (568ms)
+  ok    v422_customer_intelligence_scale.sql  (9261ms)
+  ok    v423_reward_edit.sql  (602ms)
+  ok    v424_birthday_window.sql  (629ms)
+  ok    v425_referral_typed_payout.sql  (633ms)
+  ok    v426_tier_resolver.sql  (664ms)
+  isolated v427_entitlements.sql  (own scratch schema, 196ms)
+  ok    v431_publish_spine_model.sql  (668ms)
+  ok    v432_staff_redeem_list_matches_customer.sql  (722ms)
+  ok    v433_v436_stamp_lifecycle.sql  (1046ms)
+  ok    v464_earned_reward_expiry.sql  (1009ms)
+  ok    v480_conversion_atomicity.sql  (524ms)
+  ok    v480_loyalty_value_integrity_fence.sql  (587ms)
+  ok    v480_referral_reversal.sql  (774ms)
+  ok    v482_loyalty_fence_null_guard.sql  (431ms)
+  FAIL  v510_operating_system_crm_foundation.sql
+        psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v510_operating_system_crm_foundation.sql:548: ERROR:  FAIL unrelated partial payment unlocked the contractual entitlement
+        CONTEXT:  PL/pgSQL function inline_code_block line 424 at RAISE
+  ok    v511_work_operating_system.sql  (726ms)
+  FAIL  v512_commercial_handoff_integrity.sql
+        psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v512_commercial_handoff_integrity.sql:465: ERROR:  FAIL expected exactly 1 accrual after verified payment, found 0
+        CONTEXT:  PL/pgSQL function inline_code_block line 166 at RAISE
+  FAIL  v513_onboarding_next_actor_and_review.sql
+        psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v513_onboarding_next_actor_and_review.sql:326: ERROR:  FAIL a 48h-old Peekaa turn did not become a stall work item: {"as_of": "2026-09-02T18:45:12.972037+00:00", "nudged": 1, "stalled": 1}
+        CONTEXT:  PL/pgSQL function inline_code_block line 187 at RAISE
+  ok    v544_loyalty_current_balance_truth.sql  (841ms)
+  ok    v545_programme_aware_loyalty_evidence.sql  (540ms)
+  ok    v548_insights_partition_scope.sql  (491ms)
+  ok    v551_top_share_denominator.sql  (589ms)
+  ok    v552_gated_evidence_isolation.sql  (618ms)
+  ok    v554_v154_family_provenance.sql  (529ms)
+  ok    v555_business_pot_fails_closed.sql  (485ms)
+  ok    v556_policy_read_is_strict.sql  (528ms)
+  ok    v629_corpus_acquisition_demographics.sql  (488ms)
+  ok    v651_corpus_cadence.sql  (550ms)
+  ok    v652_corpus_statistics.sql  (523ms)
+  ok    v667_ci_access_boundaries.sql  (637ms)
+  ok    v672_corpus_stat_authority.sql  (450ms)
+  ok    v673_corpus_funnels.sql  (669ms)
+  ok    v674_birthday_gift_type_change.sql  (533ms)
+  ok    v674_corpus_demographics.sql  (736ms)
+  ok    v675_corpus_behaviour.sql  (745ms)
+  ok    v675_stale_stamp_draft_superseded.sql  (520ms)
+  ok    v676_gift_intent_reopen.sql  (541ms)
+  ok    v677_reversal_is_not_a_visit.sql  (578ms)
+  ok    v678_auto_approve_after_choice.sql  (544ms)
+  ok    v678_corpus_consultant_spine.sql  (1563ms)
+  ok    v679_tier_edits_survive_publish.sql  (645ms)
+  ok    v680_corpus_envelope.sql  (670ms)
+  ok    v680_manual_payment_reopens_workspace.sql  (527ms)
+  ok    v681_corpus_calibration.sql  (714ms)
+  ok    v682_golden_reconciliation.sql  (7211ms)
+  ok    v683_corpus_behavioural_authorities.sql  (1097ms)
+  ok    v683_referral_new_customers_only.sql  (533ms)
+  ok    v684_corpus_dictionary.sql  (595ms)
+  ok    v684_delete_retired_offer.sql  (499ms)
+  ok    v685_corpus_shadow.sql  (564ms)
+  ok    v685_singapore_day_authority.sql  (571ms)
+  ok    v686_corpus_discovery.sql  (1350ms)
+  ok    v686_service_delete_owner_only_rpc.sql  (531ms)
+  ok    v687_corpus_synthetic_exclusion.sql  (524ms)
+  ok    v687_staff_self_profile.sql  (536ms)
+  ok    v688_corpus_spine_v2.sql  (2211ms)
+  ok    v688_support_mark_read.sql  (599ms)
+  ok    v690_corpus_dispersion_floor.sql  (619ms)
+  ok    v691_corpus_outliers_confounders.sql  (4224ms)
+  ok    v692_corpus_lineage.sql  (618ms)
+  ok    v693_corpus_exclusions_verdicts.sql  (733ms)
+  ok    v694_corpus_preference.sql  (704ms)
+  ok    v695_corpus_service_cadence.sql  (658ms)
+  ok    v696_corpus_spine_verdicts.sql  (1131ms)
+  ok    v697_corpus_service_promotion.sql  (636ms)
+  ok    v698_corpus_weekend_timezone.sql  (744ms)
+  ok    v699_corpus_visit_days.sql  (907ms)
+  ok    v700_corpus_behavioural_hardening.sql  (922ms)
+  ok    v702_corpus_discovery_rigor.sql  (2741ms)
+  ok    v703_corpus_envelope_everywhere.sql  (747ms)
+  ok    v705_corpus_spine_v3.sql  (2541ms)
+  ok    v706_corpus_branch_clock.sql  (1217ms)
+  ok    v707_corpus_promotion_population.sql  (826ms)
+  ok    v708_corpus_discovery_ties.sql  (2645ms)
+  ok    v709_corpus_visit_days_cadence_tiers.sql  (588ms)
+  ok    v710_corpus_service_visit_units.sql  (644ms)
+  ok    v711_corpus_bringback_visit_days.sql  (609ms)
+  ok    v712_corpus_spine_closures.sql  (1275ms)
+  ok    v713_corpus_evidence_pack.sql  (976ms)
+  ok    v714_corpus_visit_days_estate.sql  (746ms)
+  ok    v715_corpus_v179_weekday.sql  (545ms)
+  ok    v717_corpus_time_basis.sql  (880ms)
+  ok    v718_corpus_spine_margin.sql  (2625ms)
+  ok    v720_corpus_evidence_pack_grants.sql  (699ms)
+  ok    v721_corpus_one_ci_gate.sql  (746ms)
+  ok    v722_corpus_freshness_brief.sql  (955ms)
+  ok    v723_corpus_reader_contracts.sql  (762ms)
+  ok    v724_corpus_visit_days_estate_2.sql  (588ms)
+  ok    v725_corpus_time_basis_shadow_gate.sql  (610ms)
+  ok    v726_corpus_period_validation.sql  (750ms)
+  ok    v728_retention_visit_unit_pin.sql  (507ms)
+  ok    v729_corpus_visit_days_estate_3.sql  (608ms)
+  ok    v730_corpus_category_customers_window.sql  (515ms)
+  ok    v731_reconciliation_report.sql  (678ms)
+  ok    v732_corpus_coverage_shown.sql  (673ms)
+  ok    v733_corpus_best_customers_campaign.sql  (816ms)
+  ok    v734_corpus_synthetic_exclusion.sql  (665ms)
+  ok    v735_corpus_evidence_pack_extended.sql  (702ms)
+  ok    v736_corpus_small_cell_principals.sql  (720ms)
+  ok    v737_corpus_synthetic_v83_shadow.sql  (563ms)
+  ok    v738_corpus_pack_report_sections.sql  (948ms)
+  ok    v739_corpus_top_customers_floor.sql  (617ms)
+  ok    v740_corpus_synthetic_estate_3.sql  (545ms)
+  ok    v741_corpus_roster_read_audit.sql  (509ms)
+  ok    v742_corpus_synthetic_estate_4.sql  (530ms)
+  ok    v743_corpus_synthetic_scanner.sql  (3537ms)
+  ok    v744_corpus_scanner_blind_spots.sql  (4453ms)
+  ok    v744_merge_v685_semantics.sql  (507ms)
+
+── v480 actual-writer concurrency ────────────────────
+v480 concurrency: PASS (exclusive→shared 1822ms; shared→exclusive 1988ms; different tenant 44ms)
+{"sub":"f898008e-49f2-482a-bde0-a545639a3832","role":"authenticated"}
+{"status": "ok", "expiry_days": null, "expiry_mode": "none", "version_split": false, "publish_status": "published", "stamp_per_cents": null, "target_version_id": "7d52100b-ad27-4f26-8b76-3a80b3cf14b7", "stamp_validity_days": null, "earn_points_per_dollar": 1.0, "stamp_reward_expiry_days": null}
+
+{"changed": [{"to": true, "from": false, "kind": "points"}], "programmes": [{"id": "735637e8-2419-4824-8a4f-61da3a295208", "kind": "points", "active": true, "paused_since": null, "running_since": "2026-09-02T18:47:03.363171+00:00"}, {"id": "3b83d763-e243-481e-bb5e-abd0ac1898b5", "kind": "tiers", "active": false, "paused_since": null, "running_since": null}, {"id": "2af34e21-fff3-449e-bcda-566fb7c5676e", "kind": "stamps", "active": false, "paused_since": null, "running_since": null}, {"id": "e8f5938b-d4b5-4fde-b44a-ce8ff0d943a7", "kind": "referral", "active": false, "paused_since": null, "running_since": null}], "business_id": "00f3e1ce-bd24-4ee2-b9e6-6b06377d0018", "pot_migration_id": null, "referral_reward_kind_now_unpayable": false}
+  actual sale                         PASS
+  actual positive-adjustment          PASS
+  actual negative-adjustment          PASS
+  actual redemption                   PASS
+  actual sale-reversal                PASS
+  actual redemption-restoration       PASS
+  concurrent final-balance redemption PASS
+  concurrent same-key adjustment PASS
+  concurrent referral redemption/reversal PASS (0|1|0|0|2)
+  queued exclusive under shared burst PASS (1271ms)
+v480 actual-writer concurrency: PASS
+
+── summary ────────────────────────────────────────────
+  WARN  BASELINE  v425_referral_typed_payout.sql
+        passed BEFORE v425 was applied — a migration-pinned test that is already green may not be testing what the migration changes
+  WARN  BASELINE  v426_tier_resolver.sql
+        passed BEFORE v426 was applied — a migration-pinned test that is already green may not be testing what the migration changes
+  WARN  BASELINE  v431_publish_spine_model.sql
+        passed BEFORE v431 was applied — a migration-pinned test that is already green may not be testing what the migration changes
+  MIGRATED  v510_operating_system_crm_foundation.sql
+    psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v510_operating_system_crm_foundation.sql:548: ERROR:  FAIL unrelated partial payment unlocked the contractual entitlement
+  MIGRATED  v512_commercial_handoff_integrity.sql
+    psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v512_commercial_handoff_integrity.sql:465: ERROR:  FAIL expected exactly 1 accrual after verified payment, found 0
+  MIGRATED  v513_onboarding_next_actor_and_review.sql
+    psql:/Users/cs/Downloads/loyalty-worktrees/wt-ci-proof/db/tests/executed/v513_onboarding_next_actor_and_review.sql:326: ERROR:  FAIL a 48h-old Peekaa turn did not become a stall work item: {"as_of": "2026-09-02T18:45:12.972037+00:00", "nudged": 1, "stalled": 1}
+
+3 failure(s) in 235.7s
+EXIT 1

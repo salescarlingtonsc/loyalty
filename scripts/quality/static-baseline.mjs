@@ -478,7 +478,26 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   // localeCompare's tie-break within the same (major, variant) semantic pair sorts the "_fn"
   // filename ahead of its plainer sibling, so the actual reported transition lands here rather
   // than on the alphabetically-simpler v590 name.
-  '20260829_nestly_v589_referral_switch_is_one_switch.sql -> 20260828_nestly_v590_cron_run_history_retention_fn.sql'
+  '20260829_nestly_v589_referral_switch_is_one_switch.sql -> 20260828_nestly_v590_cron_run_history_retention_fn.sql',
+  // 2026-09-03 merge: the Customer Intelligence proof wave (v672-v744, dated 20260920 so the local
+  // harness and the deploy slots 20260920000000-20260922110000 agree) is a semantic-number twin of
+  // main's v672-v688 audit waves (dated 20260902, already applied to production). Semantic order
+  // therefore alternates between the two dates fourteen times; each pair is a parallel-session
+  // twin, not a real ordering regression. Deploy order is unambiguous (the canonical plan).
+  '20260920_nestly_v672_statistical_authority.sql -> 20260902_nestly_v673_staff_insert_owner_only.sql',
+  '20260920_nestly_v673_retention_funnels.sql -> 20260902_nestly_v674_birthday_gift_type_change.sql',
+  '20260920_nestly_v674_demographic_intelligence.sql -> 20260902_nestly_v675_stale_stamp_draft_superseded.sql',
+  '20260920_nestly_v675_behaviour_service_package.sql -> 20260902_nestly_v676_gift_intent_reopen.sql',
+  '20260920_nestly_v676_internal_drain_authority.sql -> 20260902_nestly_v677_reversal_is_not_a_visit.sql',
+  '20260920_nestly_v678_consultant_spine.sql -> 20260902_nestly_v679_tier_edits_survive_publish.sql',
+  '20260920_nestly_v680_ci_envelope.sql -> 20260902_nestly_v681_free_gift_confirm_at_scan.sql',
+  '20260920_nestly_v681_return_probability.sql -> 20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql',
+  '20260920_nestly_v682_golden_corpus.sql -> 20260902_nestly_v683_referral_new_customers_only.sql',
+  '20260920_nestly_v683_staff_rebooking_loyalty_discount.sql -> 20260902_nestly_v684_delete_retired_offer.sql',
+  '20260920_nestly_v684_metric_dictionary.sql -> 20260902_nestly_v685_singapore_day_authority.sql',
+  '20260920_nestly_v685_shadow_reconciliation.sql -> 20260902_nestly_v686_service_delete_owner_only_rpc.sql',
+  '20260920_nestly_v686_discovery_scan.sql -> 20260902_nestly_v687_staff_self_profile.sql',
+  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

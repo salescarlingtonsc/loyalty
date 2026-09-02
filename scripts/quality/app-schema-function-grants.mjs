@@ -5,7 +5,7 @@
  * local rehearsal harness. Production was already correct (verified 2026-09-02, read-only
  * query) -- the exposure was a harness-fidelity bug in scripts/db-tests/baseline-grants.sql,
  * now fixed there. That fix, and the belt-and-braces revoke + internal gate added in
- * db/migrations/20260902_nestly_v720_evidence_pack_grants.sql, are what actually CLOSE the
+ * db/migrations/20260920_nestly_v720_evidence_pack_grants.sql, are what actually CLOSE the
  * defect; this script is deliberately secondary. It exists only to make the next migration
  * that grants EXECUTE on a schema-`app` function to public/anon/authenticated visible for
  * review at a glance, before it ships.

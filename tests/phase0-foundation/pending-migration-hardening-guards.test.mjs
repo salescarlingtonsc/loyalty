@@ -319,18 +319,200 @@ export function assignedLiterals(code, variable) {
 }
 
 /**
+ * `stripSqlComments` (reused above) is single-quote-aware but NOT dollar-quote-aware: it treats a
+ * bare `--` anywhere outside `'...'` as a line comment, so a needle that legitimately contains
+ * `--` inside a `$marker$...$marker$` literal — exactly the defect this guard exists to catch —
+ * would be silently eaten before `helperPatchCallPairs` ever sees it, hiding the very violation
+ * it is meant to prove. This variant additionally treats `$tag$...$tag$` as opaque, so ordinary
+ * commentary around a helper call is still stripped but a literal's contents survive intact.
+ */
+function stripSqlCommentsDollarAware(sql) {
+  const n = sql.length;
+  let out = '';
+  let i = 0;
+  const dollarTag = /^\$[a-zA-Z0-9_]*\$/;
+  while (i < n) {
+    const c = sql[i];
+    const c2 = sql[i + 1];
+    if (c === "'") {
+      out += c; i += 1;
+      while (i < n) {
+        if (sql[i] === "'" && sql[i + 1] === "'") { out += "''"; i += 2; continue; }
+        if (sql[i] === "'") { out += "'"; i += 1; break; }
+        out += sql[i]; i += 1;
+      }
+      continue;
+    }
+    if (c === '$') {
+      const m = dollarTag.exec(sql.slice(i, i + 64));
+      if (m) {
+        const tag = m[0];
+        const close = sql.indexOf(tag, i + tag.length);
+        if (close !== -1) {
+          const end = close + tag.length;
+          out += sql.slice(i, end);
+          i = end;
+          continue;
+        }
+      }
+    }
+    if (c === '-' && c2 === '-') { while (i < n && sql[i] !== '\n') i++; continue; }
+    if (c === '/' && c2 === '*') { i += 2; while (i < n && !(sql[i] === '*' && sql[i + 1] === '/')) i++; i += 2; continue; }
+    out += c; i += 1;
+  }
+  return out;
+}
+
+/**
+ * Splits the arguments of a call whose opening `(` sits at `code[openIdx]`, respecting nested
+ * parens, single-quoted strings (with `''` escapes), and dollar-quoted strings (`$tag$...$tag$`,
+ * any tag, including the empty tag `$$`). Returns the raw (untrimmed) text of each top-level
+ * argument plus the index just past the call's closing `)`. This is the one parser both the
+ * assignment form and the `app.vNNN_patch(...)` call form need, because a needle/replacement
+ * literal routinely contains its own parens and quotes.
+ */
+function parseCallArgs(code, openIdx) {
+  const n = code.length;
+  let i = openIdx + 1;
+  let depth = 1;
+  const args = [];
+  let current = '';
+  const dollarTag = /^\$[a-zA-Z0-9_]*\$/;
+  while (i < n && depth > 0) {
+    const c = code[i];
+    if (c === "'") {
+      const start = i;
+      i += 1;
+      while (i < n) {
+        if (code[i] === "'" && code[i + 1] === "'") { i += 2; continue; }
+        if (code[i] === "'") { i += 1; break; }
+        i += 1;
+      }
+      current += code.slice(start, i);
+      continue;
+    }
+    if (c === '$') {
+      const m = dollarTag.exec(code.slice(i, i + 64));
+      if (m) {
+        const tag = m[0];
+        const close = code.indexOf(tag, i + tag.length);
+        if (close !== -1) {
+          const end = close + tag.length;
+          current += code.slice(i, end);
+          i = end;
+          continue;
+        }
+      }
+    }
+    if (c === '(') { depth += 1; current += c; i += 1; continue; }
+    if (c === ')') {
+      depth -= 1;
+      i += 1;
+      if (depth === 0) break;
+      current += c;
+      continue;
+    }
+    if (c === ',' && depth === 1) { args.push(current); current = ''; i += 1; continue; }
+    current += c;
+    i += 1;
+  }
+  if (args.length > 0 || current.trim() !== '') args.push(current);
+  return { args, endIndex: i };
+}
+
+// A dollar-quoted literal that is the WHOLE (trimmed) argument text: `$tag$...$tag$`, any tag.
+const WHOLE_DOLLAR_LITERAL = /^\$([a-zA-Z0-9_]*)\$([\s\S]*)\$\1\$$/;
+
+/**
+ * The generic `select <schema>.<helper>(arg1, arg2, $tag$needle$tag$, $tag$replacement$tag$, ...)`
+ * idiom (v685's `app.v685_patch`, and any future helper of the same shape): a needle/replacement
+ * pair passed as literal call arguments instead of a `v_old := $marker$...$marker$` assignment.
+ * Generic on the helper's schema-qualified name and the dollar tag — the only fixed part is
+ * "third and fourth positional arguments are whole dollar-quoted literals". Requires a leading
+ * `select` (case-insensitive) so ordinary nested calls — including ones with dollar-quoted text
+ * that happen to fall in the 3rd/4th slot — are not mistaken for the splice-helper idiom, and so
+ * the scan can skip over each matched call's own dollar-quoted arguments (never re-entering text
+ * that is DATA, not code, such as the `app.sg_day(...)` calls quoted inside D-01's replacement).
+ */
+export function helperPatchCallPairs(sql) {
+  const code = stripSqlCommentsDollarAware(sql);
+  const callRe = /\bselect\s+([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)\s*\(/gi;
+  const pairs = [];
+  let m;
+  while ((m = callRe.exec(code)) !== null) {
+    const funcName = m[1].toLowerCase();
+    const openIdx = m.index + m[0].length - 1;
+    const { args, endIndex } = parseCallArgs(code, openIdx);
+    callRe.lastIndex = endIndex; // resume AFTER this call, so its own literal arguments — which
+    // may themselves contain text that looks like other calls — are never re-scanned as code.
+    if (args.length >= 4) {
+      const needleMatch = WHOLE_DOLLAR_LITERAL.exec(args[2].trim());
+      const replacementMatch = WHOLE_DOLLAR_LITERAL.exec(args[3].trim());
+      if (needleMatch && replacementMatch) {
+        pairs.push({ funcName, needle: needleMatch[2], replacement: replacementMatch[2] });
+      }
+    }
+  }
+  return pairs;
+}
+
+/** Same comment-free assertion as GUARD 3's assignment form, applied to every helper-call pair. */
+export function helperPatchCallViolations(sql) {
+  if (!/pg_get_functiondef/i.test(stripSqlCommentsDollarAware(sql))) return [];
+  const violations = [];
+  for (const [index, pair] of helperPatchCallPairs(sql).entries()) {
+    const variable = `${pair.funcName}(#${index + 1})`;
+    for (const [role, literal] of [['needle', pair.needle], ['replacement', pair.replacement]]) {
+      if (literal.includes('--')) {
+        violations.push({ role, variable, problem: `contains a "--" comment: ${JSON.stringify(literal.trim().slice(0, 72))}` });
+      }
+    }
+  }
+  return violations;
+}
+
+/**
+ * Parameter names, in order, of every `create [or replace] function <schema>.<name>(...)` header
+ * in `code` — used only to recognise the ONE place a helper's own template body legitimately
+ * has no `:=` assignment for its needle/replacement: they arrive as call arguments instead, and
+ * `helperPatchCallPairs` above already proves those arguments comment-free at every call site.
+ */
+function functionParamPositions(code) {
+  const headerRe = /create\s+(?:or\s+replace\s+)?function\s+([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)\s*\(/gi;
+  const map = new Map();
+  let m;
+  while ((m = headerRe.exec(code)) !== null) {
+    const openIdx = m.index + m[0].length - 1;
+    const { args, endIndex } = parseCallArgs(code, openIdx);
+    headerRe.lastIndex = endIndex;
+    const params = args.map((a) => {
+      const mm = /^\s*([a-z_][a-z0-9_]*)/i.exec(a);
+      return mm ? mm[1].toLowerCase() : null;
+    });
+    map.set(m[1].toLowerCase(), params);
+  }
+  return map;
+}
+
+/**
  * GUARD 3 — for every `pg_get_functiondef` splice in `sql`, the needle AND the spliced-in
  * replacement must be free of `--`. A needle carrying a comment matches a psql-replayed rehearsal
  * DB and NOT production (whose function bodies lost their full-line comments to the MCP apply);
  * a replacement carrying one is the same divergence in the other direction, and would additionally
  * be truncated into an unterminated literal by any comment stripper that is not string-aware.
  * Fails CLOSED: a splice whose needle variable has no discoverable assignment is a violation too,
- * because an unparsed needle cannot be shown to be comment-free.
+ * because an unparsed needle cannot be shown to be comment-free — UNLESS the variable is a formal
+ * parameter of a helper function (app.vNNN_patch's own `execute replace(v_src, p_old, p_new)`
+ * template body) whose 3rd/4th-argument call sites `helperPatchCallPairs` already found and
+ * proved comment-free; that case is reported by `helperPatchCallViolations` instead, so it is not
+ * double-reported here as an unparsable needle.
  */
 export function spliceNeedleViolations(sql) {
   const code = stripSqlComments(sql);
   if (!/pg_get_functiondef/i.test(code)) return [];
   const violations = [];
+  const paramPositions = functionParamPositions(code);
+  const helperNamesWithPairs = new Set(helperPatchCallPairs(sql).map((pair) => pair.funcName));
   SPLICE_EXECUTE.lastIndex = 0;
   let call;
   while ((call = SPLICE_EXECUTE.exec(code)) !== null) {
@@ -338,6 +520,11 @@ export function spliceNeedleViolations(sql) {
       if (variable.startsWith("'")) continue; // an inline empty literal deletes rather than splices
       const assignments = assignedLiterals(code, variable);
       if (assignments.length === 0) {
+        const coveredByHelperCalls = [...paramPositions].some(([funcName, params]) => {
+          const paramIndex = params.indexOf(variable.toLowerCase());
+          return (paramIndex === 2 || paramIndex === 3) && helperNamesWithPairs.has(funcName);
+        });
+        if (coveredByHelperCalls) continue;
         violations.push({ role, variable, problem: 'no parsable assignment (cannot prove it is comment-free)' });
         continue;
       }
@@ -556,11 +743,16 @@ test('GUARD 1 fires on an app.* definer function (the rev-4 widening)', () => {
 test('pending pg_get_functiondef splices anchor on COMMENT-FREE code', async () => {
   const failures = [];
   let spliceCount = 0;
+  let helperCallCount = 0;
   for (const migration of (await orderedMigrations()).filter(({ kind }) => kind === 'pending')) {
     const code = stripSqlComments(migration.sql);
     SPLICE_EXECUTE.lastIndex = 0;
     spliceCount += [...code.matchAll(SPLICE_EXECUTE)].length;
+    helperCallCount += helperPatchCallPairs(migration.sql).length;
     for (const violation of spliceNeedleViolations(migration.sql)) {
+      failures.push(`${migration.name}: ${violation.role} ${violation.variable} — ${violation.problem}`);
+    }
+    for (const violation of helperPatchCallViolations(migration.sql)) {
       failures.push(`${migration.name}: ${violation.role} ${violation.variable} — ${violation.problem}`);
     }
   }
@@ -578,6 +770,54 @@ test('pending pg_get_functiondef splices anchor on COMMENT-FREE code', async () 
   // silently blind. v49a(x2) + v49b + v50a(x2) + v52(x3) + v53a + v67(x2) = 11 parsed splices, plus
   // v49a's one delete-form `replace(v_definition, v_needle, '')` which is counted but not spliced.
   assert.ok(spliceCount >= 11, `GUARD 3 must still see the splice idiom (saw ${spliceCount})`);
+  // Same load-bearing check for the helper-call idiom: v685's 13 `app.v685_patch(...)` calls.
+  assert.ok(helperCallCount >= 13, `GUARD 3 must still see the helper-call splice idiom (saw ${helperCallCount})`);
+});
+
+test('helper-call splice pairs: v685 finds its 13 pairs and every one passes comment-free', async () => {
+  const migrations = (await orderedMigrations()).filter(({ kind }) => kind === 'pending');
+  const v685 = migrations.find((migration) => migration.name.includes('v685'));
+  assert.ok(v685, 'nestly_v685_singapore_day_authority must be present in the pending set');
+
+  const pairs = helperPatchCallPairs(v685.sql);
+  assert.equal(pairs.length, 13, `expected 13 app.v685_patch(...) calls, found ${pairs.length}`);
+  assert.ok(pairs.every((pair) => pair.funcName === 'app.v685_patch'));
+
+  assert.deepEqual(helperPatchCallViolations(v685.sql), []);
+  // The whole-guard entry point must agree: the previously-unparsable p_old/p_new template
+  // parameters are now recognised as covered by the call-site pairs above, not reported raw.
+  assert.deepEqual(spliceNeedleViolations(v685.sql), []);
+});
+
+test('GUARD 3 (helper-call form) fails on a synthetic "--" comment inside a needle', () => {
+  const synthetic = [
+    // The gate both entry points share: only sql that mentions the pg_get_functiondef splice
+    // idiom is in scope at all, exactly as app.v900_patch's own throwaway body would read it.
+    "select pg_get_functiondef('app.some_function()'::regprocedure);",
+    "select app.v900_patch('public', 'some_function',",
+    '  $marker$before$marker$,',
+    '  $marker$after$marker$,',
+    '  1);',
+    "select app.v900_patch('public', 'some_function',",
+    '  $marker$-- a comment hiding inside the needle$marker$,',
+    '  $marker$clean replacement$marker$,',
+    '  1);',
+  ].join('\n');
+
+  const pairs = helperPatchCallPairs(synthetic);
+  assert.equal(pairs.length, 2, 'both calls must be recognised regardless of the dollar tag reused between them');
+
+  const violations = helperPatchCallViolations(synthetic);
+  assert.deepEqual(
+    violations.map((v) => `${v.role}:${v.variable}`),
+    ['needle:app.v900_patch(#2)']
+  );
+  assert.match(violations[0].problem, /contains a "--" comment/);
+  assert.match(violations[0].problem, /a comment hiding inside the needle/);
+
+  // A clean pair produces nothing, and a non-"select" occurrence of the same call shape (e.g. a
+  // nested reference) is not mistaken for the idiom.
+  assert.deepEqual(helperPatchCallPairs("perform app.v900_patch('a','b',$x$c$x$,$x$d$x$,1);"), []);
 });
 
 test('GUARD 3 fails on a deliberately broken fixture', () => {

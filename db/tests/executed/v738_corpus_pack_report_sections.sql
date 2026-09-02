@@ -1,4 +1,4 @@
--- EXECUTED acceptance fixture for db/migrations/20260902_nestly_v738_pack_report_sections.sql:
+-- EXECUTED acceptance fixture for db/migrations/20260920_nestly_v738_pack_report_sections.sql:
 -- app.v176_evidence_pack's `findings` object gains report_sections + verdict_policy, additive,
 -- alongside the ranked/top_actions/abstentions nestly_v713/v735 already wired through.
 --

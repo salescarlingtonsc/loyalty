@@ -198,7 +198,7 @@ begin
   -- NESTLY v720: app.v176_evidence_pack now gates on app.v676_internal_drain_active() for a
   -- sessionless caller (belt-and-braces alongside its owner-only ACL). The real production
   -- caller, public.internal_claim_ai_firm_report_v176, opens this window itself around its own
-  -- call (see db/migrations/20260902_nestly_v720_evidence_pack_grants.sql step 2b) — this
+  -- call (see db/migrations/20260920_nestly_v720_evidence_pack_grants.sql step 2b) — this
   -- fixture calls app.v176_evidence_pack directly, one layer inside that worker, so it opens
   -- the SAME window the worker would, exactly as F6 below already does for app.ci_access_
   -- gate_v667.

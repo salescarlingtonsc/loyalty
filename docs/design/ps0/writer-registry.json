@@ -2125,7 +2125,7 @@
       "id": "browser.rpc:app/app.js:staff_scan_gift_qr_v515",
       "surface": "browser_rpc_binding",
       "rpc": "staff_scan_gift_qr_v515",
-      "resolves_to": "staff_scan_gift_qr_v515/5 — see db.fn:public.staff_scan_gift_qr_v515/5. One scanner arm in openMerchantRedemptionScanner; the browser learns a single 'gift' kind and the server dispatches to the right redeemer.",
+      "resolves_to": "staff_scan_gift_qr_v515/5 — see db.fn:public.staff_scan_gift_qr_v515/5. Two call sites, one server call: the scanner arm in openMerchantRedemptionScanner, and (nestly_v681) the Record sale keypad's Yes on a scanned gift that needs no purchase. The browser learns a single 'gift' kind and the server dispatches to the right redeemer.",
       "call_site_finding": "none — the counter presents a token it scanned; branch and sale come from the till context; idempotency-keyed"
     },
     {
@@ -2453,6 +2453,26 @@
       "call_site_finding": "none - the grant is keyed one-per-referral by unique constraint, expiry is checked before it is offered and again before it is handed over, and the branch must be one the caller may see."
     },
     {
+      "id": "browser.rpc:app/app.js:staff_update_my_profile_v687",
+      "surface": "browser_rpc_binding",
+      "rpc": "staff_update_my_profile_v687",
+      "latest_file": "20260902150000_nestly_v687_staff_self_profile.sql",
+      "resolves_to": "staff_update_my_profile_v687/2 (any approved, active member of the business; nestly_v687, audit F131). Sets full_name on the CALLER'S OWN staff row and nothing else. Exists because policy staff_update is owner-only, so a non-owner's display-name save silently matched zero rows while the UI printed 'Name saved.'.",
+      "rows_written": "exactly one public.staff row (user_id = auth.uid(), active), column full_name only; one public.audit_log row (action staff.rename_self). No other column, no other row, in any branch.",
+      "call_site_finding": "OK. The browser supplies its business id and the new name. auth.uid() must exist (anon revoked), app.is_salon_member(p_business) gates reach (the same predicate as staff_select, carrying open-workspace and approved+active), and the UPDATE is keyed on user_id = auth.uid() so a colleague's row is unreachable. Policy staff_update is deliberately NOT widened: an UPDATE policy is per-row, so a self-row policy would also hand every staff member their own role, modules and access_state; the migration's verify block asserts the policy stays owner-only. Proven as the real roles in db/tests/v687_staff_self_profile.sql (8 assertions, incl. raw UPDATE still 0 rows).",
+      "kernel_migratability": "non-value - a display name on a roster row. It touches no credit_ledger, points_ledger, sales, stock or stored-value row and changes no permission, so it can never reach the value kernel."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_support_mark_read_v688",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_support_mark_read_v688",
+      "latest_file": "20260902160000_nestly_v688_support_mark_read.sql",
+      "resolves_to": "business_support_mark_read_v688/2 (support write access in an open workspace; nestly_v688, audit F101). Clears the unread counter of one support conversation the business owns when staff open it. Exists because unread_count was only ever zeroed inside app.support_reply_v535, so a thread that needed no reply stayed 'N new' forever.",
+      "rows_written": "at most one public.support_conversations_v530 row - unread_count = 0, updated_at = now() - and only when unread_count > 0 (a re-open writes nothing and does not churn updated_at, which the inbox sort and the v479 realtime signal watch). handoff_state and assigned_staff_id are untouched: reading is not taking ownership.",
+      "call_site_finding": "OK. Same guard as support_reply_v535 steps (1) and (2): app.business_workspace_open_v94 then app.can_module_write(p_business,'support') (a read-only viewer must not erase a colleague's queue); the conversation is selected FOR UPDATE with business_id in the predicate, so another tenant's id answers 42704. Fail-soft in the browser: an error is logged and the thread still renders. Proven in db/tests/v688_support_mark_read.sql (6 assertions across two self-built tenants).",
+      "kernel_migratability": "non-value - an inbox read marker. No ledger, sale, stock or stored-value row is reachable from it."
+    },
+    {
       "id": "browser.rpc:app/app.js:business_set_featured_offer_v462",
       "surface": "browser_rpc_binding",
       "rpc": "business_set_featured_offer_v462",
@@ -2591,7 +2611,7 @@
     {
       "id": "db.fn:public.customer_apply_referral_code_v612/3",
       "surface": "db_function",
-      "latest_file": "20260830010000_nestly_v612_referral_immediate_when_no_floor.sql",
+      "latest_file": "20260902110000_nestly_v683_referral_new_customers_only.sql",
       "rows_written": "referrals:INSERT/UPDATE (status pending→rewarded, blocked_reason), points_ledger:INSERT (both sides, scope referral_reward_points), points_batches:INSERT (both sides), referral_grants_v420:INSERT (both sides, voucher kind), app.referral_value_provenance_v480:INSERT/UPDATE (via the v480 capture triggers, qualifying_sale_id NULL)",
       "entry_point": "browser RPC (authenticated customer, verified wallet link required) — the join pop-ups' optional referral code, applied AFTER the join succeeds",
       "idempotency": "one_referral_per_referred unique insert; the pending→rewarded status transition guards the settle (a replay finds no pending row and answers already_applied); the v421 once-per-side grant index; caller passes a stable idempotency key per (business, code)",
@@ -2631,7 +2651,7 @@
     {
       "id": "db.fn:app.seed_golden_business_v682/3",
       "surface": "db_function",
-      "latest_file": "20260902090000_nestly_v682_golden_corpus.sql",
+      "latest_file": "20260920080000_nestly_v682_golden_corpus.sql",
       "rows_written": "sales:INSERT",
       "detected_signals": "sale-policy-ref",
       "entry_point": "app.seed_golden_business_v682(p_index, p_sector, p_owner) — the v682 golden reconciliation corpus seeder. Deterministic, keyed only on (p_index, p_sector) with no randomness anywhere; provisions one fully-operational synthetic business (businesses, branches, staff, business_workspace_controls_v94, business_subscription_lifecycle_v94, subscriptions, a -infinity reporting_contract_versions_v106 row) plus a deterministic customer/sales population, and returns the independently hand-computed expected headline values BEFORE any row it just inserted is read back. Called only from db/tests/executed/v682_golden_reconciliation.sql and its rollback-suite mirror db/tests/v682_golden_corpus.sql — not reachable from the browser, an Edge Function, or any other product RPC.",
@@ -3929,13 +3949,13 @@
       "id": "browser.rpc:app/app.js:staff_scan_gift_qr_to_till_v666",
       "surface": "browser_rpc_binding",
       "rpc": "staff_scan_gift_qr_to_till_v666",
-      "resolves_to": "public.staff_scan_gift_qr_to_till_v666(business, qr_token) — STABLE SECURITY DEFINER, authenticated, till-or-loyalty write. Performs no DML at all. Answers whose pending gift QR this is (returning the one till customer card, app.v666_till_customer_card) and whether the perk behind it can be priced onto a bill. Settling stays with staff_scan_gift_qr_v515 and staging with staff_stage_gift_qr_v665, so this adds no second writer and no second answer to \"was this QR used\".",
-      "call_site_finding": "nestly_v666 — one call site, the Record sale keypad's Scan button. Before it, that scanner settled a gift QR on sight and then reset to an empty keypad, which spent the customer's voucher and identified nobody (owner report 2026-09-01). Every refusal is soft so the caller falls through to v515 for the wording.",
+      "resolves_to": "public.staff_scan_gift_qr_to_till_v666(business, qr_token) — STABLE SECURITY DEFINER, authenticated, till-or-loyalty write. Performs no DML at all. Answers whose pending gift QR this is (returning the one till customer card, app.v666_till_customer_card) and whether the perk behind it can be priced onto a bill (stageable) or handed over with no purchase at all (settle_now, nestly_v681, narrowed by nestly_v682 to free_item only for tier perks — a written 'custom' perk may itself demand a purchase — with min_spend_cents and benefit_kind alongside it). Settling stays with staff_scan_gift_qr_v515 and staging with staff_stage_gift_qr_v665, so this adds no second writer and no second answer to \"was this QR used\".",
+      "call_site_finding": "nestly_v666/v681 — one call site, the Record sale keypad's Scan button; v681 turns its answer into a yes/no confirmation for a no-purchase gift, settled through staff_scan_gift_qr_v515 as before. Before it, that scanner settled a gift QR on sight and then reset to an empty keypad, which spent the customer's voucher and identified nobody (owner report 2026-09-01). Every refusal is soft so the caller falls through to v515 for the wording.",
       "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
     },
     {
-      "id": "db.backfill:20260904040000_nestly_v735_evidence_pack_extended.sql:sales",
-      "reason": "verification-only INSERT (sales) inside 20260902_nestly_v735_evidence_pack_extended.sql's savepoint v735_verify block (lines 125-329 of db/migrations/20260902_nestly_v735_evidence_pack_extended.sql), executed to prove app.v176_evidence_pack's campaigns candidate reaches findings.ranked on a populated seed and undone by `rollback to savepoint v735_verify` before the migration commits; no row persists. NOT a runtime writer and NOT a real backfill."
+      "id": "db.backfill:20260922030000_nestly_v735_evidence_pack_extended.sql:sales",
+      "reason": "verification-only INSERT (sales) inside 20260920_nestly_v735_evidence_pack_extended.sql's savepoint v735_verify block (lines 125-329 of db/migrations/20260920_nestly_v735_evidence_pack_extended.sql), executed to prove app.v176_evidence_pack's campaigns candidate reaches findings.ranked on a populated seed and undone by `rollback to savepoint v735_verify` before the migration commits; no row persists. NOT a runtime writer and NOT a real backfill."
     }
   ]
 }

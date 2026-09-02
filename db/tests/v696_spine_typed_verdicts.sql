@@ -4,7 +4,7 @@
 -- (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
 --
 -- Proves, against public.get_ci_opportunities_v1 (db/migrations/20260902_nestly_v696_spine_typed_
--- verdicts.sql, itself re-emitting db/migrations/20260902_nestly_v688_consultant_spine_v2.sql
+-- verdicts.sql, itself re-emitting db/migrations/20260920_nestly_v688_consultant_spine_v2.sql
 -- unchanged apart from three additive substitutions):
 --   B1 — every ranked candidate, in BOTH p_extended modes, carries evidence_class in
 --        {DIRECT_FACT, ASSOCIATION}, never CAUSAL, and the string 'CAUSAL' does not appear

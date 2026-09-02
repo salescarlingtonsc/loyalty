@@ -1,22 +1,27 @@
 {
   "proof_pack_item": 6,
-  "frozen_commit": "b02dfc61b132e8d046294a831ebca063e66113b0",
+  "frozen_commit": "merge commit of origin/main 3ef53a4a into claude/ci-proof-100 (parents db287b62, 3ef53a4a) \u2014 2026-09-03",
   "branch": "claude/ci-proof-100",
   "generated_from": [
-    "SWEEP-SQL-b02dfc61.log",
-    "SWEEP-JS-b02dfc61.log"
+    "SWEEP-SQL-merge-20260903.log",
+    "SWEEP-JS-merge-20260903.log",
+    "MAIN-BASELINE-CRM-3ef53a4a.log"
   ],
   "executed_sql": {
-    "command": "LC_ALL=C node scripts/db-tests/run.mjs",
+    "command": "LC_ALL=C node scripts/db-tests/run.mjs (registered migrations applied in canonical deploy order)",
     "baseline_phase": {
       "ok": 3,
-      "not_applicable": 89,
+      "not_applicable": 103,
       "fail": []
     },
     "migrated_phase": {
-      "ok": 95,
+      "ok": 106,
       "not_applicable": 0,
-      "fail": [],
+      "fail": [
+        "v510_operating_system_crm_foundation.sql",
+        "v512_commercial_handoff_integrity.sql",
+        "v513_onboarding_next_actor_and_review.sql"
+      ],
       "files": [
         "v106_corpus_revenue_truth.sql",
         "v422_baseline_behaviours.sql",
@@ -33,10 +38,7 @@
         "v480_loyalty_value_integrity_fence.sql",
         "v480_referral_reversal.sql",
         "v482_loyalty_fence_null_guard.sql",
-        "v510_operating_system_crm_foundation.sql",
         "v511_work_operating_system.sql",
-        "v512_commercial_handoff_integrity.sql",
-        "v513_onboarding_next_actor_and_review.sql",
         "v544_loyalty_current_balance_truth.sql",
         "v545_programme_aware_loyalty_evidence.sql",
         "v548_insights_partition_scope.sql",
@@ -51,18 +53,31 @@
         "v667_ci_access_boundaries.sql",
         "v672_corpus_stat_authority.sql",
         "v673_corpus_funnels.sql",
+        "v674_birthday_gift_type_change.sql",
         "v674_corpus_demographics.sql",
         "v675_corpus_behaviour.sql",
+        "v675_stale_stamp_draft_superseded.sql",
+        "v676_gift_intent_reopen.sql",
+        "v677_reversal_is_not_a_visit.sql",
+        "v678_auto_approve_after_choice.sql",
         "v678_corpus_consultant_spine.sql",
+        "v679_tier_edits_survive_publish.sql",
         "v680_corpus_envelope.sql",
+        "v680_manual_payment_reopens_workspace.sql",
         "v681_corpus_calibration.sql",
         "v682_golden_reconciliation.sql",
         "v683_corpus_behavioural_authorities.sql",
+        "v683_referral_new_customers_only.sql",
         "v684_corpus_dictionary.sql",
+        "v684_delete_retired_offer.sql",
         "v685_corpus_shadow.sql",
+        "v685_singapore_day_authority.sql",
         "v686_corpus_discovery.sql",
+        "v686_service_delete_owner_only_rpc.sql",
         "v687_corpus_synthetic_exclusion.sql",
+        "v687_staff_self_profile.sql",
         "v688_corpus_spine_v2.sql",
+        "v688_support_mark_read.sql",
         "v690_corpus_dispersion_floor.sql",
         "v691_corpus_outliers_confounders.sql",
         "v692_corpus_lineage.sql",
@@ -112,25 +127,21 @@
         "v741_corpus_roster_read_audit.sql",
         "v742_corpus_synthetic_estate_4.sql",
         "v743_corpus_synthetic_scanner.sql",
-        "v744_corpus_scanner_blind_spots.sql"
+        "v744_corpus_scanner_blind_spots.sql",
+        "v744_merge_v685_semantics.sql"
       ]
     },
     "v480_concurrency_lane": "PASS",
-    "warnings_baseline_green_before_migration": [
-      "v425_referral_typed_payout.sql",
-      "v426_tier_resolver.sql",
-      "v431_publish_spine_model.sql"
-    ],
-    "result": "all executed SQL passed",
-    "duration_s": 370.2
+    "fail_disposition": "the three failing suites (v510/v512/v513, ops-os CRM) fail identically on unmodified origin/main 3ef53a4a \u2014 MAIN-CRM-FIXTURES-PREEXISTING-20260903; outside the CI surface",
+    "merge_semantics_proof": "v744_merge_v685_semantics.sql ok"
   },
   "js_suites": {
     "command": "node --test \"tests/<dir>/**/*.test.mjs\"",
     "suites": {
       "phase0-foundation": {
-        "tests": 98,
-        "pass": 98,
-        "fail": 0
+        "tests": 107,
+        "pass": 106,
+        "fail": 1
       },
       "program-studio": {
         "tests": 72,
@@ -143,13 +154,13 @@
         "fail": 0
       },
       "business-ui": {
-        "tests": 1822,
-        "pass": 1822,
+        "tests": 1903,
+        "pass": 1903,
         "fail": 0
       },
       "platform-console": {
-        "tests": 273,
-        "pass": 273,
+        "tests": 298,
+        "pass": 298,
         "fail": 0
       },
       "browser": {
@@ -173,8 +184,8 @@
         "fail": 0
       },
       "customer-wallet": {
-        "tests": 790,
-        "pass": 790,
+        "tests": 795,
+        "pass": 795,
         "fail": 0
       },
       "platform-admin": {
@@ -183,8 +194,8 @@
         "fail": 0
       },
       "whatsapp": {
-        "tests": 94,
-        "pass": 94,
+        "tests": 102,
+        "pass": 102,
         "fail": 0
       },
       "platform": {
@@ -193,8 +204,9 @@
         "fail": 0
       }
     },
-    "total_tests": 3972,
-    "total_fail": 0
+    "total_tests": 4100,
+    "total_fail": 1,
+    "fail_disposition": "the one sweep-time failure was ci-proof-pack corpus-manifest staleness (a fixture edited after the last regeneration); regenerated and tests/phase0-foundation/ci-proof-pack.test.mjs re-run 9/9 before commit"
   },
   "quality_gates": {
     "ai_report_golden_gate": "OK \u2014 6/6 packs clean",
@@ -224,6 +236,200 @@
     "verdict": "NO RELEASE BLOCKER",
     "observations": [
       "MANUAL-SQLSTATE-INVERTED-WINDOW-V155"
-    ]
+    ],
+    "post_merge_note": "no code path scored by the checklist changed semantics except by composing main's v677/v685 authorities; the composed readers are proven by v744_merge_v685_semantics.sql"
+  },
+  "superseded_pre_merge_record": {
+    "frozen_commit": "b02dfc61b132e8d046294a831ebca063e66113b0",
+    "executed_sql": {
+      "command": "LC_ALL=C node scripts/db-tests/run.mjs",
+      "baseline_phase": {
+        "ok": 3,
+        "not_applicable": 89,
+        "fail": []
+      },
+      "migrated_phase": {
+        "ok": 95,
+        "not_applicable": 0,
+        "fail": [],
+        "files": [
+          "v106_corpus_revenue_truth.sql",
+          "v422_baseline_behaviours.sql",
+          "v422_customer_intelligence_scale.sql",
+          "v423_reward_edit.sql",
+          "v424_birthday_window.sql",
+          "v425_referral_typed_payout.sql",
+          "v426_tier_resolver.sql",
+          "v431_publish_spine_model.sql",
+          "v432_staff_redeem_list_matches_customer.sql",
+          "v433_v436_stamp_lifecycle.sql",
+          "v464_earned_reward_expiry.sql",
+          "v480_conversion_atomicity.sql",
+          "v480_loyalty_value_integrity_fence.sql",
+          "v480_referral_reversal.sql",
+          "v482_loyalty_fence_null_guard.sql",
+          "v510_operating_system_crm_foundation.sql",
+          "v511_work_operating_system.sql",
+          "v512_commercial_handoff_integrity.sql",
+          "v513_onboarding_next_actor_and_review.sql",
+          "v544_loyalty_current_balance_truth.sql",
+          "v545_programme_aware_loyalty_evidence.sql",
+          "v548_insights_partition_scope.sql",
+          "v551_top_share_denominator.sql",
+          "v552_gated_evidence_isolation.sql",
+          "v554_v154_family_provenance.sql",
+          "v555_business_pot_fails_closed.sql",
+          "v556_policy_read_is_strict.sql",
+          "v629_corpus_acquisition_demographics.sql",
+          "v651_corpus_cadence.sql",
+          "v652_corpus_statistics.sql",
+          "v667_ci_access_boundaries.sql",
+          "v672_corpus_stat_authority.sql",
+          "v673_corpus_funnels.sql",
+          "v674_corpus_demographics.sql",
+          "v675_corpus_behaviour.sql",
+          "v678_corpus_consultant_spine.sql",
+          "v680_corpus_envelope.sql",
+          "v681_corpus_calibration.sql",
+          "v682_golden_reconciliation.sql",
+          "v683_corpus_behavioural_authorities.sql",
+          "v684_corpus_dictionary.sql",
+          "v685_corpus_shadow.sql",
+          "v686_corpus_discovery.sql",
+          "v687_corpus_synthetic_exclusion.sql",
+          "v688_corpus_spine_v2.sql",
+          "v690_corpus_dispersion_floor.sql",
+          "v691_corpus_outliers_confounders.sql",
+          "v692_corpus_lineage.sql",
+          "v693_corpus_exclusions_verdicts.sql",
+          "v694_corpus_preference.sql",
+          "v695_corpus_service_cadence.sql",
+          "v696_corpus_spine_verdicts.sql",
+          "v697_corpus_service_promotion.sql",
+          "v698_corpus_weekend_timezone.sql",
+          "v699_corpus_visit_days.sql",
+          "v700_corpus_behavioural_hardening.sql",
+          "v702_corpus_discovery_rigor.sql",
+          "v703_corpus_envelope_everywhere.sql",
+          "v705_corpus_spine_v3.sql",
+          "v706_corpus_branch_clock.sql",
+          "v707_corpus_promotion_population.sql",
+          "v708_corpus_discovery_ties.sql",
+          "v709_corpus_visit_days_cadence_tiers.sql",
+          "v710_corpus_service_visit_units.sql",
+          "v711_corpus_bringback_visit_days.sql",
+          "v712_corpus_spine_closures.sql",
+          "v713_corpus_evidence_pack.sql",
+          "v714_corpus_visit_days_estate.sql",
+          "v715_corpus_v179_weekday.sql",
+          "v717_corpus_time_basis.sql",
+          "v718_corpus_spine_margin.sql",
+          "v720_corpus_evidence_pack_grants.sql",
+          "v721_corpus_one_ci_gate.sql",
+          "v722_corpus_freshness_brief.sql",
+          "v723_corpus_reader_contracts.sql",
+          "v724_corpus_visit_days_estate_2.sql",
+          "v725_corpus_time_basis_shadow_gate.sql",
+          "v726_corpus_period_validation.sql",
+          "v728_retention_visit_unit_pin.sql",
+          "v729_corpus_visit_days_estate_3.sql",
+          "v730_corpus_category_customers_window.sql",
+          "v731_reconciliation_report.sql",
+          "v732_corpus_coverage_shown.sql",
+          "v733_corpus_best_customers_campaign.sql",
+          "v734_corpus_synthetic_exclusion.sql",
+          "v735_corpus_evidence_pack_extended.sql",
+          "v736_corpus_small_cell_principals.sql",
+          "v737_corpus_synthetic_v83_shadow.sql",
+          "v738_corpus_pack_report_sections.sql",
+          "v739_corpus_top_customers_floor.sql",
+          "v740_corpus_synthetic_estate_3.sql",
+          "v741_corpus_roster_read_audit.sql",
+          "v742_corpus_synthetic_estate_4.sql",
+          "v743_corpus_synthetic_scanner.sql",
+          "v744_corpus_scanner_blind_spots.sql"
+        ]
+      },
+      "v480_concurrency_lane": "PASS",
+      "warnings_baseline_green_before_migration": [
+        "v425_referral_typed_payout.sql",
+        "v426_tier_resolver.sql",
+        "v431_publish_spine_model.sql"
+      ],
+      "result": "all executed SQL passed",
+      "duration_s": 370.2
+    },
+    "js_suites": {
+      "command": "node --test \"tests/<dir>/**/*.test.mjs\"",
+      "suites": {
+        "phase0-foundation": {
+          "tests": 98,
+          "pass": 98,
+          "fail": 0
+        },
+        "program-studio": {
+          "tests": 72,
+          "pass": 72,
+          "fail": 0
+        },
+        "ai-reports": {
+          "tests": 268,
+          "pass": 268,
+          "fail": 0
+        },
+        "business-ui": {
+          "tests": 1822,
+          "pass": 1822,
+          "fail": 0
+        },
+        "platform-console": {
+          "tests": 273,
+          "pass": 273,
+          "fail": 0
+        },
+        "browser": {
+          "tests": 32,
+          "pass": 32,
+          "fail": 0
+        },
+        "billing": {
+          "tests": 61,
+          "pass": 61,
+          "fail": 0
+        },
+        "branding": {
+          "tests": 5,
+          "pass": 5,
+          "fail": 0
+        },
+        "customer-modules": {
+          "tests": 196,
+          "pass": 196,
+          "fail": 0
+        },
+        "customer-wallet": {
+          "tests": 790,
+          "pass": 790,
+          "fail": 0
+        },
+        "platform-admin": {
+          "tests": 11,
+          "pass": 11,
+          "fail": 0
+        },
+        "whatsapp": {
+          "tests": 94,
+          "pass": 94,
+          "fail": 0
+        },
+        "platform": {
+          "tests": 250,
+          "pass": 250,
+          "fail": 0
+        }
+      },
+      "total_tests": 3972,
+      "total_fail": 0
+    }
   }
 }

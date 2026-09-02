@@ -299,8 +299,37 @@ export function discoverPendingMigrations({ watermark = SNAPSHOT_WATERMARK_VERSI
       return m ? { name, version: Number(m[1]), path: join(dir, name) } : null;
     })
     .filter((f) => f && f.version > watermark)
-    /* Ascending version, then filename, so two files sharing a version stay deterministic. */
-    .sort((a, b) => a.version - b.version || a.name.localeCompare(b.name));
+    /* Registered migrations apply in CANONICAL DEPLOY ORDER (db/migrations/migration-order.plan.json
+       proposedDeployVersion) — the order production actually receives them — so a rehearsal here
+       cannot pass in an order prod never runs. Two sessions may legitimately ship twin semantic
+       numbers (main's nestly_v685 Singapore-day authority vs the CI wave's v685 shadow
+       reconciliation, 2026-09-03); ascending NNN put the CI wave's v674 before main's v685 and
+       v685's anchored patch then found nothing to patch, while prod would have applied them the
+       other way round. Unregistered files (dropped by a sibling agent before governance) keep the
+       old contract: after every registered file, ascending NNN, then filename. */
+    .map((f) => ({ ...f, deployVersion: deployVersionByPath().get(`db/migrations/${f.name}`) ?? null }))
+    .sort((a, b) => {
+      if (a.deployVersion && b.deployVersion) return a.deployVersion.localeCompare(b.deployVersion);
+      if (a.deployVersion !== b.deployVersion) return a.deployVersion ? -1 : 1;
+      return a.version - b.version || a.name.localeCompare(b.name);
+    });
+}
+
+let deployVersionCache = null;
+/** path (repo-relative, db/migrations/<file>) -> proposedDeployVersion, from the canonical order plan. */
+function deployVersionByPath() {
+  if (deployVersionCache) return deployVersionCache;
+  deployVersionCache = new Map();
+  const planPath = join(REPO_ROOT, 'db/migrations/migration-order.plan.json');
+  if (existsSync(planPath)) {
+    const plan = JSON.parse(readFileSync(planPath, 'utf8'));
+    for (const item of plan.items ?? []) {
+      if (item.kind === 'executable' && item.path && item.proposedDeployVersion) {
+        deployVersionCache.set(item.path, String(item.proposedDeployVersion));
+      }
+    }
+  }
+  return deployVersionCache;
 }
 
 /**

@@ -1,6 +1,6 @@
 /* NESTLY v696 — Customer Intelligence opportunities panel, EXTENDED mode (p_extended=>true).
  *
- * db/migrations/20260902_nestly_v688_consultant_spine_v2.sql gave public.get_ci_opportunities_v1
+ * db/migrations/20260920_nestly_v688_consultant_spine_v2.sql gave public.get_ci_opportunities_v1
  * a trailing `p_extended boolean default false`. With true, each candidate gains top-level
  * incentive{kind,declared}, why_now, reversal_condition, alternatives[{kind,primary,what,
  * cost_basis}], cost_basis; impact gains scenario_cents and expected_value ({cents,method,

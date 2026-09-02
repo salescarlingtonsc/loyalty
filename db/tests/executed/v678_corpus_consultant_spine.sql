@@ -1,6 +1,6 @@
 -- EXECUTED acceptance fixture for nestly_v678 — the consultant spine.
 --
--- Proves public.get_ci_opportunities_v1 (db/migrations/20260902_nestly_v678_consultant_spine.sql)
+-- Proves public.get_ci_opportunities_v1 (db/migrations/20260920_nestly_v678_consultant_spine.sql)
 -- against the phase CI-C acceptance bar recorded in docs/qa/CI-ACCEPTANCE-VERDICT-2026-09-02.md:
 --
 --     "Blinded synthetic-business test: >=9 of 10 planted ground-truth issues in the top ten,

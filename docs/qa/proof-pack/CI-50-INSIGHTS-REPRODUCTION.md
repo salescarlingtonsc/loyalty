@@ -8,7 +8,7 @@
 **Date:** 2026-09-02 (run started ~11:17 UTC / 19:17 SGT, finished ~11:27 UTC / 19:27 SGT)
 **Harness watermark:** `LC_ALL=C node scripts/db-tests/run.mjs --filter=v682_golden --migrated-only --keep`
 (boots throwaway Postgres 17, baseline snapshot `tests/fixtures/db-schema-snapshot.sql` watermark
-v422, replays every migration up to and including `20260902_nestly_v730_category_customers_window.sql`
+v422, replays every migration up to and including `20260920_nestly_v730_category_customers_window.sql`
 into database `peekaa_migrated`; cluster kept at `127.0.0.1:65344` per `--keep`, stopped at the end
 of this run). Note: the `v682_golden_reconciliation.sql` fixture itself FAILed on this run inside
 its own `rollback`-wrapped transaction, but for an unrelated, pre-existing reason — a `format()`
@@ -23,7 +23,7 @@ directly (see below) rather than depending on that fixture's own transaction.
 1. Booted the harness as above and left the cluster running (`--keep`).
 2. Directly seeded three golden businesses with `app.seed_golden_business_v682(p_index, p_sector,
    p_owner)` (the checklist-item-10 golden-corpus seeder,
-   `db/migrations/20260902_nestly_v682_golden_corpus.sql`), one call per sector, against
+   `db/migrations/20260920_nestly_v682_golden_corpus.sql`), one call per sector, against
    `peekaa_migrated`:
 
    | sector | p_index | business_id | branch_id |

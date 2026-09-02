@@ -2,6 +2,7 @@
    The business workspace of app/app.js, split by scripts/quality/split-app-bundle.mjs.
    Edit app/app.js and run: npm run bundle-stamp */
 const loadChartLibrary=()=>loadOptionalLibrary({key:'charts',src:'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js',integrity:'sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF',ready:()=>typeof globalThis.Chart==='function'}).then(configureChartDefaults);
+const buildIdentityHtml=()=>`<span class="build-identity" data-build-identity>${esc(buildIdentityLabel())}</span>`;
 /* Chart.js global defaults (design system v2). Chart.js out of the box is the single
    biggest "generic AI dashboard" tell — grey 1px grids on both axes, boxed legends,
    black tooltips. Strip it back: no vertical grid, hairline horizontal grid only, no
@@ -1365,6 +1366,21 @@ async function addRecommendedLoyaltyTiersV143({
 /* Server replay signal, collision-safe: never keys off a bare `status` (a membership's result
    status is 'active', a package's has no such field) — only explicit idempotency sentinels. */
 const isReplayResult=r=>!!(r&&(r.replayed===true||r.already_recorded===true||r.status==='duplicate_ignored'||r.status==='replayed'));
+/* The reverse of sgIso: given any stored instant, return the SG wall-clock value a
+   <input type=datetime-local> field expects ("YYYY-MM-DDTHH:mm"), via Intl formatToParts
+   rather than getTimezoneOffset() math — so it is correct on every viewer's device, not just
+   ones already set to +08:00. This is the single implementation; boundaryInputValue and
+   sgInput below both delegate to it instead of re-deriving SGT themselves. */
+const sgLocalInputValue=instant=>{
+  if(!instant)return '';
+  const d=new Date(instant);
+  if(!Number.isFinite(d.getTime()))return '';
+  const values={};
+  new Intl.DateTimeFormat('en-CA',{
+    timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+  }).formatToParts(d).forEach(part=>{if(part.type!=='literal')values[part.type]=part.value});
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+};
 /* nestly_v472 — the gift end date the Point system page sets, and its two directions.
    It is a DATE the owner picks and an INSTANT the server stores, and the conversion has to be
    anchored to SGT for the same reason sgt()/sgIso() above exist: an owner in Singapore typing
@@ -1823,11 +1839,6 @@ function businessWorkspaceSwitchHtml(staffWorkspaces=[],currentBusinessSlug='',h
       ${otherWorkspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${CUI.icon('branch',{size:16})}<span data-merchant-content>${esc(workspace.business_name||workspace.business_slug)}</span></a>`).join('')}
     </div></details>`;
 }
-function staffInviteLinkV151(code){
-  const url=new URL(NestlyNativeBridge.publicUrl('/business'));
-  url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
-  return url.toString();
-}
 /* V169: when the main setup form is on the same screen it has already collected the owner
    name, business name, sector and UEN. Re-asking for all of it underneath the Stripe form
    made owners fill the same details twice and left them unsure which path they were on.
@@ -2114,6 +2125,7 @@ function navHtml(page,idPrefix='nav'){
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
+    ||(m==='remindernotify'&&S.myRole==='owner')
     ||(m==='bottlesetup'&&sectorShowsBottlesV275&&S.myRole==='owner')
     ||(m==='custpackages'&&enabled.includes('packages'))
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
@@ -2583,12 +2595,25 @@ function wireProfile(page){
         if(error)throw error;
         if(data?.user)S.user=data.user;
         else S.user={...S.user,user_metadata:{...(S.user?.user_metadata||{}),full_name:name,name}};
-        await sb.from('staff').update({full_name:name}).eq('business_id',S.biz.id).eq('user_id',S.user.id);
+        /* V687 (audit finding F131). This used to be
+             await sb.from('staff').update({full_name:name}).eq('business_id',…).eq('user_id',…)
+           with its result thrown away. Policy staff_update is owner-only
+           (`using app.is_salon_owner(business_id)`, no self-row predicate), so for every
+           non-owner role the statement matched ZERO rows — which PostgREST reports as a success,
+           not an error. The handler then printed "Name saved." while public.staff.full_name — the
+           name the Team roster, the till's staff picker, the sales report and the calendar all
+           read — never moved. staff_update_my_profile_v687 is the only route by which a
+           non-owner writes their own staff row, and it writes full_name and nothing else. */
+        const {error:mirrorError}=await sb.rpc('staff_update_my_profile_v687',{p_business:S.biz.id,p_name:name});
+        if(mirrorError)throw mirrorError;
         if(status)status.textContent='Name saved.';
         renderProfile(page);
       }catch(error){
         console.error(error);
-        if(status)status.textContent='Name could not be saved.';
+        /* The server's own words, not one blanket sentence: "you are not a member of this
+           business" and "a display name is between 2 and 120 characters" are different problems
+           with different fixes, and the old handler hid both. */
+        if(status)status.textContent=ownerErrorText(error)||'Name could not be saved.';
       }finally{
         CUI.setButtonBusy(button,{busy:false});
       }
@@ -6404,10 +6429,12 @@ async function clientDetail(id){
     else if(type==='boolean')payload.boolean_value=raw==='true';
     else payload.select_value=raw;
     const {error}=await sb.from('client_field_values').upsert(payload,{onConflict:'business_id,client_id,field_definition_id'});
+    if(!isClientDetailCurrent())return;
     if(error)return fail(error);toast('Customer detail saved');clientDetail(id);
   });
   document.querySelectorAll('.cfvClear').forEach(b=>b.onclick=async()=>{
     const {error}=await sb.from('client_field_values').delete().eq('business_id',S.biz.id).eq('client_id',id).eq('field_definition_id',b.dataset.id);
+    if(!isClientDetailCurrent())return;
     if(error)return fail(error);toast('Customer detail cleared');clientDetail(id);
   });
   const birthdayRedeem=$('birthdayRedeem');
@@ -6441,6 +6468,7 @@ async function clientDetail(id){
     aj.disabled=true;
     const {data,error}=await sb.rpc('adjust_points_v480',{p_business:S.biz.id,p_client:id,
       p_points:v,p_reason:$('adjR').value||null,p_idempotency_key:adjustmentIdem});
+    if(!isClientDetailCurrent()||!aj.isConnected)return;
     aj.disabled=false;
     if(error) return fail(error);
     adjustmentIdem=crypto.randomUUID();
@@ -7721,6 +7749,51 @@ async function tillPage(){
       onGiftIdentified:async(data,token)=>{
         cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();
         const labelV666=data?.gift_label||'';
+        /* nestly_v681 (owner ruling 2026-09-02, keypad screenshot with Scan circled): "when
+           redeeming free gift - without any requirements to spend > after scan should pop up to
+           ask to confirm redeeming the said gifts ... staff press yes / no. unless the rewards
+           requires purchases - example (20% off whole bill / 1 item) - then it will be the usual
+           process."
+           The server decides which gift this is (settle_now), because only it can see the quoted
+           minimum spend and the perk's own benefit_kind. A gift that needs no purchase is handed
+           over right here on a Yes — there is no bill to wait for, and sending the counter off to
+           find the same gift again on the Rewards tab was the detour the owner is removing. No
+           leaves the QR untouched and pending: the customer keeps the gift, and the Rewards tab
+           is still there. Everything that DOES need a purchase — a min-spend welcome gift, a
+           percentage discount — falls through to the staging path below, unchanged. */
+        if(data?.settle_now===true){
+          const confirmedV681=await confirmActionV386(
+            `Give "${labelV666||'this reward'}" to ${data?.full_name||'this customer'} now? This reward needs no purchase, so confirming hands it over and uses it up.`,
+            {confirmLabel:'Yes, give it',cancelLabel:'No',danger:false});
+          if(!isTillCurrent())return;
+          if(!confirmedV681)return toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
+          const {data:givenV681,error:giveErrorV681}=await sb.rpc('staff_scan_gift_qr_v515',{
+            p_business:S.biz.id,p_branch:tillBranchId,p_qr_token:token,p_sale:null,
+            p_idempotency_key:crypto.randomUUID()});
+          if(!isTillCurrent())return;
+          if(giveErrorV681||givenV681?.status!=='completed'){
+            /* The same three sentences the scanner's own gift arm uses, because this is the same
+               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
+               counter. Anything unrecognised keeps the scanner's catch-all. */
+            const rawV681=String(giveErrorV681?.message||'');
+            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
+              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
+              :/period rolled over/i.test(rawV681)
+              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
+              :giveErrorV681
+              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
+              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+          }
+          /* V408's rule: a gift handed over changes what this customer holds, so the card and the
+             catalogue both repaint before the counter reads either of them again. */
+          catalog=null;
+          await refreshTillCustomerStandingV408();
+          if(!isTillCurrent())return;
+          draw();
+          return toast(givenV681?.replayed===true
+            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
+        }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
            not the allowance, and appliedTierBenefitV656 is only ever sent to evaluate_checkout,
            so nothing is priced until the counter adds the first item — at which point the
@@ -10314,7 +10387,7 @@ async function salesPage(){
   /* V291: the filtered answer in full (counts, export, payment-state filtering) and how much of
      it is currently painted. */
   const SALES_PAGE_SIZE_V291=50;
-  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291;
+  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false;
   M().innerHTML=`${salesHeadHtmlV291(true)}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
@@ -10366,8 +10439,16 @@ async function salesPage(){
     if(type)query=query.eq('kind',type);
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
     if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
-    const workflow=await loadReversalWorkflows(null,Math.max(100,(sl||[]).length)).catch(e=>{fail(e);return null});
+    /* V291 audit fix (F001): the server clamps any non-zero p_limit to 100
+       (least(greatest(coalesce(p_limit,50),1),100)) with NO date/staff/type/branch predicate —
+       so asking for Math.max(100,sl.length) is never more than the 100 newest sales across the
+       whole business, no matter how large the filtered ledger `sl` is. Once a business passes
+       100 lifetime sales, older painted rows silently lost Reverse/Amend and painted the wrong
+       status/Net (falling back to `w={}`). Pass 0 — the RPC's explicit "unbounded" value,
+       already used by Customer 360 above — so every painted row has real reversal/status data. */
+    const workflow=await loadReversalWorkflows(null,0).catch(e=>{fail(e);return null});
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
+    salesWorkflowMayHaveMoreV291=!!workflow?.may_have_more;
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
     let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
     /* V266: Payment state used to filter on `sales.paid`, a column that does not exist —
@@ -10397,10 +10478,14 @@ async function salesPage(){
        nothing at all on screen, which reads as a broken button. State the range that is now in
        force and how many rows it matched, next to the control that set it. */
     const period=`${from?dashboardScheduleDayLabelV252(from):'the earliest sale'} to ${to?dashboardScheduleDayLabelV252(to):'the latest sale'}`;
+    /* F001: the RPC still reports may_have_more/bounded even though this page now asks for
+       0 (unbounded) — surface it instead of silently painting rows with no reversal/status
+       data if that ever changes underneath us. */
+    const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows':'';
     salesFilterNoteV266(paymentStateApplied
-      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}`
-      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied`,
-      paymentStateApplied?'':'warn');
+      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
+      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied${workflowWarning}`,
+      (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
       if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
     }
@@ -10475,6 +10560,12 @@ async function servicesPage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const canWrite=canWriteModule('services');
   const canUploadCatalogueMedia=S.myRole==='owner';
+  /* nestly_v682 (audit finding F068). Permanently deleting a service is the owner's alone —
+     policy services_delete_v636 says so and business_manage_catalogue_item_v660 now enforces it
+     rather than routing around it as SECURITY DEFINER. Gate the button on the same test this
+     page already uses for catalogue photos, so a non-owner sees Edit alone instead of a button
+     the server refuses. Turning a service OFF stays open to anyone with Services write. */
+  const canDeleteServiceV682=S.myRole==='owner';
   M().innerHTML=`<header class="v150-titlebar"><div class="cui-page-title">${CUI.icon('services',{size:24})}<div><h1>Services</h1><p>Manage what customers can book.</p></div></div>
     <div class="v150-title-actions">${canWrite?`<a class="btn ghost sm" href="#/servicemapping">Map categories</a>`:''}${canWrite?importBtn('services')+CUI.action({id:'openBundleForm',label:'Add bundle',variant:'secondary',className:'sm'})+CUI.action({id:'openServiceForm',label:'Add service',iconName:'add'}):''}</div></header>
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only services access</b><p class="muted small" style="margin-top:5px">You can review services and bundles. Ask for Services edit access to change them.</p></div>`}
@@ -10541,7 +10632,7 @@ async function servicesPage(){
              this row: a service or product that anything refers to — a past appointment or sale, a
              booking, a package, a reward, a bundle, a tier discount — is switched off and kept,
              because deleting it would either be refused by the database or silently rewrite a
-             bundle's economics. Only something nothing refers to is actually removed. */''}<button type="button" class="btn ghost sm" data-catalogue-delete-v660="${s.id}" data-catalogue-kind-v660="service" data-catalogue-name-v660="${esc(serviceDisplayName(s))}">Delete</button></div>`:'<span class="muted small">View only</span>'}</td></tr>`;
+             bundle's economics. Only something nothing refers to is actually removed. */''}${canDeleteServiceV682?`<button type="button" class="btn ghost sm" data-catalogue-delete-v660="${s.id}" data-catalogue-kind-v660="service" data-catalogue-name-v660="${esc(serviceDisplayName(s))}">Delete</button>`:''}</div>`:'<span class="muted small">View only</span>'}</td></tr>`;
       }).join('')}</table></div>`
       :CUI.emptyState({iconName:'services',title:'No services yet',body:'Add your first service so customers can book and staff can select it during checkout.'});
     const editingRowV584=canWrite&&editingServiceId?(sv||[]).find(row=>row.id===editingServiceId):null;
@@ -10772,6 +10863,7 @@ async function servicesPage(){
         <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
         <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
         <label>Included services</label><div id="bsv" class="small"></div>
+        <label>Included products</label><div id="bpvV488" class="small"></div>
         <div style="margin-top:12px" class="row"><button class="btn ghost sm" id="cancelBundleForm">Cancel</button><span class="spacer"></span><button class="btn sm" id="badd3">Save bundle</button></div>
       </section></div>`:''}</div>`);
   /* One door in, one door out, so Esc, the backdrop and Cancel cannot leave the overlay up with
@@ -11691,14 +11783,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       :1;
   const pointCostLabelV262=(cents)=>`${S.biz.currency||'SGD'} ${(Number(cents)/100).toFixed(3)}`;
   const tierBenefitLines=tier=>String(tier?.perk_note||'').split(/\r?\n/).map(value=>value.trim()).filter(Boolean);
-  const boundaryInputValue=(value)=>{
-    if(!value)return '';
-    const parts=new Intl.DateTimeFormat('sv-SE',{
-      timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',
-      hour:'2-digit',minute:'2-digit',hourCycle:'h23'
-    }).formatToParts(new Date(value)).reduce((out,part)=>({...out,[part.type]:part.value}),{});
-    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
-  };
+  const boundaryInputValue=(value)=>value?sgLocalInputValue(value):'';
   const boundaryInstant=(value)=>value?`${value}:00+08:00`:null;
   const boundaryState=(item,startKey,endKey,now=Date.now())=>{
     if(item?.active===false)return {label:'Paused',tone:'off'};
@@ -13502,7 +13587,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error)return fail(error);refreshRetentionPanel(draftVersionId,null,'Bring-back rule status updated.')});
   }
   if(isOwner){
-    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
+    $('rtAdd').onclick=async()=>{const button=$('rtAdd');if(button.disabled)return;const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');CUI.setButtonBusy(button,{busy:true,label:'Adding…'});const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(button.isConnected)CUI.setButtonBusy(button,{busy:false});if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
@@ -14396,6 +14481,21 @@ function promotionPublishLimitRefusalV462(error){
    published — and scheduled to start two days later — but every owner-facing label said only
    "Published", so an offer that no customer could yet see looked live. Customers were right;
    the owner screen was not. One helper now decides the state everywhere it is shown. */
+/* F027: business_get_promotion_editor_v155 (last def db/migrations/20260823_nestly_v462_
+   featured_offer_and_live_cap.sql, prod-confirmed) reports a promotion's branch scope as mode
+   'selected_branches' / 'all_branches' — the editor used to compare only against the WRITE-side
+   wire value 'selected' (what the radios post), so no server-returned mode could ever match and
+   every scoped offer reopened as "All branches"; the next Save/Publish/Unpublish then deleted
+   the scope rows. Accept both vocabularies on read. */
+function promotionScopeIsSelectedV155(mode){return mode==='selected'||mode==='selected_branches'}
+/* The server also never returns a `label` key (checked live), so the list row always printed
+   the fallback "All branches" even for a genuinely scoped offer. Derive the label from the
+   server's own branch_names instead of trusting a field it never sends. */
+function promotionScopeLabelV155(scope){
+  if(!promotionScopeIsSelectedV155(scope?.mode))return 'All branches';
+  const names=(scope.branch_names||scope.branchNames||[]).filter(Boolean);
+  return names.length?`Selected branches: ${names.join(', ')}`:'Selected branches';
+}
 function promotionLifecycleV186(item,now=new Date()){
   if(!item?.active)return {state:'draft',label:'Draft',live:false};
   const starts=item.starts_at?new Date(item.starts_at):null;
@@ -14563,7 +14663,7 @@ async function promotionsPage(selectedPromotionId=null){
   const selectedScope=selected?.branchScope||{mode:'all',branch_ids:[],branch_names:[],label:'All branches'};
   const operationalPromotionBranch=reportingOperationalBranchIdV155(promotionBranches);
   const selectedScopeBranchIds=(selectedScope.branch_ids||selectedScope.branchIds||[]).filter(id=>promotionBranches.some(branch=>branch.id===id));
-  const initialScopeMode=selectedScope.mode==='selected'&&selectedScopeBranchIds.length===1&&selectedScopeBranchIds[0]===operationalPromotionBranch?'current':(selectedScope.mode==='selected'?'selected':'all');
+  const initialScopeMode=promotionScopeIsSelectedV155(selectedScope.mode)&&selectedScopeBranchIds.length===1&&selectedScopeBranchIds[0]===operationalPromotionBranch?'current':(promotionScopeIsSelectedV155(selectedScope.mode)?'selected':'all');
   const promotionScopeModeV155=initialScopeMode;
   const initial={
     id:selected?.id||'',branch_id:null,name:selected?.name||'',
@@ -14580,7 +14680,7 @@ async function promotionsPage(selectedPromotionId=null){
     imageCustomerVisible:selected?.imageCustomerVisible===true,
     mediaVersionsByScope:selected?.mediaVersionsByScope||{},
     scopeMode:promotionScopeModeV155,
-    scopeBranchIds:selectedScope.mode==='selected'?selectedScopeBranchIds:[]
+    scopeBranchIds:promotionScopeIsSelectedV155(selectedScope.mode)?selectedScopeBranchIds:[]
   };
   const canPublishThis=initial.active||Boolean(initial.metadata?.published_once_at)||canPublishNew,
     quotaProgress=max?Math.min(100,Math.round((quotaUsed/max)*100)):100;
@@ -14646,7 +14746,7 @@ async function promotionsPage(selectedPromotionId=null){
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
-      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(item.branchScope?.label||'All branches')}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn danger sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):CUI.emptyState({iconName:'giftcard',title:'No promotions yet',body:'Start with one timely offer — it appears here as a draft you can publish.'})}</div></section>
+      <div>${items.length?items.map(item=>`<div class="promotion-item-row" data-merchant-content>${item.imageUrl?`<img class="promotion-item-thumb" src="${esc(customerMediaUrlV95(item.imageUrl)||'')}" alt="">`:'<div class="promotion-item-thumb"></div>'}<div><b>${esc(item.name||item.offerFacts||'Untitled draft')}</b><p class="muted small">${esc(promotionLifecycleV186(item).label)}</p><p class="muted small">${esc(promotionScopeLabelV155(item.branchScope))}</p></div><div class="row" style="gap:6px;flex-wrap:wrap"><a class="btn ghost sm" href="#/promotions/${encodeURIComponent(item.id)}">Edit</a><button type="button" class="btn danger sm" data-promotion-delete="${esc(item.id)}" data-promotion-published="${item.active?'1':''}" data-promotion-name="${esc(item.name||item.offerFacts||'this draft')}">Delete</button></div></div>`).join(''):CUI.emptyState({iconName:'giftcard',title:'No promotions yet',body:'Start with one timely offer — it appears here as a draft you can publish.'})}</div></section>
   </div>`;
   localizeWorkspaceSubtreeV97(host);
   /* V183 (owner: "I can edit but i cannot delete T.T"). Offers could be created, edited and
@@ -16626,7 +16726,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      typed, the page defaults to the last month rather than to everything. Typing either date
      replaces that default outright, so the filter can still reach any row ever recorded — the
      default narrows the FIRST view, it is not a cap. */
-  const growHistoryDefaultFromV382=(()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.getTime()})();
+  const growHistoryDefaultFromV382=Date.parse(`${shiftSgDateInput(sgDateInputValue(),-30)}T00:00:00+08:00`);
   const growHistoryInWindowV375=row=>{
     const typedFrom=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
     const to=growHistoryToV375?Date.parse(`${growHistoryToV375}T23:59:59+08:00`):null;
@@ -16969,7 +17069,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      database, and the notice below says exactly that rather than promising a deletion the app
      does not perform. */
   const GROW_HISTORY_WINDOW_YEARS_V375=5;
-  const growHistoryCutoffV375=(()=>{const d=new Date();d.setFullYear(d.getFullYear()-GROW_HISTORY_WINDOW_YEARS_V375);return d})();
+  const growHistoryCutoffV375=(()=>{
+    const match=sgDateInputValue().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const day=new Date(Date.UTC(Number(match[1])-GROW_HISTORY_WINDOW_YEARS_V375,Number(match[2])-1,Number(match[3])))
+      .toISOString().slice(0,10);
+    return new Date(Date.parse(`${day}T00:00:00+08:00`));
+  })();
   const growWithinHistoryWindowV375=row=>{
     const added=new Date(row?.created_at||'');
     return !Number.isFinite(added.getTime())||added>=growHistoryCutoffV375;
@@ -19675,9 +19780,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growStampsPickedV416=stamp;
     growPointsAddOpenV326='form';
     growPointsEditingV326=reward?String(reward.id):null;
+    /* nestly_p2-F036: this MUST prefill exactly like the chip/row edit handler above (37408) —
+       dropping whereItWorks/endsOn/expiryDays here left the draft blank, so any Save from this
+       grid (even a pure rename) sent p_where_it_works:'' and the server read that as an explicit
+       clear, silently wiping the owner's stored "Where it works" text. See app/app.js:37408-37416
+       for the same four keys built the same way; keep the two in sync. */
     growPointsAddDraftV326=reward
-      ?{name:reward.customer_name||reward.name||'',points:String(stamp),description:reward.description||''}
-      :{name:'',points:String(stamp),description:''};
+      ?{name:reward.customer_name||reward.name||'',points:String(stamp),description:reward.description||'',
+        endsOn:growPointsEndDateInputV472(reward.claim_available_until),
+        whereItWorks:String(reward.where_it_works||''),
+        expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''}
+      :{name:'',points:String(stamp),description:'',endsOn:'',whereItWorks:'',expiryDays:''};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -19788,11 +19901,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    /* nestly_v487: there is no field to read any more, and the empty string is load-bearing -
-       p_clear_end_date below is `!endsOnV472`, so '' makes every save an EXPLICIT clear. That is
-       what turns "delete this for all gifts" into something true rather than cosmetic: a gift
-       that already had a date loses it the next time it is saved, instead of keeping an expiry
-       the owner can no longer see or change. */
+    /* nestly_v487 tried to remove the per-gift end date by sending an unconditional explicit clear
+       on every save from this dialog. That went further than "no field to read": the date is
+       still SET by the deep reward editor's "Ends at" field (app/app.js, growPointsGiftEndsTextV476
+       renders it right there on the row), so a save from THIS dialog for any reason — a rename, a
+       photo, a description tweak — silently deleted a date the owner could still see and had not
+       touched (audit F082). This dialog has no end-date field at all, so it can never represent
+       "the owner cleared it" — the only correct behaviour for a field this form doesn't show is to
+       leave it exactly where it is, the same contract the inline stamp-row editor
+       (growStampsSaveRowV356) already uses by omitting both arguments. */
     const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
     /* nestly_v520: only the points form draws this field. On the Stamp Card page the raw value is
@@ -19842,11 +19959,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
         p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
-        /* nestly_v472: p_clear_end_date is the ONLY way to remove a date. Sending null for
-           p_claim_available_until means "say nothing" — the writer keeps whatever is stored — so
-           an empty field has to be an EXPLICIT clear, not an absent value. */
-        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
-        p_clear_end_date:!endsOnV472,
+        /* nestly_p2-F082: this dialog draws no end-date field, so it must never claim the owner
+           cleared one. null + false is "say nothing" — the writer keeps whatever claim_available_until
+           is already stored on the reward, exactly like growStampsSaveRowV356's inline row editor,
+           which omits both arguments for the same reason. Previously this unconditionally sent
+           p_clear_end_date:true, so ANY save from this dialog (even a pure rename) wiped a date set
+           through the deep reward editor. */
+        p_claim_available_until:null,
+        p_clear_end_date:false,
         /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
            stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
            to be an explicit clear, and '' is what the writer reads as one. */
@@ -25776,7 +25896,17 @@ async function giftcardsPage(){
   const isGiftCardsCurrent=()=>routeMain.isConnected&&M()===routeMain;
   routeMain.innerHTML=CUI.loadingState({title:'Gift cards',iconName:'giftcard'});
   const canConfigure=S.myRole==='owner';
-  let issueGiftCardIdempotencyKey=crypto.randomUUID();
+  /* F133: this used to be `let issueGiftCardIdempotencyKey=crypto.randomUUID()` — a page-scoped
+     closure variable, freshly minted every time giftcardsPage() re-runs (route re-entry, a
+     reload, or the branch selector's own giftcardsPage() call at the bottom of this function).
+     A slow/lost response followed by any of those re-invocations meant the retry carried an
+     unrelated key, and the server (dedupes strictly on business_id+idempotency_key) treated it
+     as a brand-new, legitimate sale — minting a second real gift card and a second
+     sales(kind='gift_card') row for one payment. Every sibling money-write on this same page
+     (redeem, just below) and membership enroll use the writeAttemptKey/sessionStorage pattern
+     specifically because it "outlives both the click closure AND a full page-function
+     re-invocation" — issuance was the one write that skipped it. */
+  const issueGiftCardSlot='nestly.giftCards.issue';
   const redeemGiftCardSlot='nestly.giftCards.redeem';
   const [clientsResult,preferencesResult,branchesResult,staffResult,staffBranchesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
@@ -25907,14 +26037,23 @@ async function giftcardsPage(){
     const amt=Math.round(parseFloat($('ga').value||'0')*100);
     if(!(amt>0)) return toast('Enter an amount');
     const sellButton=$('gsell');sellButton.disabled=true;
+    const purchaser=$('gp').value||null,recipientEmail=$('gr').value||null;
+    /* F133: stable per LOGICAL attempt — same branch+amount+purchaser+recipient reuses the same
+       key across a double-tap, timeout, lost response or a giftcardsPage() re-render; changing
+       any of those inputs (a deliberately different sale) mints a fresh one. */
+    const issueFingerprint=JSON.stringify([S.biz.id,giftBranchId,amt,purchaser,recipientEmail]);
+    const issueKey=writeAttemptKey(issueGiftCardSlot,issueFingerprint);
     const {data,error}=await sb.rpc('issue_gift_card_at_branch_v117',{p_business:S.biz.id,p_branch:giftBranchId,p_amount:amt,
-      p_purchaser:$('gp').value||null,p_recipient_email:$('gr').value||null,
-      p_idempotency_key:issueGiftCardIdempotencyKey});
+      p_purchaser:purchaser,p_recipient_email:recipientEmail,
+      p_idempotency_key:issueKey});
     if(!isGiftCardsCurrent())return;
     sellButton.disabled=false;
-    if(error) return fail(error);
+    if(error){
+      if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(issueGiftCardSlot);return toast('That issuance clashed with another — check the cards list, then start a fresh one')}
+      return fail(error);
+    }
     $('gcode').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
-    issueGiftCardIdempotencyKey=crypto.randomUUID();
+    clearWriteAttempt(issueGiftCardSlot);
     loadCards();
   };
   if(canRedeem&&$('gredeem'))$('gredeem').onclick=async()=>{
@@ -26098,6 +26237,17 @@ async function appointmentsPage(){
     return `${name} · ${contact||`staff ${String(person?.id||'').slice(-4)}`}`;
   };
   const staffName=Object.fromEntries(staff.map(s=>[s.id,staffLabel(s)]));
+  /* W3B/F075. The customer widget offers "Anyone available" (booking_requests.staff_id NULL) and
+     this page DISPLAYS that state, but the two "Change time / staff" selects were built purely
+     from `staff`, so an unassigned request had no matching <option>, the browser fell back to the
+     alphabetically-first team member, and "Move & confirm" silently pinned the request to whoever
+     that happened to be. The unassigned choice is now a real option; its empty value reaches the
+     RPC as p_staff:null, which `staff_reschedule_and_confirm_booking_request_v329` accepts
+     (`staff_id = coalesce(p_staff, staff_id)` — verified against production), leaving an
+     unassigned request unassigned. */
+  const rescheduleStaffOptionsV329=currentStaffId=>
+    `<option value="" ${currentStaffId?'':'selected'}>Anyone available</option>`
+    +staff.map(s=>`<option value="${s.id}" ${currentStaffId===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
   const staffColor=Object.fromEntries(staff.map(s=>[s.id,s.calendar_color||'#7C9CBF']));
   const myStaff=staff.find(s=>s.user_id===S.user.id);
   const canSeeAll=S.myRole==='owner'||S.myRole==='manager';
@@ -26139,7 +26289,7 @@ async function appointmentsPage(){
   const calendarGate=createLatestRequestGate(isCurrent);
   const rescheduleGate=createLatestRequestGate(isCurrent);
   const detailGate=createLatestRequestGate(isCurrent);
-  const todaySg=new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+  const todaySg=sgDateInputValue();
   /* V329 ("check availability" from the booking-request pop-up lands here already on that
      date and team member, with the request highlighted): #/appointments?date=YYYY-MM-
      DD&staff=<id>&highlight=<request id>. Unknown/invalid values fall through to the normal
@@ -26281,10 +26431,20 @@ async function appointmentsPage(){
   function closeNewAppointmentForm(){
     if(!appointmentFormCard)return;
     appointmentFormCard.hidden=true;appointmentLayout?.classList.remove('form-open');
+    /* F074: an abandoned booking (Close, or switching to a different customer in the same form)
+       must not leave a stale waitlist-row id around for a LATER, unrelated appointment to
+       silently mark 'booked'. */
+    pendingWaitlistBookIdV571='';
     $('openAppointmentForm')?.focus();
   }
-  function openNewAppointmentForm({date='',staffId='',time='',serviceId=''}={}){
+  function openNewAppointmentForm({date='',staffId='',time='',serviceId='',fromWaitlist=false}={}){
     if(!appointmentFormCard)return;
+    /* F074: pendingWaitlistBookIdV571 must only survive a form-open that actually came from the
+       waitlist's "Book" action (fromWaitlist:true, passed by the one call site below that carries
+       apptPrefillV575). Every other way to open this form — the toolbar button, a calendar
+       day-slot click, the auto-open on page entry — must not inherit a leftover id from an
+       earlier, abandoned waitlist booking. */
+    if(!fromWaitlist)pendingWaitlistBookIdV571='';
     appointmentFormCard.hidden=false;appointmentLayout?.classList.add('form-open');
     if(date&&$('ad'))$('ad').value=date;
     if(time&&$('at'))$('at').value=time;
@@ -26588,7 +26748,7 @@ async function appointmentsPage(){
   }
   const selectedDuration=()=>Number($('as')?.selectedOptions?.[0]?.dataset?.duration||$('apDuration')?.value||60);
   const selectedStart=()=>sgIso(`${$('ad')?.value||''}T${$('at')?.value||''}`);
-  const sgInput=iso=>{const d=new Date(new Date(iso).getTime()+8*3600000);return d.toISOString().slice(0,16)};
+  const sgInput=iso=>sgLocalInputValue(iso);
   function invalidateFormRequests({clearSuggestions=true,availability=true}={}){
     if(availability)availabilityGate.invalidate();
     bookingGate.invalidate();bookingAttempt=null;
@@ -26733,7 +26893,11 @@ async function appointmentsPage(){
       openNewAppointmentForm({
         date:apptPrefillV575?.date||todaySg,
         time:apptPrefillV575?.time||'',
-        serviceId:apptPrefillV575?.serviceId||''
+        serviceId:apptPrefillV575?.serviceId||'',
+        // F074: only the waitlist's own prefill (apptPrefillV575) legitimises a surviving
+        // pendingWaitlistBookIdV571 — a pure Customer 360 "New appointment" hand-off
+        // (apptPrefillClient alone) must not inherit an unrelated waitlist id.
+        fromWaitlist:!!apptPrefillV575
       });
       const clientSelect=$('ac');
       if(apptPrefillClient&&clientSelect&&[...clientSelect.options].some(o=>o.value===apptPrefillClient)){
@@ -26788,11 +26952,23 @@ async function appointmentsPage(){
       /* nestly_v571: the waitlist row that sent us here is resolved HERE and nowhere earlier —
          an appointment now exists, so the walk-in is genuinely no longer waiting. Consume-once,
          and fire-and-forget: the appointment is already saved, so a failed queue update must not
-         be reported as a failed booking. It simply leaves the row for staff to clear by hand. */
+         be reported as a failed booking. It simply leaves the row for staff to clear by hand.
+         F074: openNewAppointmentForm's fromWaitlist gate already stops a stale id from an
+         ABANDONED booking reaching this point, but the id can still survive a form the staff
+         legitimately opened from the waitlist and then, within that same open form, saved for a
+         DIFFERENT customer than the one the row was for. Re-check against the row's own
+         client_id (not the closure's) before writing 'booked'; a row with no client on record
+         (a walk-in never linked to a customer) has nothing to compare, so it is trusted as before. */
       if(pendingWaitlistBookIdV571){
         const waitlistIdV571=pendingWaitlistBookIdV571;pendingWaitlistBookIdV571='';
-        sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
-          .eq('business_id',S.biz.id).then(()=>{},()=>{});
+        sb.from('waitlist').select('client_id').eq('id',waitlistIdV571).eq('business_id',S.biz.id).maybeSingle()
+          .then(waitlistResV571=>{
+            const waitlistRowV571=waitlistResV571?.data,waitlistRowErrorV571=waitlistResV571?.error;
+            if(waitlistRowErrorV571||!waitlistRowV571)return;
+            if(waitlistRowV571.client_id&&waitlistRowV571.client_id!==request.p_client)return;
+            sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
+              .eq('business_id',S.biz.id).then(()=>{},()=>{});
+          },()=>{});
       }
       /* A4: "Book next visit" set this right after the earlier appointment was completed for the
          SAME client — this is the one shot at recording the provenance, so it is consumed here
@@ -27020,7 +27196,7 @@ async function appointmentsPage(){
     $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{
       const status=action.dataset.status;
-      if(!await setStatus(item.id,status))return;
+      if(!await setStatus(item.id,status,item))return;
       if(status!=='completed'){close();return}
       /* A4 (owner: rebooking should be one tap after checkout). The completed appointment is
          remembered so the NEXT appointment booked for this same client can be linked to it via
@@ -27151,8 +27327,15 @@ async function appointmentsPage(){
       loadCalendar().catch(fail);
     });
   }
-  async function setStatus(id,status){
-    const item=calendarItems.find(appointment=>appointment.id===id);
+  /* W3B/F072: the caller may already hold the fully-loaded appointment (the detail dialog fetches
+     its own row through get/appointment RPC). `calendarItems` is the page's STAFF-FILTERED list —
+     for a non-owner/manager staffFilter defaults to that person's own staff id, so a colleague's
+     appointment opened from the dashboard's unfiltered "Today schedule" is simply absent from it.
+     Re-deriving the item from that list made appointmentOutcomeIsDue(undefined) false and refused
+     Complete / No-show with "only after the appointment starts". Trust the passed item first; the
+     lookup remains the fallback for the inline .statusAction rows, which ARE calendar rows. */
+  async function setStatus(id,status,knownItem=null){
+    const item=knownItem&&knownItem.id===id?knownItem:calendarItems.find(appointment=>appointment.id===id);
     if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item)){toast('This outcome can only be recorded after the appointment starts.');return false}
     if(status==='completed'&&!canComplete){toast('Create-sales access is required to complete an appointment.');return false}
     const words=status==='completed'?'Complete this appointment? Peekaa will create the configured checkout record. Review Sales for the final points outcome.':status==='cancelled'?'Cancel this appointment?':'Mark this appointment as a no-show?';
@@ -27453,8 +27636,8 @@ async function appointmentsPage(){
           ${canWrite?`<button type="button" class="btn ghost sm danger" data-pending-decline="${esc(r.id)}">Decline</button>`:''}
         </div>
         ${rescheduling?`<div class="row pending-reschedule-form-v329" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:flex-end">
-          <div><label for="pendingRescheduleTimeV329-${esc(r.id)}" class="small">New date & time</label><input id="pendingRescheduleTimeV329-${esc(r.id)}" type="datetime-local" value="${esc((r.preferred_at||'').slice(0,16))}"></div>
-          <div><label for="pendingRescheduleStaffV329-${esc(r.id)}" class="small">Team member</label><select id="pendingRescheduleStaffV329-${esc(r.id)}">${staff.map(s=>`<option value="${s.id}" ${r.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('')}</select></div>
+          <div><label for="pendingRescheduleTimeV329-${esc(r.id)}" class="small">New date & time</label><input id="pendingRescheduleTimeV329-${esc(r.id)}" type="datetime-local" value="${esc(r.preferred_at?sgInput(r.preferred_at):'')}"></div>
+          <div><label for="pendingRescheduleStaffV329-${esc(r.id)}" class="small">Team member</label><select id="pendingRescheduleStaffV329-${esc(r.id)}">${rescheduleStaffOptionsV329(r.staff_id)}</select></div>
           <button type="button" class="btn sm" data-pending-reschedule-submit="${esc(r.id)}">Move & confirm</button>
         </div>`:''}
       </div>`;
@@ -27516,7 +27699,7 @@ async function appointmentsPage(){
      and needs the inline reschedule form instead. */
   function openPendingRequestTileModalV330(row){
     if($('pendingTileModalV330'))return;
-    const staffOptions=staff.map(s=>`<option value="${s.id}" ${row.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
+    const staffOptions=rescheduleStaffOptionsV329(row.staff_id);
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pendingTileModalV330" role="dialog" aria-modal="true" aria-labelledby="pendingTileModalTitleV330" tabindex="-1"><div class="modal-card" style="max-width:460px">
       <div class="row"><div><h2 id="pendingTileModalTitleV330">Booking request</h2><p class="muted small" style="margin-top:4px">Not yet confirmed — still holds this slot.</p></div><span class="spacer"></span><button class="btn ghost sm" id="pendingTileModalCloseV330" type="button">Close</button></div>
       <div class="imp-note" style="margin-top:12px">
@@ -27533,7 +27716,7 @@ async function appointmentsPage(){
         <button class="btn ghost danger" id="pendingTileDeclineV330" type="button">Decline</button>
       </div>
       <div class="row" id="pendingTileRescheduleFormV330" style="display:none;margin-top:14px;gap:8px;flex-wrap:wrap;align-items:flex-end">
-        <div><label for="pendingTileTimeV330" class="small">New date & time</label><input id="pendingTileTimeV330" type="datetime-local" value="${esc((row.preferred_at||'').slice(0,16))}"></div>
+        <div><label for="pendingTileTimeV330" class="small">New date & time</label><input id="pendingTileTimeV330" type="datetime-local" value="${esc(row.preferred_at?sgInput(row.preferred_at):'')}"></div>
         <div><label for="pendingTileStaffV330" class="small">Team member</label><select id="pendingTileStaffV330">${staffOptions}</select></div>
         <button type="button" class="btn sm" id="pendingTileRescheduleSubmitV330">Move & confirm</button>
       </div>
@@ -27630,7 +27813,7 @@ async function appointmentsPage(){
       const unassignedPendingV468=pendingRequests.filter(item=>!item.staff_id||!knownStaffIds.has(item.staff_id));
       if(unassigned.length||unassignedPendingV468.length)columns.push({id:'',label:'Unassigned',color:'#8B8791',items:unassigned,blocks:[],pending:unassignedPendingV468,schedule:{state:'unknown',label:'No assigned team member',breaks:[]}});
     }
-    const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(`${day}T12:00:00+08:00`));
+    const dateLabel=new Intl.DateTimeFormat('en-SG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(`${day}T12:00:00+08:00`));
     if(!columns.length){
       $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${esc(dateLabel)} · Singapore time</p><div class="cui-empty">${CUI.icon('staff',{size:32})}<h2>No team member assigned</h2><p>Add team members in Settings before scheduling appointments.</p></div>`;
       return;
@@ -27958,10 +28141,6 @@ function bottleStatusPillV275(status){
      solid colour swatch beside a solid fill bar reads as two competing signals on a phone. */
   return `<span class="pill" style="color:${meta.tone||'#6B6560'};border-color:${meta.tone||'#6B6560'}">${CUI.icon(meta.icon,{size:16})} ${esc(meta.label)}</span>`;
 }
-/* V279 (owner walkthrough item 8): "Bought on" defaults to TODAY in SINGAPORE, never to the
-   browser's idea of today. A bar open past midnight on a device set to another zone would
-   otherwise pre-fill yesterday on every bottle it took in after 4pm UTC. */
-const sgtTodayV279=()=>String(sgt(new Date().toISOString())||'').slice(0,10);
 /* V279 (owner walkthrough item 7). The customer identity a bar counter actually holds is the one
    the till uses — the phone number — so a scanned member code only has to carry that. This reads
    whatever the code contains and resolves it to the customer the till's own lookup would have
@@ -28179,6 +28358,39 @@ function supportWindowLabelV531(open,expiresAt){
   return SUPPORT_INBOX_COPY_V531.windowOpen+' '+(h>0?h+'h '+m+'m':m+'m');
 }
 
+/* nestly_v688 (audit finding F101). The conversations THIS session has marked read, with the
+   count each one held when the server cleared it. supportRenderListV531 recomputes those rows'
+   pills from this map instead of trusting the number the list RPC sent, so the "N new" pill is
+   gone the moment a thread is opened — and it is gone for everyone, because the server row was
+   the thing that changed, not a browser flag. */
+const supportUnreadClearedV688=new Map();
+
+/* Fail-soft on purpose: this is housekeeping, and a staff member must never be unable to READ a
+   conversation because the mark-read write was refused. The refusals it can raise (42501 no
+   support write / workspace closed, 42704 not this business's conversation) are all cases where
+   the thread load would have failed first, so there is nothing to tell the operator. */
+async function supportMarkThreadReadV688(businessId,conversationId){
+  const key=String(conversationId||'');
+  if(!businessId||!key)return null;
+  try{
+    const result=await sb.rpc('business_support_mark_read_v688',
+      {p_business:businessId,p_conversation:key});
+    if(result&&result.error){console.warn('support mark-read failed',result.error);return null}
+    const cleared=Math.max(0,Number(result&&result.data&&result.data.cleared)||0);
+    supportUnreadClearedV688.set(key,cleared);
+    return cleared;
+  }catch(error){
+    console.warn('support mark-read failed',error);
+    return null;
+  }
+}
+
+function supportUnreadCountV688(row){
+  const key=String((row&&row.conversation_id)||'');
+  if(supportUnreadClearedV688.has(key))return 0;
+  return Math.max(0,Number(row&&row.unread_count)||0);
+}
+
 async function supportInboxPageV531(hashParam){
   disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -28190,6 +28402,13 @@ async function supportInboxPageV531(hashParam){
     title:SUPPORT_INBOX_COPY_V531.title,iconName:'customers',body:'Loading conversations…'});
 
   if(conversationId){
+    /* W3B/F101, closed by nestly_v688. unread_count used to be set to 0 in exactly one place —
+       app.support_reply_v535, as a side effect of SENDING a reply — and the table carries a
+       SELECT-only RLS policy, so a thread that needed no reply kept its "N new" pill forever.
+       public.business_support_mark_read_v688 is the route that clears it on its own; it asserts
+       the same workspace-open + support-WRITE guard v535 does, so a read-only viewer cannot
+       erase a colleague's queue. It runs only after the thread actually loaded — a failed load
+       is not a read. */
     const threadResultV531=await sb.rpc('business_support_get_thread_v531',
       {p_business:S.biz.id,p_conversation:conversationId});
     if(!isCurrent())return;
@@ -28198,6 +28417,8 @@ async function supportInboxPageV531(hashParam){
         message:ownerErrorText(threadResultV531.error)||'Please try again.'});
       return;
     }
+    await supportMarkThreadReadV688(S.biz.id,conversationId);
+    if(!isCurrent())return;
     return supportRenderThreadV531(routeMain,threadResultV531.data||{});
   }
 
@@ -28229,7 +28450,7 @@ function supportRenderListV531(routeMain,rows){
           ?esc(SUPPORT_INBOX_COPY_V531.knownCustomer)
           :esc(SUPPORT_INBOX_COPY_V531.unknownCustomer)}</span>
         <span class="pill">${esc(row.assigned_staff_name||SUPPORT_INBOX_COPY_V531.unassigned)}</span>
-        ${Number(row.unread_count)>0?`<span class="pill">${Number(row.unread_count)} new</span>`:''}
+        ${supportUnreadCountV688(row)>0?`<span class="pill">${supportUnreadCountV688(row)} new</span>`:''}
       </div>
     </button>`).join('');
 
@@ -29045,7 +29266,7 @@ async function bottlesPage(){
         <select id="parkNotify">${BOTTLE_NOTIFY_CHANNELS_V278.map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}</select>
         <p class="muted small" style="margin-top:-2px">Saved with the bottle. WhatsApp and email are not switched on yet — until they are, Notify on the bottle reaches them inside the app.</p>
         <div class="split">
-          <div><label for="parkPurchased">Bought on</label><input id="parkPurchased" type="date" value="${esc(sgtTodayV279())}"></div>
+          <div><label for="parkPurchased">Bought on</label><input id="parkPurchased" type="date" value="${esc(sgDateInputValue())}"></div>
           <div><label for="parkNote">Note</label><input id="parkNote" maxlength="500" autocomplete="off" placeholder="optional"></div>
         </div>
         <div class="imp-note small" id="parkExpiryPreview" style="margin-top:14px">Expires ${esc(sgt(expiry.toISOString())||'')} · ${keepDays} days</div>
@@ -29623,7 +29844,20 @@ async function waitlistPage(){
      form the workspace does not have. It opens Bookings instead, which is where a seated
      business turns a walk-in into a held reservation. */
   const seatedWithoutAppointmentsV288=sectorHidesAppointmentsV276();
-  const canBook=seatedWithoutAppointmentsV288?canWriteModule('bookings'):canWriteModule('appointments');
+  /* W3B/F073. V288's "open Bookings instead" was a dead end: bookingsPage only LISTS booking
+     requests a customer already submitted through the public portal — there is no staff control
+     there that creates one, and nothing on that page ever reads pendingWaitlistBookIdV571. So a
+     cafe or bar clicking Book got a reassuring toast, landed on a page with nothing to click, and
+     the walk-in stayed waiting forever. Two honest paths instead:
+       - the appointments module is writable (the #/appointments ROUTE stays reachable in a seated
+         sector by design — see the v276 comment; only its advertising is hidden), so hand the row
+         to the same prefilled appointment form every other sector uses; or
+       - it is not, so there is no scheduling surface at all: seat the walk-in in place through the
+         waitlist's own status write ('booked' is one of the four values waitlist_status_check
+         allows), which is the resolution a seated business actually performs. */
+  const canHandOffToAppointmentsV571=canWriteModule('appointments');
+  const seatWalkInDirectlyV571=seatedWithoutAppointmentsV288&&!canHandOffToAppointmentsV571;
+  const canBook=seatWalkInDirectlyV571?canWrite:canHandOffToAppointmentsV571;
   /* V288 (audit A2 HIGH 1): same ruling as the Bookings page — a waitlist row that carries a
      booking request is decided with Bookings authority, not appointments authority the seated
      sectors never hold. */
@@ -29759,12 +29993,14 @@ async function waitlistPage(){
      excluded here for the same reason updateWl excludes it — those are decided in Bookings. */
   window.wlBook=async id=>{
     const row=currentRows.find(r=>r.id===id);
-    if(!canBook)return toast(seatedWithoutAppointmentsV288?'Bookings write access is required.':'Appointment write access is required.');
+    if(!canBook)return toast(seatWalkInDirectlyV571?'Waitlist write access is required.':'Appointment write access is required.');
     if(row?.booking_request_id)return toast('Linked booking requests must be decided with Confirm or Decline.');
-    if(seatedWithoutAppointmentsV288){
-      pendingWaitlistBookIdV571=id;
-      toast('Bookings opened — the walk-in stays waiting until a booking is confirmed.');
-      nav('#/bookings');return;
+    if(seatWalkInDirectlyV571){
+      /* W3B/F073: no appointment form exists for this workspace, so the queue itself is the only
+         place the walk-in can be resolved. Confirm first — this clears the row. */
+      if(!await confirmActionV386(`Seat ${row?.name||'this walk-in'} now? They leave the waiting queue.`,{confirmLabel:'Seat now',danger:false}))return;
+      if(await updateWl(id,'booked')){toast('Walk-in seated');loadWl()}
+      return;
     }
     pendingWaitlistBookIdV571=id;
     if(row?.client_id)pendingApptClientId=row.client_id;
@@ -29856,7 +30092,9 @@ async function waitlistPage(){
          - "Called" → "Call", annotated "can call customer": a past-tense status became the act.
        Book is the only primary here, so the row has one obvious next step instead of two. */
     const book=!canBook?''
-      :`<button class="btn sm" onclick="wlBook('${w.id}')" title="Open the appointment form to set a date and time"><span>Book</span></button>`;
+      :seatWalkInDirectlyV571
+        ?`<button class="btn sm" onclick="wlBook('${w.id}')" title="Seat this walk-in and clear the row"><span>Seat now</span></button>`
+        :`<button class="btn sm" onclick="wlBook('${w.id}')" title="Open the appointment form to set a date and time"><span>Book</span></button>`;
     /* Call dials AND records the contact, so a tap is never a silent no-op on the queue. A row
        with no usable number keeps the plain status button — there is nothing to dial. */
     const callable=String(w.phone||'').replace(/[^\d+]/g,'');
@@ -30135,9 +30373,13 @@ async function inventoryPage(){
     bindProductEditors();
   }
   if(canWrite)$('padd2').onclick=async()=>{
+    const button=$('padd2');
+    if(button.disabled)return;
     if($('pn2').value.trim().length<2) return toast('Name required');
+    CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
     const {error}=await sb.from('products').insert({business_id:S.biz.id,name:$('pn2').value.trim(),
       sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error) return fail(error);toast('Product added');$('pn2').value='';$('ps2').value='';$('pp2').value='';
     dismissFormModalV658($('productFormCard')); // nestly_v658
     loadInv();
@@ -30216,7 +30458,7 @@ async function packagesPage(options){
      actually use under five that are finished. Active is what the page is for. */
   let packageStatusV612='active';
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const refreshPackagesV584=()=>packagesPage({view:packagesViewV584});
+  const refreshPackagesV584=()=>{if(!isCurrent())return;packagesPage({view:packagesViewV584})};
   const canWrite=canWriteModule('packages');
   routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('packages',{size:24})}<div><h1>Packages</h1><p class="muted small">Prepaid session bundles — revenue upfront, each used session counts as a visit for retention.</p></div></div></div><div class="card"><p class="muted small">Loading packages…</p></div>`;
   const [plansResult,servicesResult,branchesResult,preferencesResult,purchasesResult,packageBranchesResultV627]=await Promise.all([
@@ -31269,18 +31511,8 @@ async function branchesPage(){
 /* ---------- customer intelligence ---------- */
 async function customerIntelligencePage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const singaporeIsoDate=(date=new Date())=>{
-    const values={};
-    new Intl.DateTimeFormat('en-CA',{
-      timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
-    }).formatToParts(date).forEach(part=>{if(part.type!=='literal')values[part.type]=part.value});
-    return `${values.year}-${values.month}-${values.day}`;
-  };
-  const shiftSingaporeDate=(iso,days)=>{
-    const value=new Date(`${iso}T00:00:00+08:00`);
-    value.setUTCDate(value.getUTCDate()+days);
-    return singaporeIsoDate(value);
-  };
+  const singaporeIsoDate=sgDateInputValue;
+  const shiftSingaporeDate=shiftSgDateInput;
   const today=singaporeIsoDate(),from=shiftSingaporeDate(today,-364);
   let lastPayload=null,lastRequest=null,lastTruthBundle=null,lastEconomicsBundle=null,lastCustomerError='';
   /* nestly_v650 (owner batch: acquisition mix, join/booking funnel, contactability and category
@@ -34113,7 +34345,15 @@ async function expensesPage(){
     <div class="card" id="expGate">${CUI.formSkeleton({fields:3})}</div>`;
   const todayIso=sgDateInputValue();
   let scopeResult;
-  try{scopeResult=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'expenses'})}
+  /* W3B/F103: this gate passed p_branch:null unconditionally, unlike every sibling finance/report
+     page (staffperf, dailyreport, P&L all pass selectedBranchId||null). Server-side
+     app.metric_module_scope_available_v145 starts at app.can_see_branch(business, p_branch), and
+     can_see_branch(business, NULL) is only true for role_class owner/admin — so a branch-scoped
+     'bookkeeper' (role_class 'employee'), the exact role the product hands finance access to, was
+     refused Expenses permanently no matter which branch they had. Following the top-bar scope
+     makes the gate the role/module check it was meant to be; the expense list below already
+     filters on the same selectedBranchId (V285). */
+  try{scopeResult=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_module:'expenses'})}
   catch(error){if(isCurrent())$('expGate').innerHTML=`<div class="err">Expenses access could not be checked. <button class="btn ghost sm" id="expensesGateRetry">Retry</button></div>`;if($('expensesGateRetry'))$('expensesGateRetry').onclick=expensesPage;return}
   if(!isCurrent())return;
   if(scopeResult?.error){
@@ -34137,7 +34377,13 @@ async function expensesPage(){
       <label for="exDesc">Description</label><input id="exDesc">
       <label for="exAmt">Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
       <label for="exDate">Date</label><input id="exDate" type="date" value="${todayIso}">
-      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
+      ${/* W3B/F104: the pre-selected scope followed branches.is_default, ignoring the top-bar
+            branch the rest of this page already obeys (the list filters on selectedBranchId).
+            Someone managing Branch 2 got an Add form pre-set to Branch 1, so an unnoticed save
+            posted the cost to the wrong branch's P&L. The top bar owns branch scope — the V285
+            ruling this very page cites — so the form follows it and falls back to the default
+            branch only when no branch is selected. */''}
+      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${(selectedBranchId?branch.id===selectedBranchId:branch.is_default)?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
     <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
@@ -35951,7 +36197,11 @@ async function settingsPage(){
     if(staffId===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
   $('igo').onclick=async()=>{
+    const button=$('igo');
+    if(button.disabled)return;
+    CUI.setButtonBusy(button,{busy:true,label:'Creating…'});
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error) return fail(error);
     await copyTextToClipboard(staffInviteLinkV151(data.code),{success:`Invite created — link copied for ${esc(ROLE_LABELS[$('ir').value]||$('ir').value)}`,
       failure:'Invite created, but copy was blocked. Copy the link or code from Pending invites.'});loadTeam();

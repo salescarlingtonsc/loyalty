@@ -4,7 +4,7 @@
 -- Named for v699 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
 -- migrated run (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
 --
--- Reads db/migrations/20260902_nestly_v699_visit_day_authority.sql.
+-- Reads db/migrations/20260920_nestly_v699_visit_day_authority.sql.
 --
 -- AUTH: every reader here goes through app.ci_access_gate_v667 (platform arm admits a super
 -- admin outright) or, for get_customer_lifecycle_v107, its own `app.is_super_admin() or

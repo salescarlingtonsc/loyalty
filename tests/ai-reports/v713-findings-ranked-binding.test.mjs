@@ -1,6 +1,6 @@
 /* nestly_v713 (check 17, evidence half) — proving V10/V10b bind against a REAL production shape.
  *
- * db/migrations/20260902_nestly_v713_evidence_pack_typed_findings.sql wires app.v176_evidence_pack
+ * db/migrations/20260920_nestly_v713_evidence_pack_typed_findings.sql wires app.v176_evidence_pack
  * (the ONLY function that ever builds the object index.ts sends the model) up to
  * public.get_ci_opportunities_v1's typed candidates, surfaced as a new top-level `findings` key:
  * `findings.ranked[]` (each candidate carrying its own `evidence_class`, 'ASSOCIATION' or
@@ -14,7 +14,7 @@
  * 05-whale-firm.json now additively carry a `findings.ranked` block shaped exactly like v713's
  * output (copied field-for-field from the live app.v176_gated_evidence generators: id, domain,
  * pattern, comparison, impact, action, evidence, evidence_class, confidence, limitation,
- * rank_class — see db/migrations/20260902_nestly_v680_ci_envelope.sql's GENERATOR F/H bodies).
+ * rank_class — see db/migrations/20260920_nestly_v680_ci_envelope.sql's GENERATOR F/H bodies).
  * validate.mjs itself needed no change: typedFindings already walks the WHOLE pack looking for any
  * plain object with its own string `evidence_class`, no matter which key holds it — this file
  * proves that generic walk actually reaches findings.ranked[], not just asserts it in prose.

@@ -5,7 +5,7 @@
  *
  * public.platform_get_assigned_firm_report_v94 does NOT currently get a top-level `freshness`
  * key from v722 (only kpis/cohorts/customer_intelligence got their evidence gating — see
- * db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql, Part B/C). The helper must
+ * db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql, Part B/C). The helper must
  * therefore render nothing today (freshness-absent case) without throwing, while still being
  * ready the day that RPC's own envelope grows one — proven here by feeding the helper a payload
  * shaped like the shared app.ci_envelope_v680 freshness block, lifted from

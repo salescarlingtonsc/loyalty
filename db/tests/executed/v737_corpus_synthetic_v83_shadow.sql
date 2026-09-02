@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v737
--- (db/migrations/20260902_nestly_v737_synthetic_excluded_v83_shadow.sql).
+-- (db/migrations/20260920_nestly_v737_synthetic_excluded_v83_shadow.sql).
 --
 -- Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v737_corpus --migrated-only
 --

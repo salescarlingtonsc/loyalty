@@ -3,7 +3,7 @@
 Every Customer Intelligence reader added from phase CI-A onward embeds these four blocks
 instead of computing its own floor, rate, or distribution. The signatures are FROZEN for the
 build wave: readers code against them concurrently, so a change here breaks siblings silently.
-Implementation: `db/migrations/20260902_nestly_v672_statistical_authority.sql`.
+Implementation: `db/migrations/20260920_nestly_v672_statistical_authority.sql`.
 
 | Function | Returns | Rule it enforces |
 |---|---|---|

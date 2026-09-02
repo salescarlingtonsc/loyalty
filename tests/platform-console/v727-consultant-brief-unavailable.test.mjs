@@ -4,7 +4,7 @@
  * REFUTER FINDING (executed). consultativeIntelligenceHtml in app/platform-console.js never read
  * kpis.status/evidence, cohorts.status/evidence or customer_intelligence.status/evidence. Fed the
  * real K1 'unavailable' payload shape that
- * db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql now emits from
+ * db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql now emits from
  * public.platform_get_assigned_firm_report_v94 (identified-customer count below the
  * app.subgroup_evidence_v1 floor of 5), it printed "SGD 0.00" for kpis.average_order_cents and
  * customer_intelligence.top_customer_revenue_cents and never the words "not enough data" —

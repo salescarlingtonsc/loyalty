@@ -25,10 +25,10 @@ import vm from 'node:vm';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
-const v672 = readFileSync(join(root, 'db', 'migrations', '20260902_nestly_v672_statistical_authority.sql'), 'utf8');
-const v673 = readFileSync(join(root, 'db', 'migrations', '20260902_nestly_v673_retention_funnels.sql'), 'utf8');
-const v674 = readFileSync(join(root, 'db', 'migrations', '20260902_nestly_v674_demographic_intelligence.sql'), 'utf8');
-const v675 = readFileSync(join(root, 'db', 'migrations', '20260902_nestly_v675_behaviour_service_package.sql'), 'utf8');
+const v672 = readFileSync(join(root, 'db', 'migrations', '20260920_nestly_v672_statistical_authority.sql'), 'utf8');
+const v673 = readFileSync(join(root, 'db', 'migrations', '20260920_nestly_v673_retention_funnels.sql'), 'utf8');
+const v674 = readFileSync(join(root, 'db', 'migrations', '20260920_nestly_v674_demographic_intelligence.sql'), 'utf8');
+const v675 = readFileSync(join(root, 'db', 'migrations', '20260920_nestly_v675_behaviour_service_package.sql'), 'utf8');
 
 const blockStart = app.indexOf('function ciMeasuredSinceInlineV679(');
 const blockEnd = app.indexOf('async function serviceMappingBoardPage(){', blockStart);

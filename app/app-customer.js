@@ -237,7 +237,15 @@ async function applyShareReferralV576(slug){
     p_business_slug:slug,p_code:code,
     p_idempotency_key:writeAttemptKey('nestly.customer.shareRefApply',key)
   }).then(result=>result,thrown=>({data:null,error:thrown}));
-  if(error){attemptedShareReferralV576.delete(key);return}
+  /* nestly_v683: 22023 is the server refusing this customer outright — today, "referral codes are
+     for new customers of this business". That answer will never change for this pair, so the stored
+     code is retired rather than retried on every wallet render for the next 30 days. Any other
+     error (offline, 42501 "not a member yet") stays retryable, exactly as before. */
+  if(error){
+    if(String(error?.code||'')==='22023')clearShareReferralV576();
+    else attemptedShareReferralV576.delete(key);
+    return;
+  }
   const reason=String(data?.reason||'');
   if(data?.applied===true||['self_referral','already_referred','unknown_code','referrals_off'].includes(reason)){
     clearShareReferralV576();
@@ -591,6 +599,10 @@ function showGrowthOfferQr({intent,businessName,offerLabel,onClose=()=>{}}={}){
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   overlay.querySelector('#growthOfferQrDone').focus();
 }
+/* Current hour of the day in Singapore wall-clock time (0-23), for anything that greets or
+   gates on time-of-day (e.g. the customer home "Good morning/afternoon/evening" banner) —
+   never the browser's own local hour. */
+const sgHour=(date=new Date())=>Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(date));
 /* ---------- customer wallet ---------- */
 /* V468 HELD, deliberately not shipped: the owner bracketed Agreements and wrote "default = tick
    the box". Pre-ticking these two reverses an explicit earlier ruling of theirs (v263/v265,
@@ -692,7 +704,7 @@ function customerRegistrationShell(body){
     :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer">${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
@@ -1184,7 +1196,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       if(!signupFullName){
         errorHost.innerHTML='<div class="err">Enter your full name.</div>';return;
       }
-      if(!signupBirthDate||new Date(`${signupBirthDate}T00:00:00`)>new Date()){
+      if(!signupBirthDate||signupBirthDate>sgDateInputValue()){
         errorHost.innerHTML='<div class="err">Enter a date of birth that is not in the future.</div>';return;
       }
       if(!['female','male'].includes(signupGender)){
@@ -1404,7 +1416,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   }
   register.onclick=async()=>{
     const fullName=fullNameInput.value.trim(),birthDate=birthDateInput.value,gender=genderInput.value,language=languageInput.value;
-    if(!fullName||!birthDate||new Date(`${birthDate}T00:00:00`)>new Date()){
+    if(!fullName||!birthDate||birthDate>sgDateInputValue()){
       profileError.innerHTML='<div class="err">Enter your name and a date of birth that is not in the future.</div>';return;
     }
     if(!['female','male'].includes(gender)){
@@ -3271,10 +3283,7 @@ async function renderCustomerProfile(requestedView){
   const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
   const passkeyAdd=$('customerPasskeyAdd');
   const passkeySupported=customerPasskeySupported({management:true});
-  const formatPasskeyDate=value=>{
-    const date=value?new Date(value):null;
-    return date&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat(undefined,{dateStyle:'medium'}).format(date):'Date unavailable';
-  };
+  const formatPasskeyDate=value=>walletDate(value)||'Date unavailable';
   const loadPasskeys=async()=>{
     if(!passkeySupported){
       passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
@@ -3494,11 +3503,15 @@ async function renderCustomerQrJoin(){
   const referralCodeV571=pendingCustomerJoinReferralV571;pendingCustomerJoinReferralV571='';
   pendingCustomerJoinSlugV587='';
   if(referralCodeV571&&slug){
-    const {data:referralResult}=await sb.rpc('customer_apply_referral_code_v612',{
+    const {data:referralResult,error:referralErrorV683}=await sb.rpc('customer_apply_referral_code_v612',{
       p_business_slug:slug,p_code:referralCodeV571,
       p_idempotency_key:writeAttemptKey('nestly.customer.joinReferral',`${slug}:${referralCodeV571}`)
-    }).then(result=>result,()=>({data:null}));
+    }).then(result=>result,thrown=>({data:null,error:thrown}));
     if(!isCurrent())return;
+    /* nestly_v683: a refused code used to be silent here — the RPC threw, data came back null and
+       the customer, who had typed something, was told nothing at all. A referral is now refused
+       outright (22023) when they are not new to this business, and that is worth one plain line. */
+    if(String(referralErrorV683?.code||'')==='22023')toast(ct('joinReferralNotNewV683'));
     /* Applied or not, the join stands. The customer is told which happened rather than left to
        assume a code was honoured — and nestly_v612 tells them WHICH promise they are holding:
        paid now (no spend requirement), or paid the moment their spending reaches the floor. */
@@ -4766,6 +4779,7 @@ function customerReferralCardMarkupV300(card,business){
       <h2 id="customerReferralTitle">${esc(ct('referralHeading',{business:business?.name||ct('localBusiness')}))}</h2>
       <p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
       ${friendReward?`<p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(ct('referralFriendAlso',{reward:friendReward}))}</p>`:''}
+      <p class="muted small">${esc(ct('referralNewOnlyV683'))}</p>
     </div></div>
     ${code?`<div class="customer-referral-code-row">
       <span class="customer-referral-code" aria-label="${esc(ct('yourReferralCode'))}">${esc(code)}</span>
@@ -5184,15 +5198,21 @@ function customerRewardReadyTotalV465(cards=[]){
   }
   return {total,known};
 }
-/* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
+/* nestly_v428 (item 6) — "2 REWARDS READY", corrected by the F109 audit (2026-09-02).
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
-   (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
-   on (business, client, programme, cycle, slot_position): "one gift per milestone per card"
-   (v323:402-407). A firm that authored two gifts at the same slot — which is legal — therefore
-   shows a completed card with BOTH claimable and lets the customer claim exactly one; claiming
-   either makes the other unavailable for the cycle (v323:753).
-   So "2 rewards ready" is arithmetic that is true and a promise that is false. The owner-locked
-   wording is "Choose 1".
+   (v323:968 — `'slot', rung.cost_points`). At v323, public.stamp_milestone_claims carried a
+   unique key on (business, client, programme, cycle, slot_position) — "one gift per milestone
+   per card" — so a firm that authored two gifts at the same slot showed a completed card with
+   BOTH claimable but let the customer claim exactly one.
+   db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql deliberately
+   DROPPED that slot-based constraint (stamp_milestone_claims_slot_uk) and kept only
+   stamp_milestone_claims_reward_uk (one claim per GIFT, not per slot) — specifically so a
+   customer who earned two gifts on one slot can claim both. Confirmed live against prod:
+   pg_constraint on stamp_milestone_claims carries no slot-based unique any more.
+   So "2 rewards ready" is now arithmetic that is true AND a promise that is kept — both are
+   claimable, each with its own QR. This function still detects the shared-slot SHAPE (it is
+   still useful to tell the customer both gifts need separate QR scans, not one scan for both),
+   it just no longer means "pick one and lose the other".
    The test is the slot rule itself, not a guess: two or more CLAIMABLE catalogue rewards sharing
    one cost, on a firm whose balance is counted in stamps. Points rewards that happen to cost the
    same are genuinely independent — a customer with the balance may take both — so the stamps gate
@@ -6173,7 +6193,7 @@ function customerGreetingNameV343(profile=null){
   return raw.split(/\s+/)[0]||raw;
 }
 function customerDaypartV343(now=new Date()){
-  const hour=now.getHours();
+  const hour=sgHour(now);
   if(hour<12)return 'morning';
   if(hour<18)return 'afternoon';
   return 'evening';
@@ -8114,12 +8134,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
-        ${/* nestly_v428 (item 6): "Available (2)" is true and, on one stamp slot, misleading — the
-             card carries two gifts and the cycle honours one. The count stays (two ARE on offer);
-             the sentence says which part of that the customer gets, above the cards it applies
-             to, rather than after they have chosen and been refused. */''}
+        ${/* nestly_v428 (item 6, corrected by F109 audit): "Available (2)" is true, and on one
+             stamp slot it used to also be misleading — the old copy said "Choose 1", claiming the
+             two gifts were mutually exclusive. db/migrations/20260824_nestly_v478_...sql dropped
+             stamp_milestone_claims_slot_uk (the constraint that made that true) and kept only
+             stamp_milestone_claims_reward_uk (one claim per GIFT, not per slot) specifically so a
+             customer who earned both gifts on one slot can claim both — confirmed live against
+             prod (pg_constraint on stamp_milestone_claims carries no slot-based unique any more).
+             The sentence now says what actually happens: both are claimable, each with its own
+             QR, rather than steering the customer to pick only one. */''}
         ${claimableRewardsV422.length
-          ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick.</p>':''}
+          ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Both are yours — show each one’s QR separately to claim it.</p>':''}
             <p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337">${claimableRewardsV422.map(rewardCardV422).join('')}</div>`
           :(entitlementsV429.length||tierPerksV501.length)?''
@@ -8332,7 +8357,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       if(lineV339){claimValidityNodeV339.textContent=lineV339;claimValidityNodeV339.hidden=false}
     }
     let redemptionAttempt=null;
-    let giftAttemptV515=null;  /* nestly_v515: its own key, so a gift retry never collides with a catalogue retry */
+    /* nestly_v515 gave the gift button its own idempotency key, so a gift retry never collides
+       with a catalogue retry. nestly_v676 moved that key out of this closure and into
+       sessionStorage (see the handler below) — a page-scoped `let` did not survive the
+       re-render that closing the QR sheet triggers, which is what broke the re-tap. */
     /* nestly_v397: the hero swipe's "Redeem now" carries the same data-customer-redeem contract,
        so it is wired HERE rather than growing a second redemption path. It lives outside #walletRewards,
        hence the second query. Each button restores its OWN label afterwards — the hero says
@@ -8351,13 +8379,27 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         const [giftKind,targetId]=String(button.dataset.customerGiftRedeem||'').split(':');
         if(!giftKind||!targetId)return toast('This gift could not be prepared. Reload and try again.');
         const restore=button.querySelector('span')?.textContent||'Show QR at counter';
-        if(!giftAttemptV515||giftAttemptV515.target!==targetId){
-          giftAttemptV515={target:targetId,key:crypto.randomUUID()};
-        }
+        /* nestly_v676 (audit F048): the key for this gift now lives in sessionStorage, keyed by
+           the gift itself. The old page-scoped `let` was nulled by onClose and re-created by the
+           loadRewards re-render behind it, so closing the sheet and tapping again sent a BRAND
+           NEW key for a gift that already had a live pending intent — which missed the server's
+           replay branch and hit the one-pending-per-gift index. Re-tapping is a retry of the
+           same logical write, so it carries the same key, exactly as writeAttemptKey exists for.
+           The v676 server also reopens the pending intent on a fresh key; this half means the
+           re-tap replays even against a server that has not taken that migration yet. */
+        const giftSlotV676=`nestly.customer.giftIntent:${businessId}:${giftKind}:${targetId}`;
+        /* One call site, spelled out, so scripts/ps0/discover-writers.mjs still sees this RPC. */
+        const mintGiftIntentV676=key=>sb.rpc('customer_create_gift_intent_v515',{
+          p_business:businessId,p_gift_kind:giftKind,p_target:targetId,p_idempotency_key:key});
         button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
-        const {data:intent,error}=await sb.rpc('customer_create_gift_intent_v515',{
-          p_business:businessId,p_gift_kind:giftKind,p_target:targetId,
-          p_idempotency_key:giftAttemptV515.key});
+        let {data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId));
+        /* A key that replays something already finished (staff scanned it, or the customer
+           cancelled from another device) must not be shown as a live QR. Retire it and mint
+           once more; the server then either issues a fresh QR or says why it cannot. */
+        if(!error&&intent&&String(intent.status||'pending')!=='pending'){
+          clearWriteAttempt(giftSlotV676);
+          ({data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId)));
+        }
         if(!isWalletSectionCurrent(host)||!button.isConnected)return;
         button.disabled=false;button.querySelector('span').textContent=restore;
         if(error){
@@ -8368,19 +8410,26 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
             ?'Gift QRs need the latest Peekaa service update.'
             :message.includes('used this perk')||message.includes('birthday month')
               ||message.includes('applied automatically')||message.includes('not available')
+              /* nestly_v676: the one 23505 case the server cannot reopen — this gift's live QR
+                 belongs to another login on the same customer record. Say that, not "try again". */
+              ||message.includes('already has a QR open')
               ?message.charAt(0).toUpperCase()+message.slice(1)
               :'This gift could not be prepared right now. Please try again.');
           return;
         }
-        if(!intent?.qr_token){
+        if(!intent?.qr_token||String(intent.status||'')!=='pending'){
           toast('This gift could not be prepared right now. Please try again.');return;
         }
+        /* v676: onClose deliberately does NOT retire the key. Closing the sheet keeps the QR
+           pending — that is what the button says — so the next tap must bring back the SAME QR,
+           which is precisely what the stored key (and the server's reopen) now do. The key is
+           retired above, on the tap that finds the intent already settled. */
         showPendingRedemptionQr({intent,businessName:b.name,
           rewardName:intent.reward_label||'Your gift',
           qrRoute:'gift-redeem',
           pollRpc:'customer_get_gift_intent_v515',
           cancelRpc:'customer_cancel_gift_intent_v515',
-          onClose:()=>{giftAttemptV515=null;loadRewards();void customerCounterMomentV468()}});
+          onClose:()=>{loadRewards();void customerCounterMomentV468()}});
       };
     });
     [...host.querySelectorAll('[data-customer-redeem]'),

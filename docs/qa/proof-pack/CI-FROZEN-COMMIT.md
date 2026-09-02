@@ -13,13 +13,13 @@
 
 | | |
 |---|---|
-| HEAD SHA | `b02dfc61b132e8d046294a831ebca063e66113b0` |
+| HEAD SHA | `db287b62b801da5e066b486b2791c9e0ed1473b5` |
 | Branch | `claude/ci-proof-100` |
-| Commit date | 2026-09-03T01:11:58+08:00 |
-| Record generated | 2026-09-02T17:20:10.574Z |
+| Commit date | 2026-09-03T01:20:57+08:00 |
+| Record generated | 2026-09-02T18:48:54.083Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
-| Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 60 |
+| Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |
 
 ## Migration ledger — canonical manifest checksums
 
@@ -29,71 +29,28 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 
 | Manifest | `.sha256` file contents | Independently recomputed SHA-256 | Match |
 |---|---|---|---|
-| `db/migrations/migration-order.manifest.json` | `242608bbd25a4e8e9f05e1aa5fce99a097f146e9f6c30223abba2f616cffcbe7  migration-order.manifest.json` | `242608bbd25a4e8e9f05e1aa5fce99a097f146e9f6c30223abba2f616cffcbe7` | MATCH |
-| `supabase/canonical-migration-order.manifest.json` | `40a3c67d86023e7043a53d8ae1a9419fb5415662181b32fc97b055d06e69a9ce  canonical-migration-order.manifest.json` | `40a3c67d86023e7043a53d8ae1a9419fb5415662181b32fc97b055d06e69a9ce` | MATCH |
+| `db/migrations/migration-order.manifest.json` | `aa8c9698e53aea1af1fc27515e216971a5b3034823f0fd2bdfe6aef75f0dc5ac  migration-order.manifest.json` | `aa8c9698e53aea1af1fc27515e216971a5b3034823f0fd2bdfe6aef75f0dc5ac` | MATCH |
+| `supabase/canonical-migration-order.manifest.json` | `fd93314ae980d60e0e5d4824ae118660d6d4fa37fa78577b69a6d71106b53fc2  canonical-migration-order.manifest.json` | `fd93314ae980d60e0e5d4824ae118660d6d4fa37fa78577b69a6d71106b53fc2` | MATCH |
 
 ## Migrations dated 2026-09-02
 
-**60** files, filename order:
+**17** files, filename order:
 
-* `db/migrations/20260902_nestly_v672_statistical_authority.sql`
-* `db/migrations/20260902_nestly_v673_retention_funnels.sql`
-* `db/migrations/20260902_nestly_v674_demographic_intelligence.sql`
-* `db/migrations/20260902_nestly_v675_behaviour_service_package.sql`
-* `db/migrations/20260902_nestly_v676_internal_drain_authority.sql`
-* `db/migrations/20260902_nestly_v678_consultant_spine.sql`
-* `db/migrations/20260902_nestly_v680_ci_envelope.sql`
-* `db/migrations/20260902_nestly_v681_return_probability.sql`
-* `db/migrations/20260902_nestly_v682_golden_corpus.sql`
-* `db/migrations/20260902_nestly_v683_staff_rebooking_loyalty_discount.sql`
-* `db/migrations/20260902_nestly_v684_metric_dictionary.sql`
-* `db/migrations/20260902_nestly_v685_shadow_reconciliation.sql`
-* `db/migrations/20260902_nestly_v686_discovery_scan.sql`
-* `db/migrations/20260902_nestly_v687_revenue_truth_synthetic_exclusion.sql`
-* `db/migrations/20260902_nestly_v688_consultant_spine_v2.sql`
-* `db/migrations/20260902_nestly_v689_ci_gate_alignment.sql`
-* `db/migrations/20260902_nestly_v690_dispersion_and_one_floor.sql`
-* `db/migrations/20260902_nestly_v691_outliers_and_confounders.sql`
-* `db/migrations/20260902_nestly_v692_lineage_and_visit_dedupe.sql`
-* `db/migrations/20260902_nestly_v693_exclusions_and_typed_verdicts.sql`
-* `db/migrations/20260902_nestly_v694_demographic_preference.sql`
-* `db/migrations/20260902_nestly_v695_service_cadence_fallback.sql`
-* `db/migrations/20260902_nestly_v696_spine_typed_verdicts.sql`
-* `db/migrations/20260902_nestly_v697_service_promotion_dependency.sql`
-* `db/migrations/20260902_nestly_v698_weekend_split_and_branch_timezone.sql`
-* `db/migrations/20260902_nestly_v699_visit_day_authority.sql`
-* `db/migrations/20260902_nestly_v700_behavioural_hardening.sql`
-* `db/migrations/20260902_nestly_v702_discovery_verdict_rigor.sql`
-* `db/migrations/20260902_nestly_v703_envelope_everywhere.sql`
-* `db/migrations/20260902_nestly_v705_spine_v3.sql`
-* `db/migrations/20260902_nestly_v706_branch_clock_everywhere.sql`
-* `db/migrations/20260902_nestly_v707_promotion_population.sql`
-* `db/migrations/20260902_nestly_v708_discovery_tie_strata.sql`
-* `db/migrations/20260902_nestly_v709_visit_days_cadence_and_tiers.sql`
-* `db/migrations/20260902_nestly_v710_service_visit_units.sql`
-* `db/migrations/20260902_nestly_v711_bringback_visit_days.sql`
-* `db/migrations/20260902_nestly_v712_spine_wording_closures.sql`
-* `db/migrations/20260902_nestly_v713_evidence_pack_typed_findings.sql`
-* `db/migrations/20260902_nestly_v714_visit_days_estate.sql`
-* `db/migrations/20260902_nestly_v715_v179_weekday_visit_days.sql`
-* `db/migrations/20260902_nestly_v717_time_basis_and_category_floor.sql`
-* `db/migrations/20260902_nestly_v718_spine_margin_and_alternatives.sql`
-* `db/migrations/20260902_nestly_v720_evidence_pack_grants.sql`
-* `db/migrations/20260902_nestly_v721_one_ci_gate.sql`
-* `db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql`
-* `db/migrations/20260902_nestly_v724_visit_days_estate_2.sql`
-* `db/migrations/20260902_nestly_v725_time_basis_and_shadow_gate.sql`
-* `db/migrations/20260902_nestly_v726_period_validation.sql`
-* `db/migrations/20260902_nestly_v729_visit_days_estate_3.sql`
-* `db/migrations/20260902_nestly_v730_category_customers_window.sql`
-* `db/migrations/20260902_nestly_v734_synthetic_excluded_everywhere.sql`
-* `db/migrations/20260902_nestly_v735_evidence_pack_extended.sql`
-* `db/migrations/20260902_nestly_v737_synthetic_excluded_v83_shadow.sql`
-* `db/migrations/20260902_nestly_v738_pack_report_sections.sql`
-* `db/migrations/20260902_nestly_v739_top_customers_floor.sql`
-* `db/migrations/20260902_nestly_v740_synthetic_excluded_estate_3.sql`
-* `db/migrations/20260902_nestly_v741_roster_read_audit.sql`
-* `db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql`
-* `db/migrations/20260902_nestly_v743_synthetic_scanner.sql`
-* `db/migrations/20260902_nestly_v744_scanner_blind_spots.sql`
+* `db/migrations/20260902_nestly_v672_public_support_desk.sql`
+* `db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql`
+* `db/migrations/20260902_nestly_v674_birthday_gift_type_change.sql`
+* `db/migrations/20260902_nestly_v675_stale_stamp_draft_superseded.sql`
+* `db/migrations/20260902_nestly_v676_gift_intent_reopen.sql`
+* `db/migrations/20260902_nestly_v677_reversal_is_not_a_visit.sql`
+* `db/migrations/20260902_nestly_v678_auto_approve_after_choice.sql`
+* `db/migrations/20260902_nestly_v679_tier_edits_survive_publish.sql`
+* `db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql`
+* `db/migrations/20260902_nestly_v681_free_gift_confirm_at_scan.sql`
+* `db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql`
+* `db/migrations/20260902_nestly_v683_referral_new_customers_only.sql`
+* `db/migrations/20260902_nestly_v684_delete_retired_offer.sql`
+* `db/migrations/20260902_nestly_v685_singapore_day_authority.sql`
+* `db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql`
+* `db/migrations/20260902_nestly_v687_staff_self_profile.sql`
+* `db/migrations/20260902_nestly_v688_support_mark_read.sql`
 

@@ -38,7 +38,10 @@ test('appointments open in a simple day-by-team view with advanced controls seco
   assert.match(appointments, /id="appointmentBlockSeg"[^>]*>Block</);
   assert.match(appointments, /<details class="appointment-more"/);
   assert.match(appointments, /id="appointmentFormCard"[^>]*hidden/);
-  assert.match(appointments, /openNewAppointmentForm\(\{date='',staffId='',time='',serviceId=''\}=\{\}\)/);
+  // F074: fromWaitlist joined the signature so only the waitlist's own prefill can keep
+  // pendingWaitlistBookIdV571 alive across a form-open; every other opener now defaults to
+  // clearing it.
+  assert.match(appointments, /openNewAppointmentForm\(\{date='',staffId='',time='',serviceId='',fromWaitlist=false\}=\{\}\)/);
 });
 
 test('day view uses named staff timelines, visible booking facts and contextual creation without false availability claims', () => {

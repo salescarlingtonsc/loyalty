@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="d500677702312ee9fe89573fc183ebb436eaf8a81c06f6a90f5e244bbdd7bbae">
+<meta name="v105-production-component-sha256" content="63bed0214cb92bfa78b592b3703ab386b9010a06dbaa035253068b7c511575f0">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -878,7 +878,6 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
-.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -5912,6 +5911,13 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .platform-drawer-close{min-width:44px;padding:10px}
 .platform-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .platform-detail-section{margin-top:14px}.platform-detail-section h2{font-size:15px;margin-bottom:8px}
+/* V672: a support message is free text a member of the public typed. It keeps their line
+   breaks, wraps rather than stretching the dialog, and scrolls once it is long. */
+.platform-support-message{
+  white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;margin:4px 0 14px;
+  background:#F8F6F2;border:1px solid var(--line);border-radius:10px;padding:12px;
+  max-height:320px;overflow-y:auto
+}
 .platform-detail-section pre{
   white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;
   background:#F8F6F2;border:1px solid var(--line);border-radius:10px;padding:12px
@@ -6490,7 +6496,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · d50067770231</span>
+<span class="v105-provenance">v105 production-component harness · 63bed0214cb9</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6615,7 +6621,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'d500677702312ee9fe89573fc183ebb436eaf8a81c06f6a90f5e244bbdd7bbae',
+  sourceHash:'63bed0214cb92bfa78b592b3703ab386b9010a06dbaa035253068b7c511575f0',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

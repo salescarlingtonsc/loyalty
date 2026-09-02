@@ -163,8 +163,14 @@ function harness() {
   /* nestly_v477: the gift form's "Where it works" placeholder IS the customer-facing default, so
      the harness pulls the one named constant rather than restating the sentence. */
   const whereDefaultV477_src = slice("const CUSTOMER_REWARD_WHERE_DEFAULT_V477='", "';");
-  const growPointsEndDateMinV472_src = slice('const growPointsEndDateMinV472=', 'slice(0,10);');
+  /* nestly_tz-client: growPointsEndDateMinV472 was a dead, never-called duplicate of the
+     canonical "today in SG" helper (sgDateInputValue) and was removed from app.js — nothing
+     in the V326 page block ever referenced it, so it is no longer spliced into this harness. */
   const growPointsEndDateInputV472_src = slice('const growPointsEndDateInputV472=', '\n};');
+  /* nestly_tz-client: the sliced page block's growHistoryCutoffV375 now derives the 5-year
+     history cutoff from sgDateInputValue() (the single canonical "today in SG" helper) rather
+     than re-deriving it from a bare new Date(), so that helper must be in scope here too. */
+  const sgDateInputValue_src = slice('const sgDateInputValue=(date=new Date())=>{', '\n};');
   const pageBlockSrc = slice(
     "  /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3",
     '      </ul>`;'
@@ -201,7 +207,7 @@ function harness() {
       /* nestly_v472: the gift form now renders a "Last day to redeem" date field, whose min comes
          from the shipped SGT helper. Pulled from source rather than stubbed, so the harness cannot
          disagree with the product about which day is the earliest one on offer. */
-      whereDefaultV477_src, growPointsEndDateMinV472_src, growPointsEndDateInputV472_src,
+      whereDefaultV477_src, growPointsEndDateInputV472_src, sgDateInputValue_src,
       pageBlockSrc,
       'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326,growPointsIsStampsV326,growPointsSpineKindV326,growPointsPageTitleV326,growPointsRowLabelV326};',
     ].join('\n');
@@ -446,8 +452,14 @@ test('V326 the three new RPCs are called with the exact parameter names the migr
      gained a parameter. The contract this test guards is unchanged — the CALL must name every
      argument the migration declares, because a positional or misnamed argument is how the
      v290 probe put a UUID in a text slot. The new names are pinned with the rest. */
+  /* audit F082: this dialog draws no end-date field, so the update call must never claim an
+     explicit clear on the owner's behalf — p_claim_available_until:null, p_clear_end_date:false
+     is "say nothing, keep what is stored", the same contract growStampsSaveRowV356's inline row
+     editor uses by omitting both arguments. Pinning the literal `null`/`false` here is what would
+     have caught the regression: the prior text pinned `!endsOnV472`, which stayed green while the
+     source unconditionally sent an explicit clear. */
   assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_where_it_works:whereV477\|\|null,\s*\r?\n?\s*p_entitlement_expiry_days:expiryDaysV520\}\)\);/);
-  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_clear_end_date:!endsOnV472,[\s\S]*?p_where_it_works:whereV477,[\s\S]*?p_entitlement_expiry_days:expiryDaysV520,\s*\r?\n?\s*p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:null,\s*\r?\n?\s*p_clear_end_date:false,[\s\S]*?p_where_it_works:whereV477,[\s\S]*?p_entitlement_expiry_days:expiryDaysV520,\s*\r?\n?\s*p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''\}\)\);/);
 });
 
 test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {

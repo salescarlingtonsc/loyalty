@@ -33,7 +33,7 @@ duration and verdict are the tool's own output, not narrated).
 
 ## (a) Sample floor k = 5 — `app.subgroup_evidence_v1` (v672)
 
-**File:line.** `db/migrations/20260902_nestly_v672_statistical_authority.sql:31-43`.
+**File:line.** `db/migrations/20260920_nestly_v672_statistical_authority.sql:31-43`.
 
 ```sql
 select jsonb_build_object(
@@ -186,7 +186,7 @@ check covers the formula's correctness in general but not that every fixture con
 
 ## (c) Two-proportion z-test and Benjamini–Hochberg q=0.10 — `app.two_prop_p_value_v686` (v686)
 
-**File:line.** `db/migrations/20260902_nestly_v686_discovery_scan.sql:140-197` (erf approximation,
+**File:line.** `db/migrations/20260920_nestly_v686_discovery_scan.sql:140-197` (erf approximation,
 normal two-tailed p, two-proportion z), `:380-393` (BH step-up).
 
 ```
@@ -246,7 +246,7 @@ cannot: a candidate whose apparent effect was a train-half artifact. This is the
 mental model — BH and holdout replication are answering different questions (respectively "how
 many of my rejections are false positives, given this test set" and "does this specific finding
 reproduce out-of-sample") and the engine's own header explicitly frames them as independent by
-design (`db/migrations/20260902_nestly_v686_discovery_scan.sql:130-133`), which this review
+design (`db/migrations/20260920_nestly_v686_discovery_scan.sql:130-133`), which this review
 confirms is the statistically correct framing, not merely restating the comment as fact — the
 "not_replicated" and BH-survivor populations are genuinely orthogonal because BH is computed on
 train p-values only and replication is a sign-agreement test on a disjoint holdout, so the two
@@ -262,7 +262,7 @@ above, matched to 4 s.f.
 
 ## (d) Temporal holdout calibration (Brier/AUC) and the exponential return-probability model (v681)
 
-**File:line.** Model: `db/migrations/20260902_nestly_v681_return_probability.sql:93-160`.
+**File:line.** Model: `db/migrations/20260920_nestly_v681_return_probability.sql:93-160`.
 Evaluation: `:168-306`.
 
 ```
@@ -278,7 +278,7 @@ categorical label does not, so the stricter, fixed floor is the right asymmetry.
 
 **Is the exponential assumption disclosed? YES — explicitly, in the payload itself, not only in
 a code comment.** The function's own `method` string
-(`db/migrations/20260902_nestly_v681_return_probability.sql:151-158`) states verbatim: *"memoryless
+(`db/migrations/20260920_nestly_v681_return_probability.sql:151-158`) states verbatim: *"memoryless
 exponential hazard ... Days already elapsed since the last visit are deliberately NOT used as a
 covariate: the exponential distribution is memoryless by construction ... This is a documented
 property of the chosen method, not an omission."* This is returned to every caller, not buried in
@@ -308,7 +308,7 @@ falsifiability check rather than only the mechanism.
   ties the standard 0.5-credit averaged rank. This is the textbook rank-based AUC estimator and is
   correctly null-guarded when either class is empty.
 - **Temporal leak guard**: an *executed*, not merely claimed, re-check
-  (`db/migrations/20260902_nestly_v681_return_probability.sql:193-205`) raises if any scored
+  (`db/migrations/20260920_nestly_v681_return_probability.sql:193-205`) raises if any scored
   client's own last known visit falls after `p_train_until` — independently re-verifying the
   population the cadence function already claims to filter, rather than trusting that filter
   blindly. This is good practice (defense in depth against a future regression in the upstream
@@ -326,7 +326,7 @@ memorylessness disclosure) that does not block acceptance.
 
 ## (e) Distribution block skew rule — `app.distribution_block_v1` (v672), sensitivity at n=5 (v691)
 
-**File:line.** Formula: `db/migrations/20260902_nestly_v672_statistical_authority.sql:60-96`.
+**File:line.** Formula: `db/migrations/20260920_nestly_v672_statistical_authority.sql:60-96`.
 
 ```
 skew_material = (top1_share_bps >= 3000)  OR  (median > 0 AND mean/median >= 1.5)
@@ -383,12 +383,12 @@ for v691** (see table below).
 ## (f) Stratified confounder check — consistent/mixed/reversed/tied/unchecked (v691/v702/v708)
 
 **File:line.** Core logic (post-v708, the current live shape):
-`db/migrations/20260902_nestly_v691_outliers_and_confounders.sql:638-698` (original), refined by
-`db/migrations/20260902_nestly_v702_discovery_verdict_rigor.sql` (adds `unchecked`, fixes the
+`db/migrations/20260920_nestly_v691_outliers_and_confounders.sql:638-698` (original), refined by
+`db/migrations/20260920_nestly_v702_discovery_verdict_rigor.sql` (adds `unchecked`, fixes the
 "minority reversal silently promoted" defect) and
-`db/migrations/20260902_nestly_v708_discovery_tie_strata.sql` (adds `tied`, fixes exact-tie
+`db/migrations/20260920_nestly_v708_discovery_tie_strata.sql` (adds `tied`, fixes exact-tie
 strata being silently counted as agreement). The final verdict rule, confirmed by reading the
-v708 anchor text directly (`db/migrations/20260902_nestly_v708_discovery_tie_strata.sql:86-92,
+v708 anchor text directly (`db/migrations/20260920_nestly_v708_discovery_tie_strata.sql:86-92,
 157-158`):
 
 ```
@@ -471,18 +471,18 @@ review beyond that cross-check — see gaps section.
 ## (g) Materiality bps and expected value (v705/v712/v718)
 
 **File:line.** Materiality bar: `app.ci_materiality_threshold_bps_v705()`
-(`db/migrations/20260902_nestly_v705_spine_v3.sql:180-187`) — a single hardcoded `100` (1% of
+(`db/migrations/20260920_nestly_v705_spine_v3.sql:180-187`) — a single hardcoded `100` (1% of
 period revenue, in basis points), the *one* place this bar is defined; `v712` moved the
 duplicate constant (`c_ev_materiality_pct := 1.0`) that previously lived separately inside the
 opportunities-ranking function to derive from this same authority instead
-(`db/migrations/20260902_nestly_v712_spine_wording_closures.sql:6-14`), closing a
+(`db/migrations/20260920_nestly_v712_spine_wording_closures.sql:6-14`), closing a
 two-authorities-for-one-number risk. Margin guard:
 `app.ci_margin_guard_v705(business, service_id, incentive_cents)`
-(`db/migrations/20260902_nestly_v705_spine_v3.sql:195-239`) — `margin = price_cents - cost_cents`;
+(`db/migrations/20260920_nestly_v705_spine_v3.sql:195-239`) — `margin = price_cents - cost_cents`;
 `status='unavailable'` when no service or no cost on record (never a guessed margin);
 `status='blocked'` when the incentive exceeds the margin; `status='ok'` otherwise. Expected value
 example (probability-adjusted, cost-*unaware* in this instance — see CONCERN below):
-`db/migrations/20260902_nestly_v688_consultant_spine_v2.sql:1119-1129` —
+`db/migrations/20260920_nestly_v688_consultant_spine_v2.sql:1119-1129` —
 `ev_cents += round(probability × avg_ticket)` per scored client, summed over the lapsed-regulars
 population, `probability` sourced from `app.return_probability_v681` (item (d)).
 
@@ -493,7 +493,7 @@ consolidation; every extended-mode candidate in `get_ci_opportunities_v1` carrie
 check 12's numerator-denominator-together discipline even for this threshold check specifically,
 and check 76 ("insufficient evidence" is a valid ranked outcome) via the `unquantified` class for
 a candidate whose EV cannot be computed at all (no behavioural model, e.g. a service-cost gap with
-no probability model behind it — `db/migrations/20260902_nestly_v705_spine_v3.sql` C/E section).
+no probability model behind it — `db/migrations/20260920_nestly_v705_spine_v3.sql` C/E section).
 
 **Margin guard — PASS.** Correctly refuses to manufacture a margin from a guessed cost
 (`status='unavailable', reason='no cost recorded for this service; enter costs in Settings'`
@@ -529,7 +529,7 @@ and document the choice next to `expected_value` the way `return_probability_v68
 string documents its exponential assumption.
 
 **Reachability finding — reported by v718 as a deliberate non-fix, correctly not silently
-patched.** `db/migrations/20260902_nestly_v718_spine_margin_and_alternatives.sql` investigates
+patched.** `db/migrations/20260920_nestly_v718_spine_margin_and_alternatives.sql` investigates
 whether `materiality_class='minor'` is reachable for a realistic candidate and finds it is
 architecturally unreachable in the current pipeline shape (any EV-bearing candidate that survives
 to the materiality-classification step has, by construction, already cleared the pre-existing

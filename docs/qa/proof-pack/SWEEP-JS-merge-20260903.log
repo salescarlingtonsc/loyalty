@@ -1,0 +1,62 @@
+RECONCILED db287b62b801da5e066b486b2791c9e0ed1473b5+merge  2026-09-02T18:47:32Z
+== tests/phase0-foundation
+✖ corpus-manifest regenerates byte-identical to the committed CI-CORPUS-MANIFEST.md/.json (522.752334ms)
+ℹ tests 107
+ℹ pass 106
+ℹ fail 1
+✖ failing tests:
+✖ corpus-manifest regenerates byte-identical to the committed CI-CORPUS-MANIFEST.md/.json (522.752334ms)
+== tests/program-studio
+ℹ tests 72
+ℹ pass 72
+ℹ fail 0
+== tests/ai-reports
+ℹ tests 268
+ℹ pass 268
+ℹ fail 0
+== tests/business-ui
+ℹ tests 1903
+ℹ pass 1903
+ℹ fail 0
+== tests/platform-console
+ℹ tests 298
+ℹ pass 298
+ℹ fail 0
+== tests/browser
+ℹ tests 32
+ℹ pass 32
+ℹ fail 0
+== tests/billing
+ℹ tests 61
+ℹ pass 61
+ℹ fail 0
+== tests/branding
+ℹ tests 5
+ℹ pass 5
+ℹ fail 0
+== tests/customer-modules
+ℹ tests 196
+ℹ pass 196
+ℹ fail 0
+== tests/customer-wallet
+ℹ tests 795
+ℹ pass 795
+ℹ fail 0
+== tests/platform-admin
+ℹ tests 11
+ℹ pass 11
+ℹ fail 0
+== tests/whatsapp
+ℹ tests 102
+ℹ pass 102
+ℹ fail 0
+== tests/platform
+ℹ tests 250
+ℹ pass 250
+ℹ fail 0
+== quality gates
+ai-report-golden-gate: OK — 6/6 packs clean
+Static production baseline checks passed.
+Surface bundles and stamps are current (core 602KB · auth 38KB · customer 728KB · business 2891KB · i18n 215KB).
+CI-READER-CONTRACTS.json and the embedded SQL literal both match the generator source.
+DONE 2026-09-02T18:48:38Z

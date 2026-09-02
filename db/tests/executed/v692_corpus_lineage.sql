@@ -4,7 +4,7 @@
 -- Named for v692 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
 -- migrated run (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
 --
--- Reads db/migrations/20260902_nestly_v692_lineage_and_visit_dedupe.sql.
+-- Reads db/migrations/20260920_nestly_v692_lineage_and_visit_dedupe.sql.
 --
 -- TRUTH TABLE (numbers computed before running anything):
 --   customer X — service sales in taxonomy node A: 3 on day1 (1000 + 1500 + 500 cents) and

@@ -1,7 +1,7 @@
 -- EXECUTED acceptance fixture for nestly_v695 — service/segment cadence fallback (check 46) and
 -- the cadence + v179 halves of the typed-verdicts vocabulary (check 17).
 --
--- WHY. db/migrations/20260902_nestly_v695_service_cadence_fallback.sql adds two pooled-evidence
+-- WHY. db/migrations/20260920_nestly_v695_service_cadence_fallback.sql adds two pooled-evidence
 -- cadence authorities (app.service_cadence_v695, app.segment_cadence_v695) and widens
 -- app.customer_cadence_v1's fallback chain from two tiers to four:
 --   customer_median_interval -> service_median -> segment_median -> business_fallback -> none.

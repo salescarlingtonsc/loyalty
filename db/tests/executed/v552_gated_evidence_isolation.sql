@@ -96,7 +96,7 @@ begin
   -- NESTLY v720: app.v176_evidence_pack now gates a sessionless caller on
   -- app.v676_internal_drain_active() (belt-and-braces alongside its owner-only ACL). The real
   -- production caller opens this window itself (public.internal_claim_ai_firm_report_v176, see
-  -- db/migrations/20260902_nestly_v720_evidence_pack_grants.sql step 2b); this fixture calls the
+  -- db/migrations/20260920_nestly_v720_evidence_pack_grants.sql step 2b); this fixture calls the
   -- function directly, one layer inside that worker, so it opens the same window.
   perform app.v676_open_internal_drain();
   pack := app.v176_evidence_pack(b, 'monthly', d_from, d_to_future);

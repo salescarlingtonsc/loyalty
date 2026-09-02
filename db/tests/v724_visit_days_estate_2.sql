@@ -3,7 +3,7 @@
 -- Named for v724 (above the v422 baseline watermark): n/a in the baseline phase (every function
 -- below already exists pre-migration with the OLD raw-row counting, so the assertions below
 -- simply fail there — reported n/a per docs/qa/CI-CORPUS-FIXTURE-GUIDE.md), gated on the
--- migrated run. Proves db/migrations/20260902_nestly_v724_visit_days_estate_2.sql.
+-- migrated run. Proves db/migrations/20260920_nestly_v724_visit_days_estate_2.sql.
 --
 -- ============================================================================================
 -- FIXED FIXTURE DATA.

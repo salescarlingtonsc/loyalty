@@ -124,7 +124,7 @@ test('photo 12 — Customer packages is its own destination under Serve & sell',
   assert.match(app, /const moduleGateKeyV584=SURFACE_MODULE_ALIAS_V584\[pageKey\]\|\|pageKey;/);
   assert.match(app, /&&!canReadModule\(moduleGateKeyV584\)\)\{/);
   // And a refresh from inside either view comes back to the view it was on.
-  assert.match(app, /const refreshPackagesV584=\(\)=>packagesPage\(\{view:packagesViewV584\}\);/);
+  assert.match(app, /const refreshPackagesV584=\(\)=>\{if\(!isCurrent\(\)\)return;packagesPage\(\{view:packagesViewV584\}\)\};/); // audit F083/F085: a late write response never repaints a page the user left
   assert.doesNotMatch(app, /toast\('Package renamed'\);packagesPage\(\)/);
 });
 

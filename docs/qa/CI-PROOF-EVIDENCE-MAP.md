@@ -51,7 +51,7 @@ on — proven, implemented-but-unproven, partial, absent — never merged.
 ## Superseded note (2026-09-02)
 
 The "No business-wide demographic coverage exists anywhere" row above (checks 31–34 ABSENT) was
-true when this map was written. `db/migrations/20260902_nestly_v674_demographic_intelligence.sql`
+true when this map was written. `db/migrations/20260920_nestly_v674_demographic_intelligence.sql`
 (`db/tests/executed/v674_corpus_demographics.sql`) now claims to close checks 31–34 with a real
 aggregate reader and the flagship cohort-vs-baseline RPC. That claim has not been independently
 re-verdicted by a refuter round in the material available to this update, so it is recorded as

@@ -2336,7 +2336,7 @@ const COHORT_PHRASES = [
     path: ['insights', 'retention', 'new_customers'],
     re: /(\d[\d,]*)\s+(?:\w+\s+){0,4}?new customers?/i,
   },
-  // Check 89 (nestly_v684_metric_dictionary, db/migrations/20260902_nestly_v684_metric_dictionary.sql
+  // Check 89 (nestly_v684_metric_dictionary, db/migrations/20260920_nestly_v684_metric_dictionary.sql
   // -> app.ci_customer_classes_v1): the dictionary defines five DISJOINT-by-construction classes -
   // loyal, frequent, retained, high_ltv, at_risk. The three entries above already cover at_risk and
   // the loyal/returning vocabulary (the "loyal regulars?" alternative in returning_customers' own

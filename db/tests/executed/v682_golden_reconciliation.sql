@@ -5,7 +5,7 @@
 --
 -- Closes checklist item 10: >=100 populated synthetic businesses across every supported sector,
 -- whose headline metrics reconcile EXACTLY to independently calculated expected values. The
--- oracle is app.seed_golden_business_v682 (db/migrations/20260902_nestly_v682_golden_corpus.sql):
+-- oracle is app.seed_golden_business_v682 (db/migrations/20260920_nestly_v682_golden_corpus.sql):
 -- for each (index, sector) it provisions one fully-operational business plus a deterministic
 -- customer/sales population, and returns the expected headline numbers computed by CLOSED-FORM
 -- ARITHMETIC on the same (index, sector) inputs -- never by reading back the rows it just wrote.

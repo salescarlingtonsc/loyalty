@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v743
--- (db/migrations/20260902_nestly_v743_synthetic_scanner.sql).
+-- (db/migrations/20260920_nestly_v743_synthetic_scanner.sql).
 --
 -- Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus --migrated-only
 --
@@ -699,9 +699,9 @@ begin
   end if;
 
   select count(*) into v_allowlist_size from app.ci_synthetic_scan_allowlist_v743;
-  if v_allowlist_size <> 120 then  -- 89 seeded by v743 + 31 added by nestly_v744's widened scan
+  if v_allowlist_size <> 121 then  -- 90 seeded by v743 (incl. main's v677 kernel, merged 2026-09-03) + 31 added by nestly_v744's widened scan
     insert into _fail values ('SCANNER_allowlist_size',
-      format('allowlist has %s rows (expected 120: 89 from v743 + 31 from v744)', v_allowlist_size));
+      format('allowlist has %s rows (expected 121: 90 from v743 + 31 from v744)', v_allowlist_size));
   end if;
   raise notice 'v743 scanner | allowlist size = % | eleven functions fixed | scan rows = %',
     v_allowlist_size, n;

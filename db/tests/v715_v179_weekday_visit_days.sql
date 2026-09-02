@@ -5,7 +5,7 @@
 -- Named for v715 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
 -- migrated run (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
 --
--- Reads db/migrations/20260902_nestly_v715_v179_weekday_visit_days.sql.
+-- Reads db/migrations/20260920_nestly_v715_v179_weekday_visit_days.sql.
 --
 -- PREDETERMINED TRUTH TABLE (computed before running anything). One business, one default branch
 -- (timezone defaults to Asia/Singapore, so app.ci_bucket_tz_v698 resolves 'firm_agreed'/

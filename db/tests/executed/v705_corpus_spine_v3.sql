@@ -3,7 +3,7 @@
 -- Above the v422 watermark: reported n/a in the BASELINE phase, gated on the MIGRATED run
 -- (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
 --
--- Proves db/migrations/20260902_nestly_v705_spine_v3.sql closes checks 22 (campaigns generator),
+-- Proves db/migrations/20260920_nestly_v705_spine_v3.sql closes checks 22 (campaigns generator),
 -- 23 (materiality threshold + classification), 25 (capacity), 66 (concentration surfacing), 74
 -- (margin guard), 77 (rebooking + operational_change alternatives).
 --

@@ -42,7 +42,7 @@
  * not a bug in this script.
  *
  * FORMERLY A KNOWN GAP, NOW CLOSED (nestly_v734, check 97): the "stale-freshness envelope" state.
- * db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql added a `freshness` block
+ * db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql added a `freshness` block
  * (data_as_of/age_hours/stale/note) to app.ci_envelope_v680's payload shape, but no renderer read
  * it — recorded below (`notRenderable`) as NOT-RENDERABLE rather than faked. app/app.js and
  * app/platform-console.js each now carry a ciFreshnessCaptionHtmlV734 renderer, wired into every
@@ -323,8 +323,8 @@ const DAYPART_A = {
 
 // opportunitiesPanelHtmlV685, extended (materiality/margin_guard/impact.capacity) — copied
 // verbatim from tests/business-ui/v716-ci-opportunities-impact.test.mjs V716_PAYLOAD, itself
-// shaped from db/migrations/20260902_nestly_v705_spine_v3.sql and
-// db/migrations/20260902_nestly_v712_spine_wording_closures.sql.
+// shaped from db/migrations/20260920_nestly_v705_spine_v3.sql and
+// db/migrations/20260920_nestly_v712_spine_wording_closures.sql.
 function materialBlockedMarginCandidate() {
   return {
     id: 'loyalty_cannibalisation_gap', rank: 1, rank_class: 'unquantified', domain: 'loyalty_programmes',
@@ -658,7 +658,7 @@ states.push({
 states.push({
   id: 'opportunities-extended',
   title: 'CI Opportunities — materiality/margin_guard/capacity extended payload',
-  source: 'opportunitiesPanelHtmlV685(OPPORTUNITIES_EXTENDED); copied from tests/business-ui/v716-ci-opportunities-impact.test.mjs V716_PAYLOAD, shaped from db/migrations/20260902_nestly_v705_spine_v3.sql and 20260902_nestly_v712_spine_wording_closures.sql',
+  source: 'opportunitiesPanelHtmlV685(OPPORTUNITIES_EXTENDED); copied from tests/business-ui/v716-ci-opportunities-impact.test.mjs V716_PAYLOAD, shaped from db/migrations/20260920_nestly_v705_spine_v3.sql and 20260920_nestly_v712_spine_wording_closures.sql',
   css: BUSINESS_CSS,
   body: () => renderOpportunities(OPPORTUNITIES_EXTENDED),
   hash: () => hashOf(oppBlock, JSON.stringify(OPPORTUNITIES_EXTENDED))

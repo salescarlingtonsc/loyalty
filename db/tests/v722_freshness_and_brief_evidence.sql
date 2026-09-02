@@ -2,7 +2,7 @@
 -- new platform auth arm on public.platform_customer_account_opens_v175, and an estate-wide
 -- signature-drift scan across every public.get_ci_* reader (check 98).
 --
--- Reads db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql. Runs ABOVE the v422
+-- Reads db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql. Runs ABOVE the v422
 -- baseline watermark, so it is reported `n/a` in the pre-migration phase and gated on the
 -- migrated run.
 --

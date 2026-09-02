@@ -17,7 +17,7 @@
 --
 -- Named for v551: T1-T3 must FAIL against the frozen baseline. One transaction, rolled back.
 --
--- UPDATED for nestly_v690 (20260902_nestly_v690_dispersion_and_one_floor.sql, "PART 2 — ONE
+-- UPDATED for nestly_v690 (20260920_nestly_v690_dispersion_and_one_floor.sql, "PART 2 — ONE
 -- FLOOR", citing the frozen CI-STAT-AUTHORITY-CONTRACT v672 at
 -- docs/design/ci/CI-STAT-AUTHORITY-CONTRACT.md): v179_business_insights' top_customers block now
 -- carries an app.subgroup_evidence_v1(n, floor=5) evidence gate, keyed on the count of identified

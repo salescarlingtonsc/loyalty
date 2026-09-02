@@ -13,7 +13,7 @@
 -- `app` function from public/anon/authenticated after restoring the snapshot, then re-grants
 -- exactly what production actually exposes there.
 --
--- nestly_v720 (db/migrations/20260902_nestly_v720_evidence_pack_grants.sql) is belt-and-braces
+-- nestly_v720 (db/migrations/20260920_nestly_v720_evidence_pack_grants.sql) is belt-and-braces
 -- on top of that harness fix: it restates the revoke on app.v176_evidence_pack explicitly (a
 -- no-op against the already-correct production ACL) AND adds an INTERNAL gate inside the
 -- function body -- app.v676_internal_drain_active() OR app.v176_can_read_firm_report(p_business)
@@ -411,7 +411,7 @@ declare
     'tier_observe_from_sale_v633','tier_transition_events_guard_v633',
     'v515_gift_intent_guard','v550_attention_outreach_immutable','v551_retention_status_rank',
     'v665_gift_reversal_guard','watermark_guard_v628'
-    -- nestly_v729 (db/migrations/20260902_nestly_v729_visit_days_estate_3.sql) briefly
+    -- nestly_v729 (db/migrations/20260920_nestly_v729_visit_days_estate_3.sql) briefly
     -- re-regressed app.ci_metric_dictionary_v1 and app.ci_visit_registry_v699 back to
     -- `authenticated, service_role` via its own anchored CREATE OR REPLACE; both are now
     -- corrected back to service_role-only ACLs in that same migration, so neither needs an

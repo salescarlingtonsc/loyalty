@@ -13,7 +13,7 @@
 -- and environment the generator script reads for itself. The report IS the captured output; this
 -- file only has to make that output trustworthy.
 --
--- ORACLE. `app.seed_golden_business_v682` (db/migrations/20260902_nestly_v682_golden_corpus.sql)
+-- ORACLE. `app.seed_golden_business_v682` (db/migrations/20260920_nestly_v682_golden_corpus.sql)
 -- provisions one fully-operational business per (index, sector) with a deterministic sales
 -- population and its OWN independently closed-form expected revenue figure — the same oracle
 -- `v682_golden_reconciliation.sql` uses for checklist item 10. This file calls it for THREE
@@ -44,7 +44,7 @@
 -- business_v682` deliberately gives every golden business a synthetic client (`is_synthetic=
 -- true`) with two REAL revenue-bearing sales, specifically to exercise nestly_v687's fix —
 -- get_revenue_truth_v106 excludes an is_synthetic client's sales from known/identified revenue
--- (`db/migrations/20260902_nestly_v687_revenue_truth_synthetic_exclusion.sql`). That exclusion was
+-- (`db/migrations/20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql`). That exclusion was
 -- applied to get_revenue_truth_v106 and (per that migration's own header) get_ci_category_mix_v1
 -- and siblings — but NOT to get_dashboard_summary_v155, app.v176_sales_window or
 -- platform_get_assigned_firm_report_v94, which is exactly what this fixture demonstrates:

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="6c0ce96da1f11f4be39c1371c4f3af8dbda9ddf60292982d3cac863c6476fdf0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -872,7 +872,6 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
-.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -5675,7 +5674,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 6c0ce96da1f11f4be39c1371c4f3af8dbda9ddf60292982d3cac863c6476fdf0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6756,7 +6755,7 @@ function pruneRewardSiblingsV139(root){
     document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error)return fail(error);refreshRetentionPanel(draftVersionId,null,'Bring-back rule status updated.')});
   }
   if(isOwner){
-    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
+    $('rtAdd').onclick=async()=>{const button=$('rtAdd');if(button.disabled)return;const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');CUI.setButtonBusy(button,{busy:true,label:'Adding…'});const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(button.isConnected)CUI.setButtonBusy(button,{busy:false});if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
@@ -12037,7 +12036,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      typed, the page defaults to the last month rather than to everything. Typing either date
      replaces that default outright, so the filter can still reach any row ever recorded — the
      default narrows the FIRST view, it is not a cap. */
-  const growHistoryDefaultFromV382=(()=>{const d=new Date();d.setMonth(d.getMonth()-1);return d.getTime()})();
+  const growHistoryDefaultFromV382=Date.parse(`${shiftSgDateInput(sgDateInputValue(),-30)}T00:00:00+08:00`);
   const growHistoryInWindowV375=row=>{
     const typedFrom=growHistoryFromV375?Date.parse(`${growHistoryFromV375}T00:00:00+08:00`):null;
     const to=growHistoryToV375?Date.parse(`${growHistoryToV375}T23:59:59+08:00`):null;
@@ -12380,7 +12379,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      database, and the notice below says exactly that rather than promising a deletion the app
      does not perform. */
   const GROW_HISTORY_WINDOW_YEARS_V375=5;
-  const growHistoryCutoffV375=(()=>{const d=new Date();d.setFullYear(d.getFullYear()-GROW_HISTORY_WINDOW_YEARS_V375);return d})();
+  const growHistoryCutoffV375=(()=>{
+    const match=sgDateInputValue().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const day=new Date(Date.UTC(Number(match[1])-GROW_HISTORY_WINDOW_YEARS_V375,Number(match[2])-1,Number(match[3])))
+      .toISOString().slice(0,10);
+    return new Date(Date.parse(`${day}T00:00:00+08:00`));
+  })();
   const growWithinHistoryWindowV375=row=>{
     const added=new Date(row?.created_at||'');
     return !Number.isFinite(added.getTime())||added>=growHistoryCutoffV375;
@@ -15086,9 +15090,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growStampsPickedV416=stamp;
     growPointsAddOpenV326='form';
     growPointsEditingV326=reward?String(reward.id):null;
+    /* nestly_p2-F036: this MUST prefill exactly like the chip/row edit handler above (37408) —
+       dropping whereItWorks/endsOn/expiryDays here left the draft blank, so any Save from this
+       grid (even a pure rename) sent p_where_it_works:'' and the server read that as an explicit
+       clear, silently wiping the owner's stored "Where it works" text. See app/app.js:37408-37416
+       for the same four keys built the same way; keep the two in sync. */
     growPointsAddDraftV326=reward
-      ?{name:reward.customer_name||reward.name||'',points:String(stamp),description:reward.description||''}
-      :{name:'',points:String(stamp),description:''};
+      ?{name:reward.customer_name||reward.name||'',points:String(stamp),description:reward.description||'',
+        endsOn:growPointsEndDateInputV472(reward.claim_available_until),
+        whereItWorks:String(reward.where_it_works||''),
+        expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''}
+      :{name:'',points:String(stamp),description:'',endsOn:'',whereItWorks:'',expiryDays:''};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -15199,11 +15211,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=String(nameField?.value||'').trim();
     const points=Math.round(Number(pointsField?.value||''));
     const description=String(descField?.value||'').trim();
-    /* nestly_v487: there is no field to read any more, and the empty string is load-bearing -
-       p_clear_end_date below is `!endsOnV472`, so '' makes every save an EXPLICIT clear. That is
-       what turns "delete this for all gifts" into something true rather than cosmetic: a gift
-       that already had a date loses it the next time it is saved, instead of keeping an expiry
-       the owner can no longer see or change. */
+    /* nestly_v487 tried to remove the per-gift end date by sending an unconditional explicit clear
+       on every save from this dialog. That went further than "no field to read": the date is
+       still SET by the deep reward editor's "Ends at" field (app/app.js, growPointsGiftEndsTextV476
+       renders it right there on the row), so a save from THIS dialog for any reason — a rename, a
+       photo, a description tweak — silently deleted a date the owner could still see and had not
+       touched (audit F082). This dialog has no end-date field at all, so it can never represent
+       "the owner cleared it" — the only correct behaviour for a field this form doesn't show is to
+       leave it exactly where it is, the same contract the inline stamp-row editor
+       (growStampsSaveRowV356) already uses by omitting both arguments. */
     const endsOnV472='';
     const whereV477=String($('growPointsAddWhereV477')?.value||'').trim();
     /* nestly_v520: only the points form draws this field. On the Stamp Card page the raw value is
@@ -15253,11 +15269,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
         p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
-        /* nestly_v472: p_clear_end_date is the ONLY way to remove a date. Sending null for
-           p_claim_available_until means "say nothing" — the writer keeps whatever is stored — so
-           an empty field has to be an EXPLICIT clear, not an absent value. */
-        p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
-        p_clear_end_date:!endsOnV472,
+        /* nestly_p2-F082: this dialog draws no end-date field, so it must never claim the owner
+           cleared one. null + false is "say nothing" — the writer keeps whatever claim_available_until
+           is already stored on the reward, exactly like growStampsSaveRowV356's inline row editor,
+           which omits both arguments for the same reason. Previously this unconditionally sent
+           p_clear_end_date:true, so ANY save from this dialog (even a pure rename) wiped a date set
+           through the deep reward editor. */
+        p_claim_available_until:null,
+        p_clear_end_date:false,
         /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
            stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
            to be an explicit clear, and '' is what the writer reads as one. */
@@ -16038,7 +16057,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'6c0ce96da1f11f4be39c1371c4f3af8dbda9ddf60292982d3cac863c6476fdf0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

@@ -1,7 +1,7 @@
 /* NESTLY v704 — Customer Intelligence category mix, check 66 (outlier analysis) consumed in the
  * merchant UI.
  *
- * db/migrations/20260902_nestly_v691_outliers_and_confounders.sql made get_ci_category_mix_v1
+ * db/migrations/20260920_nestly_v691_outliers_and_confounders.sql made get_ci_category_mix_v1
  * and get_ci_service_intelligence_v1 emit a per-row `distribution` block (n, mean, median, p90,
  * top1_share_bps, skew_material, mean_excl_top1 — app.distribution_block_v1's own keys, v672)
  * plus a `skew_note` string, but nothing rendered them (check 66 scored PARTIAL,

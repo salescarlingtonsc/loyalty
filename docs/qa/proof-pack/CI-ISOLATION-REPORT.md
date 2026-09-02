@@ -223,7 +223,7 @@ scripts/db-tests/baseline-grants.sql (same date): the harness now revokes EXECUT
 `app` function from public/anon/authenticated after restoring the snapshot, then re-grants
 exactly what production actually exposes there.
 
-nestly_v720 (db/migrations/20260902_nestly_v720_evidence_pack_grants.sql) is belt-and-braces
+nestly_v720 (db/migrations/20260920_nestly_v720_evidence_pack_grants.sql) is belt-and-braces
 on top of that harness fix: it restates the revoke on app.v176_evidence_pack explicitly (a
 no-op against the already-correct production ACL) AND adds an INTERNAL gate inside the
 function body -- app.v676_internal_drain_active() OR app.v176_can_read_firm_report(p_business)
@@ -594,7 +594,7 @@ PASS -- small-cell suppression holds for owner, consultant and super admin; tena
 
 ```
 EXECUTED acceptance fixture for nestly_v741
-(db/migrations/20260902_nestly_v741_roster_read_audit.sql).
+(db/migrations/20260920_nestly_v741_roster_read_audit.sql).
 
 Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v741_corpus --migrated-only
 

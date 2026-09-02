@@ -15,6 +15,8 @@ export const requiredStaticHtmlEntries = Object.freeze([
   'landing.html',
   'offline.html',
   'privacy.html',
+  // nestly_v672: the public support desk, rewritten from /support.
+  'support.html',
   'terms.html'
 ]);
 

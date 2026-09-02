@@ -298,7 +298,7 @@ test('the suppression instruction is idempotent and acknowledgeable exactly once
 test('the console section exists, is super-admin only, and never lists a customer', () => {
   const console_ = read('app/platform-console.js');
   assert.match(console_, /\{key:'partners',label:'Partner obligations',shortLabel:'Partners',hash:'#\/platform\/partners',icon:'setup',superAdminOnly:true\}/);
-  assert.match(console_, /routeKeys:Object\.freeze\(\['sectors','partners','access'\]\)/);
+  assert.match(console_, /routeKeys:Object\.freeze\(\['sectors','partners','support','access'\]\)/);
   assert.match(console_, /if\(!task&&activeKey==='partners'\)task=renderPartnerObligations\(context\);/);
   for (const rpc of ['platform_list_partner_obligations_v282', 'platform_save_partner_v282',
     'platform_record_partner_suppression_v282', 'platform_acknowledge_partner_suppression_v282']) {

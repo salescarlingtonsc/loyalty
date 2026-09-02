@@ -16,7 +16,7 @@ test('every mapped module and literal control passes the V123 readiness inventor
   // Module counts stay exact: gaining or losing a module surface is a decision worth noticing.
   // (Products/Inventory returning to the business rail in V184 is part of the move from 25.)
   assert.equal(report.business.expected,27);
-  assert.equal(report.platform.expected,14); // operating-system IA pass 1: demo-requests, customer-lifecycle, billing and companies folded into onboarding / subscription-operations / firms (adjudicated ruling 2026-08-25)
+  assert.equal(report.platform.expected,15); // operating-system IA pass 1: demo-requests, customer-lifecycle, billing and companies folded into onboarding / subscription-operations / firms (adjudicated ruling 2026-08-25)
   // The raw button count is a floor, not an equality. It moves on nearly every UI edit and an
   // exact number produced churn without signal; --strict above already fails on any unwired,
   // unlabeled, hidden-route or non-semantic control, which is the property that matters.

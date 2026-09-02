@@ -2,7 +2,7 @@
  * additions rendered in the merchant opportunities card (app/app.js, ciOpportunityCardHtmlV685 and
  * its e15faa11 helpers).
  *
- * db/migrations/20260902_nestly_v705_spine_v3.sql and db/migrations/20260902_nestly_v712_spine_
+ * db/migrations/20260920_nestly_v705_spine_v3.sql and db/migrations/20260902_nestly_v712_spine_
  * wording_closures.sql give every extended-mode candidate:
  *   - materiality {numerator, denominator, pct} (app.rate_block_v1's shape) + materiality_class
  *     ('material'|'minor'|'unquantified')
@@ -73,8 +73,8 @@ function renderOpportunities(payload) {
 }
 
 /* -------------------------------------------------------------------------------------------
-   Fixture candidates — shapes lifted from db/migrations/20260902_nestly_v705_spine_v3.sql and
-   db/migrations/20260902_nestly_v712_spine_wording_closures.sql (the generic post-gate lateral
+   Fixture candidates — shapes lifted from db/migrations/20260920_nestly_v705_spine_v3.sql and
+   db/migrations/20260920_nestly_v712_spine_wording_closures.sql (the generic post-gate lateral
    pass, section 5f/6, and db/tests/executed/v712_corpus_spine_closures.sql's asserted shapes:
    materiality is app.rate_block_v1's own {numerator,denominator,pct} shape, not a bare "bps").
    ------------------------------------------------------------------------------------------- */

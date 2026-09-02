@@ -3,7 +3,7 @@
 --
 -- Named for v684 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
 -- migrated run (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md). Proves
--- db/migrations/20260902_nestly_v684_metric_dictionary.sql's three objects:
+-- db/migrations/20260920_nestly_v684_metric_dictionary.sql's three objects:
 --   app.ci_metric_dictionary_v1() / public.get_ci_dictionary_v1()   — T1, T2, T3
 --   app.ci_customer_classes_v1(p_business, p_client, p_as_of)       — F, G, H, I + mutation-check
 --

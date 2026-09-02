@@ -1,7 +1,7 @@
 -- EXECUTED acceptance fixture for nestly_v681 — the return-probability model and its measured,
 -- temporally-held-out calibration/discrimination proof.
 --
--- WHY. v681 (db/migrations/20260902_nestly_v681_return_probability.sql) closes checks 49
+-- WHY. v681 (db/migrations/20260920_nestly_v681_return_probability.sql) closes checks 49
 -- (a return-probability model) and 50 (abstains on sparse history) honestly: the model
 -- (app.return_probability_v681) is a transparent memoryless-exponential hazard on the
 -- customer's OWN median rhythm (m, k from app.customer_cadence_batch_v1 — the v651 canonical

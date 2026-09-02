@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="5b6f677db02d965aa3f385648f03f032f476627fbee40722c810b2314f71d086"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="bdc12785a2a93531b38918bb86477bea60adf7ff7a40fe4b6a312680de74a77d"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -872,7 +872,6 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
-.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -5676,7 +5675,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 5b6f677db02d965aa3f385648f03f032f476627fbee40722c810b2314f71d086</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · bdc12785a2a93531b38918bb86477bea60adf7ff7a40fe4b6a312680de74a77d</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7853,10 +7852,12 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     else if(type==='boolean')payload.boolean_value=raw==='true';
     else payload.select_value=raw;
     const {error}=await sb.from('client_field_values').upsert(payload,{onConflict:'business_id,client_id,field_definition_id'});
+    if(!isClientDetailCurrent())return;
     if(error)return fail(error);toast('Customer detail saved');clientDetail(id);
   });
   document.querySelectorAll('.cfvClear').forEach(b=>b.onclick=async()=>{
     const {error}=await sb.from('client_field_values').delete().eq('business_id',S.biz.id).eq('client_id',id).eq('field_definition_id',b.dataset.id);
+    if(!isClientDetailCurrent())return;
     if(error)return fail(error);toast('Customer detail cleared');clientDetail(id);
   });
   const birthdayRedeem=$('birthdayRedeem');
@@ -7890,6 +7891,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     aj.disabled=true;
     const {data,error}=await sb.rpc('adjust_points_v480',{p_business:S.biz.id,p_client:id,
       p_points:v,p_reason:$('adjR').value||null,p_idempotency_key:adjustmentIdem});
+    if(!isClientDetailCurrent()||!aj.isConnected)return;
     aj.disabled=false;
     if(error) return fail(error);
     adjustmentIdem=crypto.randomUUID();
@@ -9158,7 +9160,15 @@ function renderHistPage(history,n,offsetV468=0){
     <div class="card" id="expGate">${CUI.formSkeleton({fields:3})}</div>`;
   const todayIso=sgDateInputValue();
   let scopeResult;
-  try{scopeResult=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'expenses'})}
+  /* W3B/F103: this gate passed p_branch:null unconditionally, unlike every sibling finance/report
+     page (staffperf, dailyreport, P&L all pass selectedBranchId||null). Server-side
+     app.metric_module_scope_available_v145 starts at app.can_see_branch(business, p_branch), and
+     can_see_branch(business, NULL) is only true for role_class owner/admin — so a branch-scoped
+     'bookkeeper' (role_class 'employee'), the exact role the product hands finance access to, was
+     refused Expenses permanently no matter which branch they had. Following the top-bar scope
+     makes the gate the role/module check it was meant to be; the expense list below already
+     filters on the same selectedBranchId (V285). */
+  try{scopeResult=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_module:'expenses'})}
   catch(error){if(isCurrent())$('expGate').innerHTML=`<div class="err">Expenses access could not be checked. <button class="btn ghost sm" id="expensesGateRetry">Retry</button></div>`;if($('expensesGateRetry'))$('expensesGateRetry').onclick=expensesPage;return}
   if(!isCurrent())return;
   if(scopeResult?.error){
@@ -9182,7 +9192,13 @@ function renderHistPage(history,n,offsetV468=0){
       <label for="exDesc">Description</label><input id="exDesc">
       <label for="exAmt">Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
       <label for="exDate">Date</label><input id="exDate" type="date" value="${todayIso}">
-      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
+      ${/* W3B/F104: the pre-selected scope followed branches.is_default, ignoring the top-bar
+            branch the rest of this page already obeys (the list filters on selectedBranchId).
+            Someone managing Branch 2 got an Add form pre-set to Branch 1, so an unnoticed save
+            posted the cost to the wrong branch's P&L. The top bar owns branch scope — the V285
+            ruling this very page cites — so the form follows it and falls back to the default
+            branch only when no branch is selected. */''}
+      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${(selectedBranchId?branch.id===selectedBranchId:branch.is_default)?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
     <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>
@@ -9850,7 +9866,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'5b6f677db02d965aa3f385648f03f032f476627fbee40722c810b2314f71d086',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'bdc12785a2a93531b38918bb86477bea60adf7ff7a40fe4b6a312680de74a77d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

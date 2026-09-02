@@ -447,13 +447,19 @@ test('nestly_v428 item 7: readiness is the server\'s answer, never arithmetic on
   assert.match(line(earning), /600/, 'the "N to go" arithmetic is what arithmetic is for');
 });
 
-test('nestly_v428 item 6: two gifts on ONE stamp slot are a choice, not two rewards', () => {
+test('F109 (was nestly_v428 item 6): two gifts on ONE stamp slot are a detected shared-slot shape — both are independently claimable since v478, not a choice', () => {
   const { customerStampChooseOneSlotV428: chooseOne } = harness;
   const gift = (name, slot) => ({ customer_name: name, cost_points: slot, redemption_kind: 'catalog_reward' });
 
-  /* public.stamp_milestone_claims is unique on (business, client, programme, cycle, slot) — one
-     gift per milestone per card (v323) — and a milestone's slot IS its cost. Two claimable gifts
-     sharing a cost are therefore one choice, however the count reads. */
+  /* At v323, public.stamp_milestone_claims was unique on (business, client, programme, cycle,
+     slot) — one gift per milestone per card — and a milestone's slot IS its cost, so two
+     claimable gifts sharing a cost were mutually exclusive. db/migrations/20260824_nestly_v478_
+     earned_stamp_gifts_survive_a_claimed_card.sql dropped that slot-based constraint
+     (stamp_milestone_claims_slot_uk) and kept only stamp_milestone_claims_reward_uk (one claim
+     per GIFT, not per slot) — verified live against prod, no slot-based unique remains — so both
+     gifts on a shared slot are now independently claimable. This function still detects the
+     shared-slot SHAPE (used to tell the customer both need separate QR scans), it no longer
+     means "pick one and lose the other". */
   assert.equal(chooseOne([gift('Cake', 8), gift('Coffee', 8)], 'stamps'), true);
   assert.equal(chooseOne([gift('Cake', 8), gift('Coffee', 5)], 'stamps'), false,
     'different slots are independent claims');
@@ -505,8 +511,13 @@ test('nestly_v428 item 6: the Available panel says which part of the count the c
   assert.match(rewards, /const instanceCountV496=item=>Math\.max\(1,Math\.floor\(Number\(item\?\.quantity\)\|\|1\)\);\s*\r?\n\s*const readyCountV397=claimableRewardsV422\.reduce\(\(total,item\)=>total\+instanceCountV496\(item\),0\);/);
   assert.match(rewards, /const chooseOneSlotV428=customerStampChooseOneSlotV428\(claimableRewardsV422,loyalty\.unit\);/);
   assert.match(rewards, /customerRewardReadyCountApplyV397\(readyCountV397,heroRootV397,\{chooseOneV428:chooseOneSlotV428\}\)/);
-  assert.match(rewards, /data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick\./);
-  // The count itself stays: two ARE on offer, and the customer picks between them.
+  // F109: copy corrected — since v478, both gifts on a shared slot are independently claimable,
+  // not a choice between them. See db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_
+  // a_claimed_card.sql (dropped stamp_milestone_claims_slot_uk) and the F109 audit finding.
+  assert.match(rewards, /data-rewards-chooseone-v428>Both are yours — show each one’s QR separately to claim it\./);
+  assert.doesNotMatch(rewards, /Choose 1 — staff will scan the one you pick/,
+    'this was the stale copy F109 flagged: the server has allowed claiming both since v478');
+  // The count itself stays: two ARE on offer, and the customer can claim both.
   /* nestly_v429 (C): and it now also counts the v427 entitlements painted below the catalogue
      cards — a welcome gift or bring-back voucher the counter already owes them is claimable, so
      leaving it out would make this number an undercount of the same panel. */

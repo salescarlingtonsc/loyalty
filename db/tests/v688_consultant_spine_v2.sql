@@ -4,7 +4,7 @@
 -- (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md).
 --
 -- Proves public.get_ci_opportunities_v1(..., p_extended => true)
--- (db/migrations/20260902_nestly_v688_consultant_spine_v2.sql) closes checks 65, 73, 22, 43, 71,
+-- (db/migrations/20260920_nestly_v688_consultant_spine_v2.sql) closes checks 65, 73, 22, 43, 71,
 -- 74, 77, 78, 79 while p_extended => false (the default every existing caller uses, including
 -- v678/v680's own frozen fixtures below) reproduces v680's behaviour byte-for-byte — this file
 -- does not touch v678_corpus_consultant_spine.sql or v680_corpus_envelope.sql, and relies on the

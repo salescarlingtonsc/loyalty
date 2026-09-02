@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v744
--- (db/migrations/20260902_nestly_v744_scanner_blind_spots.sql).
+-- (db/migrations/20260920_nestly_v744_scanner_blind_spots.sql).
 --
 -- Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v744_corpus --migrated-only
 --
@@ -274,9 +274,9 @@ begin
   end if;
 
   select count(*) into v_allowlist_size from app.ci_synthetic_scan_allowlist_v743;
-  if v_allowlist_size <> 120 then
+  if v_allowlist_size <> 121 then
     insert into _fail values ('SCANNER_allowlist_size',
-      format('allowlist has %s rows (expected 120 = 89 nestly_v743 + 31 nestly_v744)',
+      format('allowlist has %s rows (expected 121 = 90 nestly_v743 (incl. main''s v677 kernel, merged 2026-09-03) + 31 nestly_v744)',
              v_allowlist_size));
   end if;
   raise notice 'v744 scanner | allowlist size = % | twelve functions fixed | scan rows = %',
@@ -394,7 +394,7 @@ select case when count(*) = 0
                  'the extended-mode EV re-derivation) and the credit-liability figure on three '
                  'report readers all exclude a synthetic client sharing the exact same shape as '
                  'the real population, and app.ci_synthetic_scan_v743() returns zero rows with a '
-                 '120-entry justified allowlist, proven able to fail three independent ways -- '
+                 '121-entry justified allowlist, proven able to fail three independent ways -- '
                  'deleted allowlist row, unguarded view reader, and a statement-level mixed reader'
             else 'FAIL' end as verdict,
        count(*) as failures

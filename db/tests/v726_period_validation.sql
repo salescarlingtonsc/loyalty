@@ -24,7 +24,7 @@
 -- entitlement, only the new period guard and its placement relative to the existing gate.
 --
 -- Named for v726 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
--- migrated run. Proves db/migrations/20260902_nestly_v726_period_validation.sql.
+-- migrated run. Proves db/migrations/20260920_nestly_v726_period_validation.sql.
 --
 -- One transaction, rolled back. No production access.
 

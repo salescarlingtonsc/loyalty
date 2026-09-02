@@ -3,7 +3,7 @@
 **This document is a rendering, not the source of truth.** The canonical definitions live in
 SQL: `app.ci_metric_dictionary_v1()` (wrapped for callers as `public.get_ci_dictionary_v1()`,
 gated only on `auth.uid()` not null — no business or branch scope, since nothing here is
-tenant data). Implementation: `db/migrations/20260902_nestly_v684_metric_dictionary.sql`.
+tenant data). Implementation: `db/migrations/20260920_nestly_v684_metric_dictionary.sql`.
 Current version string: **`ci_dictionary_v684_1`**.
 
 Every entry below is a direct transcription of one `metrics.<key>` object the function returns

@@ -4,7 +4,7 @@
 --
 -- Named for v703 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
 -- migrated run (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md). Proves
--- db/migrations/20260902_nestly_v703_envelope_everywhere.sql.
+-- db/migrations/20260920_nestly_v703_envelope_everywhere.sql.
 --
 -- AUTH CONTEXT. Same reasoning as db/tests/executed/v693_corpus_exclusions_verdicts.sql: a
 -- super-admin session clears app.ci_access_gate_v667's platform arm outright, so this fixture

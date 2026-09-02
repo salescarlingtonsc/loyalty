@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v672 — the four-function statistical authority
--- (db/migrations/20260902_nestly_v672_statistical_authority.sql,
+-- (db/migrations/20260920_nestly_v672_statistical_authority.sql,
 -- docs/design/ci/CI-STAT-AUTHORITY-CONTRACT.md).
 --
 -- WHY. v672 replaces three mutually-inconsistent hardcoded sample floors and one floor-less

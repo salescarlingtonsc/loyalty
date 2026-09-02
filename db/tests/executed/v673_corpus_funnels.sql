@@ -2,7 +2,7 @@
 --
 -- Named for v673 (above the v422 baseline watermark): n/a in the baseline phase, gated on the
 -- migrated run (docs/qa/CI-CORPUS-FIXTURE-GUIDE.md). Proves
--- db/migrations/20260902_nestly_v673_retention_funnels.sql's two readers,
+-- db/migrations/20260920_nestly_v673_retention_funnels.sql's two readers,
 -- public.get_ci_funnel_conversion_v1 and public.get_ci_retention_windows_v1, against
 -- PREDETERMINED truth tables — exact numerator/denominator/pct assertions throughout, never
 -- `> 0` spot checks.

@@ -173,7 +173,6 @@ const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRp
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
-const buildIdentityHtml=()=>`<span class="build-identity" data-build-identity>${esc(buildIdentityLabel())}</span>`;
 function syncBuildIdentityLabels(){document.querySelectorAll('[data-build-identity]').forEach(element=>{element.textContent=buildIdentityLabel()})}
 async function loadBuildIdentity(){
   try{
@@ -194,7 +193,7 @@ const legalLinks=(locale='en')=>{
     'zh-CN':{label:'法律与隐私',privacy:'隐私政策',terms:'条款',data:'数据请求'},
     ms:{label:'Undang-undang dan privasi',privacy:'Privasi',terms:'Terma',data:'Permintaan data'}
   }[locale]||{label:'Legal and privacy',privacy:'Privacy',terms:'Terms',data:'Data request'};
-  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a>${buildIdentityHtml()}</nav>`;
+  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a></nav>`;
 };
 const publicFunctionUrl=(name,query='')=>`${SB_URL}/functions/v1/${name}${query}`;
 function publicGatewayHeaders(body,accessToken=''){
@@ -311,8 +310,13 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   staffmembers:['staff','Staff Members'],settings:['settings','Subscription'],setup:['setup','Get started'],
   /* nestly_v606 (owner mark on the Bring-back page: the WhatsApp automation and delivery blocks
      ringed together, with "Reminder & Notification move under operations setup"). A SURFACE key,
-     not an entitlement — what it shows is owner-level workspace configuration, so it is gated on
-     the same module Settings is, through SURFACE_MODULE_ALIAS_V606 below. */
+     not an entitlement — what it shows is owner-level workspace configuration, like Branches or
+     Program Studio. F013 fix: it used to be gated via SURFACE_MODULE_ALIAS_V584 onto the
+     pseudo-module 'settings', which is never in any account's resolved module list (it is not a
+     module_registry key and no enabled_modules/platform_module_overrides_v94 row ever holds it),
+     so that alias refused every role including the owner. It is now in OWNER_ONLY_MODULES, with
+     an explicit role check in the route guard and in navModuleVisible, the same shape as
+     Settings/Branches/Customer Interface/Studio. */
   remindernotify:['appointments','Reminder & Notification'],
   /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
@@ -338,11 +342,11 @@ const HIDDEN_BUSINESS_SURFACES=new Set([]);
    capability model disagreed. Verified against production 2026-08-26 by calling both RPCs
    as a real frontdesk user — both refused. */
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf','customerintel']);
-const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup','remindernotify']);
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 /* nestly_v584: a surface that has its own rail row and route but no entitlement of its own —
    the value is the module whose read permission actually governs it. */
-const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages',remindernotify:'settings'});
+const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages'});
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -1112,6 +1116,13 @@ const OWNER_ERROR_NOISE_RULES_V170=[
      configuration to version-forward from; before the first Go-live the raw server message read
      like a fault. Point the owner at the step that mints it. */
   [/no published loyalty configuration yet/i,'Finish setting up first: open Rewards and run the setup wizard to Go live. After that, everything here saves normally.'],
+  /* nestly_v675 (audit F035). publish_loyalty_config refuses a draft that was cloned from a
+     configuration version something else has since replaced. Its own advice — "open the editor
+     again and re-apply the change" — was the one instruction that could not help on the stamp
+     path, where reopening handed back the very same draft; v675 retires that draft in
+     app.stamp_config_edit_begin_v433, so the honest instruction everywhere is: reload, then
+     make the change again. */
+  [/stale_draft/i,'Your setup was changed somewhere else while this was open, so nothing was saved here. Reload the page and make the change again.'],
   [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
   [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
   [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
@@ -1183,10 +1194,6 @@ const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*
    UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
    the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
 const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
-/* The earliest day the field will accept. Today in SGT, not tomorrow: the writer refuses only a
-   date that is already PAST, and today still has hours left in it — an owner running a one-day
-   promotion must be able to say so. */
-const growPointsEndDateMinV472=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 const sgDateInputValue=(date=new Date())=>{
   const values={};
   new Intl.DateTimeFormat('en-CA',{
@@ -2009,6 +2016,19 @@ async function route(){
       toast('Only the owner can open Program Studio.');
       return nav(firstPermittedPageV570());
     }
+    /* F013 fix: same guard as Settings/Studio, for the same reason. This page IS owner
+       config authoring (WhatsApp automation switches + send stats), not a sector
+       entitlement, so it has no real module key — the v606 alias to the pseudo-module
+       'settings' via SURFACE_MODULE_ALIAS_V584 was wrong, because 'settings' is never in
+       any account's resolved module list (it is not a module_registry key and no
+       business.enabled_modules/platform_module_overrides_v94 row ever holds it), so the
+       generic module guard below refused every role including the owner. 'remindernotify'
+       is now in OWNER_ONLY_MODULES so that guard skips it, and this explicit check is what
+       fails closed for a typed #/remindernotify hash. */
+    if(pageKey==='remindernotify'&&S.myRole!=='owner'){
+      toast('Only the owner can open Reminder & Notification.');
+      return nav(firstPermittedPageV570());
+    }
     /* Stored value has no launch-live business authority. Keep the existing foundation and audit
        records, but do not expose its test/cutover controls as an ordinary launch feature. */
     if(pageKey==='storedvalue'){
@@ -2213,6 +2233,11 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'Your friend gets {reward} too.',
     referralGiftFallback:'a free gift',
     referralTerms:'After their first spend, you get {reward}.',
+    /* nestly_v683 (audit F025): the card asks a customer to forward a code, so it must say who
+       the code can actually pay for. The engine attributes a referral only to somebody new to
+       this business; before v683 it paid two existing regulars for referring each other. */
+    referralNewOnlyV683:'Only a friend who is new to this business can be referred.',
+    joinReferralNotNewV683:'Referral codes are for friends who are new to this business.',
     referralPoints:'{count} points',
     referralOnePoint:'1 point',
     referralStamps:'{count} stamps',
@@ -2422,6 +2447,8 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'您的朋友也可获得{reward}。',
     referralGiftFallback:'一份免费礼物',
     referralTerms:'他们首次消费后，您可获得{reward}。',
+    referralNewOnlyV683:'只有初次光顾本商家的朋友才能被推荐。',
+    joinReferralNotNewV683:'推荐码仅适用于初次光顾本商家的朋友。',
     referralPoints:'{count}积分',
     referralOnePoint:'1积分',
     referralStamps:'{count}个章',
@@ -2656,6 +2683,8 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'Rakan anda juga dapat {reward}.',
     referralGiftFallback:'hadiah percuma',
     referralTerms:'Selepas belanja pertama mereka, anda dapat {reward}.',
+    referralNewOnlyV683:'Hanya rakan yang baharu di perniagaan ini boleh dirujuk.',
+    joinReferralNotNewV683:'Kod rujukan adalah untuk rakan yang baharu di perniagaan ini.',
     referralPoints:'{count} mata',
     referralOnePoint:'1 mata',
     referralStamps:'{count} cop',
@@ -2890,6 +2919,8 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'உங்கள் நண்பருக்கும் {reward} கிடைக்கும்.',
     referralGiftFallback:'ஒரு இலவசப் பரிசு',
     referralTerms:'அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிடைக்கும்.',
+    referralNewOnlyV683:'இந்த வணிகத்திற்குப் புதியவரான நண்பரை மட்டுமே பரிந்துரைக்க முடியும்.',
+    joinReferralNotNewV683:'பரிந்துரை குறியீடுகள் இந்த வணிகத்திற்குப் புதிய நண்பர்களுக்கானவை.',
     referralPoints:'{count} புள்ளிகள்',
     referralOnePoint:'1 புள்ளி',
     referralStamps:'{count} முத்திரைகள்',
@@ -6070,10 +6101,34 @@ function rememberBusinessStaffInviteV151(code){
   if(normalized)sessionStorage.setItem(STAFF_INVITE_STORAGE_V151,normalized);
   return normalized;
 }
-function staffInviteOAuthRedirectV158(code){
+function staffInviteLinkV151(code){
   const url=new URL(NestlyNativeBridge.publicUrl('/business'));
   url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
   return url.toString();
+}
+/* nestly_v681 (audit F108): the invite Google door returns through the SAME consumer as the
+   owner door — consumeBusinessOAuthRedirect() bails on its first line unless oauth=business is
+   present, and the client is built with detectSessionInUrl:false, so without this parameter the
+   returned tokens were never turned into a session and the invitee landed back signed out.
+   staff_invite is kept for the address-bar case, but it is NOT what carries the code across the
+   redirect: the consumer strips the query string, so businessStaffInviteCodeV151()'s
+   sessionStorage fallback (written by rememberBusinessStaffInviteV151 before we leave) is the
+   authority on the way back. */
+function staffInviteOAuthRedirectV158(code){
+  const url=new URL(NestlyNativeBridge.publicUrl('/business'));
+  url.searchParams.set('oauth','business');
+  url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
+  return url.toString();
+}
+/* The invite code survives the round trip in sessionStorage, which is per-origin. Starting the
+   redirect from a non-canonical origin would therefore return the person to a canonical origin
+   that has never seen their code. Send them to the canonical invite link first — that one still
+   carries the code in the URL — and let them press Google again there. */
+function ensureCanonicalStaffInviteOriginV681(code){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/business'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(staffInviteLinkV151(code));
+  return false;
 }
 function staffInvitePreviewMarkupV151(preview){
   if(!preview)return '<p class="muted small">Enter a company invite code to check the business and role.</p>';
@@ -6187,6 +6242,11 @@ function renderBusinessDemoRequest(){
 function renderStaffInviteAuthV151(mode='in',initialCode=''){
   destroyMountedTurnstiles();
   const saved=rememberBusinessStaffInviteV151(initialCode)||businessStaffInviteCodeV151();
+  /* nestly_v681 (audit F108): a Google round trip that fails admission lands back HERE, not on
+     renderAuth, so the notice consumeBusinessOAuthRedirect leaves behind had no reader and the
+     failure looked like nothing happened. Read and clear it in the same breath. */
+  const staffInviteOAuthNoticeV681=sessionStorage.getItem('nestly-business-oauth-notice')||'';
+  if(staffInviteOAuthNoticeV681)sessionStorage.removeItem('nestly-business-oauth-notice');
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="staffInviteAuthTitle" style="margin:14px 0 2px">Join an existing business</h1>
@@ -6197,9 +6257,9 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     <label for="staffInviteEmailV151">Email</label><input id="staffInviteEmailV151" type="email" autocomplete="email" placeholder="you@business.com">
     <label for="staffInvitePasswordV151">Password</label>${passwordControlHtml('staffInvitePasswordV151',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     ${mode==='up'?`<label for="staffInvitePasswordConfirmV151">Confirm password</label>${passwordControlHtml('staffInvitePasswordConfirmV151',{autocomplete:'new-password',placeholder:'••••••••'})}`:''}
-    <div id="staffInviteAuthError"></div>
+    <div id="staffInviteAuthError">${staffInviteOAuthNoticeV681?`<div class="err">${esc(staffInviteOAuthNoticeV681)}</div>`:''}</div>
     ${businessGoogleButtonHtml('staffInviteGoogleV158')}
-    <p class="muted small" style="margin-top:8px">Google works for invited staff too. Peekaa still validates the company invite and role on the server before access is created.</p>
+    <p class="muted small" style="margin-top:8px">Google works for invited staff too. Continuing with Google accepts the Terms and Privacy Policy below. Peekaa still validates the company invite and role on the server before access is created.</p>
     <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px">${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
     <button class="btn ghost" id="staffInviteBack" style="width:100%;margin-top:10px">Back</button>
     ${legalLinks()}</section></main>`;
@@ -6215,14 +6275,24 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     /* nestly_v588: allow a code that is already awaiting_approval through — the server
        replays correctly now, so refusing it here just blocks a genuine returning user. */
     if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
+    if(!ensureCanonicalStaffInviteOriginV681(code))return;
     $('staffInviteGoogleV158').disabled=true;
+    /* nestly_v681 (audit F108): record the attempt the consumer demands, exactly as
+       startBusinessGoogleAuth does. The intent is 'signup', not 'signin': an invited teammate
+       is a first-time account, and complete_business_google_oauth_v138's 'signin' branch
+       requires an already-active staff row (or an approved platform triage), so a genuine
+       invitee is refused 42501 there. 'signup' admits any consented Google identity, new or
+       returning, and records the acceptance the button copy above states — no new server
+       intent is needed. */
     try{
+      if(!await beginBusinessGoogleOAuthAttempt({intent:'signup',legalAccepted:true}))throw new Error('Google sign-in could not be started.');
       const {error}=await sb.auth.signInWithOAuth({
         provider:'google',
-        options:{redirectTo:staffInviteOAuthRedirectV158(code),queryParams:{prompt:'select_account'}}
+        options:{redirectTo:staffInviteOAuthRedirectV158(code),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
       });
       if(error)throw error;
     }catch(error){
+      sessionStorage.removeItem('nestly-business-google-oauth');
       $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Google sign-in could not be started.')}</div>`;
       $('staffInviteGoogleV158').disabled=false;
     }

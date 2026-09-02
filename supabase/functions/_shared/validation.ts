@@ -115,12 +115,45 @@ export function validManagePayload(body) {
   return Number.isFinite(Date.parse(String(body.proposed || '')));
 }
 
-export function normalizeBusinessApplicationLocale(value = 'en') {
+/* The one authority for "which locale tag did this public form send us". Every anonymous
+   surface — the business application, and since v672 the support desk — folds the tags a
+   browser might send into the three Peekaa actually stores. */
+export function normalizePublicLocale(value = 'en') {
   const locale = String(value || 'en').trim().toLowerCase();
   if (['zh', 'zh-cn', 'zh-sg', 'zh-hans'].includes(locale)) return 'zh-CN';
   if (['ms', 'ms-sg', 'ms-my', 'ms-latn'].includes(locale)) return 'ms';
   if (locale === 'en') return 'en';
   return null;
+}
+
+export function normalizeBusinessApplicationLocale(value = 'en') {
+  return normalizePublicLocale(value);
+}
+
+export const SUPPORT_REQUESTER_KINDS = Object.freeze(['customer', 'business_owner']);
+
+/* v672 — the support desk takes far less than the business application does, on purpose: a
+   person who cannot get into their account should not be made to fill a form to say so. Only
+   who they are, how to reach them, and what happened. The phone number is optional; a business
+   name is required only when they told us they are the business owner, because that is the
+   field that lets the super admin find the tenant. */
+export function validSupportTicketPayload(body) {
+  if (!body) return false;
+  const kind = String(body.requester_kind || '');
+  const phone = String(body.contact_phone || '').trim();
+  const businessName = String(body.business_name || '').trim();
+  return SUPPORT_REQUESTER_KINDS.includes(kind)
+    && String(body.contact_name || '').trim().length >= 2
+    && String(body.contact_name || '').trim().length <= 120
+    && String(body.contact_email || '').length <= 254
+    && EMAIL_PATTERN.test(String(body.contact_email || '').trim())
+    && (phone === '' || PHONE_PATTERN.test(phone))
+    && (businessName === '' || (businessName.length >= 2 && businessName.length <= 160))
+    && (kind !== 'business_owner' || businessName !== '')
+    && String(body.what_happened || '').trim().length >= 10
+    && String(body.what_happened || '').trim().length <= 4000
+    && normalizePublicLocale(body.locale) !== null
+    && UUID_PATTERN.test(String(body.idempotency_key || ''));
 }
 
 export function validBusinessApplicationPayload(body) {

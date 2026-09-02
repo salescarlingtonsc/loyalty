@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="0c03acc6333ec2f28212960e35b28e02136d06b3a7dfccd31da389e5c90dae09"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="63cee90661f1138f14c003c4f05199e872c1c80e71113b9550dfd835ea941860"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -871,7 +871,6 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
-.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -6024,7 +6023,18 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
       errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
       return;
     }
-    const cadence='annual';
+    /* W3B/F096: this button used to hardcode annual, so a MONTHLY business whose payment lapsed
+       was sent to a Stripe Checkout for the annual price with no cadence control on the screen to
+       correct it. The business's own provider-confirmed cadence lives in billing.terms.cadence
+       (billing_subscription_terms_v124.cadence, which a lapse never clears), and it is already
+       being fetched here for `capacity`. Same resolution as loadBillingConfig()'s
+       `initialCadence`: use the stored cadence when the payload still offers a plan for it, and
+       fall back to annual only when there is no prior cadence to honour. */
+    const plansV620=Array.isArray(billing.plans)?billing.plans:[];
+    const byCadenceV620=Object.fromEntries(plansV620.map(plan=>[plan.cadence,plan]));
+    const storedCadenceV620=String(billing.terms?.cadence||'');
+    const cadence=(plansV620.length?byCadenceV620[storedCadenceV620]:storedCadenceV620==='annual'||storedCadenceV620==='monthly')
+      ?storedCadenceV620:'annual';
     const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
     const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
     const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
