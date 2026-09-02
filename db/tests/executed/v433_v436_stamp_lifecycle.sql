@@ -73,6 +73,15 @@ begin
    where business_id=v_biz;
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_biz, false) on conflict (business_id) do update set workspace_paused=false;
+  /* v620 (nestly_v620_entitlement_authority): business_operational_v620 additionally requires a
+     paid (or trialing) subscriptions row, not merely an approved+unpaused workspace. Without this
+     the fixture fails with "owner loyalty configuration access required" under the migrated
+     schema — see the same note in v422_baseline_behaviours.sql. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
   insert into app.platform_feature_flags(feature_key, enabled)
   values ('customer_wallet', true), ('customer_claims', true), ('customer_qr_redemption', true)
   on conflict (feature_key) do update set enabled = true;

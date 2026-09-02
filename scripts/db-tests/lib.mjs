@@ -323,10 +323,22 @@ export function discoverExecutedTests({ watermark = SNAPSHOT_WATERMARK_VERSION }
     .map((name) => {
       const m = /^v(\d+)/.exec(name);
       const version = m ? Number(m[1]) : null;
+      const path = join(EXECUTED_TESTS_DIR, name);
+      /* Opt-in marker for a file that is not a behavioural suite against the shared schema at
+         all: it builds and drops its own scratch schema (see v427_entitlements.sql's header).
+         Cloning the shared baseline/migrated template for one of these means the file's own
+         `drop schema ... cascade` tears down every object the whole platform has accumulated —
+         thousands of them on the migrated template — which blows past Postgres's
+         max_locks_per_transaction and fails with "out of shared memory", a harness artifact that
+         has nothing to do with the migration the file is actually proving. Declared by the
+         file itself (first line, exact text) rather than inferred, so nothing is silently
+         reclassified. */
+      const isolated = readFileSync(path, 'utf8').split('\n', 1)[0].trim() === '-- db-tests: isolated';
       return {
         name,
-        path: join(EXECUTED_TESTS_DIR, name),
+        path,
         version,
+        isolated,
         /* A test named for a migration NEWER than the frozen baseline is testing behaviour that
            does not exist in the baseline yet, so failing there is the correct answer, not a
            regression. Its gate is the MIGRATED phase. A test at or below the watermark — the
