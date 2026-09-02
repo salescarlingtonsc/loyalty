@@ -382,7 +382,8 @@ E'        ''notes'', ''RECONCILED as of nestly_v714: call app.ci_visit_registry_
           || ''definitive, fixture-proven list of which readers defer to this authority and how. ''
           || ''One item remains OUTSIDE the database: the owner dashboard''''s Visits-KPI drill-down ''
           || ''dialog (app/app.js) still lists one row per raw sale, not per visit-day, so the ''
-          || ''dialog''''s row count can exceed the tile it opened from -- an owed client-side fix, ''
+          || ''dialog''''s row count can exceed the tile it opened from -'
+  || '- an owed client-side fix, ''
           || ''not a database one; see this migration''''s header.''';
   v_new constant text :=
 E'        ''notes'', ''RECONCILED as of nestly_v714, extended by nestly_v729: call ''
