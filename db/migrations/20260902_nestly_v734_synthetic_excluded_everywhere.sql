@@ -1701,11 +1701,11 @@ grant execute on function public.get_dashboard_summary_v154(uuid, date, date, te
 revoke all on function public.get_dashboard_summary_v155(uuid, date, date, text, uuid[], uuid) from public, postgres, authenticated, service_role;
 grant execute on function public.get_dashboard_summary_v155(uuid, date, date, text, uuid[], uuid) to postgres, authenticated, service_role;
 
-revoke all on function app.v176_sales_window(uuid, date, date) from public, postgres, authenticated, service_role;
-grant execute on function app.v176_sales_window(uuid, date, date) to postgres, authenticated, service_role;
+revoke all on function app.v176_sales_window(uuid, date, date) from public, anon, authenticated;
+grant execute on function app.v176_sales_window(uuid, date, date) to service_role;
 
-revoke all on function app.v177_sales_window(uuid, uuid, date, date) from public, postgres, authenticated, service_role;
-grant execute on function app.v177_sales_window(uuid, uuid, date, date) to postgres, authenticated, service_role;
+revoke all on function app.v177_sales_window(uuid, uuid, date, date) from public, anon, authenticated;
+grant execute on function app.v177_sales_window(uuid, uuid, date, date) to service_role;
 
 revoke all on function public.platform_get_assigned_firm_report_v94(uuid, uuid, date, date) from public, postgres, authenticated, service_role;
 grant execute on function public.platform_get_assigned_firm_report_v94(uuid, uuid, date, date) to postgres, authenticated, service_role;
