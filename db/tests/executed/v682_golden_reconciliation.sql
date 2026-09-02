@@ -215,7 +215,7 @@ begin
   raise notice 'v682: seeded+reconciled % businesses in % ms', v_total_checked, round(v_ms, 1);
   if v_ms > v_budget_ms then
     insert into _fail values ('timing', format(
-      'whole corpus took % ms, over the % ms budget', round(v_ms, 1), v_budget_ms));
+      'whole corpus took %s ms, over the %s ms budget', round(v_ms, 1), v_budget_ms));
   end if;
 
   -- Every supported sector must appear at least once.
