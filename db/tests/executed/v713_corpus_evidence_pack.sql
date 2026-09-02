@@ -255,7 +255,11 @@ begin
   if (pack->'findings'->>'source_rpc') is distinct from 'public.get_ci_opportunities_v1' then
     insert into _fail values ('F4-source', format('source_rpc was %s', pack->'findings'->>'source_rpc'));
   end if;
-  if (pack->'evidence_completeness'->>'findings_version') is distinct from 'v713' then
+  -- nestly_v738 bumped findings_version to 'v738' when it added report_sections/verdict_policy
+  -- to `findings` (additive only) — findings_version is, by nestly_v713's own header, the field
+  -- designed to move on a future findings-shape change, unlike contract_version below, which does
+  -- not. F4-shape/F4-source above still hold unchanged.
+  if (pack->'evidence_completeness'->>'findings_version') is distinct from 'v738' then
     insert into _fail values ('F4-version', format('findings_version was %s',
       pack->'evidence_completeness'->>'findings_version'));
   end if;
