@@ -2110,6 +2110,7 @@ function navHtml(page,idPrefix='nav'){
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
+    ||(m==='remindernotify'&&S.myRole==='owner')
     ||(m==='bottlesetup'&&sectorShowsBottlesV275&&S.myRole==='owner')
     ||(m==='custpackages'&&enabled.includes('packages'))
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))

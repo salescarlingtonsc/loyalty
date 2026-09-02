@@ -310,8 +310,13 @@ const MODULES={dashboard:['home','Dashboard'],till:['till','Record sale'],client
   staffmembers:['staff','Staff Members'],settings:['settings','Subscription'],setup:['setup','Get started'],
   /* nestly_v606 (owner mark on the Bring-back page: the WhatsApp automation and delivery blocks
      ringed together, with "Reminder & Notification move under operations setup"). A SURFACE key,
-     not an entitlement — what it shows is owner-level workspace configuration, so it is gated on
-     the same module Settings is, through SURFACE_MODULE_ALIAS_V606 below. */
+     not an entitlement — what it shows is owner-level workspace configuration, like Branches or
+     Program Studio. F013 fix: it used to be gated via SURFACE_MODULE_ALIAS_V584 onto the
+     pseudo-module 'settings', which is never in any account's resolved module list (it is not a
+     module_registry key and no enabled_modules/platform_module_overrides_v94 row ever holds it),
+     so that alias refused every role including the owner. It is now in OWNER_ONLY_MODULES, with
+     an explicit role check in the route guard and in navModuleVisible, the same shape as
+     Settings/Branches/Customer Interface/Studio. */
   remindernotify:['appointments','Reminder & Notification'],
   /* V275: two bar-only surfaces. 'bottles' is a real entitlement key (module_registry + the bar
      sector bundle); 'bottlesetup' is a surface key like 'branches' — owner-only configuration
@@ -337,11 +342,11 @@ const HIDDEN_BUSINESS_SURFACES=new Set([]);
    capability model disagreed. Verified against production 2026-08-26 by calling both RPCs
    as a real frontdesk user — both refused. */
 const FINANCE_MODULES=new Set(['expenses','pnl','staffperf','customerintel']);
-const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup']);
+const OWNER_ONLY_MODULES=new Set(['branches','staffmembers','settings','setup','bottlesetup','remindernotify']);
 const BOTTLE_SURFACES_V275=new Set(['bottles','bottlesetup']);
 /* nestly_v584: a surface that has its own rail row and route but no entitlement of its own —
    the value is the module whose read permission actually governs it. */
-const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages',remindernotify:'settings'});
+const SURFACE_MODULE_ALIAS_V584=Object.freeze({custpackages:'packages'});
 const roleCanUseModule=(role,module)=>!FINANCE_MODULES.has(module)
   ||ROLE_CAPABILITIES[role]?.has('view_finance')===true;
 const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?modules:[])]
@@ -2006,6 +2011,19 @@ async function route(){
        guard below never sees it; this explicit owner check fails closed for a typed #/studio. */
     if(pageKey==='studio'&&S.myRole!=='owner'){
       toast('Only the owner can open Program Studio.');
+      return nav(firstPermittedPageV570());
+    }
+    /* F013 fix: same guard as Settings/Studio, for the same reason. This page IS owner
+       config authoring (WhatsApp automation switches + send stats), not a sector
+       entitlement, so it has no real module key — the v606 alias to the pseudo-module
+       'settings' via SURFACE_MODULE_ALIAS_V584 was wrong, because 'settings' is never in
+       any account's resolved module list (it is not a module_registry key and no
+       business.enabled_modules/platform_module_overrides_v94 row ever holds it), so the
+       generic module guard below refused every role including the owner. 'remindernotify'
+       is now in OWNER_ONLY_MODULES so that guard skips it, and this explicit check is what
+       fails closed for a typed #/remindernotify hash. */
+    if(pageKey==='remindernotify'&&S.myRole!=='owner'){
+      toast('Only the owner can open Reminder & Notification.');
       return nav(firstPermittedPageV570());
     }
     /* Stored value has no launch-live business authority. Keep the existing foundation and audit

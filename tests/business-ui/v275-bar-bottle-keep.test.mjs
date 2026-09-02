@@ -200,7 +200,7 @@ test('V275 a non-bar tenant that types the route gets an answer, not a bounce or
   assert.match(app, /async function bottleSetupPageV275\(\)\{[\s\S]*?if\(!isBarSectorV275\(\)\)return bottlesUnavailableCardV275\('Bottle keep'\);/);
   assert.match(app, /title:'Not available for this business type'/);
   // Bottle keep setup is owner-only, exactly like the other Operations setup surfaces.
-  assert.match(app, /const OWNER_ONLY_MODULES=new Set\(\['branches','staffmembers','settings','setup','bottlesetup'\]\);/);
+  assert.match(app, /const OWNER_ONLY_MODULES=new Set\(\['branches','staffmembers','settings','setup','bottlesetup','remindernotify'\]\);/);
   assert.match(app, /async function bottleSetupPageV275\(\)\{[\s\S]*?if\(S\.myRole!=='owner'\)return bottlesDeniedCardV275\('Bottle keep'\);/);
   // Both routes are dispatchable.
   assert.match(app, /bottles:bottlesPage,bottlesetup:bottleSetupPageV275,/);
