@@ -45415,7 +45415,7 @@ async function appointmentsPage(){
           ${canWrite?`<button type="button" class="btn ghost sm danger" data-pending-decline="${esc(r.id)}">Decline</button>`:''}
         </div>
         ${rescheduling?`<div class="row pending-reschedule-form-v329" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:flex-end">
-          <div><label for="pendingRescheduleTimeV329-${esc(r.id)}" class="small">New date & time</label><input id="pendingRescheduleTimeV329-${esc(r.id)}" type="datetime-local" value="${esc((r.preferred_at||'').slice(0,16))}"></div>
+          <div><label for="pendingRescheduleTimeV329-${esc(r.id)}" class="small">New date & time</label><input id="pendingRescheduleTimeV329-${esc(r.id)}" type="datetime-local" value="${esc(r.preferred_at?sgInput(r.preferred_at):'')}"></div>
           <div><label for="pendingRescheduleStaffV329-${esc(r.id)}" class="small">Team member</label><select id="pendingRescheduleStaffV329-${esc(r.id)}">${staff.map(s=>`<option value="${s.id}" ${r.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('')}</select></div>
           <button type="button" class="btn sm" data-pending-reschedule-submit="${esc(r.id)}">Move & confirm</button>
         </div>`:''}
@@ -45495,7 +45495,7 @@ async function appointmentsPage(){
         <button class="btn ghost danger" id="pendingTileDeclineV330" type="button">Decline</button>
       </div>
       <div class="row" id="pendingTileRescheduleFormV330" style="display:none;margin-top:14px;gap:8px;flex-wrap:wrap;align-items:flex-end">
-        <div><label for="pendingTileTimeV330" class="small">New date & time</label><input id="pendingTileTimeV330" type="datetime-local" value="${esc((row.preferred_at||'').slice(0,16))}"></div>
+        <div><label for="pendingTileTimeV330" class="small">New date & time</label><input id="pendingTileTimeV330" type="datetime-local" value="${esc(row.preferred_at?sgInput(row.preferred_at):'')}"></div>
         <div><label for="pendingTileStaffV330" class="small">Team member</label><select id="pendingTileStaffV330">${staffOptions}</select></div>
         <button type="button" class="btn sm" id="pendingTileRescheduleSubmitV330">Move & confirm</button>
       </div>
