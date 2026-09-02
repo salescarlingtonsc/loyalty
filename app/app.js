@@ -17433,7 +17433,18 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
       errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
       return;
     }
-    const cadence='annual';
+    /* W3B/F096: this button used to hardcode annual, so a MONTHLY business whose payment lapsed
+       was sent to a Stripe Checkout for the annual price with no cadence control on the screen to
+       correct it. The business's own provider-confirmed cadence lives in billing.terms.cadence
+       (billing_subscription_terms_v124.cadence, which a lapse never clears), and it is already
+       being fetched here for `capacity`. Same resolution as loadBillingConfig()'s
+       `initialCadence`: use the stored cadence when the payload still offers a plan for it, and
+       fall back to annual only when there is no prior cadence to honour. */
+    const plansV620=Array.isArray(billing.plans)?billing.plans:[];
+    const byCadenceV620=Object.fromEntries(plansV620.map(plan=>[plan.cadence,plan]));
+    const storedCadenceV620=String(billing.terms?.cadence||'');
+    const cadence=(plansV620.length?byCadenceV620[storedCadenceV620]:storedCadenceV620==='annual'||storedCadenceV620==='monthly')
+      ?storedCadenceV620:'annual';
     const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
     const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
     const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};
@@ -44294,6 +44305,17 @@ async function appointmentsPage(){
     return `${name} · ${contact||`staff ${String(person?.id||'').slice(-4)}`}`;
   };
   const staffName=Object.fromEntries(staff.map(s=>[s.id,staffLabel(s)]));
+  /* W3B/F075. The customer widget offers "Anyone available" (booking_requests.staff_id NULL) and
+     this page DISPLAYS that state, but the two "Change time / staff" selects were built purely
+     from `staff`, so an unassigned request had no matching <option>, the browser fell back to the
+     alphabetically-first team member, and "Move & confirm" silently pinned the request to whoever
+     that happened to be. The unassigned choice is now a real option; its empty value reaches the
+     RPC as p_staff:null, which `staff_reschedule_and_confirm_booking_request_v329` accepts
+     (`staff_id = coalesce(p_staff, staff_id)` — verified against production), leaving an
+     unassigned request unassigned. */
+  const rescheduleStaffOptionsV329=currentStaffId=>
+    `<option value="" ${currentStaffId?'':'selected'}>Anyone available</option>`
+    +staff.map(s=>`<option value="${s.id}" ${currentStaffId===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
   const staffColor=Object.fromEntries(staff.map(s=>[s.id,s.calendar_color||'#7C9CBF']));
   const myStaff=staff.find(s=>s.user_id===S.user.id);
   const canSeeAll=S.myRole==='owner'||S.myRole==='manager';
@@ -45216,7 +45238,7 @@ async function appointmentsPage(){
     $('appointmentDialogClose').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
     dialog.querySelectorAll('.statusAction').forEach(action=>action.onclick=async()=>{
       const status=action.dataset.status;
-      if(!await setStatus(item.id,status))return;
+      if(!await setStatus(item.id,status,item))return;
       if(status!=='completed'){close();return}
       /* A4 (owner: rebooking should be one tap after checkout). The completed appointment is
          remembered so the NEXT appointment booked for this same client can be linked to it via
@@ -45347,8 +45369,15 @@ async function appointmentsPage(){
       loadCalendar().catch(fail);
     });
   }
-  async function setStatus(id,status){
-    const item=calendarItems.find(appointment=>appointment.id===id);
+  /* W3B/F072: the caller may already hold the fully-loaded appointment (the detail dialog fetches
+     its own row through get/appointment RPC). `calendarItems` is the page's STAFF-FILTERED list —
+     for a non-owner/manager staffFilter defaults to that person's own staff id, so a colleague's
+     appointment opened from the dashboard's unfiltered "Today schedule" is simply absent from it.
+     Re-deriving the item from that list made appointmentOutcomeIsDue(undefined) false and refused
+     Complete / No-show with "only after the appointment starts". Trust the passed item first; the
+     lookup remains the fallback for the inline .statusAction rows, which ARE calendar rows. */
+  async function setStatus(id,status,knownItem=null){
+    const item=knownItem&&knownItem.id===id?knownItem:calendarItems.find(appointment=>appointment.id===id);
     if((status==='completed'||status==='no_show')&&!appointmentOutcomeIsDue(item)){toast('This outcome can only be recorded after the appointment starts.');return false}
     if(status==='completed'&&!canComplete){toast('Create-sales access is required to complete an appointment.');return false}
     const words=status==='completed'?'Complete this appointment? Peekaa will create the configured checkout record. Review Sales for the final points outcome.':status==='cancelled'?'Cancel this appointment?':'Mark this appointment as a no-show?';
@@ -45650,7 +45679,7 @@ async function appointmentsPage(){
         </div>
         ${rescheduling?`<div class="row pending-reschedule-form-v329" style="margin-top:10px;gap:8px;flex-wrap:wrap;align-items:flex-end">
           <div><label for="pendingRescheduleTimeV329-${esc(r.id)}" class="small">New date & time</label><input id="pendingRescheduleTimeV329-${esc(r.id)}" type="datetime-local" value="${esc(r.preferred_at?sgInput(r.preferred_at):'')}"></div>
-          <div><label for="pendingRescheduleStaffV329-${esc(r.id)}" class="small">Team member</label><select id="pendingRescheduleStaffV329-${esc(r.id)}">${staff.map(s=>`<option value="${s.id}" ${r.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('')}</select></div>
+          <div><label for="pendingRescheduleStaffV329-${esc(r.id)}" class="small">Team member</label><select id="pendingRescheduleStaffV329-${esc(r.id)}">${rescheduleStaffOptionsV329(r.staff_id)}</select></div>
           <button type="button" class="btn sm" data-pending-reschedule-submit="${esc(r.id)}">Move & confirm</button>
         </div>`:''}
       </div>`;
@@ -45712,7 +45741,7 @@ async function appointmentsPage(){
      and needs the inline reschedule form instead. */
   function openPendingRequestTileModalV330(row){
     if($('pendingTileModalV330'))return;
-    const staffOptions=staff.map(s=>`<option value="${s.id}" ${row.staff_id===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
+    const staffOptions=rescheduleStaffOptionsV329(row.staff_id);
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pendingTileModalV330" role="dialog" aria-modal="true" aria-labelledby="pendingTileModalTitleV330" tabindex="-1"><div class="modal-card" style="max-width:460px">
       <div class="row"><div><h2 id="pendingTileModalTitleV330">Booking request</h2><p class="muted small" style="margin-top:4px">Not yet confirmed — still holds this slot.</p></div><span class="spacer"></span><button class="btn ghost sm" id="pendingTileModalCloseV330" type="button">Close</button></div>
       <div class="imp-note" style="margin-top:12px">
@@ -46404,6 +46433,39 @@ function supportWindowLabelV531(open,expiresAt){
   return SUPPORT_INBOX_COPY_V531.windowOpen+' '+(h>0?h+'h '+m+'m':m+'m');
 }
 
+/* nestly_v688 (audit finding F101). The conversations THIS session has marked read, with the
+   count each one held when the server cleared it. supportRenderListV531 recomputes those rows'
+   pills from this map instead of trusting the number the list RPC sent, so the "N new" pill is
+   gone the moment a thread is opened — and it is gone for everyone, because the server row was
+   the thing that changed, not a browser flag. */
+const supportUnreadClearedV688=new Map();
+
+/* Fail-soft on purpose: this is housekeeping, and a staff member must never be unable to READ a
+   conversation because the mark-read write was refused. The refusals it can raise (42501 no
+   support write / workspace closed, 42704 not this business's conversation) are all cases where
+   the thread load would have failed first, so there is nothing to tell the operator. */
+async function supportMarkThreadReadV688(businessId,conversationId){
+  const key=String(conversationId||'');
+  if(!businessId||!key)return null;
+  try{
+    const result=await sb.rpc('business_support_mark_read_v688',
+      {p_business:businessId,p_conversation:key});
+    if(result&&result.error){console.warn('support mark-read failed',result.error);return null}
+    const cleared=Math.max(0,Number(result&&result.data&&result.data.cleared)||0);
+    supportUnreadClearedV688.set(key,cleared);
+    return cleared;
+  }catch(error){
+    console.warn('support mark-read failed',error);
+    return null;
+  }
+}
+
+function supportUnreadCountV688(row){
+  const key=String((row&&row.conversation_id)||'');
+  if(supportUnreadClearedV688.has(key))return 0;
+  return Math.max(0,Number(row&&row.unread_count)||0);
+}
+
 async function supportInboxPageV531(hashParam){
   disposeCurrentRoute();
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -46415,6 +46477,13 @@ async function supportInboxPageV531(hashParam){
     title:SUPPORT_INBOX_COPY_V531.title,iconName:'customers',body:'Loading conversations…'});
 
   if(conversationId){
+    /* W3B/F101, closed by nestly_v688. unread_count used to be set to 0 in exactly one place —
+       app.support_reply_v535, as a side effect of SENDING a reply — and the table carries a
+       SELECT-only RLS policy, so a thread that needed no reply kept its "N new" pill forever.
+       public.business_support_mark_read_v688 is the route that clears it on its own; it asserts
+       the same workspace-open + support-WRITE guard v535 does, so a read-only viewer cannot
+       erase a colleague's queue. It runs only after the thread actually loaded — a failed load
+       is not a read. */
     const threadResultV531=await sb.rpc('business_support_get_thread_v531',
       {p_business:S.biz.id,p_conversation:conversationId});
     if(!isCurrent())return;
@@ -46423,6 +46492,8 @@ async function supportInboxPageV531(hashParam){
         message:ownerErrorText(threadResultV531.error)||'Please try again.'});
       return;
     }
+    await supportMarkThreadReadV688(S.biz.id,conversationId);
+    if(!isCurrent())return;
     return supportRenderThreadV531(routeMain,threadResultV531.data||{});
   }
 
@@ -46454,7 +46525,7 @@ function supportRenderListV531(routeMain,rows){
           ?esc(SUPPORT_INBOX_COPY_V531.knownCustomer)
           :esc(SUPPORT_INBOX_COPY_V531.unknownCustomer)}</span>
         <span class="pill">${esc(row.assigned_staff_name||SUPPORT_INBOX_COPY_V531.unassigned)}</span>
-        ${Number(row.unread_count)>0?`<span class="pill">${Number(row.unread_count)} new</span>`:''}
+        ${supportUnreadCountV688(row)>0?`<span class="pill">${supportUnreadCountV688(row)} new</span>`:''}
       </div>
     </button>`).join('');
 
@@ -47848,7 +47919,20 @@ async function waitlistPage(){
      form the workspace does not have. It opens Bookings instead, which is where a seated
      business turns a walk-in into a held reservation. */
   const seatedWithoutAppointmentsV288=sectorHidesAppointmentsV276();
-  const canBook=seatedWithoutAppointmentsV288?canWriteModule('bookings'):canWriteModule('appointments');
+  /* W3B/F073. V288's "open Bookings instead" was a dead end: bookingsPage only LISTS booking
+     requests a customer already submitted through the public portal — there is no staff control
+     there that creates one, and nothing on that page ever reads pendingWaitlistBookIdV571. So a
+     cafe or bar clicking Book got a reassuring toast, landed on a page with nothing to click, and
+     the walk-in stayed waiting forever. Two honest paths instead:
+       - the appointments module is writable (the #/appointments ROUTE stays reachable in a seated
+         sector by design — see the v276 comment; only its advertising is hidden), so hand the row
+         to the same prefilled appointment form every other sector uses; or
+       - it is not, so there is no scheduling surface at all: seat the walk-in in place through the
+         waitlist's own status write ('booked' is one of the four values waitlist_status_check
+         allows), which is the resolution a seated business actually performs. */
+  const canHandOffToAppointmentsV571=canWriteModule('appointments');
+  const seatWalkInDirectlyV571=seatedWithoutAppointmentsV288&&!canHandOffToAppointmentsV571;
+  const canBook=seatWalkInDirectlyV571?canWrite:canHandOffToAppointmentsV571;
   /* V288 (audit A2 HIGH 1): same ruling as the Bookings page — a waitlist row that carries a
      booking request is decided with Bookings authority, not appointments authority the seated
      sectors never hold. */
@@ -47984,12 +48068,14 @@ async function waitlistPage(){
      excluded here for the same reason updateWl excludes it — those are decided in Bookings. */
   window.wlBook=async id=>{
     const row=currentRows.find(r=>r.id===id);
-    if(!canBook)return toast(seatedWithoutAppointmentsV288?'Bookings write access is required.':'Appointment write access is required.');
+    if(!canBook)return toast(seatWalkInDirectlyV571?'Waitlist write access is required.':'Appointment write access is required.');
     if(row?.booking_request_id)return toast('Linked booking requests must be decided with Confirm or Decline.');
-    if(seatedWithoutAppointmentsV288){
-      pendingWaitlistBookIdV571=id;
-      toast('Bookings opened — the walk-in stays waiting until a booking is confirmed.');
-      nav('#/bookings');return;
+    if(seatWalkInDirectlyV571){
+      /* W3B/F073: no appointment form exists for this workspace, so the queue itself is the only
+         place the walk-in can be resolved. Confirm first — this clears the row. */
+      if(!await confirmActionV386(`Seat ${row?.name||'this walk-in'} now? They leave the waiting queue.`,{confirmLabel:'Seat now',danger:false}))return;
+      if(await updateWl(id,'booked')){toast('Walk-in seated');loadWl()}
+      return;
     }
     pendingWaitlistBookIdV571=id;
     if(row?.client_id)pendingApptClientId=row.client_id;
@@ -48081,7 +48167,9 @@ async function waitlistPage(){
          - "Called" → "Call", annotated "can call customer": a past-tense status became the act.
        Book is the only primary here, so the row has one obvious next step instead of two. */
     const book=!canBook?''
-      :`<button class="btn sm" onclick="wlBook('${w.id}')" title="Open the appointment form to set a date and time"><span>Book</span></button>`;
+      :seatWalkInDirectlyV571
+        ?`<button class="btn sm" onclick="wlBook('${w.id}')" title="Seat this walk-in and clear the row"><span>Seat now</span></button>`
+        :`<button class="btn sm" onclick="wlBook('${w.id}')" title="Open the appointment form to set a date and time"><span>Book</span></button>`;
     /* Call dials AND records the contact, so a tap is never a silent no-op on the queue. A row
        with no usable number keeps the plain status button — there is nothing to dial. */
     const callable=String(w.phone||'').replace(/[^\d+]/g,'');
@@ -51880,7 +51968,15 @@ async function expensesPage(){
     <div class="card" id="expGate">${CUI.formSkeleton({fields:3})}</div>`;
   const todayIso=sgDateInputValue();
   let scopeResult;
-  try{scopeResult=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'expenses'})}
+  /* W3B/F103: this gate passed p_branch:null unconditionally, unlike every sibling finance/report
+     page (staffperf, dailyreport, P&L all pass selectedBranchId||null). Server-side
+     app.metric_module_scope_available_v145 starts at app.can_see_branch(business, p_branch), and
+     can_see_branch(business, NULL) is only true for role_class owner/admin — so a branch-scoped
+     'bookkeeper' (role_class 'employee'), the exact role the product hands finance access to, was
+     refused Expenses permanently no matter which branch they had. Following the top-bar scope
+     makes the gate the role/module check it was meant to be; the expense list below already
+     filters on the same selectedBranchId (V285). */
+  try{scopeResult=await sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_module:'expenses'})}
   catch(error){if(isCurrent())$('expGate').innerHTML=`<div class="err">Expenses access could not be checked. <button class="btn ghost sm" id="expensesGateRetry">Retry</button></div>`;if($('expensesGateRetry'))$('expensesGateRetry').onclick=expensesPage;return}
   if(!isCurrent())return;
   if(scopeResult?.error){
@@ -51904,7 +52000,13 @@ async function expensesPage(){
       <label for="exDesc">Description</label><input id="exDesc">
       <label for="exAmt">Amount (SGD)</label><input id="exAmt" type="number" min="0" step="0.01">
       <label for="exDate">Date</label><input id="exDate" type="date" value="${todayIso}">
-      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${branch.is_default?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
+      ${/* W3B/F104: the pre-selected scope followed branches.is_default, ignoring the top-bar
+            branch the rest of this page already obeys (the list filters on selectedBranchId).
+            Someone managing Branch 2 got an Add form pre-set to Branch 1, so an unnoticed save
+            posted the cost to the wrong branch's P&L. The top bar owns branch scope — the V285
+            ruling this very page cites — so the form follows it and falls back to the default
+            branch only when no branch is selected. */''}
+      <label for="exBranch">Expense scope</label><select id="exBranch"><option value="">Business-wide overhead</option>${expenseBranches.map(branch=>`<option value="${branch.id}" ${(selectedBranchId?branch.id===selectedBranchId:branch.is_default)?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>
       <p class="muted small" style="margin-top:6px">Choose the branch that incurred this cost. Business-wide overhead appears only in the consolidated P&amp;L; branch P&amp;L shows branch-specific expenses.</p>
       <div style="margin-top:16px"><button class="btn" id="exAdd">Add expense</button></div></div>`:''}</div>
     <div class="expenses-segment-body" id="expenseListBody"><div class="card"><div class="v150-soft-head"><b>Expense list</b><p>Recorded costs with branch or business-wide scope.</p></div><div id="exList" style="margin-top:8px">${CUI.tableSkeleton({rows:5,columns:8})}</div>

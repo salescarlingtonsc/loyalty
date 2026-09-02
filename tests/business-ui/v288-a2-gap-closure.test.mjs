@@ -161,8 +161,15 @@ test('MEDIUM 8 — sector-hiding is one predicate on every appointment front doo
   assert.match(dashboard, /href="#\/bookings">Open bookings/);
   assert.match(app, /const canBookAppt=canWriteModule\('appointments'\)&&!sectorHidesAppointmentsV276\(\);/);
   assert.match(waitlistPage, /const seatedWithoutAppointmentsV288=sectorHidesAppointmentsV276\(\);/);
-  assert.match(waitlistPage, /seatedWithoutAppointmentsV288\?canWriteModule\('bookings'\):canWriteModule\('appointments'\)/);
-  assert.match(waitlistPage, /if\(seatedWithoutAppointmentsV288\)\{[\s\S]*?nav\('#\/bookings'\);return;/);
+  /* W3B/F073 re-pin. V288 routed a seated sector's waitlist "Book" to #/bookings, but that page
+     only LISTS customer-submitted booking_requests — it never reads pendingWaitlistBookIdV571 and
+     offers no control that creates a request, so the walk-in could never leave the queue. The
+     sector predicate above is unchanged; what it decides is now an honest destination: the
+     appointment form when appointments are writable, otherwise a direct waitlist status write.
+     Behaviour is covered by tests/business-ui/w3b-audit-wave.test.mjs. */
+  assert.match(waitlistPage, /const seatWalkInDirectlyV571=seatedWithoutAppointmentsV288&&!canHandOffToAppointmentsV571;/);
+  assert.match(waitlistPage, /const canBook=seatWalkInDirectlyV571\?canWrite:canHandOffToAppointmentsV571;/);
+  assert.doesNotMatch(waitlistPage, /nav\('#\/bookings'\)/);
 });
 
 /* ------------------------------------------------------------------ MEDIUM 11/12 */
