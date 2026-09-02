@@ -108,6 +108,165 @@ test('v684 check 90 / check 88 (V9b): 05-whale-firm.json\'s bad narrative also c
     );
   });
 
+test('v705 check 17 (V10): 02-sparse-firm.json\'s bad narrative rewrites its ASSOCIATION ' +
+  'finding as a cause, and V10 names it', () => {
+    // 02-sparse-firm.json's pack carries opportunities.candidates[0], an ASSOCIATION finding
+    // ("weekend visit and return pattern"). Its "good" narrative states the pattern as observed
+    // ("also tend to return sooner"); its "bad" narrative was extended (nestly_v705) to restate
+    // the SAME finding with a causal construction ("leads to") instead. checkAssociationCausal-
+    // Binding (V10) is the rule that must catch this specific rewrite, not merely that some other
+    // rule already would have rejected the pack (the pack was already correctly rejected before
+    // this addition, via the pre-existing "Marcus Lim" orphan name).
+    const fixture = corpus.find((c) => c.file === '02-sparse-firm.json');
+    assert.ok(fixture, 'expected 02-sparse-firm.json in the golden corpus');
+    assert.match(fixture.bad, /leads to/, 'the fixture must still carry the causal rewrite this test checks');
+    const result = validateNarrative(fixture.bad, fixture.pack);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.violations.some(
+        (v) => v.rule === RULES.CAUSAL_BINDING && v.detail.includes('weekend visit and return pattern'),
+      ),
+      `expected V10 to name the ASSOCIATION finding:\n  ${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
+    );
+    // And the SAME finding stated as an observed pattern (the "good" narrative) must not fire V10.
+    const clean = validateNarrative(fixture.good, fixture.pack);
+    assert.ok(clean.violations.every((v) => v.rule !== RULES.CAUSAL_BINDING),
+      `the good narrative's observed-pattern phrasing must not trip V10:\n  ` +
+      `${clean.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`);
+  });
+
+test('v705 check 17 (V10): 06-adversarial-firm.json\'s bad narrative rewrites its ASSOCIATION ' +
+  'finding with a DIFFERENT causal construction ("results in"), and V10 names it too', () => {
+    // Deliberately a different causal phrase from the 02-sparse-firm.json test above ("results in"
+    // vs "leads to"), and neither is one of V3's own CAUSAL_PATTERNS words — proving V10 is doing
+    // independent work, not riding on V3's unconditional causal gate.
+    const fixture = corpus.find((c) => c.file === '06-adversarial-firm.json');
+    assert.ok(fixture, 'expected 06-adversarial-firm.json in the golden corpus');
+    assert.match(fixture.bad, /results in/, 'the fixture must still carry the causal rewrite this test checks');
+    const result = validateNarrative(fixture.bad, fixture.pack);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.violations.some(
+        (v) => v.rule === RULES.CAUSAL_BINDING &&
+          v.detail.includes('Mystery Box purchase and repeat visit link'),
+      ),
+      `expected V10 to name the ASSOCIATION finding:\n  ${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
+    );
+    const clean = validateNarrative(fixture.good, fixture.pack);
+    assert.ok(clean.violations.every((v) => v.rule !== RULES.CAUSAL_BINDING),
+      `the good narrative's observed-pattern phrasing must not trip V10:\n  ` +
+      `${clean.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`);
+  });
+
+test('v705 check 17 (V10): a DIRECT_FACT finding may be stated flatly, even with causal wording ' +
+  'nearby, because V10 only ever looks at ASSOCIATION findings', () => {
+  // A synthetic pack proves the exemption directly rather than relying on absence-of-evidence: a
+  // finding identical in shape to the ASSOCIATION ones above, but classed DIRECT_FACT, must never
+  // be flagged by V10 no matter how flatly (or causally) it is worded.
+  const pack = {
+    scope: { period_kind: 'monthly', period_start: '2026-08-01', period_end: '2026-08-31' },
+    opportunities: {
+      candidates: [{
+        id: 'coverage_gap',
+        label: 'tracked item coverage gap',
+        pattern: 'Only part of revenue is tracked at the item level.',
+        evidence_class: 'DIRECT_FACT',
+      }],
+    },
+  };
+  const narrative = '## Summary\nLow item coverage caused a tracked item coverage gap this month.\n' +
+    '## What went well\n- Nothing new.\n## What needs attention\n- None.\n## Your customers\n' +
+    'No customer detail this period.\n## Do these three things next\n1. Do one thing.\n' +
+    '2. Do another thing.\n3. Do a third thing.\n';
+  const result = validateNarrative(narrative, pack);
+  assert.ok(result.violations.every((v) => v.rule !== RULES.CAUSAL_BINDING),
+    `a DIRECT_FACT finding must never trip V10:\n  ` +
+    `${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`);
+});
+
+test('v705 check 17 (V10): every known-good narrative in the corpus is free of V10 violations', () => {
+  // Corpus-wide, not just the two fixtures that carry an ASSOCIATION finding: proves the new rule
+  // never fires a false positive anywhere in the shipped known-good set, the same "prove the
+  // negative across the whole corpus" shape as v677's own T-pass mutation guard.
+  for (const { file, pack, good } of corpus) {
+    const result = validateNarrative(good, pack);
+    assert.ok(result.violations.every((v) => v.rule !== RULES.CAUSAL_BINDING),
+      `${file}'s known-good narrative must not trip V10:\n  ` +
+      `${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`);
+  }
+});
+
+/* v705 check 88, refuter round 2 — five undeclared bypasses in the shared tokeniser V9/V9b build
+ * on (orphanWords / isCapitalisedCandidate), each proved against 01-normal-firm.json's OWN
+ * known-good narrative with one extra sentence appended: if the sentence were left out, the
+ * narrative validates clean (it is the shipped known-good text); appending it must flip the
+ * verdict and the violation must NAME the specific invented token, not merely fail for some other
+ * reason. Each case is its own regression test so a future change that reopens ANY ONE of the
+ * five shows up as its own failure, not a single combined assertion that could pass 4/5.
+ */
+const V9_REFUTER_CASES = [
+  {
+    label: 'possessive ("Melissa\'s")',
+    sentence: "Your regular Melissa's third visit pleased staff this month.",
+    token: 'Melissa',
+  },
+  {
+    label: 'hyphenated ("Mei-Ling")',
+    sentence: 'Your regular Mei-Ling returned twice this month.',
+    token: 'Mei-Ling',
+  },
+  {
+    label: 'em-dash-glued ("month—Marcus—and")',
+    sentence: 'One regular came back twice this month—Marcus—and said thanks.',
+    token: 'Marcus',
+  },
+  {
+    label: 'camelCase mid-sentence ("JavaBrew")',
+    sentence: 'Your customers tried the new JavaBrew blend this month.',
+    token: 'JavaBrew',
+  },
+  {
+    label: 'Unicode ("Zoë")',
+    sentence: 'Your regular Zoë came back twice this month.',
+    token: 'Zoë',
+  },
+];
+
+for (const { label, sentence, token } of V9_REFUTER_CASES) {
+  test(`v705 check 88: an undetected orphan name via ${label} is now caught by name`, () => {
+    const fixture = corpus.find((c) => c.file === '01-normal-firm.json');
+    assert.ok(fixture, 'expected 01-normal-firm.json in the golden corpus');
+
+    const baseline = validateNarrative(fixture.good, fixture.pack);
+    assert.equal(baseline.ok, true,
+      `01-normal-firm.json's known-good narrative must itself be clean before the refuter ` +
+      `sentence is appended:\n  ${baseline.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`);
+
+    const narrative = `${fixture.good}\n${sentence}\n`;
+    const result = validateNarrative(narrative, fixture.pack);
+    assert.equal(result.ok, false, `expected "${sentence}" to be rejected`);
+    assert.ok(
+      result.violations.some((v) => v.rule === RULES.ENTITY && v.detail.includes(token)),
+      `expected an ENTITY violation naming "${token}":\n  ` +
+      `${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
+    );
+  });
+}
+
+test('v705 check 88: every known-good narrative in the corpus stays clean after the ' +
+  'tokeniser widening', () => {
+  // The widened shape (internal capitals mid-sentence, hyphenated segments, Unicode letters,
+  // dash/slash token boundaries) is strictly MORE tokens than before — this is the corpus-wide
+  // proof that widening it did not turn any existing good narrative's own legitimate wording into
+  // a false positive.
+  for (const { file, pack, good } of corpus) {
+    const result = validateNarrative(good, pack);
+    assert.equal(result.ok, true,
+      `${file}'s known-good narrative must stay clean after the V9/V9b tokeniser widening:\n  ` +
+      `${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`);
+  }
+});
+
 test('v684 check 90: a known-good narrative is not passing because the pack was ignored', () => {
   // Same mutation-guard spirit as v677's own T-pass test, applied once to the corpus: swap the
   // known-good and known-bad narratives across the FIRST fixture's pack and confirm the verdict

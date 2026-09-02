@@ -41,6 +41,7 @@ export const RULES = {
   ENTITY: 'V6_ENTITY_GROUNDING',
   STRUCTURE: 'V7_STRUCTURE',
   COHORT: 'V8_COHORT_CONTRADICTION',
+  CAUSAL_BINDING: 'V10_CAUSAL_BINDING',
 };
 
 // v684 (check 86): the three tiers app.evidence_block_v1 (nestly_v652) can ever return. Exported so
@@ -77,6 +78,23 @@ export function periodLabel(report) {
   return `${kind} from ${report.period_start} to ${report.period_end}`;
 }
 
+// v705 (check 17, narrative half): findings the spine/readers already tag with their own
+// evidence_class (v693/v695/v696: 'DIRECT_FACT' or 'ASSOCIATION', never 'CAUSAL' — see v696's own
+// header) must be WRITTEN differently, not just felt differently. This block is the model-facing
+// half of that contract; validateNarrative's V10 (checkAssociationCausalBinding, below) is the
+// enforcement half, over the SAME two classes.
+const EVIDENCE_CLASS_INSTRUCTION = [
+  '',
+  'Some evidence entries carry their own `evidence_class`. Respect it exactly:',
+  '- "DIRECT_FACT" is this business\'s own recorded fact (its own sales, its own visits, its own',
+  '  customers, its own coverage) - you may state it directly.',
+  '- "ASSOCIATION" is a pattern observed across customers, staff, or segments, never a proven',
+  '  cause. Phrase it as an observed pattern ("customers who X also tend to Y"), and NEVER as a',
+  '  cause ("X causes/drives/leads to/results in Y", "because of X, Y happened", "thanks to X").',
+  '- No entry is ever "CAUSAL" - this product runs no controlled experiment, so a causal claim is',
+  '  never supported here regardless of what an entry says.',
+].join('\n');
+
 export function assembleUserPrompt(report) {
   const evidence = JSON.stringify((report && report.evidence) ?? {}, null, 2);
   return [
@@ -86,6 +104,7 @@ export function assembleUserPrompt(report) {
     '```json',
     evidence,
     '```',
+    EVIDENCE_CLASS_INSTRUCTION,
   ].join('\n');
 }
 
@@ -1017,7 +1036,31 @@ function checkSingleTokenEntities(narrative, packInfo, violations) {
 // cannot anticipate (e.g. a firm whose own name is an ordinary English word used constantly in
 // prose) — see resolveConfidenceClass above for the same "opts is the one legitimate override
 // surface" pattern.
-const ORPHAN_TOKEN_RE = /^[A-Z][a-z]{2,}$/;
+//
+// v705: this shape used to be one capital then ONLY lowercase letters, which meant an internal
+// capital ("JavaBrew") was invisible to V9 no matter how cleanly the token was isolated - not a
+// tokeniser bug, a shape bug. CAPITALISED_TOKEN_RE below is now the SAME widened shape V9b
+// (checkOrphanProperNounsSentenceInitial) already used for its own sentence-initial tokens: a
+// Unicode capital letter (\p{Lu}) followed by two or more Unicode letters of either case (\p{L}).
+// V9's own exemptions - (a)-(d) above, the allowlist, and the pack-grounding check - are
+// unchanged; only the shape test widens, via isCapitalisedCandidate() below.
+const CAPITALISED_TOKEN_RE = /^\p{Lu}[\p{L}]{2,}$/u;
+
+// v705: a hyphenated token ("Mei-Ling") matches neither the plain shape above (a hyphen is not
+// \p{L}) - it is a candidate when ANY of its hyphen-separated segments looks like a capitalised
+// name segment on its own (a single capital letter, or a capital plus 2+ more letters). The token
+// is judged and reported as a WHOLE, hyphen included: a fabricated "Mei-Ling" is one name, not
+// two, and splitting it into "Mei" / "Ling" would both mis-report the finding and risk two
+// separate, noisier violations for what is really one invented name.
+function isCapitalisedCandidate(word) {
+  if (CAPITALISED_TOKEN_RE.test(word)) return true;
+  if (!word.includes('-')) return false;
+  const segments = word.split('-').filter(Boolean);
+  if (segments.length < 2) return false;
+  return segments.some((seg) => CAPITALISED_TOKEN_RE.test(seg) || /^\p{Lu}$/u.test(seg));
+}
+
+const ORPHAN_TOKEN_RE = CAPITALISED_TOKEN_RE;
 
 // Reasons, so this list is never "just vibes":
 //   Peekaa            — the product's own name, said in almost every report ("Peekaa recorded...").
@@ -1082,23 +1125,63 @@ function inOrphanSkipRange(ranges, index) {
   return ranges.some(([from, to]) => index >= from && index < to);
 }
 
-// Every whitespace-delimited word in the ORIGINAL narrative, stripped of surrounding punctuation
-// the same way nameCandidates() strips it above (kept as a SEPARATE pass, not a shared helper,
-// because nameCandidates needs sentence-scoped runs and this needs whole-document positions for
-// the sentence-initial check below). A lone initial's period survives ("S." stays "S."); anything
-// else has trailing dots stripped ("Tan." -> "Tan").
+// v705 (check 88, refuter round 2 — five bypasses proved against 01-normal-firm.json's own
+// known-good narrative, all in the shared tokeniser orphanWords()/isCapitalisedCandidate() build
+// on):
+//   1. EM-DASH/EN-DASH/SLASH GLUING. A plain \S+ split treats "month—Marcus—and" (no surrounding
+//      space around the dash) as ONE token, so "Marcus" was never its own token at all - not
+//      merely mis-shaped, invisible to every rule that walks orphanWords()'s output. Fixed by
+//      splitting on U+2013/U+2014/"/" as token boundaries, same as whitespace, below.
+//   2. POSSESSIVE 'S. "Melissa's" kept its apostrophe (the old end-trim loop only strips a
+//      TRAILING character that is neither a letter nor a dot; the "s" after the apostrophe IS a
+//      letter, so the apostrophe sat protected in the middle of the token forever). A token
+//      shape that requires ONLY letters after the first capital then failed on the untouched
+//      apostrophe. Fixed by stripping a trailing 's/'s (straight or typographic apostrophe) once
+//      the raw token is isolated, before any shape test ever sees it.
+//   3. UNICODE LETTERS. "Zoë" lost its "ë" outright: the old trim loops tested [A-Za-z] only, so
+//      a non-ASCII letter at the token's edge read as "not a letter" and was trimmed away like
+//      punctuation, leaving "Zo" - too short for the shape regex even before Unicode was
+//      considered. Fixed by testing \p{L} (any Unicode letter) with the `u` flag throughout.
+//   4. INTERNAL CAPITALS, MID-SENTENCE. "JavaBrew" was invisible to V9 for a DIFFERENT reason from
+//      1-3: V9's own shape regex (one capital, then ONLY lowercase) rejects an internal capital
+//      outright, no matter how cleanly the token was isolated. V9b already accepted internal
+//      capitals, but only at sentence-initial position. Fixed by giving V9 the SAME widened shape
+//      V9b already used (CAPITALISED_TOKEN_RE, below) - V9's own position/allowlist/pack-
+//      grounding/run-partner exemptions are unchanged, only the SHAPE test widens.
+//   5. HYPHENATED NAMES. "Mei-Ling" matches neither shape (a hyphen is not \p{L}) even after
+//      1-4. Fixed by isCapitalisedCandidate(), below: a hyphenated token is ALSO a candidate when
+//      any one of its hyphen-separated segments looks like a capitalised name segment on its own
+//      - the token is judged and reported as a WHOLE, hyphen included, because a fabricated
+//      "Mei-Ling" is one name, not two.
+// Plain punctuation that BELONGS to a word (an internal hyphen, a trailing full stop) is
+// deliberately NOT a token boundary - only whitespace, dash and slash split tokens apart; a lone
+// initial's period still survives ("S." stays "S."); anything else has trailing dots stripped
+// ("Tan." -> "Tan").
+const ORPHAN_TOKEN_SPLIT_RE = /[^\s–—/]+/g;
+
+// A trailing possessive is the SAME name with a grammatical suffix glued on with no space -
+// stripped once, here, so it never has to be re-derived by every caller of orphanWords().
+function stripTrailingPossessive(word) {
+  return word.replace(/['’]s$/i, '');
+}
+
+// Every word in the ORIGINAL narrative, split at whitespace/dash/slash boundaries and stripped of
+// surrounding punctuation the same way nameCandidates() strips it above (kept as a SEPARATE pass,
+// not a shared helper, because nameCandidates needs sentence-scoped runs and this needs
+// whole-document positions for the sentence-initial check below).
 function orphanWords(narrative) {
   const out = [];
-  const re = /\S+/g;
+  ORPHAN_TOKEN_SPLIT_RE.lastIndex = 0;
   let m;
-  while ((m = re.exec(narrative)) !== null) {
+  while ((m = ORPHAN_TOKEN_SPLIT_RE.exec(narrative)) !== null) {
     const raw = m[0];
     let start = 0;
-    while (start < raw.length && !/[A-Za-z]/.test(raw[start])) start += 1;
+    while (start < raw.length && !/\p{L}/u.test(raw[start])) start += 1;
     let end = raw.length;
-    while (end > start && !/[A-Za-z.]/.test(raw[end - 1])) end -= 1;
+    while (end > start && !/[\p{L}.]/u.test(raw[end - 1])) end -= 1;
     let word = raw.slice(start, end);
-    if (!/^[A-Z]\.$/.test(word)) word = word.replace(/\.+$/, '');
+    if (!/^\p{Lu}\.$/u.test(word)) word = word.replace(/\.+$/, '');
+    word = stripTrailingPossessive(word);
     const index = m.index + start;
     out.push({ word, index, end: index + word.length });
   }
@@ -1141,7 +1224,7 @@ function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
 
   for (let i = 0; i < words.length; i += 1) {
     const tok = words[i];
-    if (!ORPHAN_TOKEN_RE.test(tok.word)) continue;
+    if (!isCapitalisedCandidate(tok.word)) continue;
     if (allowlist.has(tok.word)) continue;                          // (b)
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // (b) heading/code lines
     if (hasCapitalisedRunPartner(words, i)) continue;                // (d)
@@ -1220,7 +1303,17 @@ function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
 //   * Everything V9's own banner already states stays true here unchanged: a lowercase invented
 //     name is invisible (a capital start is required), and a multi-token run is V6's territory,
 //     not this rule's.
-const SENTENCE_INITIAL_TOKEN_RE = /^[A-Z][A-Za-z]{2,}$/;
+//   * v705's own widening (isCapitalisedCandidate, orphanWords) still has edges: a possessive
+//     other than a trailing 's/'s ("Melissa'll") is not stripped; a token boundary other than
+//     whitespace/dash/slash (a colon glued with no space, "thanked:Marcus") is not split; and a
+//     hyphenated token needs at least one segment that ITSELF looks capitalised ("mei-Ling" with
+//     only the second segment capitalised still matches, but "abc-def" with neither does, by
+//     design — nothing here can tell a genuinely all-lowercase invented name from an ordinary
+//     hyphenated word without a name database, same limit V9's own banner already states above).
+// v705: V9b now judges tokens with isCapitalisedCandidate() (declared with V9, above) - the SAME
+// shape and hyphenated-token widener V9 uses. The two rules differ in POSITION and allowlist
+// strictness, not in the shape of token they look at; there is no separate "sentence-initial"
+// regex any more.
 const COMMON_SENTENCE_STARTERS_HAND = new Set([
   // Ordinary English function words a report sentence legitimately opens with.
   'the', 'this', 'these', 'those', 'your', 'our', 'their', 'its', 'a', 'an', 'every', 'each',
@@ -1269,7 +1362,7 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
 
   for (let i = 0; i < words.length; i += 1) {
     const tok = words[i];
-    if (!SENTENCE_INITIAL_TOKEN_RE.test(tok.word)) continue;
+    if (!isCapitalisedCandidate(tok.word)) continue;
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // heading/code lines
     if (hasCapitalisedRunPartner(words, i)) continue;                // (d), still V6's territory
     if (!isOrphanSentenceInitial(narrative, tok.index)) continue;    // V9b only judges what V9 skips
@@ -1399,6 +1492,7 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, options); // V9b (sentence-initial gap)
   checkStructure(narrative, violations);                // V7 (check 82)
   checkCohortContradiction(narrative, pack, violations); // V8 (check 89)
+  checkAssociationCausalBinding(narrative, packInfo, violations); // V10 (check 17, narrative half)
 
   return { ok: violations.length === 0, violations };
 }
@@ -1481,6 +1575,105 @@ export function classifyCohortMentions(narrativeMd, evidencePack) {
     }
   }
   return out;
+}
+
+/* --------------------------------------- V10: causal language tied to ASSOCIATION findings */
+
+// Check 17 (typed verdicts, narrative half). v693/v695/v696 tag each finding a reader or the
+// spine emits with its own evidence_class: 'DIRECT_FACT' | 'ASSOCIATION' (never 'CAUSAL' - see
+// v696's app.ci_verdict_class_v696, whose only two branches are those two strings, and whose
+// ELSE branch raises rather than shipping a third). V3 above already refuses a short, fixed list
+// of causal verbs/adverbs UNCONDITIONALLY, anywhere in the narrative, regardless of what backs
+// them - that rule is untouched by this one. V10 is a SEPARATE, narrower rule: it does not care
+// whether the narrative uses causal wording in general; it cares whether a sentence writes a
+// causal construction ABOUT a finding the pack itself has already classed as ASSOCIATION - the
+// shape "customers who X also tend to Y" (observed) rewritten as "X causes/leads to Y" (asserted).
+// A DIRECT_FACT finding may be stated flatly (v696's own note for that bucket: "built from this
+// business's own recorded facts"), so this rule never looks at those, and a CAUSAL class never
+// ships at all, so there is nothing to exempt for it.
+//
+// GENERIC BY DESIGN, on purpose - this file has no fixed list of finding shapes to expect. It
+// walks the WHOLE pack once (readPack has already done that walk; this reuses its own `objects`
+// list, the same list V1's derivedPercentages reuses, rather than a second traversal) and treats
+// ANY plain object carrying its own string `evidence_class` as a "finding" - no matter which
+// reader or spine generator produced it, and with no assumption about what ELSE that object
+// carries. The finding's identifying text is whichever of `label`, `pattern`, `name` it has
+// (checked in that order; a finding may carry more than one, and every one it has contributes
+// keywords). `id` is deliberately NOT used for matching - ids are machine slugs
+// ('lapsed_regulars'), not English a narrative would ever echo back.
+//
+// ENTITY MATCH, conservatively - reusing this file's own sentence tokeniser (sentencesOf, the
+// same primitive V2/V5/V6/V9 already build their own sentence-scoped checks on) and its STOPWORDS
+// set (the same set V6's nameCandidates already uses to decide what is "just an ordinary word").
+// A finding's identifying text is reduced to its "significant" words: split on non-letters,
+// lower-cased, kept only when 4+ letters and not a stopword. A sentence is judged to be "about" a
+// finding when it contains at least two such words (or the finding's only one, if it has just
+// one) - requiring more than one word where possible is the same trade this file makes
+// everywhere else (V6's two-token run, V9's multi-signal gate): a single common word appearing
+// near an unrelated causal sentence is not enough to accuse the narrative of misstating THIS
+// finding.
+//
+// HONEST LIMITS. A finding whose identifying text is entirely short words (<4 letters) or entirely
+// stopwords contributes no keywords and can never be matched - this rule silently abstains for it;
+// V3's own unconditional causal gate is still the backstop for the bare PRESENCE of causal
+// language regardless of entity. A paraphrase that describes the SAME finding using none of its
+// own keywords is invisible here for the same reason V6's entity grounding cannot catch a fully
+// invented name with no resemblance to anything in the pack - there is no way to bind free English
+// prose to a machine record without a shared vocabulary between them. And the causal-construction
+// list below is fixed and cannot enumerate every way English expresses causation; it is not meant
+// to replace V3, only to narrow one specific, checkable slice of it to the right findings.
+const V10_CAUSAL_RE =
+  /\b(?:because|due to|caused?|causes|causing|drive|drives|driven|driving|leads?\s+to|leading\s+to|results?\s+in|resulting\s+in|thanks\s+to|as\s+a\s+result|so\s+that|which\s+means\s+(?:customers|clients)\s+will)\b/i;
+
+function findingKeywords(finding) {
+  const texts = [];
+  for (const key of ['label', 'pattern', 'name']) {
+    if (typeof finding[key] === 'string' && finding[key].trim()) texts.push(finding[key]);
+  }
+  const words = new Set();
+  for (const text of texts) {
+    for (const raw of text.split(/[^A-Za-z]+/)) {
+      const w = raw.toLowerCase();
+      if (w.length >= 4 && !STOPWORDS.has(w)) words.add(w);
+    }
+  }
+  return [...words];
+}
+
+function sentenceMentionsFinding(sentenceLower, keywords) {
+  if (keywords.length === 0) return false;
+  const need = keywords.length === 1 ? 1 : 2;
+  let hits = 0;
+  for (const kw of keywords) {
+    if (sentenceLower.includes(kw)) hits += 1;
+    if (hits >= need) return true;
+  }
+  return false;
+}
+
+function checkAssociationCausalBinding(narrative, packInfo, violations) {
+  const findings = [];
+  for (const obj of packInfo.objects) {
+    if (obj.evidence_class !== 'ASSOCIATION') continue; // DIRECT_FACT is exempt; CAUSAL never ships (v696)
+    const keywords = findingKeywords(obj);
+    if (keywords.length === 0) continue;
+    const label = obj.label || obj.pattern || obj.name || obj.id || 'unlabelled finding';
+    findings.push({ label, keywords });
+  }
+  if (findings.length === 0) return;
+
+  for (const sentence of sentencesOf(narrative)) {
+    if (!V10_CAUSAL_RE.test(sentence)) continue;
+    const lower = sentence.toLowerCase();
+    for (const finding of findings) {
+      if (!sentenceMentionsFinding(lower, finding.keywords)) continue;
+      violations.push({
+        rule: RULES.CAUSAL_BINDING,
+        detail: `causal construction used for an ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") ` +
+          `which must be phrased as an observed pattern, not a cause, near "${sentence.slice(0, 90)}"`,
+      });
+    }
+  }
 }
 
 /* ------------------------------------------------------ V8: cohort contradiction */

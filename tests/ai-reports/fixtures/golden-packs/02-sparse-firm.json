@@ -45,8 +45,19 @@
     },
     "evidence_completeness": {
       "unavailable_sections": []
+    },
+    "opportunities": {
+      "candidates": [
+        {
+          "id": "weekend_return_pattern",
+          "domain": "cadence",
+          "label": "weekend visit and return pattern",
+          "pattern": "Customers who visit on a weekend also tend to return sooner than customers who visit on a weekday.",
+          "evidence_class": "ASSOCIATION"
+        }
+      ]
     }
   },
-  "good": "## Summary\nSparse Sundries is a new shop. Revenue was SGD 200.00 from 2 customers this month.\n\n## What went well\n- 1 of 2 customers this month had already bought before, a returning-customer share of 50.0%.\n- 100% of revenue came from identified customers.\n\n## What needs attention\n- With only 2 customers this month, small numbers can be misleading. No regulars are at risk yet (0 customers).\n\n## Your customers\nYour only repeat customer, Ong M., carried all of the identified revenue, SGD 200.00.\n\n## Do these three things next\n1. Keep greeting each of the 2 customers personally next month.\n2. Track whether the 1 returning customer comes back again.\n3. Watch for the first regular to become at risk after more visits build up.\n",
-  "bad": "## Summary\nSparse Sundries is a new shop. Revenue was SGD 200.00 from 2 customers this month.\n\n## What went well\n- 1 of 2 customers this month had already bought before, a returning-customer share of 50.0%.\n- 100% of revenue came from identified customers.\n\n## What needs attention\n- With only 2 customers this month, small numbers can be misleading. No regulars are at risk yet (0 customers).\n\n## Your customers\nYour only repeat customer, Marcus Lim, carried all of the identified revenue, SGD 200.00.\n\n## Do these three things next\n1. Keep greeting each of the 2 customers personally next month.\n2. Track whether the 1 returning customer comes back again.\n3. Watch for the first regular to become at risk after more visits build up.\n"
+  "good": "## Summary\nSparse Sundries is a new shop. Revenue was SGD 200.00 from 2 customers this month.\n\n## What went well\n- 1 of 2 customers this month had already bought before, a returning-customer share of 50.0%.\n- 100% of revenue came from identified customers.\n\n## What needs attention\n- With only 2 customers this month, small numbers can be misleading. No regulars are at risk yet (0 customers).\n\n## Your customers\nYour only repeat customer, Ong M., carried all of the identified revenue, SGD 200.00. Customers who visit on a weekend also tend to return sooner than customers who visit on a weekday.\n\n## Do these three things next\n1. Keep greeting each of the 2 customers personally next month.\n2. Track whether the 1 returning customer comes back again.\n3. Watch for the first regular to become at risk after more visits build up.\n",
+  "bad": "## Summary\nSparse Sundries is a new shop. Revenue was SGD 200.00 from 2 customers this month.\n\n## What went well\n- 1 of 2 customers this month had already bought before, a returning-customer share of 50.0%.\n- 100% of revenue came from identified customers.\n\n## What needs attention\n- With only 2 customers this month, small numbers can be misleading. No regulars are at risk yet (0 customers).\n\n## Your customers\nYour only repeat customer, Marcus Lim, carried all of the identified revenue, SGD 200.00. Visiting on a weekend leads to customers returning sooner than a weekday visit.\n\n## Do these three things next\n1. Keep greeting each of the 2 customers personally next month.\n2. Track whether the 1 returning customer comes back again.\n3. Watch for the first regular to become at risk after more visits build up.\n"
 }
