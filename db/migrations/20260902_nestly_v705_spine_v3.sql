@@ -801,8 +801,7 @@ begin
   v_expected := replace(v_expected, a5, n5);
   v_expected := replace(v_expected, a6, n6);
   v_expected := replace(v_expected, a7, n7);
-  -- MUTATION-CHECK TEMP: skip anchor 8 (v_has_v683 hotfix) to reproduce the pre-fix regression.
-  -- v_expected := replace(v_expected, a8, n8);
+  v_expected := replace(v_expected, a8, n8);
 
   execute v_expected;
 end
