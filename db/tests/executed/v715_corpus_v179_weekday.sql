@@ -24,16 +24,37 @@
 --
 --   weekday_pattern.rows (NEW, visit-day rule): isodow=1 (Monday) visits = 3 (R's 2 Mondays + C's
 --     1 Monday); isodow=2 (Tuesday) visits = 1 (R); isodow=3 (Wed) = 1, isodow=4 (Thu) = 1,
---     isodow=5 (Fri) = 1, isodow=6 (Sat) = 1 (all C). SUM ACROSS ALL ROWS = 8.
+--     isodow=5 (Fri) = 1, isodow=6 (Sat) = 1 (all C); isodow=7 (Sun) = 3 (the three v739 filler
+--     clients below, one visit each). SUM ACROSS ALL ROWS = 11 (was 8 before the fillers).
 --   Under the OLD raw-row rule: isodow=1 would sum R's 4 Monday sale rows (3 same-day + 1 on the
---     following Monday) + C's 1 Monday sale row = 5, and the grand total would be 10 (R's 5 raw
---     rows + C's 5 raw rows) — the exact "10 for two clients with 3+1+1 and 5 sales" figure this
---     migration's header cites.
+--     following Monday) + C's 1 Monday sale row = 5 — the exact figure this migration's header
+--     cites (the OLD-rule grand total for R+C alone, 10, is no longer directly assertable as a
+--     single number here since the fillers add 3 more genuine visits on a day the old rule would
+--     also have counted correctly; the Monday-specific check below is what isolates the dedupe
+--     bug, same as before).
 --   top_customers.rows / lifetime_visits: UNCHANGED by this migration (already deduped since
 --     nestly_v699) — R.visits = 3, C.visits = 5.
 --
 -- A mutation that reverts weekday_pattern's dedupe (back to counting raw sale rows) makes the
--- Monday row read 5 and the sum read 10; this fixture turns red on either.
+-- Monday row read 5; this fixture turns red on that (the grand-total-10 tripwire from the
+-- original two-client version is superseded by the fillers below, see WK-total-mutation).
+--
+-- NESTLY v739 UPDATE (authorised, cited here per that migration's own fixture-review note):
+-- nestly_v739 gates app.v179_business_insights.insights.top_customers.rows on the SAME
+-- app.subgroup_evidence_v1 floor (5) that already gated the top1/top5 share fields — below the
+-- floor, rows now empties to [] with a `suppressed` object, instead of always rendering. This
+-- fixture's original population (R + C only, n=2) fell below that floor, which would have
+-- silently broken the pre-existing TOP-r-present / TOP-c-present assertions below (assertions
+-- this migration does not intend to touch — they test the v699 dedupe, not the v739 floor).
+-- Fix: three filler identified clients (F1/F2/F3) were added, each with exactly one
+-- revenue+visit sale, all three on v_monday1+6 (Sunday, isodow=7) — a day untouched by either R
+-- or C, so the Monday (isodow=1) and Tuesday (isodow=2) truth-table figures the weekday_pattern
+-- assertions below depend on are unaffected. This brings the identified population to n=5 (R, C,
+-- F1, F2, F3), exactly at the floor, so evidence.status='ok', top_customers.rows keeps carrying
+-- all 5 (R and C included), and top_customers.suppressed is asserted null (new assertion below).
+-- The weekday_pattern grand-total truth table above and the WK-total-visits assertion were
+-- updated from 8 to 11 to account for the fillers' 3 new Sunday visits — the ONLY numbers this
+-- update changes; Monday/Tuesday stay exactly as before.
 
 \set ON_ERROR_STOP on
 begin;
@@ -45,6 +66,9 @@ declare
   br1  uuid := '00000000-0000-4000-8000-000000715011';
   r    uuid := '00000000-0000-4000-8000-000000715101';
   c    uuid := '00000000-0000-4000-8000-000000715102';
+  f1   uuid := '00000000-0000-4000-8000-000000715103'; -- v739: floor filler
+  f2   uuid := '00000000-0000-4000-8000-000000715104'; -- v739: floor filler
+  f3   uuid := '00000000-0000-4000-8000-000000715105'; -- v739: floor filler
 
   v_monday1 date := (date_trunc('week', current_date - 30))::date;
 
@@ -71,7 +95,10 @@ begin
 
   insert into public.clients (id, business_id, full_name) values
     (r, biz, 'ZZ v715 R split-bill-plus-two-mondays'),
-    (c, biz, 'ZZ v715 C five-distinct-days');
+    (c, biz, 'ZZ v715 C five-distinct-days'),
+    (f1, biz, 'ZZ v715 F1 v739-floor-filler'),
+    (f2, biz, 'ZZ v715 F2 v739-floor-filler'),
+    (f3, biz, 'ZZ v715 F3 v739-floor-filler');
 
   ---------------------------------------------------------------------------
   -- R: 3 same-day (Monday) + 1 Tuesday + 1 the FOLLOWING Monday. 5 raw rows, 3 visit-days.
@@ -107,6 +134,22 @@ begin
      ((v_monday1 + 4)::timestamp + time '09:00') at time zone 'Asia/Singapore', v_as_of, true, true),
     ('00000000-0000-4000-8000-000000715305', biz, br1, c, 'service', 1600,
      ((v_monday1 + 5)::timestamp + time '09:00') at time zone 'Asia/Singapore', v_as_of, true, true);
+
+  ---------------------------------------------------------------------------
+  -- v739 floor fillers: F1/F2/F3, one revenue+visit sale each, all on v_monday1+6 (Sunday,
+  -- isodow=7) — a day neither R nor C touches, so Monday/Tuesday stay exactly as before. Brings
+  -- the identified population to n=5 (R, C, F1, F2, F3), clearing app.subgroup_evidence_v1's
+  -- floor of 5, so top_customers.rows keeps rendering (nestly_v739) and suppressed stays null.
+  ---------------------------------------------------------------------------
+  insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents,
+    occurred_at, created_at, counts_as_revenue, counts_as_visit)
+  values
+    ('00000000-0000-4000-8000-000000715401', biz, br1, f1, 'service', 100,
+     ((v_monday1 + 6)::timestamp + time '09:00') at time zone 'Asia/Singapore', v_as_of, true, true),
+    ('00000000-0000-4000-8000-000000715402', biz, br1, f2, 'service', 200,
+     ((v_monday1 + 6)::timestamp + time '10:00') at time zone 'Asia/Singapore', v_as_of, true, true),
+    ('00000000-0000-4000-8000-000000715403', biz, br1, f3, 'service', 300,
+     ((v_monday1 + 6)::timestamp + time '11:00') at time zone 'Asia/Singapore', v_as_of, true, true);
 
   p_from := v_monday1;
   p_to := v_monday1 + 7;
@@ -155,15 +198,17 @@ begin
 
   select coalesce(sum((w->>'visits')::bigint), 0) into v_sum
     from jsonb_array_elements(g_v179->'weekday_pattern'->'rows') w;
-  if v_sum is distinct from 8 then
+  if v_sum is distinct from 11 then
     insert into _fail values ('WK-total-visits', format(
-      'expected weekday_pattern.rows[].visits to sum to 8 (3 true visit-days for R + 5 for C), got %s',
-      v_sum));
+      'expected weekday_pattern.rows[].visits to sum to 11 (3 true visit-days for R + 5 for C + '
+      '3 v739 floor-filler visits on Sunday), got %s', v_sum));
   end if;
-  -- MUTATION: the OLD raw-row grand total (R's 5 raw rows + C's 5 raw rows) must NOT come back.
-  if v_sum = 10 then
-    insert into _fail values ('WK-total-mutation',
-      'weekday_pattern visits still sum to the OLD raw-row total (10), not the new visit-day total (8)');
+  -- MUTATION: the OLD raw-row grand total for R+C alone (10) must NOT come back, and the fillers
+  -- must not be silently dropped (which would read 8, the pre-fillers visit-day total).
+  if v_sum = 10 or v_sum = 8 then
+    insert into _fail values ('WK-total-mutation', format(
+      'weekday_pattern visits sum to %s — either the OLD raw-row total (10) came back, or the '
+      'v739 floor-filler visits (8 -> 11) were dropped', v_sum));
   end if;
 
   ---------------------------------------------------------------------------
@@ -191,13 +236,31 @@ begin
     insert into _fail values ('TOP-c-visits', format('expected C visits=5 (unchanged by this migration), got %s',
       top_c->>'visits'));
   end if;
+
+  ---------------------------------------------------------------------------
+  -- v739: at n=5 (R, C, F1, F2, F3 — exactly at the floor of 5), top_customers.evidence.status
+  -- must be 'ok' and .suppressed must be null (the floor-gate nestly_v739 added must NOT fire
+  -- here — this is the whole reason the fillers exist).
+  ---------------------------------------------------------------------------
+  if (g_v179->'top_customers'->'evidence'->>'status') is distinct from 'ok' then
+    insert into _fail values ('TOP-evidence-ok', format(
+      'top_customers.evidence.status=%s, expected ok (n=5 clears the v739/subgroup_evidence_v1 floor of 5)',
+      g_v179->'top_customers'->'evidence'->>'status'));
+  end if;
+  if (g_v179->'top_customers'->'suppressed') is distinct from 'null'::jsonb then
+    insert into _fail values ('TOP-suppressed-null', format(
+      'top_customers.suppressed=%s, expected null at n=5 (nestly_v739 only suppresses below the floor)',
+      g_v179->'top_customers'->'suppressed'));
+  end if;
 end
 $v715$;
 
 select case when count(*)=0
             then 'PASS — v715: app.v179_business_insights.weekday_pattern.visits now dedupes by '
                  '(client_id, visit-day) same as every sibling figure in the payload; Monday=3 '
-                 '(was 5), total=8 (was 10); top_customers/lifetime_visits unchanged at 3/5'
+                 '(was 5), total=11 with 3 v739 floor fillers (was 8 for R+C alone, 10 under the '
+                 'old raw-row rule); top_customers/lifetime_visits unchanged at 3/5, rows keep '
+                 'rendering and suppressed stays null at n=5 (nestly_v739)'
             else 'FAIL' end as verdict,
        count(*) as failures from _fail;
 select k, v from _fail order by k, v;

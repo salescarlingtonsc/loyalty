@@ -36,35 +36,38 @@
 --              total_visits=3 (< floor). staff_ok is credited on the 6-client pop group ->
 --              total_visits=6 (>= floor).
 --   AI evidence pack (sessionless drain): biz_a's whole identified population for the test
---              window is 3+6=9 clients (>= floor) -> top_customers share percentages present.
---              biz_c is seeded with exactly 2 identified clients (< floor) -> share percentages
---              null. Both businesses' top_customers `rows` are asserted to carry v177-style
---              redacted labels (never a raw multi-word full name) in BOTH cases -- see the T7
---              finding below for what this does and does not prove.
+--              window is 3+6=9 clients (>= floor) -> top_customers share percentages AND rows
+--              present (unchanged from before nestly_v739). biz_c is seeded with exactly 2
+--              identified clients (< floor) -> share percentages null AND (since nestly_v739)
+--              rows=[] with a suppressed object -- see the T7 assertions below, updated by
+--              nestly_v739 to match.
 --
--- TWO FINDINGS RECORDED, NOT FAILED. Per the working instructions: "assert whatever the
--- checklist's wording requires and report if the reader discloses a name at n<5". Check 96's
--- text is about CUSTOMER identity and demographic small groups; it says nothing about staff
--- (employee) identity or about a partially-redacted customer label. Both items below are
--- deliberate, already-reviewed product shapes (nestly_v683/v699 for staff; nestly_v690/v177 for
--- the evidence pack), not access-boundary defects, so this fixture CHARACTERIZES them (asserts
--- the real, current behaviour, so a change shows up as a diff) rather than failing on them:
+-- ONE FINDING RECORDED, NOT FAILED (F2 below was CLOSED by nestly_v739 -- see that migration and
+-- the updated T7 assertions further down; this fixture now asserts the fixed behaviour instead of
+-- characterizing the gap). Per the working instructions: "assert whatever the checklist's wording
+-- requires and report if the reader discloses a name at n<5". Check 96's text is about CUSTOMER
+-- identity and demographic small groups; it says nothing about staff (employee) identity. F1 below
+-- is a deliberate, already-reviewed product shape (nestly_v683/v699), not an access-boundary
+-- defect, so this fixture CHARACTERIZES it (asserts the real, current behaviour, so a change shows
+-- up as a diff) rather than failing on it:
 --   F1 get_ci_staff_performance_v1 discloses `full_name` for EVERY staff row regardless of n --
 --      only the rate-like fields (revenue_per_visit_cents, adjusted.expected_revenue_cents,
 --      adjusted.index) null out below the floor. A staff member with 3 evidence-ok visits is
 --      named exactly as prominently as one with 300. get_ci_staff_identity_v1, by contrast,
 --      NEVER discloses a name at any n -- it returns staff_id (uuid) only, so the two staff
 --      readers disagree on whether staff identity is small-cell-sensitive at all.
---   F2 The AI evidence pack's `insights.top_customers.rows` are NEVER suppressed by the floor --
---      only `top1_share_of_total_revenue_pct` / `top5_share_of_total_revenue_pct` (and the
---      identified-revenue twins) null out. The rows themselves always render (up to 5, ordered
---      by revenue) via app.v177_person_label -- "First L." for a two-token name, a bare single
---      token for a one-token name, "Guest XXXX" for none -- REGARDLESS of how small the
---      identified population is. In a 2-customer window this is a first-name-plus-revenue-rank
---      disclosure the owner-facing category-customers floor would refuse to make about the same
---      two people. Recorded for an owner ruling; not asserted as a fixture failure because the
---      row-level redaction is deliberate (v177) and the floor gating only the percentages is
---      the shipped nestly_v690 design, not an oversight.
+--   F2 (CLOSED by nestly_v739). Was: the AI evidence pack's `insights.top_customers.rows` were
+--      NEVER suppressed by the floor -- only `top1_share_of_total_revenue_pct` /
+--      `top5_share_of_total_revenue_pct` (and the identified-revenue twins) nulled out. The rows
+--      themselves always rendered (up to 5, ordered by revenue) via app.v177_person_label --
+--      "First L." for a two-token name, a bare single token for a one-token name, "Guest XXXX" for
+--      none -- REGARDLESS of how small the identified population was. In a 2-customer window that
+--      was a first-name-plus-revenue-rank disclosure the owner-facing category-customers floor
+--      refuses to make about the same two people. nestly_v739 closed the gap: `rows` now empties
+--      to [] and a `suppressed` object (shaped like get_ci_category_customers_v1's own:
+--      reason/floor/cohort_size) is emitted whenever top_customers.evidence.status is
+--      'insufficient', reusing the exact same subgroup_evidence_v1 expression the share fields
+--      already gated on -- so all three (shares, rows, suppressed) now agree on the same n<5 line.
 --
 -- Named for v736: every "served" assertion below is preceded by a precondition assertion that
 -- the principal genuinely holds the access being exercised (fixture-guide rule). Every
@@ -532,12 +535,13 @@ begin
   end;
 
   ---------------------------------------------------------------------------
-  -- T7 (FINDING F2, characterized not failed). AI evidence pack, sessionless drain
+  -- T7 (FINDING F2, CLOSED by nestly_v739). AI evidence pack, sessionless drain
   --     (app.v176_evidence_pack via app.v676_open_internal_drain -- nestly_v676/v720, the
   --     ONE real production caller's own shape). biz_a: 9-client window (>= floor) -> share
-  --     percentages present. biz_c: 2-client window (< floor) -> share percentages null. In
-  --     BOTH cases `insights.top_customers.rows` render (never suppressed to []), and every
-  --     row's `label` is a v177-redacted token, never the client's raw multi-word full_name.
+  --     percentages AND rows present, unchanged. biz_c: 2-client window (< floor) -> share
+  --     percentages null AND (since nestly_v739) rows=[] with a suppressed object shaped like
+  --     get_ci_category_customers_v1's own. biz_a's rows still carry v177-redacted labels, never
+  --     the client's raw multi-word full_name.
   ---------------------------------------------------------------------------
   perform set_config('request.jwt.claims', null, true); -- sessionless: auth.uid() must read null
   perform app.v676_open_internal_drain();
@@ -546,6 +550,9 @@ begin
     if (g->'insights'->'top_customers'->'top1_share_of_total_revenue_pct') is null
        or (g->'insights'->'top_customers'->'top1_share_of_total_revenue_pct') = 'null'::jsonb then
       insert into _fail values ('T7-bizA', 'the 9-client (>= floor) window unexpectedly nulled top1_share_of_total_revenue_pct');
+    end if;
+    if (g->'insights'->'top_customers'->'suppressed') is distinct from 'null'::jsonb then
+      insert into _fail values ('T7-bizA', 'the 9-client (>= floor) window unexpectedly carried a top_customers.suppressed object');
     end if;
     if not exists (select 1 from jsonb_array_elements(g->'insights'->'top_customers'->'rows') r
                     where r->>'label' !~ ' ' or r->>'label' ~ '^[A-Za-z0-9]+ [A-Z]\.$') then
@@ -566,17 +573,31 @@ begin
     g := app.v176_evidence_pack(biz_c, 'monthly', d_from, d_to);
     if (g->'insights'->'top_customers'->'top1_share_of_total_revenue_pct') is not null
        and (g->'insights'->'top_customers'->'top1_share_of_total_revenue_pct') <> 'null'::jsonb then
-      insert into _fail values ('T7-bizC', 'F2: the 2-client (< floor) window did NOT null top1_share_of_total_revenue_pct -- header is stale');
+      insert into _fail values ('T7-bizC', 'the 2-client (< floor) window did NOT null top1_share_of_total_revenue_pct -- header is stale');
     end if;
-    -- F2 itself: rows are NOT suppressed below the floor. Recorded, not failed (see header).
-    if coalesce(jsonb_array_length(g->'insights'->'top_customers'->'rows'),0) <> 2 then
+    -- F2, CLOSED by nestly_v739: rows now suppress to [] below the floor, with a
+    -- get_ci_category_customers_v1-shaped `suppressed` object.
+    if coalesce(jsonb_array_length(g->'insights'->'top_customers'->'rows'),0) <> 0 then
       insert into _fail values ('T7-bizC', format(
-        'F2 characterization broke: expected exactly 2 top_customers rows in a 2-client below-floor window, got %s -- either the finding is stale or the corpus drifted',
+        'nestly_v739 regression: expected top_customers.rows=[] in a 2-client below-floor window, got %s row(s)',
         jsonb_array_length(g->'insights'->'top_customers'->'rows')));
     end if;
-    if exists (select 1 from jsonb_array_elements(g->'insights'->'top_customers'->'rows') r
-                where coalesce(r->>'label','') = '') then
-      insert into _fail values ('T7-bizC', 'a top_customers row in the below-floor window carried no label at all -- that would be MORE private than the finding recorded, re-read before editing the header');
+    if (g->'insights'->'top_customers'->'suppressed') is null
+       or (g->'insights'->'top_customers'->'suppressed') = 'null'::jsonb then
+      insert into _fail values ('T7-bizC', 'top_customers.suppressed was null in a 2-client below-floor window, expected an object');
+    else
+      if g->'insights'->'top_customers'->'suppressed'->>'reason' <> 'below_small_cell_floor' then
+        insert into _fail values ('T7-bizC', format('suppressed.reason=%s, expected below_small_cell_floor',
+          g->'insights'->'top_customers'->'suppressed'->>'reason'));
+      end if;
+      if (g->'insights'->'top_customers'->'suppressed'->>'floor')::int <> 5 then
+        insert into _fail values ('T7-bizC', format('suppressed.floor=%s, expected 5',
+          g->'insights'->'top_customers'->'suppressed'->>'floor'));
+      end if;
+      if (g->'insights'->'top_customers'->'suppressed'->>'cohort_size')::int <> 2 then
+        insert into _fail values ('T7-bizC', format('suppressed.cohort_size=%s, expected 2',
+          g->'insights'->'top_customers'->'suppressed'->>'cohort_size'));
+      end if;
     end if;
   exception when others then
     get stacked diagnostics v_err = returned_sqlstate;
@@ -651,7 +672,7 @@ end
 $v736$;
 
 select case when count(*)=0
-            then 'PASS -- small-cell suppression holds for owner, consultant and super admin; tenant isolation holds for the stranger; two non-failing findings recorded (F1 staff full_name, F2 evidence-pack top_customers rows)'
+            then 'PASS -- small-cell suppression holds for owner, consultant and super admin; tenant isolation holds for the stranger; one non-failing finding recorded (F1 staff full_name); F2 (evidence-pack top_customers rows) closed by nestly_v739'
             else 'FAIL' end as verdict,
        count(*) as failures from _fail;
 select k, v from _fail order by k, v;
