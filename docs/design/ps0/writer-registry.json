@@ -2125,7 +2125,7 @@
       "id": "browser.rpc:app/app.js:staff_scan_gift_qr_v515",
       "surface": "browser_rpc_binding",
       "rpc": "staff_scan_gift_qr_v515",
-      "resolves_to": "staff_scan_gift_qr_v515/5 — see db.fn:public.staff_scan_gift_qr_v515/5. One scanner arm in openMerchantRedemptionScanner; the browser learns a single 'gift' kind and the server dispatches to the right redeemer.",
+      "resolves_to": "staff_scan_gift_qr_v515/5 — see db.fn:public.staff_scan_gift_qr_v515/5. Two call sites, one server call: the scanner arm in openMerchantRedemptionScanner, and (nestly_v681) the Record sale keypad's Yes on a scanned gift that needs no purchase. The browser learns a single 'gift' kind and the server dispatches to the right redeemer.",
       "call_site_finding": "none — the counter presents a token it scanned; branch and sale come from the till context; idempotency-keyed"
     },
     {
@@ -3902,8 +3902,8 @@
       "id": "browser.rpc:app/app.js:staff_scan_gift_qr_to_till_v666",
       "surface": "browser_rpc_binding",
       "rpc": "staff_scan_gift_qr_to_till_v666",
-      "resolves_to": "public.staff_scan_gift_qr_to_till_v666(business, qr_token) — STABLE SECURITY DEFINER, authenticated, till-or-loyalty write. Performs no DML at all. Answers whose pending gift QR this is (returning the one till customer card, app.v666_till_customer_card) and whether the perk behind it can be priced onto a bill. Settling stays with staff_scan_gift_qr_v515 and staging with staff_stage_gift_qr_v665, so this adds no second writer and no second answer to \"was this QR used\".",
-      "call_site_finding": "nestly_v666 — one call site, the Record sale keypad's Scan button. Before it, that scanner settled a gift QR on sight and then reset to an empty keypad, which spent the customer's voucher and identified nobody (owner report 2026-09-01). Every refusal is soft so the caller falls through to v515 for the wording.",
+      "resolves_to": "public.staff_scan_gift_qr_to_till_v666(business, qr_token) — STABLE SECURITY DEFINER, authenticated, till-or-loyalty write. Performs no DML at all. Answers whose pending gift QR this is (returning the one till customer card, app.v666_till_customer_card) and whether the perk behind it can be priced onto a bill (stageable) or handed over with no purchase at all (settle_now, nestly_v681, with min_spend_cents and benefit_kind alongside it). Settling stays with staff_scan_gift_qr_v515 and staging with staff_stage_gift_qr_v665, so this adds no second writer and no second answer to \"was this QR used\".",
+      "call_site_finding": "nestly_v666/v681 — one call site, the Record sale keypad's Scan button; v681 turns its answer into a yes/no confirmation for a no-purchase gift, settled through staff_scan_gift_qr_v515 as before. Before it, that scanner settled a gift QR on sight and then reset to an empty keypad, which spent the customer's voucher and identified nobody (owner report 2026-09-01). Every refusal is soft so the caller falls through to v515 for the wording.",
       "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
     }
   ]

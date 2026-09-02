@@ -7660,6 +7660,51 @@ async function tillPage(){
       onGiftIdentified:async(data,token)=>{
         cust=data;walkin=false;notFoundPhone=null;invalidMsg=null;step=2;draw();
         const labelV666=data?.gift_label||'';
+        /* nestly_v681 (owner ruling 2026-09-02, keypad screenshot with Scan circled): "when
+           redeeming free gift - without any requirements to spend > after scan should pop up to
+           ask to confirm redeeming the said gifts ... staff press yes / no. unless the rewards
+           requires purchases - example (20% off whole bill / 1 item) - then it will be the usual
+           process."
+           The server decides which gift this is (settle_now), because only it can see the quoted
+           minimum spend and the perk's own benefit_kind. A gift that needs no purchase is handed
+           over right here on a Yes — there is no bill to wait for, and sending the counter off to
+           find the same gift again on the Rewards tab was the detour the owner is removing. No
+           leaves the QR untouched and pending: the customer keeps the gift, and the Rewards tab
+           is still there. Everything that DOES need a purchase — a min-spend welcome gift, a
+           percentage discount — falls through to the staging path below, unchanged. */
+        if(data?.settle_now===true){
+          const confirmedV681=await confirmActionV386(
+            `Give "${labelV666||'this reward'}" to ${data?.full_name||'this customer'} now? This reward needs no purchase, so confirming hands it over and uses it up.`,
+            {confirmLabel:'Yes, give it',cancelLabel:'No',danger:false});
+          if(!isTillCurrent())return;
+          if(!confirmedV681)return toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
+          const {data:givenV681,error:giveErrorV681}=await sb.rpc('staff_scan_gift_qr_v515',{
+            p_business:S.biz.id,p_branch:tillBranchId,p_qr_token:token,p_sale:null,
+            p_idempotency_key:crypto.randomUUID()});
+          if(!isTillCurrent())return;
+          if(giveErrorV681||givenV681?.status!=='completed'){
+            /* The same three sentences the scanner's own gift arm uses, because this is the same
+               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
+               counter. Anything unrecognised keeps the scanner's catch-all. */
+            const rawV681=String(giveErrorV681?.message||'');
+            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
+              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
+              :/period rolled over/i.test(rawV681)
+              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
+              :giveErrorV681
+              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
+              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+          }
+          /* V408's rule: a gift handed over changes what this customer holds, so the card and the
+             catalogue both repaint before the counter reads either of them again. */
+          catalog=null;
+          await refreshTillCustomerStandingV408();
+          if(!isTillCurrent())return;
+          draw();
+          return toast(givenV681?.replayed===true
+            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
+        }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
            not the allowance, and appliedTierBenefitV656 is only ever sent to evaluate_checkout,
            so nothing is priced until the counter adds the first item — at which point the

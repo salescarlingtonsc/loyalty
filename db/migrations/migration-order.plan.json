@@ -3345,6 +3345,12 @@
       "path": "db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql",
       "semanticVersion": "v680",
       "proposedDeployVersion": "20260902080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v681_free_gift_confirm_at_scan.sql",
+      "semanticVersion": "v681",
+      "proposedDeployVersion": "20260902090000"
     }
   ]
 }

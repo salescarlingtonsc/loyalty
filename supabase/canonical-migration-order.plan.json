@@ -3340,6 +3340,12 @@
       "version": "20260902080000",
       "name": "nestly_v680_manual_payment_reopens_workspace",
       "sourcePath": "db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902090000",
+      "name": "nestly_v681_free_gift_confirm_at_scan",
+      "sourcePath": "db/migrations/20260902_nestly_v681_free_gift_confirm_at_scan.sql"
     }
   ]
 }

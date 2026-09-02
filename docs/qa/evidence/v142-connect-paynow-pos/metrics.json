@@ -1,7 +1,7 @@
 {
   "desktop": {
     "before": {
-      "sourceHash": "13bb625f8c7973904a0d5f038cdedff8412c17008ea597fa27db82e3fa8873bb",
+      "sourceHash": "02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266",
       "viewport": {
         "clientWidth": 1440,
         "scrollWidth": 1440
@@ -97,7 +97,7 @@
                 "qty": 1
               }
             ],
-            "p_idempotency_key": "ed273bdb-00b7-4289-9756-4b1ef7273d98",
+            "p_idempotency_key": "9167d7d4-1689-4b6b-a28b-e8b4e13c6296",
             "p_tier_benefit": null
           }
         }
@@ -108,7 +108,7 @@
           "body": {
             "action": "create_paynow",
             "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
-            "idempotency_key": "5f647416-3fa6-409b-9130-23dd163e450b",
+            "idempotency_key": "1585d47d-db65-47fb-9624-4cde073ff8c5",
             "business_id": "10000000-0000-4000-8000-000000000142",
             "branch_id": "40000000-0000-4000-8000-000000000142",
             "client_id": "50000000-0000-4000-8000-000000000142",
@@ -120,7 +120,7 @@
       "errors": []
     },
     "after": {
-      "sourceHash": "13bb625f8c7973904a0d5f038cdedff8412c17008ea597fa27db82e3fa8873bb",
+      "sourceHash": "02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266",
       "viewport": {
         "clientWidth": 1440,
         "scrollWidth": 1440
@@ -217,7 +217,7 @@
                 "qty": 1
               }
             ],
-            "p_idempotency_key": "ed273bdb-00b7-4289-9756-4b1ef7273d98",
+            "p_idempotency_key": "9167d7d4-1689-4b6b-a28b-e8b4e13c6296",
             "p_tier_benefit": null
           }
         },
@@ -240,7 +240,7 @@
           "body": {
             "action": "create_paynow",
             "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
-            "idempotency_key": "5f647416-3fa6-409b-9130-23dd163e450b",
+            "idempotency_key": "1585d47d-db65-47fb-9624-4cde073ff8c5",
             "business_id": "10000000-0000-4000-8000-000000000142",
             "branch_id": "40000000-0000-4000-8000-000000000142",
             "client_id": "50000000-0000-4000-8000-000000000142",
@@ -254,7 +254,7 @@
   },
   "mobile390": {
     "before": {
-      "sourceHash": "13bb625f8c7973904a0d5f038cdedff8412c17008ea597fa27db82e3fa8873bb",
+      "sourceHash": "02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266",
       "viewport": {
         "clientWidth": 390,
         "scrollWidth": 390
@@ -350,8 +350,14 @@
                 "qty": 1
               }
             ],
-            "p_idempotency_key": "db2c621d-355d-439e-9cf3-c06066e88cb5",
+            "p_idempotency_key": "9a4ad1b8-efec-4c79-85be-b1b0f8aa01b5",
             "p_tier_benefit": null
+          }
+        },
+        {
+          "name": "get_pos_paynow_attempt_v142",
+          "args": {
+            "p_attempt": "80000000-0000-4000-8000-000000000142"
           }
         }
       ],
@@ -361,7 +367,7 @@
           "body": {
             "action": "create_paynow",
             "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
-            "idempotency_key": "0c9c9b1f-f31a-4142-8060-fb0032c95ced",
+            "idempotency_key": "55246509-a2fe-4055-89ba-1a70c3e6168d",
             "business_id": "10000000-0000-4000-8000-000000000142",
             "branch_id": "40000000-0000-4000-8000-000000000142",
             "client_id": "50000000-0000-4000-8000-000000000142",
@@ -373,7 +379,7 @@
       "errors": []
     },
     "after": {
-      "sourceHash": "13bb625f8c7973904a0d5f038cdedff8412c17008ea597fa27db82e3fa8873bb",
+      "sourceHash": "02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266",
       "viewport": {
         "clientWidth": 390,
         "scrollWidth": 390
@@ -470,7 +476,7 @@
                 "qty": 1
               }
             ],
-            "p_idempotency_key": "db2c621d-355d-439e-9cf3-c06066e88cb5",
+            "p_idempotency_key": "9a4ad1b8-efec-4c79-85be-b1b0f8aa01b5",
             "p_tier_benefit": null
           }
         },
@@ -493,7 +499,7 @@
           "body": {
             "action": "create_paynow",
             "fingerprint": "10000000-0000-4000-8000-000000000142:40000000-0000-4000-8000-000000000142:50000000-0000-4000-8000-000000000142:30000000-0000-4000-8000-000000000142:70000000-0000-4000-8000-000000000142",
-            "idempotency_key": "0c9c9b1f-f31a-4142-8060-fb0032c95ced",
+            "idempotency_key": "55246509-a2fe-4055-89ba-1a70c3e6168d",
             "business_id": "10000000-0000-4000-8000-000000000142",
             "branch_id": "40000000-0000-4000-8000-000000000142",
             "client_id": "50000000-0000-4000-8000-000000000142",
