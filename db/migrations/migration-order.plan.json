@@ -3543,6 +3543,54 @@
       "path": "db/migrations/20260902_nestly_v721_one_ci_gate.sql",
       "semanticVersion": "v721",
       "proposedDeployVersion": "20260903180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v725_time_basis_and_shadow_gate.sql",
+      "semanticVersion": "v725",
+      "proposedDeployVersion": "20260903190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v718_spine_margin_and_alternatives.sql",
+      "semanticVersion": "v718",
+      "proposedDeployVersion": "20260903200000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v720_evidence_pack_grants.sql",
+      "semanticVersion": "v720",
+      "proposedDeployVersion": "20260903210000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v722_freshness_and_brief_evidence.sql",
+      "semanticVersion": "v722",
+      "proposedDeployVersion": "20260903220000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v724_visit_days_estate_2.sql",
+      "semanticVersion": "v724",
+      "proposedDeployVersion": "20260903230000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v726_period_validation.sql",
+      "semanticVersion": "v726",
+      "proposedDeployVersion": "20260904000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v729_visit_days_estate_3.sql",
+      "semanticVersion": "v729",
+      "proposedDeployVersion": "20260904010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v730_category_customers_window.sql",
+      "semanticVersion": "v730",
+      "proposedDeployVersion": "20260904020000"
     }
   ]
 }
