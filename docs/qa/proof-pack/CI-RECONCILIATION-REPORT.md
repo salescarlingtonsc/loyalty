@@ -27,10 +27,10 @@ asserts every one reads exactly `100.0`.
 
 | | |
 |---|---|
-| Commit SHA | `579e5d11a150e4237c8688758c75e9de76b4afe6` |
+| Commit SHA | `0402acb5179c392dd6a6ae564d476f6d0cb63b95` |
 | Branch | `claude/ci-proof-100` |
-| Commit date | 2026-09-02T20:05:42+08:00 |
-| Report generated | 2026-09-02T12:06:19.273Z |
+| Commit date | 2026-09-02T20:10:41+08:00 |
+| Report generated | 2026-09-02T12:11:09.131Z |
 | Postgres | psql (PostgreSQL) 17.10 (Homebrew) |
 | Node | v24.16.0 |
 | Harness watermark | `scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION` (see that file) |
@@ -51,7 +51,7 @@ harness actually printed._
 ## Full harness output (verbatim, for the `v731` fixture only)
 
 ```
-workdir /var/folders/hb/ngsyjpbs2gv757_fvmlwljxr0000gn/T/peekaa-db-tests-PiSSs8  ·  port 55871
+workdir /var/folders/hb/ngsyjpbs2gv757_fvmlwljxr0000gn/T/peekaa-db-tests-41PsZ7  ·  port 58325
 
 ── building baseline ──────────────────────────────────
   422 tables, 1365 routines (snapshot watermark v422)  5.5s
@@ -278,9 +278,9 @@ workdir /var/folders/hb/ngsyjpbs2gv757_fvmlwljxr0000gn/T/peekaa-db-tests-PiSSs8 
   applied  v735  20260902_nestly_v735_evidence_pack_extended.sql
 
 ── MIGRATED (against peekaa_migrated) ──────────────────────
-  ok    v731_reconciliation_report.sql  (4049ms)
+  ok    v731_reconciliation_report.sql  (3734ms)
 
 ── summary ────────────────────────────────────────────
-  all executed SQL passed in 36.3s
+  all executed SQL passed in 26.9s
 ```
 

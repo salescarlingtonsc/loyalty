@@ -52,7 +52,7 @@ items with no code anchor.
 ```
 
 </details> |
-| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1906-1942 | <details><summary>show</summary>
+| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1947-1983 | <details><summary>show</summary>
 
 ```
 // Check 88 (tokeniser gap #4): every rule above - V6, V9, V9b - is built on a LATIN-script idea of
@@ -95,7 +95,7 @@ items with no code anchor.
 ```
 
 </details> |
-| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1983-2010 | <details><summary>show</summary>
+| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2024-2051 | <details><summary>show</summary>
 
 ```
 // Check 88 (tokeniser gap #5). V11 (above) closes the CJK case, but Han/Hangul/Hiragana/Katakana
@@ -129,14 +129,14 @@ items with no code anchor.
 ```
 
 </details> |
-| _(not stated in this block)_ | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2026-2026 | <details><summary>show</summary>
+| _(not stated in this block)_ | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2067-2067 | <details><summary>show</summary>
 
 ```
   if (!isPredominantlyLatinScript(narrative)) return; // declared limit — see the note above
 ```
 
 </details> |
-| 17 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2648-2697 | <details><summary>show</summary>
+| 17 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2689-2738 | <details><summary>show</summary>
 
 ```
 // Check 17 (typed verdicts, POSITIVE half). A refuter proved V10's original causal-phrase
