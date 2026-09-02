@@ -768,6 +768,86 @@ test('v684 check 88 (V9): every golden-pack good narrative is orphan-clean (non-
   assert.deepEqual(only(faithful, RULES.ENTITY), [], explain(faithful));
 });
 
+/* --------------------------------------------- V9b: sentence-initial orphan proper nouns */
+
+// An independent refuter broke V9: checkOrphanProperNouns exempts EVERY sentence/line-initial
+// capitalised token unconditionally (condition (a) in its own banner), so inserting a fabricated
+// entity as its OWN sentence — no direct-address cue, no multi-token run — validated clean. Both
+// of the refuter's exact repro sentences are proven here to now fail, naming the token, via V9b
+// (checkOrphanProperNounsSentenceInitial).
+test('v684 check 88 (V9b): the refuter\'s "Melissa" sentence-initial orphan is now caught (firing)', () => {
+  const narrative = FAITHFUL.replace(
+    '## Do these three things next',
+    'Melissa spent more than usual this period.\n\n## Do these three things next',
+  );
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.ENTITY);
+  assert.ok(
+    hits.some((v) => v.detail.includes('V9b') && v.detail.includes('Melissa')),
+    `expected V9b to name "Melissa":\n  ${explain(result)}`,
+  );
+});
+
+test('v684 check 88 (V9b): the refuter\'s "JavaBrew" sentence-initial orphan is now caught (firing)', () => {
+  // "JavaBrew" also defeats V9's OWN token shape (ORPHAN_TOKEN_RE requires a capital followed by
+  // ONLY lowercase letters; an internal capital fails that regex outright, sentence-initial or
+  // not) — V9b's SENTENCE_INITIAL_TOKEN_RE is deliberately wider so this case is not missed twice.
+  const narrative = FAITHFUL.replace(
+    '## Do these three things next',
+    'JavaBrew is a popular add-on many customers choose.\n\n## Do these three things next',
+  );
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.ENTITY);
+  assert.ok(
+    hits.some((v) => v.detail.includes('V9b') && v.detail.includes('JavaBrew')),
+    `expected V9b to name "JavaBrew":\n  ${explain(result)}`,
+  );
+});
+
+test('v684 check 88 (V9b): every golden-pack good narrative is STILL orphan-clean (non-firing, corpus-wide)', () => {
+  // Same corpus-wide proof as V9's own test above, repeated for V9b specifically: adding a new
+  // rule that also inspects sentence-initial words must not turn any shipped known-good narrative
+  // (or the v677 FAITHFUL fixture) into a false positive.
+  const corpusDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'golden-packs');
+  const files = readdirSync(corpusDir).filter((f) => f.endsWith('.json'));
+  assert.ok(files.length >= 6, `expected >= 6 golden packs, found ${files.length}`);
+  for (const file of files) {
+    const { pack, good } = JSON.parse(readFileSync(join(corpusDir, file), 'utf8'));
+    const result = validateNarrative(good, pack);
+    const v9bHits = only(result, RULES.ENTITY).filter((v) => v.detail.includes('V9b'));
+    assert.deepEqual(v9bHits, [],
+      `${file}'s known-good narrative must not trip V9b:\n  ${explain(result)}`);
+  }
+  const faithful = validateNarrative(FAITHFUL, evidencePack());
+  const faithfulV9bHits = only(faithful, RULES.ENTITY).filter((v) => v.detail.includes('V9b'));
+  assert.deepEqual(faithfulV9bHits, [], explain(faithful));
+});
+
+test('v684 check 88 (V9b): a pruned fixture surname is NOT a global exemption — an invented ' +
+  '"Tan" in a pack with no Tan is caught (firing)', () => {
+  // COMMON_SENTENCE_STARTERS_HARVESTED was pruned of every word present in the packs it was
+  // harvested from (06-adversarial-firm.json names "Tan R."), specifically so that harvesting
+  // never turns into a blanket exemption for every OTHER pack. This proves the prune held: pack 01
+  // (01-normal-firm.json, "Normal Cafe" / "Alan T.") names no Tan anywhere, so a sentence-initial
+  // invented "Tan" against IT must still be caught.
+  const corpusDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'golden-packs');
+  const { pack, good } = JSON.parse(readFileSync(join(corpusDir, '01-normal-firm.json'), 'utf8'));
+  assert.ok(
+    !JSON.stringify(pack).toLowerCase().includes('tan'),
+    'precondition: 01-normal-firm.json\'s pack must not itself name a "Tan"',
+  );
+  const narrative = good.replace(
+    '## Do these three things next',
+    'Tan mentioned he switched to oat milk this month.\n\n## Do these three things next',
+  );
+  const result = validateNarrative(narrative, pack);
+  const hits = only(result, RULES.ENTITY);
+  assert.ok(
+    hits.some((v) => v.detail.includes('V9b') && v.detail.includes('Tan')),
+    `expected V9b to name "Tan" against a pack that names no Tan:\n  ${explain(result)}`,
+  );
+});
+
 /* ---------------------------------------------- check 84: branch label, lower-case month */
 
 test('v684 check 84: naming a branch that is not the pack\'s branch is caught (firing)', () => {

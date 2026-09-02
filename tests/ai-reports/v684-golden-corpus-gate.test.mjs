@@ -86,6 +86,28 @@ test('v684 check 90 / check 88 (V9): 01-normal-firm.json\'s bad narrative also c
     );
   });
 
+test('v684 check 90 / check 88 (V9b): 05-whale-firm.json\'s bad narrative also carries a ' +
+  'SENTENCE-INITIAL orphan invented name, and V9b names it', () => {
+    // 05-whale-firm.json's "bad" narrative was extended (nestly_v701 refuter fix) with an orphan
+    // invented name written as its OWN sentence ("Jasmine mentioned she loves the new
+    // collection.") — no direct-address cue, and sentence-initial, exactly the shape the
+    // independent refuter used to defeat V9 (checkOrphanProperNouns exempts sentence-initial
+    // tokens unconditionally). V9b (checkOrphanProperNounsSentenceInitial) is the rule that must
+    // catch this one; this test proves the gate's verdict actually NAMES V9b in the violation
+    // detail, not merely that some other rule already would have rejected the pack.
+    const fixture = corpus.find((c) => c.file === '05-whale-firm.json');
+    assert.ok(fixture, 'expected 05-whale-firm.json in the golden corpus');
+    assert.match(fixture.bad, /Jasmine/, 'the fixture must still carry the orphan name this test checks');
+    const result = validateNarrative(fixture.bad, fixture.pack);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.violations.some(
+        (v) => v.rule === RULES.ENTITY && v.detail.includes('V9b') && v.detail.includes('Jasmine'),
+      ),
+      `expected V9b to name "Jasmine":\n  ${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
+    );
+  });
+
 test('v684 check 90: a known-good narrative is not passing because the pack was ignored', () => {
   // Same mutation-guard spirit as v677's own T-pass test, applied once to the corpus: swap the
   // known-good and known-bad narratives across the FIRST fixture's pack and confirm the verdict

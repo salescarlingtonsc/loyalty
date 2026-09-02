@@ -1158,6 +1158,136 @@ function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
   }
 }
 
+/* -------------------------------------------------- V9b: sentence-initial orphans */
+
+// An independent refuter broke V9 by exploiting condition (a) directly: V9 exempts EVERY
+// sentence/line-initial capitalised token unconditionally, on the reasoning that a capital
+// letter starting a sentence is "ordinary English, not a naming claim". That reasoning holds for
+// "Revenue rose..." and "Saturday was the strongest day..." — it does not hold for
+// "Melissa spent more than usual this period." or "JavaBrew is a popular add-on many customers
+// choose." inserted as their own sentence: both are fabricated-entity claims, and both slipped
+// through V9 clean purely because of WHERE they sit in the sentence, not what they say.
+//
+// V9b closes that hole WITHOUT reverting V9's own exemption (V9 still never flags a
+// sentence-initial token; this is a separate, additive rule so the two stay easy to reason about
+// independently). It also widens the SHAPE of token it looks at, on purpose: V9's own
+// ORPHAN_TOKEN_RE (one capital then only lowercase letters) never matches "JavaBrew" at all — an
+// internal capital breaks that regex outright, mid-sentence or not — so closing only the
+// sentence-initial gap while keeping V9's narrower shape would still let "JavaBrew" through.
+// SENTENCE_INITIAL_TOKEN_RE below therefore accepts any run of letters starting with a capital
+// (internal capitals allowed), scoped to sentence-initial position only — V9's own mid-sentence
+// behaviour is untouched.
+//
+// It looks at exactly the tokens V9 skips — sentence/line-initial, non-heading, non-code, not
+// part of a multi-token run (still V6's territory) — and flags one UNLESS its lowercase form is:
+//   (a) found anywhere (case-INSENSITIVE — unlike V9's own case-sensitive haystack, because a
+//       word's capitalisation at the start of a sentence is a position artefact, not evidence of
+//       a proper noun; "Revenue" leading a sentence should ground against a pack string that says
+//       "revenue" in lowercase) among the pack's own string leaves;
+//   (b) on the same conservative allowlist V9 uses (buildOrphanAllowlist — product name,
+//       jurisdictions, channel names, month/day names, opts.entityAllowlist);
+//   (c) in COMMON_SENTENCE_STARTERS (below) — the deliberately-built set of ordinary English
+//       function words and report vocabulary that legitimately start a sentence in this product's
+//       reports, PLUS every sentence-initial token that actually appears in the six golden-pack
+//       known-good narratives and the v677 FAITHFUL fixture AND is NOT itself present anywhere in
+//       those same packs' own evidence strings. That pruning step matters: a harvested word that
+//       ALSO happens to be present in the pack it was harvested from (a customer surname, a
+//       business name, an item name — "Chen", "Tan", "Wong", "Kaya", "Whale", "Mystery", "Sparse",
+//       "Odd", "High", "Unavail" all showed up in the first harvest before pruning) already passes
+//       condition (a) for THAT pack on its own; shipping it as a global starter would ALSO exempt
+//       it for every OTHER pack that has no such name, silently weakening V9b everywhere except
+//       where it was harvested from. Pruning keeps the harvested half to genuinely ordinary,
+//       fixture-independent words. This was harvested ONCE by a throwaway script (not shipped, not
+//       run at validation time — this file has no filesystem access and must not gain one) that
+//       replicated orphanWords()/isOrphanSentenceInitial() over
+//       tests/ai-reports/fixtures/golden-packs/*.json's "good" field and the v677 test file's
+//       FAITHFUL constant, checked each result against the same packs' own string leaves, and
+//       pasted only the survivors below as a literal. The set is therefore fixed at review time,
+//       not read from fixtures at runtime.
+//
+// HONEST LIMITS, stated plainly because firing a false positive costs a regenerated report and
+// missing a true positive costs an owner reading a fabricated claim:
+//   * An invented name that COLLIDES with a common English word used as a starter here (e.g.
+//     "Grace", "Summer", "May", "June", "August", "March", "Will", "Faith") is NOT caught by V9b —
+//     it reads as the ordinary word, same false-negative shape V9's own comment already accepts
+//     for V6. "May"/"June"/"March"/"August" are month names in COMMON_SENTENCE_STARTERS already;
+//     "Grace"/"Summer"/"Faith"/"Will" are ordinary-English words this file cannot tell apart from
+//     an invented name without a name database, which V6's own banner already explains cannot
+//     exist here.
+//   * A pruned word (see above) is exempted ONLY for the pack it came from, via condition (a),
+//     never globally — an invented "Tan" in a pack that has no Tan is now caught (proven by a
+//     dedicated test against 01-normal-firm.json, which names no Tan).
+//   * Everything V9's own banner already states stays true here unchanged: a lowercase invented
+//     name is invisible (a capital start is required), and a multi-token run is V6's territory,
+//     not this rule's.
+const SENTENCE_INITIAL_TOKEN_RE = /^[A-Z][A-Za-z]{2,}$/;
+const COMMON_SENTENCE_STARTERS_HAND = new Set([
+  // Ordinary English function words a report sentence legitimately opens with.
+  'the', 'this', 'these', 'those', 'your', 'our', 'their', 'its', 'a', 'an', 'every', 'each',
+  'in', 'on', 'at', 'over', 'during', 'across', 'among', 'after', 'before', 'since',
+  'while', 'when', 'where', 'if', 'although', 'because', 'however', 'overall', 'meanwhile',
+  // Ordinary report vocabulary this product's own narratives use to open a sentence.
+  'revenue', 'customers', 'customer', 'visits', 'visit', 'sales', 'trade', 'repeat', 'new',
+  'returning', 'loyal', 'lapsed', 'most', 'many', 'some', 'few', 'no', 'none', 'only', 'about',
+  'roughly', 'around', 'nearly', 'almost', 'compared', 'versus', 'weekday', 'weekend', 'morning',
+  'afternoon', 'evening',
+]);
+// Harvested once (see the block comment above) from tests/ai-reports/fixtures/golden-packs/
+// {01-normal,02-sparse,03-high-anonymous,04-unavailable-sections,05-whale,06-adversarial}-firm.json
+// ("good" field) and tests/ai-reports/v677-evidence-safe-generation.test.mjs's FAITHFUL constant,
+// 2026-09-02, THEN PRUNED (2026-09-02, same day) of every word that is itself present in any of
+// those same packs' evidence strings (case-insensitive substring, matching condition (a)'s own
+// test): "chen", "cruz", "high", "kaya", "mystery", "odd", "one", "only", "revenue", "sales",
+// "sparse", "tan", "the", "unavail", "whale", "with", "wong" were removed by that rule (several are
+// fixture proper nouns — customer/business/item names; "revenue"/"sales"/"the"/"only"/"with"/"one"
+// survive anyway via COMMON_SENTENCE_STARTERS_HAND above, which lists them for their own,
+// fixture-independent reason, not because they were harvested). Re-run the harvest-then-prune pass
+// and re-paste if either corpus's known-good narratives change.
+const COMMON_SENTENCE_STARTERS_HARVESTED = new Set([
+  'about', 'account', 'ask', 'build', 'check', 'confirm', 'double', 'keep', 'put', 'review',
+  'saturday', 'send', 'that', 'track', 'tracked', 'tuesday', 'watch', 'your',
+]);
+// Numbers spelled as words ("One returned visit...") and month/weekday names (independent of V2's
+// own case-sensitive month check — different purpose, same words), lower-cased, reusing this
+// file's existing single source of truth for each list rather than retyping them.
+const COMMON_SENTENCE_STARTERS = new Set([
+  ...COMMON_SENTENCE_STARTERS_HAND,
+  ...COMMON_SENTENCE_STARTERS_HARVESTED,
+  ...Object.keys(NUM_WORDS),
+  ...Object.keys(TENS_WORDS),
+  'hundred', 'thousand',
+  ...MONTHS.flatMap(([full, abbr]) => (full === abbr ? [full] : [full, abbr])),
+  ...DAY_NAMES,
+]);
+
+function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, opts) {
+  const allowlist = buildOrphanAllowlist(opts);
+  const ranges = orphanSkipRanges(narrative);
+  const haystackLower = packInfo.strings.join(' ').toLowerCase(); // case-INSENSITIVE, see banner
+  const words = orphanWords(narrative);
+  const reported = new Set();
+
+  for (let i = 0; i < words.length; i += 1) {
+    const tok = words[i];
+    if (!SENTENCE_INITIAL_TOKEN_RE.test(tok.word)) continue;
+    if (inOrphanSkipRange(ranges, tok.index)) continue;              // heading/code lines
+    if (hasCapitalisedRunPartner(words, i)) continue;                // (d), still V6's territory
+    if (!isOrphanSentenceInitial(narrative, tok.index)) continue;    // V9b only judges what V9 skips
+    if (allowlist.has(tok.word)) continue;                           // (b)
+    const plain = tok.word.toLowerCase();
+    if (COMMON_SENTENCE_STARTERS.has(plain)) continue;                // (c)
+    if (haystackLower.includes(plain)) continue;                     // (a)
+    if (reported.has(plain)) continue;
+    reported.add(plain);
+    violations.push({
+      rule: RULES.ENTITY,
+      detail: `V9b: "${tok.word}" opens a sentence, is capitalised, is not a common sentence-` +
+        `starter word, and matches no evidence-pack string (case-insensitive); check it is not ` +
+        `an invented name, near "${contextAround(narrative, tok.index, tok.end)}"`,
+    });
+  }
+}
+
 /* -------------------------------------------------------------- V7: structure */
 
 // Check 82: the report is a fixed template, not free-form prose. SYSTEM_PROMPT (index.ts) spells
@@ -1266,6 +1396,7 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   checkEntities(narrative, packInfo, violations);       // V6
   checkSingleTokenEntities(narrative, packInfo, violations); // V6 (check 83/88)
   checkOrphanProperNouns(narrative, packInfo, violations, options); // V9 (check 83/88 gap closure)
+  checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, options); // V9b (sentence-initial gap)
   checkStructure(narrative, violations);                // V7 (check 82)
   checkCohortContradiction(narrative, pack, violations); // V8 (check 89)
 
