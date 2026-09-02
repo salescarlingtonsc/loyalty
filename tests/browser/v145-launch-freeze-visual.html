@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="fa7e4d51def3366e6000386323b35768cae5f7b466244f446a6fd451f09be8b3"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f722add668a6926de9f659ef0a57dc2c93c8264154beb7af37cf331b9954c0c6"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -872,7 +872,6 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .legal-links a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
-.customer-entry-footer>.customer-business-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px;color:var(--muted);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer>.legal-links{margin-top:0}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -5676,7 +5675,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · fa7e4d51def3366e6000386323b35768cae5f7b466244f446a6fd451f09be8b3</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f722add668a6926de9f659ef0a57dc2c93c8264154beb7af37cf331b9954c0c6</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -9850,7 +9849,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'fa7e4d51def3366e6000386323b35768cae5f7b466244f446a6fd451f09be8b3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'f722add668a6926de9f659ef0a57dc2c93c8264154beb7af37cf331b9954c0c6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

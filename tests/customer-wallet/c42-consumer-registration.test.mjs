@@ -111,7 +111,11 @@ test('customer authentication defaults to password while signup and recovery alo
   assert.match(auth, /href="\/app"/);
   assert.match(auth, /I’m a customer/);
   assert.match(app, /h==='#\/'\|\|h==='#\/customer'\|\|h==='#\/customer\/register'\|\|h\.startsWith\('#\/customer\?'\)/);
-  assert.match(app, /href="\/business">Business sign in<\/a>/);
+  /* Owner ruling 2026-09-02: the customer entry footer carries legal links only — the
+     "Business sign in" link was removed from it. Staff still reach the workspace through the
+     /business entry path switch asserted above. */
+  assert.doesNotMatch(app, /Business sign in/);
+  assert.match(app, /<footer class="customer-entry-footer">\$\{legalLinks\(customerLocale\)\}<\/footer>/);
   assert.match(app, /CUSTOMER_PHONE_OTP_RUNTIME_ENABLED[\s\S]*RUNTIME_CONFIG\.environment!=='production'/);
   assert.match(app, /RUNTIME_CONFIG\.customerPhoneOtpEnabled===true/);
   assert.match(customerRoute, /normalizeSingaporeCustomerPhone/);

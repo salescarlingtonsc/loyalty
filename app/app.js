@@ -201,7 +201,7 @@ const legalLinks=(locale='en')=>{
     'zh-CN':{label:'法律与隐私',privacy:'隐私政策',terms:'条款',data:'数据请求'},
     ms:{label:'Undang-undang dan privasi',privacy:'Privasi',terms:'Terma',data:'Permintaan data'}
   }[locale]||{label:'Legal and privacy',privacy:'Privacy',terms:'Terms',data:'Data request'};
-  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a>${buildIdentityHtml()}</nav>`;
+  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a></nav>`;
 };
 const publicFunctionUrl=(name,query='')=>`${SB_URL}/functions/v1/${name}${query}`;
 function publicGatewayHeaders(body,accessToken=''){
@@ -4685,7 +4685,7 @@ function customerRegistrationShell(body){
     :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer">${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){

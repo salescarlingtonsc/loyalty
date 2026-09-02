@@ -692,7 +692,7 @@ function customerRegistrationShell(body){
     :'';
   root.innerHTML=`<main class="wallet-shell customer-surface" id="main" tabindex="-1"><div class="wallet-inner"><header class="wallet-head">
     <a class="logo" href="/app" aria-label="${esc(BRAND.customerLabel)} home">${brandWordmark()}</a>
-    </header>${joinContextV609}${body}<footer class="customer-entry-footer"><a class="customer-business-link" href="/business">Business sign in</a>${legalLinks(customerLocale)}</footer></div></main>`;
+    </header>${joinContextV609}${body}<footer class="customer-entry-footer">${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){

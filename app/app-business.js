@@ -2,6 +2,7 @@
    The business workspace of app/app.js, split by scripts/quality/split-app-bundle.mjs.
    Edit app/app.js and run: npm run bundle-stamp */
 const loadChartLibrary=()=>loadOptionalLibrary({key:'charts',src:'https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js',integrity:'sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF',ready:()=>typeof globalThis.Chart==='function'}).then(configureChartDefaults);
+const buildIdentityHtml=()=>`<span class="build-identity" data-build-identity>${esc(buildIdentityLabel())}</span>`;
 /* Chart.js global defaults (design system v2). Chart.js out of the box is the single
    biggest "generic AI dashboard" tell — grey 1px grids on both axes, boxed legends,
    black tooltips. Strip it back: no vertical grid, hairline horizontal grid only, no

@@ -173,7 +173,6 @@ const customerRpc=(name,args,ms=12000)=>sb.rpc(name,args).abortSignal(customerRp
 let buildIdentity=Object.freeze({available:false});
 const buildIdentityLabel=()=>buildIdentity.available
   ?`Build ${buildIdentity.shortSha} · ${buildIdentity.environment}`:'Build identity unavailable';
-const buildIdentityHtml=()=>`<span class="build-identity" data-build-identity>${esc(buildIdentityLabel())}</span>`;
 function syncBuildIdentityLabels(){document.querySelectorAll('[data-build-identity]').forEach(element=>{element.textContent=buildIdentityLabel()})}
 async function loadBuildIdentity(){
   try{
@@ -194,7 +193,7 @@ const legalLinks=(locale='en')=>{
     'zh-CN':{label:'法律与隐私',privacy:'隐私政策',terms:'条款',data:'数据请求'},
     ms:{label:'Undang-undang dan privasi',privacy:'Privasi',terms:'Terma',data:'Permintaan data'}
   }[locale]||{label:'Legal and privacy',privacy:'Privacy',terms:'Terms',data:'Data request'};
-  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a>${buildIdentityHtml()}</nav>`;
+  return `<nav class="legal-links" aria-label="${esc(copy.label)}"><a href="/privacy.html">${esc(copy.privacy)}</a><a href="/terms.html">${esc(copy.terms)}</a><a href="/data-request.html">${esc(copy.data)}</a></nav>`;
 };
 const publicFunctionUrl=(name,query='')=>`${SB_URL}/functions/v1/${name}${query}`;
 function publicGatewayHeaders(body,accessToken=''){

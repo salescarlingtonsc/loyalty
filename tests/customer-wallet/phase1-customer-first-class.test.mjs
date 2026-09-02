@@ -22,7 +22,7 @@ test('root is customer-first and business sign-in is a separate clean entry path
   assert.match(brand,/customerLabel:\s*'My Peekaa'/);
   const entry=section('function customerRegistrationShell(body)','function renderCustomerOtpVerification');
   assert.match(entry,/class="customer-entry-footer"/);
-  assert.match(entry,/class="customer-business-link" href="\/business">Business sign in<\/a>/);
+  assert.doesNotMatch(entry,/Business sign in/,'owner ruling: the customer entry footer carries no business sign-in link');
   assert.doesNotMatch(entry,/Choose account type|id="customerBack"/);
 
   const auth=section("function renderAuth(mode='in',{admin=false}={})",'function validNewPassword');
