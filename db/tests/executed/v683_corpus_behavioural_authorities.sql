@@ -55,6 +55,13 @@
 -- both clear the floor at exactly 5 visits each; Carol is deliberately kept at 3 (insufficient)
 -- so the null-below-floor path has a real, asserted example alongside the two real verdicts.
 --
+-- VISITS ARE DAYS (nestly_v699): get_ci_staff_performance_v1's 'visits' counts distinct (client,
+-- Asia/Singapore calendar day) pairs per staff and service, not raw sale-item lines. Every sale
+-- below is therefore dated on its OWN day (one sale per staff per day) — alice/bob/dave each get
+-- five distinct days, carol three — so the "visits" figures in this truth table are visit-days by
+-- construction, and the numbers are otherwise identical to the pre-v699 shape (this fixture never
+-- relied on same-day multi-sale collapsing).
+--
 -- Service PREMIUM (firm-wide lines): alice x5 @ $100.00, carol x3 @ $100.00
 --   -> firm avg ticket(PREMIUM) = (5*10000 + 3*10000) / 8 = 10000 (both sell at exactly the
 --      firm average, by construction, so alice's index lands on exactly 1.00).
@@ -262,9 +269,13 @@ begin
   -- (dated today-5..today-2) share this business and would otherwise leak into Bob's/Alice's
   -- visit counts here (s2 in particular is bob + svc_basic + $50, identical in shape to the
   -- mix-adjusted rows) since get_ci_staff_performance_v1 has no concept of "which sub-fixture a
-  -- sale belongs to" -- only occurred_at and business_id. [today-9, today-6] holds only the
-  -- deliberately-inserted today-7 rows below.
-  v_perf_from := v_today - 9; v_perf_to := v_today - 6;
+  -- sale belongs to" -- only occurred_at and business_id. [today-11, today-6] holds only the
+  -- deliberately-inserted rows below, now one PER DAY (nestly_v699: visits count distinct
+  -- (client, Asia/Singapore calendar day) pairs, not raw sale-item lines — five distinct days
+  -- gives alice/bob/dave their five visits and carol her three, and the spare today-11 slot is
+  -- reserved for the mutation check's sixth alice sale below, without any row sharing a day with
+  -- another row for the same staff member).
+  v_perf_from := v_today - 11; v_perf_to := v_today - 6;
 
   insert into auth.users (id, email) values
     (u_sa, 'zz-v683-sa@example.test'),
@@ -433,18 +444,22 @@ begin
   ------------------------------------------------------------------------------------------
   -- One sale per service line, fixed ids, so staff attribution can be inserted with certainty:
   -- alice x5 + carol x3 on PREMIUM ($100 each, so alice AND carol clear the floor/miss it
-  -- respectively); bob x5 + dave x5 on BASIC ($50/$20, so both clear the floor).
+  -- respectively); bob x5 + dave x5 on BASIC ($50/$20, so both clear the floor). nestly_v699:
+  -- get_ci_staff_performance_v1's 'visits' now counts distinct (client, Asia/Singapore calendar
+  -- day) pairs, not raw sale-item lines, so each staff member's own sales are spread across
+  -- DISTINCT days (day_offset below) rather than all landing on today-7 as before — the truth
+  -- table (alice/bob/dave 5 visits, carol 3) is unchanged; only the day each row falls on moved.
   insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents, occurred_at, created_at)
   select ('00000000-0000-4000-8000-0000000684' || lpad(n::text, 2, '0'))::uuid,
          biz, branch1, cl_b, 'service', cents,
-         (v_today - 7)::timestamp at time zone 'Asia/Singapore',
-         (v_today - 7)::timestamp at time zone 'Asia/Singapore'
+         (v_today + day_offset)::timestamp at time zone 'Asia/Singapore',
+         (v_today + day_offset)::timestamp at time zone 'Asia/Singapore'
     from (values
-      (1, 10000),(2, 10000),(3, 10000),(4, 10000),(5, 10000),
-      (6, 10000),(7, 10000),(8, 10000),
-      (9, 5000),(10, 5000),(11, 5000),(12, 5000),(13, 5000),
-      (14, 2000),(15, 2000),(16, 2000),(17, 2000),(18, 2000)
-    ) as t(n, cents)
+      (1, 10000, -10),(2, 10000, -9),(3, 10000, -8),(4, 10000, -7),(5, 10000, -6),
+      (6, 10000, -10),(7, 10000, -9),(8, 10000, -8),
+      (9, 5000, -10),(10, 5000, -9),(11, 5000, -8),(12, 5000, -7),(13, 5000, -6),
+      (14, 2000, -10),(15, 2000, -9),(16, 2000, -8),(17, 2000, -7),(18, 2000, -6)
+    ) as t(n, cents, day_offset)
   on conflict (id) do nothing;
 
   insert into public.sale_items (sale_id, business_id, item_type, ref_id, qty, unit_cents, line_cents, staff_id)
@@ -523,11 +538,14 @@ begin
 
   -- MUTATION CHECK: one more alice sale on PREMIUM at a discount price (6000, well below the
   -- firm average of 10000) must pull her adjusted index below 1.00. Alice has 6 visits after
-  -- this (still >= floor 5), so she stays evidence-'ok' throughout.
+  -- this (still >= floor 5), so she stays evidence-'ok' throughout. Dated today-11 — the one day
+  -- in [v_perf_from, v_perf_to] none of alice's five base-truth-table sales already occupies —
+  -- so this is a genuine SIXTH distinct visit-day, not a second same-day sale that would leave
+  -- her visit count at 5 under nestly_v699's per-day counting.
   insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents, occurred_at, created_at)
   values ('00000000-0000-4000-8000-000000068499', biz, branch1, cl_b, 'service', 6000,
-          (v_today - 7)::timestamp at time zone 'Asia/Singapore',
-          (v_today - 7)::timestamp at time zone 'Asia/Singapore');
+          (v_today - 11)::timestamp at time zone 'Asia/Singapore',
+          (v_today - 11)::timestamp at time zone 'Asia/Singapore');
   insert into public.sale_items (sale_id, business_id, item_type, ref_id, qty, unit_cents, line_cents, staff_id)
   values ('00000000-0000-4000-8000-000000068499', biz, 'service', svc_premium, 1, 6000, 6000, st_alice);
 

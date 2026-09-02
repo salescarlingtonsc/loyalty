@@ -9,11 +9,17 @@
 -- TRUTH TABLE (numbers computed before running anything):
 --   customer X — service sales in taxonomy node A: 3 on day1 (1000 + 1500 + 500 cents) and
 --     1 on day2 (2000 cents). At the pinned as_of (before a 5th sale is even recorded):
---       visits (V) = 4 distinct sales, revenue (R) = 1000+1500+500+2000 = 5000 cents,
+--       raw sale count = 4, revenue (R) = 1000+1500+500+2000 = 5000 cents,
 --       visit_days = 2 (day1, day2) — a REPEAT purchaser under the new dedupe rule.
 --     A 5th sale (day2, 3000 cents) is recorded (created_at) AFTER the pinned as_of. Under that
---     same pinned as_of it must not appear anywhere (V/R/visit_days unchanged: 4/5000/2). Under
---     a LATER as_of it must appear: V=5, R=8000, visit_days still 2 (same two calendar days).
+--     same pinned as_of it must not appear anywhere (raw count/R/visit_days unchanged: 4/5000/2).
+--     Under a LATER as_of it must appear: raw count=5, R=8000, visit_days still 2 (same two
+--     calendar days).
+--   VISITS ARE DAYS (nestly_v699): get_ci_category_customers_v1's 'visits' now counts distinct
+--     Asia/Singapore calendar days per client, not raw sale rows — so X's 'visits' figure is 2 at
+--     BOTH the pinned as_of (day1+day2, 4 underlying sales) and the later as_of (day1+day2 still,
+--     now 5 underlying sales added on an already-counted day); only revenue_cents moves between
+--     the two as_of readings (5000 -> 8000), exactly mirroring visit_days above.
 --   customer Y — 3 service sales, all on day1, no taxonomy node set (irrelevant to the lineage
 --     assertion, only exercises v107): raw sale count in period = 3 (>=2, so Y WOULD have been
 --     a "repeat purchaser" under the pre-v692 raw-count rule) but visit_days = 1, so Y must NOT
@@ -28,7 +34,11 @@
 --     fillers have a single sale each, so they are neither raw-count nor visit-day repeats).
 --   LINEAGE: get_ci_category_customers_v1's row for X in node A (visits, revenue_cents) must
 --     equal get_ci_customer_records_v1's own totals for X, filtered to node A's sale_items, at
---     the SAME as_of — exactly, both at the pinned as_of (4/5000) and at the later as_of (5/8000).
+--     the SAME as_of — exactly, both at the pinned as_of (visits=2/revenue=5000) and at the later
+--     as_of (visits=2/revenue=8000). This lineage check is now STRONGER than before nestly_v699:
+--     it additionally asserts category_customers.visits equals customer_records.totals.visit_days
+--     itself (not merely a hand-computed count derived from the returned sale rows), at each
+--     as_of — the same shared visit-day authority (app.ci_visit_day_v699) checked from both sides.
 
 \set ON_ERROR_STOP on
 begin;
@@ -284,8 +294,10 @@ begin
   end if;
   x_visits_agg := (x_row->>'visits')::bigint;
   x_revenue_agg := (x_row->>'revenue_cents')::bigint;
-  if x_visits_agg <> 4 or x_revenue_agg <> 5000 then
-    insert into _fail values ('L1', format('category_customers X: expected visits=4 revenue_cents=5000, got visits=%s revenue_cents=%s',
+  -- nestly_v699: get_ci_category_customers_v1's 'visits' counts distinct visit-days, not raw
+  -- sale rows, so X (4 sales across day1+day2) reads visits=2 here, not 4.
+  if x_visits_agg <> 2 or x_revenue_agg <> 5000 then
+    insert into _fail values ('L1', format('category_customers X: expected visits=2 (visit-days) revenue_cents=5000, got visits=%s revenue_cents=%s',
       x_visits_agg, x_revenue_agg));
   end if;
 
@@ -308,7 +320,11 @@ begin
   end if;
 
   -- Filter the records reader's own sale_items by node A and reconcile EXACTLY against the
-  -- aggregate's V/R for X — the check 19 lineage assertion, insight -> cohort -> transactions.
+  -- aggregate's revenue for X — the check 19 lineage assertion, insight -> cohort -> transactions.
+  -- rec_v here is a RAW sale count (how many of X's own returned sale rows carry a node-A line),
+  -- deliberately compared against the records reader's own totals.sales (also raw), not against
+  -- category_customers' now visit-day-based 'visits' — those are two different units and
+  -- nestly_v699 keeps them that way on purpose (see the new visit_days reconciliation below).
   select count(*) filter (where matched), coalesce(sum(matched_cents) filter (where matched), 0)
     into rec_v, rec_r
     from (
@@ -324,19 +340,31 @@ begin
         from jsonb_array_elements(rec1->'sales') se
     ) t;
 
-  if rec_v <> x_visits_agg or rec_r <> x_revenue_agg then
+  if rec_r <> x_revenue_agg then
     insert into _fail values ('L3-lineage', format(
-      'lineage mismatch at pinned as_of: category_customers gave visits=%s revenue_cents=%s, '
-      'customer_records (filtered to node %s) gave visits=%s revenue_cents=%s',
-      x_visits_agg, x_revenue_agg, nodeA, rec_v, rec_r));
+      'revenue lineage mismatch at pinned as_of: category_customers gave revenue_cents=%s, '
+      'customer_records (filtered to node %s) gave revenue_cents=%s',
+      x_revenue_agg, nodeA, rec_r));
   end if;
   if rec_v <> 4 or rec_r <> 5000 then
-    insert into _fail values ('L3-exact', format('expected the lineage totals to be exactly 4/5000, got %s/%s', rec_v, rec_r));
+    insert into _fail values ('L3-exact', format('expected the raw-sale/revenue lineage totals to be exactly 4/5000, got %s/%s', rec_v, rec_r));
+  end if;
+
+  -- STRONGER LINEAGE (nestly_v699 addition): category_customers.visits (now visit-day-based) must
+  -- equal customer_records.totals.visit_days itself, not a hand-derived count — the same shared
+  -- authority (app.ci_visit_day_v699) checked from both readers, at the SAME as_of.
+  if x_visits_agg <> (rec1#>>'{totals,visit_days}')::bigint then
+    insert into _fail values ('L3-visitdays-lineage', format(
+      'visit_days lineage mismatch at pinned as_of: category_customers gave visits=%s, '
+      'customer_records gave totals.visit_days=%s', x_visits_agg, rec1#>>'{totals,visit_days}'));
+  end if;
+  if x_visits_agg <> 2 then
+    insert into _fail values ('L3-visitdays-exact', format('expected the visit_days lineage to be exactly 2, got %s', x_visits_agg));
   end if;
 
   -- MUTATION-CHECK (alter the expected R): a deliberately wrong expectation must NOT match —
   -- proves the assertion above is exact-value, not a loose or vacuous comparison.
-  if rec_r = x_revenue_agg + 1 or rec_v = x_visits_agg + 1 then
+  if rec_r = x_revenue_agg + 1 or x_visits_agg = (rec1#>>'{totals,visit_days}')::bigint + 1 then
     insert into _fail values ('L3-mutation', 'the lineage check would have passed against a wrong-by-one expectation — it is not exact');
   end if;
 
@@ -348,8 +376,10 @@ begin
    where (c->>'client_id')::uuid = cX;
   x_visits_agg := (x_row->>'visits')::bigint;
   x_revenue_agg := (x_row->>'revenue_cents')::bigint;
-  if x_visits_agg <> 5 or x_revenue_agg <> 8000 then
-    insert into _fail values ('L4', format('category_customers X at later as_of: expected visits=5 revenue_cents=8000, got visits=%s revenue_cents=%s',
+  -- nestly_v699: still 2 visit-days (the 5th sale lands on day2, already counted) — only revenue
+  -- moves between the two as_of readings.
+  if x_visits_agg <> 2 or x_revenue_agg <> 8000 then
+    insert into _fail values ('L4', format('category_customers X at later as_of: expected visits=2 (visit-days) revenue_cents=8000, got visits=%s revenue_cents=%s',
       x_visits_agg, x_revenue_agg));
   end if;
 
@@ -376,10 +406,22 @@ begin
                   or (it->>'effective_node_key') like nodeA || '.%') as matched_cents
         from jsonb_array_elements(rec2->'sales') se
     ) t;
-  if rec_v <> x_visits_agg or rec_r <> x_revenue_agg or rec_v <> 5 or rec_r <> 8000 then
+  if rec_r <> x_revenue_agg or rec_v <> 5 or rec_r <> 8000 then
     insert into _fail values ('L6-lineage-later', format(
-      'lineage mismatch at later as_of: category_customers visits=%s revenue_cents=%s vs records visits=%s revenue_cents=%s',
-      x_visits_agg, x_revenue_agg, rec_v, rec_r));
+      'revenue lineage mismatch at later as_of: category_customers revenue_cents=%s vs records (raw sales=%s) revenue_cents=%s',
+      x_revenue_agg, rec_v, rec_r));
+  end if;
+
+  -- STRONGER LINEAGE, later as_of: category_customers.visits (day-based) still equals
+  -- customer_records.totals.visit_days — 2 on both sides, even though 5 sales now underlie it.
+  if x_visits_agg <> (rec2#>>'{totals,visit_days}')::bigint or x_visits_agg <> 2 then
+    insert into _fail values ('L6-visitdays-lineage', format(
+      'visit_days lineage mismatch at later as_of: category_customers gave visits=%s, '
+      'customer_records gave totals.visit_days=%s', x_visits_agg, rec2#>>'{totals,visit_days}'));
+  end if;
+  -- MUTATION-CHECK: a wrong-by-one expectation must not match.
+  if x_visits_agg = (rec2#>>'{totals,visit_days}')::bigint + 1 then
+    insert into _fail values ('L6-mutation', 'the later-as_of visit_days lineage check would have passed against a wrong-by-one expectation');
   end if;
 
   -- appointment surfaced, with the fields the reader promises.
