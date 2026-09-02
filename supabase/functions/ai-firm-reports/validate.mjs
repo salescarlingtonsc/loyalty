@@ -42,6 +42,17 @@ export const RULES = {
   STRUCTURE: 'V7_STRUCTURE',
   COHORT: 'V8_COHORT_CONTRADICTION',
   CAUSAL_BINDING: 'V10_CAUSAL_BINDING',
+  // v706 (check 17, POSITIVE half): a refuter proved V10's causal-phrase BLACKLIST (above) is a
+  // list that can always be evaded by one more idiom it does not yet name (27/27 ordinary causal
+  // constructions - "boosts", "is behind", "so ... that", "this pushes" as a pronoun continuation,
+  // a bare conditional, and more - passed V10 clean). V10b inverts the burden: for a sentence that
+  // references an ASSOCIATION finding's own vocabulary, the sentence must POSITIVELY carry one of
+  // a fixed, approved set of association-marker phrases (ASSOCIATION_MARKERS, below) - silence is
+  // now a failure, not a pass. V10 (the blacklist) is UNCHANGED and stays wired as a second line:
+  // a sentence can carry a marker AND still use a blacklisted verb ("X tends to cause Y"), and V10
+  // alone still catches a causal sentence that names no ASSOCIATION finding's vocabulary at all
+  // (V10b never fires without a keyword match, same abstention shape as V10 itself).
+  ASSOCIATION_MARKER: 'V10B_ASSOCIATION_MARKER',
 };
 
 // v684 (check 86): the three tiers app.evidence_block_v1 (nestly_v652) can ever return. Exported so
@@ -83,6 +94,11 @@ export function periodLabel(report) {
 // header) must be WRITTEN differently, not just felt differently. This block is the model-facing
 // half of that contract; validateNarrative's V10 (checkAssociationCausalBinding, below) is the
 // enforcement half, over the SAME two classes.
+// v706: the ASSOCIATION bullet now also names the requirement V10b (checkAssociationPositiveMarker)
+// enforces - use one of the listed observed-pattern phrases, not merely "not a cause". V10's own
+// list of blocked causal words is unchanged and stays as a backstop; this bullet's new sentence is
+// what closes the gap a blacklist alone cannot: it tells the model what TO write, not only what to
+// avoid.
 const EVIDENCE_CLASS_INSTRUCTION = [
   '',
   'Some evidence entries carry their own `evidence_class`. Respect it exactly:',
@@ -90,7 +106,12 @@ const EVIDENCE_CLASS_INSTRUCTION = [
   '  customers, its own coverage) - you may state it directly.',
   '- "ASSOCIATION" is a pattern observed across customers, staff, or segments, never a proven',
   '  cause. Phrase it as an observed pattern ("customers who X also tend to Y"), and NEVER as a',
-  '  cause ("X causes/drives/leads to/results in Y", "because of X, Y happened", "thanks to X").',
+  '  cause ("X causes/drives/leads to/results in Y", "because of X, Y happened", "thanks to X",',
+  '  "X boosts/fuels/triggers Y", "is why", "means that", "so X that Y", "this pushes...", "if you',
+  '  keep X, Y will..."). Every sentence about an ASSOCIATION finding must use one of these words:',
+  '  "tend to", "is associated with", "we observe", "we see", "pattern", "correlate", "alongside",',
+  '  "in the same period", "at the same time", "coincide", "more likely", "less likely", "more',
+  '  often", "less often", "appears to", "seems to".',
   '- No entry is ever "CAUSAL" - this product runs no controlled experiment, so a causal claim is',
   '  never supported here regardless of what an entry says.',
 ].join('\n');
@@ -1044,7 +1065,16 @@ function checkSingleTokenEntities(narrative, packInfo, violations) {
 // Unicode capital letter (\p{Lu}) followed by two or more Unicode letters of either case (\p{L}).
 // V9's own exemptions - (a)-(d) above, the allowlist, and the pack-grounding check - are
 // unchanged; only the shape test widens, via isCapitalisedCandidate() below.
-const CAPITALISED_TOKEN_RE = /^\p{Lu}[\p{L}]{2,}$/u;
+//
+// v706 (check 88, refuter round 3): "O'Brien" was invisible for a THIRD reason, distinct from
+// 1-5 above - an INTERNAL apostrophe. orphanWords() keeps it (only a TRAILING punctuation mark is
+// trimmed, and stripTrailingPossessive only strips a trailing 's), so the isolated token really is
+// "O'Brien" - but the shape test itself rejected it outright, because an apostrophe is not \p{L}
+// and the old regex demanded every character after the first be a plain letter. Fixed by allowing
+// an OPTIONAL apostrophe (straight or typographic) immediately before any letter in the run, so an
+// internal apostrophe no longer breaks the shape test while a token with no apostrophe at all
+// behaves byte-for-byte as before (the group is `['’]?` - optional).
+const CAPITALISED_TOKEN_RE = /^\p{Lu}(?:['’]?\p{L}){2,}$/u;
 
 // v705: a hyphenated token ("Mei-Ling") matches neither the plain shape above (a hyphen is not
 // \p{L}) - it is a candidate when ANY of its hyphen-separated segments looks like a capitalised
@@ -1165,6 +1195,21 @@ function stripTrailingPossessive(word) {
   return word.replace(/['’]s$/i, '');
 }
 
+// v706 (check 88, refuter round 3): an honorific glued directly onto a name with NO space at all
+// ("Mr.Tan") is invisible to every existing rule for two INDEPENDENT reasons at once - the shape
+// test rejects the internal period outright (same class of problem as the apostrophe fix above),
+// and DIRECT_ADDRESS_CUE_RE (checkSingleTokenEntities) requires a space after the honorific, which
+// this text does not have. Rather than widen either shape test to tolerate an embedded period
+// (which would then also swallow a genuine sentence-final "Mr." followed immediately by a new
+// sentence with no space - a real, if rare, typo shape this file should not start silently
+// accepting as one token), this is fixed at the SOURCE: the token this word is glued to is split
+// into its two real words - "Mr." and "Tan" - each carrying its own correct offset into the
+// ORIGINAL narrative, before any shape test ever runs. Every downstream rule then sees exactly
+// what it would have seen had the model written "Mr. Tan": "Mr." itself is never a capitalised
+// candidate (the period still breaks CAPITALISED_TOKEN_RE, correctly - an honorism is not a name),
+// and "Tan" is judged as an ordinary standalone token as normal.
+const GLUED_HONORIFIC_RE = /^(Mr|Ms|Mrs|Dr)\.(\p{Lu}[\p{L}]*)$/u;
+
 // Every word in the ORIGINAL narrative, split at whitespace/dash/slash boundaries and stripped of
 // surrounding punctuation the same way nameCandidates() strips it above (kept as a SEPARATE pass,
 // not a shared helper, because nameCandidates needs sentence-scoped runs and this needs
@@ -1183,6 +1228,16 @@ function orphanWords(narrative) {
     if (!/^\p{Lu}\.$/u.test(word)) word = word.replace(/\.+$/, '');
     word = stripTrailingPossessive(word);
     const index = m.index + start;
+
+    const glued = GLUED_HONORIFIC_RE.exec(word);
+    if (glued) {
+      const honorific = `${glued[1]}.`;
+      const name = glued[2];
+      out.push({ word: honorific, index, end: index + honorific.length });
+      out.push({ word: name, index: index + honorific.length, end: index + honorific.length + name.length });
+      continue;
+    }
+
     out.push({ word, index, end: index + word.length });
   }
   return out;
@@ -1193,12 +1248,28 @@ function orphanWords(narrative) {
 // happens to be capitalised at a clause start (e.g. an orphan name right after "The") does not
 // smuggle the orphan out of V9's reach — "The Marcus arrived" must still be checked, because "The"
 // is not itself a name.
-function hasCapitalisedRunPartner(words, i) {
-  const isPartner = (w) => {
-    if (!w || !NAME_TOKEN_RE.test(w.word)) return false;
-    return !STOPWORDS.has(w.word.toLowerCase().replace(/\.$/, ''));
+//
+// v706 (check 88, refuter round 3): "Tan/Wong" was a DOUBLE exemption, not a missed one. V6's own
+// tokeniser (nameCandidates, above) splits a sentence on WHITESPACE ONLY, so "Tan/Wong" is one
+// unbreakable non-name token to V6 - it is dropped by nameCandidates' own shape test and V6 never
+// forms a two-word run out of it at all. orphanWords() (this function's own caller), by contrast,
+// DOES split on "/" (ORPHAN_TOKEN_SPLIT_RE, above) - so "Tan" and "Wong" arrive here as two
+// SEPARATE, array-adjacent tokens. The old version of this function only checked array adjacency,
+// so it saw two capitalised non-stopword neighbours and concluded "this is a run, V6's territory" -
+// exactly backwards, because V6 never actually claimed it. The result: neither rule ever looked at
+// "Tan" or "Wong" on its own. Fixed by requiring the ACTUAL text between the two token spans, in
+// the original narrative, to be whitespace-only before counting them as a run partner - a "/" (or
+// any other punctuation the split regex consumed as a boundary) between two array-adjacent tokens
+// means they were never written as a whitespace-joined two-word name and V9 must judge each alone.
+function hasCapitalisedRunPartner(narrative, words, i) {
+  const isPartner = (self, neighbour) => {
+    if (!neighbour || !NAME_TOKEN_RE.test(neighbour.word)) return false;
+    if (STOPWORDS.has(neighbour.word.toLowerCase().replace(/\.$/, ''))) return false;
+    const [first, second] = self.index < neighbour.index ? [self, neighbour] : [neighbour, self];
+    const gap = narrative.slice(first.end, second.index);
+    return gap.length > 0 && /^\s+$/.test(gap);
   };
-  return isPartner(words[i - 1]) || isPartner(words[i + 1]);
+  return isPartner(words[i], words[i - 1]) || isPartner(words[i], words[i + 1]);
 }
 
 // (a): sentence-initial in the broad sense — start of the document, start of a line (which in this
@@ -1227,7 +1298,7 @@ function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
     if (!isCapitalisedCandidate(tok.word)) continue;
     if (allowlist.has(tok.word)) continue;                          // (b)
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // (b) heading/code lines
-    if (hasCapitalisedRunPartner(words, i)) continue;                // (d)
+    if (hasCapitalisedRunPartner(narrative, words, i)) continue;     // (d)
     if (isOrphanSentenceInitial(narrative, tok.index)) continue;     // (a)
     if (rawHaystack.includes(tok.word)) continue;                    // (c)
     if (reported.has(tok.word)) continue;
@@ -1364,7 +1435,7 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
     const tok = words[i];
     if (!isCapitalisedCandidate(tok.word)) continue;
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // heading/code lines
-    if (hasCapitalisedRunPartner(words, i)) continue;                // (d), still V6's territory
+    if (hasCapitalisedRunPartner(narrative, words, i)) continue;     // (d), still V6's territory
     if (!isOrphanSentenceInitial(narrative, tok.index)) continue;    // V9b only judges what V9 skips
     if (allowlist.has(tok.word)) continue;                           // (b)
     const plain = tok.word.toLowerCase();
@@ -1377,6 +1448,47 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
       detail: `V9b: "${tok.word}" opens a sentence, is capitalised, is not a common sentence-` +
         `starter word, and matches no evidence-pack string (case-insensitive); check it is not ` +
         `an invented name, near "${contextAround(narrative, tok.index, tok.end)}"`,
+    });
+  }
+}
+
+/* ----------------------------------------------------------- V11: CJK entities */
+
+// Check 88 (tokeniser gap #4): every rule above - V6, V9, V9b - is built on a LATIN-script idea of
+// "capitalised". A CJK name ("美玲") has no case at all, so it is invisible to all of them: it
+// never matches NAME_TOKEN_RE, CAPITALISED_TOKEN_RE, or any allowlist built around Latin letters.
+// This is not a shape bug to widen the existing regexes for - a script with no capitalisation
+// needs its own, independent test, not a capitalisation test taught to ignore capitalisation.
+//
+// V11 fires on any RUN of two or more Han, Hangul, Hiragana or Katakana characters that does not
+// appear, verbatim, anywhere among the pack's own string leaves - the same "found in the pack"
+// grounding principle V6/V9 already use, applied to a different alphabet. Unicode script property
+// escapes (\p{Script=Han} etc, with the `u` flag) are used rather than a fixed code-point range so
+// this does not silently drift as Unicode adds characters to those scripts.
+//
+// HONEST LIMIT, declared rather than hidden: a run of 2+ characters is the floor this rule can
+// reason about. A ONE-character CJK name (a real, if less common, shape - a single-character
+// Chinese given name) is indistinguishable from a one-character common word or particle without a
+// name database, the same limit V6's own banner already states for Latin script; a single
+// character therefore never fires V11, by design, not by oversight.
+const CJK_RUN_RE = /[\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}]{2,}/gu;
+
+function checkCjkEntities(narrative, packInfo, violations) {
+  const haystack = packInfo.strings.join('\n');
+  const reported = new Set();
+  CJK_RUN_RE.lastIndex = 0;
+  let m;
+  while ((m = CJK_RUN_RE.exec(narrative)) !== null) {
+    const run = m[0];
+    if (haystack.includes(run)) continue;
+    if (reported.has(run)) continue;
+    reported.add(run);
+    violations.push({
+      rule: RULES.ENTITY,
+      detail: `V11: "${run}" is a run of 2+ Han/Hangul/Kana characters naming a person or entity ` +
+        `but appears nowhere in the evidence pack (a single-character name is a known limit of ` +
+        `this check - see the file's own note on CJK), near ` +
+        `"${contextAround(narrative, m.index, m.index + run.length)}"`,
     });
   }
 }
@@ -1490,9 +1602,11 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   checkSingleTokenEntities(narrative, packInfo, violations); // V6 (check 83/88)
   checkOrphanProperNouns(narrative, packInfo, violations, options); // V9 (check 83/88 gap closure)
   checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, options); // V9b (sentence-initial gap)
+  checkCjkEntities(narrative, packInfo, violations);    // V11 (check 88, CJK/Hangul/Kana gap)
   checkStructure(narrative, violations);                // V7 (check 82)
   checkCohortContradiction(narrative, pack, violations); // V8 (check 89)
-  checkAssociationCausalBinding(narrative, packInfo, violations); // V10 (check 17, narrative half)
+  checkAssociationCausalBinding(narrative, packInfo, violations); // V10 (check 17, causal blacklist, second line)
+  checkAssociationPositiveMarker(narrative, packInfo, violations); // V10b (check 17, positive marker, primary)
 
   return { ok: violations.length === 0, violations };
 }
@@ -1651,15 +1765,24 @@ function sentenceMentionsFinding(sentenceLower, keywords) {
   return false;
 }
 
-function checkAssociationCausalBinding(narrative, packInfo, violations) {
+// Shared by V10 and V10b: every plain object the pack carries with its own evidence_class of
+// 'ASSOCIATION' (DIRECT_FACT is exempt from both rules; CAUSAL never ships, per v696), reduced to
+// its identifying keywords. One traversal, one definition of "a finding", so the two rules can
+// never quietly drift apart on what counts as one.
+function associationFindings(packInfo) {
   const findings = [];
   for (const obj of packInfo.objects) {
-    if (obj.evidence_class !== 'ASSOCIATION') continue; // DIRECT_FACT is exempt; CAUSAL never ships (v696)
+    if (obj.evidence_class !== 'ASSOCIATION') continue;
     const keywords = findingKeywords(obj);
     if (keywords.length === 0) continue;
     const label = obj.label || obj.pattern || obj.name || obj.id || 'unlabelled finding';
     findings.push({ label, keywords });
   }
+  return findings;
+}
+
+function checkAssociationCausalBinding(narrative, packInfo, violations) {
+  const findings = associationFindings(packInfo);
   if (findings.length === 0) return;
 
   for (const sentence of sentencesOf(narrative)) {
@@ -1671,6 +1794,116 @@ function checkAssociationCausalBinding(narrative, packInfo, violations) {
         rule: RULES.CAUSAL_BINDING,
         detail: `causal construction used for an ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") ` +
           `which must be phrased as an observed pattern, not a cause, near "${sentence.slice(0, 90)}"`,
+      });
+    }
+  }
+}
+
+/* ------------------------------------------ V10b: ASSOCIATION positive marker */
+
+// Check 17 (typed verdicts, POSITIVE half). A refuter proved V10's causal-phrase BLACKLIST
+// (V10_CAUSAL_RE, above) is a fixed list that can always be evaded by one more idiom it does not
+// yet name - 27/27 of "boosts", "fuels", "triggers", "explains", "is behind", "owing to", "stems
+// from", "is why", "means that", "translates into", "so ... that" (with words between "so" and
+// "that" - the blacklist's own "so\s+that" only matches the two words adjacent), "as a consequence
+// of", a pronoun continuation ("Weekend visits build momentum. This pushes customers to return
+// sooner."), a bare conditional ("If you keep encouraging weekend visits, customers will return
+// sooner"), "pave the way", "sets up", "follows from", "accounts for", "is the reason" and
+// "produces" all passed V10 clean, because none of them is "because/due to/cause/drive/leads
+// to/results in/thanks to/as a result/so that/which means...will" - the exact, finite list V10
+// tests for. A blacklist of English causal idioms can never be exhaustive.
+//
+// V10b inverts the burden instead of extending the list further: for a sentence that references an
+// ASSOCIATION finding's own vocabulary (the SAME keyword-extraction and sentence-matching V10
+// already uses - associationFindings/sentenceMentionsFinding, above - so the two rules can never
+// disagree on WHICH sentences are "about" a finding), the sentence (plus the immediately following
+// sentence, if IT opens with a pronoun continuation - "This/That/It/Which" - referring back to the
+// same claim) must POSITIVELY carry at least one of the approved ASSOCIATION_MARKERS below.
+// Silence is now a failure, not a pass - the exact opposite failure mode from V10's own blacklist.
+// V10 stays wired as a SECOND, independent line (validateNarrative runs both): a sentence can carry
+// an approved marker and STILL use a blacklisted verb in the same breath ("customers who visit on
+// a weekend tend to be caused to return sooner" - contrived, but V10 alone catches it), and V10
+// alone still catches an unrelated causal sentence that names no ASSOCIATION finding's vocabulary
+// at all (out of V10b's reach, since V10b - like V10 - never fires without a keyword match).
+//
+// HONEST LIMIT, stated plainly because this is the inverse failure mode from every other rule in
+// this file: a sentence that PARAPHRASES the same finding using NONE of its own vocabulary (no
+// word findingKeywords() would extract from the finding's label/pattern/name) is invisible to
+// sentenceMentionsFinding and therefore invisible to V10b - exactly the same "no shared vocabulary,
+// no way to bind free English to a machine record" limit V6's own entity-grounding banner and V10's
+// own header already state for their respective jobs. V10's unconditional causal-word blacklist is
+// what still catches a causal paraphrase that keeps none of the finding's own words; V10b narrows
+// one specific, checkable slice (silence where a marker is required), it does not replace V10's
+// unconditional check, which is why both stay wired into validateNarrative independently.
+//
+// THE MARKER LIST is the single source of truth for what counts as an approved association phrase,
+// used nowhere else and duplicated nowhere else - the prompt instruction (EVIDENCE_CLASS_INSTRUCTION,
+// above) tells the model to use one of these words in its own prose, in English, rather than
+// quoting this list verbatim (a model does not read regexes) - but every phrase named there is
+// present here, so a model that follows the instruction always passes, and this list is the one
+// place to add a marker if the model's own phrasing drifts.
+export const ASSOCIATION_MARKERS = [
+  /\btend(?:s)?\s+to\b/i,
+  /\bis\s+associated\s+with\b/i,
+  /\bassociated\s+with\b/i,
+  // "customers who ... also" - the gap between the cue and "also" is deliberately generous (a
+  // relative clause commonly sits between them: "customers who visit on a weekend also tend...").
+  /\bcustomers?\s+who\b[\s\S]{0,80}?\balso\b/i,
+  /\bclients?\s+who\b[\s\S]{0,80}?\balso\b/i,
+  /\balso\s+tend/i,
+  /\bwe\s+observe/i,
+  /\bwe\s+see\b/i,
+  /\bpattern/i,
+  /\bcorrelat/i,
+  /\bgoes\s+together\s+with\b/i,
+  /\balongside\b/i,
+  /\bin\s+the\s+same\s+period\b/i,
+  /\bat\s+the\s+same\s+time\b/i,
+  /\bcoincide/i,
+  /\bmore\s+often\b/i,
+  /\bless\s+often\b/i,
+  /\bmore\s+likely\b/i,
+  /\bless\s+likely\b/i,
+  /\bappears?\s+to\b/i,
+  /\bseems?\s+to\b/i,
+];
+
+function hasAssociationMarker(text) {
+  return ASSOCIATION_MARKERS.some((re) => re.test(text));
+}
+
+// A sentence opening with one of these pronouns, right after a sentence that named the finding, is
+// read as continuing the SAME claim ("Weekend visits build momentum. This pushes customers to
+// return sooner.") - so the marker may live in either sentence and the pair still passes. Anything
+// looser (a pronoun three sentences later, or one that opens a genuinely new topic) is out of
+// scope, the same conservative-window trade this file makes everywhere else.
+const PRONOUN_CONTINUATION_RE = /^(?:This|That|It|Which)\b/;
+
+function checkAssociationPositiveMarker(narrative, packInfo, violations) {
+  const findings = associationFindings(packInfo);
+  if (findings.length === 0) return;
+
+  const sentences = sentencesOf(narrative);
+  const reported = new Set();
+
+  for (let i = 0; i < sentences.length; i += 1) {
+    const sentence = sentences[i];
+    const lower = sentence.toLowerCase();
+    for (const finding of findings) {
+      if (!sentenceMentionsFinding(lower, finding.keywords)) continue;
+      let window = sentence;
+      if (i + 1 < sentences.length && PRONOUN_CONTINUATION_RE.test(sentences[i + 1])) {
+        window = `${sentence} ${sentences[i + 1]}`;
+      }
+      if (hasAssociationMarker(window)) continue;
+      const key = `${finding.label}::${i}`;
+      if (reported.has(key)) continue;
+      reported.add(key);
+      violations.push({
+        rule: RULES.ASSOCIATION_MARKER,
+        detail: `sentence references ASSOCIATION finding ("${String(finding.label).slice(0, 80)}") ` +
+          `but carries no approved association marker (e.g. "tend to", "is associated with", ` +
+          `"we observe", "more likely"), near "${sentence.slice(0, 90)}"`,
       });
     }
   }

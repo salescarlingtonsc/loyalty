@@ -44,10 +44,11 @@ const MAX_OUTPUT_TOKENS = 4000;
 const MAX_BODY = 4096;
 const ALLOWED_MODELS = new Set(['claude-sonnet-5', 'claude-opus-4-8']);
 const FALLBACK_MODEL = 'claude-sonnet-5';
-// v705 (check 17): assembleUserPrompt (./validate.mjs) now surfaces each finding's evidence_class
-// to the model — bump this on any SYSTEM_PROMPT or model change, same as always; see the file
-// header note.
-export const PROMPT_VERSION = 'v705';
+// v706 (check 17): EVIDENCE_CLASS_INSTRUCTION (./validate.mjs) now names the approved positive
+// association-marker phrases the model must use for an ASSOCIATION finding, enforced by the new
+// V10b (checkAssociationPositiveMarker) — bump this on any SYSTEM_PROMPT or model change, same as
+// always; see the file header note.
+export const PROMPT_VERSION = 'v706';
 
 type ClaimedReport = {
   id: string;
