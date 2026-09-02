@@ -3580,7 +3580,8 @@
       'This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.':'此平台级暂停将覆盖{scope}。它叠加在商户自己的开关之上——不会更改商户的设置。',
       'This releases the platform hold on {scope}. The firm’s own switch decides sends from here.':'此操作将解除对{scope}的平台暂停。此后由商户自己的开关决定是否发送。',
       'Retention hold placed.':'已设置留存暂停。',
-      'Retention hold released.':'已解除留存暂停。'
+      'Retention hold released.':'已解除留存暂停。',
+      'Peekaa recorded revenue':'Peekaa 记录的收入'
     }),
     ms:Object.freeze({
       'Retention holds':'Penggantungan pengekalan',
@@ -3605,7 +3606,8 @@
       'This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.':'Penghentian di peringkat platform ini merangkumi {scope}. Ia diletakkan di atas suis firma sendiri — tetapan mereka tidak diubah.',
       'This releases the platform hold on {scope}. The firm’s own switch decides sends from here.':'Ini melepaskan penggantungan platform pada {scope}. Suis firma sendiri menentukan penghantaran selepas ini.',
       'Retention hold placed.':'Penggantungan pengekalan telah digantung.',
-      'Retention hold released.':'Penggantungan pengekalan telah dilepaskan.'
+      'Retention hold released.':'Penggantungan pengekalan telah dilepaskan.',
+      'Peekaa recorded revenue':'Hasil direkodkan Peekaa'
     })
   });
   let platformLocale='en';
@@ -5556,7 +5558,7 @@
           ?pt('No customers in scope')
           :`${returningRate.toFixed(1)}% (${returningCustomers}/${activeCustomers})`,'retention'],
         ['Transactions',String(Number(kpis.visits??0)),'till'],
-        ['Revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports']
+        ['Peekaa recorded revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports']
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
         ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?CUI.table({
@@ -13736,7 +13738,7 @@
         ['Businesses',summary.business_count||0,'branch'],
         ['Customers',summary.customer_count||0,'customers'],
         ['Sales',summary.sales_count||0,'till'],
-        ['Revenue',currency(summary.revenue_cents||0),'reports']
+        ['Peekaa recorded revenue',currency(summary.revenue_cents||0),'reports']
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       ${CUI.table({caption:'Business performance',headers:['Business','Sector','Customers','Revenue'],rows:asArray(report.businesses).map(row=>[
         escapeHtml(row.name),escapeHtml(sectorLabel(row.industry)),String(row.customers||0),currency(row.revenue_cents||0)

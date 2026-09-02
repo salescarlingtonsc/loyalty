@@ -49298,6 +49298,9 @@ async function customerIntelligencePage(){
   let lastFunnelConversionBundle=null,lastFunnelConversionError='',
     lastDemographicsBundle=null,lastDemographicsError='',
     lastBehaviourBundle=null,lastBehaviourError='';
+  /* nestly_v685: ranked opportunities (public.get_ci_opportunities_v1, v678) — same independent-
+     bundle-per-section discipline, same ciQuietErrorV650 idiom as every panel above. */
+  let lastOpportunitiesBundle=null,lastOpportunitiesError='';
   const categoryCustomersCacheV650=new Map();// node_key -> {loading,error,data}
   const expandedCategoryNodesV650=new Set();
   const CUSTOMER_INTELLIGENCE_PAGE_SIZE=100;
@@ -49387,14 +49390,27 @@ async function customerIntelligencePage(){
     </section>`;
   }
   const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;
-  function ciCategoryCustomersRowsMarkupV650(nodeKey){
+  /* nestly_v685 (check 19): drill parity. The aggregate row's `customer_count` (from
+     get_ci_category_mix_v1) and the drilled `customers` array (from
+     get_ci_category_customers_v1) must describe the SAME cohort. Below the k=5 small-cell
+     floor (v667), the drilled rows are withheld and `suppressed.cohort_size` carries the count
+     instead — so the "showing" half of the parity line reads `suppressed.cohort_size` there,
+     never a misleading 0, and the suppression note replaces "No customers in this category yet."
+     which previously could not be told apart from a genuinely empty category. */
+  function ciCategoryCustomersRowsMarkupV650(nodeKey,expectedCustomerCount){
     const cached=categoryCustomersCacheV650.get(nodeKey);
     if(!cached)return '';
     if(cached.loading)return `<tr><td colspan="4"><div class="empty">Loading customers…</div></td></tr>`;
     if(cached.error)return `<tr><td colspan="4"><div class="err" role="status">${esc(cached.error)}</div></td></tr>`;
     const customers=Array.isArray(cached.data?.customers)?cached.data.customers:[];
-    if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div></td></tr>`;
-    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div></td></tr>`;
+    const suppressed=cached.data?.suppressed||null;
+    const shownCount=suppressed?Number(suppressed.cohort_size||0):customers.length;
+    const parityLine=`<p class="muted small" style="margin:8px 0 0">${Number(expectedCustomerCount||0)} customers · showing ${shownCount}</p>`;
+    if(suppressed){
+      return `<tr><td colspan="4"><div class="empty">${esc(suppressed.note||'Too few customers to name without identifying them.')}</div>${parityLine}</td></tr>`;
+    }
+    if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div>${parityLine}</td></tr>`;
+    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div>${parityLine}</td></tr>`;
   }
   function categoryMixMarkupV650(){
     if(lastCategoryMixError)return ciQuietErrorV650('What they buy could not load.',lastCategoryMixError);
@@ -49417,7 +49433,7 @@ async function customerIntelligencePage(){
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">What they buy</span>
       <h2 id="ciCategoryMixHeadingV650">Category mix</h2></div></div>
       <p class="muted small">All branches</p>
-      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key):''}`).join('')}</tbody></table></div>`
+      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
         :'<div class="empty">No categorised revenue in this scope yet.</div>'}
       <p class="muted small" style="margin-top:10px">Category view covers ${classifiedPct.toFixed(1)}% of service &amp; retail revenue.${projectedPct>0?` ${projectedPct.toFixed(1)}% projected through current mappings, not snapshots.`:''}</p>
       ${ciMeasuredSinceV650(bundle.observed_since)}
@@ -49480,6 +49496,10 @@ async function customerIntelligencePage(){
   function ciBehaviourMarkupV679(){
     if(lastBehaviourError)return ciQuietErrorV650('When customers come in could not load.',lastBehaviourError);
     return behaviourPanelHtmlV679(lastBehaviourBundle);
+  }
+  function ciOpportunitiesMarkupV685(){
+    if(lastOpportunitiesError)return ciQuietErrorV650('Ranked opportunities could not load.',lastOpportunitiesError);
+    return opportunitiesPanelHtmlV685(lastOpportunitiesBundle);
   }
   const forecastMarkup=(forecast,currency)=>{
     if(forecast?.status!=='available'){
@@ -49548,7 +49568,7 @@ async function customerIntelligencePage(){
     const economicsMarkupV522=economicsGatedOffV522
       ?''
       :window.NestlySectorEconomics.render(economicsView);
-    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}`;
+    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -49634,7 +49654,7 @@ async function customerIntelligencePage(){
       truthResponse,lifecycleResponse,briefingResponse,customerResponse,
       economicsResponse,driversResponse,policyResponse,
       acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse,
-      funnelConversionResponse,demographicsResponse,behaviourResponse
+      funnelConversionResponse,demographicsResponse,behaviourResponse,opportunitiesResponse
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -49686,6 +49706,10 @@ async function customerIntelligencePage(){
         p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
       }),
       sb.rpc('get_ci_daypart_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      /* nestly_v685: ranked opportunities — branch-scoped like the v679 trio above. */
+      sb.rpc('get_ci_opportunities_v1',{
         p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
       })
     ]);
@@ -49743,6 +49767,8 @@ async function customerIntelligencePage(){
     lastDemographicsBundle=demographicsResponse.data||null;
     lastBehaviourError=behaviourResponse.error?.message||'';
     lastBehaviourBundle=behaviourResponse.data||null;
+    lastOpportunitiesError=opportunitiesResponse.error?.message||'';
+    lastOpportunitiesBundle=opportunitiesResponse.data||null;
     paint(lastPayload);
   };
   $('ciRun').onclick=run;
@@ -49808,6 +49834,69 @@ async function customerIntelligencePage(){
   };
   renderReportScopeNoteV272(isCurrent);
   await run();
+}
+
+/* nestly_v685 (check 79-consumer) — renders public.get_ci_opportunities_v1's payload (nestly_v678,
+   the consultant spine): a ranked, evidence-gated list of business opportunities, always including
+   the 'do_nothing' outcome as a first-class ranked entry when nothing else clears the evidence bar
+   (never an empty list). Pure TOP-LEVEL function, same posture as the v679 panels just below —
+   a test can extract and execute it directly against a fixture shaped like the RPC's real output. */
+function ciOpportunityConfidenceV685(confidence){
+  const c=confidence&&typeof confidence==='object'?confidence:{};
+  return `${Number(c.n)||0}/${Number(c.floor)||0}`;
+}
+function ciOpportunityImpactV685(impact,currency){
+  const i=impact&&typeof impact==='object'?impact:{};
+  if(i.cents===null||i.cents===undefined)return esc(i.reason||'Impact not available.');
+  return esc(scopeMoneyV685(i.cents,currency));
+}
+function scopeMoneyV685(cents,currency='SGD'){
+  return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
+}
+function ciOpportunityCardHtmlV685(item,currency){
+  const action=item?.action||{},confidence=item?.confidence||{};
+  return `<article class="revenue-opportunity" data-rank-class="${esc(item?.rank_class||'')}">
+    <div class="revenue-opportunity-rank"><span>${Number(item?.rank)||0}</span></div>
+    <div class="revenue-opportunity-main">
+      <p class="revenue-opportunity-finding">${esc(item?.pattern||'No pattern described.')}</p>
+      <div class="revenue-opportunity-facts">
+        <div><span>Impact</span><strong>${ciOpportunityImpactV685(item?.impact,currency)}</strong></div>
+        <div><span>Evidence class</span><strong class="pill">${esc(item?.evidence_class||'Unknown')}</strong></div>
+        <div><span>Confidence</span><strong>${ciOpportunityConfidenceV685(confidence)}</strong></div>
+      </div>
+      <dl class="ci-opportunity-action">
+        <div><dt>Who</dt><dd>${esc(action.who||'Not specified')}</dd></div>
+        <div><dt>What</dt><dd>${esc(action.what||'Not specified')}</dd></div>
+        <div><dt>When</dt><dd>${esc(action.when||'Not specified')}</dd></div>
+        <div><dt>Channel</dt><dd>${esc(action.channel||'Not specified')}</dd></div>
+      </dl>
+      <p class="muted small ci-opportunity-limitation">${esc(item?.limitation||'')}</p>
+    </div>
+  </article>`;
+}
+function opportunitiesPanelHtmlV685(payload){
+  if(payload&&payload.error)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
+    'Opportunities could not load',esc(payload.error?.message||payload.error||'Try running the report again.'));
+  if(!payload)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
+    'Ranked opportunities','Run this report to load ranked opportunities.');
+  const currency=payload?.scope?.currency||'SGD';
+  const ranked=Array.isArray(payload.ranked)?payload.ranked:[];
+  const comparisons=payload.comparisons||{};
+  const comparisonsLine=`${Number(comparisons.subgroups_examined)||0} examined · ${Number(comparisons.subgroups_promoted)||0} promoted`;
+  if(!ranked.length)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
+    'Ranked opportunities','No ranked opportunities were returned for this scope.');
+  return `<section class="revenue-truth-section" aria-labelledby="ciOpportunitiesHeadingV685">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Today’s best actions</span>
+    <h2 id="ciOpportunitiesHeadingV685">Ranked opportunities</h2></div></div>
+    <div class="ci-opportunities-list">${ranked.map(item=>ciOpportunityCardHtmlV685(item,currency)).join('')}</div>
+    <p class="muted small ci-opportunities-comparisons" style="margin-top:10px">${esc(comparisonsLine)}</p>
+    ${ciMeasuredSinceInlineV685(payload.observed_since)}
+  </section>`;
+}
+function ciMeasuredSinceInlineV685(observedSince){
+  return observedSince
+    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    :'';
 }
 
 /* nestly_v679 — Customer intelligence gets three more evidence-safe panels: the lifecycle funnel
