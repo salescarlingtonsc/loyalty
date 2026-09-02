@@ -21662,6 +21662,44 @@ const DASHBOARD_METRIC_DEFINITIONS_V405={
   inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
 };
 
+/* nestly_v717 (owed by nestly_v714: "the dashboard's Visits drill-down still lists raw sales in
+   the browser"). v714 made the owner dashboard's Visits KPI count DISTINCT (client, Asia/Singapore
+   visit day) — a split bill is one visit — but this dialog kept listing one row per raw sale, so
+   a tile reading 8 opened a list of 10. This groups the exact same rows validVisitSales() already
+   scopes (counts_as_visit, never a reversal, never a reversed original) by (client_id, SG calendar
+   day), mirroring the server's visit_days definition rather than inventing a near-enough one: an
+   anonymous sale (no client_id — a walk-in) stays its own row, exactly as a sale with no client
+   cannot be folded into anyone else's day. `sgt()` is the one Asia/Singapore formatter this file
+   already uses everywhere else that needs a wall-clock day, so the day key comes from there rather
+   than a second timezone rule invented for this dialog. */
+function groupVisitDaysV719(rows){
+  const groups=new Map();
+  const order=[];
+  for(const row of validVisitSales(rows)){
+    const day=(sgt(row.occurred_at)||'').slice(0,10);
+    const key=row.client_id?`c:${row.client_id}:${day}`:`a:${row.id}`;
+    let group=groups.get(key);
+    if(!group){
+      group={clientId:row.client_id||null,name:row.clients?.full_name||'Walk-in',count:0,amountCents:0,occurredAt:row.occurred_at};
+      groups.set(key,group);
+      order.push(key);
+    }
+    group.count+=1;
+    group.amountCents+=Number(row.amount_cents)||0;
+    /* Show the row under the LATEST sale time on that visit day, so a same-day group sorts where
+       an owner scanning newest-first expects it, not where its earliest ticket happened to land. */
+    if(String(row.occurred_at)>String(group.occurredAt))group.occurredAt=row.occurred_at;
+  }
+  return order.map(key=>groups.get(key)).sort((a,b)=>String(b.occurredAt).localeCompare(String(a.occurredAt)));
+}
+/* The one line the grouped row prints for "what happened that day" — a ticket count and the
+   summed amount, e.g. "2 tickets · SGD 45.00", so a split bill still shows what it added up to
+   without pretending it was two visits. */
+function visitDaySummaryV719(group){
+  const count=Number(group?.count)||0;
+  return `${count===1?'1 ticket':`${count} tickets`} · ${money(group?.amountCents||0)}`;
+}
+
 /* V468 (owner photos 3, 8 and 9: "View visits", "See new customers" and "See inactive customers"
    all did nothing). CUI.activateDialog's teardown unwinds the dialog's pushed history entry with
    history.back(), which is ASYNCHRONOUS — nav() set the hash synchronously and the queued pop
@@ -21803,8 +21841,17 @@ async function openDashboardMetricRowsV388(options){
     });
     if(!stillOpen())return;
     if(error)return failed(ownerErrorText(error));
-    const scoped=key==='visits'?validVisitSales(data||[]):(data||[]).filter(row=>row?.counts_as_revenue);
-    body.innerHTML=table(['When','Customer',key==='visits'?'Kind':'Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${customerCellV408(row.client_id,row.clients?.full_name||'Walk-in','')}</td><td data-label="${key==='visits'?'Kind':'Amount'}">${key==='visits'?esc(String(row.kind||'')):esc(money(row.amount_cents||0))}</td></tr>`));
+    if(key==='visits'){
+      /* nestly_v717: one row per VISIT DAY, not per raw sale — see groupVisitDaysV719 above.
+         The row count here is what must equal the tile's own count, since both now come from
+         the same (client, SG day) grouping the server's Visits KPI applies. */
+      const groups=groupVisitDaysV719(data||[]);
+      body.innerHTML=table(['When','Customer','Visit'],groups.map(group=>`<tr><td data-label="When">${esc(sgLedgerDateV154(group.occurredAt).date)}</td><td data-label="Customer">${customerCellV408(group.clientId,group.name,'')}</td><td data-label="Visit">${esc(visitDaySummaryV719(group))}</td></tr>`));
+      body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">One visit per customer per day; split bills count once.</p>`);
+      return;
+    }
+    const scoped=(data||[]).filter(row=>row?.counts_as_revenue);
+    body.innerHTML=table(['When','Customer','Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${customerCellV408(row.client_id,row.clients?.full_name||'Walk-in','')}</td><td data-label="Amount">${esc(money(row.amount_cents||0))}</td></tr>`));
   }catch(error){failed(ownerErrorText(error))}
 }
 function dashboardMetricWasLineV387(metric,previousRange){

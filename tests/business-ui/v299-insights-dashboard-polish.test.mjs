@@ -163,11 +163,14 @@ test('V408 a KPI drill-down row opens the customer behind it',()=>{
      assertion is on the helper, not on the shape that was broken. */
   assert.match(app,/dialogHandOffNavV468\(close,`#\/client\/\$\{hit\.dataset\.metricClientV408\}`\);/);
   assert.doesNotMatch(app,/close\(\);\s*nav\(`#\/client\//,'close() then nav() is the v183 history race');
-  /* THREE call sites, not four: visits and revenue share one row builder, so the four tiles are
-     served by new / inactive / sales. */
+  /* FOUR call sites: new / inactive / visits / revenue. Before nestly_v719 this was three,
+     because visits and revenue shared one per-sale row builder — but v719 gave the Visits
+     drill-down its OWN grouped-by-visit-day renderer (groupVisitDaysV719, see
+     tests/business-ui/v719-visits-drilldown-days.test.mjs), so it now has its own
+     customerCellV408 call site, separate from revenue's still-per-sale one. */
   const drill=app.slice(app.indexOf('async function openDashboardMetricRowsV388('),
                         app.indexOf('function dashboardMetricWasLineV387('));
-  assert.equal([...drill.matchAll(/customerCellV408\(/g)].length,3);
+  assert.equal([...drill.matchAll(/customerCellV408\(/g)].length,4);
 });
 
 test('V408 redeeming refreshes the customer standing from the server',()=>{
