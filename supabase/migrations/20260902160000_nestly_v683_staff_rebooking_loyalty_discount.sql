@@ -537,8 +537,6 @@ $$;
 revoke all on function public.get_ci_rebooking_v1(uuid,date,date,uuid) from public, anon;
 grant execute on function public.get_ci_rebooking_v1(uuid,date,date,uuid) to authenticated, service_role;
 
-commit;
-
 -- ============================================================================================
 -- 4. LOYALTY PROGRAMMES (checks 54-55)
 -- ============================================================================================
@@ -579,7 +577,6 @@ commit;
 -- computed over the customer's ENTIRE history (not window-boxed) because "has this customer ever
 -- engaged with this programme" is what "enrolled" means; the redemption EVENTS themselves stay
 -- window + maturity-boxed like every other CI-B/CI-C reader.
-begin;
 
 -- Internal helper, not an API surface: the SAME "eligible" population set-based, reused both to
 -- COUNT eligible customers and to INTERSECT each programme's "enrolled" count against it, so
@@ -942,8 +939,6 @@ $$;
 revoke all on function public.get_ci_loyalty_programmes_v1(uuid,date,date,uuid) from public, anon;
 grant execute on function public.get_ci_loyalty_programmes_v1(uuid,date,date,uuid) to authenticated, service_role;
 
-commit;
-
 -- ============================================================================================
 -- 5. DISCOUNT DEPENDENCY (checks 56-57)
 -- ============================================================================================
@@ -1076,8 +1071,6 @@ end;
 $$;
 revoke all on function public.get_ci_discount_dependency_v1(uuid,date,date,uuid) from public, anon;
 grant execute on function public.get_ci_discount_dependency_v1(uuid,date,date,uuid) to authenticated, service_role;
-
-commit;
 
 -- ============================================================================================
 -- 6. ATTRIBUTION TAXONOMY (check 58)

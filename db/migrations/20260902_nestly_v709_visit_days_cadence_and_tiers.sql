@@ -115,13 +115,13 @@ E'  ), sequenced as (
   select client_id,';
   v_new_seq constant text :=
 E'  ), visit_days as (
-    -- nestly_v709 (check 4 fix): collapse same-day sales (a split bill -- several tickets, one
-    -- customer, one afternoon) into ONE visit before intervals are computed. A visit-day is
-    -- app.ci_visit_day_v699(occurred_at) (the one visit-day authority; nestly_v699), anchored at
-    -- the day''s FIRST qualifying (residual_minor > 0) sale occurred_at -- not the day boundary,
-    -- and not the day''s last sale. Computed over the FULL residual history, unrestricted by
-    -- p_before, so previous_purchase_at below reflects the true prior visit day regardless of
-    -- the horizon; the p_before cut moves to visit_day in the final select.
+    /* nestly_v709 (check 4 fix): collapse same-day sales (a split bill: several tickets, one
+       customer, one afternoon) into ONE visit before intervals are computed. A visit-day is
+       app.ci_visit_day_v699(occurred_at) (the one visit-day authority; nestly_v699), anchored at
+       the day''s FIRST qualifying (residual_minor > 0) sale occurred_at, not the day boundary,
+       and not the day''s last sale. Computed over the FULL residual history, unrestricted by
+       p_before, so previous_purchase_at below reflects the true prior visit day regardless of
+       the horizon; the p_before cut moves to visit_day in the final select. */
     select client_id,
            app.ci_visit_day_v699(occurred_at) as visit_day,
            min(occurred_at) as occurred_at
@@ -254,7 +254,7 @@ E'      ''get_ci_retention_windows_v1'', jsonb_build_object(
         ''note'', ''min(visit_date) per stage, inherently deduped (nestly_v673)''),
       ''app.customer_cadence_batch_v1'', jsonb_build_object(
         ''uses_authority'', true,
-        ''note'', ''paid_visits / interval_observations / median_interval_days (and the p25/p75/iqr dispersion columns) are computed over distinct visit-days, not raw sale rows -- a split bill collapses to one visit before intervals are sequenced (nestly_v709, check 4)''),
+        ''note'', ''paid_visits / interval_observations / median_interval_days (and the p25/p75/iqr dispersion columns) are computed over distinct visit-days, not raw sale rows; a split bill collapses to one visit before intervals are sequenced (nestly_v709, check 4)''),
       ''app.tier_resolve_v426'', jsonb_build_object(
         ''uses_authority'', true,
         ''note'', ''the tier_basis=visits metric counts distinct visit-days, the same authority every other visits-shaped CI reader in this registry uses (nestly_v709, check 4)'')

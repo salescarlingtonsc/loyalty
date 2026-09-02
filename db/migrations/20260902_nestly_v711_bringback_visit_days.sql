@@ -129,14 +129,14 @@ E'  visits as (
 
   v_new constant text :=
 E'  visit_days as (
-    -- nestly_v711 (check 4 fix): collapse same-day sales (a split bill -- several tickets, one
-    -- customer, one afternoon) into ONE visit before prior_visits/cadence_days are computed. A
-    -- visit-day is app.ci_visit_day_v699(occurred_at) (the one visit-day authority; nestly_v699),
-    -- anchored at the day''s FIRST qualifying sale''s occurred_at -- not the day boundary, and not
-    -- the day''s last sale (same anchor rule as nestly_v709''s fix to
-    -- app.customer_cadence_batch_v1). average_transaction_cents / historical_revenue_cents are
-    -- computed separately, over every individual qualifying sale (see the amounts CTE below) --
-    -- only the visits denominator collapses, not the revenue sum.
+    /* nestly_v711 (check 4 fix): collapse same-day sales (a split bill: several tickets, one
+       customer, one afternoon) into ONE visit before prior_visits/cadence_days are computed. A
+       visit-day is app.ci_visit_day_v699(occurred_at) (the one visit-day authority; nestly_v699),
+       anchored at the day''s FIRST qualifying sale''s occurred_at, not the day boundary, and not
+       the day''s last sale (same anchor rule as nestly_v709''s fix to
+       app.customer_cadence_batch_v1). average_transaction_cents / historical_revenue_cents are
+       computed separately, over every individual qualifying sale (see the amounts CTE below);
+       only the visits denominator collapses, not the revenue sum. */
     select client_id,
       app.ci_visit_day_v699(occurred_at) as visit_day,
       min(occurred_at) as occurred_at
@@ -234,7 +234,7 @@ E'      ''app.tier_resolve_v426'', jsonb_build_object(
         ''note'', ''the tier_basis=visits metric counts distinct visit-days, the same authority every other visits-shaped CI reader in this registry uses (nestly_v709, check 4)''),
       ''refresh_growth_recommendation_v108'', jsonb_build_object(
         ''uses_authority'', true,
-        ''note'', ''prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)'')
+        ''note'', ''prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)'')
     )
   );';
   v_count     integer;

@@ -1446,12 +1446,12 @@ begin
   -- anchor 1: the registry's current last entry (refresh_growth_recommendation_v108, nestly_v711)
   v_count := (length(v_def) - length(replace(v_def, $v714regl_a2$      'refresh_growth_recommendation_v108', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
+        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
     )
   );
 $function$$v714regl_a2$, ''))) / length($v714regl_a2$      'refresh_growth_recommendation_v108', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
+        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
     )
   );
 $function$$v714regl_a2$);
@@ -1474,12 +1474,12 @@ $function$$v714regl_a2$);
 
   v_expected := replace(v_def, $v714regl_a2$      'refresh_growth_recommendation_v108', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
+        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
     )
   );
 $function$$v714regl_a2$, $v714regl_r3$      'refresh_growth_recommendation_v108', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)'),
+        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)'),
       'app.ci_customer_classes_v1', jsonb_build_object(
         'uses_authority', true,
         'note', 'visits_last_180d (the loyal-class >=6 gate) counts distinct visit-days, not raw sale rows (nestly_v714, check 4)'),
@@ -1530,7 +1530,7 @@ $function$$v714regl_r3$);
   select pg_get_functiondef(to_regprocedure('app.ci_visit_registry_v699()')) into v_after;
   v_roundtrip := replace(replace(v_after, $v714regl_r3$      'refresh_growth_recommendation_v108', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)'),
+        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)'),
       'app.ci_customer_classes_v1', jsonb_build_object(
         'uses_authority', true,
         'note', 'visits_last_180d (the loyal-class >=6 gate) counts distinct visit-days, not raw sale rows (nestly_v714, check 4)'),
@@ -1568,7 +1568,7 @@ $function$$v714regl_r3$);
   );
 $function$$v714regl_r3$, $v714regl_a2$      'refresh_growth_recommendation_v108', jsonb_build_object(
         'uses_authority', true,
-        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows -- a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
+        'note', 'prior_visits / cadence_days are computed over distinct visit-days, not raw sale rows; a visit-day is anchored at that day''s first qualifying sale; last_visit_at and the average/historical revenue amounts are unchanged (nestly_v711, check 4)')
     )
   );
 $function$$v714regl_a2$), $v714regv_r5$      'app.v179_business_insights', jsonb_build_object(
