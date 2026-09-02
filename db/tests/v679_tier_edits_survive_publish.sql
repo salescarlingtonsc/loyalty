@@ -91,6 +91,7 @@ begin
   values (p_business) on conflict (business_id) do nothing;
   update public.business_subscription_lifecycle_v94
      set workspace_paused=false where business_id = p_business;
+  insert into public.subscriptions(business_id) values (p_business) on conflict do nothing;
 
   insert into public.staff(business_id,user_id,role,full_name,active,access_state)
   values (p_business,p_owner,'owner','V679 Owner',true,'approved');
@@ -156,6 +157,14 @@ declare
   v_published uuid; v_draft uuid; v_gold_perk text; v_n integer;
 begin
   perform pg_temp.as_v679_system();
+  -- This suite is one wrapping transaction (rollback-only), unlike production where each RPC
+  -- call is its own transaction. app.acquire_loyalty_exclusive_v480 refuses to upgrade a
+  -- transaction from a shared loyalty fence to exclusive (self-deadlock avoidance) — and the
+  -- fixture's own baseline sales below acquire that shared fence via app.on_sale_recorded's
+  -- v480 trigger. Take the exclusive fence up front, before anything shared-fenced runs, so the
+  -- whole suite holds it for the transaction's lifetime exactly as if publish_loyalty_config had
+  -- gone first in its own transaction; no assertion below depends on lock mode.
+  perform app.acquire_loyalty_exclusive_v480(bA);
   perform pg_temp.v679_tenant(bA,oA,cA,cAuth,cfg,tBronze,tSilver,tGold);
 
   -- ------------------------------------------------------------------ 1. baseline

@@ -38,12 +38,12 @@ create temporary table v677_evidence(test text, detail text) on commit drop;
 
 do $v677$
 declare
-  v_business   uuid;
-  v_client     uuid;
-  v_customer   uuid;   -- the customer's auth user, from the verified link
-  v_owner      uuid;   -- the owner's auth user, from staff
-  v_branch     uuid;
-  v_phone      text;
+  v_business   uuid := gen_random_uuid();
+  v_client     uuid := gen_random_uuid();
+  v_customer   uuid := gen_random_uuid();   -- the customer's auth user, from the verified link
+  v_owner      uuid := gen_random_uuid();   -- the owner's auth user, from staff
+  v_branch     uuid := gen_random_uuid();
+  v_phone      text := '8186' || lpad((floor(random()*10000))::text, 4, '0');
   v_locale     text := 'en';
   v_sale       uuid;
   v_reversal   uuid;
@@ -58,40 +58,66 @@ declare
   v_count      integer;
   v_card       jsonb;
   v_metric_j   jsonb;
+  v_slug       text := 'v677-acceptance-' || substr(gen_random_uuid()::text, 1, 8);
+  v_identity   uuid := gen_random_uuid();
+  v_link       uuid := gen_random_uuid();
+  v_tier_row   uuid := gen_random_uuid();
 begin
   -- ---------------------------------------------------------------- SECTION 0
   -- A tenant whose tier metric IS the visit count, with Tiers switched on, an active
   -- branch, an owner who can sell and refund, and a customer whose app session can be
-  -- impersonated through a verified link. Ordered so the choice is deterministic.
-  select l.business_id, l.client_id, l.auth_user_id, c.phone_norm
-    into v_business, v_client, v_customer, v_phone
-    from public.customer_links l
-    join public.clients c
-      on c.id = l.client_id and c.business_id = l.business_id
-    join public.customer_identities ci
-      on ci.id = l.identity_id and ci.auth_user_id = l.auth_user_id and ci.status = 'active'
-    left join public.loyalty_programs lp on lp.business_id = l.business_id
-   where l.state = 'verified'
-     and coalesce(lp.tier_basis, 'visits') = 'visits'
-     and c.phone_norm is not null
-     and app.programme_running_v371(l.business_id, 'tiers')
-     and exists (select 1 from public.branches b
-                  where b.business_id = l.business_id and b.active)
-     and exists (select 1 from public.staff s
-                  where s.business_id = l.business_id and s.role = 'owner'
-                    and s.active and s.user_id is not null)
-   order by l.business_id, l.client_id
-   limit 1;
-  if v_business is null then
-    raise exception 'FIXTURE: no tenant on tier_basis=visits with Tiers running and a verified customer link';
-  end if;
+  -- impersonated through a verified link. Built from scratch inside this transaction, the
+  -- same way public.platform_decide_business_application_v105 shapes a real tenant (see
+  -- pg_temp.lc_birth / pg_temp.lc_customer in db/tests/tenant_lifecycle_certification.sql) —
+  -- this suite must not depend on discovering a matching tenant in whatever database it runs
+  -- against, local or production.
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,
+                         email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_owner,'authenticated','authenticated',
+          'v677-owner-'||substr(v_owner::text,1,8)||'@example.test','',now(),now(),now()),
+         ('00000000-0000-0000-0000-000000000000',v_customer,'authenticated','authenticated',
+          'v677-customer-'||substr(v_customer::text,1,8)||'@example.test','',now(),now(),now());
 
-  select s.user_id into v_owner from public.staff s
-   where s.business_id = v_business and s.role = 'owner' and s.active and s.user_id is not null
-   order by s.id limit 1;
-  select b.id into v_branch from public.branches b
-   where b.business_id = v_business and b.active
-   order by b.is_default desc, b.created_at, b.id limit 1;
+  insert into public.businesses(id,name,slug,industry,enabled_modules,points_mode)
+  values (v_business,'V677 Acceptance',v_slug,'fnb',
+          array['dashboard','clients','sales','loyalty','till'],'redeem');
+
+  insert into public.staff(business_id,user_id,role,full_name,active,access_state)
+  values (v_business,v_owner,'owner','V677 Owner',true,'approved');
+  insert into public.branches(id,business_id,name,is_default,active)
+  values (v_branch,v_business,'V677 Main',true,true);
+  insert into public.staff_branches(business_id,staff_id,branch_id)
+  select v_business, s.id, v_branch from public.staff s
+   where s.business_id=v_business and s.user_id=v_owner;
+
+  update public.business_workspace_controls_v94
+     set approval_status='approved', version=version+1, decided_by=v_owner,
+         decided_at=now(), decision_reason='v677 acceptance fixture', updated_at=now()
+   where business_id = v_business;
+  update public.business_subscription_lifecycle_v94
+     set workspace_paused=false where business_id = v_business;
+  insert into public.subscriptions(business_id) values (v_business) on conflict do nothing;
+
+  insert into public.clients(id,business_id,full_name,phone)
+  values (v_client,v_business,'V677 Customer',v_phone);
+  insert into public.customer_identities(id,auth_user_id,status)
+  values (v_identity,v_customer,'active');
+  perform set_config('app.customer_link_insert_id', v_link::text, true);
+  insert into public.customer_links(
+    id,business_id,identity_id,auth_user_id,client_id,state,verification_method,verified_at)
+  values (v_link,v_business,v_identity,v_customer,v_client,'verified','phone_claim',now());
+  perform set_config('app.customer_link_insert_id','',true);
+
+  -- Tiers on, basis 'visits', through the real owner RPCs (not a direct row write).
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
+  perform public.business_set_tier_basis_v347(v_business,'visits');
+  perform public.set_programmes_v314(v_business, jsonb_build_object('tiers',true), gen_random_uuid());
+  -- A threshold-0 tier so the customer always has a "current" tier to report a metric on —
+  -- S1-T4/S2/S3-T4 read customer_get_business_presentation_v95's tier.current.metric, which is
+  -- null (no current tier) below the lowest threshold.
+  insert into public.loyalty_tiers(id,business_id,name,threshold,points_multiplier,sort)
+  values (v_tier_row,v_business,'V677 Base',0,1,1);
 
   insert into v677_evidence values('S0','business '||v_business||', client '||v_client);
 

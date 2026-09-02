@@ -48,27 +48,58 @@ declare
   v_count integer;
 begin
   -- ------------------------------------------------------------------ fixture
-  select user_id into v_recorder from public.super_admins order by user_id limit 1;
-  select user_id into v_verifier from public.super_admins order by user_id offset 1 limit 1;
-  if v_recorder is null or v_verifier is null or v_recorder = v_verifier then
-    raise exception 'FIXTURE: two distinct super admins are required (recorder and verifier)';
-  end if;
+  -- Two distinct super admins (recorder and verifier) and an approved, unpaused manual-rail
+  -- tenant, built from scratch inside this transaction rather than discovered — production has
+  -- no guarantee of either, and this suite must not depend on what happens to exist there.
+  v_recorder := gen_random_uuid();
+  v_verifier := gen_random_uuid();
+  v_business := gen_random_uuid();
 
-  select subscription.business_id into v_business
-    from public.subscriptions subscription
-    join public.business_workspace_controls_v94 control
-      on control.business_id = subscription.business_id and control.approval_status = 'approved'
-    join public.business_subscription_lifecycle_v94 lifecycle
-      on lifecycle.business_id = subscription.business_id and not lifecycle.workspace_paused
-   where subscription.billing_provider = 'manual'
-   order by subscription.created_at limit 1;
-  if v_business is null then
-    raise exception 'FIXTURE: no approved, unpaused manual-rail tenant to test against';
-  end if;
+  insert into auth.users(instance_id,id,aud,role,email,encrypted_password,
+                         email_confirmed_at,created_at,updated_at)
+  values ('00000000-0000-0000-0000-000000000000',v_recorder,'authenticated','authenticated',
+          'v680-recorder-'||substr(v_recorder::text,1,8)||'@example.test','',now(),now(),now()),
+         ('00000000-0000-0000-0000-000000000000',v_verifier,'authenticated','authenticated',
+          'v680-verifier-'||substr(v_verifier::text,1,8)||'@example.test','',now(),now(),now());
+  insert into public.super_admins(user_id,email,note)
+  values (v_recorder,'v680-recorder-'||substr(v_recorder::text,1,8)||'@example.test','v680 rollback fixture'),
+         (v_verifier,'v680-verifier-'||substr(v_verifier::text,1,8)||'@example.test','v680 rollback fixture');
+
+  insert into public.businesses(id,name,slug,industry,enabled_modules,points_mode)
+  values (v_business,'V680 Fixture Tenant',
+          'v680-manual-'||substr(v_business::text,1,8),'retail',
+          array['dashboard','clients','sales'],'redeem');
+  update public.business_workspace_controls_v94
+     set approval_status='approved', version=version+1, decided_at=now(), updated_at=now(),
+         decision_reason='v680 rollback fixture'
+   where business_id = v_business;
+  update public.business_subscription_lifecycle_v94
+     set workspace_paused=false where business_id = v_business;
+  -- billing_provider defaults to 'manual' — a bare insert is the manual-rail tenant the suite
+  -- discovers itself by that default in production.
+  insert into public.subscriptions(business_id) values (v_business) on conflict do nothing;
+
+  -- Platform seller settings ship deliberately incomplete (nestly_v156: GST/address/payment
+  -- terms are filled in by an admin later, out of band from any migration, and every version
+  -- row is immutable audit evidence) — complete them here, through the real RPC, so
+  -- app.v156_profile_ready lets the manual-invoice RPC below issue anything at all.
+  perform set_config('request.jwt.claims', json_build_object(
+    'sub', v_recorder::text, 'role', 'authenticated',
+    'amr', json_build_array(json_build_object('method','oauth')),
+    'app_metadata', json_build_object('providers', json_build_array('google')))::text, true);
+  perform public.platform_set_billing_profile_v156(
+    jsonb_build_object(
+      'registered_address','1 Fixture Way, Singapore 123456',
+      'billing_email','v680.billing@example.test',
+      'default_payment_terms','Due within 7 days',
+      'gst_status','not_registered'),
+    gen_random_uuid());
+  perform set_config('request.jwt.claims','',true);
 
   -- The obligation this workspace was sold on.  v510 matches payment evidence against accepted
   -- commercial terms, so the suite has to build the same paperwork an assisted sale would.
-  insert into public.sme_companies default values returning id into v_company;
+  insert into public.sme_companies(legal_name) values ('V680 Fixture Tenant Pte Ltd')
+    returning id into v_company;
   insert into public.sme_prospects(company_id, ownership_state, legacy_stage_raw, priority)
   values (v_company, 'closed', 'v680 rollback fixture', 'normal') returning id into v_prospect;
   insert into public.sme_commercial_terms(prospect_id, version, plan_code, product_code,
@@ -91,7 +122,7 @@ begin
          next_payment_at = v_prior_end,
          obligation_period_start = v_service_start - 365,
          obligation_period_end = v_service_start - 1,
-         trial_ends_at = null
+         trial_ends_at = v_prior_end - interval '365 days'
    where business_id = v_business;
   /* The lapsed shape the finding describes: the money for the LAST period is on file, so v510 left
      payment_status 'paid' — only the date is stale.  Set it in its own statement: the v510

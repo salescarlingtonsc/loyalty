@@ -212,6 +212,9 @@ begin
           coalesce(v_mods,array['dashboard','clients','sales','loyalty','retention']));
   insert into public.staff(id,business_id,user_id,role,full_name,active)
   values (p_staff,p_biz,p_owner,'owner',p_name||' owner',true);
+  -- nestly_v673 audit (2026-09-02): real onboarding (v130/v565) also births a trialing subscription,
+  -- and since v620 app.business_operational_v620 requires one — so the fixture mirrors that write.
+  insert into public.subscriptions(business_id) values (p_biz) on conflict do nothing;
   insert into public.branches(id,business_id,name,is_default,active)
   values (p_branch,p_biz,p_name,true,true);
   insert into public.staff_branches(business_id,staff_id,branch_id)
