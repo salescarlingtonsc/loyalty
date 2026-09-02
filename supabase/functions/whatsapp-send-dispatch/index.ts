@@ -18,6 +18,8 @@ import {
   buildTemplateSend,
   classifyMetaResponse,
   classifyTransportError,
+  reportFailureCode,
+  reportSendOutcome,
   resolveOutcome,
   sendPath,
   toE164,
@@ -103,6 +105,35 @@ Deno.serve(async (req) => {
      state when a reminder is due. Returning here would strand every template
      send at 'queued' forever. */
   let sent = 0, retried = 0, failed = 0;
+  /* v687 (audit F126): outcomes Meta gave us that we could NOT write down. Counted and returned
+     so a dispatcher that is delivering messages it cannot record is visible in the cron response,
+     not only in a customer's duplicate WhatsApp thread. */
+  let unreported = 0;
+
+  /* One place where "the outcome is now durable" is decided, so the support loop and the
+     template loop cannot drift apart on it. Bounded retries with backoff (the whole budget is
+     ~4.25s, far inside the 120s lease this worker still holds for the row), a named non-retryable
+     case for a stale lease or a vanished row, and a counted, logged failure when it still will
+     not write — never the old `await admin.rpc(...)` with the error dropped on the floor. */
+  const report = async (fn: string, args: Record<string, unknown>, event: string, messageId: string,
+                        disposition: string) => {
+    const result = await reportSendOutcome(
+      (name: string, params: Record<string, unknown>) => admin.rpc(name, params), fn, args);
+    if (result.ok) return true;
+    unreported += 1;
+    /* A uuid, a word and an error code. Never the wamid: it base64-decodes to the customer's
+       phone number, so it is PII and this file says so at the top. */
+    log(event, {
+      message_id: messageId,
+      disposition,
+      attempts: result.attempts,
+      code: reportFailureCode(result.error),
+      /* The tell for the exact failure mode F126 describes: Meta accepted the message and the
+         database never learned it, so the row is still re-claimable. */
+      delivered_but_unrecorded: disposition === 'sent',
+    });
+    return false;
+  };
 
   for (const lease of data as Array<Record<string, string | number>>) {
     const messageId = String(lease.message_id);
@@ -116,10 +147,10 @@ Deno.serve(async (req) => {
     const e164 = toE164(String(lease.recipient_phone_norm || ''));
     const rendered = String(lease.rendered_body || '');
     if (!e164 || !rendered) {
-      await admin.rpc('internal_support_report_outbound_v535', {
+      await report('internal_support_report_outbound_v535', {
         p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
         p_error_code: !e164 ? 'recipient_not_normalisable' : 'rendered_body_missing',
-      });
+      }, 'report_failed', messageId, 'failed');
       failed += 1;
       log('preflight_failed', { message_id: messageId });
       continue;
@@ -149,7 +180,7 @@ Deno.serve(async (req) => {
     const disposition = outcome.status === 'sent' ? 'sent'
       : outcome.status === 'retry' ? 'retry' : 'failed';
 
-    await admin.rpc('internal_support_report_outbound_v535', {
+    await report('internal_support_report_outbound_v535', {
       p_message: messageId,
       p_lease_token: leaseToken,
       p_disposition: disposition,
@@ -157,7 +188,7 @@ Deno.serve(async (req) => {
       p_error_code: disposition === 'sent' ? null : String(outcome.code || outcome.status),
       p_http_status: null,
       p_retry_in_seconds: outcome.retryInSeconds,
-    });
+    }, 'report_failed', messageId, disposition);
 
     if (disposition === 'sent') sent += 1;
     else if (disposition === 'retry') retried += 1;
@@ -194,10 +225,10 @@ Deno.serve(async (req) => {
          transient. */
       const e164 = toE164(String(lease.recipient_phone_norm || ''));
       if (!e164) {
-        await admin.rpc('internal_whatsapp_report_template_send_v557', {
+        await report('internal_whatsapp_report_template_send_v557', {
           p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
           p_error_code: 'recipient_not_normalisable', p_http_status: null, p_retry_in_seconds: null,
-        });
+        }, 'template_report_failed', messageId, 'failed');
         templateFailed += 1;
         log('template_preflight_failed', { message_id: messageId });
         continue;
@@ -210,10 +241,10 @@ Deno.serve(async (req) => {
         parameters: Array.isArray(lease.parameters) ? lease.parameters : [],
       });
       if (!built.ok) {
-        await admin.rpc('internal_whatsapp_report_template_send_v557', {
+        await report('internal_whatsapp_report_template_send_v557', {
           p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
           p_error_code: built.reason, p_http_status: null, p_retry_in_seconds: null,
-        });
+        }, 'template_report_failed', messageId, 'failed');
         templateFailed += 1;
         log('template_preflight_failed', { message_id: messageId });
         continue;
@@ -233,7 +264,7 @@ Deno.serve(async (req) => {
       const disposition = outcome.status === 'sent' ? 'sent'
         : outcome.status === 'retry' ? 'retry' : 'failed';
 
-      await admin.rpc('internal_whatsapp_report_template_send_v557', {
+      await report('internal_whatsapp_report_template_send_v557', {
         p_message: messageId,
         p_lease_token: leaseToken,
         p_disposition: disposition,
@@ -241,7 +272,7 @@ Deno.serve(async (req) => {
         p_error_code: disposition === 'sent' ? null : String(outcome.code || outcome.status),
         p_http_status: null,
         p_retry_in_seconds: outcome.retryInSeconds,
-      });
+      }, 'template_report_failed', messageId, disposition);
 
       if (disposition === 'sent') templateSent += 1;
       else if (disposition === 'retry') templateRetried += 1;
@@ -255,5 +286,11 @@ Deno.serve(async (req) => {
     claimed: data.length, sent, retried, failed,
     template_claimed: templateClaimed, template_sent: templateSent,
     template_retried: templateRetried, template_failed: templateFailed,
+    /* v687 (audit F126). Non-zero means at least one outcome Meta gave us was never written
+       down, so at least one row is still 'processing' with a lease that will expire and be
+       re-claimed — i.e. a duplicate is coming. Closing that residual for good needs a queue that
+       can record "sent, unconfirmed" (a terminal state the claim RPCs will not re-claim), which
+       is a schema decision for the owner; until then this counter is the alarm. */
+    unreported,
   });
 });

@@ -293,3 +293,88 @@ export function resolveOutcome(classification, attemptCount) {
   const status = disposition === 'retry' ? 'failed_retries_exhausted' : disposition;
   return { status, consumeQuota: false, retryInSeconds: null, code: classification.code };
 }
+
+// ---------------------------------------------------------------------------
+// Persisting the outcome (v687, audit finding F126)
+// ---------------------------------------------------------------------------
+
+// The dispatcher used to fire the report RPC and walk away:
+//
+//   await admin.rpc('internal_support_report_outbound_v535', { ... });
+//   if (disposition === 'sent') sent += 1;
+//
+// with no `{ error }` destructured and no try/catch. Meta had already accepted
+// the message and the customer's phone had already buzzed; the only record of
+// that fact was this one write. If it failed — a blip between the edge runtime
+// and Postgres, a PostgREST timeout, a pooler hiccup — the row stayed
+// status='processing' with a lease that expires in 120s, and
+// internal_support_claim_outbound_v535 re-claims ANY row whose lease has expired
+// ('m.lease_until is null or m.lease_until < now()'). The next cron run sent the
+// same WhatsApp message to the same customer again. And again.
+//
+// A send is at-most-once only if the record of it is durable, so the record now
+// gets the same treatment the send itself gets: bounded retries with backoff,
+// and — when it still cannot be written — a named, counted, logged failure
+// instead of silence. That does not make the write infallible (nothing on this
+// side of the network can), but it collapses the overwhelmingly common cause,
+// a transient blip, and it makes the residual VISIBLE rather than showing up
+// days later as a customer complaint about a duplicate message.
+
+export const REPORT_ATTEMPTS = 4;
+
+// Short and front-loaded on purpose. This runs inside a request that is already
+// holding a 120s lease for this message: the total delay across all retries
+// (250 + 1000 + 3000 = 4.25s) must stay far below that lease so the row cannot
+// be re-claimed by another worker while we are still trying to report it.
+export const REPORT_BACKOFF_MS = [250, 1000, 3000];
+
+// Two Postgres error codes from internal_support_report_outbound_v535 /
+// internal_whatsapp_report_template_send_v557 mean the answer will never change,
+// so retrying only burns lease time:
+//   40001 'stale lease'            — another worker already owns this row. It is
+//                                    also the fingerprint of the double-send this
+//                                    fix exists to stop, so it is worth naming.
+//   P0002 'unknown outbound message' — the row is gone.
+export function reportRetryable(error) {
+  const code = String(error?.code ?? '');
+  return code !== '40001' && code !== 'P0002';
+}
+
+const defaultSleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// `rpc` is injected (supabase-js returns { data, error } rather than throwing, so
+// both shapes are handled) and so is `sleep`, which is what makes this testable
+// under `node --test` with no Deno, no network and no clock.
+export async function reportSendOutcome(rpc, fn, args, options = {}) {
+  const attempts = Math.max(1, Number(options.attempts ?? REPORT_ATTEMPTS));
+  const backoff = Array.isArray(options.backoff) ? options.backoff : REPORT_BACKOFF_MS;
+  const sleep = typeof options.sleep === 'function' ? options.sleep : defaultSleep;
+  let lastError = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    let result;
+    try {
+      result = await rpc(fn, args);
+    } catch (thrown) {
+      result = { error: thrown instanceof Error ? thrown : new Error(String(thrown)) };
+    }
+    if (!result?.error) return { ok: true, attempts: attempt + 1, error: null, retryable: false };
+
+    lastError = result.error;
+    if (!reportRetryable(lastError)) {
+      return { ok: false, attempts: attempt + 1, error: lastError, retryable: false };
+    }
+    if (attempt + 1 < attempts) {
+      await sleep(backoff[Math.min(attempt, backoff.length - 1)] ?? backoff[backoff.length - 1]);
+    }
+  }
+  return { ok: false, attempts, error: lastError, retryable: true };
+}
+
+// What the dispatcher logs when the outcome could not be persisted. A code and a
+// word — never the wamid, which base64-decodes to the customer's phone number.
+export function reportFailureCode(error) {
+  const code = String(error?.code ?? '').trim();
+  if (code) return code.slice(0, 32);
+  return 'report_write_failed';
+}

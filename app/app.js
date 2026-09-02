@@ -19529,12 +19529,25 @@ function wireProfile(page){
         if(error)throw error;
         if(data?.user)S.user=data.user;
         else S.user={...S.user,user_metadata:{...(S.user?.user_metadata||{}),full_name:name,name}};
-        await sb.from('staff').update({full_name:name}).eq('business_id',S.biz.id).eq('user_id',S.user.id);
+        /* V687 (audit finding F131). This used to be
+             await sb.from('staff').update({full_name:name}).eq('business_id',…).eq('user_id',…)
+           with its result thrown away. Policy staff_update is owner-only
+           (`using app.is_salon_owner(business_id)`, no self-row predicate), so for every
+           non-owner role the statement matched ZERO rows — which PostgREST reports as a success,
+           not an error. The handler then printed "Name saved." while public.staff.full_name — the
+           name the Team roster, the till's staff picker, the sales report and the calendar all
+           read — never moved. staff_update_my_profile_v687 is the only route by which a
+           non-owner writes their own staff row, and it writes full_name and nothing else. */
+        const {error:mirrorError}=await sb.rpc('staff_update_my_profile_v687',{p_business:S.biz.id,p_name:name});
+        if(mirrorError)throw mirrorError;
         if(status)status.textContent='Name saved.';
         renderProfile(page);
       }catch(error){
         console.error(error);
-        if(status)status.textContent='Name could not be saved.';
+        /* The server's own words, not one blanket sentence: "you are not a member of this
+           business" and "a display name is between 2 and 120 characters" are different problems
+           with different fixes, and the old handler hid both. */
+        if(status)status.textContent=ownerErrorText(error)||'Name could not be saved.';
       }finally{
         CUI.setButtonBusy(button,{busy:false});
       }
