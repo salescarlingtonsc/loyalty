@@ -42,6 +42,12 @@ import { assembleUserPrompt, resolveConfidenceClass } from './validate.mjs';
 // verdict — same dual-runtime .mjs pattern as validate.mjs itself, so tests/ai-reports/*.test.mjs
 // executes the exact same decision code this file runs live. See ./enforce.mjs's own header.
 import { decideNarrativeOutcome } from './enforce.mjs';
+// v(check 98): decideGenerationFailure is the layer BELOW decideNarrativeOutcome — it classifies
+// whether the model call itself produced anything worth validating at all (threw, timed out, came
+// back refused/malformed, or came back with no text), before the narrative ever reaches
+// decideNarrativeOutcome. Same dual-runtime .mjs file, same reason this file already imports from
+// ./enforce.mjs rather than re-implementing the decision inline.
+import { decideGenerationFailure } from './enforce.mjs';
 
 const MAX_REPORTS_PER_INVOCATION = 5;
 const MAX_OUTPUT_TOKENS = 4000;
@@ -219,17 +225,32 @@ async function processQueue(): Promise<Record<string, unknown>> {
         confidence_class: resolveConfidenceClass(report.evidence),
       };
 
-      const message = await anthropic.messages.create({
-        model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        thinking: { type: 'disabled' },
-        system: SYSTEM_PROMPT,
-        // v684 (check 81): assembleUserPrompt is imported from ./validate.mjs — the exact code
-        // path tests/ai-reports/*.test.mjs executes from Node — so there is one assembly
-        // implementation, not a Deno copy and a re-implementation the tests exercise instead.
-        messages: [{ role: 'user', content: assembleUserPrompt(report) }],
-      });
-      if (message.stop_reason === 'refusal') throw new Error('model_refused');
+      // v(check 98): the call to the model is its own failure surface, distinct from narrative
+      // validation below. A throw here (network failure, non-2xx, timeout/abort) is caught and
+      // classified by decideGenerationFailure into a NAMED reason — never left as raw SDK
+      // exception text, and never allowed to fall through to a blank/partial "ready" report.
+      let message: Anthropic.Message;
+      try {
+        message = await anthropic.messages.create({
+          model,
+          max_tokens: MAX_OUTPUT_TOKENS,
+          thinking: { type: 'disabled' },
+          system: SYSTEM_PROMPT,
+          // v684 (check 81): assembleUserPrompt is imported from ./validate.mjs — the exact code
+          // path tests/ai-reports/*.test.mjs executes from Node — so there is one assembly
+          // implementation, not a Deno copy and a re-implementation the tests exercise instead.
+          messages: [{ role: 'user', content: assembleUserPrompt(report) }],
+        });
+      } catch (apiError) {
+        const failure = decideGenerationFailure(apiError);
+        throw new Error(failure.failure_reason);
+      }
+      // v(check 98): the call resolved, but the RESPONSE itself can still be unusable — a
+      // refusal, missing/empty content, or an all-whitespace narrative. None of that throws, so
+      // it is checked here, before narrativeFrom ever runs, using the SAME classifier the
+      // thrown-error path above uses (one decision function, not two).
+      const responseFailure = decideGenerationFailure(message);
+      if (responseFailure) throw new Error(responseFailure.failure_reason);
       const narrative = narrativeFrom(message);
 
       // v677: the narrative is checked against the SAME evidence object the model was given

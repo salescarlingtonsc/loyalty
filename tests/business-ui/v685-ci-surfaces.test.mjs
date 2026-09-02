@@ -437,6 +437,47 @@ test('V685 opportunitiesPanelHtmlV685 (check 98): an RPC error renders the expli
   assert.ok(html.includes('evidence engine timed out'));
 });
 
+/* -------------------------------------------------------------------------------------------
+   (check 98, extended) A Postgres RPC error is not always a plain string — Supabase's client
+   surfaces it as {message, code, details, hint}, and two codes recur across the CI panels' own
+   readers: 42501 (insufficient_privilege — app.ci_access_gate_v667 raising when the caller's role
+   or branch scope does not clear the gate) and 22023 (invalid_parameter_value — a malformed
+   p_from/p_to or p_branch reaching the reader). Both are just RPC failures from this renderer's
+   point of view: the page (customerIntelligencePage, around lastAcquisitionError=
+   acquisitionResponse.error?.message||'') stores only the error's `.message`, so a REAL 42501/
+   22023 response degrades exactly like any other RPC failure above — proven here with the actual
+   Postgres wording those codes produce, not a placeholder string, so this stays a proof rather
+   than a restatement of the generic case already covered above.
+   ------------------------------------------------------------------------------------------- */
+
+test('V685 acquisitionMarkupV650 (check 98, 42501): a permission-denied RPC error renders the unavailable message, not zeros', () => {
+  const page = makePage();
+  page.setAcquisition(null, 'permission denied for function get_ci_acquisition_v1');
+  const html = page.acquisition();
+  assert.ok(html.includes('Where customers come from could not load.'));
+  assert.ok(html.includes('permission denied for function get_ci_acquisition_v1'));
+  assert.ok(!/>0</.test(html), 'a 42501 error state must never render a zero-stuffed table');
+});
+
+test('V685 categoryMixMarkupV650 (check 98, 22023): an invalid-parameter RPC error renders the unavailable message, not zeros', () => {
+  const page = makePage();
+  page.setCategoryMix(null, 'invalid input value for parameter p_from: date out of range');
+  const html = page.categoryMix();
+  assert.ok(html.includes('What they buy could not load.'));
+  assert.ok(html.includes('invalid input value for parameter p_from: date out of range'));
+});
+
+test('V685 opportunitiesPanelHtmlV685 (check 98, 42501/22023 shapes): the actual RPC error object (message+code), not a bare string, still renders the unavailable message', () => {
+  const denied = renderOpportunities({ error: { message: 'permission denied for function get_ci_opportunities_v1', code: '42501' } });
+  assert.ok(denied.includes('Opportunities could not load'));
+  assert.ok(denied.includes('permission denied for function get_ci_opportunities_v1'));
+
+  const invalid = renderOpportunities({ error: { message: 'invalid input syntax for type uuid: not-a-branch', code: '22023' } });
+  assert.ok(invalid.includes('Opportunities could not load'));
+  assert.ok(invalid.includes('invalid input syntax for type uuid: not-a-branch'),
+    'the message renders regardless of the accompanying Postgres error code');
+});
+
 test('V685 opportunitiesPanelHtmlV685: a missing/malformed payload renders the empty state, not a crash', () => {
   assert.ok(renderOpportunities(null).includes('Run this report to load ranked opportunities.'));
   assert.doesNotThrow(() => renderOpportunities({}));

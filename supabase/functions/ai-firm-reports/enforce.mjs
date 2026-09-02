@@ -72,3 +72,86 @@ export function decideNarrativeOutcome(narrativeMd, evidencePack, opts = {}) {
     violations: verdict.violations,
   };
 }
+
+// nestly (CI-100 check 98) — GENERATION failure classification, one layer BELOW
+// decideNarrativeOutcome above. decideNarrativeOutcome judges a narrative that the model DID
+// return, against the evidence. This function judges whether the model call produced a narrative
+// worth judging at all: it never runs, it runs past its deadline, it comes back but the SDK
+// response itself is unusable (a refusal, no content blocks), or it comes back structurally fine
+// but with no text. Each of those is a distinct, named reason — never a blank or partial "ready"
+// report, and never the raw SDK exception text (which can be arbitrarily long, vary between SDK
+// versions, or in rare cases echo request internals) stored as the stored failure_reason.
+//
+// CONTRACT. One entry point, pure and synchronous, same dual-runtime .mjs discipline as
+// decideNarrativeOutcome above (no npm:/Deno specifics — the exact same code runs under Deno,
+// imported by ./index.ts, and under Node via `node --test tests/ai-reports/*.test.mjs`).
+//
+//   decideGenerationFailure(errorOrResponse) ->
+//     null                                              when the input is a usable response
+//                                                        (the caller should proceed to extract
+//                                                        and validate the narrative), OR
+//     { status: 'failed', narrative_md: null,
+//       failure_reason: 'model_unavailable' | 'model_timeout' | 'malformed_output'
+//                        | 'empty_narrative' }           when it is not.
+//
+// The argument is EITHER the Error thrown by the model call (network failure, non-2xx from the
+// Anthropic API, an aborted/timed-out request) OR the Anthropic.Message response object the SDK
+// resolved with (a response can itself be unusable — stop_reason 'refusal', a missing/empty
+// content array, or text blocks that are all whitespace — none of that throws, so it must be
+// checked separately from the try/catch that catches a thrown error).
+//
+// CLASSIFICATION, duck-typed (this file imports nothing from the Anthropic SDK, so it cannot use
+// `instanceof Anthropic.APIError` — see validate.mjs's own header for why these files stay
+// import-free besides each other):
+//   - A response object (has a `content` array or a `stop_reason` string, and is not an Error) is
+//     judged on ITS shape, never treated as a thrown error:
+//       * stop_reason 'refusal', or `content` missing/not an array/empty -> 'malformed_output'
+//       * `content` present but every text block is empty/whitespace-only -> 'empty_narrative'
+//       * otherwise -> null (usable; caller proceeds to narrativeFrom/decideNarrativeOutcome)
+//   - Anything else is treated as the thrown error:
+//       * looks like a timeout/abort (SDK's APIConnectionTimeoutError name, a bare AbortError, an
+//         ETIMEDOUT/ECONNABORTED code, or a "timed out"/"timeout" message) -> 'model_timeout'
+//       * everything else the call itself failed on (connection refused, DNS, a non-2xx status
+//         from the API, malformed transport-level response, SDK internal error) -> 'model_unavailable'
+export function decideGenerationFailure(input) {
+  if (isResponseShape(input)) {
+    if (input.stop_reason === 'refusal') {
+      return generationFailure('malformed_output');
+    }
+    if (!Array.isArray(input.content) || input.content.length === 0) {
+      return generationFailure('malformed_output');
+    }
+    const text = input.content
+      .filter((block) => block && block.type === 'text' && typeof block.text === 'string')
+      .map((block) => block.text)
+      .join('\n')
+      .trim();
+    if (!text) {
+      return generationFailure('empty_narrative');
+    }
+    return null;
+  }
+
+  const err = input && typeof input === 'object' ? input : { message: String(input ?? 'unknown error') };
+  const name = String(err.name || '');
+  const code = String(err.code || '');
+  const message = String(err.message || '');
+
+  const looksLikeTimeout =
+    name === 'APIConnectionTimeoutError' ||
+    name === 'AbortError' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ECONNABORTED' ||
+    /time(d)?\s*-?out/i.test(message);
+
+  return generationFailure(looksLikeTimeout ? 'model_timeout' : 'model_unavailable');
+}
+
+function isResponseShape(x) {
+  return Boolean(x) && typeof x === 'object' && !(x instanceof Error) &&
+    (Array.isArray(x.content) || typeof x.stop_reason === 'string');
+}
+
+function generationFailure(reason) {
+  return { status: 'failed', narrative_md: null, failure_reason: reason };
+}

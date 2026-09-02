@@ -1089,6 +1089,12 @@
       'Yearly':'每年',
       'another firm':'另一家企业',
       'not generated yet':'尚未生成',
+      'Report unavailable — {reason}':'报告不可用 — {reason}',
+      'unknown reason':'未知原因',
+      'The report writer is temporarily unavailable.':'报告撰写服务暂时不可用。',
+      'The report writer took too long to respond.':'报告撰写服务响应超时。',
+      'The report writer returned an unusable response.':'报告撰写服务返回了无法使用的内容。',
+      'The report writer returned no content.':'报告撰写服务未返回任何内容。',
       'this contact':'此联系人',
       '{count} archived':'已归档 {count} 条',
       '{lane} is reached through account conversion and onboarding evidence, not by moving a card.':'{lane}需通过账号转换和入驻证据达成，不能靠移动卡片。',
@@ -1463,6 +1469,12 @@
       'Yearly':'Tahunan',
       'another firm':'firma lain',
       'not generated yet':'belum dijana',
+      'Report unavailable — {reason}':'Laporan tidak tersedia — {reason}',
+      'unknown reason':'sebab tidak diketahui',
+      'The report writer is temporarily unavailable.':'Perkhidmatan penulisan laporan tidak tersedia buat sementara waktu.',
+      'The report writer took too long to respond.':'Perkhidmatan penulisan laporan mengambil masa terlalu lama untuk bertindak balas.',
+      'The report writer returned an unusable response.':'Perkhidmatan penulisan laporan mengembalikan respons yang tidak boleh digunakan.',
+      'The report writer returned no content.':'Perkhidmatan penulisan laporan tidak mengembalikan sebarang kandungan.',
       'this contact':'kenalan ini',
       '{count} archived':'{count} diarkibkan',
       '{lane} is reached through account conversion and onboarding evidence, not by moving a card.':'{lane} dicapai melalui penukaran akaun dan bukti penerimaan, bukan dengan memindahkan kad.',
@@ -4906,6 +4918,24 @@
   function aiReportPeriodLabel(report) {
     return `${platformStatus(report.period_kind)} · ${report.period_start} – ${report.period_end}`;
   }
+  // nestly (CI-100 check 98): supabase/functions/ai-firm-reports/enforce.mjs's
+  // decideGenerationFailure() stores one of four short, stable reason codes on a failed report
+  // (model_unavailable / model_timeout / malformed_output / empty_narrative) — decideNarrativeOutcome
+  // failures and any other stored `error` text still pass through unchanged. This is display-only
+  // translation, never a gate: an unrecognised reason still renders (falls back to the raw stored
+  // text, or 'unknown reason' if the row has none at all), so a failed report is NEVER shown with a
+  // blank reason.
+  function aiReportFailureReasonLabel(reason) {
+    const known={
+      model_unavailable:'The report writer is temporarily unavailable.',
+      model_timeout:'The report writer took too long to respond.',
+      malformed_output:'The report writer returned an unusable response.',
+      empty_narrative:'The report writer returned no content.'
+    };
+    const key=String(reason??'').trim();
+    if(!key)return pt('unknown reason');
+    return known[key]?pt(known[key]):key;
+  }
   function sgCalendarToday() {
     const parts=new Intl.DateTimeFormat('en-CA',{
       timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
@@ -4973,7 +5003,7 @@
             status:platformStatus(report.status),
             date:report.completed_at?dateTime(report.completed_at):pt('not generated yet')
           }))}${report.model?` · ${escapeHtml(report.model)}`:''}</p>
-          ${report.status==='failed'&&report.error?`<p class="muted small">${escapeHtml(report.error)}</p>`:''}</div>
+          ${report.status==='failed'?`<p class="muted small">${escapeHtml(pt('Report unavailable — {reason}',{reason:aiReportFailureReasonLabel(report.error)}))}</p>`:''}</div>
           <div class="platform-actions">${CUI.status(platformStatus(report.status),aiReportTone(report.status))}
             ${report.narrative_md?`<button type="button" class="btn ghost sm" data-ai-report-view="${escapeHtml(report.id)}">${escapeHtml(pt("Read report"))}</button>`:''}</div>
         </div>`).join('')}</div>`:localizedEmptyHtml('No AI report has been written for this firm yet.')}

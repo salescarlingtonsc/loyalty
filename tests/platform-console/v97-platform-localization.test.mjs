@@ -355,7 +355,14 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // (Average order, the insufficient-evidence note template, Identified customers, With a
   // purchase, Inactive 90+ days). 'Top customer revenue' dedupes against an identical string
   // already introduced by an earlier wave, so it does not add a sixth.
-  assert.equal(explicit.length,1115,'update the audited explicit-copy inventory when adding runtime UI'); // v727
+  // nestly (CI-100 check 98, generation-failure model-failure rendering): +2 distinct explicit
+  // pt() literal-argument strings — the "Report unavailable — {reason}" template and the
+  // 'unknown reason' fallback. aiReportFailureReasonLabel()'s four decideGenerationFailure()
+  // reason sentences (model_unavailable/model_timeout/malformed_output/empty_narrative) are
+  // called as pt(known[key]) — a variable, not a literal — so this regex-based inventory does
+  // not see them; they still carry real zh-CN/ms dictionary entries (added alongside these two),
+  // just outside what this particular static scan can detect.
+  assert.equal(explicit.length,1117,'update the audited explicit-copy inventory when adding runtime UI'); // check 98
   // nestly_v727: +2 distinct metadata strings (the new Customer intelligence card's title and
   // description).
   assert.equal(metadata.length,850,'update the audited CUI metadata inventory when adding UI metadata'); // v727
