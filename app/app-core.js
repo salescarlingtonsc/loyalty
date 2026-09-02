@@ -1116,6 +1116,13 @@ const OWNER_ERROR_NOISE_RULES_V170=[
      configuration to version-forward from; before the first Go-live the raw server message read
      like a fault. Point the owner at the step that mints it. */
   [/no published loyalty configuration yet/i,'Finish setting up first: open Rewards and run the setup wizard to Go live. After that, everything here saves normally.'],
+  /* nestly_v675 (audit F035). publish_loyalty_config refuses a draft that was cloned from a
+     configuration version something else has since replaced. Its own advice — "open the editor
+     again and re-apply the change" — was the one instruction that could not help on the stamp
+     path, where reopening handed back the very same draft; v675 retires that draft in
+     app.stamp_config_edit_begin_v433, so the honest instruction everywhere is: reload, then
+     make the change again. */
+  [/stale_draft/i,'Your setup was changed somewhere else while this was open, so nothing was saved here. Reload the page and make the change again.'],
   [/foreign_or_inactive_branch_scope/i,'The branch being viewed is switched off or waiting for payment. Choose another branch at the top.'],
   [/unauthorised_branch_scope|branch_visibility/i,'You do not have access to the branch being viewed. Choose another branch at the top.'],
   [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
