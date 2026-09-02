@@ -49423,6 +49423,25 @@ async function customerIntelligencePage(){
     if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div>${parityLine}</td></tr>`;
     return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div>${parityLine}</td></tr>`;
   }
+  /* nestly_v704 (check 66). get_ci_category_mix_v1 (v691) now embeds a per-category
+     `distribution` block {n, mean, median, p90, top1_share_bps, skew_material,
+     mean_excl_top1} — app.distribution_block_v1's own keys, verbatim — plus a `skew_note`
+     string the server already wrote. This renders that block; it never derives a
+     percentage from any other field, only formats top1_share_bps (divide by 100, same as
+     every other bps value already on this page). Below the k=5 floor shared with
+     subgroup_evidence_v1 (v672), or with no distribution at all, this renders nothing. */
+  const CI_CATEGORY_DISTRIBUTION_FLOOR_V704=5;
+  function ciCategoryDistributionRowMarkupV704(category){
+    const dist=category&&category.distribution;
+    if(!dist||typeof dist!=='object')return '';
+    const n=Number(dist.n||0);
+    if(n<CI_CATEGORY_DISTRIBUTION_FLOOR_V704)return '';
+    if(dist.mean==null||dist.median==null)return '';
+    const topShareBps=dist.top1_share_bps;
+    const topPct=(topShareBps===null||topShareBps===undefined)?null:(Number(topShareBps)/100);
+    const skewNote=category.skew_note;
+    return `<tr class="ci-category-distribution-row-v704"><td colspan="3"><p class="muted small" style="margin:4px 0 0"><b>Concentration</b> — median ${esc(scopeMoney(dist.median))} vs mean ${esc(scopeMoney(dist.mean))} per customer${topPct!==null?` · top customer carries ${topPct.toFixed(1)}%`:''}</p>${skewNote?`<p class="muted small" style="margin:2px 0 0">${esc(skewNote)}</p>`:''}</td></tr>`;
+  }
   function categoryMixMarkupV650(){
     if(lastCategoryMixError)return ciQuietErrorV650('What they buy could not load.',lastCategoryMixError);
     const bundle=lastCategoryMixBundle;
@@ -49444,7 +49463,7 @@ async function customerIntelligencePage(){
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">What they buy</span>
       <h2 id="ciCategoryMixHeadingV650">Category mix</h2></div></div>
       <p class="muted small">All branches</p>
-      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
+      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${ciCategoryDistributionRowMarkupV704(category)}${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
         :'<div class="empty">No categorised revenue in this scope yet.</div>'}
       <p class="muted small" style="margin-top:10px">Category view covers ${classifiedPct.toFixed(1)}% of service &amp; retail revenue.${projectedPct>0?` ${projectedPct.toFixed(1)}% projected through current mappings, not snapshots.`:''}</p>
       ${ciMeasuredSinceV650(bundle.observed_since)}
