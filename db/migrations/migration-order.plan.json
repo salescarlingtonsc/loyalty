@@ -3603,6 +3603,24 @@
       "path": "db/migrations/20260902_nestly_v735_evidence_pack_extended.sql",
       "semanticVersion": "v735",
       "proposedDeployVersion": "20260904040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v737_synthetic_excluded_v83_shadow.sql",
+      "semanticVersion": "v737",
+      "proposedDeployVersion": "20260904050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v738_pack_report_sections.sql",
+      "semanticVersion": "v738",
+      "proposedDeployVersion": "20260904060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v739_top_customers_floor.sql",
+      "semanticVersion": "v739",
+      "proposedDeployVersion": "20260904070000"
     }
   ]
 }
