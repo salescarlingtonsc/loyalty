@@ -867,11 +867,21 @@ function checkLimitationItems(narrative, pack, violations) {
 // "First L." or "Guest AB12" from real customer names, which are unbounded. The heuristic is
 // deliberately CONSERVATIVE - it fires only on a run of two or more capitalised words that is not
 // led by a common English word, not a weekday or month, and not found anywhere in the pack's own
-// strings. It therefore CANNOT catch:
-//   * a single-word invented name ("Marcus"), because one capitalised word is far too common;
+// strings. It therefore CANNOT catch, on its own:
+//   * a single-word invented name ("Marcus") right after a direct-address cue — closed below by
+//     checkSingleTokenEntities;
+//   * a single-word invented name ANYWHERE ELSE in the sentence — closed further below by V9's
+//     checkOrphanProperNouns;
 //   * an invented name that happens to be a substring of a pack string.
 // And it CAN misfire on an unusual proper noun the model legitimately introduces (a place, a
 // public holiday). Misfires cost a regenerated report, so the trade is deliberate.
+// AFTER V9 (below), what remains genuinely undetectable: a lowercase invented name ("marcus asked
+// about his account" — no capital letter, nothing here or in V9 looks for it); a name that is
+// itself an ordinary lowercase English word capitalised only because a model legitimately
+// capitalised it for other reasons (rare, and the false-negative side of that trade is deliberate,
+// same asymmetry as everywhere else in this file); and a name that collides letter-for-letter with
+// a legitimate allowlisted word or an unrelated pack string substring (e.g. an invented "Sun" would
+// be masked by a pack string containing "Sunday" or "Sunset Cafe").
 const NAME_TOKEN_RE = /^(?:[A-Z][a-z]+|[A-Z]\.)$/;
 const DAY_NAMES = new Set([
   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
@@ -954,8 +964,9 @@ function checkEntities(narrative, packInfo, violations) {
 // two-token rule above by design (one capitalised word is far too common to flag on its own). This
 // closes ONE narrow, high-precision slice of that gap: a capitalised token immediately following a
 // direct-address cue ("customer", "client", "Ms", "Mr", "Mrs") is exactly the position a name goes,
-// so it is checked alone. Still conservative — a single name anywhere else in the sentence, or any
-// other part of speech, is not covered.
+// so it is checked alone. A single name anywhere ELSE in the sentence is closed separately by V9's
+// checkOrphanProperNouns, further below — kept as its own rule rather than folded in here because
+// its allowlist and sentence-position logic are shaped differently (see V9's own comment).
 const DIRECT_ADDRESS_CUE_RE = /\b(?:customer|client|Ms\.?|Mr\.?|Mrs\.?)\s+([A-Z][a-z]+)\b/g;
 
 function checkSingleTokenEntities(narrative, packInfo, violations) {
@@ -975,6 +986,174 @@ function checkSingleTokenEntities(narrative, packInfo, violations) {
       detail: `"${name}" is named right after "${m[0].slice(0, m[0].length - name.length).trim()}" ` +
         `but appears nowhere in the evidence pack, near ` +
         `"${contextAround(narrative, m.index, m.index + m[0].length)}"`,
+    });
+  }
+}
+
+/* ---------------------------------------------------- V9: orphan proper nouns */
+
+// v701 closes the gap this file's own comments (above, and the old check-83/88 note) admitted was
+// undetectable: a SINGLE invented proper noun with no direct-address cue in front of it at all —
+// "Marcus returned twice last month" has no "customer"/"Ms"/"Mr" to anchor on, so
+// checkSingleTokenEntities never sees it, and it is only one word, so checkEntities' two-token run
+// never sees it either. This rule fires on ANY capitalised token of 4+ letters (one initial capital
+// then two or more lowercase letters) that is:
+//   (a) not sentence-initial — a capital letter starting a sentence, heading, or list item is
+//       ordinary English, not a naming claim ("Revenue rose...", "## Summary", "1. Send...");
+//   (b) not in a conservative allowlist (below) of words a legitimate report uses even mid-sentence
+//       without being a claim about a person or place: weekday and month names (case-normalised,
+//       independent of V2's own case-sensitive month check above — different purpose, same
+//       months), the product's own name, common jurisdictions/currency/platform words this
+//       product's reports legitimately mention, and the report's own fixed template heading words
+//       (belt-and-suspenders: heading LINES are also excluded wholesale, below);
+//   (c) not found, verbatim and case-SENSITIVE, anywhere among the pack's own string leaves — a
+//       business name, branch label, customer label, item/category/campaign name genuinely in the
+//       pack must ground the word it contains, same principle as V6's own haystack;
+//   (d) not part of a multi-token capitalised run — "Chen H.", "Kaya Toast Set", "Marcus Tan" are
+//       V6's territory (checkEntities/checkSingleTokenEntities already judge those runs); V9 only
+//       ever looks at a capitalised word standing completely alone.
+// Firing costs a regenerated report (see the file banner), so (a)-(d) are each deliberately narrow.
+// A caller may extend the allowlist via opts.entityAllowlist for a business/report shape this file
+// cannot anticipate (e.g. a firm whose own name is an ordinary English word used constantly in
+// prose) — see resolveConfidenceClass above for the same "opts is the one legitimate override
+// surface" pattern.
+const ORPHAN_TOKEN_RE = /^[A-Z][a-z]{2,}$/;
+
+// Reasons, so this list is never "just vibes":
+//   Peekaa            — the product's own name, said in almost every report ("Peekaa recorded...").
+//   Singapore/Malaysia — the product's declared jurisdictions (CLAUDE.md: "Singapore-first"); a
+//                        report legitimately says "customers across Singapore" with no per-report
+//                        evidence-pack leaf to ground it against.
+//   SGD               — the currency code; already excluded from ORPHAN_TOKEN_RE in practice (all
+//                        three letters are capitals, so it never matches [A-Z][a-z]{2,}), listed
+//                        anyway so the allowlist is legible on its own without relying on that
+//                        regex accident.
+//   WhatsApp/Google/Stripe/Facebook/Instagram — channel/platform names this product's automations
+//                        and comms integrate with or reference (CLAUDE.md: "WhatsApp-native");
+//                        legitimately named in a report ("sent via WhatsApp") with nothing in the
+//                        v176 evidence pack to ground the word against.
+//   Summary/Do        — first words of two of the five REQUIRED_HEADINGS (`## Summary`, `## Do
+//                        these three things next`). Heading LINES are excluded wholesale below
+//                        (headingRanges), so this only matters if a heading's own wording is ever
+//                        echoed back mid-sentence elsewhere; listed for that belt-and-suspenders
+//                        case rather than relying solely on the line-range exclusion.
+const ORPHAN_ALLOWLIST_BASE = new Set([
+  'Peekaa', 'Singapore', 'Malaysia', 'SGD', 'WhatsApp', 'Google', 'Stripe', 'Facebook', 'Instagram',
+  'Summary', 'Do',
+]);
+
+function orphanMonthNameSet() {
+  const out = new Set();
+  const cap = (w) => w[0].toUpperCase() + w.slice(1);
+  for (const [full, abbr] of MONTHS) {
+    out.add(cap(full));
+    if (abbr !== full) out.add(cap(abbr));
+  }
+  return out;
+}
+const ORPHAN_MONTH_NAMES = orphanMonthNameSet();
+
+function orphanDayNameSet() {
+  const out = new Set();
+  for (const d of DAY_NAMES) out.add(d[0].toUpperCase() + d.slice(1));
+  return out;
+}
+const ORPHAN_DAY_NAMES = orphanDayNameSet();
+
+function buildOrphanAllowlist(opts) {
+  const extra = opts && Array.isArray(opts.entityAllowlist) ? opts.entityAllowlist : [];
+  return new Set([...ORPHAN_ALLOWLIST_BASE, ...ORPHAN_MONTH_NAMES, ...ORPHAN_DAY_NAMES, ...extra]);
+}
+
+// Fenced code blocks and heading LINES are template/formatting, not claims about the business —
+// same rationale as maskStructuralNumbers' heading-line blanking for V1. Unlike that function this
+// one only needs to know WHERE to skip, not to preserve the narrative's length.
+function orphanSkipRanges(narrative) {
+  const ranges = [];
+  const codeFence = /```[\s\S]*?```/g;
+  let m;
+  while ((m = codeFence.exec(narrative)) !== null) ranges.push([m.index, m.index + m[0].length]);
+  const heading = /^[ \t]*#{1,6}[ \t].*$/gm;
+  while ((m = heading.exec(narrative)) !== null) ranges.push([m.index, m.index + m[0].length]);
+  return ranges;
+}
+
+function inOrphanSkipRange(ranges, index) {
+  return ranges.some(([from, to]) => index >= from && index < to);
+}
+
+// Every whitespace-delimited word in the ORIGINAL narrative, stripped of surrounding punctuation
+// the same way nameCandidates() strips it above (kept as a SEPARATE pass, not a shared helper,
+// because nameCandidates needs sentence-scoped runs and this needs whole-document positions for
+// the sentence-initial check below). A lone initial's period survives ("S." stays "S."); anything
+// else has trailing dots stripped ("Tan." -> "Tan").
+function orphanWords(narrative) {
+  const out = [];
+  const re = /\S+/g;
+  let m;
+  while ((m = re.exec(narrative)) !== null) {
+    const raw = m[0];
+    let start = 0;
+    while (start < raw.length && !/[A-Za-z]/.test(raw[start])) start += 1;
+    let end = raw.length;
+    while (end > start && !/[A-Za-z.]/.test(raw[end - 1])) end -= 1;
+    let word = raw.slice(start, end);
+    if (!/^[A-Z]\.$/.test(word)) word = word.replace(/\.+$/, '');
+    const index = m.index + start;
+    out.push({ word, index, end: index + word.length });
+  }
+  return out;
+}
+
+// (d): a capitalised, non-stopword neighbour immediately before or after means this token is part
+// of a run V6 already owns. Stopwords are excluded from counting as a "partner" so a stopword that
+// happens to be capitalised at a clause start (e.g. an orphan name right after "The") does not
+// smuggle the orphan out of V9's reach — "The Marcus arrived" must still be checked, because "The"
+// is not itself a name.
+function hasCapitalisedRunPartner(words, i) {
+  const isPartner = (w) => {
+    if (!w || !NAME_TOKEN_RE.test(w.word)) return false;
+    return !STOPWORDS.has(w.word.toLowerCase().replace(/\.$/, ''));
+  };
+  return isPartner(words[i - 1]) || isPartner(words[i + 1]);
+}
+
+// (a): sentence-initial in the broad sense — start of the document, start of a line (which in this
+// report's markdown is always a new paragraph, heading, or numbered/bulleted action), or right
+// after sentence-ending punctuation. A leading list/blockquote marker ("- ", "1. ", "> ") is
+// stripped first so the word right after it is still judged as a line start.
+const ORPHAN_LINE_MARKER_RE = /^[ \t]*(?:[-*+>]|\d{1,3}[.)])[ \t]+/;
+function isOrphanSentenceInitial(narrative, index) {
+  const lineStart = narrative.lastIndexOf('\n', index - 1) + 1;
+  let lead = narrative.slice(lineStart, index);
+  const marker = ORPHAN_LINE_MARKER_RE.exec(lead);
+  if (marker) lead = lead.slice(marker[0].length);
+  if (lead.trim() === '') return true;
+  return /[.!?:]["')\]]*\s+$/.test(lead);
+}
+
+function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
+  const allowlist = buildOrphanAllowlist(opts);
+  const ranges = orphanSkipRanges(narrative);
+  const rawHaystack = packInfo.strings.join(' '); // case-sensitive, unlike V6's haystack
+  const words = orphanWords(narrative);
+  const reported = new Set();
+
+  for (let i = 0; i < words.length; i += 1) {
+    const tok = words[i];
+    if (!ORPHAN_TOKEN_RE.test(tok.word)) continue;
+    if (allowlist.has(tok.word)) continue;                          // (b)
+    if (inOrphanSkipRange(ranges, tok.index)) continue;              // (b) heading/code lines
+    if (hasCapitalisedRunPartner(words, i)) continue;                // (d)
+    if (isOrphanSentenceInitial(narrative, tok.index)) continue;     // (a)
+    if (rawHaystack.includes(tok.word)) continue;                    // (c)
+    if (reported.has(tok.word)) continue;
+    reported.add(tok.word);
+    violations.push({
+      rule: RULES.ENTITY,
+      detail: `"${tok.word}" is a capitalised word, not sentence-initial, and matches no evidence` +
+        `-pack string; check it is not an invented name, near ` +
+        `"${contextAround(narrative, tok.index, tok.end)}"`,
     });
   }
 }
@@ -1035,7 +1214,11 @@ function checkStructure(narrative, violations) {
  *
  * @param {string} narrativeMd   the markdown the model returned
  * @param {object} evidencePack  the SAME object handed to the model (app.v176_evidence_pack)
- * @param {object} [opts]        { causalEvidence?: boolean, allowStrongClaims?: boolean }
+ * @param {object} [opts]        { causalEvidence?: boolean, allowStrongClaims?: boolean,
+ *                                 confidenceClass?: string, entityAllowlist?: string[] }
+ *                               entityAllowlist extends V9's conservative orphan-proper-noun
+ *                               allowlist (checkOrphanProperNouns, below) for a business/report
+ *                               shape this file cannot anticipate on its own.
  * @returns {{ok: boolean, violations: Array<{rule: string, detail: string}>}}
  */
 export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
@@ -1082,6 +1265,7 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   checkLimitationItems(narrative, pack, violations);    // V5 (check 87)
   checkEntities(narrative, packInfo, violations);       // V6
   checkSingleTokenEntities(narrative, packInfo, violations); // V6 (check 83/88)
+  checkOrphanProperNouns(narrative, packInfo, violations, options); // V9 (check 83/88 gap closure)
   checkStructure(narrative, violations);                // V7 (check 82)
   checkCohortContradiction(narrative, pack, violations); // V8 (check 89)
 

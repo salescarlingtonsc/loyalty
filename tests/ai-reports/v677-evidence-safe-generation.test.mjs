@@ -19,7 +19,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -683,6 +683,89 @@ test('v684 check 83/88: a real pack name after the same cues does not fire (non-
   const narrative = '## Summary\nWe should call customer Lee about her account. The client Tan renews annually.';
   const result = validateNarrative(narrative, evidencePack());
   assert.deepEqual(only(result, RULES.ENTITY), [], explain(result));
+});
+
+/* --------------------------------------------- check 83/88 gap closure: V9 orphan proper nouns */
+
+/* v701 closes the specific gap this file's OWN comments (validate.mjs ~864-873, ~961) admitted:
+ * "Marcus asked..." right after a direct-address cue was already caught by checkSingleTokenEntities
+ * above; a single invented name with NO such cue anywhere in front of it — the ordinary shape a
+ * model actually produces when narrating — was not. checkOrphanProperNouns closes that. */
+
+test('v684 check 88 (V9): a single orphan invented name with no direct-address cue is caught (firing)', () => {
+  // Embedded mid-sentence (after "coming, and ") so it is neither sentence-initial nor line-initial
+  // — the shape checkSingleTokenEntities' direct-address cue never covered in the first place.
+  const narrative = FAITHFUL.replace(
+    '4 regular customers have stopped coming.',
+    '4 regular customers have stopped coming, and Marcus returned twice last month.',
+  );
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.ENTITY);
+  assert.ok(hits.some((v) => v.detail.includes('Marcus')), explain(result));
+});
+
+test('v684 check 88 (V9): mutation guard — removing the orphan flips the verdict', () => {
+  const withOrphan = FAITHFUL.replace(
+    '4 regular customers have stopped coming.',
+    '4 regular customers have stopped coming, and Marcus returned twice last month.',
+  );
+  const withoutOrphan = FAITHFUL.replace(
+    '4 regular customers have stopped coming.',
+    '4 regular customers have stopped coming, and one of them returned twice last month.',
+  );
+  const withResult = validateNarrative(withOrphan, evidencePack());
+  const withoutResult = validateNarrative(withoutOrphan, evidencePack());
+  assert.ok(only(withResult, RULES.ENTITY).some((v) => v.detail.includes('Marcus')), explain(withResult));
+  assert.deepEqual(only(withoutResult, RULES.ENTITY), [], explain(withoutResult));
+});
+
+test('v684 check 88 (V9): a pack customer label used honestly ("M. Tan" shape) does not fire (non-firing)', () => {
+  // "Tan" alone, mid-sentence, is a case-sensitive substring of the pack's own "Tan W." label.
+  const narrative = FAITHFUL + '\nEvery week M. Tan visits twice for the same order.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.ENTITY), [], explain(result));
+});
+
+test('v684 check 88 (V9): "Peekaa recorded revenue" does not fire — the product name is allowlisted', () => {
+  const narrative = FAITHFUL + '\nPeekaa recorded revenue growth again this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.ENTITY), [], explain(result));
+});
+
+test('v684 check 88 (V9): a sentence-initial "Revenue" does not fire (non-firing)', () => {
+  const narrative = validateNarrative('## Summary\nRevenue rose sharply this month.\n', evidencePack());
+  assert.deepEqual(only(narrative, RULES.ENTITY), [], explain(narrative));
+});
+
+test('v684 check 88 (V9): a weekday mid-sentence does not fire (non-firing)', () => {
+  const narrative = FAITHFUL + '\nTrade was brisk, and Saturday broke every record we track.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.ENTITY), [], explain(result));
+});
+
+test('v684 check 88 (V9): a multi-token run stays V6\'s territory, not V9\'s (non-firing when grounded)', () => {
+  // "Lee S." is a real pack label; "Marcus Tan" (already exercised above at line ~442) is V6's own
+  // two-token catch. This proves V9 does not ALSO double-fire on a run V6 already owns.
+  const narrative = FAITHFUL + '\nWe called Lee S. again about her order.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.ENTITY), [], explain(result));
+});
+
+test('v684 check 88 (V9): every golden-pack good narrative is orphan-clean (non-firing, corpus-wide)', () => {
+  // False positives cost a regenerated report (the asymmetry this file is built around), so V9 is
+  // proven here against every shipped known-GOOD narrative and the FAITHFUL fixture, not just a
+  // hand-picked sentence.
+  const corpusDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'golden-packs');
+  const files = readdirSync(corpusDir).filter((f) => f.endsWith('.json'));
+  assert.ok(files.length >= 6, `expected >= 6 golden packs, found ${files.length}`);
+  for (const file of files) {
+    const { pack, good } = JSON.parse(readFileSync(join(corpusDir, file), 'utf8'));
+    const result = validateNarrative(good, pack);
+    assert.deepEqual(only(result, RULES.ENTITY), [],
+      `${file}'s known-good narrative must not trip V9:\n  ${explain(result)}`);
+  }
+  const faithful = validateNarrative(FAITHFUL, evidencePack());
+  assert.deepEqual(only(faithful, RULES.ENTITY), [], explain(faithful));
 });
 
 /* ---------------------------------------------- check 84: branch label, lower-case month */

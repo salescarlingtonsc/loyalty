@@ -18,7 +18,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { validateNarrative } from '../../supabase/functions/ai-firm-reports/validate.mjs';
+import { RULES, validateNarrative } from '../../supabase/functions/ai-firm-reports/validate.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -67,6 +67,24 @@ for (const { file, pack, bad } of corpus) {
     assert.ok(result.violations.length > 0);
   });
 }
+
+test('v684 check 90 / check 88 (V9): 01-normal-firm.json\'s bad narrative also carries an orphan ' +
+  'invented name, and V9 catches it', () => {
+    // 01-normal-firm.json's "bad" narrative was extended (nestly_v701) with an orphan single-token
+    // invented name ("Priya") with no direct-address cue in front of it — exactly the shape
+    // checkOrphanProperNouns (V9) exists to close. It sits alongside the pre-existing fabricated
+    // revenue figure, so the pack was already correctly rejected before this addition; this test
+    // proves V9 SPECIFICALLY fires on it, not merely that some other rule already would have.
+    const fixture = corpus.find((c) => c.file === '01-normal-firm.json');
+    assert.ok(fixture, 'expected 01-normal-firm.json in the golden corpus');
+    assert.match(fixture.bad, /Priya/, 'the fixture must still carry the orphan name this test checks');
+    const result = validateNarrative(fixture.bad, fixture.pack);
+    assert.equal(result.ok, false);
+    assert.ok(
+      result.violations.some((v) => v.rule === RULES.ENTITY && v.detail.includes('Priya')),
+      `expected V9 to catch "Priya":\n  ${result.violations.map((v) => `${v.rule} :: ${v.detail}`).join('\n  ')}`,
+    );
+  });
 
 test('v684 check 90: a known-good narrative is not passing because the pack was ignored', () => {
   // Same mutation-guard spirit as v677's own T-pass test, applied once to the corpus: swap the
