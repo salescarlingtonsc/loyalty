@@ -75,6 +75,36 @@
 -- (referral above rest); holdout diff is -10pp (referral now below rest) -- the sign flips, so
 -- the engine must move referral to 'not_replicated', never 'discoveries', proving the holdout
 -- check actually discriminates rather than rubber-stamping every candidate.
+--
+-- PART C -- DISC-SEASON-POS: the seasonality engine's POSITIVE branch. Part A's business proves
+-- 'available'=false (business created "now", no prior-year data). It never exercises the
+-- opposite branch, where app.metric_observed_since_v1 finds evidence old enough and prior_agg
+-- actually has rows -- the same-period-prior-year rate computation in that branch has never run
+-- under test. A third, independent business ("bizc") closes it.
+--
+-- app.metric_observed_since_v1('ci_discovery', bizc) = greatest(watermark-for-this-metric,
+-- bizc.created_at); no analytics_observation_watermarks row is seeded (none needed) because
+-- coalescing to NULL drops out of greatest(), leaving bizc.created_at as the sole floor. That
+-- column is explicitly backdated on INSERT to 10 days before the prior-year window opens, which
+-- honestly satisfies "the metric was observed that far back" via a real row rather than a stub.
+--
+-- CURRENT WINDOW (same 120-day, "31-days-ago" window shape as Parts A/B): ONE cohort of 10
+-- clients anchored on d_from+10 (inside the train half, no rival cohort in this business to
+-- compare against, so nothing here reaches 'discoveries' -- only headline/seasonality are
+-- asserted for bizc), 4 of the 10 return within 30 days -> headline current_pct = 4/10 = 40.0%.
+--
+-- PRIOR-YEAR WINDOW (the identical calendar window exactly one year earlier, per the migration's
+-- own v_prior_from/v_prior_to = (p_from/p_to - interval '1 year')::date): a second cohort of 8
+-- clients anchored on v_prior_from+20, 6 of the 8 return within 30 days -> prior_year_pct =
+-- 6/8 = 75.0%.
+--
+-- Asserted: seasonality.available=true, method='same_period_prior_year', current_pct=40.0,
+-- prior_year_pct=75.0, and prior_period.from/to exactly equal to d_from/d_to minus one year.
+--
+-- MUTATION-CHECK (b) (done by hand while authoring this scenario, not left in the committed
+-- file): re-seeding the prior-year cohort as 5/8 returned (62.5%) while leaving the 75.0
+-- assertion in place turned SEAS-PRIOR red; restoring 6/8 turned the suite green again -- see
+-- the session report for the exact harness output of both runs.
 
 \set ON_ERROR_STOP on
 begin;
@@ -463,6 +493,103 @@ begin
   end if;
 end
 $v686b$;
+
+-- =================================================================================================
+-- PART C -- DISC-SEASON-POS: seasonality's positive branch (prior-year data exists and is used)
+-- =================================================================================================
+do $v686c$
+declare
+  bizc uuid := gen_random_uuid();
+  brc uuid := gen_random_uuid();
+  svcc uuid := gen_random_uuid();
+  u_sa uuid := '00000000-0000-4000-8000-000000686eee';
+  d_to date := current_date - 31;
+  d_from date := (current_date - 31) - 119;
+  v_train_to date := d_from + 59;
+  v_prior_from date := (d_from - interval '1 year')::date;
+  v_prior_to date := (d_to - interval '1 year')::date;
+  v_cur_anchor date := d_from + 10;
+  v_prior_anchor date := v_prior_from + 20;
+  v_biz_created timestamptz :=
+    ((v_prior_from - 10)::timestamp + time '00:00') at time zone 'Asia/Singapore';
+  g jsonb;
+  season jsonb;
+  v_err text;
+begin
+  if v_cur_anchor + 7 > v_train_to then
+    insert into _fail values ('SEAS0',
+      'fixture window too short for the current-window anchor+return to land in the train half');
+  else
+    insert into public.businesses (id, name, slug, enabled_modules, created_at) values
+      (bizc, 'ZZ v686 seasonality firm', 'zz-v686-seasonality',
+       array['dashboard','clients','sales','reports'], v_biz_created);
+    insert into public.branches (id, business_id, name, is_default, active) values
+      (brc, bizc, 'ZZ v686 seasonality branch', true, true);
+    insert into public.services (id, business_id, name, price_cents, duration_min) values
+      (svcc, bizc, 'ZZ v686 seasonality service', 3000, 30);
+    insert into public.service_canonical_map (business_id, service_id, node_key, version_no, method)
+    values (bizc, svcc, 'nails', 1, 'owner_chosen');
+
+    -- CURRENT WINDOW: 10 clients, 4 return within 30 days -> headline current_pct = 40.0%.
+    perform pg_temp.zz_v686_cohort(bizc, brc, svcc, v_cur_anchor, 'walk_in_till', 27, 'female', 10, 4, 3000);
+
+    -- PRIOR-YEAR WINDOW (same calendar window, one year earlier): 8 clients, 6 return -> 75.0%.
+    perform pg_temp.zz_v686_cohort(bizc, brc, svcc, v_prior_anchor, 'walk_in_till', 27, 'female', 8, 6, 3000);
+
+    perform set_config('request.jwt.claims', json_build_object(
+        'sub', u_sa, 'role','authenticated',
+        'amr', json_build_array(json_build_object('method','oauth')),
+        'app_metadata', json_build_object('providers', json_build_array('google'))
+      )::text, true);
+
+    begin
+      g := public.get_ci_discovery_v1(bizc, d_from, d_to);
+    exception when others then
+      get stacked diagnostics v_err = returned_sqlstate;
+      insert into _fail values ('SEAS1', format('get_ci_discovery_v1 (seasonality) raised %s: %s', v_err, sqlerrm));
+    end;
+
+    if g is null then
+      insert into _fail values ('SEAS1', 'get_ci_discovery_v1 (seasonality) returned no payload');
+    else
+      season := g->'seasonality';
+      if season is null then
+        insert into _fail values ('SEAS2', 'seasonality key missing from payload');
+      else
+        if (season->>'available')::boolean is distinct from true then
+          insert into _fail values ('SEAS-AVAIL',
+            format('seasonality.available was %s, expected true (bizc.created_at backdated to %s, prior_from is %s)',
+                   season->>'available', v_biz_created, v_prior_from));
+        end if;
+        if season->>'method' is distinct from 'same_period_prior_year' then
+          insert into _fail values ('SEAS-METHOD',
+            format('seasonality.method was %s, expected same_period_prior_year', season->>'method'));
+        end if;
+        if coalesce((season->>'current_pct')::numeric, -1) <> 40.0 then
+          insert into _fail values ('SEAS-CUR',
+            format('seasonality.current_pct was %s, expected 40.0 (4/10)', season->>'current_pct'));
+        end if;
+        if coalesce((season->>'prior_year_pct')::numeric, -1) <> 75.0 then
+          insert into _fail values ('SEAS-PRIOR',
+            format('seasonality.prior_year_pct was %s, expected 75.0 (6/8)', season->>'prior_year_pct'));
+        end if;
+        if (season->'prior_period'->>'from')::date is distinct from v_prior_from then
+          insert into _fail values ('SEAS-FROM',
+            format('seasonality.prior_period.from was %s, expected %s (d_from minus one year)',
+                   season->'prior_period'->>'from', v_prior_from));
+        end if;
+        if (season->'prior_period'->>'to')::date is distinct from v_prior_to then
+          insert into _fail values ('SEAS-TO',
+            format('seasonality.prior_period.to was %s, expected %s (d_to minus one year)',
+                   season->'prior_period'->>'to', v_prior_to));
+        end if;
+      end if;
+    end if;
+
+    perform set_config('request.jwt.claims', null, true);
+  end if;
+end
+$v686c$;
 
 select case when count(*)=0
             then 'PASS -- discovery scan: candidates, BH, holdout replication, deterioration, seasonality, missingness all hold'
