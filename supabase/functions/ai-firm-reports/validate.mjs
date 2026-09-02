@@ -174,10 +174,28 @@ const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/;
 // every ordinary (non-ID-cued) numeric claim.
 const ID_KEY_RE = /id|ref|number|no$/i;
 
+// Check 83 (date-derived grounding coincidence): a pack key that names a DATE, not a quantity.
+// Matches a key ending in "_at"/"_date"/"_on" (generated_at, period_start... no — "period_start"
+// does not end in those suffixes, which is why "period" is ALSO matched anywhere in the key, not
+// just as a suffix: period_start, period_end, prior_period_start all carry it) or containing
+// "period" anywhere. Deliberately keyed on the FIELD NAME, the same convention ID_KEY_RE already
+// uses above — a date is a fact about WHEN the evidence was assembled or scoped, never a quantity
+// a narrative should ground a percentage, ratio or currency claim against.
+const DATE_KEY_RE = /(?:_at|_date|_on)$|period/i;
+
 // Walks every leaf of the pack once. Everything the rules need is collected here so the rules
 // themselves stay readable and the traversal cost is paid a single time.
 function readPack(pack) {
   const numbers = new Set();      // every numeric leaf, plus |n| for negatives
+  // Check 83: numbers that are date-SHAPED — a year, a month number, a day, or a numeric leaf
+  // living under a *_at/*_date/*_on/period key — tracked separately from `numbers`. They stay IN
+  // `numbers` too (a bare digit claim like "in 2026" or "the 15th" is still a legitimate date
+  // mention this file should ground), but groundNumbers below excludes this subset specifically
+  // when the CLAIM being checked is a percentage, ratio or currency figure — see its own note for
+  // why: nothing in the pack's own date parts is ever "cents", and a coincidental year/month/day
+  // match must not silently ground an unrelated rate claim (e.g. "revenue rose 20.26%" grounding
+  // against the year 2026 via the cents-as-dollars heuristic, 2026 / 100 = 20.26).
+  const dateNumbers = new Set();
   const strings = [];             // every string leaf, verbatim
   const dateStrings = new Set();  // leaves that are ISO dates / timestamps
   const objects = [];             // every plain object, for the sibling-ratio derivation
@@ -196,6 +214,15 @@ function readPack(pack) {
     if (typeof n !== 'number' || !Number.isFinite(n)) return;
     numbers.add(n);
     if (n < 0) numbers.add(Math.abs(n));
+  };
+
+  // Check 83: same as addNumber, but ALSO records the value as date-shaped for groundNumbers'
+  // pct/ratio/currency exclusion below.
+  const addDateNumber = (n) => {
+    addNumber(n);
+    if (typeof n !== 'number' || !Number.isFinite(n)) return;
+    dateNumbers.add(n);
+    if (n < 0) dateNumbers.add(Math.abs(n));
   };
 
   const walk = (node) => {
@@ -239,9 +266,9 @@ function readPack(pack) {
   for (const d of dateStrings) {
     const m = ISO_DATE_RE.exec(d);
     if (!m) continue;
-    addNumber(Number(m[1]));            // year
-    addNumber(Number(m[2]));            // month, as written and unpadded
-    addNumber(Number(m[3]));            // day
+    addDateNumber(Number(m[1]));            // year
+    addDateNumber(Number(m[2]));            // month, as written and unpadded
+    addDateNumber(Number(m[3]));            // day
   }
 
   // Check 88 (numeric-ID coincidence): every numeric leaf that lives under an ID-shaped key
@@ -250,17 +277,20 @@ function readPack(pack) {
   // for why a number introduced by an ID cue must ground against THIS set specifically, not any
   // numeric leaf in the pack.
   const idNumbers = new Set();
+  // Check 83: every numeric leaf that lives under a date-shaped key (*_at/*_date/*_on/period) —
+  // e.g. a hypothetical `period_days: 30` — is ALSO date-shaped, same reasoning as the year/month/
+  // day parts above, even when it is not itself an ISO date string.
   for (const obj of objects) {
     for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === 'number' && Number.isFinite(value) && ID_KEY_RE.test(key)) {
-        idNumbers.add(value);
-      }
+      if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+      if (ID_KEY_RE.test(key)) idNumbers.add(value);
+      if (DATE_KEY_RE.test(key)) { dateNumbers.add(value); if (value < 0) dateNumbers.add(Math.abs(value)); }
     }
   }
 
   return {
     numbers: [...numbers], strings, dateStrings: [...dateStrings], objects,
-    idNumbers: [...idNumbers], keys,
+    idNumbers: [...idNumbers], dateNumbers, keys,
   };
 }
 
@@ -634,9 +664,22 @@ function groundNumbers(narrative, packInfo, derivedPct) {
   const idCuedRanges = idCuedDigitRanges(masked);
   const idNumbers = packInfo.idNumbers || [];
 
+  // Check 83: a percentage, ratio (scanQuantityPhrases' RATIO_RE already emits these as
+  // isPercent:true tokens) or currency claim must never ground against a date-shaped number — see
+  // DATE_KEY_RE / dateNumbers above for what counts as one. A plain claim (a bare count, or an
+  // actual date mention like "in 2026") is NOT restricted; only the pct/currency shape is, because
+  // that is the shape the cents-as-dollars heuristic (n / 100) applies to, and a year is never
+  // cents. isCurrency reads the token's own matched text: NUMBER_TOKEN_RE's optional S$/SGD/$
+  // prefix survives into tok.raw verbatim.
+  const CURRENCY_TOKEN_PREFIX_RE = /^\s*(?:S\$|SGD\s|\$)/;
+  const dateNumbers = packInfo.dateNumbers || new Set();
   const groundedAgainstPack = (tok) => {
+    const excludeDateNumbers = tok.isPercent || CURRENCY_TOKEN_PREFIX_RE.test(tok.raw);
     for (const n of packInfo.numbers) {
+      const isDateNumber = dateNumbers.has(n);
+      if (excludeDateNumbers && isDateNumber) continue; // check 83: date parts never ground a rate
       if (renders(tok.value, tok.decimals, n)) return true;      // the value as the pack holds it
+      if (isDateNumber) continue;                                 // a date is never "cents"
       if (renders(tok.value, tok.decimals, n / 100)) return true; // cents written as dollars
     }
     if (tok.isPercent) {
@@ -782,6 +825,10 @@ function checkPopulation(narrative, pack, violations) {
     MONTH_NAME_RE.lastIndex = 0;
     let m;
     while ((m = MONTH_NAME_RE.exec(narrative)) !== null) {
+      // Check 86: same modal-"May" exemption as checkLowercaseMonthClauseStart below (defined
+      // further down the file, hoisted) — belt-and-suspenders in case a model capitalises "May"
+      // as a modal ("This May reflect...", an unusual but not impossible capitalisation choice).
+      if (isModalMayUsage(narrative, m[1], m.index, m.index + m[0].length)) continue;
       const idx = monthIndexOf(m[1]);
       if (idx < 0) continue;
       const lead = narrative.slice(0, m.index);
@@ -861,6 +908,41 @@ function checkBranch(narrative, pack, violations) {
 // is never touched, while "In july, sales grew" is caught even though "july" is lower-case.
 const MONTH_NAME_CI_RE = new RegExp(MONTH_NAME_RE.source, 'gi');
 
+// Check 86: "may" is BOTH the month name and English's most common modal auxiliary ("this may
+// reflect...", "it may improve..."). checkLowercaseMonthClauseStart's own CURRENT_CUE list
+// includes the bare word "this", so "This may reflect the school holidays." was misread as a
+// leading period claim about the month of May: "this " matches CURRENT_CUE, the text before it is
+// sentence-initial (CLAUSE_START), and "may" parses as monthIndexOf('may') >= 0 — the recommended
+// hedging language this report's own honest-limitation notes elsewhere ask for was rejected by the
+// very rule meant to police a DIFFERENT thing (a fabricated period). Modal usage is recognisable
+// two ways, either enough to exempt the match:
+//   (1) the word immediately BEFORE "may" is a modal SUBJECT — a pronoun or a noun a hedge
+//       naturally attaches to ("this", "it", "that", "which", "customers", "clients", "members",
+//       "guests", "shoppers", "they", "we", "you"). Deliberately NOT "sales" or any other noun this
+//       report uses as the subject of a genuine month claim — "Sales in May were higher" has "in"
+//       between "Sales" and "May", not a direct subject-verb adjacency, so it is untouched.
+//   (2) the word immediately AFTER "may" is one of a short list of bare-infinitive verbs a hedge in
+//       this report's own voice commonly takes ("reflect", "indicate", "suggest", "mean", "explain",
+//       "increase", "decrease", "improve", "help", "need", "want", "affect", "change", "vary",
+//       "grow", "shrink", "differ", "include", "require", "benefit"). A genuine month claim is never
+//       followed by one of these — "Sales in May WERE higher" is followed by a past-tense BE-verb
+//       describing what happened IN that month, not a hedge continuation — so this does not widen
+//       the false-negative gap check 84 already accepts for month names in general.
+// Scoped to the literal word "may" only (never "march"/"august"/etc, which have no comparable modal
+// reading in this report's voice), so every other month name keeps its existing behaviour untouched.
+const MODAL_MAY_SUBJECT_RE =
+  /\b(?:this|it|that|which|customers?|clients?|members?|guests?|shoppers?|they|we|you)\s*$/i;
+const MODAL_MAY_VERB_RE =
+  /^\s*(?:reflect|indicate|suggest|mean|explain|increase|decrease|improve|help|need|want|affect|change|vary|grow|shrink|differ|include|require|benefit)\b/i;
+
+function isModalMayUsage(narrative, monthWord, matchIndex, matchEnd) {
+  if (String(monthWord).toLowerCase().replace(/\.$/, '') !== 'may') return false;
+  const before = narrative.slice(Math.max(0, matchIndex - 24), matchIndex);
+  if (MODAL_MAY_SUBJECT_RE.test(before)) return true;
+  const after = narrative.slice(matchEnd, matchEnd + 24);
+  return MODAL_MAY_VERB_RE.test(after);
+}
+
 function checkLowercaseMonthClauseStart(narrative, pack, violations) {
   const bounds = periodBounds(pack);
   const currentMonths = monthsSpanned(bounds.from, bounds.to);
@@ -870,6 +952,7 @@ function checkLowercaseMonthClauseStart(narrative, pack, violations) {
   let m;
   while ((m = MONTH_NAME_CI_RE.exec(narrative)) !== null) {
     if (/^[A-Z]/.test(m[1])) continue; // capitalised: the primary case-sensitive pass already covers it
+    if (isModalMayUsage(narrative, m[1], m.index, m.index + m[0].length)) continue;
     const idx = monthIndexOf(m[1]);
     if (idx < 0 || currentMonths.has(idx)) continue;
     const lead = narrative.slice(0, m.index);
@@ -1528,10 +1611,33 @@ function orphanWords(narrative) {
 // the original narrative, to be whitespace-only before counting them as a run partner - a "/" (or
 // any other punctuation the split regex consumed as a boundary) between two array-adjacent tokens
 // means they were never written as a whitespace-joined two-word name and V9 must judge each alone.
-function hasCapitalisedRunPartner(narrative, words, i) {
+// v(check 88, refuter round 4): "Last Tuesday Marcus returned twice" evaded V9 entirely. "Tuesday"
+// sits immediately before "Marcus", is capitalised, is not a stopword, and the gap between them is
+// plain whitespace — so the OLD isPartner() below counted it as a genuine run partner and V9's own
+// exemption (d) ("part of a multi-token capitalised run — V6's territory") skipped "Marcus" as
+// already-someone-else's-problem. It never was: V6's own run-builder (nameCandidates, above) FLUSHES
+// its run the instant it sees a weekday or month name (`DAY_NAMES.has(plain) ||
+// monthIndexOf(plain) >= 0` at that function's own continue-and-flush line) — "Tuesday Marcus" is
+// never treated as a two-word name by V6, because V6 deliberately refuses to let a weekday/month
+// word anchor one end of a run. hasCapitalisedRunPartner disagreed with V6 about what counts as a
+// run, which is exactly backwards: it exists ONLY to detect "this token is V6's territory", so it
+// must use V6's own definition of a run partner, not a looser one. Fixed by excluding a weekday, a
+// month name, or an allowlisted word (Peekaa, WhatsApp, ...) from counting as a partner here too —
+// a capitalised token whose ONLY neighbour is one of those is judged ALONE, same as V6 already does.
+// `allowlist` is optional (existing callers outside this file's two, if any were ever added, keep
+// working with day/month-only exclusion) so this stays backward compatible in shape.
+function hasCapitalisedRunPartner(narrative, words, i, allowlist) {
+  const isNonPartnerWord = (word) => {
+    const plain = word.toLowerCase().replace(/\.$/, '');
+    if (STOPWORDS.has(plain)) return true;
+    if (DAY_NAMES.has(plain)) return true;
+    if (monthIndexOf(plain) >= 0) return true;
+    if (allowlist && allowlist.has(word)) return true;
+    return false;
+  };
   const isPartner = (self, neighbour) => {
     if (!neighbour || !NAME_TOKEN_RE.test(neighbour.word)) return false;
-    if (STOPWORDS.has(neighbour.word.toLowerCase().replace(/\.$/, ''))) return false;
+    if (isNonPartnerWord(neighbour.word)) return false;
     const [first, second] = self.index < neighbour.index ? [self, neighbour] : [neighbour, self];
     const gap = narrative.slice(first.end, second.index);
     return gap.length > 0 && /^\s+$/.test(gap);
@@ -1565,7 +1671,7 @@ function checkOrphanProperNouns(narrative, packInfo, violations, opts) {
     if (!isCapitalisedCandidate(tok.word)) continue;
     if (allowlist.has(tok.word)) continue;                          // (b)
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // (b) heading/code lines
-    if (hasCapitalisedRunPartner(narrative, words, i)) continue;     // (d)
+    if (hasCapitalisedRunPartner(narrative, words, i, allowlist)) continue; // (d)
     if (isOrphanSentenceInitial(narrative, tok.index)) continue;     // (a)
     if (rawHaystack.includes(tok.word)) continue;                    // (c)
     if (reported.has(tok.word)) continue;
@@ -1776,7 +1882,7 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
     const tok = words[i];
     if (!isCapitalisedCandidate(tok.word)) continue;
     if (inOrphanSkipRange(ranges, tok.index)) continue;              // heading/code lines
-    if (hasCapitalisedRunPartner(narrative, words, i)) continue;     // (d), still V6's territory
+    if (hasCapitalisedRunPartner(narrative, words, i, allowlist)) continue; // (d), still V6's territory
     if (!isOrphanSentenceInitial(narrative, tok.index)) continue;    // V9b only judges what V9 skips
     if (isInterrogativeModalOpening(narrative, tok)) continue;       // check 17/88: a question, not a name
     if (allowlist.has(tok.word)) continue;                           // (b)
@@ -1952,14 +2058,86 @@ const REQUIRED_HEADINGS = [
   '## Do these three things next',
 ];
 
+// (check 82, gap closed) The old version of this check used `narrative.indexOf(heading)` — a bare
+// SUBSTRING search, not a search over actual level-2 heading LINES. That has two holes at once:
+// (1) an injected heading the model was never asked for ("## Sponsored by BrewCo") was invisible —
+//     nothing here ever looked at what OTHER `## ` lines exist, only whether the five required
+//     strings happen to appear somewhere in the document; (2) a required heading's text embedded
+//     mid-sentence, not as its own heading line, would satisfy indexOf() without the report having
+//     that section at all.
+// Fixed by reading every ACTUAL level-2 heading line (`^##[ \t]+...$`, which does not match `###`
+// or deeper — a line starting "###" has a third "#" immediately after "##", not a space/tab, so
+// the regex below never matches it) and requiring the found set to equal REQUIRED_HEADINGS EXACTLY:
+// same five headings, in the same order, nothing extra. An injected "## Sponsored ..." now fails on
+// its own heading text (not one of the five); a required heading rewritten even slightly ("##
+// Summary!") now fails BOTH as "missing" (its exact text is absent) and as "unexpected" (the
+// rewritten line is not one of the five) — the double signal is deliberate, not a bug, and matches
+// this file's own asymmetry: a false positive here costs a regenerated report, not a wrong one.
+const HEADING_LINE_RE = /^##[ \t]+(.+?)[ \t]*$/gm;
+
+// (check 82, subsections) SYSTEM_PROMPT (index.ts) never asks for a THIRD-level heading anywhere —
+// it defines exactly five level-2 sections and, under the last one, three numbered list items. The
+// v179/v684 evidence pack has no field that declares a section's own subsections either (no
+// `subsections` key on any of the five, checked against readPack.keys below), so there is nothing
+// for a model-written H3 to legitimately be ABOUT. Given that, this file makes the conservative
+// choice explicitly rather than leaving the gap open: H3 (or deeper) is FORBIDDEN outright, not
+// "allowed only when the pack declares subsections" — because today the pack never does, so the
+// two policies are behaviourally identical, and forbidding outright is simpler to audit than a
+// conditional gate on a key that does not exist. If a future pack version adds a per-section
+// `subsections` declaration, this comment (and the check below) is where that conditional belongs —
+// it is not implemented here because implementing a gate against a key nothing ever sets would be
+// coverage theatre, the same reasoning the file applies everywhere else (e.g. checkCausal's
+// currently-shut opts.causalEvidence door).
+const SUBHEADING_LINE_RE = /^#{3,6}[ \t]+.*$/gm;
+
 function checkStructure(narrative, violations) {
-  const positions = REQUIRED_HEADINGS.map((heading) => narrative.indexOf(heading));
-  positions.forEach((idx, i) => {
-    if (idx !== -1) return;
+  const found = [];
+  HEADING_LINE_RE.lastIndex = 0;
+  let hm;
+  while ((hm = HEADING_LINE_RE.exec(narrative)) !== null) {
+    found.push({ text: `## ${hm[1].trim()}`, index: hm.index });
+  }
+  const requiredSet = new Set(REQUIRED_HEADINGS);
+
+  // Missing: a required heading whose exact text never appears as its own heading line.
+  for (const heading of REQUIRED_HEADINGS) {
+    if (found.some((f) => f.text === heading)) continue;
     violations.push({
       rule: RULES.STRUCTURE,
-      detail: `required heading "${REQUIRED_HEADINGS[i]}" is missing from the report`,
+      detail: `required heading "${heading}" is missing from the report`,
     });
+  }
+
+  // Unexpected: any level-2 heading line that is not one of the five required headings — this is
+  // what catches an injected "## Sponsored by BrewCo" that substring-matching used to miss entirely.
+  for (const f of found) {
+    if (requiredSet.has(f.text)) continue;
+    violations.push({
+      rule: RULES.STRUCTURE,
+      detail: `heading "${f.text}" is not one of the report's five required headings`,
+    });
+  }
+
+  // Duplicate: a required heading repeated is still wrong even though its text is exact — each of
+  // the five must appear exactly once.
+  const requiredCounts = new Map();
+  for (const f of found) {
+    if (!requiredSet.has(f.text)) continue;
+    requiredCounts.set(f.text, (requiredCounts.get(f.text) || 0) + 1);
+  }
+  for (const [heading, count] of requiredCounts) {
+    if (count <= 1) continue;
+    violations.push({
+      rule: RULES.STRUCTURE,
+      detail: `required heading "${heading}" appears ${count} times; it must appear exactly once`,
+    });
+  }
+
+  // Out of order: same pairwise check as before, now driven off the exact heading-line index
+  // (first occurrence) rather than a substring search.
+  const positions = REQUIRED_HEADINGS.map((heading) => {
+    const hit = found.find((f) => f.text === heading);
+    return hit ? hit.index : -1;
   });
   for (let i = 1; i < positions.length; i += 1) {
     if (positions[i] === -1 || positions[i - 1] === -1) continue;
@@ -1970,6 +2148,18 @@ function checkStructure(narrative, violations) {
           `but appears out of order`,
       });
     }
+  }
+
+  // Check 82 (subsections): H3+ is forbidden outright — see SUBHEADING_LINE_RE's own note above for
+  // why "allowed only when the pack declares subsections" and "forbidden" are the same policy today.
+  SUBHEADING_LINE_RE.lastIndex = 0;
+  let sm;
+  while ((sm = SUBHEADING_LINE_RE.exec(narrative)) !== null) {
+    violations.push({
+      rule: RULES.STRUCTURE,
+      detail: `heading "${sm[0].trim()}" is a level-3-or-deeper heading; the report's five ` +
+        `required headings declare no subsections and none are permitted`,
+    });
   }
 
   const lastIdx = positions[positions.length - 1];
@@ -2104,6 +2294,36 @@ const COHORT_PHRASES = [
     cohort: 'new_customers',
     path: ['insights', 'retention', 'new_customers'],
     re: /(\d[\d,]*)\s+(?:\w+\s+){0,4}?new customers?/i,
+  },
+  // Check 89 (nestly_v684_metric_dictionary, db/migrations/20260902_nestly_v684_metric_dictionary.sql
+  // -> app.ci_customer_classes_v1): the dictionary defines five DISJOINT-by-construction classes -
+  // loyal, frequent, retained, high_ltv, at_risk. The three entries above already cover at_risk and
+  // the loyal/returning vocabulary (the "loyal regulars?" alternative in returning_customers' own
+  // regex). Only `frequent` and the dictionary's `high_ltv` class (this cohort's own English word is
+  // "valuable" - "4 valuable customers", never the machine slug) were undeclared here, so a claimed
+  // count for either cohort could silently match a DIFFERENT tracked cohort's number and nothing
+  // caught it - the exact gap checkCohortContradiction exists to close for every other cohort.
+  // PACK PATH, honestly noted: app.ci_customer_classes_v1 returns per-CUSTOMER booleans
+  // (classes.frequent, classes.high_ltv), not a business-wide COUNT the way insights.at_risk.
+  // customers or insights.retention.new_customers already are - no AI-report evidence-pack reader
+  // aggregates either class into a count yet. The paths below follow the exact naming convention
+  // the three cohorts above already use (insights.retention.<cohort>_customers) for the day a reader
+  // does add that aggregate; until then this entry simply never binds (readPath returns undefined,
+  // classifyCohortMentions abstains, same as any other cohort phrase whose path resolves to nothing)
+  // - it does not fabricate a number to check against, only widens the vocabulary the moment the
+  // pack starts carrying one.
+  {
+    cohort: 'frequent_customers',
+    path: ['insights', 'retention', 'frequent_customers'],
+    re: /(\d[\d,]*)\s+(?:\w+\s+){0,4}?frequent (?:customers?|shoppers?|visitors?|regulars?)/i,
+  },
+  {
+    // "valuable" is this file's English rendering of the dictionary's `high_ltv` class (a customer
+    // at/above the business's own 80th percentile of lifetime spend) - the cohort's machine slug is
+    // never the word a narrative would use.
+    cohort: 'high_ltv_customers',
+    path: ['insights', 'retention', 'high_ltv_customers'],
+    re: /(\d[\d,]*)\s+(?:\w+\s+){0,4}?(?:valuable|high[- ]spending|high[- ]ltv|top[- ]spending) customers?/i,
   },
 ];
 
