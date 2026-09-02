@@ -65,6 +65,7 @@ begin
    where business_id=v_biz;
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_biz,false) on conflict (business_id) do update set workspace_paused=false;
+  insert into public.subscriptions(business_id) values (v_biz) on conflict do nothing;
 
   perform pg_temp.as_v676_user(v_owner);
   insert into public.loyalty_programs(business_id, active, loyalty_model, kind,
@@ -147,10 +148,29 @@ begin
       else 'FAIL '||coalesce(nullif(v_err,''),'a QR was minted for an already redeemed gift') end);
 
   -- ================ 05  AN EXPIRED PENDING ROW IS STILL STOOD DOWN ================
+  -- now() is frozen for this whole rollback-only transaction (transaction_timestamp semantics),
+  -- and customer_gift_intents_v515_expiry_check requires expires_at > created_at, which also
+  -- defaults to that same frozen now() — so an UPDATE can never backdate expires_at into the
+  -- past relative to "now" as the RPC sees it. app.v515_gift_intent_guard fires only on
+  -- UPDATE/DELETE (before delete or update — never insert), so instead: cancel the live pending
+  -- intent through the real RPC (frees customer_gift_intents_v515_open_uk), then INSERT a
+  -- synthetic already-lapsed PENDING row copying its provenance columns, with an explicit past
+  -- created_at/expires_at pair that satisfies the check constraint (expires_at > created_at) and
+  -- is still <= the frozen now() the stand-down UPDATE inside the RPC compares against.
   select id into v_perk_intent from public.customer_gift_intents_v515
    where business_id=v_biz and client_id=v_client and gift_kind='tier_perk' and status='pending';
-  update public.customer_gift_intents_v515 set expires_at = now() - interval '1 minute'
-   where id = v_perk_intent;
+  perform public.customer_cancel_gift_intent_v515(v_perk_intent, gen_random_uuid());
+  insert into public.customer_gift_intents_v515(
+    id, business_id, identity_id, auth_user_id, client_id, gift_kind, grant_id, benefit_id,
+    quoted_label, quoted_min_spend_cents, quoted_period_key, quoted_terms,
+    token_hash, idempotency_key, request_hash, status, expires_at, created_at)
+  select gen_random_uuid(), business_id, identity_id, auth_user_id, client_id, gift_kind, grant_id,
+    benefit_id, quoted_label, quoted_min_spend_cents, quoted_period_key, quoted_terms,
+    app.v89_sha256(gen_random_uuid()::text), gen_random_uuid(), request_hash,
+    'pending', now() - interval '1 minute', now() - interval '20 minutes'
+  from public.customer_gift_intents_v515
+  where id = v_perk_intent
+  returning id into v_perk_intent;
   v_b := public.customer_create_gift_intent_v515(v_biz,'tier_perk',v_benefit,gen_random_uuid());
   select status into v_status from public.customer_gift_intents_v515 where id = v_perk_intent;
   insert into _r values('05_expired_row_stood_down',
