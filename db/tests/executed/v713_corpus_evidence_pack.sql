@@ -176,9 +176,36 @@ begin
   end if;
 
   ---------------------------------------------------------------------------
-  -- F1/F2/F3/F4 — THE CALL, sessionless, through the real production entry point.
+  -- F0 — NESTLY v720: sessionless WITHOUT the drain open must now be refused. Before v720,
+  -- app.v176_evidence_pack had no gate of its own and this call would have succeeded; this
+  -- fixture used to rely on exactly that. Assert the refusal first, so a future regression that
+  -- silently widens the gate back to "auth.uid() is null is enough" is caught here rather than
+  -- only by the more elaborate access-boundary battery in v720_corpus_evidence_pack_grants.sql.
   ---------------------------------------------------------------------------
+  begin
+    perform app.v176_evidence_pack(biz, 'monthly', d1, d1);
+    insert into _fail values ('F0-drain-required',
+      'a sessionless call with the internal drain CLOSED still got a pack — nestly_v720''s gate is not being enforced');
+  exception
+    when sqlstate '42501' then null; -- expected
+    when others then
+      insert into _fail values ('F0-drain-required', format('refused with %s, expected 42501', sqlerrm));
+  end;
+
+  ---------------------------------------------------------------------------
+  -- F1/F2/F3/F4 — THE CALL, sessionless, through the real production entry point.
+  --
+  -- NESTLY v720: app.v176_evidence_pack now gates on app.v676_internal_drain_active() for a
+  -- sessionless caller (belt-and-braces alongside its owner-only ACL). The real production
+  -- caller, public.internal_claim_ai_firm_report_v176, opens this window itself around its own
+  -- call (see db/migrations/20260902_nestly_v720_evidence_pack_grants.sql step 2b) — this
+  -- fixture calls app.v176_evidence_pack directly, one layer inside that worker, so it opens
+  -- the SAME window the worker would, exactly as F6 below already does for app.ci_access_
+  -- gate_v667.
+  ---------------------------------------------------------------------------
+  perform app.v676_open_internal_drain();
   pack := app.v176_evidence_pack(biz, 'monthly', d1, d1);
+  perform app.v676_close_internal_drain();
 
   -- F1 — the ci_opportunities section is AVAILABLE, not withheld for an access reason.
   if exists (select 1 from jsonb_array_elements(pack->'evidence_completeness'->'unavailable_sections') u
@@ -256,7 +283,9 @@ begin
   end
   $stub$;
 
+  perform app.v676_open_internal_drain();
   pack := app.v176_evidence_pack(biz, 'monthly', d1, d1);
+  perform app.v676_close_internal_drain();
 
   if not exists (select 1 from jsonb_array_elements(pack->'evidence_completeness'->'unavailable_sections') u
                   where u->>'section' = 'ci_opportunities' and coalesce(u->>'sqlstate','') <> '') then
