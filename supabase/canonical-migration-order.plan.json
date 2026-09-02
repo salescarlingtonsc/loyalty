@@ -3292,6 +3292,12 @@
       "version": "20260902000000",
       "name": "nestly_v672_public_support_desk",
       "sourcePath": "db/migrations/20260902_nestly_v672_public_support_desk.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902010000",
+      "name": "nestly_v673_staff_insert_owner_only",
+      "sourcePath": "db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql"
     }
   ]
 }

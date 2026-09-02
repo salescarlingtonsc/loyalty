@@ -3297,6 +3297,12 @@
       "path": "db/migrations/20260902_nestly_v672_public_support_desk.sql",
       "semanticVersion": "v672",
       "proposedDeployVersion": "20260902000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql",
+      "semanticVersion": "v673",
+      "proposedDeployVersion": "20260902010000"
     }
   ]
 }
