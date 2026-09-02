@@ -80,21 +80,34 @@ begin
 
   -- Configure every business before the first SHARED value writer; this proves
   -- the supported EXCLUSIVE→SHARED order and never attempts an unsafe upgrade.
+  --
+  -- ORDERING NOTE (added 2026-09-02): nestly_v565 ("every business born the same") added a guard
+  -- inside set_programmes_v314 -- turning 'referral' on in the same p_switches call requires a
+  -- public.referral_programs row to already exist, else it raises
+  -- 'referral_needs_configuration: save the referral reward first' (22023). This fixture used to
+  -- flip {"points":true,"referral":true} (or stamps/referral) in one call and only afterwards call
+  -- save_referral_program_v421, which the v565 guard now refuses. v425_referral_typed_payout.sql
+  -- (e.g. its lines around 333-334, 344-345) already carries the guard-compatible order: enable
+  -- the base earn programme, save the referral reward, THEN enable 'referral' in its own
+  -- set_programmes_v314 call. Reordered to match; no assertion or business logic changed.
   perform public.business_set_earning_rule_v359(v_pbiz,1.0,null,'none',null);
   perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_pbiz, null, 'v480 acceptance'))::jsonb ->> 'version_id')::uuid);
-  perform public.set_programmes_v314(v_pbiz,'{"points":true,"referral":true}'::jsonb,gen_random_uuid());
+  perform public.set_programmes_v314(v_pbiz,'{"points":true}'::jsonb,gen_random_uuid());
   perform public.save_referral_program_v421(v_pbiz,true,'points',100,null,0,true,100,null);
+  perform public.set_programmes_v314(v_pbiz,'{"referral":true}'::jsonb,gen_random_uuid());
 
   perform public.business_set_earning_rule_v359(v_sbiz,1.0,null,'none',null);
   perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_sbiz, null, 'v480 acceptance'))::jsonb ->> 'version_id')::uuid);
-  perform public.set_programmes_v314(v_sbiz,'{"stamps":true,"referral":true}'::jsonb,gen_random_uuid());
+  perform public.set_programmes_v314(v_sbiz,'{"stamps":true}'::jsonb,gen_random_uuid());
   update public.loyalty_programs set active=true,stamp_per_cents=1000 where business_id=v_sbiz;
   perform public.save_referral_program_v421(v_sbiz,true,'stamps',7,null,0,true,7,null);
+  perform public.set_programmes_v314(v_sbiz,'{"referral":true}'::jsonb,gen_random_uuid());
 
   perform public.business_set_earning_rule_v359(v_vbiz,1.0,null,'none',null);
   perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_vbiz, null, 'v480 acceptance'))::jsonb ->> 'version_id')::uuid);
-  perform public.set_programmes_v314(v_vbiz,'{"points":true,"referral":true}'::jsonb,gen_random_uuid());
+  perform public.set_programmes_v314(v_vbiz,'{"points":true}'::jsonb,gen_random_uuid());
   perform public.save_referral_program_v421(v_vbiz,true,'voucher',null,'Free Coffee',0,true,null,'Free Coffee');
+  perform public.set_programmes_v314(v_vbiz,'{"referral":true}'::jsonb,gen_random_uuid());
 
   select id into v_ppot from public.business_programmes where business_id=v_pbiz and kind='points';
   select id into v_spot from public.business_programmes where business_id=v_sbiz and kind='stamps';

@@ -342,11 +342,31 @@ begin
   end if;
   raise notice 'C ok: S$15 earned +3 at the card''s own S$5 rate (filled now 7 of 5)';
 
-  perform app.redeem_reward_core(v_biz, v_client, v_reward_big, 'v433-final-claim-0001', v_branch, null, null);
+  -- nestly_v489 (auto rollover, 2026-08-24) + nestly_v496: since v489, the S$15 sale just above
+  -- already overfilled the card to 7/5, and its AFTER INSERT trigger (trg_v489_stamp_rollover,
+  -- firing after the earn within the same statement) auto-closes the cycle itself with
+  -- origin='completed' the instant it detects filled>=slots — the 2 excess stamps roll onto a
+  -- fresh cycle before this manual claim ever runs. So by the time redeem_reward_core is called
+  -- below, the 5-slot card is already closed with origin 'completed', not 'claimed': the manual
+  -- claim finds no open card holding 5+ stamps and instead takes v478/v489's survivor path (the
+  -- same "origin in ('expired','claimed','completed')" lookup patched into redeem_reward_core),
+  -- returning from_expired_card=true and stamp_card_closed=false rather than closing a cycle of
+  -- its own. This was bisected as a stale fixture (pre-v489 expectation), not a regression.
+  select count(*) into v_n from public.stamp_cycles
+   where business_id = v_biz and client_id = v_client and origin = 'completed' and slots = 5;
+  if v_n <> 1 then
+    raise exception 'C FAIL: the overfilling S$15 sale did not auto-close the 5-slot card (origin completed, % closed cycles)', v_n;
+  end if;
+
+  v_json := app.redeem_reward_core(v_biz, v_client, v_reward_big, 'v433-final-claim-0001', v_branch, null, null)::jsonb;
+  if coalesce((v_json->>'from_expired_card')::boolean, false) is distinct from true
+     or coalesce((v_json->>'stamp_card_closed')::boolean, true) is distinct from false then
+    raise exception 'C FAIL: the manual claim on an already auto-completed card did not take the survivor path: %', v_json;
+  end if;
   select count(*) into v_n from public.stamp_cycles
    where business_id = v_biz and client_id = v_client and origin = 'claimed' and slots = 5;
-  if v_n <> 1 then
-    raise exception 'C FAIL: the final claim did not close the 5-slot card (% closed cycles)', v_n;
+  if v_n <> 0 then
+    raise exception 'C FAIL: the survivor claim on an auto-completed card invented an extra claimed cycle (% found)', v_n;
   end if;
 
   insert into public.sales(business_id, client_id, kind, amount_cents, branch_id)
