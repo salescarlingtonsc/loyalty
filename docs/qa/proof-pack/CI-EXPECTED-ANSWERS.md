@@ -11,8 +11,8 @@ a literal slice of the committed fixture file, so the expected answers a reviewe
 against live in exactly one place (the fixture itself) and this document, not two places
 that can drift apart.
 
-Fixtures with an extracted truth table: **42**. Flagged (no truth-table
-marker found): **15**.
+Fixtures with an extracted truth table: **46**. Flagged (no truth-table
+marker found): **18**.
 
 ## Flagged — no truth-table marker found
 
@@ -37,6 +37,9 @@ values.
 * `db/tests/executed/v732_corpus_coverage_shown.sql`
 * `db/tests/executed/v734_corpus_synthetic_exclusion.sql`
 * `db/tests/executed/v735_corpus_evidence_pack_extended.sql`
+* `db/tests/executed/v738_corpus_pack_report_sections.sql`
+* `db/tests/executed/v741_corpus_roster_read_audit.sql`
+* `db/tests/executed/v742_corpus_synthetic_estate_4.sql`
 
 ## Truth tables, verbatim
 
@@ -2724,16 +2727,37 @@ rollback;
 --
 --   weekday_pattern.rows (NEW, visit-day rule): isodow=1 (Monday) visits = 3 (R's 2 Mondays + C's
 --     1 Monday); isodow=2 (Tuesday) visits = 1 (R); isodow=3 (Wed) = 1, isodow=4 (Thu) = 1,
---     isodow=5 (Fri) = 1, isodow=6 (Sat) = 1 (all C). SUM ACROSS ALL ROWS = 8.
+--     isodow=5 (Fri) = 1, isodow=6 (Sat) = 1 (all C); isodow=7 (Sun) = 3 (the three v739 filler
+--     clients below, one visit each). SUM ACROSS ALL ROWS = 11 (was 8 before the fillers).
 --   Under the OLD raw-row rule: isodow=1 would sum R's 4 Monday sale rows (3 same-day + 1 on the
---     following Monday) + C's 1 Monday sale row = 5, and the grand total would be 10 (R's 5 raw
---     rows + C's 5 raw rows) — the exact "10 for two clients with 3+1+1 and 5 sales" figure this
---     migration's header cites.
+--     following Monday) + C's 1 Monday sale row = 5 — the exact figure this migration's header
+--     cites (the OLD-rule grand total for R+C alone, 10, is no longer directly assertable as a
+--     single number here since the fillers add 3 more genuine visits on a day the old rule would
+--     also have counted correctly; the Monday-specific check below is what isolates the dedupe
+--     bug, same as before).
 --   top_customers.rows / lifetime_visits: UNCHANGED by this migration (already deduped since
 --     nestly_v699) — R.visits = 3, C.visits = 5.
 --
 -- A mutation that reverts weekday_pattern's dedupe (back to counting raw sale rows) makes the
--- Monday row read 5 and the sum read 10; this fixture turns red on either.
+-- Monday row read 5; this fixture turns red on that (the grand-total-10 tripwire from the
+-- original two-client version is superseded by the fillers below, see WK-total-mutation).
+--
+-- NESTLY v739 UPDATE (authorised, cited here per that migration's own fixture-review note):
+-- nestly_v739 gates app.v179_business_insights.insights.top_customers.rows on the SAME
+-- app.subgroup_evidence_v1 floor (5) that already gated the top1/top5 share fields — below the
+-- floor, rows now empties to [] with a `suppressed` object, instead of always rendering. This
+-- fixture's original population (R + C only, n=2) fell below that floor, which would have
+-- silently broken the pre-existing TOP-r-present / TOP-c-present assertions below (assertions
+-- this migration does not intend to touch — they test the v699 dedupe, not the v739 floor).
+-- Fix: three filler identified clients (F1/F2/F3) were added, each with exactly one
+-- revenue+visit sale, all three on v_monday1+6 (Sunday, isodow=7) — a day untouched by either R
+-- or C, so the Monday (isodow=1) and Tuesday (isodow=2) truth-table figures the weekday_pattern
+-- assertions below depend on are unaffected. This brings the identified population to n=5 (R, C,
+-- F1, F2, F3), exactly at the floor, so evidence.status='ok', top_customers.rows keeps carrying
+-- all 5 (R and C included), and top_customers.suppressed is asserted null (new assertion below).
+-- The weekday_pattern grand-total truth table above and the WK-total-visits assertion were
+-- updated from 8 to 11 to account for the fillers' 3 new Sunday visits — the ONLY numbers this
+-- update changes; Monday/Tuesday stay exactly as before.
 ```
 
 ### `db/tests/executed/v717_corpus_time_basis.sql`
@@ -3074,6 +3098,11 @@ rollback;
 --       app.ci_verdict_class_v696, nestly_v705), whose 'limitation' names the missing
 --       incrementality in plain language, and whose 'impact.expected_value.status' =
 --       'unavailable' (no behavioural model backs it -- never a manufactured cents figure).
+--   app.v176_evidence_pack(biz, 'monthly', d_send, d_send), sessionless (internal drain open --
+--     the real production call shape, since nestly_v735): findings.ranked ALSO contains a
+--     candidate id='campaigns', evidence_class='ASSOCIATION', with the same non-incrementality
+--     limitation -- the wiring gap PART E originally documented as absent is now closed, and this
+--     is the checked, positive fact that closure produced (PART E).
 --   MATCHED-COHORT DEMONSTRATION (computed directly from public.sales, not through an RPC --
 --     there is no dedicated "campaign lift" RPC in this schema, which is itself the point:
 --     nothing here computes incrementality):
@@ -3094,27 +3123,32 @@ rollback;
 --     slipped in anywhere else still fails the check.
 --
 -- ===========================================================================================
--- ONE DISCOVERED, DOCUMENTED DEVIATION FROM THE TASK BRIEF'S WORDING
+-- CLOSED BY NESTLY_V735 (2026-09-02) -- PART E's ORIGINAL DOCUMENTED DEVIATION IS NOW RESOLVED
 -- ===========================================================================================
--- The brief asks to "assert the v713 evidence pack's findings carry that ASSOCIATION class for
--- the campaigns candidate." Read against the live code (db/migrations/20260902_nestly_v713_
--- evidence_pack_typed_findings.sql line 173 and 20260902_nestly_v685_shadow_reconciliation.sql
--- line 98 -- the only two call sites of public.get_ci_opportunities_v1 with a 3-arg or narrower
--- shape in this repo), app.v176_gated_evidence calls
+-- This fixture originally documented a deviation from its own task brief: the brief asked to
+-- "assert the v713 evidence pack's findings carry that ASSOCIATION class for the campaigns
+-- candidate," but app.v176_gated_evidence called
 -- `public.get_ci_opportunities_v1(p_business, p_from, v_to_effective)` -- THREE positional
--- arguments, so `p_extended` takes its default of `false`. The 'campaigns' generator (nestly
--- v705) only fires when `p_extended = true` (see "EXTENDED MODE STARTS HERE" in
--- db/migrations/20260902_nestly_v688_consultant_spine_v2.sql, guarded by
--- `if not p_extended or v_stale then return ... end if;` before that generator ever runs). No
--- migration after v713 changes this call site. So under the code as it actually ships today,
--- the AI firm-report evidence pack's `findings.ranked` array CANNOT carry the 'campaigns'
--- candidate -- asserting that it does would be asserting something the shipped code cannot
--- produce, which would make this fixture pass for the wrong reason (or fail forever on correct
--- code). This fixture instead proves the true, verifiable claim: the 'campaigns' ASSOCIATION
--- candidate exists and is correctly typed when produced the only way it is ever produced
--- (`p_extended=>true`, PART C below), and separately proves (PART E) that it is, as the code
--- shows, genuinely absent from the non-extended pack on this exact seed -- turning the
--- documented gap into a positive, checked fact rather than a silent assumption.
+-- arguments, so `p_extended` took its default of `false`. The 'campaigns' generator (nestly v705)
+-- only fires when `p_extended = true` (see "EXTENDED MODE STARTS HERE" in db/migrations/20260902_
+-- nestly_v688_consultant_spine_v2.sql, guarded by `if not p_extended or v_stale then return ...
+-- end if;` before that generator ever runs), so under the code as it shipped through v713 the AI
+-- firm-report evidence pack's `findings.ranked` array could never carry the 'campaigns' candidate.
+-- PART E (below) originally proved that absence as a positive, checked fact rather than a silent
+-- assumption -- and closed with "either the wiring changed (update this fixture's header) or this
+-- assertion is wrong."
+--
+-- db/migrations/20260902_nestly_v735_evidence_pack_extended.sql (proven by db/tests/executed/
+-- v735_corpus_evidence_pack_extended.sql) is that wiring change: one anchored, comment-free
+-- substitution, so app.v176_gated_evidence's call becomes `public.get_ci_opportunities_v1
+-- (p_business, p_from, v_to_effective, null, clock_timestamp(), true)`. PART E below now asserts
+-- the corrected, positive claim -- the 'campaigns' ASSOCIATION candidate IS present in
+-- findings.ranked, with a limitation naming non-incrementality, through the REAL, production
+-- app.v176_evidence_pack path (sessionless, internal drain open) -- exactly the wiring change this
+-- note anticipated. PART C (below, unchanged) already proved the candidate exists and is correctly
+-- typed when produced via a direct p_extended=>true call to the underlying RPC; PART E now proves
+-- the SAME claim through the actual gated pack a real AI firm report reads, closing the gap
+-- between "the RPC can produce this" and "the pack a report actually gets contains this."
 --
 -- MUTATION-CHECKED (2026-09-02, this session, --filter=v733_corpus --migrated-only): PART D's
 -- expected M-group return rate was temporarily changed from 5 to 4 (matched-cohort numerator)
@@ -3122,6 +3156,119 @@ rollback;
 --   ERROR:  v733: 1 assertion(s) failed:
 --     D-matched-n: matched (M) returned count = 5, expected 4
 -- Reverting the literal back to 5 restored PASS.
+--
+-- One transaction, rolled back. No production access.
+```
+
+### `db/tests/executed/v736_corpus_small_cell_principals.sql`
+
+```
+--   node_rare  ("small" cohort): 3 identified customers, 1 sale @ 1000 cents each -> below the
+--              floor (5, app.subgroup_evidence_v1). get_ci_category_customers_v1 must return
+--              customers=[] and suppressed{cohort_size:3, floor:5}.
+--   node_pop   ("big" cohort):   6 identified customers, 1 sale @ 1000 cents each -> at/above
+--              the floor. get_ci_category_customers_v1 must return 6 named rows.
+--   Demographics: the small cohort is also one (age_band, gender) cell (n=3, '31_40'/'female');
+--              the big cohort is a DIFFERENT cell (n=6, '41_50'/'male'). Cell n=3 -> atv_cents
+--              null, evidence.status='insufficient'. Cell n=6 -> atv_cents present,
+--              evidence.status='ok'. Demographics cells never carry a name or client_id at all
+--              -- structurally, not just below the floor -- and this fixture asserts that shape
+--              directly rather than assuming it.
+--   Staff:     staff_low is credited (sale_items.staff_id) on the 3-client rare group ->
+--              total_visits=3 (< floor). staff_ok is credited on the 6-client pop group ->
+--              total_visits=6 (>= floor).
+--   AI evidence pack (sessionless drain): biz_a's whole identified population for the test
+--              window is 3+6=9 clients (>= floor) -> top_customers share percentages AND rows
+--              present (unchanged from before nestly_v739). biz_c is seeded with exactly 2
+--              identified clients (< floor) -> share percentages null AND (since nestly_v739)
+--              rows=[] with a suppressed object -- see the T7 assertions below, updated by
+--              nestly_v739 to match.
+--
+-- ONE FINDING RECORDED, NOT FAILED (F2 below was CLOSED by nestly_v739 -- see that migration and
+-- the updated T7 assertions further down; this fixture now asserts the fixed behaviour instead of
+-- characterizing the gap). Per the working instructions: "assert whatever the checklist's wording
+-- requires and report if the reader discloses a name at n<5". Check 96's text is about CUSTOMER
+-- identity and demographic small groups; it says nothing about staff (employee) identity. F1 below
+-- is a deliberate, already-reviewed product shape (nestly_v683/v699), not an access-boundary
+-- defect, so this fixture CHARACTERIZES it (asserts the real, current behaviour, so a change shows
+-- up as a diff) rather than failing on it:
+--   F1 get_ci_staff_performance_v1 discloses `full_name` for EVERY staff row regardless of n --
+--      only the rate-like fields (revenue_per_visit_cents, adjusted.expected_revenue_cents,
+--      adjusted.index) null out below the floor. A staff member with 3 evidence-ok visits is
+--      named exactly as prominently as one with 300. get_ci_staff_identity_v1, by contrast,
+--      NEVER discloses a name at any n -- it returns staff_id (uuid) only, so the two staff
+--      readers disagree on whether staff identity is small-cell-sensitive at all.
+--   F2 (CLOSED by nestly_v739). Was: the AI evidence pack's `insights.top_customers.rows` were
+--      NEVER suppressed by the floor -- only `top1_share_of_total_revenue_pct` /
+--      `top5_share_of_total_revenue_pct` (and the identified-revenue twins) nulled out. The rows
+--      themselves always rendered (up to 5, ordered by revenue) via app.v177_person_label --
+--      "First L." for a two-token name, a bare single token for a one-token name, "Guest XXXX" for
+--      none -- REGARDLESS of how small the identified population was. In a 2-customer window that
+--      was a first-name-plus-revenue-rank disclosure the owner-facing category-customers floor
+--      refuses to make about the same two people. nestly_v739 closed the gap: `rows` now empties
+--      to [] and a `suppressed` object (shaped like get_ci_category_customers_v1's own:
+--      reason/floor/cohort_size) is emitted whenever top_customers.evidence.status is
+--      'insufficient', reusing the exact same subgroup_evidence_v1 expression the share fields
+--      already gated on -- so all three (shares, rows, suppressed) now agree on the same n<5 line.
+--
+-- Named for v736: every "served" assertion below is preceded by a precondition assertion that
+-- the principal genuinely holds the access being exercised (fixture-guide rule). Every
+-- "refused" assertion asserts errcode 42501 exactly, never merely "raised". One transaction,
+-- rolled back. No production access.
+```
+
+### `db/tests/executed/v737_corpus_synthetic_v83_shadow.sql`
+
+```
+--   5 real clients, 8 sales, 8 distinct visit-days, totalling exactly 50000 cents (v734's own
+--   real-client shape, reused verbatim for continuity with the corpus).
+--   1 synthetic client (clients.is_synthetic=true), 3 sales: 4000 (day 8, FULLY REVERSED via a
+--   native reversal_of row for -4000) + 3000 (day 9) + 3000 (day 10) -- unreversed net 6000.
+--   2 anonymous sales (client_id null), 5000 + 5000 = 10000 cents (days 11-12).
+--   -> get_revenue_truth_v106:      known_revenue_minor=60000, identified_revenue_minor=50000,
+--                                   anonymous_revenue_minor=10000, completed_transactions=10.
+--   -> get_customer_intelligence_v83 (fixed): summary.net_revenue_cents=50000 (== v106 identified),
+--                                   customers[] excludes the synthetic client entirely.
+--   -> get_ci_shadow_reconciliation_v685 (fixed): independent oracle known_revenue_minor=60000,
+--                                   completed_transactions=10 -- equal to the captured truth on
+--                                   both metrics -> overall_status='PASS'.
+--   -> pre-fix (documented, not re-asserted here -- see the migration's own before/after proof):
+--                                   v83 would have reported 56000 and listed the synthetic
+--                                   client; the shadow oracle would have reported 66000/12
+--                                   against a captured truth of 60000/10 -> overall_status='FAIL'.
+--
+-- One transaction, rolled back. No production access.
+```
+
+### `db/tests/executed/v739_corpus_top_customers_floor.sql`
+
+```
+--   biz_below: 2 identified customers, each with one sale of revenue in the window -> n=2 < floor
+--     5 -> top_customers.evidence.status='insufficient' -> rows=[]; suppressed=
+--     {reason:'below_small_cell_floor', floor:5, cohort_size:2}; the four share fields stay null
+--     (nestly_v690's existing, unchanged behaviour).
+--   biz_ok: 6 identified customers, each with one sale of revenue in the window -> n=6 >= floor 5
+--     -> evidence.status='ok' -> rows carries the top 5 of 6 by revenue (unchanged shape/order,
+--     each label a v177 redaction of the fixture's two-token full_name); suppressed IS NULL; the
+--     four share fields are present (non-null).
+--
+-- AUTH CONTEXT: same as db/tests/executed/v690_corpus_dispersion_floor.sql -- v179_business_insights
+-- and subgroup_evidence_v1 never call auth.uid()/auth.jwt(); a plain insert with no
+-- request.jwt.claims impersonation clears app.enforce_branch_module_row_v94 (its early-return on
+-- auth.uid() is null).
+```
+
+### `db/tests/executed/v740_corpus_synthetic_estate_3.sql`
+
+```
+--   known revenue (identified + anonymous, synthetic excluded)              = 60000 cents
+--   naive/pre-fix revenue some readers reported (includes synthetic net)     = 66000 cents
+--   platform_generate_my_report_v89's OWN pre-fix bug was worse: gross, not net of reversal
+--   AND including synthetic                                                 = 70000 cents
+--   identified customers (real clients only)                                = 5
+--   naive/pre-fix customer counts (real + synthetic)                        = 6
+--   unreversed transaction rows (real 8 + synthetic 2 + anonymous 2)        = 12 (naive)
+--   unreversed transaction rows after synthetic exclusion (8 real + 2 anon) = 10 (fixed)
 --
 -- One transaction, rolled back. No production access.
 ```
