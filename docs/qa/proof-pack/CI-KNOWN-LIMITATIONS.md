@@ -23,7 +23,7 @@ causality, misleading coverage, small-sample overconfidence, incorrect financial
 "Even at 99/100, the claim is not permitted if..."), status and owner.
 
 Per this generation: **5** validator-declared limits, 
-**3** BLOCKED ledger rows, **8** manually-registered
+**3** BLOCKED ledger rows, **9** manually-registered
 items with no code anchor.
 
 ---
@@ -52,7 +52,7 @@ items with no code anchor.
 ```
 
 </details> |
-| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1800-1836 | <details><summary>show</summary>
+| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1906-1942 | <details><summary>show</summary>
 
 ```
 // Check 88 (tokeniser gap #4): every rule above - V6, V9, V9b - is built on a LATIN-script idea of
@@ -95,7 +95,7 @@ items with no code anchor.
 ```
 
 </details> |
-| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1877-1904 | <details><summary>show</summary>
+| 88 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1983-2010 | <details><summary>show</summary>
 
 ```
 // Check 88 (tokeniser gap #5). V11 (above) closes the CJK case, but Han/Hangul/Hiragana/Katakana
@@ -129,14 +129,14 @@ items with no code anchor.
 ```
 
 </details> |
-| _(not stated in this block)_ | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 1920-1920 | <details><summary>show</summary>
+| _(not stated in this block)_ | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2026-2026 | <details><summary>show</summary>
 
 ```
   if (!isPredominantlyLatinScript(narrative)) return; // declared limit — see the note above
 ```
 
 </details> |
-| 17 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2428-2477 | <details><summary>show</summary>
+| 17 | yes (fabricated data / unsupported causality) | DECLARED (by design, not a defect) | engineering (validate.mjs maintainer) | 2648-2697 | <details><summary>show</summary>
 
 ```
 // Check 17 (typed verdicts, POSITIVE half). A refuter proved V10's original causal-phrase
@@ -213,4 +213,5 @@ items with no code anchor.
 | `MANUAL-SCREENSHOTS-001` | 92, 93, 97, 98 | no (Missing UI/runtime proof scores the individual check zero per the checklist's own scoring rule, but is not itself one of the six named hard-gate categories (tenant leakage, fabricated data, unsupported causality, misleading coverage, small-sample overconfidence, incorrect financial truth).) | PARTIAL — HTML pages built, PNG capture pending | engineering (browser evidence capture) | docs/qa/proof-pack/SCREENSHOTS.md: 'Screenshot capture: PENDING — no playwright-core/playwright module importable in this environment. HTML pages and index were produced; PNG capture was not attempted, per instruction (stop after HTML+index when the driver is unavailable rather than fabricate screenshots).' Every row's PNG/sha256 column reads '(pending)'. |
 | `MANUAL-CHECK-4-VISIT-DAY-SG` | 4, 8, 13 | no (Disclosed, not silent: the visit-day unit is stated in every payload's visit_definition and in the metric dictionary.) | DECLARED_LIMIT | product (owner ruling needed only if a per-branch visit day is wanted) | app.ci_visit_day_v699 defines a visit as one customer per Asia/Singapore calendar day (nestly_v699). Two consequences: a sitting that crosses Singapore midnight counts as two visits, and a branch outside UTC+8 buckets its hours and weekdays on its own clock (nestly_v698/v706) while the visit-day unit stays Singapore-anchored. Both are disclosed in payloads (visit_definition, bucket_timezone, timezone_basis). Changing the unit to the sale's branch clock is a coordinated change across every registry entry in app.ci_visit_registry_v699. |
 | `MANUAL-CHECK-98-EXECUTED` | 98 | yes (Same hard-gate shape as MANUAL-CHECK-98-001; recorded here so the register shows the closure.) | CLOSED | engineering | Closed 2026-09-02 (commit 663d6907): decideGenerationFailure classifies model failures into named reasons the console renders as 'Report unavailable — <reason>'; exports refuse to build a file on a failed or partial fetch; CI panels render 42501/22023 as explicit unavailable messages. Executing tests: tests/ai-reports/generation-failure-classification.test.mjs, tests/platform-console/ai-report-failure-rendering.test.mjs, tests/business-ui/v685-ci-surfaces.test.mjs. |
+| `MANUAL-CHECK-23-MINOR` | 23 | no (Ranking already prevents a small significant finding from outranking a material one; this is a vocabulary limit, not a ranking defect.) | DECLARED_LIMIT | engineering (consultant spine) | materiality_class 'minor' is reachable only for scenario-only candidates below the 1% bar; an expected-value candidate below the bar ABSTAINS with reason below_materiality (the v688 contract, frozen by fixture A4-promoted) and is listed in the payload's abstentions rather than ranked as minor. Making 'minor' reachable for EV candidates would flip that frozen assertion; recorded in nestly_v718's header. The single threshold lives in app.ci_materiality_threshold_bps_v705(). |
 

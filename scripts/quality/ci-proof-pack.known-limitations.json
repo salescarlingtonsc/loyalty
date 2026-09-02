@@ -102,6 +102,17 @@
       "status": "CLOSED",
       "owner": "engineering",
       "detail": "Closed 2026-09-02 (commit 663d6907): decideGenerationFailure classifies model failures into named reasons the console renders as 'Report unavailable — <reason>'; exports refuse to build a file on a failed or partial fetch; CI panels render 42501/22023 as explicit unavailable messages. Executing tests: tests/ai-reports/generation-failure-classification.test.mjs, tests/platform-console/ai-report-failure-rendering.test.mjs, tests/business-ui/v685-ci-surfaces.test.mjs."
+    },
+    {
+      "id": "MANUAL-CHECK-23-MINOR",
+      "checks": [
+        23
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Ranking already prevents a small significant finding from outranking a material one; this is a vocabulary limit, not a ranking defect.",
+      "status": "DECLARED_LIMIT",
+      "owner": "engineering (consultant spine)",
+      "detail": "materiality_class 'minor' is reachable only for scenario-only candidates below the 1% bar; an expected-value candidate below the bar ABSTAINS with reason below_materiality (the v688 contract, frozen by fixture A4-promoted) and is listed in the payload's abstentions rather than ranked as minor. Making 'minor' reachable for EV candidates would flip that frozen assertion; recorded in nestly_v718's header. The single threshold lives in app.ci_materiality_threshold_bps_v705()."
     }
   ]
 }
