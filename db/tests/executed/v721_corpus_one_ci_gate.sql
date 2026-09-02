@@ -8,7 +8,14 @@
 --        consultant and a real-session super admin — the exact two populations nestly_v667's own
 --        header names as entitled — were refused on THIS reader while being served by every
 --        sibling CI reader. Fixed by deleting the private gate and calling
---        app.ci_access_gate_v667(p_business, null) instead — one authority.
+--        app.ci_access_gate_v667(p_business, p_branch) instead — one authority. CORRECTION to an
+--        earlier draft of this comment, which said this reader passes null: it does not, and
+--        must not — v83 already carries its own separate app.can_see_branch(p_business, p_branch)
+--        branch check immediately below the gate (see I-series), and handing the shared gate a
+--        hardcoded null would tell it EVERY call through v83 is a firm-wide request regardless of
+--        what branch the caller actually asked for, wrongly refusing a branch-restricted employee
+--        reading their own assigned branch once check 95's branch-restriction addition (below)
+--        exists beside it. See the migration's own header for the full account and the I1 proof.
 --   (95) app.ci_access_gate_v667's branch check only asked "does p_branch belong to
 --        p_business", never "may THIS caller see that branch", and never refused a null
 --        (firm-wide) p_branch from a caller who is not entitled to firm-wide figures. A
@@ -53,6 +60,26 @@
 --   I2  The SAME bookkeeper reading v83 for the OTHER branch (A1) is REFUSED — by v83's own
 --       branch_visibility_required check, independent of the gate.
 --
+-- J-SERIES (added nestly_v725, check 91 fixture-coverage follow-up) — four principals the
+-- original G/H/I series did not cover, each refused (42501) on public.get_customer_intelligence_v83
+-- AND on three other CI readers gated only by the shared authority
+-- (get_ci_category_mix_v1, get_ci_daypart_v1, get_ci_opportunities_v1), with a precondition per
+-- principal proving they genuinely hold what the refusal is about (not vacuous by accident):
+--   J1  A "reports"-only staff member (app.can_module(biz_a,'reports') true, 'customerintel'
+--       false) — proves module denial alone still refuses, unaided by anything else this
+--       migration touches.
+--   J2  A "customerintel"-module staff member whose ROLE carries no view_finance (the exact
+--       nestly_v689 B1c shape from v667's own fixture) — proves the merchant arm's
+--       has_perm(view_finance) requirement still holds after v721's edits.
+--   J3  An UNASSIGNED platform consultant (a real, active public.platform_consultants row that
+--       is NOT linked to firm A via sme_prospects) — proves the platform arm
+--       (app.v176_can_read_firm_report) requires an actual assignment, not merely being SOME
+--       consultant somewhere.
+--   J4  A verified CUSTOMER of firm A (a real public.customer_links row, state='verified',
+--       linking their auth user to a firm-A client) — proves a customer's own portal session
+--       gets no special treatment from any CI reader; holding a customer relationship to the
+--       firm is not a path to reading intelligence ABOUT the firm's customers.
+--
 -- Named for v721: every assertion must FAIL against the pre-v721 engine. One transaction, rolled
 -- back. No production access.
 
@@ -77,10 +104,22 @@ declare
   staff_bk_id uuid := '00000000-0000-4000-8000-000000721205';
   cons_id     uuid := '00000000-0000-4000-8000-000000721201';
   co_id       uuid := '00000000-0000-4000-8000-000000721202';
+  -- J-series (nestly_v725): four principals not covered by G/H/I.
+  u_reports    uuid := '00000000-0000-4000-8000-000000721106'; -- J1: reports-only staff
+  u_ci_nofin   uuid := '00000000-0000-4000-8000-000000721107'; -- J2: customerintel, no view_finance
+  u_unassigned uuid := '00000000-0000-4000-8000-000000721108'; -- J3: unassigned consultant
+  u_customer   uuid := '00000000-0000-4000-8000-000000721109'; -- J4: verified customer
+  cons_unassigned_id uuid := '00000000-0000-4000-8000-000000721203';
+  j_client_id  uuid := '00000000-0000-4000-8000-000000721301';
+  j_identity_id uuid := '00000000-0000-4000-8000-000000721302';
+  j_link_id    uuid := '00000000-0000-4000-8000-000000721303';
+  j_reader     text;
+  j_readers constant text[] := array['get_ci_category_mix_v1','get_ci_daypart_v1','get_ci_opportunities_v1'];
   d_from      date := current_date - 20;
   d_to        date := current_date;
   g           jsonb;
   v_err       text;
+  v_sqlstate  text;
 begin
   ---------------------------------------------------------------------------
   -- actors
@@ -88,7 +127,9 @@ begin
   insert into auth.users (id, email) values
     (u_sa,'zz-v721-sa@example.test'), (u_cons,'zz-v721-cons@example.test'),
     (u_owner_a,'zz-v721-oa@example.test'), (u_owner_b,'zz-v721-ob@example.test'),
-    (u_bk,'zz-v721-bk@example.test')
+    (u_bk,'zz-v721-bk@example.test'),
+    (u_reports,'zz-v721-reports@example.test'), (u_ci_nofin,'zz-v721-cinofin@example.test'),
+    (u_unassigned,'zz-v721-unassigned@example.test'), (u_customer,'zz-v721-customer@example.test')
     on conflict (id) do nothing;
   insert into public.super_admins (user_id, email)
     values (u_sa,'zz-v721-sa@example.test') on conflict do nothing;
@@ -120,6 +161,19 @@ begin
   insert into public.staff_branches (business_id, staff_id, branch_id)
     values (biz_a, staff_bk_id, br_a2);
 
+  /* J1 (nestly_v725): a firm-A member whose PER-STAFF allowlist grants 'reports' but withholds
+     'customerintel' -- module denial alone, nothing else. */
+  insert into public.staff (business_id, user_id, role, full_name, active, access_state, modules)
+    values (biz_a, u_reports, 'staff', 'ZZ v721 reports-only', true, 'approved',
+            array['dashboard','clients','reports']);
+  /* J2 (nestly_v725): the exact nestly_v689/v667-B1c shape -- 'customerintel' (and 'reports', so
+     the OLD pre-v689 gate would have served this user and the test would prove nothing) both
+     granted via the per-staff allowlist, but role 'staff' carries no view_finance
+     (app.role_perms('staff') = {view_sales,create_sales}). */
+  insert into public.staff (business_id, user_id, role, full_name, active, access_state, modules)
+    values (biz_a, u_ci_nofin, 'staff', 'ZZ v721 ci-no-finance', true, 'approved',
+            array['dashboard','clients','reports','customerintel']);
+
   insert into public.business_workspace_controls_v94
     (business_id, approval_status, decided_at, decision_reason)
   select b, 'approved', now(), 'v721 one-ci-gate fixture' from unnest(array[biz_a,biz_b]) b
@@ -144,6 +198,30 @@ begin
                                     converted_business_id, converted_at, converted_by)
     values (co_id, 'zz-v721-fixture', cons_id, 'owned', null,
             biz_a, clock_timestamp(), u_sa);
+
+  /* J3 (nestly_v725): a real, active platform_consultants row that is NOT linked to firm A (or
+     anyone) via sme_prospects -- "unassigned", not "not a consultant at all". */
+  insert into public.platform_consultants (id, user_id, display_name, tier, employment_started_on, active)
+    values (cons_unassigned_id, u_unassigned, 'ZZ v721 unassigned consultant', 'junior',
+            current_date - 40, true);
+
+  /* J4 (nestly_v725): a verified customer of firm A, via the same chain every customer-portal
+     fixture in this repo uses (auth.users -> clients -> customer_identities -> customer_profiles
+     -> customer_links), so app.can_module/app.is_salon_member/app.v176_can_read_firm_report all
+     see them the same way a real customer session would. */
+  insert into public.clients (id, business_id, full_name)
+    values (j_client_id, biz_a, 'ZZ v721 J4 customer');
+  insert into public.customer_identities (id, auth_user_id, status, created_via)
+    values (j_identity_id, u_customer, 'active', 'phone_registration');
+  perform set_config('app.c42_profile_identity', j_identity_id::text, true);
+  insert into public.customer_profiles (identity_id, auth_user_id, full_name, birth_date)
+    values (j_identity_id, u_customer, 'ZZ v721 J4 customer', date '1990-01-01');
+  perform set_config('app.c42_profile_identity', '', true);
+  perform set_config('app.customer_link_insert_id', j_link_id::text, true);
+  insert into public.customer_links
+    (id, business_id, identity_id, auth_user_id, client_id, state, verification_method, verified_at)
+    values (j_link_id, biz_a, j_identity_id, u_customer, j_client_id, 'verified', 'phone_claim', now());
+  perform set_config('app.customer_link_insert_id', '', true);
 
   ---------------------------------------------------------------------------
   -- PRECONDITIONS. Confirm the fixture actors are what the header claims, or the assertions
@@ -348,8 +426,10 @@ begin
   end;
 
   ---------------------------------------------------------------------------
-  -- I1 — sanity: v83's OWN pre-existing app.can_see_branch check (independent of the shared
-  -- gate, which v83 now calls with p_branch=null) still serves the bookkeeper their own branch.
+  -- I1 — sanity: v83's OWN pre-existing app.can_see_branch check (evaluated a second time,
+  -- redundantly but not contradictorily, alongside the shared gate's own branch check -- v83
+  -- passes the shared gate its REAL p_branch, not null; see the header correction above) still
+  -- serves the bookkeeper their own branch.
   ---------------------------------------------------------------------------
   perform set_config('request.jwt.claims',
     json_build_object('sub',u_bk,'role','authenticated')::text, true);
@@ -373,6 +453,133 @@ begin
              get stacked diagnostics v_err = returned_sqlstate;
              insert into _fail values ('I2', format('refused with %s, expected 42501', v_err));
   end;
+
+  ---------------------------------------------------------------------------
+  -- J1 (nestly_v725) — reports-only staff: refused on v83 and on every shared-gate reader.
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_reports,'role','authenticated')::text, true);
+  if not app.can_module(biz_a,'reports') then
+    insert into _fail values ('J1-pre','u_reports does not resolve the reports module; J1 would be vacuous');
+  end if;
+  if app.can_module(biz_a,'customerintel') then
+    insert into _fail values ('J1-pre','u_reports unexpectedly resolves customerintel; J1 would be vacuous');
+  end if;
+  begin
+    perform public.get_customer_intelligence_v83(biz_a, null, d_from, d_to);
+    insert into _fail values ('J1-v83','a reports-only staff member read v83');
+  exception when insufficient_privilege then null;
+           when others then
+             get stacked diagnostics v_err = returned_sqlstate;
+             insert into _fail values ('J1-v83', format('refused with %s, expected 42501', v_err));
+  end;
+  foreach j_reader in array j_readers loop
+    begin
+      execute format('select public.%I($1,$2,$3)', j_reader) using biz_a, d_from, d_to;
+      insert into _fail values ('J1-' || j_reader, 'a reports-only staff member read ' || j_reader);
+    exception when insufficient_privilege then null;
+             when others then
+               get stacked diagnostics v_sqlstate = returned_sqlstate;
+               insert into _fail values ('J1-' || j_reader, format('refused with %s, expected 42501', v_sqlstate));
+    end;
+  end loop;
+
+  ---------------------------------------------------------------------------
+  -- J2 (nestly_v725) — customerintel-module staff with no view_finance permission: refused.
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_ci_nofin,'role','authenticated')::text, true);
+  if not app.can_module(biz_a,'customerintel') then
+    insert into _fail values ('J2-pre','u_ci_nofin does not resolve customerintel; J2 would be vacuous');
+  end if;
+  if app.has_perm(biz_a,'view_finance') then
+    insert into _fail values ('J2-pre','u_ci_nofin unexpectedly resolves view_finance; J2 would be vacuous');
+  end if;
+  begin
+    perform public.get_customer_intelligence_v83(biz_a, null, d_from, d_to);
+    insert into _fail values ('J2-v83','a customerintel-no-finance staff member read v83');
+  exception when insufficient_privilege then null;
+           when others then
+             get stacked diagnostics v_err = returned_sqlstate;
+             insert into _fail values ('J2-v83', format('refused with %s, expected 42501', v_err));
+  end;
+  foreach j_reader in array j_readers loop
+    begin
+      execute format('select public.%I($1,$2,$3)', j_reader) using biz_a, d_from, d_to;
+      insert into _fail values ('J2-' || j_reader, 'a customerintel-no-finance staff member read ' || j_reader);
+    exception when insufficient_privilege then null;
+             when others then
+               get stacked diagnostics v_sqlstate = returned_sqlstate;
+               insert into _fail values ('J2-' || j_reader, format('refused with %s, expected 42501', v_sqlstate));
+    end;
+  end loop;
+
+  ---------------------------------------------------------------------------
+  -- J3 (nestly_v725) — an unassigned consultant: refused (the platform arm requires an ACTUAL
+  -- assignment via sme_prospects, not merely being some consultant somewhere).
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_unassigned,'role','authenticated')::text, true);
+  if app.is_salon_member(biz_a) then
+    insert into _fail values ('J3-pre','u_unassigned unexpectedly holds a staff row; J3 would be vacuous');
+  end if;
+  if app.v176_can_read_firm_report(biz_a) then
+    insert into _fail values ('J3-pre','u_unassigned unexpectedly passes the platform arm for firm A; J3 would be vacuous');
+  end if;
+  begin
+    perform public.get_customer_intelligence_v83(biz_a, null, d_from, d_to);
+    insert into _fail values ('J3-v83','an unassigned consultant read v83');
+  exception when insufficient_privilege then null;
+           when others then
+             get stacked diagnostics v_err = returned_sqlstate;
+             insert into _fail values ('J3-v83', format('refused with %s, expected 42501', v_err));
+  end;
+  foreach j_reader in array j_readers loop
+    begin
+      execute format('select public.%I($1,$2,$3)', j_reader) using biz_a, d_from, d_to;
+      insert into _fail values ('J3-' || j_reader, 'an unassigned consultant read ' || j_reader);
+    exception when insufficient_privilege then null;
+             when others then
+               get stacked diagnostics v_sqlstate = returned_sqlstate;
+               insert into _fail values ('J3-' || j_reader, format('refused with %s, expected 42501', v_sqlstate));
+    end;
+  end loop;
+
+  ---------------------------------------------------------------------------
+  -- J4 (nestly_v725) — a verified customer of firm A: refused (a customer relationship to the
+  -- firm is not a path to reading intelligence ABOUT the firm's customers).
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_customer,'role','authenticated')::text, true);
+  if app.is_salon_member(biz_a) then
+    insert into _fail values ('J4-pre','u_customer unexpectedly holds a staff row; J4 would be vacuous');
+  end if;
+  if app.v176_can_read_firm_report(biz_a) then
+    insert into _fail values ('J4-pre','u_customer unexpectedly passes the platform arm for firm A; J4 would be vacuous');
+  end if;
+  if not exists (select 1 from public.customer_links l
+                  where l.id = j_link_id and l.business_id = biz_a and l.auth_user_id = u_customer
+                    and l.client_id = j_client_id and l.state = 'verified') then
+    insert into _fail values ('J4-pre','the J4 customer_links row is not a genuine verified link; J4 would prove nothing about a real customer relationship');
+  end if;
+  begin
+    perform public.get_customer_intelligence_v83(biz_a, null, d_from, d_to);
+    insert into _fail values ('J4-v83','a verified customer of firm A read v83');
+  exception when insufficient_privilege then null;
+           when others then
+             get stacked diagnostics v_err = returned_sqlstate;
+             insert into _fail values ('J4-v83', format('refused with %s, expected 42501', v_err));
+  end;
+  foreach j_reader in array j_readers loop
+    begin
+      execute format('select public.%I($1,$2,$3)', j_reader) using biz_a, d_from, d_to;
+      insert into _fail values ('J4-' || j_reader, 'a verified customer of firm A read ' || j_reader);
+    exception when insufficient_privilege then null;
+             when others then
+               get stacked diagnostics v_sqlstate = returned_sqlstate;
+               insert into _fail values ('J4-' || j_reader, format('refused with %s, expected 42501', v_sqlstate));
+    end;
+  end loop;
 
   perform set_config('request.jwt.claims', null, true);
 end
