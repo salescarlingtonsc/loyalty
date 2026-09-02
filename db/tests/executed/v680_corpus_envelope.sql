@@ -22,6 +22,10 @@
 --       as_of pinned 10 days ago (0 cents) and included under as_of now (400 cents).
 --   E8  get_ci_opportunities_v1 with as_of 500 days in the future refuses to rank: ranked is a
 --       single do_nothing entry, refusal_reason='stale_evidence'.
+--   E9  LATE refund: sale 10000 cents seeded inside the window; as_of pinned; THEN an external
+--       refund of 3000 is reconciled (recorded after the pin) with business_date still inside the
+--       window -> get_revenue_truth_v106 at the pinned as_of still reports 10000 (late refund
+--       invisible to that snapshot); at a fresh as_of it reports 7000 (now included).
 
 \set ON_ERROR_STOP on
 begin;
@@ -88,6 +92,18 @@ declare
 
   -- E8
   r8 jsonb;
+
+  -- E9
+  c_e9 uuid := '00000000-0000-4000-8000-000000680901';
+  s_e9 uuid := '00000000-0000-4000-8000-000000680902';
+  w9_from date; w9_to date;
+  v_as_of9 timestamptz;
+  v_ingest9 jsonb;
+  v_event_id9 uuid;
+  v_recon9 jsonb;
+  v_recon9_created_at timestamptz;
+  r9_pinned jsonb;
+  r9_fresh jsonb;
 begin
   ---------------------------------------------------------------------------
   -- business, branch, operational recipe (guide: "making a business genuinely operational")
@@ -418,6 +434,69 @@ begin
      or r8->'ranked'->0->>'id' is distinct from 'do_nothing'
      or r8->'ranked'->0->>'rank_class' is distinct from 'do_nothing' then
     insert into _fail values ('E8-ranked', 'ranked: ' || (r8->'ranked')::text);
+  end if;
+
+  ---------------------------------------------------------------------------
+  -- E9 — LATE refund: reconciled after a pinned as_of, dated inside the window
+  ---------------------------------------------------------------------------
+  if not app.has_perm(biz, 'view_finance') then
+    insert into _fail values ('E9-pre', 'fixture owner lacks view_finance; E9 is vacuous');
+  else
+    select upper(b.currency) into v_currency from public.businesses b where b.id = biz;
+
+    w9_from := d0 + 110; w9_to := d0 + 111;
+
+    insert into public.clients (id, business_id, full_name) values
+      (c_e9, biz, 'ZZ v680 e9');
+
+    insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents,
+                              occurred_at, created_at)
+    values (s_e9, biz, br, c_e9, 'retail', 10000,
+            (w9_from::timestamp + time '12:00') at time zone 'Asia/Singapore',
+            (w9_from::timestamp + time '12:00') at time zone 'Asia/Singapore');
+
+    -- pin BEFORE the refund is even ingested/reconciled
+    v_as_of9 := clock_timestamp();
+
+    -- ingested + reconciled AFTER the pin, but business_date (from occurred_at) is inside the window
+    v_ingest9 := public.ingest_external_commerce_event_v106(
+      biz, br, 'refund_completed', 'zz_v680_pos', 'zz-v680-evt-9', 'zz-v680-idem-9',
+      ((w9_from::timestamp + time '12:05') at time zone 'Asia/Singapore'),
+      v_currency, -3000, '{}'::jsonb);
+    v_event_id9 := (v_ingest9->>'event_id')::uuid;
+
+    v_recon9 := public.reconcile_external_commerce_event_v106(
+      v_event_id9, s_e9, 'zz-v680-recon-9',
+      jsonb_build_array(jsonb_build_object('amount_minor', 3000)));
+    if v_recon9->>'status' <> 'reconciled' then
+      insert into _fail values ('E9-recon', 'reconcile status: ' || coalesce(v_recon9->>'status','null'));
+    end if;
+
+    -- precondition: the refund's reconciliation row really was recorded AFTER the pinned as_of
+    select r.created_at into v_recon9_created_at
+      from public.commerce_event_reconciliations_v106 r
+     where r.id = (v_recon9->>'reconciliation_id')::uuid;
+    if v_recon9_created_at is null or v_recon9_created_at <= v_as_of9 then
+      insert into _fail values ('E9-pre-timing',
+        'expected the reconciliation created_at to be after the pinned as_of; created_at=' ||
+        coalesce(v_recon9_created_at::text, 'null') || ' as_of=' || v_as_of9::text);
+    end if;
+
+    -- pinned as_of: the LATE refund is invisible to that immutable snapshot -> still 10000
+    r9_pinned := public.get_revenue_truth_v106(biz, w9_from, w9_to, br, v_as_of9);
+    if (r9_pinned->'totals'->>'known_revenue_minor')::bigint is distinct from 10000 then
+      insert into _fail values ('E9-pinned',
+        'expected 10000 (late refund invisible under the pinned as_of), got ' ||
+        coalesce(r9_pinned->'totals'->>'known_revenue_minor','null'));
+    end if;
+
+    -- fresh as_of: the snapshot has moved past the reconciliation -> now 7000
+    r9_fresh := public.get_revenue_truth_v106(biz, w9_from, w9_to, br, clock_timestamp());
+    if (r9_fresh->'totals'->>'known_revenue_minor')::bigint is distinct from 7000 then
+      insert into _fail values ('E9-fresh',
+        'expected 7000 (10000-3000) once the snapshot includes the late refund, got ' ||
+        coalesce(r9_fresh->'totals'->>'known_revenue_minor','null'));
+    end if;
   end if;
 
 end
