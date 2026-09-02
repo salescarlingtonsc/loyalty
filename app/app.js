@@ -16185,7 +16185,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       if(lineV339){claimValidityNodeV339.textContent=lineV339;claimValidityNodeV339.hidden=false}
     }
     let redemptionAttempt=null;
-    let giftAttemptV515=null;  /* nestly_v515: its own key, so a gift retry never collides with a catalogue retry */
+    /* nestly_v515 gave the gift button its own idempotency key, so a gift retry never collides
+       with a catalogue retry. nestly_v676 moved that key out of this closure and into
+       sessionStorage (see the handler below) — a page-scoped `let` did not survive the
+       re-render that closing the QR sheet triggers, which is what broke the re-tap. */
     /* nestly_v397: the hero swipe's "Redeem now" carries the same data-customer-redeem contract,
        so it is wired HERE rather than growing a second redemption path. It lives outside #walletRewards,
        hence the second query. Each button restores its OWN label afterwards — the hero says
@@ -16204,13 +16207,27 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         const [giftKind,targetId]=String(button.dataset.customerGiftRedeem||'').split(':');
         if(!giftKind||!targetId)return toast('This gift could not be prepared. Reload and try again.');
         const restore=button.querySelector('span')?.textContent||'Show QR at counter';
-        if(!giftAttemptV515||giftAttemptV515.target!==targetId){
-          giftAttemptV515={target:targetId,key:crypto.randomUUID()};
-        }
+        /* nestly_v676 (audit F048): the key for this gift now lives in sessionStorage, keyed by
+           the gift itself. The old page-scoped `let` was nulled by onClose and re-created by the
+           loadRewards re-render behind it, so closing the sheet and tapping again sent a BRAND
+           NEW key for a gift that already had a live pending intent — which missed the server's
+           replay branch and hit the one-pending-per-gift index. Re-tapping is a retry of the
+           same logical write, so it carries the same key, exactly as writeAttemptKey exists for.
+           The v676 server also reopens the pending intent on a fresh key; this half means the
+           re-tap replays even against a server that has not taken that migration yet. */
+        const giftSlotV676=`nestly.customer.giftIntent:${businessId}:${giftKind}:${targetId}`;
+        /* One call site, spelled out, so scripts/ps0/discover-writers.mjs still sees this RPC. */
+        const mintGiftIntentV676=key=>sb.rpc('customer_create_gift_intent_v515',{
+          p_business:businessId,p_gift_kind:giftKind,p_target:targetId,p_idempotency_key:key});
         button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
-        const {data:intent,error}=await sb.rpc('customer_create_gift_intent_v515',{
-          p_business:businessId,p_gift_kind:giftKind,p_target:targetId,
-          p_idempotency_key:giftAttemptV515.key});
+        let {data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId));
+        /* A key that replays something already finished (staff scanned it, or the customer
+           cancelled from another device) must not be shown as a live QR. Retire it and mint
+           once more; the server then either issues a fresh QR or says why it cannot. */
+        if(!error&&intent&&String(intent.status||'pending')!=='pending'){
+          clearWriteAttempt(giftSlotV676);
+          ({data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId)));
+        }
         if(!isWalletSectionCurrent(host)||!button.isConnected)return;
         button.disabled=false;button.querySelector('span').textContent=restore;
         if(error){
@@ -16221,19 +16238,26 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
             ?'Gift QRs need the latest Peekaa service update.'
             :message.includes('used this perk')||message.includes('birthday month')
               ||message.includes('applied automatically')||message.includes('not available')
+              /* nestly_v676: the one 23505 case the server cannot reopen — this gift's live QR
+                 belongs to another login on the same customer record. Say that, not "try again". */
+              ||message.includes('already has a QR open')
               ?message.charAt(0).toUpperCase()+message.slice(1)
               :'This gift could not be prepared right now. Please try again.');
           return;
         }
-        if(!intent?.qr_token){
+        if(!intent?.qr_token||String(intent.status||'')!=='pending'){
           toast('This gift could not be prepared right now. Please try again.');return;
         }
+        /* v676: onClose deliberately does NOT retire the key. Closing the sheet keeps the QR
+           pending — that is what the button says — so the next tap must bring back the SAME QR,
+           which is precisely what the stored key (and the server's reopen) now do. The key is
+           retired above, on the tap that finds the intent already settled. */
         showPendingRedemptionQr({intent,businessName:b.name,
           rewardName:intent.reward_label||'Your gift',
           qrRoute:'gift-redeem',
           pollRpc:'customer_get_gift_intent_v515',
           cancelRpc:'customer_cancel_gift_intent_v515',
-          onClose:()=>{giftAttemptV515=null;loadRewards();void customerCounterMomentV468()}});
+          onClose:()=>{loadRewards();void customerCounterMomentV468()}});
       };
     });
     [...host.querySelectorAll('[data-customer-redeem]'),
