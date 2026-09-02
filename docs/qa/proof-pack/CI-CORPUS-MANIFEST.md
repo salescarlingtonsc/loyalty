@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **64**.
+Fixture count: **65**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -81,6 +81,7 @@ Fixture count: **64**.
 | `db/tests/executed/v740_corpus_synthetic_estate_3.sql` | `db/migrations/20260902_nestly_v740_synthetic_excluded_estate_3.sql` | 1 | 1 | 1 | `d22288f7d18f9365292571cb8ec0ce15a982c76c4fe8b084811c7b1cdf3e6333` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v740_corpus_synthetic_estate_3 --migrated-only` |
 | `db/tests/executed/v741_corpus_roster_read_audit.sql` | `db/migrations/20260902_nestly_v741_roster_read_audit.sql` | 96 | 1 | 1 | `3aae6524ab47afce9b23caec64c940f669188a5a29d9a1a3ef36297f6d7dc6c4` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v741_corpus_roster_read_audit --migrated-only` |
 | `db/tests/executed/v742_corpus_synthetic_estate_4.sql` | `db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql` | 1 | 1 | 1 | `e1af91e9f64334a48908273c7de2c2ad8391b1fee61046fb7c4bd32c92e30b8e` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v742_corpus_synthetic_estate_4 --migrated-only` |
+| `db/tests/executed/v743_corpus_synthetic_scanner.sql` | `db/migrations/20260902_nestly_v743_synthetic_scanner.sql` | 1 | 5 | 5 | `fae7bdc46c8ee7c1bf9e2a6059d1fa35d1ca710f7210277e6997941502b051f8` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus_synthetic_scanner --migrated-only` |
 
 ## Notes
 

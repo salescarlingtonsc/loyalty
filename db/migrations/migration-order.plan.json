@@ -3639,6 +3639,12 @@
       "path": "db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql",
       "semanticVersion": "v742",
       "proposedDeployVersion": "20260904100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v743_synthetic_scanner.sql",
+      "semanticVersion": "v743",
+      "proposedDeployVersion": "20260904110000"
     }
   ]
 }
