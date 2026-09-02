@@ -1,0 +1,107 @@
+{
+  "$schema_note": "Hand-maintained register of CI-100 known limitations that have no single code anchor a generator can extract automatically (no HONEST LIMIT comment in supabase/functions/ai-firm-reports/validate.mjs, no BLOCKED row in docs/qa/OWNER-ISSUE-LEDGER.md). scripts/quality/ci-proof-pack.mjs known-limitations reads this file verbatim and merges it into docs/qa/proof-pack/CI-KNOWN-LIMITATIONS.md alongside the two extracted sources. Edit this file by hand when a new limitation with no code anchor is found; do not hand-edit the generated .md file.",
+  "items": [
+    {
+      "id": "MANUAL-CHECK-98-001",
+      "checks": [
+        98
+      ],
+      "hard_gate": true,
+      "hard_gate_reason": "Section J check 98 requires RPC/partial/model/export failure to surface an explicit unavailable state, never a silent zero — the checklist's own hard-gate list names 'incorrect financial truth' and a masked failure reading as a real zero is exactly that shape.",
+      "status": "PARTIAL",
+      "owner": "engineering (AI report + export pipeline)",
+      "detail": "docs/qa/CI-PROOF-EVIDENCE-MAP-2026-09-02.md check 98 row: 'every refusal asserted as 42501, never an empty payload. Model/export failure paths still unproven' — db/tests/executed/v667_ci_access_boundaries.sql proves the RPC-refusal half only. Model-failure and export-failure proof is pending."
+    },
+    {
+      "id": "MANUAL-CHECK-80-001",
+      "checks": [
+        80
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Not on the checklist's own hard-gate list (tenant leakage, fabricated data, unsupported causality, misleading coverage, small-sample overconfidence, incorrect financial truth); the checklist itself reports checks 80/99/100 as EXTERNAL regardless of engineering evidence, since they need people or a calendar, not a defect fix.",
+      "status": "EXTERNAL — not started",
+      "owner": "Sol / owner (independent senior-business reviewer panel)",
+      "detail": "Check 80: an independent reviewer panel must rate >=80% of recommendations defensible and commercially sensible, with zero harmful recommendations, blind to human-vs-AI origin. No panel has convened. docs/qa/CI-100-CHECKLIST.md's own text: 'Checks 80, 99 and 100 need people or a calendar and are reported as EXTERNAL until they happen.'"
+    },
+    {
+      "id": "MANUAL-CHECK-99-001",
+      "checks": [
+        99
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "EXTERNAL by the checklist's own text; the machinery (app.ci_shadow_capture_v685, db/migrations/20260902_nestly_v685_shadow_reconciliation.sql) is built and proven, but a shadow PERIOD is a calendar event, not a code defect.",
+      "status": "EXTERNAL — machinery built, period not run",
+      "owner": "owner (schedules the shadow period) / engineering (monitors it)",
+      "detail": "Check 99: production-shadow reconciliation for a defined period. db/tests/executed/v685_corpus_shadow.sql proves the capture machinery works; no live shadow period has been scheduled or run."
+    },
+    {
+      "id": "MANUAL-CHECK-100-001",
+      "checks": [
+        100
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "EXTERNAL by the checklist's own text; independent human acceptance cannot be produced by a script.",
+      "status": "EXTERNAL — not started",
+      "owner": "Sol (independent final acceptance) / owner (release approval)",
+      "detail": "Check 100: Sol must review the frozen commit, the full proof pack and the production-shadow results, reproduce the hard traps, and record ACCEPTED 100/100 before the owner separately approves any release. Not started; check 99's shadow-period results are itself a precondition."
+    },
+    {
+      "id": "MANUAL-SECTION-G-REVIEW-001",
+      "checks": [
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Section G's required proof asks for 'expert-reviewed' fixtures; the review performed to date (docs/qa/proof-pack/CI-STATISTICAL-METHOD-REVIEW.md) is explicit that it is an internal agent review, not an external statistician's sign-off, and is not itself evidence of a defect in the routines it reviewed.",
+      "status": "PARTIAL — internal review only",
+      "owner": "external statistician (named, TBD)",
+      "detail": "docs/qa/proof-pack/CI-STATISTICAL-METHOD-REVIEW.md's own banner: 'Internal review by an agent that did not author the methods; NOT an external expert sign-off — item 8 remains EXTERNAL until a named statistician signs below.' The signature block at the top of that file is blank."
+    },
+    {
+      "id": "MANUAL-SCREENSHOTS-001",
+      "checks": [
+        92,
+        93,
+        97,
+        98
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Missing UI/runtime proof scores the individual check zero per the checklist's own scoring rule, but is not itself one of the six named hard-gate categories (tenant leakage, fabricated data, unsupported causality, misleading coverage, small-sample overconfidence, incorrect financial truth).",
+      "status": "PARTIAL — HTML pages built, PNG capture pending",
+      "owner": "engineering (browser evidence capture)",
+      "detail": "docs/qa/proof-pack/SCREENSHOTS.md: 'Screenshot capture: PENDING — no playwright-core/playwright module importable in this environment. HTML pages and index were produced; PNG capture was not attempted, per instruction (stop after HTML+index when the driver is unavailable rather than fabricate screenshots).' Every row's PNG/sha256 column reads '(pending)'."
+    },
+    {
+      "id": "MANUAL-CHECK-4-VISIT-DAY-SG",
+      "checks": [
+        4,
+        8,
+        13
+      ],
+      "hard_gate": false,
+      "hard_gate_reason": "Disclosed, not silent: the visit-day unit is stated in every payload's visit_definition and in the metric dictionary.",
+      "status": "DECLARED_LIMIT",
+      "owner": "product (owner ruling needed only if a per-branch visit day is wanted)",
+      "detail": "app.ci_visit_day_v699 defines a visit as one customer per Asia/Singapore calendar day (nestly_v699). Two consequences: a sitting that crosses Singapore midnight counts as two visits, and a branch outside UTC+8 buckets its hours and weekdays on its own clock (nestly_v698/v706) while the visit-day unit stays Singapore-anchored. Both are disclosed in payloads (visit_definition, bucket_timezone, timezone_basis). Changing the unit to the sale's branch clock is a coordinated change across every registry entry in app.ci_visit_registry_v699."
+    },
+    {
+      "id": "MANUAL-CHECK-98-EXECUTED",
+      "checks": [
+        98
+      ],
+      "hard_gate": true,
+      "hard_gate_reason": "Same hard-gate shape as MANUAL-CHECK-98-001; recorded here so the register shows the closure.",
+      "status": "CLOSED",
+      "owner": "engineering",
+      "detail": "Closed 2026-09-02 (commit 663d6907): decideGenerationFailure classifies model failures into named reasons the console renders as 'Report unavailable — <reason>'; exports refuse to build a file on a failed or partial fetch; CI panels render 42501/22023 as explicit unavailable messages. Executing tests: tests/ai-reports/generation-failure-classification.test.mjs, tests/platform-console/ai-report-failure-rendering.test.mjs, tests/business-ui/v685-ci-surfaces.test.mjs."
+    }
+  ]
+}
