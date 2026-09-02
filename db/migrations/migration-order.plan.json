@@ -3351,6 +3351,12 @@
       "path": "db/migrations/20260902_nestly_v681_free_gift_confirm_at_scan.sql",
       "semanticVersion": "v681",
       "proposedDeployVersion": "20260902090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql",
+      "semanticVersion": "v682",
+      "proposedDeployVersion": "20260902100000"
     }
   ]
 }

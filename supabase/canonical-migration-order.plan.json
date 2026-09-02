@@ -3346,6 +3346,12 @@
       "version": "20260902090000",
       "name": "nestly_v681_free_gift_confirm_at_scan",
       "sourcePath": "db/migrations/20260902_nestly_v681_free_gift_confirm_at_scan.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902100000",
+      "name": "nestly_v682_custom_perk_is_not_a_free_gift",
+      "sourcePath": "db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql"
     }
   ]
 }
