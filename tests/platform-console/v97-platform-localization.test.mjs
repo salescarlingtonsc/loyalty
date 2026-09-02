@@ -351,8 +351,14 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
      they shipped had no zh-CN or ms entry at all, which is what the coverage test above caught;
      both dictionaries carry them now, and these counts are re-pinned to what the console actually
      renders. */
-  assert.equal(explicit.length,1110,'update the audited explicit-copy inventory when adding runtime UI'); // v667
-  assert.equal(metadata.length,848,'update the audited CUI metadata inventory when adding UI metadata'); // v667
+  // nestly_v727 (consultant brief evidence gating, check 93): +5 distinct explicit pt() strings
+  // (Average order, the insufficient-evidence note template, Identified customers, With a
+  // purchase, Inactive 90+ days). 'Top customer revenue' dedupes against an identical string
+  // already introduced by an earlier wave, so it does not add a sixth.
+  assert.equal(explicit.length,1115,'update the audited explicit-copy inventory when adding runtime UI'); // v727
+  // nestly_v727: +2 distinct metadata strings (the new Customer intelligence card's title and
+  // description).
+  assert.equal(metadata.length,850,'update the audited CUI metadata inventory when adding UI metadata'); // v727
   assert.equal(announcements.length,47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');

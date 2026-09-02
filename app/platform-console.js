@@ -3610,6 +3610,31 @@
       'Peekaa recorded revenue':'Hasil direkodkan Peekaa'
     })
   });
+  /* nestly_v727 (consultant brief evidence gating, check 93): the average-order and
+     top-customer-revenue KPI tiles, the new Customer intelligence card, and the insufficient-
+     evidence note that replaces a currency figure below app.subgroup_evidence_v1's floor. */
+  const PLATFORM_COPY_V727=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Average order':'平均订单',
+      'Not enough data yet ({n} of {floor} customers)':'数据尚不足（{n} / {floor} 位顾客）',
+      'Customer intelligence':'顾客洞察',
+      'Identified-customer coverage and the account it points to, gated by the same evidence floor.':'已识别顾客的覆盖情况，以及其指向的账户，受相同证据门槛限制。',
+      'Identified customers':'已识别顾客',
+      'With a purchase':'有购买记录',
+      'Inactive 90+ days':'90天以上不活跃',
+      'Top customer revenue':'最高顾客收入'
+    }),
+    ms:Object.freeze({
+      'Average order':'Purata pesanan',
+      'Not enough data yet ({n} of {floor} customers)':'Data belum mencukupi ({n} daripada {floor} pelanggan)',
+      'Customer intelligence':'Kecerdasan pelanggan',
+      'Identified-customer coverage and the account it points to, gated by the same evidence floor.':'Liputan pelanggan yang dikenal pasti dan akaun yang ditunjukkannya, tertakluk kepada had bukti yang sama.',
+      'Identified customers':'Pelanggan dikenal pasti',
+      'With a purchase':'Dengan pembelian',
+      'Inactive 90+ days':'Tidak aktif 90+ hari',
+      'Top customer revenue':'Hasil pelanggan teratas'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3632,6 +3657,7 @@
       ??PLATFORM_COPY_V513[platformLocale]?.[key]
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
+      ??PLATFORM_COPY_V727[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -5526,10 +5552,22 @@
     </div>`;
   }
   function consultativeIntelligenceHtml(report,affinity,recommendations,CUI) {
+    /* nestly_v727. app.subgroup_evidence_v1's shape is {n,floor,status:'ok'|'insufficient'} (see
+       db/migrations/20260902_nestly_v672_statistical_authority.sql). v722 attaches this evidence
+       block, plus a section-level 'unavailable' status, to kpis/cohorts/customer_intelligence on
+       public.platform_get_assigned_firm_report_v94 -- and nulls the one rate-like field in each
+       of kpis and customer_intelligence (average_order_cents, top_customer_revenue_cents) below
+       the floor. Counts are never nulled: zero is a legitimate count on an empty business. */
+    const consultantEvidenceNoteHtml=evidence=>{
+      const e=asObject(evidence),n=Number(e.n??0),floor=Number(e.floor??5);
+      return pt('Not enough data yet ({n} of {floor} customers)',{n,floor});
+    };
     const kpis=asObject(report.kpis),intelligence=asObject(report.customer_intelligence);
     const quality=asObject(report.data_quality),pairs=asArray(affinity.pairs);
     const actions=asArray(recommendations.recommendations);
     const confidence=quality.confidence||quality.status||'not_enough_data';
+    const kpisUnavailable=kpis.status==='unavailable';
+    const intelligenceUnavailable=intelligence.status==='unavailable';
     /* nestly_v667. This block read key names that platform_get_assigned_firm_report_v94 has
        never emitted, so four of the six surfaces below rendered fallback zeros or an empty
        state no matter what the firm's real numbers were. The names come from a v94 definition
@@ -5558,20 +5596,35 @@
           ?pt('No customers in scope')
           :`${returningRate.toFixed(1)}% (${returningCustomers}/${activeCustomers})`,'retention'],
         ['Transactions',String(Number(kpis.visits??0)),'till'],
-        ['Peekaa recorded revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports']
+        ['Peekaa recorded revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports'],
+        ['Average order',kpisUnavailable
+          ?consultantEvidenceNoteHtml(kpis.evidence)
+          :currency(kpis.average_order_cents??0,kpis.currency||'SGD'),'reports']
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
-        ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?CUI.table({
+        ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?`${cohorts.status==='unavailable'?`<p class="muted small">${escapeHtml(consultantEvidenceNoteHtml(cohorts.evidence))}</p>`:''}${CUI.table({
           /* Only the count and the definition are emitted per cohort. Columns for orders,
              revenue or a per-cohort return rate would have to be invented, so they are gone
-             rather than shown as zero. */
+             rather than shown as zero. Counts render even when the section is below the
+             evidence floor -- a count is not a rate, and zero-hiding a real count would be its
+             own fabrication. */
           caption:'Customer group performance',headers:['Group','Customers','How this group is defined'],
           rows:cohortRows.map(row=>[
             escapeHtml(platformStatus(row.key)),
             String(row.customers),
             escapeHtml(row.definition)
           ])
-        }):localizedEmptyHtml('The selected scope does not yet have enough customer-group data.')})}
+        })}`:localizedEmptyHtml('The selected scope does not yet have enough customer-group data.')})}
+        ${CUI.card({title:'Customer intelligence',description:'Identified-customer coverage and the account it points to, gated by the same evidence floor.',body:`<ul class="platform-stat-list">
+          <li>${escapeHtml(pt('Identified customers'))}: <b>${escapeHtml(String(Number(intelligence.total_customers??0)))}</b></li>
+          <li>${escapeHtml(pt('With a purchase'))}: <b>${escapeHtml(String(Number(intelligence.customers_with_purchase??0)))}</b></li>
+          <li>${escapeHtml(pt('Inactive 90+ days'))}: <b>${escapeHtml(String(Number(intelligence.customers_over_90_days_inactive??0)))}</b></li>
+          <li>${escapeHtml(pt('Top customer revenue'))}: <b>${
+            intelligenceUnavailable
+              ?escapeHtml(consultantEvidenceNoteHtml(intelligence.evidence))
+              :escapeHtml(currency(intelligence.top_customer_revenue_cents??0,kpis.currency||'SGD'))
+          }</b></li>
+        </ul>`})}
         ${CUI.card({title:'Products bought with services',description:'Attach rate is calculated only from canonical, non-reversed sale lines.',body:affinity.enabled===false
           ?localizedEmptyHtml('Item-level intelligence is disabled for this firm.')
           :pairs.length?CUI.table({
