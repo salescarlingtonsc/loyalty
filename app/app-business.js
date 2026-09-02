@@ -31666,9 +31666,12 @@ async function customerIntelligencePage(){
       sb.rpc('get_ci_daypart_v1',{
         p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
       }),
-      /* nestly_v685: ranked opportunities — branch-scoped like the v679 trio above. */
+      /* nestly_v685: ranked opportunities — branch-scoped like the v679 trio above.
+         nestly_v696: p_extended=>true (the v688 consultant-spine-v2 flag) so each candidate carries
+         incentive/why_now/reversal_condition/alternatives/cost_basis, impact gains scenario_cents +
+         expected_value, and the payload gains report_sections + top_actions. */
       sb.rpc('get_ci_opportunities_v1',{
-        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null,p_extended:true
       })
     ]);
     if(!isCurrent())return;
@@ -31811,8 +31814,57 @@ function ciOpportunityImpactV685(impact,currency){
 function scopeMoneyV685(cents,currency='SGD'){
   return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
 }
+/* nestly_v696 (check p_extended-consumer) — v688 gave get_ci_opportunities_v1 a trailing
+   p_extended flag; the RPC call site above now always passes p_extended:true. Every figure below
+   is read verbatim off the payload — never computed client-side (v145's browser-side-readiness
+   ban applies equally here to expected value: only the server's own return_probability_v681 model
+   may produce that number). */
+function ciOpportunityExpectedValueHtmlV685(impact,currency){
+  const i=impact&&typeof impact==='object'?impact:{};
+  const ev=i.expected_value;
+  if(!ev||typeof ev!=='object')return '';
+  if(ev.status==='unavailable')
+    return `<div><span>Expected value</span><strong>${esc(ev.reason||'Not available.')}</strong></div>`;
+  const inputs=ev.inputs&&typeof ev.inputs==='object'?ev.inputs:{};
+  const counts=[];
+  if(inputs.scored!==undefined&&inputs.scored!==null)counts.push(`${Number(inputs.scored)||0} scored`);
+  if(inputs.abstained!==undefined&&inputs.abstained!==null)counts.push(`${Number(inputs.abstained)||0} abstained`);
+  const countsText=counts.length?` (${counts.join(', ')})`:'';
+  return `<div><span>Expected value</span><strong>${esc(scopeMoneyV685(ev.cents,currency))}${esc(countsText)}</strong></div>`;
+}
+function ciOpportunityScenarioHtmlV685(impact,currency){
+  const i=impact&&typeof impact==='object'?impact:{};
+  if(i.scenario_cents===null||i.scenario_cents===undefined)return '';
+  return `<div><span>Scenario value</span><strong>${esc(scopeMoneyV685(i.scenario_cents,currency))}</strong></div>`;
+}
+function ciOpportunityIncentiveHtmlV685(incentive){
+  const inc=incentive&&typeof incentive==='object'?incentive:null;
+  if(!inc||inc.declared!==true)return '';
+  const label=inc.kind==='none'?'No incentive':`Incentive: ${inc.kind}`;
+  return `<div><span>Incentive</span><strong>${esc(label)}</strong></div>`;
+}
+function ciOpportunityPrimaryAlternativeHtmlV685(alternatives){
+  const list=Array.isArray(alternatives)?alternatives:[];
+  const primary=list.find(a=>a&&a.primary===true)||list[0];
+  if(!primary)return '';
+  return `<div><span>Primary option</span><strong>${esc(primary.what||'Not specified')}</strong></div>`;
+}
+function ciOpportunityWhyNowHtmlV685(text){
+  if(!text)return '';
+  return `<p class="muted small ci-opportunity-why-now"><strong>Why now</strong> ${esc(text)}</p>`;
+}
+function ciOpportunityReversalHtmlV685(text){
+  if(!text)return '';
+  return `<p class="muted small ci-opportunity-reversal"><strong>What would prove this wrong</strong> ${esc(text)}</p>`;
+}
 function ciOpportunityCardHtmlV685(item,currency){
   const action=item?.action||{},confidence=item?.confidence||{};
+  const scenarioHtml=ciOpportunityScenarioHtmlV685(item?.impact,currency);
+  const expectedValueHtml=ciOpportunityExpectedValueHtmlV685(item?.impact,currency);
+  const incentiveHtml=ciOpportunityIncentiveHtmlV685(item?.incentive);
+  const alternativeHtml=ciOpportunityPrimaryAlternativeHtmlV685(item?.alternatives);
+  const whyNowHtml=ciOpportunityWhyNowHtmlV685(item?.why_now);
+  const reversalHtml=ciOpportunityReversalHtmlV685(item?.reversal_condition);
   return `<article class="revenue-opportunity" data-rank-class="${esc(item?.rank_class||'')}">
     <div class="revenue-opportunity-rank"><span>${Number(item?.rank)||0}</span></div>
     <div class="revenue-opportunity-main">
@@ -31821,6 +31873,10 @@ function ciOpportunityCardHtmlV685(item,currency){
         <div><span>Impact</span><strong>${ciOpportunityImpactV685(item?.impact,currency)}</strong></div>
         <div><span>Evidence class</span><strong class="pill">${esc(item?.evidence_class||'Unknown')}</strong></div>
         <div><span>Confidence</span><strong>${ciOpportunityConfidenceV685(confidence)}</strong></div>
+        ${scenarioHtml}
+        ${expectedValueHtml}
+        ${incentiveHtml}
+        ${alternativeHtml}
       </div>
       <dl class="ci-opportunity-action">
         <div><dt>Who</dt><dd>${esc(action.who||'Not specified')}</dd></div>
@@ -31828,9 +31884,39 @@ function ciOpportunityCardHtmlV685(item,currency){
         <div><dt>When</dt><dd>${esc(action.when||'Not specified')}</dd></div>
         <div><dt>Channel</dt><dd>${esc(action.channel||'Not specified')}</dd></div>
       </dl>
+      ${whyNowHtml}
+      ${reversalHtml}
       <p class="muted small ci-opportunity-limitation">${esc(item?.limitation||'')}</p>
     </div>
   </article>`;
+}
+function ciTopActionsHtmlV685(topActions){
+  const list=Array.isArray(topActions)?topActions:[];
+  if(!list.length)return '';
+  return `<div class="ci-top-actions">
+    <h3 class="ci-top-actions-heading">Top actions</h3>
+    <ol class="ci-top-actions-list">${list.map(item=>`<li>${esc(item?.action?.what||item?.pattern||'Not specified')}</li>`).join('')}</ol>
+  </div>`;
+}
+const CI_REPORT_SECTION_ORDER_V696=['strengths','failures','leakage','margin','unnoticed_behaviour','segments','change'];
+const CI_REPORT_SECTION_LABELS_V696={
+  strengths:'Strengths',failures:'Failures',leakage:'Leakage',margin:'Margin',
+  unnoticed_behaviour:'Unnoticed',segments:'Segments',change:'Change'
+};
+function ciReportSectionBodyHtmlV696(section){
+  if(section&&typeof section==='object'&&!Array.isArray(section))
+    return `<p class="muted small">${esc(section.reason||'Not available.')}</p>`;
+  const ids=Array.isArray(section)?section:[];
+  if(!ids.length)return `<p class="muted small">Nothing surfaced above the evidence floor.</p>`;
+  return `<ul class="ci-report-section-ids">${ids.map(id=>`<li>${esc(id)}</li>`).join('')}</ul>`;
+}
+function ciReportSectionsHtmlV696(sections){
+  const s=sections&&typeof sections==='object'?sections:{};
+  return `<div class="ci-report-sections">${CI_REPORT_SECTION_ORDER_V696.map(key=>`
+    <details class="ci-report-section" data-section="${esc(key)}">
+      <summary>${esc(CI_REPORT_SECTION_LABELS_V696[key]||key)}</summary>
+      <div class="ci-report-section-body">${ciReportSectionBodyHtmlV696(s[key])}</div>
+    </details>`).join('')}</div>`;
 }
 function opportunitiesPanelHtmlV685(payload){
   if(payload&&payload.error)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
@@ -31846,7 +31932,9 @@ function opportunitiesPanelHtmlV685(payload){
   return `<section class="revenue-truth-section" aria-labelledby="ciOpportunitiesHeadingV685">
     <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Today’s best actions</span>
     <h2 id="ciOpportunitiesHeadingV685">Ranked opportunities</h2></div></div>
+    ${ciTopActionsHtmlV685(payload.top_actions)}
     <div class="ci-opportunities-list">${ranked.map(item=>ciOpportunityCardHtmlV685(item,currency)).join('')}</div>
+    ${ciReportSectionsHtmlV696(payload.report_sections)}
     <p class="muted small ci-opportunities-comparisons" style="margin-top:10px">${esc(comparisonsLine)}</p>
     ${ciMeasuredSinceInlineV685(payload.observed_since)}
   </section>`;
