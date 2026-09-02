@@ -39,12 +39,18 @@
 --     (v628) marks a reversed original's own include_visit false for get_ci_daypart_v1 -- so this
 --     client contributes exactly 0 to every metric below. Its purpose is solely to prove the
 --     exclusion holds at scale, the way v106_corpus_revenue_truth.sql's R2 proves it for one pair.
---   1 synthetic client (is_synthetic=true) with ZERO sales -- present so "every populated business
---     carries a synthetic customer to exclude" is exercised structurally, without having to reason
---     about is_synthetic revenue-attribution rules that differ between readers (get_revenue_truth_v106
---     predates the is_synthetic exclusion entirely; get_ci_daypart_v1 enforces it via v628). Giving
---     it zero sales sidesteps that divergence rather than papering over it: a client with no sales
---     changes no reader's total, in either reading.
+--   1 synthetic client (is_synthetic=true) with 2 real sales at the sector base price
+--     (counts_as_revenue=true, counts_as_visit=false -- see the insert's own comment for why visit
+--     is left false). UPDATED by nestly_v687 (HARDEN): this client used to carry ZERO sales,
+--     specifically to sidestep a divergence where get_revenue_truth_v106 predated the
+--     is_synthetic exclusion entirely while get_ci_daypart_v1 already enforced it via v628 --
+--     giving it no sales sidestepped the disagreement rather than fixing it. nestly_v687 closed
+--     that gap (get_revenue_truth_v106 now excludes is_synthetic-client sales via
+--     app.analytics_sale_class_v1, same as get_ci_daypart_v1), so this corpus now gives the
+--     synthetic client real revenue-bearing sales specifically to prove the exclusion holds: with
+--     v687 applied, known/identified revenue and completed/identified_transactions below are
+--     unmoved by these 2 rows; with v687 rolled back, they are not (see
+--     db/tests/executed/v687_corpus_synthetic_exclusion.sql and this file's own red/green proof).
 --   known_revenue          = identified_revenue + anonymous_revenue
 --   completed_transactions = identified_transactions + (p_index mod 2)
 --   visits                 = identified_transactions + (p_index mod 2)   -- same qualifying set as
@@ -268,10 +274,32 @@ begin
     end loop;
   end if;
 
-  -- 1 synthetic client, zero sales (see header for why zero sales is deliberate).
+  -- 1 synthetic client, WITH 2 real sales at the sector base price (v687 hardening: this used
+  -- to be zero sales specifically to sidestep the get_revenue_truth_v106/get_ci_daypart_v1
+  -- divergence -- see the header's "1 synthetic client" note and nestly_v687's header for the
+  -- fix that closed it). counts_as_revenue=true so a get_revenue_truth_v106 that forgot the
+  -- exclusion would inflate known/identified revenue and completed/identified_transactions by
+  -- exactly these 2 rows -- the divergence this corpus now exists to catch.
+  -- counts_as_visit=false is deliberate and NOT part of what v687 tests: get_customer_lifecycle_
+  -- v107 (nestly_v107, untouched by v687, out of this task's scope) has its own eligibility gate
+  -- requiring counts_as_visit=true and carries no is_synthetic exclusion of its own, so a
+  -- counts_as_visit=true row here would leak into transacting_identified_customers /
+  -- repeat_purchasers_in_period and move 'customer_count'/'repeat_customers' out from under the
+  -- unchanged expected block below, for a reason unrelated to D7. get_ci_daypart_v1 already
+  -- excludes this client either way, via app.analytics_sale_class_v1's is_synthetic_client column
+  -- (nestly_v628/v680) -- unaffected by this migration.
   v_synth_client := gen_random_uuid();
   insert into public.clients (id, business_id, full_name, is_synthetic)
-  values (v_synth_client, v_biz, 'ZZ golden synthetic (excluded, no sales)', true);
+  values (v_synth_client, v_biz, 'ZZ golden synthetic (excluded from every reader)', true);
+
+  insert into public.sales (id, business_id, branch_id, client_id, kind, amount_cents,
+    occurred_at, created_at, counts_as_revenue, counts_as_visit, earns_points,
+    policy_resolved_at, commission_rate_bps, commission_resolved_at)
+  select gen_random_uuid(), v_biz, v_branch, v_synth_client, 'service', v_base_price_cents,
+         v_ts, v_ts, true, false, false, v_ts, 0, v_ts
+    from generate_series(1, 2) as g,
+    lateral (select (v_window_from + ((g*23 + p_index) % 120))::timestamp
+                      at time zone 'Asia/Singapore' as v_ts) t;
 
   alter table public.sales enable trigger user;
 
