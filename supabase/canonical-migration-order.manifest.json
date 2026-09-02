@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 510,
-  "itemCount": 555,
+  "pendingCount": 511,
+  "itemCount": 556,
   "items": [
     {
       "order": 1,
@@ -5542,6 +5542,16 @@
     {
       "order": 554,
       "kind": "pending",
+      "version": "20260902060000",
+      "name": "nestly_v678_auto_approve_after_choice",
+      "path": "supabase/migrations/20260902060000_nestly_v678_auto_approve_after_choice.sql",
+      "octetLength": 14301,
+      "sha256": "1d65d51444fba1d44290089e804e6da81e9f9d523d1aa1edd20c25aed0dd6973",
+      "provenance": "local-source"
+    },
+    {
+      "order": 555,
+      "kind": "pending",
       "version": "20260902070000",
       "name": "nestly_v679_tier_edits_survive_publish",
       "path": "supabase/migrations/20260902070000_nestly_v679_tier_edits_survive_publish.sql",
@@ -5550,7 +5560,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 555,
+      "order": 556,
       "kind": "pending",
       "version": "20260902080000",
       "name": "nestly_v680_manual_payment_reopens_workspace",

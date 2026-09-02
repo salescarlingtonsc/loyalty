@@ -3330,6 +3330,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v678_auto_approve_after_choice.sql",
+      "semanticVersion": "v678",
+      "proposedDeployVersion": "20260902060000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260902_nestly_v679_tier_edits_survive_publish.sql",
       "semanticVersion": "v679",
       "proposedDeployVersion": "20260902070000"

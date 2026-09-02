@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 554,
-  "executableCount": 540,
+  "itemCount": 555,
+  "executableCount": 541,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -798,7 +798,7 @@
     },
     {
       "sourceDeployVersion": "20260902",
-      "count": 8,
+      "count": 9,
       "paths": [
         "db/migrations/20260902_nestly_v672_public_support_desk.sql",
         "db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql",
@@ -806,6 +806,7 @@
         "db/migrations/20260902_nestly_v675_stale_stamp_draft_superseded.sql",
         "db/migrations/20260902_nestly_v676_gift_intent_reopen.sql",
         "db/migrations/20260902_nestly_v677_reversal_is_not_a_visit.sql",
+        "db/migrations/20260902_nestly_v678_auto_approve_after_choice.sql",
         "db/migrations/20260902_nestly_v679_tier_edits_survive_publish.sql",
         "db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql"
       ]
@@ -5231,13 +5232,21 @@
     {
       "order": 553,
       "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v678_auto_approve_after_choice.sql",
+      "semanticVersion": "v678",
+      "proposedDeployVersion": "20260902060000",
+      "sha256": "1d65d51444fba1d44290089e804e6da81e9f9d523d1aa1edd20c25aed0dd6973"
+    },
+    {
+      "order": 554,
+      "kind": "executable",
       "path": "db/migrations/20260902_nestly_v679_tier_edits_survive_publish.sql",
       "semanticVersion": "v679",
       "proposedDeployVersion": "20260902070000",
       "sha256": "7f34720f5ae4f1c3c2779421b30e6c1f9d0561865975583b21439a3b2843fe74"
     },
     {
-      "order": 554,
+      "order": 555,
       "kind": "executable",
       "path": "db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql",
       "semanticVersion": "v680",
