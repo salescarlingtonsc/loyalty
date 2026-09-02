@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 557,
-  "executableCount": 543,
+  "itemCount": 561,
+  "executableCount": 547,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -798,7 +798,7 @@
     },
     {
       "sourceDeployVersion": "20260902",
-      "count": 11,
+      "count": 15,
       "paths": [
         "db/migrations/20260902_nestly_v672_public_support_desk.sql",
         "db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql",
@@ -810,7 +810,11 @@
         "db/migrations/20260902_nestly_v679_tier_edits_survive_publish.sql",
         "db/migrations/20260902_nestly_v680_manual_payment_reopens_workspace.sql",
         "db/migrations/20260902_nestly_v681_free_gift_confirm_at_scan.sql",
-        "db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql"
+        "db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql",
+        "db/migrations/20260902_nestly_v683_referral_new_customers_only.sql",
+        "db/migrations/20260902_nestly_v684_delete_retired_offer.sql",
+        "db/migrations/20260902_nestly_v685_singapore_day_authority.sql",
+        "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql"
       ]
     }
   ],
@@ -5270,6 +5274,38 @@
       "semanticVersion": "v682",
       "proposedDeployVersion": "20260902100000",
       "sha256": "a9c7b4cce0231c0fcf058f869a723deb34962fc0ef3751559284a7c9b226ee27"
+    },
+    {
+      "order": 558,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v683_referral_new_customers_only.sql",
+      "semanticVersion": "v683",
+      "proposedDeployVersion": "20260902110000",
+      "sha256": "572378aa4f333bd82113380bbca547b6b8a2d0c351675871494e129463aaeacf"
+    },
+    {
+      "order": 559,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v684_delete_retired_offer.sql",
+      "semanticVersion": "v684",
+      "proposedDeployVersion": "20260902120000",
+      "sha256": "6eedbac475f98780f2dfac0349e1e156327c79ede36654700a7b9b04425c546f"
+    },
+    {
+      "order": 560,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v685_singapore_day_authority.sql",
+      "semanticVersion": "v685",
+      "proposedDeployVersion": "20260902130000",
+      "sha256": "3f36fef1d6bcfd432bb5e786ee472ecfac427178fef4b78fac8cc9bee4f2dd93"
+    },
+    {
+      "order": 561,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql",
+      "semanticVersion": "v686",
+      "proposedDeployVersion": "20260902140000",
+      "sha256": "a458edc83a8e10c4366b55a4a713abe272266028a11de088a589e8a8ef0f57ae"
     }
   ]
 }

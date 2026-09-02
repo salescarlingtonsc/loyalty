@@ -121,9 +121,12 @@ test('the SPA has no raw customer-module writes and carries stable retry keys', 
   ]) assert.match(app, new RegExp(`sb\\.rpc\\('${rpc}'`, 'i'), `app must call ${rpc}`);
   assert.match(app, /const createClientIdempotencyKey=crypto\.randomUUID\(\)/i);
   assert.match(app, /const consentIdempotencyKey=crypto\.randomUUID\(\)/i);
-  assert.match(app, /let issueGiftCardIdempotencyKey=crypto\.randomUUID\(\)/i);
-  assert.match(app, /p_idempotency_key:issueGiftCardIdempotencyKey/i);
-  assert.match(app, /issueGiftCardIdempotencyKey=crypto\.randomUUID\(\)[\s\S]*?loadCards\(\)/i);
+  /* audit F133 (2026-09-02): the issue key is durable — a sessionStorage slot keyed by the
+     issuance fingerprint (writeAttemptKey), cleared once the write settles — so a reload or
+     re-render cannot mint a second key and double-issue a card. */
+  assert.match(app, /const issueGiftCardSlot='nestly\.giftCards\.issue';/i);
+  assert.match(app, /const issueKey=writeAttemptKey\(issueGiftCardSlot,issueFingerprint\);/i);
+  assert.match(app, /clearWriteAttempt\(issueGiftCardSlot\);[\s\S]*?loadCards\(\)/i);
   assert.doesNotMatch(app, /sb\.rpc\('quick_add_client'/i);
   assert.doesNotMatch(app, /sb\.rpc\('enroll_membership'/i);
   assert.doesNotMatch(app, /sb\.rpc\('redeem_gift_card'/i);

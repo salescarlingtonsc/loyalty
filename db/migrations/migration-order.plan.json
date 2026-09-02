@@ -3357,6 +3357,30 @@
       "path": "db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql",
       "semanticVersion": "v682",
       "proposedDeployVersion": "20260902100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v683_referral_new_customers_only.sql",
+      "semanticVersion": "v683",
+      "proposedDeployVersion": "20260902110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v684_delete_retired_offer.sql",
+      "semanticVersion": "v684",
+      "proposedDeployVersion": "20260902120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v685_singapore_day_authority.sql",
+      "semanticVersion": "v685",
+      "proposedDeployVersion": "20260902130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql",
+      "semanticVersion": "v686",
+      "proposedDeployVersion": "20260902140000"
     }
   ]
 }

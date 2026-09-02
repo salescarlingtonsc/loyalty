@@ -6,6 +6,16 @@ function base64Url(bytes: Uint8Array) {
   return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
 }
 
+// A booking `preferred`/`proposed` value usually arrives as a bare `datetime-local` string
+// ("YYYY-MM-DDTHH:mm[:ss]") with no zone — Frenly is SG-first, so that means Singapore wall-clock
+// time, not the Deno runtime's UTC. Anchor it to +08:00 before parsing. A value that already
+// carries a zone (a trailing Z, or a +hh:mm/-hh:mm offset) is left exactly as written.
+function sgAnchoredIso(value: string): string {
+  const raw = String(value ?? '').trim();
+  const hasZone = /Z$|[+-]\d{2}:?\d{2}$/.test(raw);
+  return new Date(hasZone ? raw : `${raw}+08:00`).toISOString();
+}
+
 export async function sha256Hex(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value));
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -33,7 +43,7 @@ export function canonicalBookingRequest(input: Record<string, unknown>) {
     phone: input.phone ? String(input.phone) : null,
     service: input.service || null,
     party: Number(input.party),
-    preferred: new Date(String(input.preferred)).toISOString(),
+    preferred: sgAnchoredIso(String(input.preferred)),
     notes: input.notes ? String(input.notes).trim() : null,
     table_type: input.table_type || null,
     consent: input.consent === true,
@@ -51,7 +61,7 @@ export function canonicalBookingRequest(input: Record<string, unknown>) {
 export function canonicalBookingChange(input: Record<string, unknown>) {
   return {
     kind: String(input.kind || ''),
-    proposed: input.proposed ? new Date(String(input.proposed)).toISOString() : null,
+    proposed: input.proposed ? sgAnchoredIso(String(input.proposed)) : null,
     note: input.note ? String(input.note).trim() : null,
   };
 }

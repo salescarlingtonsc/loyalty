@@ -338,4 +338,19 @@ $v679_test$;
 
 select seq, step, outcome from v679_out order by seq;
 
+/* The report above is printed first so a human sees WHICH assertion failed; this block then
+   makes the failure fatal. It matters because scripts/db-tests/run.mjs judges a file purely by
+   psql's exit code — a suite that only records FAIL rows is reported green. */
+do $v679_gate$
+declare
+  v_bad integer;
+begin
+  select count(*) into v_bad from v679_out where outcome not like 'PASS%';
+  if v_bad > 0 then
+    raise exception 'SUITE FAILED: % assertion(s) — %', v_bad,
+      (select string_agg(step, ', ') from v679_out where outcome not like 'PASS%');
+  end if;
+end
+$v679_gate$;
+
 rollback;

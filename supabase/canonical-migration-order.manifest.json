@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 513,
-  "itemCount": 558,
+  "pendingCount": 517,
+  "itemCount": 562,
   "items": [
     {
       "order": 1,
@@ -5587,6 +5587,46 @@
       "path": "supabase/migrations/20260902100000_nestly_v682_custom_perk_is_not_a_free_gift.sql",
       "octetLength": 5560,
       "sha256": "a9c7b4cce0231c0fcf058f869a723deb34962fc0ef3751559284a7c9b226ee27",
+      "provenance": "local-source"
+    },
+    {
+      "order": 559,
+      "kind": "pending",
+      "version": "20260902110000",
+      "name": "nestly_v683_referral_new_customers_only",
+      "path": "supabase/migrations/20260902110000_nestly_v683_referral_new_customers_only.sql",
+      "octetLength": 22450,
+      "sha256": "572378aa4f333bd82113380bbca547b6b8a2d0c351675871494e129463aaeacf",
+      "provenance": "local-source"
+    },
+    {
+      "order": 560,
+      "kind": "pending",
+      "version": "20260902120000",
+      "name": "nestly_v684_delete_retired_offer",
+      "path": "supabase/migrations/20260902120000_nestly_v684_delete_retired_offer.sql",
+      "octetLength": 10358,
+      "sha256": "6eedbac475f98780f2dfac0349e1e156327c79ede36654700a7b9b04425c546f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 561,
+      "kind": "pending",
+      "version": "20260902130000",
+      "name": "nestly_v685_singapore_day_authority",
+      "path": "supabase/migrations/20260902130000_nestly_v685_singapore_day_authority.sql",
+      "octetLength": 32465,
+      "sha256": "3f36fef1d6bcfd432bb5e786ee472ecfac427178fef4b78fac8cc9bee4f2dd93",
+      "provenance": "local-source"
+    },
+    {
+      "order": 562,
+      "kind": "pending",
+      "version": "20260902140000",
+      "name": "nestly_v686_service_delete_owner_only_rpc",
+      "path": "supabase/migrations/20260902140000_nestly_v686_service_delete_owner_only_rpc.sql",
+      "octetLength": 11914,
+      "sha256": "a458edc83a8e10c4366b55a4a713abe272266028a11de088a589e8a8ef0f57ae",
       "provenance": "local-source"
     }
   ]

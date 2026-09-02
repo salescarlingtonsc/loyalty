@@ -3352,6 +3352,30 @@
       "version": "20260902100000",
       "name": "nestly_v682_custom_perk_is_not_a_free_gift",
       "sourcePath": "db/migrations/20260902_nestly_v682_custom_perk_is_not_a_free_gift.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902110000",
+      "name": "nestly_v683_referral_new_customers_only",
+      "sourcePath": "db/migrations/20260902_nestly_v683_referral_new_customers_only.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902120000",
+      "name": "nestly_v684_delete_retired_offer",
+      "sourcePath": "db/migrations/20260902_nestly_v684_delete_retired_offer.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902130000",
+      "name": "nestly_v685_singapore_day_authority",
+      "sourcePath": "db/migrations/20260902_nestly_v685_singapore_day_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902140000",
+      "name": "nestly_v686_service_delete_owner_only_rpc",
+      "sourcePath": "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql"
     }
   ]
 }

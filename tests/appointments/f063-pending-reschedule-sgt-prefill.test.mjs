@@ -17,15 +17,20 @@ import test from 'node:test';
 const root=new URL('../../',import.meta.url);
 const app=await readFile(new URL('app/app.js',root),'utf8');
 
-const sgInputSource=app.match(/const sgInput=iso=>\{[^\n]+\};/)?.[0];
+/* nestly_tz-client: sgInput no longer re-derives SGT itself — it delegates to the single
+   canonical instant->datetime-local helper, sgLocalInputValue (declared next to sgIso), so
+   this harness pulls that source in too rather than eval'ing sgInput in isolation. */
+const sgInputSource=app.match(/const sgInput=iso=>[^\n]+;/)?.[0];
 const sgIsoSource=app.match(/const sgIso=v=>[^\n]+;/)?.[0];
+const sgLocalInputValueSource=app.match(/const sgLocalInputValue=instant=>\{[\s\S]*?\n\};/)?.[0];
 
 test('sgInput and sgIso helpers exist in app.js',()=>{
   assert.ok(sgInputSource,'sgInput helper must exist');
   assert.ok(sgIsoSource,'sgIso helper must exist');
+  assert.ok(sgLocalInputValueSource,'sgLocalInputValue helper must exist');
 });
 
-const {sgInput,sgIso}=Function(`${sgIsoSource}\n${sgInputSource}\nreturn {sgInput,sgIso};`)();
+const {sgInput,sgIso}=Function(`${sgIsoSource}\n${sgLocalInputValueSource}\n${sgInputSource}\nreturn {sgInput,sgIso};`)();
 
 test('a stored UTC instant pre-fills as its Singapore local wall time (F063)',()=>{
   // 2026-09-10T02:30:00Z is 10:30 in Singapore (+08:00).

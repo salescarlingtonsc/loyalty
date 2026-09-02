@@ -2591,7 +2591,7 @@
     {
       "id": "db.fn:public.customer_apply_referral_code_v612/3",
       "surface": "db_function",
-      "latest_file": "20260830010000_nestly_v612_referral_immediate_when_no_floor.sql",
+      "latest_file": "20260902110000_nestly_v683_referral_new_customers_only.sql",
       "rows_written": "referrals:INSERT/UPDATE (status pending→rewarded, blocked_reason), points_ledger:INSERT (both sides, scope referral_reward_points), points_batches:INSERT (both sides), referral_grants_v420:INSERT (both sides, voucher kind), app.referral_value_provenance_v480:INSERT/UPDATE (via the v480 capture triggers, qualifying_sale_id NULL)",
       "entry_point": "browser RPC (authenticated customer, verified wallet link required) — the join pop-ups' optional referral code, applied AFTER the join succeeds",
       "idempotency": "one_referral_per_referred unique insert; the pending→rewarded status transition guards the settle (a replay finds no pending row and answers already_applied); the v421 once-per-side grant index; caller passes a stable idempotency key per (business, code)",

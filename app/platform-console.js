@@ -3653,6 +3653,46 @@
       'The public page tells people to email hello@peekaa.asia if nobody has replied by then.':'Halaman awam memberitahu pengguna untuk menghantar e-mel ke hello@peekaa.asia jika tiada balasan menjelang tarikh tersebut.'
     })
   });
+  /* F130 — Extend trial / Pause workspace modals (platform_adjust_subscription_v622 /
+     platform_set_workspace_pause_v622 console UI). */
+  const PLATFORM_COPY_F130=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Current trial end: {date}':'当前试用结束日期：{date}',
+      'Not set':'未设置',
+      'New trial end date (Singapore time)':'新的试用结束日期（新加坡时间）',
+      'Pick a valid trial-end date.':'请选择一个有效的试用结束日期。',
+      'Trial extended.':'试用期已延长。',
+      'This blocks owner access to the workspace immediately, the same as the dunning cron would on day 14.':'这会立即阻止商户访问该工作区，效果与第 14 天的催缴任务相同。',
+      'This restores owner access to the workspace immediately.':'这会立即恢复商户对该工作区的访问权限。',
+      'Workspace paused.':'工作区已暂停。',
+      'Workspace unpaused.':'工作区已恢复。',
+      'Extend trial':'延长试用期',
+      'Unpause workspace':'恢复工作区',
+      'Pause workspace':'暂停工作区',
+      'Nothing to adjust — add a new trial-end date or a note.':'没有可调整的内容——请添加新的试用结束日期或备注。',
+      'Trial runway beyond 180 days is not adjustable here.':'无法在此处将试用期延长至超过 180 天。',
+      'No subscription exists for this business.':'该商户没有订阅记录。',
+      'No lifecycle row exists for this business.':'该商户没有生命周期记录。'
+    }),
+    ms:Object.freeze({
+      'Current trial end: {date}':'Tarikh tamat percubaan semasa: {date}',
+      'Not set':'Belum ditetapkan',
+      'New trial end date (Singapore time)':'Tarikh tamat percubaan baharu (waktu Singapura)',
+      'Pick a valid trial-end date.':'Sila pilih tarikh tamat percubaan yang sah.',
+      'Trial extended.':'Tempoh percubaan telah dilanjutkan.',
+      'This blocks owner access to the workspace immediately, the same as the dunning cron would on day 14.':'Ini menyekat akses pemilik ke ruang kerja dengan serta-merta, sama seperti tugas kutipan automatik pada hari ke-14.',
+      'This restores owner access to the workspace immediately.':'Ini memulihkan akses pemilik ke ruang kerja dengan serta-merta.',
+      'Workspace paused.':'Ruang kerja telah dijeda.',
+      'Workspace unpaused.':'Ruang kerja telah disambung semula.',
+      'Extend trial':'Lanjutkan percubaan',
+      'Unpause workspace':'Sambung semula ruang kerja',
+      'Pause workspace':'Jeda ruang kerja',
+      'Nothing to adjust — add a new trial-end date or a note.':'Tiada apa untuk dilaraskan — tambah tarikh tamat percubaan baharu atau nota.',
+      'Trial runway beyond 180 days is not adjustable here.':'Tempoh percubaan melebihi 180 hari tidak boleh dilaraskan di sini.',
+      'No subscription exists for this business.':'Tiada langganan wujud untuk perniagaan ini.',
+      'No lifecycle row exists for this business.':'Tiada rekod kitaran hayat wujud untuk perniagaan ini.'
+    })
+  });
   let platformLocale='en';
   let platformLocaleVersion=0;
   let lastRenderArgs=null;
@@ -3676,6 +3716,7 @@
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
       ??PLATFORM_COPY_V672[platformLocale]?.[key]
+      ??PLATFORM_COPY_F130[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -3690,6 +3731,23 @@
     }
     if(known==='owner_account_already_has_workspace'){
       return pt('This owner account is already assigned to a workspace.');
+    }
+    // F130: platform_adjust_subscription_v622 / platform_set_workspace_pause_v622 raise these
+    // exact messages (db/migrations/20260830_nestly_v622_sa_writes_become_rpcs.sql). Named
+    // exactly like the two owner_account_* codes above so the specific RPC rejection reaches
+    // the operator through the normal translated path, never by inspecting the raw thrown
+    // error's message text directly at the call site.
+    if(known==='nothing to adjust'){
+      return pt('Nothing to adjust — add a new trial-end date or a note.');
+    }
+    if(known==='trial runway beyond 180 days is not adjustable here'){
+      return pt('Trial runway beyond 180 days is not adjustable here.');
+    }
+    if(known==='no subscription exists for this business'){
+      return pt('No subscription exists for this business.');
+    }
+    if(known==='no lifecycle row exists for this business'){
+      return pt('No lifecycle row exists for this business.');
     }
     return known&&platformText(known)!==known?platformText(known):platformText(fallback);
   }
@@ -4519,6 +4577,34 @@
       timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
     }).formatToParts(date).filter(part=>part.type!=='literal').map(part=>[part.type,part.value]));
     return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+  // Owner ruling 2026-09-02: every date/time in Peekaa is Asia/Singapore, never
+  // browser-local or UTC. These two helpers are the single authority for
+  // converting between a stored instant and a `datetime-local` input's value
+  // in this file (TZ-C2-02..10). Mirrors app.js's sgt()/sgIso() pair, which
+  // platform-console.js cannot see.
+  function sgLocalInputValue(instant) {
+    const date = instant instanceof Date ? instant : new Date(instant);
+    if (isNaN(date.getTime())) return '';
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).formatToParts(date).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  }
+  function sgLocalToIso(inputValue) {
+    const raw = String(inputValue || '').trim();
+    if (!raw) return null;
+    // Already carries an explicit zone offset or 'Z' — trust it as-is.
+    if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(raw)) {
+      const asIs = new Date(raw);
+      return isNaN(asIs.getTime()) ? null : asIs.toISOString();
+    }
+    // datetime-local values are `YYYY-MM-DDTHH:mm` or `YYYY-MM-DDTHH:mm:ss`.
+    const hasSeconds = /T\d{2}:\d{2}:\d{2}$/.test(raw);
+    const withSeconds = hasSeconds ? raw : `${raw}:00`;
+    const asSg = new Date(`${withSeconds}+08:00`);
+    return isNaN(asSg.getTime()) ? null : asSg.toISOString();
   }
   function enterpriseDefaults() {
     const to=singaporeIsoDate(),fromDate=new Date(`${to}T00:00:00+08:00`);
@@ -6446,11 +6532,14 @@
   function nextActionBucket(item) {
     const value=prospectValue(item,'next_action_at','next_activity_at');
     if(!value)return'missing';
-    const due=new Date(value),now=new Date();
+    const due=new Date(value);
     if(!Number.isFinite(due.getTime()))return'missing';
-    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-    const tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);
-    const nextWeek=new Date(today);nextWeek.setDate(nextWeek.getDate()+8);
+    // Owner ruling 2026-09-02: bucket on Singapore midnight, not the admin's
+    // browser-local midnight (TZ-C2-09). Singapore has no DST, so simple
+    // millisecond arithmetic on the SG-day boundary is exact.
+    const today=new Date(`${singaporeIsoDate()}T00:00:00+08:00`);
+    const tomorrow=new Date(today.getTime()+86400000);
+    const nextWeek=new Date(today.getTime()+8*86400000);
     if(due<today)return'overdue';
     if(due<tomorrow)return'today';
     if(due<nextWeek)return'next_7_days';
@@ -7545,7 +7634,7 @@
         p_company:{legal_name:form.get('company_name'),registration_number:form.get('uen')||null},
         p_primary_contact:{full_name:form.get('contact_name'),email:form.get('contact_email')||null,phone:form.get('contact_phone')||null},
         p_consultant:form.get('consultant')||null,p_source:{source_system:'platform_console',source_type:'manual'},
-        p_next_action_at:new Date(form.get('next_action_at')).toISOString()};
+        p_next_action_at:sgLocalToIso(form.get('next_action_at'))};
       const fingerprint=JSON.stringify(args);
       if(createAttemptFingerprint&&createAttemptFingerprint!==fingerprint)createAttemptKey=idempotencyKey();
       createAttemptFingerprint=fingerprint;
@@ -8206,7 +8295,7 @@
 
   function subscriptionQuotationModal(detail,context) {
     const {CUI,sb}=context,prospect=asObject(detail.prospect),current=asObject(detail.subscription_ops?.commercial),terms=commercialBase(detail.commercial_terms);
-    const today=new Date().toISOString().slice(0,10),expiry=new Date(Date.now()+14*86400000).toISOString().slice(0,10);
+    const today=singaporeIsoDate(),expiry=singaporeIsoDate(new Date(Date.now()+14*86400000));
     modal({title:'Generate subscription quotation',submitLabel:'Finalise quotation',CUI,body:`<p class="muted small">${escapeHtml(pt('Finalisation creates an immutable numbered snapshot. It is blocked until seller legal settings and a primary billing contact are complete.'))}</p><div class="platform-form-grid">
       ${CUI.field({id:'v156QuotePlan',label:'Subscription plan',value:current.expected_plan||terms.plan_code||'',required:true,attributes:'name="plan"'})}
       ${CUI.field({id:'v156QuoteInterval',label:'Billing interval',control:'select',options:['monthly','quarterly','half_yearly','annual','fixed'].map(value=>({value,label:platformStatus(value),selected:value===(current.billing_interval||terms.billing_cycle||'annual')})),attributes:'name="billing_interval"'})}
@@ -8231,13 +8320,13 @@
     if(!context.sb.functions?.invoke){context.CUI.announce('Document signer is unavailable.',{assertive:true});return}
     button.disabled=true;try{const result=await context.sb.functions.invoke('subscription-document-dispatch',{body:{action:'read',document_id:documentId}});if(result?.error||!result?.data?.signed_url)throw result?.error||new Error(pt('Document link unavailable'));globalObject.open(result.data.signed_url,'_blank','noopener')}catch(error){context.CUI.announce(platformErrorMessage(error,'Document link unavailable.'),{assertive:true})}finally{button.disabled=false}
   }
-  const nullableDateTime=value=>String(value||'').trim()===''?null:new Date(value).toISOString();
+  const nullableDateTime=value=>String(value||'').trim()===''?null:sgLocalToIso(value);
   function isoInput(value,{date=false}={}) {
     if(!value)return'';
     const parsed=new Date(value);
     if(Number.isNaN(parsed.getTime()))return String(value).slice(0,date?10:16);
-    if(date)return parsed.toISOString().slice(0,10);
-    return new Date(parsed.getTime()-parsed.getTimezoneOffset()*60000).toISOString().slice(0,16);
+    if(date)return singaporeIsoDate(parsed);
+    return sgLocalInputValue(parsed);
   }
   function profileSnapshot(source,allowed) {
     const object=asObject(source),result={};
@@ -8949,7 +9038,7 @@
         }))
       ],attributes:'name="consultant"'})}`,
       onSubmit:async(form,controls)=>{
-        await rpc(sb,'platform_create_prospect_task_v76',{p_prospect:prospect.id||prospect.prospect_id,p_title:form.get('title'),p_due_at:new Date(form.get('due_at')).toISOString(),p_assigned_consultant:form.get('consultant')||null,p_idempotency_key:idempotencyKey()});
+        await rpc(sb,'platform_create_prospect_task_v76',{p_prospect:prospect.id||prospect.prospect_id,p_title:form.get('title'),p_due_at:sgLocalToIso(form.get('due_at')),p_assigned_consultant:form.get('consultant')||null,p_idempotency_key:idempotencyKey()});
         controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Task created.');
       }});
   }
@@ -9031,7 +9120,7 @@
         specs.forEach(spec=>{
           let value=String(form.get(spec.id)||'').trim();
           if(!value)return;
-          if(spec.type==='datetime-local')value=new Date(value).toISOString();
+          if(spec.type==='datetime-local')value=sgLocalToIso(value);
           if(spec.money)value=moneyInputToCents(value);
           else if(spec.type==='number')value=Number(value);
           if(spec.id==='attendees')value=value.split(',').map(item=>item.trim()).filter(Boolean).join(', ');
@@ -9040,7 +9129,7 @@
         if(toStage==='appointment'&&!evidence.meeting_url&&!evidence.physical_location)
           throw new Error(pt('Add a meeting URL or physical location.'));
         const nextActionType=String(form.get('next_action_type')||'').trim();
-        const nextActionAt=new Date(form.get('next_action_at')).toISOString();
+        const nextActionAt=sgLocalToIso(form.get('next_action_at'));
         // Stage evidence and the canonical next action are one fact, not two
         // independently editable dates.  Persist the canonical value in both
         // representations so the database can prove that they agree.
@@ -9099,7 +9188,7 @@
       ${CUI.field({id:'termsNextAction',label:'Payment / onboarding follow-up due',type:'datetime-local',required:true,attributes:'name="next_action_at"'})}
     </div>`,onSubmit:async(form,controls)=>{
       const terms={product_code:form.get('product_code'),plan_code:form.get('plan_code'),seats:Number(form.get('seats')),billing_cycle:form.get('billing_cycle'),accepted_value_cents:moneyInputToCents(form.get('accepted_amount')),currency:String(form.get('currency')).toUpperCase(),contract_status:'accepted',owner_email:form.get('owner_email'),onboarding_owner_consultant_id:form.get('onboarding_owner'),target_go_live:form.get('target_go_live')};
-      const nextActionAt=new Date(form.get('next_action_at')).toISOString();
+      const nextActionAt=sgLocalToIso(form.get('next_action_at'));
       controls.close();previewThenConfirm({title:'Confirm commercial agreement',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'closed_won',entry_gate:stageGateDefinitions.closed_won,commercial_terms:terms},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'closed_won',{entryEvidence:{explicit_confirmation:true},commercialTerms:terms,nextActionType:'payment_follow_up',nextActionAt},context);confirmControls.close()}});
     }});
   }
@@ -9204,7 +9293,7 @@
   function sectorBundleModal({profiles,context,profile=null}) {
     const {CUI,sb}=context;
     const initial=profile||profiles[0]||{},published=asObject(initial.published_version);
-    const defaultLabel=`${initial.label||sectorLabel(initial.sector_key)} · ${new Date().toLocaleDateString(platformIntlLocale(),{year:'numeric',month:'short',day:'2-digit'})}`;
+    const defaultLabel=`${initial.label||sectorLabel(initial.sector_key)} · ${new Date().toLocaleDateString(platformIntlLocale(),{year:'numeric',month:'short',day:'2-digit',timeZone:'Asia/Singapore'})}`;
     const overlay=modal({title:published.id?pt('Edit {sector} modules',{sector:initial.label||initial.sector_key}):'Create sector bundle version',submitLabel:'Review version',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'bundleSector',label:'Sector',control:'select',options:profiles.map(item=>({value:item.sector_key,label:item.label||item.sector_key,selected:item.sector_key===initial.sector_key})),attributes:'name="sector_key"'})}
       ${CUI.field({id:'bundleLabel',label:'Version label',required:true,value:defaultLabel,attributes:'name="label"'})}
@@ -9228,7 +9317,7 @@
     sectorSelect.onchange=()=>{
       const next=profiles.find(item=>item.sector_key===sectorSelect.value);
       pickerHost.innerHTML=modulePickerHtml(asArray(next?.published_version?.modules));
-      overlay.querySelector('#bundleLabel').value=`${next?.label||sectorLabel(sectorSelect.value)} · ${new Date().toLocaleDateString(platformIntlLocale(),{year:'numeric',month:'short',day:'2-digit'})}`;
+      overlay.querySelector('#bundleLabel').value=`${next?.label||sectorLabel(sectorSelect.value)} · ${new Date().toLocaleDateString(platformIntlLocale(),{year:'numeric',month:'short',day:'2-digit',timeZone:'Asia/Singapore'})}`;
       wirePicker();
     };
   }
@@ -9371,7 +9460,7 @@
         const payload={
           p_request:requestId,p_action:action,p_reason:form.get('reason'),
           p_disposition:disposition,
-          p_retention_until:disposition==='retained_legal'?new Date(retentionValue).toISOString():null,
+          p_retention_until:disposition==='retained_legal'?sgLocalToIso(retentionValue):null,
           p_evidence_reference:form.get('evidence_reference')
         };
         const attempt=privacyOperationAttempt(action,requestId,payload);
@@ -10271,7 +10360,7 @@
           p_outcome:outcome,
           p_notes:String(form.get('notes')||'').trim()||null,
           p_contact:null,
-          p_next_follow_up_at:followUp?new Date(followUp).toISOString():null
+          p_next_follow_up_at:followUp?sgLocalToIso(followUp):null
         };
         const fingerprint=JSON.stringify(request);
         if(fingerprint!==outreachFingerprint){
@@ -10517,12 +10606,16 @@
         rows:asArray(page.rows),
         offset:0,
         total:Number(page.total??asArray(page.rows).length),
-        hasMore:page.has_more===true,
+        /* F122: platform_explorer_search_v312 never returns a has_more key — it only ever
+           carries total/limit/offset/sort/mode plus rows|ids|markers. Derive it from the
+           true pre-LIMIT count the RPC already returns, the same way the CSV export
+           (prospectingFetchAllForExport, above) already walks pages via payload.total. */
+        hasMore:asArray(page.rows).length<Number(page.total??0),
         markers:[],clusters:[],mapped:0,capped:false,markerCap:0,
         selected:'',savedFilters:[],savedFilterId:'',
         bulkSelection:new Set(),
-        funnelFrom:new Date(today.getTime()-29*86400000).toISOString().slice(0,10),
-        funnelTo:today.toISOString().slice(0,10),
+        funnelFrom:singaporeIsoDate(new Date(today.getTime()-29*86400000)),
+        funnelTo:singaporeIsoDate(today),
         funnelLoaded:false,
         listError:null,mapError:null
       };
@@ -10670,7 +10763,11 @@
           state.rows=append?state.rows.concat(rows):rows;
           state.offset=offset;
           state.total=Number(payload.total??state.rows.length);
-          state.hasMore=payload.has_more===true;
+          /* F122: same fix as the initial-state seed above — the RPC has no has_more field,
+             so derive it from offset+rows.length against the true total it does return. Use
+             the just-fetched page's length, not the cumulative state.rows, or an appended
+             page would double-count what's already loaded. */
+          state.hasMore=offset+rows.length<state.total;
           state.listError=null;
         }catch(error){
           state.listError=error;
@@ -10689,8 +10786,11 @@
             p_limit:PROSPECTING_PAGE,p_offset:0}));
           state.markers=asArray(payload.markers);
           state.mapped=Number(payload.mapped??payload.total??state.markers.length);
-          state.capped=payload.capped===true;
-          state.markerCap=Number(payload.marker_cap||state.markers.length);
+          /* F122: the RPC never returns capped/marker_cap either — derive the note from the
+             same total-vs-drawn truth as the list's hasMore, instead of trusting fields the
+             server never sends (which pinned this false forever). */
+          state.capped=state.mapped>state.markers.length;
+          state.markerCap=state.markers.length;
           state.mapError=null;
         }catch(error){
           state.mapError=error;state.markers=[];
@@ -11030,6 +11130,138 @@
       await refreshMap();
     }catch(error){showError(main,error,CUI,'Prospecting')}
   }
+  // --------------------------------------------------------------------------
+  // Audit F130: platform_adjust_subscription_v622 (extend a trial / attach a
+  // note) and platform_set_workspace_pause_v622 (manual pause/unpause) have
+  // existed since v622 but had no console UI — the only way a super admin
+  // could unblock a dunning-locked workspace or grant more trial runway was a
+  // raw SQL statement. Both RPCs enforce app.is_super_admin(), a >=8-character
+  // reason, and (for the trial date) a 180-day cap server-side; the payload
+  // builders and the reason check below mirror those rules exactly so the
+  // console never sends a request the server has already decided to reject.
+  // Same technique as retentionHoldPayload/submitRetentionHold (v574): pure
+  // payload builders + a thin submit wrapper, so the exact RPC name and
+  // argument shape can be asserted without a DOM or a live Supabase client.
+  // --------------------------------------------------------------------------
+  const SUBSCRIPTION_REASON_MIN_LENGTH=8;
+  // This exact sentence is the server's own message
+  // (platform_adjust_subscription_v622 / platform_set_workspace_pause_v622,
+  // db/migrations/20260830_nestly_v622_sa_writes_become_rpcs.sql) — reused
+  // verbatim so the client-side check never drifts from what the RPC enforces.
+  const SUBSCRIPTION_REASON_TOO_SHORT_MESSAGE='a reason of at least 8 characters is required';
+  function subscriptionReasonError(reason) {
+    return String(reason||'').trim().length<SUBSCRIPTION_REASON_MIN_LENGTH
+      ?SUBSCRIPTION_REASON_TOO_SHORT_MESSAGE:null;
+  }
+  // Converts a <input type="date"> value (an SG-local calendar date with no
+  // time or zone) into the UTC instant of SG local midnight for that date —
+  // never `new Date(dateString)`, which would anchor to the browser's own
+  // timezone instead of Asia/Singapore.
+  function sgDateInputToIsoMidnight(value) {
+    if(!value)return null;
+    const date=new Date(`${value}T00:00:00+08:00`);
+    return Number.isNaN(date.getTime())?null:date.toISOString();
+  }
+  function subscriptionAdjustPayload(businessId,changes={}) {
+    return {
+      p_business:businessId,
+      p_reason:String(changes.reason||'').trim(),
+      p_trial_ends_at:changes.trialEndsAt||null,
+      p_note:changes.note||null
+    };
+  }
+  async function submitSubscriptionAdjust(sb,businessId,changes) {
+    return rpc(sb,'platform_adjust_subscription_v622',subscriptionAdjustPayload(businessId,changes));
+  }
+  function workspacePausePayload(businessId,paused,reason) {
+    return {p_business:businessId,p_paused:Boolean(paused),p_reason:String(reason||'').trim()};
+  }
+  async function submitWorkspacePause(sb,businessId,paused,reason) {
+    return rpc(sb,'platform_set_workspace_pause_v622',workspacePausePayload(businessId,paused,reason));
+  }
+  // The card must re-render from what the RPC actually wrote, not from the
+  // value the operator typed — the server can reject part of a request (e.g.
+  // silently keep the prior note when only the date is sent) so the merge
+  // below only ever takes fields the RPC's own response returned.
+  function applySubscriptionAdjustResult(detail,result) {
+    const data=asObject(result);
+    return {...detail,subscription:{...asObject(detail.subscription),trial_ends_at:data.trial_ends_at}};
+  }
+  function applyWorkspacePauseResult(detail,result) {
+    const data=asObject(result);
+    return {...detail,subscription:{...asObject(detail.subscription),workspace_paused:data.workspace_paused}};
+  }
+  function extendTrialModal(detail,context,onUpdated) {
+    const {CUI,sb}=context,business=asObject(detail.company),subscription=asObject(detail.subscription);
+    modal({
+      title:'Extend trial',submitLabel:'Extend trial',CUI,
+      body:`<p class="muted small">${escapeHtml(pt('Current trial end: {date}',{date:subscription.trial_ends_at?dateTime(subscription.trial_ends_at):pt('Not set')}))}</p>
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('New trial end date (Singapore time)'))}</span><input type="date" name="trialEndsAt" required></label>
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('Reason'))}</span><textarea name="reason" rows="3" required minlength="${SUBSCRIPTION_REASON_MIN_LENGTH}" maxlength="1000"></textarea></label>`,
+      onSubmit:async(form,controls)=>{
+        const reasonRaw=form.get('reason'),reasonError=subscriptionReasonError(reasonRaw);
+        if(reasonError){
+          controls.submit.disabled=false;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(reasonError)}</div>`;
+          return;
+        }
+        const trialEndsAt=sgDateInputToIsoMidnight(form.get('trialEndsAt'));
+        if(!trialEndsAt){
+          controls.submit.disabled=false;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(pt('Pick a valid trial-end date.'))}</div>`;
+          return;
+        }
+        let result;
+        try{
+          result=await submitSubscriptionAdjust(sb,business.id,{reason:reasonRaw,trialEndsAt});
+        }catch(error){
+          // The generic modal() catch cannot be relied on here: it always shows its own
+          // hardcoded fallback text, never the thrown error's message. F130 requires the
+          // RPC's own rejection (e.g. "trial runway beyond 180 days is not adjustable
+          // here") to reach the operator, so it goes through platformErrorMessage's
+          // named-code branches rather than reading the thrown error's message directly at
+          // the call site — translated for zh-CN/ms, and the exact server sentence for English.
+          controls.submit.disabled=false;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'That action could not be completed.'))}</div>`;
+          return;
+        }
+        controls.close();
+        CUI.announce(pt('Trial extended.'));
+        onUpdated(applySubscriptionAdjustResult(detail,result));
+      }
+    });
+  }
+  function workspacePauseModal(detail,context,onUpdated) {
+    const {CUI,sb}=context,business=asObject(detail.company),subscription=asObject(detail.subscription);
+    const nextPaused=!subscription.workspace_paused;
+    modal({
+      title:nextPaused?'Pause workspace':'Unpause workspace',
+      submitLabel:nextPaused?'Pause workspace':'Unpause workspace',CUI,
+      body:`<p class="muted small">${escapeHtml(nextPaused
+        ?pt('This blocks owner access to the workspace immediately, the same as the dunning cron would on day 14.')
+        :pt('This restores owner access to the workspace immediately.'))}</p>
+        <label class="cui-field"><span class="field-label">${escapeHtml(pt('Reason'))}</span><textarea name="reason" rows="3" required minlength="${SUBSCRIPTION_REASON_MIN_LENGTH}" maxlength="1000"></textarea></label>`,
+      onSubmit:async(form,controls)=>{
+        const reasonRaw=form.get('reason'),reasonError=subscriptionReasonError(reasonRaw);
+        if(reasonError){
+          controls.submit.disabled=false;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(reasonError)}</div>`;
+          return;
+        }
+        let result;
+        try{
+          result=await submitWorkspacePause(sb,business.id,nextPaused,reasonRaw);
+        }catch(error){
+          controls.submit.disabled=false;
+          controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'That action could not be completed.'))}</div>`;
+          return;
+        }
+        controls.close();
+        CUI.announce(nextPaused?pt('Workspace paused.'):pt('Workspace unpaused.'));
+        onUpdated(applyWorkspacePauseResult(detail,result));
+      }
+    });
+  }
   // Company detail drawer. Everything the operator needs before picking up the
   // phone, on one surface: who they are, what they are on, what they owe, how
   // they have paid before, and who to call.
@@ -11064,7 +11296,7 @@
       `${escapeHtml(companyPaymentProofLabel(payment))}${payment.manual_reference?`<br><span class="muted small">${escapeHtml(payment.manual_reference)}</span>`:''}`
     ]);
   }
-  function companyDetailHtml(detail,CUI) {
+  function companyDetailHtml(detail,CUI,{canManageSubscription=false}={}) {
     const company=asObject(detail.company),subscription=asObject(detail.subscription);
     const outstanding=asObject(detail.outstanding),consultant=asObject(detail.consultant);
     const contacts=asArray(detail.contacts),payments=asArray(detail.payments);
@@ -11108,7 +11340,10 @@
               ['Consultant',consultant.display_name?escapeHtml(consultant.display_name):null]
             ])
           : `<div class="wide">${localizedEmptyHtml('This firm has no subscription yet.')}</div>`
-      }</dl>`})}
+      }</dl>${canManageSubscription&&hasSubscription?`<div class="platform-actions" style="margin-top:14px">
+        <button type="button" class="btn ghost sm" data-extend-trial>${escapeHtml(pt('Extend trial'))}</button>
+        <button type="button" class="btn ghost sm" data-toggle-pause>${escapeHtml(subscription.workspace_paused?pt('Unpause workspace'):pt('Pause workspace'))}</button>
+      </div>`:''}`})}
       ${CUI.card({title:'Contacts',description:'Call or message the people who answer for this firm.',
         body:contacts.length
           ? CUI.table({caption:'Contacts',headers:['Name','Role','Email','Contact'],rows:companyDetailContactRows(contacts,CUI)})
@@ -11136,9 +11371,19 @@
     const close=()=>{if(closed)return;closed=true;closeOverlay(overlay,deactivate)};
     overlay.querySelector('.platform-drawer-close').onclick=close;
     deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    const canManageSubscription=context.access?.role==='super_admin';
+    const renderDetail=detail=>{
+      const host=overlay.querySelector('[data-detail]');
+      host.innerHTML=companyDetailHtml(detail,CUI,{canManageSubscription});
+      if(!canManageSubscription)return;
+      const extendButton=host.querySelector('[data-extend-trial]');
+      if(extendButton)extendButton.onclick=()=>extendTrialModal(detail,context,next=>renderDetail(next));
+      const pauseButton=host.querySelector('[data-toggle-pause]');
+      if(pauseButton)pauseButton.onclick=()=>workspacePauseModal(detail,context,next=>renderDetail(next));
+    };
     try{
       const detail=asObject(await rpc(sb,'platform_company_detail_v225',{p_business:id}));
-      overlay.querySelector('[data-detail]').innerHTML=companyDetailHtml(detail,CUI);
+      renderDetail(detail);
     }catch(error){
       overlay.querySelector('[data-detail]').innerHTML=error?.platformUpdateRequired
         ?systemUpdateRequired(CUI,'Company detail')
@@ -12201,7 +12446,7 @@
   }
 
   function manualInvoiceModal(row,context) {
-    const {CUI,sb}=context,today=new Date().toISOString().slice(0,10);
+    const {CUI,sb}=context,today=singaporeIsoDate();
     modal({title:pt('Manual invoice · {name}',{name:row.business_name}),submitLabel:'Create and queue invoice',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'v156ManualIssue',label:'Issue date',type:'date',value:today,required:true,attributes:'name="issue_date"'})}
       ${CUI.field({id:'v156ManualDue',label:'Due date',type:'date',value:today,required:true,attributes:'name="due_date"'})}
@@ -12214,7 +12459,7 @@
   }
 
   function manualPaymentModal(document,context) {
-    const {CUI,sb}=context,today=new Date().toISOString().slice(0,10);
+    const {CUI,sb}=context,today=singaporeIsoDate();
     modal({title:pt('Record payment · {number}',{number:document.document_number}),submitLabel:'Submit for independent verification',CUI,body:`<p class="muted small">${escapeHtml(pt('A different super admin must verify this evidence before a receipt is issued. Recording payment does not mark a Stripe invoice paid.'))}</p><div class="platform-form-grid">
       ${CUI.field({id:'v156PaymentReference',label:'Bank transfer reference',required:true,attributes:'name="payment_reference"'})}
       ${CUI.field({id:'v156PaymentDate',label:'Value date',type:'date',value:today,required:true,attributes:'name="value_date"'})}
@@ -12390,7 +12635,7 @@
   }
   function billingPriceModal(context) {
     const {CUI,sb}=context;
-    const defaultEffective=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+    const defaultEffective=sgLocalInputValue(new Date());
     modal({title:'New Stripe price version',submitLabel:'Preview price',CUI,body:`<div class="platform-form-grid">
       ${CUI.field({id:'billingPriceCadence',label:'Cadence',control:'select',options:['annual','monthly'].map(value=>({value,label:platformStatus(value)})),attributes:'name="cadence"'})}
       <input type="hidden" name="tax_behavior" value="exclusive"><div class="cui-field"><span class="field-label">${escapeHtml(pt('GST treatment'))}</span><p class="muted small">${escapeHtml(pt('GST not charged · Stripe Price tax behavior must be exclusive · automatic tax remains disabled.'))}</p></div>
@@ -12409,7 +12654,7 @@
         p_provider_base_price_id:form.get('base_price_id'),
         p_provider_capacity_price_id:form.get('capacity_price_id'),
         p_tax_behavior:form.get('tax_behavior'),
-        p_effective_from:new Date(form.get('effective_from')).toISOString()
+        p_effective_from:sgLocalToIso(form.get('effective_from'))
       };
       const preview=await rpc(sb,'preview_billing_plan_catalog_v125',proposal);
       const reason=form.get('reason');
@@ -12631,7 +12876,7 @@
       await rpc(sb,'attribute_consultant_v78',{
         p_consultant:form.get('consultant'),p_prospect:recordType==='prospect'?recordId:null,
         p_business:recordType==='business'?recordId:null,
-        p_onboarding_started_at:new Date(form.get('onboarding_started_at')).toISOString(),
+        p_onboarding_started_at:sgLocalToIso(form.get('onboarding_started_at')),
         p_reason:form.get('reason')
       });
       controls.close();await renderCommission(context);CUI.announce('Consultant attribution recorded.');
@@ -12647,7 +12892,7 @@
       ${CUI.field({id:'policyRenewal',label:'Renewal rate (%)',type:'number',required:true,attributes:'name="renewal_percent" min="0" max="100" step="0.01" inputmode="decimal"'})}
       <div class="wide">${CUI.field({id:'policyReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{
-      const values={role:form.get('role'),first_year_bps:percentInputToBasisPoints(form.get('first_year_percent')),anniversary_bonus_bps:percentInputToBasisPoints(form.get('anniversary_bonus_percent')),renewal_bps:percentInputToBasisPoints(form.get('renewal_percent')),effective_from:new Date(form.get('effective_from')).toISOString(),reason:form.get('reason')};
+      const values={role:form.get('role'),first_year_bps:percentInputToBasisPoints(form.get('first_year_percent')),anniversary_bonus_bps:percentInputToBasisPoints(form.get('anniversary_bonus_percent')),renewal_bps:percentInputToBasisPoints(form.get('renewal_percent')),effective_from:sgLocalToIso(form.get('effective_from')),reason:form.get('reason')};
       const preview={role:values.role,year_one_rate:`${basisPointsToPercentInput(values.first_year_bps)}%`,service_anniversary_bonus:`${basisPointsToPercentInput(values.anniversary_bonus_bps)}%`,renewal_rate:`${basisPointsToPercentInput(values.renewal_bps)}%`,effective_from:values.effective_from,reason:values.reason,calculation_basis:'Subscription amount before GST'};
       controls.close();previewThenConfirm({title:'Confirm commission policy',preview,CUI,onConfirm:async(confirmControls)=>{
         await rpc(sb,'create_consultant_commission_policy_v78',{p_tier:values.role,p_first_year_bps:values.first_year_bps,p_anniversary_bonus_bps:values.anniversary_bonus_bps,p_renewal_bps:values.renewal_bps,p_effective_from:values.effective_from,p_reason:values.reason});
@@ -12680,12 +12925,12 @@
   function recordPayoutModal(lineId,amount,context) {
     const {CUI,sb}=context;
     modal({title:'Record consultant payment',submitLabel:'Record payment',CUI,body:`${CUI.field({id:'paidAmount',label:'Paid amount (SGD)',type:'number',value:centsToMoneyInput(amount),required:true,attributes:'name="amount" min="0.01" step="0.01" inputmode="decimal"'})}${CUI.field({id:'paidReference',label:'Payment reference',required:true,attributes:'name="reference"'})}${CUI.field({id:'paidAt',label:'Paid at',type:'datetime-local',required:true,attributes:'name="paid_at"'})}`,
-      onSubmit:async(form,controls)=>{await rpc(sb,'record_consultant_payout_v78',{p_line:lineId,p_amount_cents:moneyInputToCents(form.get('amount')),p_reference:form.get('reference'),p_paid_at:new Date(form.get('paid_at')).toISOString()});controls.close();await renderCommission(context);CUI.announce('Consultant payment recorded.')}});
+      onSubmit:async(form,controls)=>{await rpc(sb,'record_consultant_payout_v78',{p_line:lineId,p_amount_cents:moneyInputToCents(form.get('amount')),p_reference:form.get('reference'),p_paid_at:sgLocalToIso(form.get('paid_at'))});controls.close();await renderCommission(context);CUI.announce('Consultant payment recorded.')}});
   }
   function forfeitCommissionModal(consultantId,context) {
     const {CUI,sb}=context;
     modal({title:'Forfeit open commission',submitLabel:'Preview forfeiture',CUI,body:`${CUI.field({id:'departedAt',label:'Departed at',type:'datetime-local',required:true,attributes:'name="departed_at"'})}${CUI.field({id:'forfeitReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" rows="3"'})}`,
-      onSubmit:async(form,controls)=>{const preview={consultant_id:consultantId,departed_at:new Date(form.get('departed_at')).toISOString(),reason:form.get('reason')};controls.close();previewThenConfirm({title:'Confirm commission forfeiture',preview,CUI,onConfirm:async confirmControls=>{await rpc(sb,'forfeit_consultant_open_commission_v78',{p_consultant:consultantId,p_departed_at:preview.departed_at,p_reason:preview.reason});confirmControls.close();await renderCommission(context);CUI.announce('Open commission forfeited.')}})}});
+      onSubmit:async(form,controls)=>{const preview={consultant_id:consultantId,departed_at:sgLocalToIso(form.get('departed_at')),reason:form.get('reason')};controls.close();previewThenConfirm({title:'Confirm commission forfeiture',preview,CUI,onConfirm:async confirmControls=>{await rpc(sb,'forfeit_consultant_open_commission_v78',{p_consultant:consultantId,p_departed_at:preview.departed_at,p_reason:preview.reason});confirmControls.close();await renderCommission(context);CUI.announce('Open commission forfeited.')}})}});
   }
 
   // --------------------------------------------------------------------------
@@ -13706,7 +13951,7 @@
           p_primary_contact:{full_name:String(form.get('contact_name')||'').trim()||'Business contact',
             phone:String(form.get('phone')||'').trim()||null,email:String(form.get('email')||'').trim()||null},
           p_source:{source_system:'platform_console',source_type:'manual'},
-          p_next_action_at:new Date(form.get('next_action_at')).toISOString()};
+          p_next_action_at:sgLocalToIso(form.get('next_action_at'))};
         const fingerprint=JSON.stringify(args);
         if(createAttemptFingerprint&&createAttemptFingerprint!==fingerprint)createAttemptKey=idempotencyKey();
         createAttemptFingerprint=fingerprint;
@@ -13728,7 +13973,7 @@
       onSubmit:async(form,controls)=>{
         await rpc(sb,'platform_create_my_prospect_task_v89',{
           p_prospect:prospectId,p_title:form.get('title'),
-          p_due_at:new Date(form.get('due_at')).toISOString()
+          p_due_at:sgLocalToIso(form.get('due_at'))
         });
         controls.close();await onSaved?.();CUI.announce('Task created.');
       }
@@ -14345,7 +14590,7 @@
         await rpc(sb,'platform_create_work_item_v511',{
           p_work_type:form.get('work_type'),p_title:form.get('title'),p_detail:form.get('detail')||null,
           p_business:business,p_prospect:prospect,
-          p_due_at:new Date(form.get('due_at')).toISOString(),
+          p_due_at:sgLocalToIso(form.get('due_at')),
           p_owner:owner,p_queue:owner?null:'operations_intake',p_priority:0,
           p_idempotency_key:idempotencyKey()
         });
@@ -14371,7 +14616,7 @@
       try{
         await rpc(sb,'platform_transition_work_item_v511',{
           p_work_item:item.id,p_expected_version:Number(item.version),p_to_state:'waiting',
-          p_reason:form.get('reason'),p_waiting_until:new Date(form.get('waiting_until')).toISOString(),
+          p_reason:form.get('reason'),p_waiting_until:sgLocalToIso(form.get('waiting_until')),
           p_due_at:null,p_close_outcome:null,p_idempotency_key:idempotencyKey()
         });
       }catch(error){
@@ -14792,6 +15037,8 @@
     commissionRosterRows,commissionAccrualRows,automationRunRows,
     subscriptionDurationHtml,subscriptionOperationsTable,
     companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
+    subscriptionReasonError,sgDateInputToIsoMidnight,subscriptionAdjustPayload,submitSubscriptionAdjust,
+    workspacePausePayload,submitWorkspacePause,applySubscriptionAdjustResult,applyWorkspacePauseResult,
     renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
     renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
     renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
@@ -14808,7 +15055,8 @@
     whatsappCapabilityLabel,whatsappCapabilityLimitText,whatsappCapabilitiesPanelHtml,
     whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant,
     retentionHoldReasonText,retentionHoldDetailHtml,retentionHoldRowHtml,retentionHoldsPanelHtml,
-    retentionHoldsSectionHtml,retentionHoldPayload,submitRetentionHold
+    retentionHoldsSectionHtml,retentionHoldPayload,submitRetentionHold,
+    singaporeIsoDate,sgLocalInputValue,sgLocalToIso,isoInput,nextActionBucket
   });
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -14830,6 +15078,8 @@
       commissionRosterRows,commissionAccrualRows,automationRunRows,
       subscriptionDurationHtml,subscriptionOperationsTable,
       companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
+      subscriptionReasonError,sgDateInputToIsoMidnight,subscriptionAdjustPayload,submitSubscriptionAdjust,
+      workspacePausePayload,submitWorkspacePause,applySubscriptionAdjustResult,applyWorkspacePauseResult,
       renderMarketingUsage,marketingCampaignRows,marketingUsageRows,marketingNotTrackedLabel,marketingMonthRange,
       renderPartnerObligations,partnerRegistryRows,partnerDisclosureRows,partnerSuppressionRows,
       renderDemoRequests,demoRequestQueueHtml,platformWindowState,platformWindowHtml,
@@ -14846,7 +15096,8 @@
     whatsappCapabilityLabel,whatsappCapabilityLimitText,whatsappCapabilitiesPanelHtml,
     whatsappCapabilitiesSectionHtml,whatsappCapabilityGrantPayload,submitWhatsappCapabilityGrant,
     retentionHoldReasonText,retentionHoldDetailHtml,retentionHoldRowHtml,retentionHoldsPanelHtml,
-    retentionHoldsSectionHtml,retentionHoldPayload,submitRetentionHold
+    retentionHoldsSectionHtml,retentionHoldPayload,submitRetentionHold,
+    singaporeIsoDate,sgLocalInputValue,sgLocalToIso,isoInput,nextActionBucket
     };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

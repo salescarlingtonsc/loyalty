@@ -1194,10 +1194,6 @@ const sgt=iso=>{if(!iso) return null;const d=new Date(new Date(iso).getTime()+8*
    UTC ISO string by anchoring it explicitly to Singapore time (+08:00) instead of relying on
    the browser's ambient system timezone — avoids the local-vs-UTC mismatch bug. */
 const sgIso=v=>v?new Date(v+':00+08:00').toISOString():null;
-/* The earliest day the field will accept. Today in SGT, not tomorrow: the writer refuses only a
-   date that is already PAST, and today still has hours left in it — an owner running a one-day
-   promotion must be able to say so. */
-const growPointsEndDateMinV472=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 const sgDateInputValue=(date=new Date())=>{
   const values={};
   new Intl.DateTimeFormat('en-CA',{
@@ -2237,6 +2233,11 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'Your friend gets {reward} too.',
     referralGiftFallback:'a free gift',
     referralTerms:'After their first spend, you get {reward}.',
+    /* nestly_v683 (audit F025): the card asks a customer to forward a code, so it must say who
+       the code can actually pay for. The engine attributes a referral only to somebody new to
+       this business; before v683 it paid two existing regulars for referring each other. */
+    referralNewOnlyV683:'Only a friend who is new to this business can be referred.',
+    joinReferralNotNewV683:'Referral codes are for friends who are new to this business.',
     referralPoints:'{count} points',
     referralOnePoint:'1 point',
     referralStamps:'{count} stamps',
@@ -2446,6 +2447,8 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'您的朋友也可获得{reward}。',
     referralGiftFallback:'一份免费礼物',
     referralTerms:'他们首次消费后，您可获得{reward}。',
+    referralNewOnlyV683:'只有初次光顾本商家的朋友才能被推荐。',
+    joinReferralNotNewV683:'推荐码仅适用于初次光顾本商家的朋友。',
     referralPoints:'{count}积分',
     referralOnePoint:'1积分',
     referralStamps:'{count}个章',
@@ -2680,6 +2683,8 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'Rakan anda juga dapat {reward}.',
     referralGiftFallback:'hadiah percuma',
     referralTerms:'Selepas belanja pertama mereka, anda dapat {reward}.',
+    referralNewOnlyV683:'Hanya rakan yang baharu di perniagaan ini boleh dirujuk.',
+    joinReferralNotNewV683:'Kod rujukan adalah untuk rakan yang baharu di perniagaan ini.',
     referralPoints:'{count} mata',
     referralOnePoint:'1 mata',
     referralStamps:'{count} cop',
@@ -2914,6 +2919,8 @@ const CUSTOMER_COPY=Object.freeze({
     referralFriendAlso:'உங்கள் நண்பருக்கும் {reward} கிடைக்கும்.',
     referralGiftFallback:'ஒரு இலவசப் பரிசு',
     referralTerms:'அவர்களின் முதல் செலவுக்குப் பிறகு, உங்களுக்கு {reward} கிடைக்கும்.',
+    referralNewOnlyV683:'இந்த வணிகத்திற்குப் புதியவரான நண்பரை மட்டுமே பரிந்துரைக்க முடியும்.',
+    joinReferralNotNewV683:'பரிந்துரை குறியீடுகள் இந்த வணிகத்திற்குப் புதிய நண்பர்களுக்கானவை.',
     referralPoints:'{count} புள்ளிகள்',
     referralOnePoint:'1 புள்ளி',
     referralStamps:'{count} முத்திரைகள்',

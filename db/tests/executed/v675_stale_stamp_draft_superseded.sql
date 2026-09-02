@@ -316,4 +316,19 @@ $v675$;
 reset role;
 select k, v from _r order by k;
 
+/* The report above is printed first so a human sees WHICH assertion failed; this block then
+   makes the failure fatal. It matters because scripts/db-tests/run.mjs judges a file purely by
+   psql's exit code — a suite that only records FAIL rows is reported green. */
+do $v675_gate$
+declare
+  v_bad integer;
+begin
+  select count(*) into v_bad from _r where v not like 'PASS%';
+  if v_bad > 0 then
+    raise exception 'SUITE FAILED: % assertion(s) — %', v_bad,
+      (select string_agg(k, ', ') from _r where v not like 'PASS%');
+  end if;
+end
+$v675_gate$;
+
 rollback;

@@ -81,8 +81,10 @@ test('Luna C42: future DOB is rejected at both request and persistence boundarie
      customer forms still check it before they submit, which is where the message the customer
      reads comes from. The two server boundaries above remain the authority. */
   assert.match(app, /\$\{birthDatePickerHtmlV663\('customerDob',''\)\}/);
-  assert.match(app, /new Date\(`\$\{birthDate\}T00:00:00`\)>new Date\(\)/);
-  assert.match(app, /new Date\(`\$\{signupBirthDate\}T00:00:00`\)>new Date\(\)/);
+  /* Owner ruling (Singapore time only): the browser boundary compares the picker's date
+     string directly against Singapore's own current date, not the browser's local clock. */
+  assert.match(app, /birthDate>sgDateInputValue\(\)/);
+  assert.match(app, /signupBirthDate>sgDateInputValue\(\)/);
 });
 
 test('Luna C42: registration replay is exact, changed payload conflicts, and every dependent write is after the idempotency reservation', () => {

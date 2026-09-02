@@ -237,7 +237,15 @@ async function applyShareReferralV576(slug){
     p_business_slug:slug,p_code:code,
     p_idempotency_key:writeAttemptKey('nestly.customer.shareRefApply',key)
   }).then(result=>result,thrown=>({data:null,error:thrown}));
-  if(error){attemptedShareReferralV576.delete(key);return}
+  /* nestly_v683: 22023 is the server refusing this customer outright — today, "referral codes are
+     for new customers of this business". That answer will never change for this pair, so the stored
+     code is retired rather than retried on every wallet render for the next 30 days. Any other
+     error (offline, 42501 "not a member yet") stays retryable, exactly as before. */
+  if(error){
+    if(String(error?.code||'')==='22023')clearShareReferralV576();
+    else attemptedShareReferralV576.delete(key);
+    return;
+  }
   const reason=String(data?.reason||'');
   if(data?.applied===true||['self_referral','already_referred','unknown_code','referrals_off'].includes(reason)){
     clearShareReferralV576();
@@ -591,6 +599,10 @@ function showGrowthOfferQr({intent,businessName,offerLabel,onClose=()=>{}}={}){
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   overlay.querySelector('#growthOfferQrDone').focus();
 }
+/* Current hour of the day in Singapore wall-clock time (0-23), for anything that greets or
+   gates on time-of-day (e.g. the customer home "Good morning/afternoon/evening" banner) —
+   never the browser's own local hour. */
+const sgHour=(date=new Date())=>Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(date));
 /* ---------- customer wallet ---------- */
 /* V468 HELD, deliberately not shipped: the owner bracketed Agreements and wrote "default = tick
    the box". Pre-ticking these two reverses an explicit earlier ruling of theirs (v263/v265,
@@ -1184,7 +1196,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       if(!signupFullName){
         errorHost.innerHTML='<div class="err">Enter your full name.</div>';return;
       }
-      if(!signupBirthDate||new Date(`${signupBirthDate}T00:00:00`)>new Date()){
+      if(!signupBirthDate||signupBirthDate>sgDateInputValue()){
         errorHost.innerHTML='<div class="err">Enter a date of birth that is not in the future.</div>';return;
       }
       if(!['female','male'].includes(signupGender)){
@@ -1404,7 +1416,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   }
   register.onclick=async()=>{
     const fullName=fullNameInput.value.trim(),birthDate=birthDateInput.value,gender=genderInput.value,language=languageInput.value;
-    if(!fullName||!birthDate||new Date(`${birthDate}T00:00:00`)>new Date()){
+    if(!fullName||!birthDate||birthDate>sgDateInputValue()){
       profileError.innerHTML='<div class="err">Enter your name and a date of birth that is not in the future.</div>';return;
     }
     if(!['female','male'].includes(gender)){
@@ -3271,10 +3283,7 @@ async function renderCustomerProfile(requestedView){
   const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
   const passkeyAdd=$('customerPasskeyAdd');
   const passkeySupported=customerPasskeySupported({management:true});
-  const formatPasskeyDate=value=>{
-    const date=value?new Date(value):null;
-    return date&&!Number.isNaN(date.getTime())?new Intl.DateTimeFormat(undefined,{dateStyle:'medium'}).format(date):'Date unavailable';
-  };
+  const formatPasskeyDate=value=>walletDate(value)||'Date unavailable';
   const loadPasskeys=async()=>{
     if(!passkeySupported){
       passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
@@ -3494,11 +3503,15 @@ async function renderCustomerQrJoin(){
   const referralCodeV571=pendingCustomerJoinReferralV571;pendingCustomerJoinReferralV571='';
   pendingCustomerJoinSlugV587='';
   if(referralCodeV571&&slug){
-    const {data:referralResult}=await sb.rpc('customer_apply_referral_code_v612',{
+    const {data:referralResult,error:referralErrorV683}=await sb.rpc('customer_apply_referral_code_v612',{
       p_business_slug:slug,p_code:referralCodeV571,
       p_idempotency_key:writeAttemptKey('nestly.customer.joinReferral',`${slug}:${referralCodeV571}`)
-    }).then(result=>result,()=>({data:null}));
+    }).then(result=>result,thrown=>({data:null,error:thrown}));
     if(!isCurrent())return;
+    /* nestly_v683: a refused code used to be silent here — the RPC threw, data came back null and
+       the customer, who had typed something, was told nothing at all. A referral is now refused
+       outright (22023) when they are not new to this business, and that is worth one plain line. */
+    if(String(referralErrorV683?.code||'')==='22023')toast(ct('joinReferralNotNewV683'));
     /* Applied or not, the join stands. The customer is told which happened rather than left to
        assume a code was honoured — and nestly_v612 tells them WHICH promise they are holding:
        paid now (no spend requirement), or paid the moment their spending reaches the floor. */
@@ -4766,6 +4779,7 @@ function customerReferralCardMarkupV300(card,business){
       <h2 id="customerReferralTitle">${esc(ct('referralHeading',{business:business?.name||ct('localBusiness')}))}</h2>
       <p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(floor?ct('referralTermsWithFloor',{reward,floor}):ct('referralTerms',{reward}))}</p>
       ${friendReward?`<p class="muted small"${isGiftV421?' data-merchant-content':''}>${esc(ct('referralFriendAlso',{reward:friendReward}))}</p>`:''}
+      <p class="muted small">${esc(ct('referralNewOnlyV683'))}</p>
     </div></div>
     ${code?`<div class="customer-referral-code-row">
       <span class="customer-referral-code" aria-label="${esc(ct('yourReferralCode'))}">${esc(code)}</span>
@@ -6173,7 +6187,7 @@ function customerGreetingNameV343(profile=null){
   return raw.split(/\s+/)[0]||raw;
 }
 function customerDaypartV343(now=new Date()){
-  const hour=now.getHours();
+  const hour=sgHour(now);
   if(hour<12)return 'morning';
   if(hour<18)return 'afternoon';
   return 'evening';
