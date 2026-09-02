@@ -3640,6 +3640,12 @@
       "version": "20260904110000",
       "name": "nestly_v743_synthetic_scanner",
       "sourcePath": "db/migrations/20260902_nestly_v743_synthetic_scanner.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260904120000",
+      "name": "nestly_v744_scanner_blind_spots",
+      "sourcePath": "db/migrations/20260902_nestly_v744_scanner_blind_spots.sql"
     }
   ]
 }

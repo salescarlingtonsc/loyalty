@@ -3645,6 +3645,12 @@
       "path": "db/migrations/20260902_nestly_v743_synthetic_scanner.sql",
       "semanticVersion": "v743",
       "proposedDeployVersion": "20260904110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v744_scanner_blind_spots.sql",
+      "semanticVersion": "v744",
+      "proposedDeployVersion": "20260904120000"
     }
   ]
 }

@@ -13,13 +13,13 @@
 
 | | |
 |---|---|
-| HEAD SHA | `d30df22ff9a3e218404d6b466f4bcfa65c45a59b` |
+| HEAD SHA | `8799bbad65bed2b46debde45ae4795fd4d965674` |
 | Branch | `claude/ci-proof-100` |
-| Commit date | 2026-09-02T23:14:19+08:00 |
-| Record generated | 2026-09-02T15:31:46.400Z |
+| Commit date | 2026-09-03T00:54:51+08:00 |
+| Record generated | 2026-09-02T17:00:09.299Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
-| Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 59 |
+| Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 60 |
 
 ## Migration ledger — canonical manifest checksums
 
@@ -29,12 +29,12 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 
 | Manifest | `.sha256` file contents | Independently recomputed SHA-256 | Match |
 |---|---|---|---|
-| `db/migrations/migration-order.manifest.json` | `f9cc7ace4473e9fafc6fbc773138891c3aa7085a14a727611dca74598750abd7  migration-order.manifest.json` | `f9cc7ace4473e9fafc6fbc773138891c3aa7085a14a727611dca74598750abd7` | MATCH |
-| `supabase/canonical-migration-order.manifest.json` | `92177df908db4dcc5a436a875d32fc61e155226183bdf14bfd5ea141e9cd066f  canonical-migration-order.manifest.json` | `92177df908db4dcc5a436a875d32fc61e155226183bdf14bfd5ea141e9cd066f` | MATCH |
+| `db/migrations/migration-order.manifest.json` | `242608bbd25a4e8e9f05e1aa5fce99a097f146e9f6c30223abba2f616cffcbe7  migration-order.manifest.json` | `242608bbd25a4e8e9f05e1aa5fce99a097f146e9f6c30223abba2f616cffcbe7` | MATCH |
+| `supabase/canonical-migration-order.manifest.json` | `40a3c67d86023e7043a53d8ae1a9419fb5415662181b32fc97b055d06e69a9ce  canonical-migration-order.manifest.json` | `40a3c67d86023e7043a53d8ae1a9419fb5415662181b32fc97b055d06e69a9ce` | MATCH |
 
 ## Migrations dated 2026-09-02
 
-**59** files, filename order:
+**60** files, filename order:
 
 * `db/migrations/20260902_nestly_v672_statistical_authority.sql`
 * `db/migrations/20260902_nestly_v673_retention_funnels.sql`
@@ -95,4 +95,5 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 * `db/migrations/20260902_nestly_v741_roster_read_audit.sql`
 * `db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql`
 * `db/migrations/20260902_nestly_v743_synthetic_scanner.sql`
+* `db/migrations/20260902_nestly_v744_scanner_blind_spots.sql`
 
