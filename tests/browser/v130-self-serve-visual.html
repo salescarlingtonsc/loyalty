@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ea0b539f6c18d167ac4b255ba00dc298af76ba65f12345004b5ef22c00a0c0d6"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="33b229556caacd1cbcbb411aa89eb56447e5e1f348ea2ed6820ff213df6870ef"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6375,7 +6375,18 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
       errorHost.innerHTML='<div class="err">Billing details could not load. Try again.</div>';
       return;
     }
-    const cadence='annual';
+    /* W3B/F096: this button used to hardcode annual, so a MONTHLY business whose payment lapsed
+       was sent to a Stripe Checkout for the annual price with no cadence control on the screen to
+       correct it. The business's own provider-confirmed cadence lives in billing.terms.cadence
+       (billing_subscription_terms_v124.cadence, which a lapse never clears), and it is already
+       being fetched here for `capacity`. Same resolution as loadBillingConfig()'s
+       `initialCadence`: use the stored cadence when the payload still offers a plan for it, and
+       fall back to annual only when there is no prior cadence to honour. */
+    const plansV620=Array.isArray(billing.plans)?billing.plans:[];
+    const byCadenceV620=Object.fromEntries(plansV620.map(plan=>[plan.cadence,plan]));
+    const storedCadenceV620=String(billing.terms?.cadence||'');
+    const cadence=(plansV620.length?byCadenceV620[storedCadenceV620]:storedCadenceV620==='annual'||storedCadenceV620==='monthly')
+      ?storedCadenceV620:'annual';
     const capacity=Math.max(1000,Math.ceil((Number(billing.current_customer_count)||0)/1000)*1000,Number(billing.terms?.customer_capacity)||0);
     const billingAttemptSlot=`nestly:v124:billing-command:${businessId}`;
     const readBillingAttempt=()=>{try{return JSON.parse(sessionStorage.getItem(billingAttemptSlot)||'null')}catch{return null}};

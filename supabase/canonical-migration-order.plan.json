@@ -3376,6 +3376,18 @@
       "version": "20260902140000",
       "name": "nestly_v686_service_delete_owner_only_rpc",
       "sourcePath": "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902150000",
+      "name": "nestly_v687_staff_self_profile",
+      "sourcePath": "db/migrations/20260902_nestly_v687_staff_self_profile.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260902160000",
+      "name": "nestly_v688_support_mark_read",
+      "sourcePath": "db/migrations/20260902_nestly_v688_support_mark_read.sql"
     }
   ]
 }

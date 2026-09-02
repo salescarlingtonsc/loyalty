@@ -3381,6 +3381,18 @@
       "path": "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql",
       "semanticVersion": "v686",
       "proposedDeployVersion": "20260902140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v687_staff_self_profile.sql",
+      "semanticVersion": "v687",
+      "proposedDeployVersion": "20260902150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v688_support_mark_read.sql",
+      "semanticVersion": "v688",
+      "proposedDeployVersion": "20260902160000"
     }
   ]
 }
