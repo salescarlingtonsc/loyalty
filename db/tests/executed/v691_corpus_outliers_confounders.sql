@@ -4,16 +4,32 @@
 -- before it).
 --
 -- PART A -- get_ci_category_mix_v1 / get_ci_service_intelligence_v1: 'distribution' + 'skew_note'.
---   ONE business ("biz_a"), one branch, two level-2 categories:
+--   ONE business ("biz_a"), one branch, THREE level-2 categories:
 --     WHALE   4 customers x $1000 (100000c... no, cents) + 1 customer x $6000 -> a single whale.
---     FLAT    4 customers x $1000, no whale at all.
+--     FLAT    5 customers x $1000, no whale at all (reseeded 2026-09-02, nestly_v717: raised
+--             from 4 to 5 customers so it CLEARS v717's category-mix floor gate,
+--             app.subgroup_evidence_v1's default floor of 5 on customer_count -- at n=4 this
+--             category legitimately went distribution=null/skew_note=null under v717 and this
+--             fixture's old n=4 numbers stopped being reachable through category_mix; see SCARCE
+--             below for the below-floor case those n=4 rows used to cover).
+--     SCARCE  4 customers x $1000, no whale -- the OLD flat shape, kept verbatim as its own
+--             category so the below-floor path (v717) still has live coverage: distribution and
+--             skew_note must be null, and a new 'evidence' block must read
+--             {"n":4,"floor":5,"status":"insufficient"}.
 --   HAND-COMPUTED (cents): WHALE n=5, total=10000, mean=2000.00, median=1000.00 (5-point
 --   percentile_cont(0.5) lands on the 3rd sorted value), top1_share_bps=6000 (6000/10000),
 --   skew_material=true (60% >= 30%, and mean/median=2.0 >= 1.5 -- both trip it),
---   mean_excl_top1=(10000-6000)/4=1000.00. FLAT n=4, total=4000, top1_share_bps=2500 (<3000),
---   mean=median=1000.00 (mean/median=1.0 <1.5) -> skew_material=false, skew_note absent (null).
+--   mean_excl_top1=(10000-6000)/4=1000.00. FLAT n=5, total=5000, all five equal at 1000, so
+--   mean=median=1000.00, top1_share_bps=2000 (1000/5000, <3000), mean/median=1.0 (<1.5) ->
+--   skew_material=false, skew_note absent (null), mean_excl_top1=(5000-1000)/4=1000.00;
+--   evidence={"n":5,"floor":5,"status":"ok"} (n=5 clears the floor, which is >=, not >). SCARCE
+--   n=4 < floor 5 -> evidence.status='insufficient', distribution and skew_note both null; the
+--   underlying counts (revenue_cents/line_count/customer_count) are unaffected by the gate.
 --   Each customer buys exactly one service mapped to one category, so
---   get_ci_service_intelligence_v1's per-BUYER distribution reproduces the identical numbers.
+--   get_ci_service_intelligence_v1's per-BUYER distribution reproduces the identical WHALE/FLAT
+--   numbers (that reader has no v717 floor gate -- it is not one of the seven readers v717
+--   touches -- so its FLAT numbers are unaffected by the category_mix-only gate: still
+--   skew_material=false, skew_note null, at n=5 same as n=4 would have shown).
 --   MUTATION CHECK: the whale's single sale is folded down to $1000 (now 5 x $1000, flat); the
 --   check is re-run and skew_material must flip to false and top1_share_bps to 2000 -- proving
 --   the number is recomputed, not memoised from the first call.
@@ -145,13 +161,16 @@ declare
   br uuid := gen_random_uuid();
   node_whale text;
   node_flat text;
+  node_scarce text;
   svc_whale uuid := gen_random_uuid();
   svc_flat uuid := gen_random_uuid();
+  svc_scarce uuid := gen_random_uuid();
   d_to date := current_date;
   d_from date := current_date - 10;
   g jsonb;
   cat_whale jsonb;
   cat_flat jsonb;
+  cat_scarce jsonb;
   svc_whale_row jsonb;
   svc_flat_row jsonb;
   biz2 uuid := gen_random_uuid();
@@ -162,8 +181,11 @@ begin
    where n.version_no = 1 and n.level = 2 order by n.node_key limit 1;
   select n.node_key into node_flat from public.taxonomy_nodes n
    where n.version_no = 1 and n.level = 2 and n.node_key <> node_whale order by n.node_key limit 1;
-  if node_whale is null or node_flat is null then
-    insert into _fail values ('A0','taxonomy v1 has fewer than two level-2 nodes; fixture cannot run');
+  select n.node_key into node_scarce from public.taxonomy_nodes n
+   where n.version_no = 1 and n.level = 2 and n.node_key not in (node_whale, node_flat)
+   order by n.node_key limit 1;
+  if node_whale is null or node_flat is null or node_scarce is null then
+    insert into _fail values ('A0','taxonomy v1 has fewer than three level-2 nodes; fixture cannot run');
     return;
   end if;
 
@@ -173,11 +195,13 @@ begin
     (br, biz, 'ZZ v691 outlier branch', true, true);
   insert into public.services (id, business_id, name, price_cents, duration_min) values
     (svc_whale, biz, 'ZZ v691 whale service', 6000, 30),
-    (svc_flat,  biz, 'ZZ v691 flat service',  1000, 30);
+    (svc_flat,  biz, 'ZZ v691 flat service',  1000, 30),
+    (svc_scarce, biz, 'ZZ v691 scarce service', 1000, 30);
   insert into public.service_canonical_map
     (business_id, service_id, node_key, version_no, method) values
     (biz, svc_whale, node_whale, 1, 'owner_chosen'),
-    (biz, svc_flat,  node_flat,  1, 'owner_chosen');
+    (biz, svc_flat,  node_flat,  1, 'owner_chosen'),
+    (biz, svc_scarce, node_scarce, 1, 'owner_chosen');
 
   -- WHALE: 4 x 1000 + 1 x 6000.
   with wc as (
@@ -199,10 +223,11 @@ begin
   insert into public.sale_items (business_id, sale_id, item_type, ref_id, qty, unit_cents, line_cents)
   select biz, ws.id, 'service', svc_whale, 1, ws.amount_cents, ws.amount_cents from wsales ws;
 
-  -- FLAT: 4 x 1000, no whale.
+  -- FLAT: 5 x 1000, no whale (nestly_v717: raised from 4 to 5 so this category clears the
+  -- category-mix floor gate; see SCARCE below for the below-floor exhibit the old n=4 covered).
   with fc as (
     insert into public.clients (business_id, full_name)
-    select biz, 'ZZ v691 flat cust ' || gs from generate_series(1,4) gs
+    select biz, 'ZZ v691 flat cust ' || gs from generate_series(1,5) gs
     returning id
   ),
   fsales as (
@@ -216,12 +241,31 @@ begin
   insert into public.sale_items (business_id, sale_id, item_type, ref_id, qty, unit_cents, line_cents)
   select biz, fs.id, 'service', svc_flat, 1, fs.amount_cents, fs.amount_cents from fsales fs;
 
+  -- SCARCE: 4 x 1000, no whale -- the OLD flat shape (nestly_v717 below-floor exhibit: keeps
+  -- live coverage of app.subgroup_evidence_v1's insufficient path on get_ci_category_mix_v1).
+  with sc as (
+    insert into public.clients (business_id, full_name)
+    select biz, 'ZZ v691 scarce cust ' || gs from generate_series(1,4) gs
+    returning id
+  ),
+  ssales as (
+    insert into public.sales (business_id, branch_id, client_id, kind, amount_cents,
+                               occurred_at, counts_as_revenue, counts_as_visit)
+    select biz, br, sc.id, 'service', 1000,
+           (d_from::timestamp + time '10:00') at time zone 'Asia/Singapore', true, true
+      from sc
+    returning id, amount_cents
+  )
+  insert into public.sale_items (business_id, sale_id, item_type, ref_id, qty, unit_cents, line_cents)
+  select biz, ss.id, 'service', svc_scarce, 1, ss.amount_cents, ss.amount_cents from ssales ss;
+
   -- ---------------------------------------------------------------------------
   -- A1 -- category_mix distribution, exact.
   -- ---------------------------------------------------------------------------
   g := public.get_ci_category_mix_v1(biz, d_from, d_to);
-  select c into cat_whale from jsonb_array_elements(g->'categories') c where c->>'node_key' = node_whale;
-  select c into cat_flat  from jsonb_array_elements(g->'categories') c where c->>'node_key' = node_flat;
+  select c into cat_whale  from jsonb_array_elements(g->'categories') c where c->>'node_key' = node_whale;
+  select c into cat_flat   from jsonb_array_elements(g->'categories') c where c->>'node_key' = node_flat;
+  select c into cat_scarce from jsonb_array_elements(g->'categories') c where c->>'node_key' = node_scarce;
 
   if cat_whale is null then
     insert into _fail values ('A1','whale category missing from categories array');
@@ -252,14 +296,62 @@ begin
   if cat_flat is null then
     insert into _fail values ('A2','flat category missing from categories array');
   else
-    if (cat_flat->'distribution'->>'n')::int <> 4 then
-      insert into _fail values ('A2-n', format('flat distribution.n = %s, expected 4', cat_flat->'distribution'->>'n'));
+    -- n=5 (raised from 4, nestly_v717): clears app.subgroup_evidence_v1's default floor of 5,
+    -- so distribution/skew_note/evidence must all be the real, non-gated numbers.
+    if (cat_flat->'distribution'->>'n')::int <> 5 then
+      insert into _fail values ('A2-n', format('flat distribution.n = %s, expected 5', cat_flat->'distribution'->>'n'));
+    end if;
+    if (cat_flat->'distribution'->>'mean')::numeric <> 1000.00 then
+      insert into _fail values ('A2-mean', format('flat mean = %s, expected 1000.00', cat_flat->'distribution'->>'mean'));
+    end if;
+    if (cat_flat->'distribution'->>'median')::numeric <> 1000.00 then
+      insert into _fail values ('A2-median', format('flat median = %s, expected 1000.00', cat_flat->'distribution'->>'median'));
+    end if;
+    if (cat_flat->'distribution'->>'top1_share_bps')::int <> 2000 then
+      insert into _fail values ('A2-top1', format('flat top1_share_bps = %s, expected 2000', cat_flat->'distribution'->>'top1_share_bps'));
     end if;
     if (cat_flat->'distribution'->>'skew_material')::boolean is distinct from false then
       insert into _fail values ('A2-skew', 'flat skew_material expected false');
     end if;
+    if (cat_flat->'distribution'->>'mean_excl_top1')::numeric <> 1000.00 then
+      insert into _fail values ('A2-mxt1', format('flat mean_excl_top1 = %s, expected 1000.00', cat_flat->'distribution'->>'mean_excl_top1'));
+    end if;
     if cat_flat->>'skew_note' is not null then
       insert into _fail values ('A2-note', format('flat skew_note expected null/absent, got %s', cat_flat->>'skew_note'));
+    end if;
+    if cat_flat->'evidence' is distinct from '{"n":5,"floor":5,"status":"ok"}'::jsonb then
+      insert into _fail values ('A2-evidence', format('flat evidence = %s, expected {"n":5,"floor":5,"status":"ok"}', cat_flat->'evidence'));
+    end if;
+  end if;
+
+  -- ---------------------------------------------------------------------------
+  -- A2b -- nestly_v717 below-floor exhibit: SCARCE (n=4 < floor 5) must come back with
+  -- distribution and skew_note both null, and a new 'evidence' block reading insufficient.
+  -- Counts (revenue_cents/line_count/customer_count) are NOT part of the gate and must survive.
+  -- (-> not ->> is deliberate for the null checks below: jsonb_build_object('distribution',
+  -- null, ...) stores a JSON null, not a SQL NULL, and `col -> 'key' is not null` is always true
+  -- against a JSON null value; ->> correctly folds a JSON null to SQL NULL.)
+  -- ---------------------------------------------------------------------------
+  if cat_scarce is null then
+    insert into _fail values ('A2b','scarce category missing from categories array');
+  else
+    if (cat_scarce->>'distribution') is not null then
+      insert into _fail values ('A2b-distribution', format('expected null, got %s', cat_scarce->>'distribution'));
+    end if;
+    if cat_scarce->>'skew_note' is not null then
+      insert into _fail values ('A2b-note', format('expected null, got %s', cat_scarce->>'skew_note'));
+    end if;
+    if cat_scarce->'evidence' is distinct from '{"n":4,"floor":5,"status":"insufficient"}'::jsonb then
+      insert into _fail values ('A2b-evidence', format('scarce evidence = %s, expected {"n":4,"floor":5,"status":"insufficient"}', cat_scarce->'evidence'));
+    end if;
+    if (cat_scarce->>'revenue_cents')::bigint <> 4000 then
+      insert into _fail values ('A2b-revenue', format('revenue_cents=%s, expected 4000', cat_scarce->>'revenue_cents'));
+    end if;
+    if (cat_scarce->>'line_count')::int <> 4 then
+      insert into _fail values ('A2b-line_count', format('line_count=%s, expected 4', cat_scarce->>'line_count'));
+    end if;
+    if (cat_scarce->>'customer_count')::int <> 4 then
+      insert into _fail values ('A2b-customer_count', format('customer_count=%s, expected 4', cat_scarce->>'customer_count'));
     end if;
   end if;
 
