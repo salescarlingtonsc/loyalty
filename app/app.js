@@ -49929,18 +49929,86 @@ function ciOpportunityReversalHtmlV685(text){
   if(!text)return '';
   return `<p class="muted small ci-opportunity-reversal"><strong>What would prove this wrong</strong> ${esc(text)}</p>`;
 }
+/* nestly_v716 (checks 22/23/25/66/74/77-consumer) — renders the extended payload's v705+v712
+   additions: materiality, margin guard, business-impact translation (affected customers/revenue/
+   margin/capacity/retention risk), category concentration, and the now-always->=2-kind
+   alternatives array. Every string below is either a fixed, ≤3-word label keyed off a server-
+   supplied status/class, or a figure read verbatim off the payload — nothing is computed here. */
+function ciOpportunityMaterialityChipHtmlV716(materialityClass){
+  const labels={material:'Material',minor:'Minor',unquantified:'Unquantified'};
+  const label=labels[materialityClass];
+  if(!label)return '';
+  return `<span class="pill ci-opportunity-materiality-chip" data-materiality-class="${esc(materialityClass)}">${esc(label)}</span>`;
+}
+function ciOpportunityMarginHtmlV716(marginGuard,currency){
+  const g=marginGuard&&typeof marginGuard==='object'?marginGuard:null;
+  if(!g||!g.status)return '';
+  if(g.status==='ok')
+    return `<div><span>Margin</span><strong>Margin ok (${esc(scopeMoneyV685(g.margin_cents,currency))})</strong></div>`;
+  if(g.status==='blocked')
+    return `<div><span>Margin</span><strong>Blocked: ${esc(g.reason||'')}</strong></div>`;
+  return `<div><span>Margin</span><strong>Enter costs in Settings</strong></div>`;
+}
+function ciOpportunityCapacityHtmlV716(capacity){
+  const c=capacity&&typeof capacity==='object'?capacity:null;
+  if(!c||!c.status||c.status==='not_applicable')return '';
+  if(c.status==='ok'){
+    const pctText=(c.pct===null||c.pct===undefined)?'':` (${esc(String(c.pct))}%)`;
+    return `<div><span>Capacity</span><strong>${Number(c.booked_minutes)||0} of ${Number(c.available_minutes)||0} min booked${pctText}</strong></div>`;
+  }
+  return `<div><span>Capacity</span><strong>${esc(c.reason||'Not available.')}</strong></div>`;
+}
+function ciOpportunityRetentionRiskHtmlV716(retentionRisk){
+  const r=retentionRisk&&typeof retentionRisk==='object'?retentionRisk:null;
+  if(!r||!r.status||r.status==='not_applicable')return '';
+  if(r.status==='ok')
+    return `<div><span>Retention risk</span><strong>${Number(r.at_risk_n)||0} at risk</strong></div>`;
+  return `<div><span>Retention risk</span><strong>${esc(r.reason||'Not available.')}</strong></div>`;
+}
+function ciOpportunityConcentrationHtmlV716(concentration){
+  const c=concentration&&typeof concentration==='object'?concentration:null;
+  if(!c||!c.skew_note)return '';
+  return `<p class="muted small ci-opportunity-concentration">${esc(c.skew_note)}</p>`;
+}
+const CI_ALT_KIND_LABELS_V716={
+  reminder_only:'Reminder only', incentive:'Incentive', operational_change:'Operational change',
+  no_action:'No action', rebooking:'Rebooking', service_recovery:'Service recovery'
+};
+function ciOpportunityAltKindLabelV716(kind){
+  return CI_ALT_KIND_LABELS_V716[kind]||(kind?String(kind):'Option');
+}
+function ciOpportunityAlternativesListHtmlV716(alternatives){
+  const list=Array.isArray(alternatives)?alternatives:[];
+  if(!list.length)return '';
+  const primaryIdx=list.findIndex(a=>a&&a.primary===true);
+  const ordered=primaryIdx>-1?[list[primaryIdx],...list.slice(0,primaryIdx),...list.slice(primaryIdx+1)]:list;
+  return `<div class="ci-opportunity-alternatives">
+    <span class="muted small">Options</span>
+    <ul class="ci-opportunity-alternatives-list">${ordered.map(a=>{
+      const label=ciOpportunityAltKindLabelV716(a&&a.kind);
+      const what=a&&a.what?esc(a.what):'';
+      return `<li${a&&a.primary===true?' data-primary="true"':''}><strong>${esc(label)}</strong>${what?`: ${what}`:''}</li>`;
+    }).join('')}</ul>
+  </div>`;
+}
 function ciOpportunityCardHtmlV685(item,currency){
-  const action=item?.action||{},confidence=item?.confidence||{};
+  const action=item?.action||{},confidence=item?.confidence||{},impact=item?.impact||{};
   const scenarioHtml=ciOpportunityScenarioHtmlV685(item?.impact,currency);
   const expectedValueHtml=ciOpportunityExpectedValueHtmlV685(item?.impact,currency);
   const incentiveHtml=ciOpportunityIncentiveHtmlV685(item?.incentive);
   const alternativeHtml=ciOpportunityPrimaryAlternativeHtmlV685(item?.alternatives);
   const whyNowHtml=ciOpportunityWhyNowHtmlV685(item?.why_now);
   const reversalHtml=ciOpportunityReversalHtmlV685(item?.reversal_condition);
+  const materialityChipHtml=ciOpportunityMaterialityChipHtmlV716(item?.materiality_class);
+  const marginHtml=ciOpportunityMarginHtmlV716(item?.margin_guard,currency);
+  const capacityHtml=ciOpportunityCapacityHtmlV716(impact.capacity);
+  const retentionRiskHtml=ciOpportunityRetentionRiskHtmlV716(impact.retention_risk);
+  const concentrationHtml=ciOpportunityConcentrationHtmlV716(item?.concentration);
+  const alternativesListHtml=ciOpportunityAlternativesListHtmlV716(item?.alternatives);
   return `<article class="revenue-opportunity" data-rank-class="${esc(item?.rank_class||'')}">
     <div class="revenue-opportunity-rank"><span>${Number(item?.rank)||0}</span></div>
     <div class="revenue-opportunity-main">
-      <p class="revenue-opportunity-finding">${esc(item?.pattern||'No pattern described.')}</p>
+      <p class="revenue-opportunity-finding">${esc(item?.pattern||'No pattern described.')}${materialityChipHtml}</p>
       <div class="revenue-opportunity-facts">
         <div><span>Impact</span><strong>${ciOpportunityImpactV685(item?.impact,currency)}</strong></div>
         <div><span>Evidence class</span><strong class="pill">${esc(item?.evidence_class||'Unknown')}</strong></div>
@@ -49949,7 +50017,11 @@ function ciOpportunityCardHtmlV685(item,currency){
         ${expectedValueHtml}
         ${incentiveHtml}
         ${alternativeHtml}
+        ${marginHtml}
+        ${capacityHtml}
+        ${retentionRiskHtml}
       </div>
+      ${concentrationHtml}
       <dl class="ci-opportunity-action">
         <div><dt>Who</dt><dd>${esc(action.who||'Not specified')}</dd></div>
         <div><dt>What</dt><dd>${esc(action.what||'Not specified')}</dd></div>
@@ -49958,6 +50030,7 @@ function ciOpportunityCardHtmlV685(item,currency){
       </dl>
       ${whyNowHtml}
       ${reversalHtml}
+      ${alternativesListHtml}
       <p class="muted small ci-opportunity-limitation">${esc(item?.limitation||'')}</p>
     </div>
   </article>`;

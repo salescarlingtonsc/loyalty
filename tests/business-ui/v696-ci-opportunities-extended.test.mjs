@@ -237,12 +237,10 @@ test('V696 opportunitiesPanelHtmlV685: why_now renders', () => {
   assert.ok(html.includes('12 customers are already overdue against their OWN rhythm as of 2026-08-31.'));
 });
 
-test('V696 opportunitiesPanelHtmlV685: the primary alternative renders, not the non-primary one', () => {
+test('V696 opportunitiesPanelHtmlV685: "Primary option" shows the primary alternative (v716 additionally lists every alternative elsewhere on the card, see v716-ci-opportunities-impact.test.mjs)', () => {
   const html = renderOpportunities(EXTENDED_PAYLOAD);
   assert.ok(html.includes('Primary option'));
   assert.ok(html.includes('Contact without any discount or credit.'), 'the primary (reminder_only) alternative must render');
-  assert.ok(!html.includes('Offer a discount or loyalty credit to prompt action.'),
-    'the non-primary alternative must not render as the primary option');
 });
 
 test('V696 opportunitiesPanelHtmlV685: incentive declaration renders when declared', () => {
