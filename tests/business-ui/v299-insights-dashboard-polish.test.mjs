@@ -85,8 +85,17 @@ test('V405 the KPI drill-down can actually see its own definitions map',()=>{
      shadow it. */
   assert.match(app,/const def=options\.def\|\|DASHBOARD_METRIC_DEFINITIONS_V405\[key\]\|\|\{\};/,
     'the dialog still falls back to the module-scope map');
-  assert.match(app,/const def=DASHBOARD_METRIC_DEFINITIONS_V405\[metric\.key\];/,
+  /* V694: the tile painter's body (the `const def=...` line) moved out of the inline
+     metrics.map(...) callback into its own top-level dashboardMetricTileHtmlV405 (so the
+     "Peekaa recorded revenue" label fix could be independently vm-executed — see
+     tests/business-ui/v694-recorded-revenue-tiles.test.mjs). The call site now hands that
+     function the SAME module-scope lookup as an argument instead of destructuring it inline;
+     the scope guarantee this test protects — the tile painter reads the module-scope map, not
+     a stale function-scoped one — is unchanged. */
+  assert.match(app,/metrics\.map\(metric=>dashboardMetricTileHtmlV405\(metric,DASHBOARD_METRIC_DEFINITIONS_V405\[metric\.key\],previousRange\)\)/,
     'the tile painter reads the same module-scope map');
+  assert.match(app,/^function dashboardMetricTileHtmlV405\(metric,def,previousRange\)\{/m,
+    'the tile painter must be a top-level function, not re-nested inside dashboard()');
   // Nothing may reference the old function-scoped name outside a comment.
   const live=app.split('\n').filter(line=>line.includes('dashboardMetricDefinitionsV141')
     && !/^\s*(\*|\/\*|\/\/)/.test(line));

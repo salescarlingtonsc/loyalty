@@ -21647,7 +21647,7 @@ const DASHBOARD_INACTIVE_PAGE_V406=100;
    so it belongs at module scope where BOTH readers can actually see it. */
 const DASHBOARD_METRIC_DEFINITIONS_V405={
   visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals. Each qualifying sale counts once — several sales by one customer in a day count separately, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v548: visits are sale records, not distinct physical visits — say so */
-  revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
+  revenue:{label:'Peekaa recorded revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
   new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',action:'View customers',buttonLabel:'See new customers',scope:'business'},
   /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
      only, so the number an owner tapped and the list they landed on could never agree. The
@@ -21813,6 +21813,17 @@ function dashboardMetricWasLineV387(metric,previousRange){
      measured against the same window, so printing the dates three times would be three readings
      of one fact, which is what V200 deleted a whole headline for. */
   return `<span class="metric-was-v387">was ${esc(metric.was)}</span>`;
+}
+/* V694 (check 2, owner-flagged refute of "UI always says Peekaa-recorded revenue unless a
+   reconciled source proves completeness"): the dashboard revenue KPI tile printed a bare
+   `Revenue` label — no different from a claim of total business revenue, which Peekaa cannot
+   prove (see app/revenue-truth.js's own recordedHelper). Pulled out of the inline
+   `kpis.innerHTML=metrics.map(...)` template into its own top-level function so it is
+   independently testable, the same posture as dailyMetricTileV468 below and the renderers
+   tests/business-ui/v679-ci-analyst-panels.test.mjs already executes. Behaviour is otherwise
+   unchanged: same classes, same aria-label helper, same delta chip and "was" line. */
+function dashboardMetricTileHtmlV405(metric,def,previousRange){
+  return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`;
 }
 function dashboardDeltaLegendV385(metrics,previousRange){
   /* V387: `Number(null)` is 0, which IS finite — so the original guard treated "no comparison"
@@ -22338,7 +22349,7 @@ async function dashboard(){
     /* V399: the grid is sized from the tiles that actually rendered — see --kpi-count in the
        stylesheet. Set before innerHTML so the first paint is already the right shape. */
     kpis.style.setProperty('--kpi-count',String(Math.max(1,metrics.length)));
-    kpis.innerHTML=metrics.map(metric=>{const def=DASHBOARD_METRIC_DEFINITIONS_V405[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
+    kpis.innerHTML=metrics.map(metric=>dashboardMetricTileHtmlV405(metric,DASHBOARD_METRIC_DEFINITIONS_V405[metric.key],previousRange)).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
@@ -51720,7 +51731,7 @@ async function staffMembersPage(){
    `giftcards` deliberately carries no route: V303 removed gift cards from the business UI and
    the router refuses #/giftcards, so a footer link there would be a door to a refusal. */
 const DAILY_REPORT_METRIC_DEFINITIONS_V468={
-  revenue:{label:'Revenue',action:'View records',buttonLabel:'View sales',
+  revenue:{label:'Peekaa recorded revenue',action:'View records',buttonLabel:'View sales',
     definition:'Every sale record for this day, in this branch scope, whose immutable sale policy counts it as revenue. Reversal records are listed with their negative amount.'},
   visits:{label:'Visits',action:'View records',buttonLabel:'View sales',
     definition:'Original visit sales recorded on this day that have not been reversed, including reversals recorded on a later day. Reversal records are never counted as visits.'},
