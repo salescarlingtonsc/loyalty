@@ -1824,11 +1824,6 @@ function businessWorkspaceSwitchHtml(staffWorkspaces=[],currentBusinessSlug='',h
       ${otherWorkspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${CUI.icon('branch',{size:16})}<span data-merchant-content>${esc(workspace.business_name||workspace.business_slug)}</span></a>`).join('')}
     </div></details>`;
 }
-function staffInviteLinkV151(code){
-  const url=new URL(NestlyNativeBridge.publicUrl('/business'));
-  url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
-  return url.toString();
-}
 /* V169: when the main setup form is on the same screen it has already collected the owner
    name, business name, sector and UEN. Re-asking for all of it underneath the Stripe form
    made owners fill the same details twice and left them unsure which path they were on.

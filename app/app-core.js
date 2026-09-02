@@ -6069,10 +6069,34 @@ function rememberBusinessStaffInviteV151(code){
   if(normalized)sessionStorage.setItem(STAFF_INVITE_STORAGE_V151,normalized);
   return normalized;
 }
-function staffInviteOAuthRedirectV158(code){
+function staffInviteLinkV151(code){
   const url=new URL(NestlyNativeBridge.publicUrl('/business'));
   url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
   return url.toString();
+}
+/* nestly_v681 (audit F108): the invite Google door returns through the SAME consumer as the
+   owner door — consumeBusinessOAuthRedirect() bails on its first line unless oauth=business is
+   present, and the client is built with detectSessionInUrl:false, so without this parameter the
+   returned tokens were never turned into a session and the invitee landed back signed out.
+   staff_invite is kept for the address-bar case, but it is NOT what carries the code across the
+   redirect: the consumer strips the query string, so businessStaffInviteCodeV151()'s
+   sessionStorage fallback (written by rememberBusinessStaffInviteV151 before we leave) is the
+   authority on the way back. */
+function staffInviteOAuthRedirectV158(code){
+  const url=new URL(NestlyNativeBridge.publicUrl('/business'));
+  url.searchParams.set('oauth','business');
+  url.searchParams.set('staff_invite',normalizeCompanyInviteCodeV151(code)||String(code||'').trim());
+  return url.toString();
+}
+/* The invite code survives the round trip in sessionStorage, which is per-origin. Starting the
+   redirect from a non-canonical origin would therefore return the person to a canonical origin
+   that has never seen their code. Send them to the canonical invite link first — that one still
+   carries the code in the URL — and let them press Google again there. */
+function ensureCanonicalStaffInviteOriginV681(code){
+  const canonical=new URL(NestlyNativeBridge.publicUrl('/business'));
+  if(location.origin===canonical.origin)return true;
+  location.replace(staffInviteLinkV151(code));
+  return false;
 }
 function staffInvitePreviewMarkupV151(preview){
   if(!preview)return '<p class="muted small">Enter a company invite code to check the business and role.</p>';
@@ -6186,6 +6210,11 @@ function renderBusinessDemoRequest(){
 function renderStaffInviteAuthV151(mode='in',initialCode=''){
   destroyMountedTurnstiles();
   const saved=rememberBusinessStaffInviteV151(initialCode)||businessStaffInviteCodeV151();
+  /* nestly_v681 (audit F108): a Google round trip that fails admission lands back HERE, not on
+     renderAuth, so the notice consumeBusinessOAuthRedirect leaves behind had no reader and the
+     failure looked like nothing happened. Read and clear it in the same breath. */
+  const staffInviteOAuthNoticeV681=sessionStorage.getItem('nestly-business-oauth-notice')||'';
+  if(staffInviteOAuthNoticeV681)sessionStorage.removeItem('nestly-business-oauth-notice');
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="staffInviteAuthTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="staffInviteAuthTitle" style="margin:14px 0 2px">Join an existing business</h1>
@@ -6196,9 +6225,9 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     <label for="staffInviteEmailV151">Email</label><input id="staffInviteEmailV151" type="email" autocomplete="email" placeholder="you@business.com">
     <label for="staffInvitePasswordV151">Password</label>${passwordControlHtml('staffInvitePasswordV151',{autocomplete:mode==='in'?'current-password':'new-password',placeholder:'••••••••'})}
     ${mode==='up'?`<label for="staffInvitePasswordConfirmV151">Confirm password</label>${passwordControlHtml('staffInvitePasswordConfirmV151',{autocomplete:'new-password',placeholder:'••••••••'})}`:''}
-    <div id="staffInviteAuthError"></div>
+    <div id="staffInviteAuthError">${staffInviteOAuthNoticeV681?`<div class="err">${esc(staffInviteOAuthNoticeV681)}</div>`:''}</div>
     ${businessGoogleButtonHtml('staffInviteGoogleV158')}
-    <p class="muted small" style="margin-top:8px">Google works for invited staff too. Peekaa still validates the company invite and role on the server before access is created.</p>
+    <p class="muted small" style="margin-top:8px">Google works for invited staff too. Continuing with Google accepts the Terms and Privacy Policy below. Peekaa still validates the company invite and role on the server before access is created.</p>
     <button class="btn" id="staffInviteAuthGo" style="width:100%;margin-top:18px">${mode==='in'?'Sign in and continue':'Create account and continue'}</button>
     <button class="btn ghost" id="staffInviteBack" style="width:100%;margin-top:10px">Back</button>
     ${legalLinks()}</section></main>`;
@@ -6214,14 +6243,24 @@ function renderStaffInviteAuthV151(mode='in',initialCode=''){
     /* nestly_v588: allow a code that is already awaiting_approval through — the server
        replays correctly now, so refusing it here just blocks a genuine returning user. */
     if(preview?.status&&preview.status!=='valid'&&preview.status!=='awaiting_approval'){$('staffInviteAuthError').innerHTML='<div class="err">Use a valid active company invite before continuing with Google.</div>';return}
+    if(!ensureCanonicalStaffInviteOriginV681(code))return;
     $('staffInviteGoogleV158').disabled=true;
+    /* nestly_v681 (audit F108): record the attempt the consumer demands, exactly as
+       startBusinessGoogleAuth does. The intent is 'signup', not 'signin': an invited teammate
+       is a first-time account, and complete_business_google_oauth_v138's 'signin' branch
+       requires an already-active staff row (or an approved platform triage), so a genuine
+       invitee is refused 42501 there. 'signup' admits any consented Google identity, new or
+       returning, and records the acceptance the button copy above states — no new server
+       intent is needed. */
     try{
+      if(!await beginBusinessGoogleOAuthAttempt({intent:'signup',legalAccepted:true}))throw new Error('Google sign-in could not be started.');
       const {error}=await sb.auth.signInWithOAuth({
         provider:'google',
-        options:{redirectTo:staffInviteOAuthRedirectV158(code),queryParams:{prompt:'select_account'}}
+        options:{redirectTo:staffInviteOAuthRedirectV158(code),scopes:'openid email profile',queryParams:{prompt:'select_account'}}
       });
       if(error)throw error;
     }catch(error){
+      sessionStorage.removeItem('nestly-business-google-oauth');
       $('staffInviteAuthError').innerHTML=`<div class="err">${esc(error.message||'Google sign-in could not be started.')}</div>`;
       $('staffInviteGoogleV158').disabled=false;
     }
