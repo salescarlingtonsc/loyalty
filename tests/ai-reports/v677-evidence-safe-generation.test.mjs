@@ -999,30 +999,34 @@ const INDEX_TS = readFileSync(
 test('v677 wiring: the worker validates before it can store a report as succeeded', () => {
   // Deno resolves relative modules by their exact specifier — no extension inference.
   assert.ok(INDEX_TS.includes("from './validate.mjs'"),
-    'index.ts must import the validator with the exact ./validate.mjs specifier Deno requires');
+    'index.ts must import assembleUserPrompt/resolveConfidenceClass with the exact ./validate.mjs specifier Deno requires');
+  // (check 81/90 enforcement requirement, v713): the pass/fail decision moved into
+  // decideNarrativeOutcome (./enforce.mjs) — see tests/ai-reports/
+  // v713-causal-unconditional-fraction-and-enforcement.test.mjs for the full wiring proof and the
+  // executing tests that exercise decideNarrativeOutcome itself. This test keeps its original,
+  // narrower job: the sequencing guard that cannot be reached from Node at all.
+  assert.ok(INDEX_TS.includes("from './enforce.mjs'"),
+    'index.ts must import the decision function with the exact ./enforce.mjs specifier Deno requires');
 
-  const validatedAt = INDEX_TS.indexOf('validateNarrative(narrative');
+  const decidedAt = INDEX_TS.indexOf('decideNarrativeOutcome(narrative');
   const succeededAt = INDEX_TS.indexOf("p_status: 'succeeded'");
-  assert.ok(validatedAt > -1, 'index.ts must call validateNarrative on the returned narrative');
+  assert.ok(decidedAt > -1, 'index.ts must call decideNarrativeOutcome on the returned narrative');
   assert.ok(succeededAt > -1, "index.ts must still have the succeeded completion path");
-  assert.ok(validatedAt < succeededAt,
-    'validation must run BEFORE the succeeded RPC, or a bad narrative is stored as a good report');
+  assert.ok(decidedAt < succeededAt,
+    'the decision must run BEFORE the succeeded RPC, or a bad narrative is stored as a good report');
 
   // The narrative handed to the validator must be the one that is stored, and the pack handed to
   // the validator must be the one the prompt serialised.
   assert.ok(INDEX_TS.includes('p_narrative_md: narrative'),
     'the stored narrative must be the same string that was validated');
-  assert.ok(INDEX_TS.includes('validateNarrative(narrative, report.evidence ?? {})'),
-    'the validator must read the same evidence object userPrompt() serialises for the model');
-
-  assert.ok(INDEX_TS.includes("`narrative_validation: ${listed}${extra}`"),
-    'a validation failure must carry the machine-readable narrative_validation prefix');
+  assert.ok(INDEX_TS.includes('decideNarrativeOutcome(narrative, report.evidence ?? {})'),
+    'the decision must read the same evidence object userPrompt() serialises for the model');
 });
 
 test('v684 wiring: index.ts assembles the prompt and resolves confidence_class through validate.mjs', () => {
   // check 81: the model input must come from the SAME assembler the test suite executes above,
   // not a re-implementation living only in index.ts.
-  assert.ok(INDEX_TS.includes('assembleUserPrompt, resolveConfidenceClass, validateNarrative'),
+  assert.ok(INDEX_TS.includes('assembleUserPrompt, resolveConfidenceClass'),
     'index.ts must import assembleUserPrompt and resolveConfidenceClass from ./validate.mjs');
   assert.ok(INDEX_TS.includes('content: assembleUserPrompt(report)'),
     'the model call must use assembleUserPrompt, not an inline re-implementation');
@@ -1030,13 +1034,13 @@ test('v684 wiring: index.ts assembles the prompt and resolves confidence_class t
     'index.ts must not keep its own copy of userPrompt/periodLabel once validate.mjs owns them');
 
   // check 86: confidence_class must be resolved once and folded into the SAME evidence object
-  // that assembleUserPrompt and validateNarrative both read, before either runs.
+  // that assembleUserPrompt and decideNarrativeOutcome both read, before either runs.
   const confidenceAt = INDEX_TS.indexOf('resolveConfidenceClass(report.evidence)');
   const promptAt = INDEX_TS.indexOf('assembleUserPrompt(report)');
-  const validateAt = INDEX_TS.indexOf('validateNarrative(narrative, report.evidence ?? {})');
+  const decidedAt = INDEX_TS.indexOf('decideNarrativeOutcome(narrative, report.evidence ?? {})');
   assert.ok(confidenceAt > -1, 'index.ts must call resolveConfidenceClass on report.evidence');
-  assert.ok(confidenceAt < promptAt && confidenceAt < validateAt,
-    'confidence_class must be resolved BEFORE both the model call and validation, or one of them ' +
+  assert.ok(confidenceAt < promptAt && confidenceAt < decidedAt,
+    'confidence_class must be resolved BEFORE both the model call and the decision, or one of them ' +
     'sees a pack without it');
 
   // check 90: a PROMPT_VERSION the golden gate can record, and the governance note above it.

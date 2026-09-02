@@ -173,6 +173,15 @@ function readPack(pack) {
   const strings = [];             // every string leaf, verbatim
   const dateStrings = new Set();  // leaves that are ISO dates / timestamps
   const objects = [];             // every plain object, for the sibling-ratio derivation
+  // Check 88 (false-positive round 4): every OWN PROPERTY KEY the pack carries anywhere, lower-
+  // cased. A field like `insights.retention.returning_customers` never puts the WORD "returning"
+  // into packInfo.strings (it is a key, not a value), yet a report sentence that opens
+  // "Returning customers..." is plainly talking about that field, not naming an invented person.
+  // Kept separate from `strings` (values) rather than folded in, because a key is grounding a
+  // WORD the pack's own schema uses, not a fact the pack asserts - the two are different kinds of
+  // evidence and this file keeps them in different sets for the same reason it already keeps
+  // idNumbers separate from numbers (see ID_KEY_RE above).
+  const keys = new Set();
   const seen = new Set();
 
   const addNumber = (n) => {
@@ -201,7 +210,10 @@ function readPack(pack) {
       return;
     }
     objects.push(node);
-    for (const value of Object.values(node)) walk(value);
+    for (const [key, value] of Object.entries(node)) {
+      keys.add(String(key).toLowerCase());
+      walk(value);
+    }
   };
 
   walk(pack);
@@ -238,7 +250,10 @@ function readPack(pack) {
     }
   }
 
-  return { numbers: [...numbers], strings, dateStrings: [...dateStrings], objects, idNumbers: [...idNumbers] };
+  return {
+    numbers: [...numbers], strings, dateStrings: [...dateStrings], objects,
+    idNumbers: [...idNumbers], keys,
+  };
 }
 
 // round(100*a/b, 0|1) for numeric leaves a, b of the SAME object — the one derivation the model is
@@ -435,6 +450,111 @@ function scanNumberWords(text) {
   return found;
 }
 
+/* --------------------------------------- V1 extension: fractions, ordinals, dozen, "X in Y" */
+
+// Check 83: "a third of customers", "half of revenue", "three quarters", "a dozen regulars" and
+// "one in five" each state a QUANTITY in words that scanNumberWords above cannot parse at all — it
+// only understands CARDINAL number words (one, two, three...) chained together, never a fraction
+// name ("third", "quarter"), the "dozen" idiom, or an "X in Y" ratio. A model that fabricates a
+// figure this way used to defeat V1 completely, the same gap scanNumberWords itself closed for
+// spelled-out cardinals ("seventeen"). Each phrase is converted to the SAME token shape
+// scanNumberWords produces (value/decimals/isPercent) so groundNumbers grounds it exactly like any
+// other number claim:
+//   - a fraction ("a third", "half", "three quarters") states a PERCENT (100 * numerator /
+//     denominator — "a third" -> 33.3, "half" -> 50, "three quarters" -> 75) and is checked against
+//     the pack's own derived percentages, same as a digit percent claim (decimals:0, i.e. the
+//     SAME +/-0.5 tolerance groundNumbers already applies to any percent, per renders()).
+//   - "a dozen"/"two dozen" states a plain COUNT (numerator * 12, "a dozen" -> 12) and grounds
+//     against the pack's ordinary numeric leaves, not a percent at all.
+//   - "one in five" states a RATIO, converted the same way as a fraction (100 * a / b -> 20) since
+//     a rate expressed as "1 in 5" and "20%" are the same claim about the evidence.
+//
+// STAYS OUT, declared rather than silently missing: a vague quantity word that names no number at
+// all - "several", "many", "most", "a few", "plenty" - is not converted here and never will be;
+// there is nothing to ground it against, and inventing a number for it would be this file
+// hallucinating a claim the narrative never actually made. An ordinal used to rank rather than
+// quantify ("the second visit", "first came in July") is also out of scope — FRACTION_NUMERATOR_
+// WORDS below is cardinals-and-articles only (a/an/one/two/three...), never ordinals, so "second
+// half" or "first quarter" (a real business term!) are NOT matched by design, only "<cardinal>
+// <fraction-word>".
+//
+// KNOWN OVER-MATCH, declared rather than hidden: the fraction regex has no way to tell "a third of
+// customers" (a quantity claim) from an unrelated "a third party" (not a quantity at all) — both
+// are "a" immediately followed by "third". This is the same asymmetry as every other rule in this
+// file: firing on the rare unrelated case costs a regenerated report, and is accepted rather than
+// leaving the real quantity phrase unconvertable.
+const FRACTION_NUMERATOR_WORDS = { a: 1, an: 1, ...NUM_WORDS };
+const FRACTION_DENOMINATORS = {
+  half: 2, halves: 2,
+  third: 3, thirds: 3,
+  quarter: 4, quarters: 4, fourth: 4, fourths: 4,
+  fifth: 5, fifths: 5,
+  sixth: 6, sixths: 6,
+  seventh: 7, sevenths: 7,
+  eighth: 8, eighths: 8,
+  ninth: 9, ninths: 9,
+  tenth: 10, tenths: 10,
+};
+const alternation = (words) => words.sort((a, b) => b.length - a.length).join('|');
+const FRACTION_RE = new RegExp(
+  `\\b(${alternation(Object.keys(FRACTION_NUMERATOR_WORDS))})\\s+` +
+    `(${alternation(Object.keys(FRACTION_DENOMINATORS))})\\b`,
+  'gi',
+);
+const DOZEN_RE = new RegExp(
+  `\\b(${alternation(Object.keys(FRACTION_NUMERATOR_WORDS))})\\s+dozen\\b`, 'gi',
+);
+const RATIO_RE = new RegExp(
+  `\\b(${alternation(Object.keys(NUM_WORDS))})\\s+in\\s+(${alternation(Object.keys(NUM_WORDS))})\\b`,
+  'gi',
+);
+
+function scanQuantityPhrases(text) {
+  const tokens = [];
+  const spans = [];
+  if (typeof text !== 'string' || !text) return { tokens, spans };
+
+  FRACTION_RE.lastIndex = 0;
+  let m;
+  while ((m = FRACTION_RE.exec(text)) !== null) {
+    const numerator = FRACTION_NUMERATOR_WORDS[m[1].toLowerCase()];
+    const denominator = FRACTION_DENOMINATORS[m[2].toLowerCase()];
+    if (!denominator) continue;
+    const pct = Math.round((100 * numerator / denominator) * 10) / 10;
+    if (!Number.isFinite(pct)) continue;
+    tokens.push({
+      raw: m[0], value: pct, decimals: 0, isPercent: true, index: m.index, end: m.index + m[0].length,
+    });
+    spans.push([m.index, m.index + m[0].length]);
+  }
+
+  DOZEN_RE.lastIndex = 0;
+  while ((m = DOZEN_RE.exec(text)) !== null) {
+    const numerator = FRACTION_NUMERATOR_WORDS[m[1].toLowerCase()];
+    const value = numerator * 12;
+    if (!Number.isFinite(value)) continue;
+    tokens.push({
+      raw: m[0], value, decimals: 0, isPercent: false, index: m.index, end: m.index + m[0].length,
+    });
+    spans.push([m.index, m.index + m[0].length]);
+  }
+
+  RATIO_RE.lastIndex = 0;
+  while ((m = RATIO_RE.exec(text)) !== null) {
+    const a = NUM_WORDS[m[1].toLowerCase()];
+    const b = NUM_WORDS[m[2].toLowerCase()];
+    if (!b) continue; // "... in zero" — nothing to divide by, and not a claim this file has seen
+    const pct = Math.round((100 * a / b) * 10) / 10;
+    if (!Number.isFinite(pct)) continue;
+    tokens.push({
+      raw: m[0], value: pct, decimals: 0, isPercent: true, index: m.index, end: m.index + m[0].length,
+    });
+    spans.push([m.index, m.index + m[0].length]);
+  }
+
+  return { tokens, spans };
+}
+
 /* ------------------------------------------- V1: every number is in evidence */
 
 // Shown working: "SGD 108.00 / 4 customers = SGD 27.00 each". The system prompt in index.ts
@@ -482,7 +602,20 @@ function overlapsAnyRange(ranges, from, to) {
 function groundNumbers(narrative, packInfo, derivedPct) {
   const masked = maskStructuralNumbers(narrative, packInfo.dateStrings);
   const digitTokens = scanNumbers(masked, false);
-  const wordTokens = scanNumberWords(masked);
+  // Check 83: fraction/ordinal/dozen/"X in Y" quantity phrases are extracted FIRST, from the same
+  // masked text, and their spans blanked out of a COPY before the ordinary cardinal-word scan runs
+  // — "three quarters" would otherwise ALSO surface a bare "three"=3 token (NUMBER_WORD_RUN_RE has
+  // no idea "quarters" changes what "three" means), and "one in five" would surface "one"=1 and
+  // "five"=5 as two unrelated claims alongside the ratio's own 20%. Blanking prevents the same
+  // phrase being counted twice under two different, disagreeing interpretations.
+  const { tokens: quantityTokens, spans: quantitySpans } = scanQuantityPhrases(masked);
+  let maskedForWords = masked;
+  if (quantitySpans.length) {
+    const chars = [...masked];
+    for (const [from, to] of quantitySpans) blankSpan(chars, from, to);
+    maskedForWords = chars.join('');
+  }
+  const wordTokens = scanNumberWords(maskedForWords).concat(quantityTokens);
   // Word tokens are checked directly against the pack (never chained into shown-working — a
   // model spelling out an intermediate step is not something the prompt asks for, and chaining
   // word tokens into the digit-token arithmetic pass would let a spelled result launder a
@@ -765,6 +898,48 @@ const CAUSAL_PATTERNS = [
   },
 ];
 
+// Check 85: a refuter proved CAUSAL_PATTERNS above never grew to cover the SAME idioms
+// CAUSAL_CONSTRUCTIONS (below, shared with V10/V10b) already knows about — "as a result" and a
+// pronoun-continuation causal idiom ("This pushes customers to return sooner.") both validated
+// clean on a pack that carries NO typed findings at all, because V10/V10b only ever look at a
+// sentence that references a typed ASSOCIATION finding's own vocabulary (typedFindings, below) —
+// most reports, and every pack with zero typed findings, never reach either of those two rules no
+// matter what the narrative says. checkCausal now ALSO tests the one shared CAUSAL_CONSTRUCTIONS
+// list, unconditionally — no typed finding required, no pack shape required — in addition to (not
+// instead of) CAUSAL_PATTERNS above, which stays for because_of_intervention: a bare "because of
+// the campaign" is a narrower, marketing-specific claim that is not on the shared list at all (the
+// shared list only has a BARE "because", deliberately unqualified — see the exemption note below).
+//
+// EXEMPTION. CAUSAL_CONSTRUCTIONS includes a bare `/\bbecause\b/i`, and this report legitimately
+// uses "because" to explain a LIMITATION, not assert a business cause ("the figure is incomplete
+// because item coverage is low this month" — a fact about the evidence, not a claim about what
+// made something happen). A causal construction whose OBJECT — the text immediately following the
+// match — names a coverage/limitation concept (data, coverage, identified, recorded, sample,
+// window, period) is exempted from THIS unconditional pass: the sentence is explaining a gap in
+// the evidence, not claiming the gap caused a business outcome. Deliberately narrow (a short
+// window right after the match, a fixed word list) — the same asymmetry as every other rule in
+// this file, tuned so a false negative (a genuine causal claim that happens to mention one of
+// these words nearby) is the accepted cost, never a false positive on the honest limitation case.
+const CAUSAL_LIMITATION_OBJECT_RE = /\b(?:data|coverage|identified|recorded|sample|window|period)\b/i;
+const CAUSAL_OBJECT_WINDOW = 60;
+
+function checkCausalConstructionsUnconditional(narrative, violations) {
+  for (const re of CAUSAL_CONSTRUCTIONS) {
+    const hit = re.exec(narrative);
+    if (!hit) continue;
+    const object = narrative.slice(
+      hit.index + hit[0].length,
+      hit.index + hit[0].length + CAUSAL_OBJECT_WINDOW,
+    );
+    if (CAUSAL_LIMITATION_OBJECT_RE.test(object)) continue;
+    violations.push({
+      rule: RULES.CAUSAL,
+      detail: `causal construction "${hit[0]}" with no causal evidence in the pack, near ` +
+        `"${contextAround(narrative, hit.index, hit.index + hit[0].length)}"`,
+    });
+  }
+}
+
 function checkCausal(narrative, opts, violations) {
   if (opts.causalEvidence === true) return;   // the door exists; nothing opens it today
   for (const { label, re } of CAUSAL_PATTERNS) {
@@ -776,6 +951,7 @@ function checkCausal(narrative, opts, violations) {
         `"${contextAround(narrative, hit.index, hit.index + hit[0].length)}"`,
     });
   }
+  checkCausalConstructionsUnconditional(narrative, violations);
 }
 
 /* ---------------------------------------------------- V4: confidence ceiling */
@@ -1502,12 +1678,52 @@ const COMMON_SENTENCE_STARTERS_HARVESTED = new Set([
   'about', 'account', 'ask', 'build', 'check', 'confirm', 'double', 'keep', 'put', 'review',
   'saturday', 'send', 'that', 'track', 'tracked', 'tuesday', 'watch', 'your',
 ]);
+// Check 88 (false-positive round 4): a refuter proved the hand-built + harvested lists above are
+// still too narrow — ordinary English discourse/function words that open a sentence all the time
+// in prose of this shape ("There were more visits this month.", "Regulars returned sooner.") were
+// simply never on either list, because both were built by watching THIS product's own six fixed
+// golden narratives rather than by naming the general vocabulary a report legitimately opens a
+// sentence with. Two more sets, kept separate from the hand-built/harvested ones above so each
+// one's own provenance stays legible (a discourse word is a fact about English; a product-noun is
+// a fact about Peekaa; neither was harvested from a fixture and pruned the way
+// COMMON_SENTENCE_STARTERS_HARVESTED was):
+//   BROAD_DISCOURSE_STARTERS - ordinary transition/discourse/quantifier words ("there", "here",
+//   "then", "however", "finally", "please", "consider", ...) that open a sentence in any register
+//   of plain English, independent of this product's own vocabulary.
+//   PRODUCT_VOCABULARY (exported - check 88 names it as a first-class list of its own, not merely
+//   folded silently in here) - the concrete nouns this product's OWN reports use constantly
+//   ("customers", "stamps", "tiers", "referrals", "branch", ...). A report that opens a sentence
+//   with one of these is talking about the business, not naming an invented person.
+// Both stay honestly narrow: a genuinely invented name ("Melissa", "Marcus") is not on either list,
+// so "Melissa spent more than usual this month." is still caught exactly as before - these two
+// lists only ever REMOVE a false positive, they add no new blind spot for a fabricated proper noun.
+const BROAD_DISCOURSE_STARTERS = new Set([
+  'there', 'here', 'these', 'those', 'this', 'that', 'then', 'next', 'also', 'still', 'yet',
+  'however', 'overall', 'meanwhile', 'finally', 'first', 'second', 'third', 'last', 'later',
+  'earlier', 'today', 'yesterday', 'tomorrow', 'currently', 'recently', 'now', 'again', 'instead',
+  'otherwise', 'likewise', 'similarly', 'notably', 'importantly', 'unfortunately',
+  'encouragingly', 'together', 'both', 'each', 'either', 'neither', 'none', 'nobody', 'everyone',
+  'anyone', 'someone', 'something', 'nothing', 'everything', 'please', 'consider', 'note',
+  'remember', 'keep', 'focus', 'expect', 'plan', 'try', 'watch', 'avoid', 'protect', 'reward',
+  'invite', 'ask', 'offer', 'thank',
+]);
+export const PRODUCT_VOCABULARY = new Set([
+  'regulars', 'customers', 'clients', 'visits', 'visitors', 'stamps', 'stamp', 'tiers', 'tier',
+  'rewards', 'reward', 'redemptions', 'referrals', 'referral', 'bookings', 'booking',
+  'appointments', 'staff', 'branch', 'branches', 'package', 'packages', 'sessions', 'campaigns',
+  'campaign', 'promotions', 'promotion', 'discounts', 'discount', 'members', 'membership',
+  'loyalty', 'points', 'gift', 'gifts', 'vouchers', 'newcomers', 'lapsed', 'returning',
+  'identified', 'anonymous', 'weekday', 'weekend', 'mornings', 'afternoons', 'evenings', 'peak',
+  'quiet',
+]);
 // Numbers spelled as words ("One returned visit...") and month/weekday names (independent of V2's
 // own case-sensitive month check — different purpose, same words), lower-cased, reusing this
 // file's existing single source of truth for each list rather than retyping them.
 const COMMON_SENTENCE_STARTERS = new Set([
   ...COMMON_SENTENCE_STARTERS_HAND,
   ...COMMON_SENTENCE_STARTERS_HARVESTED,
+  ...BROAD_DISCOURSE_STARTERS,
+  ...PRODUCT_VOCABULARY,
   ...Object.keys(NUM_WORDS),
   ...Object.keys(TENS_WORDS),
   'hundred', 'thousand',
@@ -1538,6 +1754,13 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
   const allowlist = buildOrphanAllowlist(opts);
   const ranges = orphanSkipRanges(narrative);
   const haystackLower = packInfo.strings.join(' ').toLowerCase(); // case-INSENSITIVE, see banner
+  // Check 88 (false-positive round 4): the pack's own field NAMES, not only its values - joined the
+  // SAME way haystackLower joins string VALUES, and tested the SAME way (substring, case-
+  // insensitive) so a sentence opening "Returning customers made up..." grounds against the key
+  // `insights.retention.returning_customers` even though the word "returning" never appears as a
+  // pack STRING value anywhere. Kept as its own haystack (not merged into haystackLower) because a
+  // key is grounding a WORD the pack's own schema uses, not a fact the pack asserts.
+  const keysLower = packInfo.keys ? [...packInfo.keys].join(' ') : '';
   const words = orphanWords(narrative);
   const reported = new Set();
 
@@ -1552,6 +1775,7 @@ function checkOrphanProperNounsSentenceInitial(narrative, packInfo, violations, 
     const plain = tok.word.toLowerCase();
     if (COMMON_SENTENCE_STARTERS.has(plain)) continue;                // (c)
     if (haystackLower.includes(plain)) continue;                     // (a)
+    if (keysLower.includes(plain)) continue;                         // (a), the pack's own KEYS
     if (reported.has(plain)) continue;
     reported.add(plain);
     violations.push({

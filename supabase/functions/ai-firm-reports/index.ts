@@ -36,8 +36,12 @@ import {
 // v684 (check 81/86): assembleUserPrompt is the same pack-assembly code the test suite executes
 // from Node (index.ts is Deno + npm: specifiers and cannot be imported there), and
 // resolveConfidenceClass is the one place that decides confidence_class for both the model and
-// the validator. All three exports come from this one file so nothing here is re-implemented.
-import { assembleUserPrompt, resolveConfidenceClass, validateNarrative } from './validate.mjs';
+// the validator. Both exports come from this one file so nothing here is re-implemented.
+import { assembleUserPrompt, resolveConfidenceClass } from './validate.mjs';
+// (check 81/90 enforcement requirement): the pass/fail DECISION built on top of validateNarrative's
+// verdict — same dual-runtime .mjs pattern as validate.mjs itself, so tests/ai-reports/*.test.mjs
+// executes the exact same decision code this file runs live. See ./enforce.mjs's own header.
+import { decideNarrativeOutcome } from './enforce.mjs';
 
 const MAX_REPORTS_PER_INVOCATION = 5;
 const MAX_OUTPUT_TOKENS = 4000;
@@ -180,20 +184,6 @@ function narrativeFrom(message: Anthropic.Message): string {
   return text;
 }
 
-// v677: a validation failure is a machine-readable reason, not prose. The rule ids are stable
-// (V1_NUMERIC_CLAIM ... V6_ENTITY_GROUNDING) so the platform console can group and count them
-// without parsing English. Truncated well inside failureReason()'s own 400-character slice.
-function validationFailureReason(
-  violations: Array<{ rule: string; detail: string }>,
-): string {
-  const listed = violations
-    .slice(0, 3)
-    .map((violation) => `${violation.rule}: ${violation.detail}`)
-    .join(' | ');
-  const extra = violations.length > 3 ? ` (+${violations.length - 3} more)` : '';
-  return `narrative_validation: ${listed}${extra}`.slice(0, 380);
-}
-
 function failureReason(error: unknown): string {
   if (error instanceof Anthropic.APIError) {
     return `anthropic_${error.status ?? 'error'}: ${String(error.message).slice(0, 400)}`;
@@ -247,8 +237,12 @@ async function processQueue(): Promise<Record<string, unknown>> {
       // the validator can never be judging a different pack than the model saw). The prompt's
       // "NEVER invent a number" was an instruction; this is the control. A narrative that fails
       // takes the existing failed path below and is never stored as a good report.
-      const verdict = validateNarrative(narrative, report.evidence ?? {});
-      if (!verdict.ok) throw new Error(validationFailureReason(verdict.violations));
+      // (check 81/90 enforcement requirement): decideNarrativeOutcome (./enforce.mjs) is the ONE
+      // place that turns validateNarrative's verdict into ready/failed — behaviour here is
+      // unchanged from the old inline `if (!verdict.ok) throw ...`, just executed by a function a
+      // Node test can call directly instead of only ever running live inside this Deno function.
+      const outcome = decideNarrativeOutcome(narrative, report.evidence ?? {});
+      if (outcome.status === 'failed') throw new Error(outcome.failure_reason ?? 'narrative_validation_failed');
 
       const { error: completeError } = await admin.rpc(
         'internal_complete_ai_firm_report_v176',
