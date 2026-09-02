@@ -3616,6 +3616,24 @@
       "version": "20260904070000",
       "name": "nestly_v739_top_customers_floor",
       "sourcePath": "db/migrations/20260902_nestly_v739_top_customers_floor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260904080000",
+      "name": "nestly_v740_synthetic_excluded_estate_3",
+      "sourcePath": "db/migrations/20260902_nestly_v740_synthetic_excluded_estate_3.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260904090000",
+      "name": "nestly_v741_roster_read_audit",
+      "sourcePath": "db/migrations/20260902_nestly_v741_roster_read_audit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260904100000",
+      "name": "nestly_v742_synthetic_excluded_estate_4",
+      "sourcePath": "db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql"
     }
   ]
 }

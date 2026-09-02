@@ -3621,6 +3621,24 @@
       "path": "db/migrations/20260902_nestly_v739_top_customers_floor.sql",
       "semanticVersion": "v739",
       "proposedDeployVersion": "20260904070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v740_synthetic_excluded_estate_3.sql",
+      "semanticVersion": "v740",
+      "proposedDeployVersion": "20260904080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v741_roster_read_audit.sql",
+      "semanticVersion": "v741",
+      "proposedDeployVersion": "20260904090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v742_synthetic_excluded_estate_4.sql",
+      "semanticVersion": "v742",
+      "proposedDeployVersion": "20260904100000"
     }
   ]
 }
