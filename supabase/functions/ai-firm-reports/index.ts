@@ -11,6 +11,14 @@
 // Failure isolation: every report is wrapped in its own try/catch and a failure
 // is written back as status='failed' with the reason, so one firm's bad data
 // never stops the batch.
+//
+// v684 (check 90): PROMPT_VERSION below is the prompt's own version tag, and
+// scripts/quality/ai-report-golden-gate.mjs records it in every gate run.
+// ANY change to SYSTEM_PROMPT, or to the model(s) in ALLOWED_MODELS/FALLBACK_MODEL, MUST bump
+// PROMPT_VERSION and MUST be followed by `npm run ai-report:gate` (or `node
+// scripts/quality/ai-report-golden-gate.mjs`) passing clean against the golden corpus in
+// tests/ai-reports/fixtures/golden-packs/ before the change ships. The gate is what stands
+// between a prompt edit and a validator that silently stops matching what the model now writes.
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.115.0';
 import {
@@ -25,13 +33,19 @@ import {
 // same code runs here under Deno and under `node --test` in
 // tests/ai-reports/v677-evidence-safe-generation.test.mjs — the pattern already used by
 // _shared/whatsapp-send-boundaries.mjs. There is one copy of these rules, not two.
-import { validateNarrative } from './validate.mjs';
+// v684 (check 81/86): assembleUserPrompt is the same pack-assembly code the test suite executes
+// from Node (index.ts is Deno + npm: specifiers and cannot be imported there), and
+// resolveConfidenceClass is the one place that decides confidence_class for both the model and
+// the validator. All three exports come from this one file so nothing here is re-implemented.
+import { assembleUserPrompt, resolveConfidenceClass, validateNarrative } from './validate.mjs';
 
 const MAX_REPORTS_PER_INVOCATION = 5;
 const MAX_OUTPUT_TOKENS = 4000;
 const MAX_BODY = 4096;
 const ALLOWED_MODELS = new Set(['claude-sonnet-5', 'claude-opus-4-8']);
 const FALLBACK_MODEL = 'claude-sonnet-5';
+// v684 (check 90): bump this on any SYSTEM_PROMPT or model change — see the file header note.
+export const PROMPT_VERSION = 'v684';
 
 type ClaimedReport = {
   id: string;
@@ -143,27 +157,6 @@ const SYSTEM_PROMPT = [
   '- Return only the report in markdown. No preamble, no closing question, no reasoning notes.',
 ].join('\n');
 
-function periodLabel(report: ClaimedReport): string {
-  const kind = report.period_kind === 'monthly'
-    ? 'month'
-    : report.period_kind === 'quarterly'
-    ? 'quarter'
-    : 'year';
-  return `${kind} from ${report.period_start} to ${report.period_end}`;
-}
-
-function userPrompt(report: ClaimedReport): string {
-  const evidence = JSON.stringify(report.evidence ?? {}, null, 2);
-  return [
-    `Write the ${report.period_kind} business report for the ${periodLabel(report)}.`,
-    '',
-    'Evidence pack (the only facts you may use):',
-    '```json',
-    evidence,
-    '```',
-  ].join('\n');
-}
-
 function resolveModel(report: ClaimedReport): string {
   const stored = String(report.model || '').trim();
   if (ALLOWED_MODELS.has(stored)) return stored;
@@ -219,12 +212,25 @@ async function processQueue(): Promise<Record<string, unknown>> {
     const report = claim.report as ClaimedReport;
     const model = resolveModel(report);
     try {
+      // v684 (check 86): confidence_class is resolved ONCE, here, and folded into report.evidence
+      // before either the model or the validator ever sees it — the same "one object, one source
+      // of truth" invariant v677 already relies on for the rest of the pack. See
+      // resolveConfidenceClass() in ./validate.mjs for why this defaults to 'insufficient' rather
+      // than being silently absent.
+      report.evidence = {
+        ...(report.evidence ?? {}),
+        confidence_class: resolveConfidenceClass(report.evidence),
+      };
+
       const message = await anthropic.messages.create({
         model,
         max_tokens: MAX_OUTPUT_TOKENS,
         thinking: { type: 'disabled' },
         system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userPrompt(report) }],
+        // v684 (check 81): assembleUserPrompt is imported from ./validate.mjs — the exact code
+        // path tests/ai-reports/*.test.mjs executes from Node — so there is one assembly
+        // implementation, not a Deno copy and a re-implementation the tests exercise instead.
+        messages: [{ role: 'user', content: assembleUserPrompt(report) }],
       });
       if (message.stop_reason === 'refusal') throw new Error('model_refused');
       const narrative = narrativeFrom(message);

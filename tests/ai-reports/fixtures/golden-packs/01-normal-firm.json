@@ -1,0 +1,53 @@
+{
+  "description": "A normal, healthy small firm — everyday shape: some returning customers, one at-risk group, a modest top customer, identification below 100%.",
+  "pack": {
+    "contract_version": "v176",
+    "scope": {
+      "business_name": "Normal Cafe",
+      "branch_label": "Tampines",
+      "period_kind": "monthly",
+      "period_start": "2026-08-01",
+      "period_end": "2026-08-31",
+      "prior_period_start": "2026-07-01",
+      "prior_period_end": "2026-07-31"
+    },
+    "confidence_class": "insufficient",
+    "insights": {
+      "identification": {
+        "total_revenue_cents": 500000,
+        "identified_revenue_cents": 400000,
+        "identified_revenue_share_pct": 80.0,
+        "anonymous_sales": 5
+      },
+      "retention": {
+        "customers_served": 10,
+        "new_customers": 3,
+        "returning_customers": 7,
+        "existing_customer_return_rate_pct": 70.0,
+        "prior_period_new_customers": 6,
+        "prior_new_who_returned_this_period": 4,
+        "prior_new_return_rate_pct": 66.7
+      },
+      "at_risk": {
+        "definition": "customers with 2+ lifetime visits whose last visit is 45-180 days before period end",
+        "customers": 3,
+        "their_lifetime_revenue_cents": 150000,
+        "recovery_value_one_visit_each_cents": 9000
+      },
+      "top_customers": {
+        "rows": [
+          { "label": "Alan T.", "revenue_cents": 80000, "visits": 4, "is_new_this_period": false }
+        ],
+        "top1_share_of_total_revenue_pct": 16.0
+      }
+    },
+    "account_opens": {
+      "report_range": { "requested_to": "2026-08-31", "effective_to": "2026-08-31", "clamped": false }
+    },
+    "evidence_completeness": {
+      "unavailable_sections": []
+    }
+  },
+  "good": "## Summary\nSales were steady this month for Normal Cafe at the Tampines branch. Revenue was SGD 5,000.00, and 3 regular customers are at risk of slipping away.\n\n## What went well\n- 7 of 10 customers this month had already bought before, a returning-customer share of 70.0%.\n- Of the 6 customers who first bought in July, 4 came back this month (66.7%).\n\n## What needs attention\n- 3 regulars have not been seen in a while. One returned visit each is worth SGD 90.00.\n- About 80% of revenue came from identified customers; the customer figures describe them.\n\n## Your customers\nYour largest customer, Alan T., carried 16.0% of all revenue, SGD 800.00.\n\n## Do these three things next\n1. Send one win-back message to the 3 at-risk regulars this week. SGD 90.00 / 3 customers = SGD 30.00 each.\n2. Review the Tampines branch roster next month.\n3. Ask the 4 customers who returned in August what brought them back.\n",
+  "bad": "## Summary\nSales were steady this month for Normal Cafe at the Tampines branch. Revenue was SGD 6,250.00, and 3 regular customers are at risk of slipping away.\n\n## What went well\n- 7 of 10 customers this month had already bought before, a returning-customer share of 70.0%.\n- Of the 6 customers who first bought in July, 4 came back this month (66.7%).\n\n## What needs attention\n- 3 regulars have not been seen in a while. One returned visit each is worth SGD 90.00.\n- About 80% of revenue came from identified customers; the customer figures describe them.\n\n## Your customers\nYour largest customer, Alan T., carried 16.0% of all revenue, SGD 800.00.\n\n## Do these three things next\n1. Send one win-back message to the 3 at-risk regulars this week. SGD 90.00 / 3 customers = SGD 30.00 each.\n2. Review the Tampines branch roster next month.\n3. Ask the 4 customers who returned in August what brought them back.\n"
+}

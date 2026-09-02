@@ -1,0 +1,53 @@
+{
+  "description": "A firm whose recommendations section was withheld (gated RPC unavailable) — the narrative must say so, not invent recommendations.",
+  "pack": {
+    "contract_version": "v176",
+    "scope": {
+      "business_name": "Unavail Co",
+      "branch_label": "Novena",
+      "period_kind": "monthly",
+      "period_start": "2026-08-01",
+      "period_end": "2026-08-31",
+      "prior_period_start": "2026-07-01",
+      "prior_period_end": "2026-07-31"
+    },
+    "confidence_class": "insufficient",
+    "insights": {
+      "identification": {
+        "total_revenue_cents": 200000,
+        "identified_revenue_cents": 180000,
+        "identified_revenue_share_pct": 90.0,
+        "anonymous_sales": 2
+      },
+      "retention": {
+        "customers_served": 6,
+        "new_customers": 2,
+        "returning_customers": 4,
+        "existing_customer_return_rate_pct": 66.7,
+        "prior_period_new_customers": 5,
+        "prior_new_who_returned_this_period": 3,
+        "prior_new_return_rate_pct": 60.0
+      },
+      "at_risk": {
+        "definition": "customers with 2+ lifetime visits whose last visit is 45-180 days before period end",
+        "customers": 2,
+        "their_lifetime_revenue_cents": 80000,
+        "recovery_value_one_visit_each_cents": 4000
+      },
+      "top_customers": {
+        "rows": [
+          { "label": "Cruz D.", "revenue_cents": 30000, "visits": 2, "is_new_this_period": false }
+        ],
+        "top1_share_of_total_revenue_pct": 15.0
+      }
+    },
+    "account_opens": {
+      "report_range": { "requested_to": "2026-08-31", "effective_to": "2026-08-31", "clamped": false }
+    },
+    "evidence_completeness": {
+      "unavailable_sections": [ { "section": "recommendations", "sqlstate": "42501" } ]
+    }
+  },
+  "good": "## Summary\nUnavail Co grew steadily. Revenue was SGD 2,000.00 this month across the Novena branch.\n\n## What went well\n- 4 of 6 identified customers this month had already bought before, a returning-customer share of 66.7%.\n- Cruz D. carried 15.0% of all revenue, SGD 300.00.\n\n## What needs attention\n- About 90% of revenue came from identified customers; the customer figures describe them.\n- 2 regulars have not been seen in a while. One returned visit each is worth SGD 40.00.\n- The recommendations section was not available for this report.\n\n## Your customers\n2 regulars are at risk; recovering them is worth SGD 40.00 each.\n\n## Do these three things next\n1. Send one win-back message to the 2 at-risk regulars this week. SGD 40.00 / 2 customers = SGD 20.00 each.\n2. Confirm branch details for the Novena outlet next review.\n3. Check back on this report once recommendations become available again.\n",
+  "bad": "## Summary\nUnavail Co grew steadily. Revenue was SGD 2,000.00 this month across the Novena branch.\n\n## What went well\n- 4 of 6 identified customers this month had already bought before, a returning-customer share of 66.7%.\n- Cruz D. carried 15.0% of all revenue, SGD 300.00.\n\n## What needs attention\n- About 90% of revenue came from identified customers; the customer figures describe them.\n- 2 regulars have not been seen in a while. One returned visit each is worth SGD 40.00.\n- Our recommendation is to open a pop-up stall next month.\n\n## Your customers\n2 regulars are at risk; recovering them is worth SGD 40.00 each.\n\n## Do these three things next\n1. Send one win-back message to the 2 at-risk regulars this week. SGD 40.00 / 2 customers = SGD 20.00 each.\n2. Confirm branch details for the Novena outlet next review.\n3. Check back on this report once recommendations become available again.\n"
+}

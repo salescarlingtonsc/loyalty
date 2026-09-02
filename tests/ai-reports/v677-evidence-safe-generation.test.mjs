@@ -25,7 +25,10 @@ import { dirname, join } from 'node:path';
 
 import {
   RULES,
+  assembleUserPrompt,
   classifyCohortMentions,
+  periodLabel,
+  resolveConfidenceClass,
   validateNarrative,
 } from '../../supabase/functions/ai-firm-reports/validate.mjs';
 
@@ -54,6 +57,7 @@ function evidencePack() {
     scope: {
       business_id: '8492e8d6-4f2a-4d31-9c77-0b1f5a6e2c40',
       business_name: 'QA Kaya Toast',
+      branch_label: 'Tiong Bahru',
       industry: 'cafe',
       period_kind: 'monthly',
       period_start: '2026-08-01',
@@ -61,6 +65,10 @@ function evidencePack() {
       prior_period_start: '2026-07-01',
       prior_period_end: '2026-07-31',
     },
+    // check 86: v652's evidence_block tiers (insufficient | early_signal | strong_pattern). This
+    // v179 pack carries no comparative claim of its own, so index.ts's resolveConfidenceClass()
+    // defaults it to the strictest tier — see validate.mjs's own note on that function.
+    confidence_class: 'insufficient',
     sales: {
       current: {
         from: '2026-08-01', to: '2026-08-31', currency: 'SGD',
@@ -249,12 +257,14 @@ test('v677 T-fabricated-number: an invented dollar figure is caught by name', ()
 test('v677 V1: currency prefixes, thousand separators and cents-as-dollars all ground', () => {
   const pack = evidencePack();
   // 660150 cents is the same fact written five ways; all five must be accepted, and a sixth
-  // that is NOT a correct rendering must not be.
+  // that is NOT a correct rendering must not be. Built on FAITHFUL (not a bare fragment) so a
+  // full-ok assertion is meaningful now that V7 requires the report's own structure too.
   for (const written of ['SGD 6,601.50', 'S$6,601.50', '$6601.50', 'SGD 6,602', '660150 cents']) {
-    const result = validateNarrative(`## Summary\nRevenue was ${written}.`, pack);
+    const narrative = FAITHFUL.replace('SGD 6,601.50', written);
+    const result = validateNarrative(narrative, pack);
     assert.equal(result.ok, true, `"${written}" should ground:\n  ${explain(result)}`);
   }
-  const wrong = validateNarrative('## Summary\nRevenue was SGD 6,600.', pack);
+  const wrong = validateNarrative(FAITHFUL.replace('SGD 6,601.50', 'SGD 6,600.'), pack);
   assert.equal(wrong.ok, false, 'SGD 6,600 is not a correct rounding of 6601.50 at zero decimals');
 });
 
@@ -288,12 +298,14 @@ test('v677 T-derived-ok: a percentage derived from two sibling leaves is accepte
 
 test('v677 V1: arithmetic with the working shown is checked, not merely permitted', () => {
   const pack = evidencePack();
-  const good = validateNarrative(
-    '## Summary\nSGD 108.00 / 4 customers = SGD 27.00 each.', pack);
+  // FAITHFUL already carries this exact shown working ("SGD 108.00 / 4 customers = SGD 27.00
+  // each.") in its last section; T-pass already proves that grounds. This test isolates the
+  // arithmetic check itself: swap only the stated RESULT and confirm a wrong one is caught.
+  const good = validateNarrative(FAITHFUL, pack);
   assert.equal(good.ok, true, `correct shown working must ground its result:\n  ${explain(good)}`);
 
   const wrong = validateNarrative(
-    '## Summary\nSGD 108.00 / 4 customers = SGD 52.00 each.', pack);
+    FAITHFUL.replace('SGD 27.00 each', 'SGD 52.00 each'), pack);
   assert.equal(wrong.ok, false, 'wrong shown working must not launder its result');
   assert.ok(only(wrong, RULES.NUMERIC).some((v) => v.detail.includes('52')),
     `expected the bad result to be flagged:\n  ${explain(wrong)}`);
@@ -554,6 +566,259 @@ test('v677 check 89 (partial): an ambiguous sentence abstains rather than mis-bi
   assert.deepEqual(bindings, [], `expected abstention, got ${JSON.stringify(bindings)}`);
 });
 
+/* ============================================================== v684: checks 81-89 */
+/* nestly_v684 closes the residual gaps CI-D left in checks 81-90. Every rule below is executed
+ * (firing + non-firing), same discipline as the v677 suite above: no source-regex assertions. */
+
+/* --------------------------------------------------- check 81: model-input assembly */
+
+test('v684 check 81: assembleUserPrompt sends the model only the validated pack', () => {
+  const pack = evidencePack();
+  const report = {
+    period_kind: 'monthly', period_start: '2026-08-01', period_end: '2026-08-31', evidence: pack,
+  };
+  const prompt = assembleUserPrompt(report);
+
+  assert.equal(periodLabel(report), 'month from 2026-08-01 to 2026-08-31');
+  assert.match(
+    prompt,
+    /^Write the monthly business report for the month from 2026-08-01 to 2026-08-31\.\n\nEvidence pack \(the only facts you may use\):\n```json\n/,
+  );
+
+  const fenceStart = prompt.indexOf('```json\n') + '```json\n'.length;
+  const fenceEnd = prompt.lastIndexOf('\n```');
+  const embedded = JSON.parse(prompt.slice(fenceStart, fenceEnd));
+  assert.deepEqual(embedded, pack,
+    'the model must see exactly the pack validateNarrative will also check, byte-for-byte as JSON');
+
+  // No raw table dumps, no dashboard chrome, no SQL, no infrastructure detail.
+  for (const forbidden of [/select\s+\*/i, /<table/i, /<html/i, /\bdashboard\b/i, /localhost/i, /\bfrom\s+public\./i]) {
+    assert.ok(!forbidden.test(prompt), `prompt must not contain ${forbidden}`);
+  }
+});
+
+test('v684 check 81: the assembled prompt is not a static template — it tracks the pack', () => {
+  const reportA = {
+    period_kind: 'monthly', period_start: '2026-08-01', period_end: '2026-08-31', evidence: evidencePack(),
+  };
+  const pack2 = evidencePack();
+  pack2.insights.retention.customers_served = 999;
+  const reportB = { ...reportA, evidence: pack2 };
+  assert.notEqual(assembleUserPrompt(reportA), assembleUserPrompt(reportB));
+});
+
+/* -------------------------------------------------------------- check 82: structure (V7) */
+
+test('v684 check 82: the faithful report has no structure violation (non-firing)', () => {
+  assert.deepEqual(only(validateNarrative(FAITHFUL, evidencePack()), RULES.STRUCTURE), []);
+});
+
+test('v684 check 82: a missing required heading is a structure violation (firing)', () => {
+  const narrative = FAITHFUL.replace('## Your customers\n', '');
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(only(result, RULES.STRUCTURE).some((v) => /Your customers/.test(v.detail)), explain(result));
+});
+
+test('v684 check 82: headings out of order is a structure violation (firing)', () => {
+  const narrative = FAITHFUL
+    .replace('## What went well', '## TEMP_SWAP')
+    .replace('## What needs attention', '## What went well')
+    .replace('## TEMP_SWAP', '## What needs attention');
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(only(result, RULES.STRUCTURE).some((v) => /out of order/.test(v.detail)), explain(result));
+});
+
+test('v684 check 82: a fourth numbered action is a structure violation (firing)', () => {
+  const narrative = FAITHFUL.replace(
+    '3. Ask the 5 customers who returned in August what brought them back, before the end of next month.\n',
+    '3. Ask the 5 customers who returned in August what brought them back, before the end of next month.\n' +
+      '4. Also say thank you.\n',
+  );
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(only(result, RULES.STRUCTURE).some((v) => /exactly three/.test(v.detail)), explain(result));
+});
+
+/* ------------------------------------------------ check 83/88: number words (V1), single-token entity (V6) */
+
+test('v684 check 83: a spelled-out number that is true is not flagged (non-firing)', () => {
+  const narrative = FAITHFUL.replace(
+    '4 regular customers have stopped coming.', 'four regular customers have stopped coming.');
+  assert.deepEqual(only(validateNarrative(narrative, evidencePack()), RULES.NUMERIC), []);
+});
+
+test('v684 check 83: a fabricated spelled-out number is caught (firing)', () => {
+  // 13 is not in the fixture pack anywhere (11 legitimately is: account_opens.distinct_customers).
+  const narrative = FAITHFUL.replace(
+    '4 regular customers have stopped coming.', 'thirteen regular customers have stopped coming.');
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.NUMERIC);
+  assert.ok(hits.some((v) => v.detail.includes('13') && /thirteen/.test(v.detail)), explain(result));
+});
+
+test('v684 check 83: "<number> hundred/thousand" compounds parse, with a mutation guard', () => {
+  const pack = evidencePack();
+  pack.insights.at_risk.recovery_value_one_visit_each_cents = 30000; // SGD 300.00
+
+  const good = validateNarrative('## Summary\nOne returned visit is worth three hundred dollars.', pack);
+  assert.deepEqual(only(good, RULES.NUMERIC), [], explain(good));
+
+  // Mutation guard: change ONE word ("hundred" -> "thousand") and the verdict must flip.
+  const mutated = validateNarrative('## Summary\nOne returned visit is worth three thousand dollars.', pack);
+  assert.ok(only(mutated, RULES.NUMERIC).some((v) => v.detail.includes('3000')), explain(mutated));
+});
+
+test('v684 check 83/88: a single invented name right after a direct-address cue is caught (firing)', () => {
+  const narrative = '## Summary\nWe should call customer Marcus about his account.';
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.ENTITY);
+  assert.ok(hits.some((v) => v.detail.includes('Marcus')), explain(result));
+});
+
+test('v684 check 83/88: a real pack name after the same cues does not fire (non-firing)', () => {
+  // "Lee" / "Tan" are substrings of the pack's own "Lee S." / "Tan W." labels. Deliberately
+  // written with lower-case "customer"/"client" cues only, not "Ms"/"Mr"/"Mrs": those title
+  // words are themselves capitalised and already form a two-token candidate under the existing
+  // V6 rule above (e.g. "Ms Tan" is not literally in the pack even though "Tan W." is) — a
+  // separate, pre-existing gap this test is not trying to exercise.
+  const narrative = '## Summary\nWe should call customer Lee about her account. The client Tan renews annually.';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.ENTITY), [], explain(result));
+});
+
+/* ---------------------------------------------- check 84: branch label, lower-case month */
+
+test('v684 check 84: naming a branch that is not the pack\'s branch is caught (firing)', () => {
+  const narrative = FAITHFUL + '\nThe Orchard branch had the best week.\n';
+  const result = validateNarrative(narrative, evidencePack()); // scope.branch_label = 'Tiong Bahru'
+  const hits = only(result, RULES.POPULATION);
+  assert.ok(hits.some((v) => /Orchard/.test(v.detail) && /Tiong Bahru/.test(v.detail)), explain(result));
+});
+
+test('v684 check 84: naming the pack\'s own branch does not fire (non-firing)', () => {
+  const narrative = FAITHFUL + '\nThe Tiong Bahru branch had the best week.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.POPULATION), [], explain(result));
+});
+
+test('v684 check 84: a lower-case wrong month at clause start is caught (firing)', () => {
+  const narrative = FAITHFUL.replace('Sales grew this month.', 'In july, sales grew.');
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.POPULATION);
+  assert.ok(hits.some((v) => /lower-case/.test(v.detail) && /july/i.test(v.detail)), explain(result));
+});
+
+test('v684 check 84: "may" as a modal verb is not mistaken for a month claim (non-firing)', () => {
+  const narrative = FAITHFUL + '\nRevenue may increase next month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.POPULATION), [], explain(result));
+});
+
+/* --------------------------------------------------- check 86: server confidence class (V4) */
+
+test('v684 check 86: resolveConfidenceClass reads evidence_block.verdict, defaults to insufficient', () => {
+  assert.equal(resolveConfidenceClass(null), 'insufficient');
+  assert.equal(resolveConfidenceClass({}), 'insufficient');
+  assert.equal(resolveConfidenceClass({ evidence_block: { verdict: 'strong_pattern' } }), 'strong_pattern');
+  assert.equal(resolveConfidenceClass({ evidence_block: { verdict: 'not_a_real_tier' } }), 'insufficient');
+});
+
+test('v684 check 86: strong-pattern vocabulary below the ceiling is refused (firing)', () => {
+  const pack = evidencePack(); // confidence_class: 'insufficient'
+  const narrative = FAITHFUL + '\nThis is a clear pattern of growth.\n';
+  const result = validateNarrative(narrative, pack);
+  const hits = only(result, RULES.CONFIDENCE);
+  assert.ok(hits.some((v) => /clear pattern/.test(v.detail) && /insufficient/.test(v.detail)), explain(result));
+});
+
+test('v684 check 86: the same strong wording is allowed at strong_pattern (non-firing)', () => {
+  const pack = evidencePack();
+  pack.confidence_class = 'strong_pattern';
+  const narrative = FAITHFUL + '\nThis is a clear pattern of growth.\n';
+  const result = validateNarrative(narrative, pack);
+  assert.deepEqual(only(result, RULES.CONFIDENCE), [], explain(result));
+});
+
+test('v684 check 86: a pattern/trend claim needs hedged wording below the ceiling (firing)', () => {
+  const narrative = FAITHFUL + '\nWe see a trend in Saturday sales.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(only(result, RULES.CONFIDENCE).some((v) => /trend/.test(v.detail)), explain(result));
+});
+
+test('v684 check 86: hedged pattern wording passes (non-firing)', () => {
+  const narrative = FAITHFUL + '\nThere may be an early sign of a trend in Saturday sales.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.CONFIDENCE), [], explain(result));
+});
+
+test('v684 check 86: opts.confidenceClass overrides the pack when supplied', () => {
+  const narrative = FAITHFUL + '\nThis is a clear pattern of growth.\n';
+  const result = validateNarrative(narrative, evidencePack(), { confidenceClass: 'strong_pattern' });
+  assert.deepEqual(only(result, RULES.CONFIDENCE), [], explain(result));
+});
+
+/* ------------------------------------------------------- check 87: limitation items (V5) */
+
+test('v684 check 87: the identified-only caveat present is sufficient (non-firing)', () => {
+  assert.deepEqual(only(validateNarrative(FAITHFUL, evidencePack()), RULES.LIMITATION), []);
+});
+
+test('v684 check 87: a missing identified-only caveat below 100% is caught (firing)', () => {
+  const narrative = FAITHFUL.replace(
+    'About 78% of revenue came from identified customers; the customer figures below describe them.\n',
+    '',
+  );
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(only(result, RULES.LIMITATION).some((v) => /identified_revenue_share_pct/.test(v.detail)),
+    explain(result));
+});
+
+test('v684 check 87: a clamped account_opens window must be acknowledged (firing)', () => {
+  const pack = evidencePack();
+  pack.account_opens.report_range = { requested_to: '2026-08-31', effective_to: '2026-08-20', clamped: true };
+  const result = validateNarrative(FAITHFUL, pack);
+  assert.ok(only(result, RULES.LIMITATION).some((v) => /report_range\.clamped/.test(v.detail)), explain(result));
+});
+
+test('v684 check 87: an acknowledged clamp passes (non-firing)', () => {
+  const pack = evidencePack();
+  pack.account_opens.report_range = { requested_to: '2026-08-31', effective_to: '2026-08-20', clamped: true };
+  const narrative = FAITHFUL + '\nAccount opens only cover up to 2026-08-20, not the full period.\n';
+  const result = validateNarrative(narrative, pack);
+  assert.deepEqual(only(result, RULES.LIMITATION), [], explain(result));
+});
+
+test('v684 check 87: a top-item claim below 90% coverage without a caveat is caught (firing)', () => {
+  const narrative = FAITHFUL.replace(
+    'Tracked items cover 66.8% of revenue, so this is of tracked items only: Kaya Toast Set sold 64 for SGD 1,920.00.',
+    'Kaya Toast Set was your top item, selling 64 units for SGD 1,920.00.',
+  );
+  const result = validateNarrative(narrative, evidencePack());
+  assert.ok(only(result, RULES.LIMITATION).some((v) => /coverage_pct/.test(v.detail)), explain(result));
+});
+
+/* -------------------------------------------------- check 89: cohort contradiction wired as V8 */
+
+test('v684 check 89: the faithful report has no cohort contradiction (non-firing)', () => {
+  assert.deepEqual(only(validateNarrative(FAITHFUL, evidencePack()), RULES.COHORT), []);
+});
+
+test('v684 check 89: a count that matches a DIFFERENT cohort exactly is a hard violation (firing)', () => {
+  // Pack: at_risk.customers = 4, retention.returning_customers = 5. "4 loyal regulars" cannot be
+  // both — the pack proves the 4 belongs to at_risk, not returning_customers.
+  const narrative = FAITHFUL + '\nYou have 4 loyal regulars who came back this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  const hits = only(result, RULES.COHORT);
+  assert.equal(hits.length, 1, explain(result));
+  assert.match(hits[0].detail, /at_risk/);
+});
+
+test('v684 check 89: an inconsistent count matching no OTHER tracked cohort still abstains', () => {
+  // 9 matches nothing else in the pack (at_risk=4, new_customers=4) — must not be promoted.
+  const narrative = FAITHFUL + '\nYou have 9 loyal regulars who came back this month.\n';
+  const result = validateNarrative(narrative, evidencePack());
+  assert.deepEqual(only(result, RULES.COHORT), [], explain(result));
+});
+
 /* ------------------------------------------------------------------- wiring */
 
 /* STRUCTURAL GUARD, and labelled as one. Every test above executes the validator; this one reads
@@ -589,4 +854,31 @@ test('v677 wiring: the worker validates before it can store a report as succeede
 
   assert.ok(INDEX_TS.includes("`narrative_validation: ${listed}${extra}`"),
     'a validation failure must carry the machine-readable narrative_validation prefix');
+});
+
+test('v684 wiring: index.ts assembles the prompt and resolves confidence_class through validate.mjs', () => {
+  // check 81: the model input must come from the SAME assembler the test suite executes above,
+  // not a re-implementation living only in index.ts.
+  assert.ok(INDEX_TS.includes('assembleUserPrompt, resolveConfidenceClass, validateNarrative'),
+    'index.ts must import assembleUserPrompt and resolveConfidenceClass from ./validate.mjs');
+  assert.ok(INDEX_TS.includes('content: assembleUserPrompt(report)'),
+    'the model call must use assembleUserPrompt, not an inline re-implementation');
+  assert.ok(!/function userPrompt\(/.test(INDEX_TS) && !/function periodLabel\(/.test(INDEX_TS),
+    'index.ts must not keep its own copy of userPrompt/periodLabel once validate.mjs owns them');
+
+  // check 86: confidence_class must be resolved once and folded into the SAME evidence object
+  // that assembleUserPrompt and validateNarrative both read, before either runs.
+  const confidenceAt = INDEX_TS.indexOf('resolveConfidenceClass(report.evidence)');
+  const promptAt = INDEX_TS.indexOf('assembleUserPrompt(report)');
+  const validateAt = INDEX_TS.indexOf('validateNarrative(narrative, report.evidence ?? {})');
+  assert.ok(confidenceAt > -1, 'index.ts must call resolveConfidenceClass on report.evidence');
+  assert.ok(confidenceAt < promptAt && confidenceAt < validateAt,
+    'confidence_class must be resolved BEFORE both the model call and validation, or one of them ' +
+    'sees a pack without it');
+
+  // check 90: a PROMPT_VERSION the golden gate can record, and the governance note above it.
+  assert.match(INDEX_TS, /const PROMPT_VERSION = '[^']+'/,
+    'index.ts must export a PROMPT_VERSION constant for the golden gate to record');
+  assert.ok(INDEX_TS.includes('ai-report:gate'),
+    'index.ts must document that a SYSTEM_PROMPT/model change requires running the golden gate');
 });

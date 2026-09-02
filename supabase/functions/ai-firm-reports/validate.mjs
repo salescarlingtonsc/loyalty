@@ -39,7 +39,55 @@ export const RULES = {
   CONFIDENCE: 'V4_CONFIDENCE_CEILING',
   LIMITATION: 'V5_LIMITATION_PRESERVATION',
   ENTITY: 'V6_ENTITY_GROUNDING',
+  STRUCTURE: 'V7_STRUCTURE',
+  COHORT: 'V8_COHORT_CONTRADICTION',
 };
+
+// v684 (check 86): the three tiers app.evidence_block_v1 (nestly_v652) can ever return. Exported so
+// index.ts and this file share one list instead of two string unions drifting apart.
+export const CONFIDENCE_TIERS = ['insufficient', 'early_signal', 'strong_pattern'];
+const CONFIDENCE_TIER_SET = new Set(CONFIDENCE_TIERS);
+
+// v684 (check 86): where confidence_class comes from, honestly. v652's app.evidence_block_v1
+// computes a capped verdict for the ONE comparative report that carries an evidence_block today
+// (public.get_recovery_report_v550). The v176/v179 pack this worker sends has no comparative claim
+// in it and carries no evidence_block of its own. index.ts therefore calls this with
+// report.evidence, reads evidence.evidence_block.verdict IF a future pack ever adds one, and
+// otherwise defaults to 'insufficient' — the strictest tier, so an absent signal can never unlock
+// strong-pattern vocabulary by omission. This is the one place that line of reasoning lives; a
+// future evidence_block on the v176 pack needs no other change.
+export function resolveConfidenceClass(evidence) {
+  const block = evidence && typeof evidence === 'object' ? evidence.evidence_block : null;
+  const verdict = block && typeof block === 'object' ? block.verdict : null;
+  return typeof verdict === 'string' && CONFIDENCE_TIER_SET.has(verdict) ? verdict : 'insufficient';
+}
+
+/* ------------------------------------------------- check 81: model-input assembly */
+
+// v684 (check 81): the EXACT text sent to the model, extracted out of index.ts so a Node test can
+// execute the real assembly path instead of a re-implementation. Pure string building, no
+// Deno/npm imports — same file, same invariant as validateNarrative. Behaviour is byte-identical
+// to the inline userPrompt()/periodLabel() this replaces in index.ts.
+export function periodLabel(report) {
+  const kind = report.period_kind === 'monthly'
+    ? 'month'
+    : report.period_kind === 'quarterly'
+    ? 'quarter'
+    : 'year';
+  return `${kind} from ${report.period_start} to ${report.period_end}`;
+}
+
+export function assembleUserPrompt(report) {
+  const evidence = JSON.stringify((report && report.evidence) ?? {}, null, 2);
+  return [
+    `Write the ${report.period_kind} business report for the ${periodLabel(report)}.`,
+    '',
+    'Evidence pack (the only facts you may use):',
+    '```json',
+    evidence,
+    '```',
+  ].join('\n');
+}
 
 /* ------------------------------------------------------------ pack traversal */
 
@@ -212,7 +260,93 @@ function maskStructuralNumbers(narrative, packDates) {
     }
   }
 
+  // 3. Markdown heading LINES ("## Do these three things next") are fixed template text, not
+  //    claims — including any number word inside them. Blanking the whole line (not just digits)
+  //    is what keeps V7's own required heading text from being read as a V1 claim.
+  const headingLine = /^[ \t]*#{1,6}[ \t].*$/gm;
+  let hm;
+  while ((hm = headingLine.exec(narrative)) !== null) {
+    blankSpan(chars, hm.index, hm.index + hm[0].length);
+  }
+
   return chars.join('');
+}
+
+/* --------------------------------------------------- V1 extension: number words */
+
+// Check 83/88: a model that spells a fabricated figure out in words ("four regulars", "three
+// hundred dollars") used to defeat V1 entirely — the digit-only NUMBER_TOKEN_RE never saw it. This
+// is a CONSERVATIVE word-number parser: zero..twenty, the tens (thirty..ninety), hundred, thousand,
+// joined by whitespace/hyphen and an optional "and". It does NOT understand fractions, ordinals
+// ("third"), "dozen", or numbers above one million spelled out — those stay a known gap, same
+// spirit as the digit scanner's own documented limits.
+const NUM_WORDS = {
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
+  seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20,
+};
+const TENS_WORDS = { thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+const NUMBER_WORD_KEYS = ['hundred', 'thousand', ...Object.keys(TENS_WORDS), ...Object.keys(NUM_WORDS)]
+  .sort((a, b) => b.length - a.length);
+const NUMBER_WORD_RUN_RE = new RegExp(
+  `\\b(?:${NUMBER_WORD_KEYS.join('|')})` +
+    `(?:[\\s-]+(?:and[\\s-]+)?(?:${NUMBER_WORD_KEYS.join('|')}))*\\b`,
+  'gi',
+);
+
+function wordsToNumber(words) {
+  let total = 0;
+  let current = 0;
+  let matched = false;
+  for (const raw of words) {
+    const w = raw.toLowerCase();
+    if (w === 'and') continue;
+    if (w === 'hundred') {
+      current = (current === 0 ? 1 : current) * 100;
+      matched = true;
+    } else if (w === 'thousand') {
+      total += (current === 0 ? 1 : current) * 1000;
+      current = 0;
+      matched = true;
+    } else if (Object.prototype.hasOwnProperty.call(NUM_WORDS, w)) {
+      current += NUM_WORDS[w];
+      matched = true;
+    } else if (Object.prototype.hasOwnProperty.call(TENS_WORDS, w)) {
+      current += TENS_WORDS[w];
+      matched = true;
+    } else {
+      return null;
+    }
+  }
+  if (!matched) return null;
+  return total + current;
+}
+
+// Also check 83: digit-plus-"k" shorthand ("4k", "12k" -> 4000, 12000). Kept in its own regex
+// rather than folded into NUMBER_TOKEN_RE so the money/percent grammar there stays untouched.
+const NUMBER_K_RE = /\b(\d{1,3}(?:,\d{3})*)(?:\.(\d+))?[kK]\b/g;
+
+function scanNumberWords(text) {
+  const found = [];
+  if (typeof text !== 'string' || !text) return found;
+  NUMBER_WORD_RUN_RE.lastIndex = 0;
+  let m;
+  while ((m = NUMBER_WORD_RUN_RE.exec(text)) !== null) {
+    const value = wordsToNumber(m[0].split(/[\s-]+/));
+    if (value === null || !Number.isFinite(value)) continue;
+    found.push({
+      raw: m[0], value, decimals: 0, isPercent: false, index: m.index, end: m.index + m[0].length,
+    });
+  }
+  NUMBER_K_RE.lastIndex = 0;
+  while ((m = NUMBER_K_RE.exec(text)) !== null) {
+    const base = Number(`${m[1].replace(/,/g, '')}${m[2] ? `.${m[2]}` : ''}`);
+    if (!Number.isFinite(base)) continue;
+    found.push({
+      raw: m[0], value: base * 1000, decimals: 0, isPercent: false, index: m.index, end: m.index + m[0].length,
+    });
+  }
+  return found;
 }
 
 /* ------------------------------------------- V1: every number is in evidence */
@@ -234,7 +368,14 @@ const EQUALS_BRIDGE = /^[^\d]{0,28}?(?:=|equals|is|gives|makes|comes to)[^\d]{0,
 
 function groundNumbers(narrative, packInfo, derivedPct) {
   const masked = maskStructuralNumbers(narrative, packInfo.dateStrings);
-  const tokens = scanNumbers(masked, false);
+  const digitTokens = scanNumbers(masked, false);
+  const wordTokens = scanNumberWords(masked);
+  // Word tokens are checked directly against the pack (never chained into shown-working — a
+  // model spelling out an intermediate step is not something the prompt asks for, and chaining
+  // word tokens into the digit-token arithmetic pass would let a spelled result launder a
+  // fabricated digit operand). Kept as their own array; digit tokens keep the existing behaviour
+  // byte-for-byte.
+  const tokens = digitTokens;
   const grounded = new Array(tokens.length).fill(false);
 
   const groundedAgainstPack = (tok) => {
@@ -275,7 +416,9 @@ function groundNumbers(narrative, packInfo, derivedPct) {
     if (!changed) break;
   }
 
-  return { tokens, grounded };
+  const wordGrounded = wordTokens.map(groundedAgainstPack);
+
+  return { tokens, grounded, wordTokens, wordGrounded };
 }
 
 function contextAround(narrative, index, end) {
@@ -412,6 +555,72 @@ function checkPopulation(narrative, pack, violations) {
   }
 }
 
+/* -------------------------------------------------------- V2 extension: branch */
+
+// Check 84: a report scoped to one branch must not name another. Conservative on purpose — it
+// only fires when the narrative pairs a capitalised name with an explicit branch word ("the
+// Orchard branch", "at Tampines outlet"), AND that name is introduced by an article/preposition
+// ("the"/"at"/"your"/"our"). Without that second requirement a sentence that simply STARTS with a
+// capitalised verb right before the word "branch" ("Confirm branch details...") reads as a branch
+// name; requiring the article is what tells "the Orchard branch" apart from that. A bare place
+// name with no such cue is never flagged either way — this file has no way to tell a legitimate
+// aside ("near Orchard MRT") from a branch claim.
+const BRANCH_MENTION_RE =
+  /\b(?:[Tt]he|[Aa]t|[Yy]our|[Oo]ur)\s+([A-Z][A-Za-z']+(?:\s[A-Z][A-Za-z']+)?)\s+(?:branch|outlet|location|store)\b/g;
+
+function checkBranch(narrative, pack, violations) {
+  const scope = (pack && pack.scope) || {};
+  const branchLabel = typeof scope.branch_label === 'string' ? scope.branch_label.trim() : '';
+  BRANCH_MENTION_RE.lastIndex = 0;
+  let m;
+  while ((m = BRANCH_MENTION_RE.exec(narrative)) !== null) {
+    const named = m[1].trim();
+    if (branchLabel && named.toLowerCase() === branchLabel.toLowerCase()) continue;
+    violations.push({
+      rule: RULES.POPULATION,
+      detail: `"${named}" is named as the report's branch, but ${branchLabel
+        ? `the pack's branch is "${branchLabel}"`
+        : 'the pack carries no branch scope for this report'}, near ` +
+        `"${contextAround(narrative, m.index, m.index + m[0].length)}"`,
+    });
+  }
+}
+
+/* ---------------------------------------------- V2 extension: lowercase months */
+
+// Check 84's second half. V2's primary month check is deliberately case-SENSITIVE (documented
+// above at MONTH_NAME_RE) because "may"/"march" are ordinary English words and a blanket
+// case-insensitive match would fail correct reports that use the sanctioned "may increase"
+// phrasing. This second pass closes the gap the safe way: it only looks at the exact syntactic
+// position V2 already treats as a leading period claim — a CURRENT_CUE word at clause start,
+// immediately followed by the candidate month — so "Revenue may increase" (no cue before "may")
+// is never touched, while "In july, sales grew" is caught even though "july" is lower-case.
+const MONTH_NAME_CI_RE = new RegExp(MONTH_NAME_RE.source, 'gi');
+
+function checkLowercaseMonthClauseStart(narrative, pack, violations) {
+  const bounds = periodBounds(pack);
+  const currentMonths = monthsSpanned(bounds.from, bounds.to);
+  if (currentMonths.size === 0) return;
+
+  MONTH_NAME_CI_RE.lastIndex = 0;
+  let m;
+  while ((m = MONTH_NAME_CI_RE.exec(narrative)) !== null) {
+    if (/^[A-Z]/.test(m[1])) continue; // capitalised: the primary case-sensitive pass already covers it
+    const idx = monthIndexOf(m[1]);
+    if (idx < 0 || currentMonths.has(idx)) continue;
+    const lead = narrative.slice(0, m.index);
+    const cue = CURRENT_CUE.exec(lead.slice(-24));
+    if (!cue) continue;
+    if (COMPARISON_CUE.test(lead.slice(-24))) continue;
+    if (!CLAUSE_START.test(lead.slice(0, lead.length - cue[0].length))) continue;
+    violations.push({
+      rule: RULES.POPULATION,
+      detail: `period "${m[0]}" (lower-case) is not the pack's period (${bounds.from} to ${bounds.to}), ` +
+        `near "${contextAround(narrative, m.index, m.index + m[0].length)}"`,
+    });
+  }
+}
+
 /* ------------------------------------------------------- V3: causal language */
 
 // The v179 pack contains no experiment, no holdout and no counterfactual — nothing in it can
@@ -467,6 +676,49 @@ function checkConfidence(narrative, opts, violations) {
       rule: RULES.CONFIDENCE,
       detail: `over-confident claim "${hit[0]}" (${label}); the evidence supports "may" or ` +
         `"could", near "${contextAround(narrative, hit.index, hit.index + hit[0].length)}"`,
+    });
+  }
+}
+
+/* -------------------------------------------- V4 extension: confidence ceiling */
+
+// Check 86: strong-pattern vocabulary is only earned at the pack's own confidence_class ceiling
+// (v652's evidence_block tiers: insufficient | early_signal | strong_pattern). Below strong_pattern
+// a "pattern/trend" claim must carry hedged wording nearby ("may", "early sign", "seems to" ...).
+// This is separate from OVERCONFIDENT_PATTERNS above (definitely/certainly/guaranteed/"will
+// increase" stay refused at every tier — no comparison in this product is ever THAT certain);
+// this rule is about the language of PATTERN-RECOGNITION specifically, which v652 exists to cap.
+const STRONG_CERTAINTY_RE =
+  /\b(?:clearly|consistently|reliably|a strong (?:pattern|trend)|clear pattern|proven|definitively shows)\b/i;
+const PATTERN_MENTION_RE = /\b(?:pattern|trend|tendency)\b/gi;
+const HEDGE_NEARBY_RE =
+  /\b(?:may|might|could|possibly|early sign|early indication|not (?:yet )?conclusive|not confirmed|preliminary|seems? to|appears? to)\b/i;
+
+function checkConfidenceTier(narrative, pack, opts, violations) {
+  if (opts.allowStrongClaims === true) return;
+  const tierRaw = typeof opts.confidenceClass === 'string' ? opts.confidenceClass : pack.confidence_class;
+  const tier = CONFIDENCE_TIER_SET.has(tierRaw) ? tierRaw : 'insufficient';
+  if (tier === 'strong_pattern') return; // the ceiling is not exceeded; nothing left to check here
+
+  const strongHit = STRONG_CERTAINTY_RE.exec(narrative);
+  if (strongHit) {
+    violations.push({
+      rule: RULES.CONFIDENCE,
+      detail: `"${strongHit[0]}" claims strong-pattern confidence but confidence_class is ` +
+        `"${tier}"; use hedged wording ("may", "early sign") near ` +
+        `"${contextAround(narrative, strongHit.index, strongHit.index + strongHit[0].length)}"`,
+    });
+  }
+
+  PATTERN_MENTION_RE.lastIndex = 0;
+  let m;
+  while ((m = PATTERN_MENTION_RE.exec(narrative)) !== null) {
+    const window = narrative.slice(Math.max(0, m.index - 40), Math.min(narrative.length, m.index + 40));
+    if (HEDGE_NEARBY_RE.test(window)) continue;
+    violations.push({
+      rule: RULES.CONFIDENCE,
+      detail: `"${m[0]}" claim has no hedged wording nearby while confidence_class is "${tier}", ` +
+        `near "${contextAround(narrative, m.index, m.index + m[0].length)}"`,
     });
   }
 }
@@ -540,6 +792,71 @@ function checkLimitations(narrative, pack, violations) {
         detail: `evidence_completeness.unavailable_sections names "${section}" but the narrative ` +
           `never says it was unavailable`,
       });
+    }
+  }
+}
+
+/* ------------------------------------------------- V5 extension: other limitations */
+
+// Check 87: three more limitations the pack can carry, each a fact that changes what a claim
+// nearby actually means, and each requiring its own acknowledgement rather than the blanket
+// GENERIC_ACKNOWLEDGEMENT above (that escape hatch is specifically for unavailable_sections).
+const IDENTIFIED_CAVEAT_CUE = /\bidentified\b/i;
+const ACCOUNT_OPENS_CLAMP_CUE =
+  /\b(?:not the full period|only up to|only cover(?:s|ed)?|only includes?|partial(?:ly)?|does not cover the (?:full|whole) period)\b/i;
+const ACCOUNT_OPENS_MENTION_CUE = /\baccount[\s-]?open|sign[\s-]?up|new account|registration|joined/i;
+const ITEM_TOP_CLAIM_CUE = /\bitems?\b/i;
+const ITEM_TOP_ACTION_CUE = /\btop|sell|sold|best|popular/i;
+const ITEM_COVERAGE_CUE =
+  /\b(?:of tracked items|tracked items only|only part of (?:revenue|sales)|coverage|partial item)\b/i;
+
+function checkLimitationItems(narrative, pack, violations) {
+  const sentences = sentencesOf(narrative);
+
+  const identification = (pack && pack.insights && pack.insights.identification) ||
+    (pack && pack.identification) || null;
+  const share = identification ? identification.identified_revenue_share_pct : null;
+  if (typeof share === 'number' && share < 100) {
+    const acknowledged = sentences.some((s) => IDENTIFIED_CAVEAT_CUE.test(s));
+    if (!acknowledged) {
+      violations.push({
+        rule: RULES.LIMITATION,
+        detail: `identified_revenue_share_pct is ${share} (below 100) but the narrative never ` +
+          `states an identified-only caveat`,
+      });
+    }
+  }
+
+  const accountOpens = (pack && pack.account_opens) || null;
+  const range = accountOpens && accountOpens.report_range;
+  if (range && range.clamped === true) {
+    const acknowledged = sentences.some(
+      (s) => ACCOUNT_OPENS_MENTION_CUE.test(s) && ACCOUNT_OPENS_CLAMP_CUE.test(s),
+    );
+    if (!acknowledged) {
+      violations.push({
+        rule: RULES.LIMITATION,
+        detail: 'account_opens.report_range.clamped is true but the narrative never says the ' +
+          'account-opens figures are partial',
+      });
+    }
+  }
+
+  const items = (pack && pack.insights && pack.insights.items) || (pack && pack.items) || null;
+  const coverage = items ? items.coverage_pct : null;
+  if (typeof coverage === 'number' && coverage < 90) {
+    const mentionsTopItems = sentences.some(
+      (s) => ITEM_TOP_CLAIM_CUE.test(s) && ITEM_TOP_ACTION_CUE.test(s),
+    );
+    if (mentionsTopItems) {
+      const acknowledged = sentences.some((s) => ITEM_COVERAGE_CUE.test(s));
+      if (!acknowledged) {
+        violations.push({
+          rule: RULES.LIMITATION,
+          detail: `items.coverage_pct is ${coverage} (below 90) but a top-item claim is made ` +
+            `without a coverage caveat`,
+        });
+      }
     }
   }
 }
@@ -631,6 +948,86 @@ function checkEntities(narrative, packInfo, violations) {
   }
 }
 
+/* -------------------------------------------------------------- V6 extension: single-token names */
+
+// Check 83/88's second half: a single invented proper noun ("Marcus") is invisible to the
+// two-token rule above by design (one capitalised word is far too common to flag on its own). This
+// closes ONE narrow, high-precision slice of that gap: a capitalised token immediately following a
+// direct-address cue ("customer", "client", "Ms", "Mr", "Mrs") is exactly the position a name goes,
+// so it is checked alone. Still conservative — a single name anywhere else in the sentence, or any
+// other part of speech, is not covered.
+const DIRECT_ADDRESS_CUE_RE = /\b(?:customer|client|Ms\.?|Mr\.?|Mrs\.?)\s+([A-Z][a-z]+)\b/g;
+
+function checkSingleTokenEntities(narrative, packInfo, violations) {
+  const haystack = packInfo.strings.join('  ').toLowerCase();
+  const reported = new Set();
+  DIRECT_ADDRESS_CUE_RE.lastIndex = 0;
+  let m;
+  while ((m = DIRECT_ADDRESS_CUE_RE.exec(narrative)) !== null) {
+    const name = m[1];
+    const plain = name.toLowerCase();
+    if (DAY_NAMES.has(plain) || monthIndexOf(plain) >= 0 || STOPWORDS.has(plain)) continue;
+    if (haystack.includes(plain)) continue;
+    if (reported.has(plain)) continue;
+    reported.add(plain);
+    violations.push({
+      rule: RULES.ENTITY,
+      detail: `"${name}" is named right after "${m[0].slice(0, m[0].length - name.length).trim()}" ` +
+        `but appears nowhere in the evidence pack, near ` +
+        `"${contextAround(narrative, m.index, m.index + m[0].length)}"`,
+    });
+  }
+}
+
+/* -------------------------------------------------------------- V7: structure */
+
+// Check 82: the report is a fixed template, not free-form prose. SYSTEM_PROMPT (index.ts) spells
+// out five headings in this exact order, and "exactly three numbered actions" under the last one.
+// This checks the OUTPUT against that spec — a prompt asking for structure is not a guarantee of
+// structure, same rationale as every other rule in this file.
+const REQUIRED_HEADINGS = [
+  '## Summary',
+  '## What went well',
+  '## What needs attention',
+  '## Your customers',
+  '## Do these three things next',
+];
+
+function checkStructure(narrative, violations) {
+  const positions = REQUIRED_HEADINGS.map((heading) => narrative.indexOf(heading));
+  positions.forEach((idx, i) => {
+    if (idx !== -1) return;
+    violations.push({
+      rule: RULES.STRUCTURE,
+      detail: `required heading "${REQUIRED_HEADINGS[i]}" is missing from the report`,
+    });
+  });
+  for (let i = 1; i < positions.length; i += 1) {
+    if (positions[i] === -1 || positions[i - 1] === -1) continue;
+    if (positions[i] <= positions[i - 1]) {
+      violations.push({
+        rule: RULES.STRUCTURE,
+        detail: `heading "${REQUIRED_HEADINGS[i]}" must come after "${REQUIRED_HEADINGS[i - 1]}" ` +
+          `but appears out of order`,
+      });
+    }
+  }
+
+  const lastIdx = positions[positions.length - 1];
+  if (lastIdx === -1) return;
+  const lastHeading = REQUIRED_HEADINGS[REQUIRED_HEADINGS.length - 1];
+  const rest = narrative.slice(lastIdx + lastHeading.length);
+  const nextHeading = /^[ \t]*#{1,6}[ \t]/m.exec(rest);
+  const section = nextHeading ? rest.slice(0, nextHeading.index) : rest;
+  const items = section.match(/^[ \t]*\d{1,2}[.)][ \t]+\S/gm) || [];
+  if (items.length !== 3) {
+    violations.push({
+      rule: RULES.STRUCTURE,
+      detail: `"${lastHeading}" must have exactly three numbered actions, found ${items.length}`,
+    });
+  }
+}
+
 /* -------------------------------------------------------------- entry point */
 
 /**
@@ -655,7 +1052,7 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
   const derivedPct = derivedPercentages(packInfo.objects);
 
   // V1
-  const { tokens, grounded } = groundNumbers(narrative, packInfo, derivedPct);
+  const { tokens, grounded, wordTokens, wordGrounded } = groundNumbers(narrative, packInfo, derivedPct);
   for (let i = 0; i < tokens.length; i += 1) {
     if (grounded[i]) continue;
     const tok = tokens[i];
@@ -665,12 +1062,28 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
         `"${contextAround(narrative, tok.index, tok.end)}"`,
     });
   }
+  for (let i = 0; i < wordTokens.length; i += 1) {
+    if (wordGrounded[i]) continue;
+    const tok = wordTokens[i];
+    violations.push({
+      rule: RULES.NUMERIC,
+      detail: `${tok.value} (written "${tok.raw.trim()}") is not in the evidence pack, near ` +
+        `"${contextAround(narrative, tok.index, tok.end)}"`,
+    });
+  }
 
-  checkPopulation(narrative, pack, violations);   // V2
-  checkCausal(narrative, options, violations);    // V3
-  checkConfidence(narrative, options, violations);// V4
-  checkLimitations(narrative, pack, violations);  // V5
-  checkEntities(narrative, packInfo, violations); // V6
+  checkPopulation(narrative, pack, violations);         // V2
+  checkBranch(narrative, pack, violations);             // V2 (check 84)
+  checkLowercaseMonthClauseStart(narrative, pack, violations); // V2 (check 84)
+  checkCausal(narrative, options, violations);          // V3
+  checkConfidence(narrative, options, violations);      // V4
+  checkConfidenceTier(narrative, pack, options, violations); // V4 (check 86)
+  checkLimitations(narrative, pack, violations);        // V5
+  checkLimitationItems(narrative, pack, violations);    // V5 (check 87)
+  checkEntities(narrative, packInfo, violations);       // V6
+  checkSingleTokenEntities(narrative, packInfo, violations); // V6 (check 83/88)
+  checkStructure(narrative, violations);                // V7 (check 82)
+  checkCohortContradiction(narrative, pack, violations); // V8 (check 89)
 
   return { ok: violations.length === 0, violations };
 }
@@ -686,9 +1099,13 @@ export function validateNarrative(narrativeMd, evidencePack, opts = {}) {
 // separately computed quantities. If one report says "4 customers are at risk" and another says
 // "4 loyal regulars", at most one can be right, and the pack decides which.
 //
-// This is exported for the suite to execute, and deliberately NOT wired into validateNarrative's
-// verdict: the phrase list below is small, and failing a real report on a phrasing miss is a worse
-// outcome than an advisory signal. Promoting it to a hard rule needs broader phrase coverage first.
+// classifyCohortMentions itself stays exported and ADVISORY — general phrase coverage is still
+// thin, so its full output is not something validateNarrative should fail a report on wholesale.
+// v684 (check 89) wires ONE narrow slice of it into the hard verdict as V8, below: a claimed count
+// that does not match its own cohort but DOES match a DIFFERENT tracked cohort's count exactly.
+// That specific shape — "4 loyal regulars" when returning_customers is 5 but at_risk.customers is
+// 4 — cannot be explained by phrasing noise; the number the model wrote belongs to a cohort it
+// didn't name. Anything looser than that (inconsistent but matching nothing else) still abstains.
 // Each pattern binds a COUNT to a COHORT only when the cohort's cue follows the number within a
 // few words. Anything looser mis-binds: "4 regulars with 2 or more past visits have not been seen
 // for 45 to 180 days" offers three numbers and only one of them is the cohort's size. When the
@@ -749,4 +1166,34 @@ export function classifyCohortMentions(narrativeMd, evidencePack) {
     }
   }
   return out;
+}
+
+/* ------------------------------------------------------ V8: cohort contradiction */
+
+// Check 89, the hard-verdict slice described above. Fires ONLY when a binding is inconsistent with
+// its own cohort AND the claimed count equals a different cohort's count exactly — the case where
+// the pack itself proves the number belongs elsewhere. Every other inconsistency (a count that
+// matches nothing at all) still abstains, exactly as classifyCohortMentions does on its own.
+function checkCohortContradiction(narrative, pack, violations) {
+  const bindings = classifyCohortMentions(narrative, pack);
+  if (bindings.length === 0) return;
+  const expectedByCohort = {};
+  for (const { cohort, path } of COHORT_PHRASES) {
+    const value = readPath(pack, path);
+    if (typeof value === 'number') expectedByCohort[cohort] = value;
+  }
+  for (const binding of bindings) {
+    if (binding.consistent || binding.expected === undefined) continue;
+    for (const [otherCohort, otherValue] of Object.entries(expectedByCohort)) {
+      if (otherCohort === binding.cohort) continue;
+      if (otherValue !== binding.claimed) continue;
+      violations.push({
+        rule: RULES.COHORT,
+        detail: `cohort count contradicts the pack: "${binding.claimed}" is bound to ` +
+          `${binding.cohort} (pack says ${binding.expected}) but matches ${otherCohort}'s own ` +
+          `count (${otherValue}) instead, near "${binding.context}"`,
+      });
+      break;
+    }
+  }
 }

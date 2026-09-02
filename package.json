@@ -11,6 +11,7 @@
     "tenant-gate:prove": "node scripts/ops/tenant-consistency-gate.mjs --prove-detection",
     "certify-tenant": "node scripts/ops/tenant-consistency-gate.mjs --certify",
     "quality": "node scripts/quality/static-baseline.mjs",
+    "ai-report:gate": "node scripts/quality/ai-report-golden-gate.mjs",
     "runtime-config:check": "node scripts/runtime-config/generate.mjs --config config/runtime/production.json --check",
     "migration-manifest:check": "node scripts/migrations/generate-manifest.mjs --check",
     "canonical-migrations:plan:check": "node scripts/migrations/materialize-canonical-order.mjs --check-plan",

@@ -1,0 +1,53 @@
+{
+  "description": "A high-anonymous firm — most sales are cash/anonymous, identification share is low, and customer-section figures must be caveated as identified-only.",
+  "pack": {
+    "contract_version": "v176",
+    "scope": {
+      "business_name": "High Anon Mart",
+      "period_kind": "monthly",
+      "period_start": "2026-08-01",
+      "period_end": "2026-08-31",
+      "prior_period_start": "2026-07-01",
+      "prior_period_end": "2026-07-31"
+    },
+    "confidence_class": "insufficient",
+    "insights": {
+      "identification": {
+        "total_revenue_cents": 1000000,
+        "identified_revenue_cents": 250000,
+        "identified_revenue_share_pct": 25.0,
+        "anonymous_sales": 40
+      },
+      "retention": {
+        "customers_served": 5,
+        "new_customers": 2,
+        "returning_customers": 3,
+        "existing_customer_return_rate_pct": 60.0,
+        "prior_period_new_customers": 4,
+        "prior_new_who_returned_this_period": 2,
+        "prior_new_return_rate_pct": 50.0
+      },
+      "at_risk": {
+        "definition": "customers with 2+ lifetime visits whose last visit is 45-180 days before period end",
+        "customers": 1,
+        "their_lifetime_revenue_cents": 60000,
+        "recovery_value_one_visit_each_cents": 5000
+      },
+      "top_customers": {
+        "rows": [
+          { "label": "Wong K.", "revenue_cents": 100000, "visits": 3, "is_new_this_period": false }
+        ],
+        "top1_share_of_total_revenue_pct": 10.0,
+        "top1_share_of_identified_revenue_pct": 40.0
+      }
+    },
+    "account_opens": {
+      "report_range": { "requested_to": "2026-08-31", "effective_to": "2026-08-31", "clamped": false }
+    },
+    "evidence_completeness": {
+      "unavailable_sections": []
+    }
+  },
+  "good": "## Summary\nHigh Anon Mart saw steady footfall. Revenue was SGD 10,000.00 this month, though only 25% of it is tied to identified customers.\n\n## What went well\n- 3 of 5 identified customers this month had already bought before, a returning-customer share of 60.0%.\n- Wong K. carried 40.0% of identified revenue, or SGD 1,000.00.\n\n## What needs attention\n- Only 25% of revenue came from identified customers; the customer figures below describe them only, not all shoppers.\n- 1 regular has not been seen in a while. One returned visit is worth SGD 50.00.\n\n## Your customers\nWong K. carried 10.0% of all revenue, including anonymous sales.\n\n## Do these three things next\n1. Send one win-back message to the 1 at-risk regular this week. SGD 50.00 / 1 customer = SGD 50.00 each.\n2. Ask identified customers for contact details at checkout to raise the 25% identification rate.\n3. Review the 3 returning customers for a loyalty invite next month.\n",
+  "bad": "## Summary\nHigh Anon Mart saw steady footfall. Revenue was SGD 10,000.00 this month, though only 25% of it is tied to identified customers.\n\n## What went well\n- 3 of 5 identified customers this month had already bought before, a returning-customer share of 60.0%.\n- Wong K. carried 40.0% of identified revenue, or SGD 1,000.00.\n\n## What needs attention\n- Only 25% of revenue came from identified customers; the customer figures below describe them only, not all shoppers.\n- 1 regular has not been seen in a while. One returned visit is worth SGD 50.00.\n\n## Your customers\nWong K. carried 10.0% of all revenue, including anonymous sales. All of your customers are loyal regulars who keep coming back.\n\n## Do these three things next\n1. Send one win-back message to the 1 at-risk regular this week. SGD 50.00 / 1 customer = SGD 50.00 each.\n2. Ask identified customers for contact details at checkout to raise the 25% identification rate.\n3. Review the 3 returning customers for a loyalty invite next month.\n"
+}
