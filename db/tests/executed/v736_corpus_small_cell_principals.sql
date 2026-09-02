@@ -68,7 +68,7 @@
 --
 -- Named for v736: every "served" assertion below is preceded by a precondition assertion that
 -- the principal genuinely holds the access being exercised (fixture-guide rule). Every
--- "refused" assertion asserts errcode 32501 exactly, never merely "raised". One transaction,
+-- "refused" assertion asserts errcode 42501 exactly, never merely "raised". One transaction,
 -- rolled back. No production access.
 
 \set ON_ERROR_STOP on
@@ -152,7 +152,7 @@ begin
 
   -- The assigned consultant, for biz_a only (fixture-guide "assigning a consultant").
   insert into public.platform_consultants (id, user_id, display_name, tier, employment_started_on, active)
-    values (cons_id, u_cons, 'ZZ v736 consultant', 'senior', current_date - 300, true);
+    values (cons_id, u_cons, 'ZZ v736 consultant', 'senior', current_date - 400, true);
   insert into public.sme_companies (id, legal_name, trading_name)
     values (co_id, 'ZZ v736 Firm A Pte Ltd', 'ZZ v736 Firm A');
   insert into public.sme_prospects (company_id, legacy_stage_raw, assigned_consultant_id,
@@ -585,7 +585,7 @@ begin
   perform app.v676_close_internal_drain();
 
   ---------------------------------------------------------------------------
-  -- T8. Stranger (owner B): 32501 on every reader above, and on the evidence pack read through
+  -- T8. Stranger (owner B): 42501 on every reader above, and on the evidence pack read through
   --     owner B's own SESSION (not the drain -- the drain is sessionless by construction and
   --     is not owner B's route in production; this proves owner B's session specifically).
   ---------------------------------------------------------------------------
@@ -598,7 +598,7 @@ begin
   exception when insufficient_privilege then null;
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
-             insert into _fail values ('T8-category', format('refused with %s, expected 32501', v_err));
+             insert into _fail values ('T8-category', format('refused with %s, expected 42501', v_err));
   end;
 
   begin
@@ -607,7 +607,7 @@ begin
   exception when insufficient_privilege then null;
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
-             insert into _fail values ('T8-records', format('refused with %s, expected 32501', v_err));
+             insert into _fail values ('T8-records', format('refused with %s, expected 42501', v_err));
   end;
 
   begin
@@ -616,7 +616,7 @@ begin
   exception when insufficient_privilege then null;
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
-             insert into _fail values ('T8-demographics', format('refused with %s, expected 32501', v_err));
+             insert into _fail values ('T8-demographics', format('refused with %s, expected 42501', v_err));
   end;
 
   begin
@@ -625,7 +625,7 @@ begin
   exception when insufficient_privilege then null;
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
-             insert into _fail values ('T8-staffid', format('refused with %s, expected 32501', v_err));
+             insert into _fail values ('T8-staffid', format('refused with %s, expected 42501', v_err));
   end;
 
   begin
@@ -634,7 +634,7 @@ begin
   exception when insufficient_privilege then null;
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
-             insert into _fail values ('T8-staffperf', format('refused with %s, expected 32501', v_err));
+             insert into _fail values ('T8-staffperf', format('refused with %s, expected 42501', v_err));
   end;
 
   begin
@@ -643,7 +643,7 @@ begin
   exception when insufficient_privilege then null;
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
-             insert into _fail values ('T8-evidencepack', format('refused with %s, expected 32501', v_err));
+             insert into _fail values ('T8-evidencepack', format('refused with %s, expected 42501', v_err));
   end;
 
   perform set_config('request.jwt.claims', null, true);
