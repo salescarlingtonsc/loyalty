@@ -46,8 +46,11 @@ test('v575 Book hands the appointment its date, time and service', () => {
   assert.match(page, /time:wantedV575\?wantedV575\.slice\(11,16\):''/);
   assert.match(page, /serviceId:row\?\.service_id\|\|''/);
   const appts = section('const apptPrefillClient=pendingApptClientId', '$(\'appointmentCustomerSearch\').oninput');
-  assert.match(appts, /openNewAppointmentForm\(\{\s*date:apptPrefillV575\?\.date\|\|todaySg,\s*time:apptPrefillV575\?\.time\|\|'',\s*serviceId:apptPrefillV575\?\.serviceId\|\|''\s*\}\)/,
-    'the form opens with all three filled');
+  // F074: the waitlist prefill is the one call site allowed to keep pendingWaitlistBookIdV571
+  // alive across the form-open, via fromWaitlist:!!apptPrefillV575 — every other call site now
+  // defaults to clearing it (openNewAppointmentForm's fromWaitlist=false default).
+  assert.match(appts, /openNewAppointmentForm\(\{\s*date:apptPrefillV575\?\.date\|\|todaySg,\s*time:apptPrefillV575\?\.time\|\|'',\s*serviceId:apptPrefillV575\?\.serviceId\|\|'',[\s\S]*?fromWaitlist:!!apptPrefillV575\s*\}\)/,
+    'the form opens with all three filled and marks itself as the waitlist-originated open');
   assert.match(appts, /if\(apptPrefillClient\|\|apptPrefillV575\)\{/,
     'a walk-in with no customer record still opens a prefilled form');
 });

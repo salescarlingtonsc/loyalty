@@ -12565,15 +12565,21 @@ function customerRewardReadyTotalV465(cards=[]){
   }
   return {total,known};
 }
-/* nestly_v428 (item 6) — "2 REWARDS READY" WHEN ONLY ONE CAN BE TAKEN.
+/* nestly_v428 (item 6), corrected by the F109 audit (2026-09-02).
    A stamp milestone is an ordinary catalogue reward whose COST IS ITS SLOT on the card
-   (v323:968 — `'slot', rung.cost_points`), and public.stamp_milestone_claims carries a unique key
-   on (business, client, programme, cycle, slot_position): "one gift per milestone per card"
-   (v323:402-407). A firm that authored two gifts at the same slot — which is legal — therefore
-   shows a completed card with BOTH claimable and lets the customer claim exactly one; claiming
-   either makes the other unavailable for the cycle (v323:753).
-   So "2 rewards ready" is arithmetic that is true and a promise that is false. The owner-locked
-   wording is "Choose 1".
+   (v323:968 — `'slot', rung.cost_points`). At v323, public.stamp_milestone_claims carried a
+   unique key on (business, client, programme, cycle, slot_position) — "one gift per milestone
+   per card" — so a firm that authored two gifts at the same slot showed a completed card with
+   BOTH claimable but let the customer claim exactly one.
+   db/migrations/20260824_nestly_v478_earned_stamp_gifts_survive_a_claimed_card.sql deliberately
+   DROPPED that slot-based constraint (stamp_milestone_claims_slot_uk) and kept only
+   stamp_milestone_claims_reward_uk (one claim per GIFT, not per slot) — specifically so a
+   customer who earned two gifts on one slot can claim both. Confirmed live against prod:
+   pg_constraint on stamp_milestone_claims carries no slot-based unique any more.
+   So "2 rewards ready" is now arithmetic that is true AND a promise that is kept — both are
+   claimable, each with its own QR. This function still detects the shared-slot SHAPE (it is
+   still useful to tell the customer both gifts need separate QR scans, not one scan for both),
+   it just no longer means "pick one and lose the other".
    The test is the slot rule itself, not a guess: two or more CLAIMABLE catalogue rewards sharing
    one cost, on a firm whose balance is counted in stamps. Points rewards that happen to cost the
    same are genuinely independent — a customer with the balance may take both — so the stamps gate
@@ -16003,12 +16009,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
-        ${/* nestly_v428 (item 6): "Available (2)" is true and, on one stamp slot, misleading — the
-             card carries two gifts and the cycle honours one. The count stays (two ARE on offer);
-             the sentence says which part of that the customer gets, above the cards it applies
-             to, rather than after they have chosen and been refused. */''}
+        ${/* nestly_v428 (item 6, corrected by F109 audit): "Available (2)" is true, and on one
+             stamp slot it used to also be misleading — the old copy said "Choose 1", claiming the
+             two gifts were mutually exclusive. db/migrations/20260824_nestly_v478_...sql dropped
+             stamp_milestone_claims_slot_uk (the constraint that made that true) and kept only
+             stamp_milestone_claims_reward_uk (one claim per GIFT, not per slot) specifically so a
+             customer who earned both gifts on one slot can claim both — confirmed live against
+             prod (pg_constraint on stamp_milestone_claims carries no slot-based unique any more).
+             The sentence now says what actually happens: both are claimable, each with its own
+             QR, rather than steering the customer to pick only one. */''}
         ${claimableRewardsV422.length
-          ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Choose 1 — staff will scan the one you pick.</p>':''}
+          ?`${chooseOneSlotV428?'<p class="muted small customer-programme-rewards-lede" data-rewards-chooseone-v428>Both are yours — show each one’s QR separately to claim it.</p>':''}
             <p class="muted small customer-programme-rewards-lede">Pick a reward, then show its QR at the counter — staff scan it and the ${esc(rewardUnit)} come off.</p>
             <div class="wallet-rewards customer-rewards-carousel-v337">${claimableRewardsV422.map(rewardCardV422).join('')}</div>`
           :(entitlementsV429.length||tierPerksV501.length)?''
@@ -31365,7 +31376,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error)return fail(error);refreshRetentionPanel(draftVersionId,null,'Bring-back rule status updated.')});
   }
   if(isOwner){
-    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
+    $('rtAdd').onclick=async()=>{const button=$('rtAdd');if(button.disabled)return;const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');CUI.setButtonBusy(button,{busy:true,label:'Adding…'});const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(button.isConnected)CUI.setButtonBusy(button,{busy:false});if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
@@ -44512,10 +44523,20 @@ async function appointmentsPage(){
   function closeNewAppointmentForm(){
     if(!appointmentFormCard)return;
     appointmentFormCard.hidden=true;appointmentLayout?.classList.remove('form-open');
+    /* F074: an abandoned booking (Close, or switching to a different customer in the same form)
+       must not leave a stale waitlist-row id around for a LATER, unrelated appointment to
+       silently mark 'booked'. */
+    pendingWaitlistBookIdV571='';
     $('openAppointmentForm')?.focus();
   }
-  function openNewAppointmentForm({date='',staffId='',time='',serviceId=''}={}){
+  function openNewAppointmentForm({date='',staffId='',time='',serviceId='',fromWaitlist=false}={}){
     if(!appointmentFormCard)return;
+    /* F074: pendingWaitlistBookIdV571 must only survive a form-open that actually came from the
+       waitlist's "Book" action (fromWaitlist:true, passed by the one call site below that carries
+       apptPrefillV575). Every other way to open this form — the toolbar button, a calendar
+       day-slot click, the auto-open on page entry — must not inherit a leftover id from an
+       earlier, abandoned waitlist booking. */
+    if(!fromWaitlist)pendingWaitlistBookIdV571='';
     appointmentFormCard.hidden=false;appointmentLayout?.classList.add('form-open');
     if(date&&$('ad'))$('ad').value=date;
     if(time&&$('at'))$('at').value=time;
@@ -44964,7 +44985,11 @@ async function appointmentsPage(){
       openNewAppointmentForm({
         date:apptPrefillV575?.date||todaySg,
         time:apptPrefillV575?.time||'',
-        serviceId:apptPrefillV575?.serviceId||''
+        serviceId:apptPrefillV575?.serviceId||'',
+        // F074: only the waitlist's own prefill (apptPrefillV575) legitimises a surviving
+        // pendingWaitlistBookIdV571 — a pure Customer 360 "New appointment" hand-off
+        // (apptPrefillClient alone) must not inherit an unrelated waitlist id.
+        fromWaitlist:!!apptPrefillV575
       });
       const clientSelect=$('ac');
       if(apptPrefillClient&&clientSelect&&[...clientSelect.options].some(o=>o.value===apptPrefillClient)){
@@ -45019,11 +45044,22 @@ async function appointmentsPage(){
       /* nestly_v571: the waitlist row that sent us here is resolved HERE and nowhere earlier —
          an appointment now exists, so the walk-in is genuinely no longer waiting. Consume-once,
          and fire-and-forget: the appointment is already saved, so a failed queue update must not
-         be reported as a failed booking. It simply leaves the row for staff to clear by hand. */
+         be reported as a failed booking. It simply leaves the row for staff to clear by hand.
+         F074: openNewAppointmentForm's fromWaitlist gate already stops a stale id from an
+         ABANDONED booking reaching this point, but the id can still survive a form the staff
+         legitimately opened from the waitlist and then, within that same open form, saved for a
+         DIFFERENT customer than the one the row was for. Re-check against the row's own
+         client_id (not the closure's) before writing 'booked'; a row with no client on record
+         (a walk-in never linked to a customer) has nothing to compare, so it is trusted as before. */
       if(pendingWaitlistBookIdV571){
         const waitlistIdV571=pendingWaitlistBookIdV571;pendingWaitlistBookIdV571='';
-        sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
-          .eq('business_id',S.biz.id).then(()=>{},()=>{});
+        sb.from('waitlist').select('client_id').eq('id',waitlistIdV571).eq('business_id',S.biz.id).maybeSingle()
+          .then(({data:waitlistRowV571,error:waitlistRowErrorV571})=>{
+            if(waitlistRowErrorV571||!waitlistRowV571)return;
+            if(waitlistRowV571.client_id&&waitlistRowV571.client_id!==request.p_client)return;
+            sb.from('waitlist').update({status:'booked'}).eq('id',waitlistIdV571)
+              .eq('business_id',S.biz.id).then(()=>{},()=>{});
+          },()=>{});
       }
       /* A4: "Book next visit" set this right after the earlier appointment was completed for the
          SAME client — this is the one shot at recording the provenance, so it is consumed here
@@ -48461,9 +48497,13 @@ async function inventoryPage(){
     bindProductEditors();
   }
   if(canWrite)$('padd2').onclick=async()=>{
+    const button=$('padd2');
+    if(button.disabled)return;
     if($('pn2').value.trim().length<2) return toast('Name required');
+    CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
     const {error}=await sb.from('products').insert({business_id:S.biz.id,name:$('pn2').value.trim(),
       sku:$('ps2').value||null,retail_price_cents:Math.round(parseFloat($('pp2').value||'0')*100)});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error) return fail(error);toast('Product added');$('pn2').value='';$('ps2').value='';$('pp2').value='';
     dismissFormModalV658($('productFormCard')); // nestly_v658
     loadInv();
@@ -53833,7 +53873,11 @@ async function settingsPage(){
     if(staffId===myStaffId){S.myModules=null;S.myModulePerms=null;route();}
   };
   $('igo').onclick=async()=>{
+    const button=$('igo');
+    if(button.disabled)return;
+    CUI.setButtonBusy(button,{busy:true,label:'Creating…'});
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error) return fail(error);
     await copyTextToClipboard(staffInviteLinkV151(data.code),{success:`Invite created — link copied for ${esc(ROLE_LABELS[$('ir').value]||$('ir').value)}`,
       failure:'Invite created, but copy was blocked. Copy the link or code from Pending invites.'});loadTeam();

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="30d6e07d396f03ce868141df56ccb1f9fefee81afa869b17ba11ac4b0b77794b"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5674,7 +5674,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 30d6e07d396f03ce868141df56ccb1f9fefee81afa869b17ba11ac4b0b77794b</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6755,7 +6755,7 @@ function pruneRewardSiblingsV139(root){
     document.querySelectorAll('.retentionToggle').forEach(b=>b.onclick=async()=>{const {error}=await sb.rpc('save_retention_program_draft',{p_config_version:draftVersionId,p_program_id:b.dataset.id,p_program:{active:b.dataset.to==='true'},p_expected_snapshot_hash:snapshotHash});if(!isRetentionCurrent())return;if(error)return fail(error);refreshRetentionPanel(draftVersionId,null,'Bring-back rule status updated.')});
   }
   if(isOwner){
-    $('rtAdd').onclick=async()=>{const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
+    $('rtAdd').onclick=async()=>{const button=$('rtAdd');if(button.disabled)return;const label=$('rtName').value.trim();if(label.length<2)return toast('Give the reward type a clear name');CUI.setButtonBusy(button,{busy:true,label:'Adding…'});const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:null,p_taxonomy:{label,fulfillment_kind:$('rtKind').value,active:true}});if(!isRetentionCurrent())return;if(button.isConnected)CUI.setButtonBusy(button,{busy:false});if(error)return fail(error);toast('Reward type added');refreshRetentionPanel(draftVersionId,null,'Reward type added.')};
     document.querySelectorAll('.taxonomyRename').forEach(b=>b.onclick=async()=>{const label=prompt('New reward label',b.dataset.label)?.trim();if(!label||label===b.dataset.label)return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{label}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward label renamed; prior grants are unchanged');refreshRetentionPanel(draftVersionId,null,'Reward label updated.')});
     document.querySelectorAll('.taxonomySort').forEach(b=>b.onclick=async()=>{const raw=prompt('Sort order (0–10000)',b.dataset.sort);if(raw===null)return;const sort=Number(raw);if(!Number.isInteger(sort)||sort<0||sort>10000)return toast('Sort order must be a whole number from 0 to 10000');const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{sort}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type order updated');refreshRetentionPanel(draftVersionId,null,'Reward type order updated.')});
     document.querySelectorAll('.taxonomyRetire').forEach(b=>b.onclick=async()=>{if(!await confirmActionV386('Retire this label? Published active programs must be replaced or paused first.'))return;const {error}=await sb.rpc('save_reward_taxonomy',{p_business:S.biz.id,p_taxonomy_id:b.dataset.id,p_taxonomy:{active:false}});if(!isRetentionCurrent())return;if(error)return fail(error);toast('Reward type retired; history is preserved');refreshRetentionPanel(draftVersionId,null,'Reward type retired.')});
@@ -16057,7 +16057,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'30d6e07d396f03ce868141df56ccb1f9fefee81afa869b17ba11ac4b0b77794b',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
