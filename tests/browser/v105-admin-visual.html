@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="dc701cdb26b9f6eeb883d6c9f5d5a2a1ac398614e9bc5404410e9fbe58cf8cdc">
+<meta name="v105-production-component-sha256" content="c513be2dc54ef82366170420e9b128028c09195d40e19ca8d1f639572df4c925">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -162,7 +162,7 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .password-control.has-passkey input{padding-right:102px}
 .password-control-actions{position:absolute;inset:0 4px 0 auto;display:flex;align-items:center}
 .password-icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:transparent;color:var(--ink2);box-shadow:none;transition:background .18s var(--ease),color .18s var(--ease)}
-/* nestly_v745: display:inline-flex above outranks the UA's [hidden]{display:none}, so a button the
+/* nestly_v748: display:inline-flex above outranks the UA's [hidden]{display:none}, so a button the
    code had hidden still painted — which is how the v670 diagnosis was misread on first look. */
 .password-icon-button[hidden]{display:none}
 .password-icon-button:hover{background:var(--tint);color:var(--coral)}
@@ -2326,6 +2326,19 @@ li.grow-inline-modal-v658,
 li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
 .grow-inline-modal-v658 .grow-setup-input-v301{box-sizing:border-box;text-align:left;margin-inline:0}
 .grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+/* nestly_v748 (owner photos 1 and 2, red boxes drawn round the tier-name field). Every field in
+   these pop-ups is written as `<label><br><input>` inside one <p>. An inline-block input sits on
+   the text baseline, so the line box that holds it reserves a descender's worth of leading BELOW
+   it and the label's own half-leading above — 104px of paragraph for a 17px label and a 44px
+   field. The label therefore floated a long way from the box it names, and the run of fields had
+   no rhythm at all: the gap inside a field group was larger than the gap between groups.
+   Stacking the paragraph as a flex column removes the baseline entirely, so the label sits 6px
+   above its own input and the groups are separated by the dialog's own 12px gap. The <br> is a
+   line break with nothing left to break and would otherwise become a flex item of its own.
+   `:not(.row)` keeps the paragraphs that are deliberately horizontal (the "+ Add benefit" row)
+   exactly as they are. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
+.grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -6499,7 +6512,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · dc701cdb26b9</span>
+<span class="v105-provenance">v105 production-component harness · c513be2dc54e</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6624,7 +6637,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'dc701cdb26b9f6eeb883d6c9f5d5a2a1ac398614e9bc5404410e9fbe58cf8cdc',
+  sourceHash:'c513be2dc54ef82366170420e9b128028c09195d40e19ca8d1f639572df4c925',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

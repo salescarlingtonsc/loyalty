@@ -6673,6 +6673,48 @@ function customerWalletFactsUnchangedV333(silent,signature){
    is mid-interaction) must leave the old signature in place, or the next tick would read the new
    facts as "already shown" and the customer would never see them. */
 function customerWalletFactsPaintedV333(signature){customerWalletFactSignatureV333=signature}
+/* nestly_v748 (owner photo 4: "cancel or close the pop up should not auto brings me to the home
+   page - it should stay put as if the pop up did not occur" — clarified by the owner as "before
+   clicking i am looking at the rewards list ... if i close the qrcode i should still be looking at
+   the reward list like nothing happened").
+
+   Nothing NAVIGATES on close — v524 closed that door and the route guard still holds. What moves
+   is the scroll. Closing the QR fires two repaints in sequence: loadRewards() replaces
+   #walletRewards wholesale, then the counter moment repaints the whole body. The body repaint
+   holds scrollTop itself (customerWalletSilentPaintV333, just below); the section repaint does
+   not, and it is the one that changes height — a redeemed gift drops its Redeem control, a hero
+   card re-lays out — so the content the customer was reading slides out from under the viewport
+   and they land at the top of the page.
+
+   Holding the raw scrollTop is the right anchor here rather than scrolling some element back into
+   view: "as if the pop up did not occur" means the page is where they left it, and the position
+   they left it at is the position the modal was opened over (nothing locks or resets body scroll
+   while a customer sheet is up).
+
+   The hold spans the whole settling window because the section loaders land asynchronously and
+   independently: it re-applies on every frame for ~700ms and stands down the moment the customer
+   scrolls themselves, so it can never fight a deliberate gesture.  */
+function customerHoldWalletScrollV748(windowMs=700){
+  const scroller=document.scrollingElement||document.documentElement;
+  if(!scroller)return ()=>{};
+  const wanted=scroller.scrollTop;
+  let stopped=false;
+  const until=Date.now()+windowMs;
+  /* Stand down on the customer's own INPUT, not on a scroll event. A scroll event cannot tell us
+     who moved the page — a section that repaints shorter moves it too, and that is precisely the
+     movement we are here to undo, so treating any scroll as a gesture would disable the hold in
+     the one case it exists for. A wheel, a touch or an arrow key is unambiguous. */
+  const events=['wheel','touchstart','keydown','pointerdown'];
+  const release=()=>{stopped=true;events.forEach(name=>window.removeEventListener(name,release))};
+  events.forEach(name=>window.addEventListener(name,release,{passive:true,once:true}));
+  const tick=()=>{
+    if(stopped||Date.now()>until){release();return}
+    if(scroller.scrollTop!==wanted)scroller.scrollTop=wanted;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  return release;
+}
 function customerWalletSilentPaintV333(html){
   const host=$('walletBody');
   if(!host)return false;
@@ -8278,7 +8320,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
           qrRoute:'gift-redeem',
           pollRpc:'customer_get_gift_intent_v515',
           cancelRpc:'customer_cancel_gift_intent_v515',
-          onClose:()=>{loadRewards();void customerCounterMomentV468()}});
+          onClose:()=>{customerHoldWalletScrollV748();loadRewards();void customerCounterMomentV468()}});
       };
     });
     [...host.querySelectorAll('[data-customer-redeem]'),
@@ -8313,7 +8355,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
          alone re-read the catalogue and left the balance, the hero and the history exactly as
          stale as they were — the "takes awhile" the owner reported. */
       showPendingRedemptionQr({intent,businessName:b.name,rewardName:reward.customer_name||reward.name,
-        onClose:()=>{loadRewards();void customerCounterMomentV468()}});
+        onClose:()=>{customerHoldWalletScrollV748();loadRewards();void customerCounterMomentV468()}});
     });
   };
   const activityState={items:[],nextCursor:null};
@@ -8418,7 +8460,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:(grantLabelV469?'Given free':'');
         return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
-          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}
+          ${/* nestly_v748 (owner photo 5: "when points earned > it should clearly state the expiry
+               date per points earned"). The deadline on THESE points, not the wallet's next
+               expiry band: points_expires_at comes from the batch this very event created
+               (v748's history reader), so a row can never quote another earn's date. Silent when
+               the business runs no expiry — there is no date to state, and inventing one would be
+               worse than saying nothing. */''}
+          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>${walletDate(item.points_expires_at)?`<span class="muted small"> · expires ${esc(walletDate(item.points_expires_at))}</span>`:''}`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       };

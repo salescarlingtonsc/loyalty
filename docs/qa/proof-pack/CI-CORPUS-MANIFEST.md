@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **66**.
+Fixture count: **67**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -83,6 +83,7 @@ Fixture count: **66**.
 | `db/tests/executed/v742_corpus_synthetic_estate_4.sql` | `db/migrations/20260920_nestly_v742_synthetic_excluded_estate_4.sql` | 1 | 1 | 1 | `841421d3fe2cb5724287d4525ed2fd82c06fb0ca9ecca9069f4ec858586d232c` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v742_corpus_synthetic_estate_4 --migrated-only` |
 | `db/tests/executed/v743_corpus_synthetic_scanner.sql` | `db/migrations/20260920_nestly_v743_synthetic_scanner.sql` | 1 | 5 | 5 | `3279d9b169588892db0d8efc8f681551be80f0137148fb2acbf1baa062ed4322` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus_synthetic_scanner --migrated-only` |
 | `db/tests/executed/v744_corpus_scanner_blind_spots.sql` | `db/migrations/20260920_nestly_v744_scanner_blind_spots.sql` | _(none)_ | 2 | 2 | `2b759ea4ba04083f10bb0c24de14653d6c773c3446bb89d8cf03542866e6f794` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v744_corpus_scanner_blind_spots --migrated-only` |
+| `db/tests/executed/v748_corpus_history_points_expiry.sql` | `db/migrations/20260922_nestly_v748_history_states_points_expiry.sql` | _(none)_ | 1 | 1 | `e8749bc38117c0be166e5a5052246b519ff3352d802c583922618c3f76218293` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v748_corpus_history_points_expiry --migrated-only` |
 
 ## Notes
 

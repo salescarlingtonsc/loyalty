@@ -85,7 +85,10 @@ test('photo 5 — Save is the last thing in the gift dialog, Delete the first', 
 
 test('photo 6 — the referral panels are white cards, and the band is gone', () => {
   assert.match(app, /<div class="card grow-referral-panel-v584" data-grow-referral-summary-v375/);
-  assert.match(app, /<div class="card grow-referral-panel-v584" data-grow-referral-settings-v364/);
+  /* nestly_v748 (owner photo 3): the settings panel became a pop-up, so it now also carries
+     grow-inline-modal-v658 and its dialog attributes. The v584 point — a WHITE CARD, not the
+     pink band — is unchanged and is what this still asserts. */
+  assert.match(app, /<div class="card grow-referral-panel-v584 grow-inline-modal-v658" data-grow-referral-settings-v364/);
   assert.match(shell, /\.grow-referral-panel-v584\{background:var\(--card,#fff\)/);
   assert.doesNotMatch(app, /programme-category-title">Referrals</);
 });

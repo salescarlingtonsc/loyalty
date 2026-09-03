@@ -18351,8 +18351,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
-    :`<div class="card grow-referral-panel-v584" data-grow-referral-settings-v364 style="margin-top:10px">
-      <b>Referral settings</b>
+    :`${/* nestly_v748 (owner photo 3: "i need the edit to be a pop up as well - same as other
+         rewards"). Referral settings were the last editor on this page still opening as a panel
+         that pushed the rest of the programme list down the screen; tiers, the gift form and
+         bring-back have all been pop-ups since v410/v658. Presentation only — the fields, the
+         validation and save_referral_program_v421 are untouched. It stays rendered BY the page
+         template rather than detached to document.body for the same reason the tier form does:
+         every handler here ends in growRerenderV322, which replaces outerMain wholesale, and a
+         detached node would be orphaned behind the repaint. */''}<div class="grow-points-modal-back-v410" data-grow-referral-modal-back-v748 aria-hidden="true"></div><div class="card grow-referral-panel-v584 grow-inline-modal-v658" data-grow-referral-settings-v364 role="dialog" aria-modal="true" aria-labelledby="growReferralSettingsTitleV748">
+      <div class="grow-points-form-head-v485"><b id="growReferralSettingsTitleV748">Referral settings</b>
+        <button type="button" class="grow-points-form-close-v485" data-grow-referral-cancel-v364="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button></div>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
       ${/* nestly_v558: the on/off the owner asked for, in the same toggle-row shape the birthday
            gift and the welcome offer already use, so the three read as one family. It is applied by
@@ -19602,6 +19610,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     '[data-grow-tiers-add-cancel-v331]','#growTiersAddNameV331');
   growInlineModalDismissV658('[data-grow-bb-form-v361]','[data-grow-bb-modal-back-v658]',
     '[data-grow-bb-cancel-v361]','#growBbNameV361');
+  /* nestly_v748: the referral editor joins them, with the same three ways out. */
+  growInlineModalDismissV658('[data-grow-referral-settings-v364]','[data-grow-referral-modal-back-v748]',
+    '[data-grow-referral-cancel-v364]','#growReferralOnV558');
   /* nestly_v662: the two delete confirmations became pop-ups too, so they get the same way out.
      Only the pending row renders one at all, so these selectors can only ever find the
      confirmation actually being asked. */
@@ -20165,11 +20176,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
-  const growReferralCancelV364=outerMain.querySelector('[data-grow-referral-cancel-v364]');
-  if(growReferralCancelV364)growReferralCancelV364.onclick=()=>{
+  /* nestly_v748: the pop-up has TWO ways to leave without saving — the header ✕ and the footer
+     Cancel — so this wires every node carrying the hook, not the first one. querySelector alone
+     would have left the ✕ inert. */
+  outerMain.querySelectorAll('[data-grow-referral-cancel-v364]').forEach(button=>{button.onclick=()=>{
     growReferralEditOpenV364=false;growReferralErrorV364='';
     growRerenderV322({quiet:true});
-  };
+  }});
   /* nestly_v420: the radios swap the two inputs without a server round trip; nothing is written
      until Save, so a mis-tap costs a tap. The kind is captured into state so a re-render (an
      error, a toast) does not throw the choice away. */

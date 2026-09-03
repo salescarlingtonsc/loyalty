@@ -68,7 +68,11 @@ const run = ({ replies }) => {
     isWalletSectionCurrent: () => true,
     showPendingRedemptionQr: options => shown.push(options),
     loadRewards: () => {},
-    customerCounterMomentV468: async () => {}
+    customerCounterMomentV468: async () => {},
+    /* nestly_v748: onClose now holds the page's scroll across the two repaints it triggers
+       (owner photo 4). Stubbed here — this suite is about the idempotency key, and the hold's
+       own behaviour is proved in tests/customer-wallet/v748-qr-close-holds-scroll.test.mjs. */
+    customerHoldWalletScrollV748: () => () => {}
   };
   // The shipped block assigns onclick onto every button the host hands it; run it verbatim.
   const names = Object.keys(scope);

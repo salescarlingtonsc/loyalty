@@ -3748,6 +3748,12 @@
       "version": "20260922110000",
       "name": "nestly_v744_scanner_blind_spots",
       "sourcePath": "db/migrations/20260920_nestly_v744_scanner_blind_spots.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260923000000",
+      "name": "nestly_v748_history_states_points_expiry",
+      "sourcePath": "db/migrations/20260923_nestly_v748_history_states_points_expiry.sql"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="3bdab8495ca5fc2ff9ccfa50b169960acb19168ad7509442c8e329287d292dd2"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -156,7 +156,7 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .password-control.has-passkey input{padding-right:102px}
 .password-control-actions{position:absolute;inset:0 4px 0 auto;display:flex;align-items:center}
 .password-icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:transparent;color:var(--ink2);box-shadow:none;transition:background .18s var(--ease),color .18s var(--ease)}
-/* nestly_v745: display:inline-flex above outranks the UA's [hidden]{display:none}, so a button the
+/* nestly_v748: display:inline-flex above outranks the UA's [hidden]{display:none}, so a button the
    code had hidden still painted — which is how the v670 diagnosis was misread on first look. */
 .password-icon-button[hidden]{display:none}
 .password-icon-button:hover{background:var(--tint);color:var(--coral)}
@@ -2320,6 +2320,19 @@ li.grow-inline-modal-v658,
 li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
 .grow-inline-modal-v658 .grow-setup-input-v301{box-sizing:border-box;text-align:left;margin-inline:0}
 .grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
+/* nestly_v748 (owner photos 1 and 2, red boxes drawn round the tier-name field). Every field in
+   these pop-ups is written as `<label><br><input>` inside one <p>. An inline-block input sits on
+   the text baseline, so the line box that holds it reserves a descender's worth of leading BELOW
+   it and the label's own half-leading above — 104px of paragraph for a 17px label and a 44px
+   field. The label therefore floated a long way from the box it names, and the run of fields had
+   no rhythm at all: the gap inside a field group was larger than the gap between groups.
+   Stacking the paragraph as a flex column removes the baseline entirely, so the label sits 6px
+   above its own input and the groups are separated by the dialog's own 12px gap. The <br> is a
+   line break with nothing left to break and would otherwise become a flex item of its own.
+   `:not(.row)` keeps the paragraphs that are deliberately horizontal (the "+ Add benefit" row)
+   exactly as they are. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
+.grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -5677,7 +5690,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 3bdab8495ca5fc2ff9ccfa50b169960acb19168ad7509442c8e329287d292dd2</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -13664,8 +13677,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
-    :`<div class="card grow-referral-panel-v584" data-grow-referral-settings-v364 style="margin-top:10px">
-      <b>Referral settings</b>
+    :`${/* nestly_v748 (owner photo 3: "i need the edit to be a pop up as well - same as other
+         rewards"). Referral settings were the last editor on this page still opening as a panel
+         that pushed the rest of the programme list down the screen; tiers, the gift form and
+         bring-back have all been pop-ups since v410/v658. Presentation only — the fields, the
+         validation and save_referral_program_v421 are untouched. It stays rendered BY the page
+         template rather than detached to document.body for the same reason the tier form does:
+         every handler here ends in growRerenderV322, which replaces outerMain wholesale, and a
+         detached node would be orphaned behind the repaint. */''}<div class="grow-points-modal-back-v410" data-grow-referral-modal-back-v748 aria-hidden="true"></div><div class="card grow-referral-panel-v584 grow-inline-modal-v658" data-grow-referral-settings-v364 role="dialog" aria-modal="true" aria-labelledby="growReferralSettingsTitleV748">
+      <div class="grow-points-form-head-v485"><b id="growReferralSettingsTitleV748">Referral settings</b>
+        <button type="button" class="grow-points-form-close-v485" data-grow-referral-cancel-v364="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button></div>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
       ${/* nestly_v558: the on/off the owner asked for, in the same toggle-row shape the birthday
            gift and the welcome offer already use, so the three read as one family. It is applied by
@@ -14915,6 +14936,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     '[data-grow-tiers-add-cancel-v331]','#growTiersAddNameV331');
   growInlineModalDismissV658('[data-grow-bb-form-v361]','[data-grow-bb-modal-back-v658]',
     '[data-grow-bb-cancel-v361]','#growBbNameV361');
+  /* nestly_v748: the referral editor joins them, with the same three ways out. */
+  growInlineModalDismissV658('[data-grow-referral-settings-v364]','[data-grow-referral-modal-back-v748]',
+    '[data-grow-referral-cancel-v364]','#growReferralOnV558');
   /* nestly_v662: the two delete confirmations became pop-ups too, so they get the same way out.
      Only the pending row renders one at all, so these selectors can only ever find the
      confirmation actually being asked. */
@@ -15478,11 +15502,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
-  const growReferralCancelV364=outerMain.querySelector('[data-grow-referral-cancel-v364]');
-  if(growReferralCancelV364)growReferralCancelV364.onclick=()=>{
+  /* nestly_v748: the pop-up has TWO ways to leave without saving — the header ✕ and the footer
+     Cancel — so this wires every node carrying the hook, not the first one. querySelector alone
+     would have left the ✕ inert. */
+  outerMain.querySelectorAll('[data-grow-referral-cancel-v364]').forEach(button=>{button.onclick=()=>{
     growReferralEditOpenV364=false;growReferralErrorV364='';
     growRerenderV322({quiet:true});
-  };
+  }});
   /* nestly_v420: the radios swap the two inputs without a server round trip; nothing is written
      until Save, so a mis-tap costs a tap. The kind is captured into state so a re-render (an
      error, a toast) does not throw the choice away. */
@@ -16060,7 +16086,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'3bdab8495ca5fc2ff9ccfa50b169960acb19168ad7509442c8e329287d292dd2',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

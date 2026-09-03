@@ -3753,6 +3753,12 @@
       "path": "db/migrations/20260920_nestly_v744_scanner_blind_spots.sql",
       "semanticVersion": "v744",
       "proposedDeployVersion": "20260922110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260923_nestly_v748_history_states_points_expiry.sql",
+      "semanticVersion": "v748",
+      "proposedDeployVersion": "20260923000000"
     }
   ]
 }

@@ -14705,6 +14705,48 @@ function customerWalletFactsUnchangedV333(silent,signature){
    is mid-interaction) must leave the old signature in place, or the next tick would read the new
    facts as "already shown" and the customer would never see them. */
 function customerWalletFactsPaintedV333(signature){customerWalletFactSignatureV333=signature}
+/* nestly_v748 (owner photo 4: "cancel or close the pop up should not auto brings me to the home
+   page - it should stay put as if the pop up did not occur" — clarified by the owner as "before
+   clicking i am looking at the rewards list ... if i close the qrcode i should still be looking at
+   the reward list like nothing happened").
+
+   Nothing NAVIGATES on close — v524 closed that door and the route guard still holds. What moves
+   is the scroll. Closing the QR fires two repaints in sequence: loadRewards() replaces
+   #walletRewards wholesale, then the counter moment repaints the whole body. The body repaint
+   holds scrollTop itself (customerWalletSilentPaintV333, just below); the section repaint does
+   not, and it is the one that changes height — a redeemed gift drops its Redeem control, a hero
+   card re-lays out — so the content the customer was reading slides out from under the viewport
+   and they land at the top of the page.
+
+   Holding the raw scrollTop is the right anchor here rather than scrolling some element back into
+   view: "as if the pop up did not occur" means the page is where they left it, and the position
+   they left it at is the position the modal was opened over (nothing locks or resets body scroll
+   while a customer sheet is up).
+
+   The hold spans the whole settling window because the section loaders land asynchronously and
+   independently: it re-applies on every frame for ~700ms and stands down the moment the customer
+   scrolls themselves, so it can never fight a deliberate gesture.  */
+function customerHoldWalletScrollV748(windowMs=700){
+  const scroller=document.scrollingElement||document.documentElement;
+  if(!scroller)return ()=>{};
+  const wanted=scroller.scrollTop;
+  let stopped=false;
+  const until=Date.now()+windowMs;
+  /* Stand down on the customer's own INPUT, not on a scroll event. A scroll event cannot tell us
+     who moved the page — a section that repaints shorter moves it too, and that is precisely the
+     movement we are here to undo, so treating any scroll as a gesture would disable the hold in
+     the one case it exists for. A wheel, a touch or an arrow key is unambiguous. */
+  const events=['wheel','touchstart','keydown','pointerdown'];
+  const release=()=>{stopped=true;events.forEach(name=>window.removeEventListener(name,release))};
+  events.forEach(name=>window.addEventListener(name,release,{passive:true,once:true}));
+  const tick=()=>{
+    if(stopped||Date.now()>until){release();return}
+    if(scroller.scrollTop!==wanted)scroller.scrollTop=wanted;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  return release;
+}
 function customerWalletSilentPaintV333(html){
   const host=$('walletBody');
   if(!host)return false;
@@ -16310,7 +16352,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
           qrRoute:'gift-redeem',
           pollRpc:'customer_get_gift_intent_v515',
           cancelRpc:'customer_cancel_gift_intent_v515',
-          onClose:()=>{loadRewards();void customerCounterMomentV468()}});
+          onClose:()=>{customerHoldWalletScrollV748();loadRewards();void customerCounterMomentV468()}});
       };
     });
     [...host.querySelectorAll('[data-customer-redeem]'),
@@ -16345,7 +16387,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
          alone re-read the catalogue and left the balance, the hero and the history exactly as
          stale as they were — the "takes awhile" the owner reported. */
       showPendingRedemptionQr({intent,businessName:b.name,rewardName:reward.customer_name||reward.name,
-        onClose:()=>{loadRewards();void customerCounterMomentV468()}});
+        onClose:()=>{customerHoldWalletScrollV748();loadRewards();void customerCounterMomentV468()}});
     });
   };
   const activityState={items:[],nextCursor:null};
@@ -16450,7 +16492,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         const packageDetail=item.is_package_session===true?`${item.package_name||'Package'}${item.package_purchased_at?' · purchased '+walletDate(item.package_purchased_at):''}${item.package_reference?' · ref '+item.package_reference:''}`:(grantLabelV469?'Given free':'');
         return `<article class="wallet-line" style="align-items:flex-start"><div style="min-width:0;flex:1"><div class="row" style="align-items:flex-start"><div><b>${esc(packageLabel)}</b><p class="muted small" style="margin-top:3px">${esc(walletDate(item.event_at,true))}${item.status?' · '+esc(String(item.status).replaceAll('_',' ')):''}</p>${packageDetail?`<p class="muted small" style="margin-top:3px">${esc(packageDetail)}</p>`:''}</div><span class="spacer"></span>${net===null||item.is_package_session===true?'':`<b style="white-space:nowrap">${esc(historyMoney(net))}</b>`}</div>
           ${gross!==null&&net!==gross?`<p class="muted small" style="margin-top:5px">Original ${esc(historyMoney(gross))} · net after linked corrections ${esc(historyMoney(net))}</p>`:''}
-          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}
+          ${/* nestly_v748 (owner photo 5: "when points earned > it should clearly state the expiry
+               date per points earned"). The deadline on THESE points, not the wallet's next
+               expiry band: points_expires_at comes from the batch this very event created
+               (v748's history reader), so a row can never quote another earn's date. Silent when
+               the business runs no expiry — there is no date to state, and inventing one would be
+               worse than saying nothing. */''}
+          ${(earned||redeemed||removed)?`<p class="small" style="margin-top:6px">${earned?`<span class="wallet-delta plus">+${esc(customerPointTotalV103(earned))} ${esc(unitNounV437(earned))} earned</span>${walletDate(item.points_expires_at)?`<span class="muted small"> · expires ${esc(walletDate(item.points_expires_at))}</span>`:''}`:''}${earned&&(redeemed||removed)?' · ':''}${redeemed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(redeemed))} ${esc(unitNounV437(redeemed))} redeemed</span>`:''}${redeemed&&removed?' · ':''}${removed?`<span class="wallet-delta minus">−${esc(customerPointTotalV103(removed))} ${esc(unitNounV437(removed))} removed</span>`:''}</p>`:''}
           ${lines.length?`<details style="margin-top:8px"><summary class="small">${lines.length} item${lines.length===1?'':'s'}</summary><div style="margin-top:5px">${lines.map(line=>`<div class="row small"><span>${Number(line.qty||0)} × ${esc(line.description||line.item_type||'Item')}</span><span class="spacer"></span><span>${esc(historyMoney(line.line_cents))}</span></div>`).join('')}</div></details>`:''}
         </div></article>`;
       };
@@ -36213,8 +36261,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="muted small" style="margin-top:8px">Each customer's own code is on their profile: Customers → open the customer → Copy.</p>
     </div>`;
   const growReferralSettingsPanelV364=!(growReferralEditOpenV364&&isOwner&&modules.includes('referrals')&&canWriteModule('referrals'))?''
-    :`<div class="card grow-referral-panel-v584" data-grow-referral-settings-v364 style="margin-top:10px">
-      <b>Referral settings</b>
+    :`${/* nestly_v748 (owner photo 3: "i need the edit to be a pop up as well - same as other
+         rewards"). Referral settings were the last editor on this page still opening as a panel
+         that pushed the rest of the programme list down the screen; tiers, the gift form and
+         bring-back have all been pop-ups since v410/v658. Presentation only — the fields, the
+         validation and save_referral_program_v421 are untouched. It stays rendered BY the page
+         template rather than detached to document.body for the same reason the tier form does:
+         every handler here ends in growRerenderV322, which replaces outerMain wholesale, and a
+         detached node would be orphaned behind the repaint. */''}<div class="grow-points-modal-back-v410" data-grow-referral-modal-back-v748 aria-hidden="true"></div><div class="card grow-referral-panel-v584 grow-inline-modal-v658" data-grow-referral-settings-v364 role="dialog" aria-modal="true" aria-labelledby="growReferralSettingsTitleV748">
+      <div class="grow-points-form-head-v485"><b id="growReferralSettingsTitleV748">Referral settings</b>
+        <button type="button" class="grow-points-form-close-v485" data-grow-referral-cancel-v364="1" aria-label="Close without saving" title="Close without saving">${CUI.icon('close',{size:18})}</button></div>
       <p class="muted small" style="margin-top:6px">Paid after the friend's first qualifying visit, not when they sign up. One reward per referred customer, ever.</p>
       ${/* nestly_v558: the on/off the owner asked for, in the same toggle-row shape the birthday
            gift and the welcome offer already use, so the three read as one family. It is applied by
@@ -37464,6 +37520,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     '[data-grow-tiers-add-cancel-v331]','#growTiersAddNameV331');
   growInlineModalDismissV658('[data-grow-bb-form-v361]','[data-grow-bb-modal-back-v658]',
     '[data-grow-bb-cancel-v361]','#growBbNameV361');
+  /* nestly_v748: the referral editor joins them, with the same three ways out. */
+  growInlineModalDismissV658('[data-grow-referral-settings-v364]','[data-grow-referral-modal-back-v748]',
+    '[data-grow-referral-cancel-v364]','#growReferralOnV558');
   /* nestly_v662: the two delete confirmations became pop-ups too, so they get the same way out.
      Only the pending row renders one at all, so these selectors can only ever find the
      confirmation actually being asked. */
@@ -38027,11 +38086,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
-  const growReferralCancelV364=outerMain.querySelector('[data-grow-referral-cancel-v364]');
-  if(growReferralCancelV364)growReferralCancelV364.onclick=()=>{
+  /* nestly_v748: the pop-up has TWO ways to leave without saving — the header ✕ and the footer
+     Cancel — so this wires every node carrying the hook, not the first one. querySelector alone
+     would have left the ✕ inert. */
+  outerMain.querySelectorAll('[data-grow-referral-cancel-v364]').forEach(button=>{button.onclick=()=>{
     growReferralEditOpenV364=false;growReferralErrorV364='';
     growRerenderV322({quiet:true});
-  };
+  }});
   /* nestly_v420: the radios swap the two inputs without a server round trip; nothing is written
      until Save, so a mis-tap costs a tap. The kind is captured into state so a re-render (an
      error, a toast) does not throw the choice away. */
