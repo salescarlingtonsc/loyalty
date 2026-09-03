@@ -27,157 +27,6 @@ async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurr
   }
   return publicGateway('public-booking',{body,accessToken});
 }
-let turnstileLoader;
-/* V206: Turnstile must never be able to strand the sign-in form.
-   Two failure shapes were reaching users on iPadOS/WebKit:
-   (1) the api.js request hangs with NEITHER onload NOR onerror — a content blocker, a captive
-       portal, or a stalled TLS handshake to challenges.cloudflare.com. The promise never settled,
-       so `await loadTurnstile()` never returned, the status stayed on "Loading security check…"
-       with the Retry button hidden, and Sign in stayed disabled forever.
-   (2) the loader promise was CACHED after it rejected, so once the first attempt failed every
-       later Retry re-awaited the same rejected promise and could never recover.
-   Both are fixed here: a hard deadline settles the promise, and every failure path drops the
-   cached promise so a Retry genuinely re-requests the script. */
-const TURNSTILE_SCRIPT_TIMEOUT_MS=8000;
-/* How long a rendered widget may sit with no callback of any kind before the UI declares it
-   wedged. Cloudflare's own interactive flows can legitimately take a while once the checkbox is
-   SHOWN, which is why the stall timer is disarmed the moment before-interactive fires. */
-const TURNSTILE_SOLVE_TIMEOUT_MS=20000;
-/* V286: every primary button on an auth screen is disabled until Turnstile hands back a
-   token. When the widget is merely slow — not wedged, so none of the error callbacks fire —
-   the screen offers no way out for 20s. This is the shorter, honest line: after 12s without a
-   token the user is told the one thing that actually helps. It never re-enables a button and
-   never bypasses the check. */
-const TURNSTILE_SLOW_FALLBACK_MS_V286=12000;
-const turnstileApiReady=()=>(window.turnstile&&typeof window.turnstile.render==='function')?window.turnstile:null;
-function loadTurnstile(){
-  const ready=turnstileApiReady();
-  if(ready) return Promise.resolve(ready);
-  if(turnstileLoader) return turnstileLoader;
-  turnstileLoader=new Promise((resolve,reject)=>{
-    const script=document.createElement('script');
-    script.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-    script.async=true;script.defer=true;
-    let settled=false;
-    const fail=(message,{remove=true}={})=>{
-      if(settled)return;
-      settled=true;clearTimeout(deadline);turnstileLoader=null;
-      if(remove)script.remove();
-      reject(new Error(message));
-    };
-    const succeed=()=>{
-      if(settled)return;
-      const api=turnstileApiReady();
-      /* onload fired but the global is absent: the response was not the real api.js (a captive
-         portal or an interception proxy). Treat it as a load failure, not as success. */
-      if(!api)return fail('Security check unavailable.');
-      settled=true;clearTimeout(deadline);resolve(api);
-    };
-    /* The script element is deliberately LEFT in place on timeout: a slow-but-alive request may
-       still define window.turnstile, and the next Retry then resolves instantly from the global. */
-    const deadline=setTimeout(()=>fail('Security check timed out.',{remove:false}),TURNSTILE_SCRIPT_TIMEOUT_MS);
-    script.onload=succeed;
-    script.onerror=()=>fail('Security check unavailable.');
-    document.head.appendChild(script);
-  });
-  return turnstileLoader;
-}
-async function mountTurnstile(siteKey,{container,status,retry,action,onToken,locale='en'}){
-  const statusEl=$(status),retryEl=$(retry);let api,widgetId,destroyed=false;
-  const security=key=>authSecurityCopy(locale,key);
-  let tokenSeenV286=false;
-  const slowNoteV286=document.createElement('p');
-  slowNoteV286.className='challenge-status';
-  slowNoteV286.id=`${status}-slow-note`;
-  slowNoteV286.hidden=true;
-  slowNoteV286.textContent=security('slowFallback');
-  statusEl.insertAdjacentElement('afterend',slowNoteV286);
-  const slowTimerV286=setTimeout(()=>{
-    if(destroyed||tokenSeenV286)return;
-    slowNoteV286.hidden=false;
-  },TURNSTILE_SLOW_FALLBACK_MS_V286);
-  const stopSlowNoteV286=()=>{clearTimeout(slowTimerV286);slowNoteV286.hidden=true};
-  /* A passed check should be invisible: red status text and a "Retry" link after
-     success read as failure. The block only surfaces while loading or on error. */
-  const setPassed=passed=>{
-    statusEl.hidden=passed;
-    const host=document.getElementById(container);
-    if(host)host.style.display=passed?'none':'';
-    statusEl.closest('.challenge')?.classList.toggle('challenge-passed',passed);
-  };
-  const message=(text,isError=false)=>{setPassed(false);statusEl.textContent=text;statusEl.style.color=isError?'var(--danger)':''};
-  const clear=(text,isError=false)=>{onToken('');message(text,isError)};
-  const logTurnstileError=(errorCode)=>{
-    const code=String(errorCode||'unknown').replace(/[^\w.-]/g,'').slice(0,64)||'unknown';
-    console.warn('Turnstile error code:',code);
-  };
-  const removeWidget=()=>{
-    const host=document.getElementById(container);
-    if(api&&widgetId!==undefined&&host){
-      try{if(typeof api.remove==='function')api.remove(widgetId);else api.reset(widgetId)}catch{}
-    }
-    widgetId=undefined;
-    host?.replaceChildren();
-  };
-  /* Every render attempt gets a generation. A widget torn down by a Retry (or by a re-render of
-     the screen) can still invoke its callbacks afterwards on WebKit; without this, a stale
-     challenge could write its token into the CURRENT form — or blank a token the user had
-     already earned. A callback from an older generation is ignored outright. */
-  let generation=0;
-  let stall=null;
-  const stopStall=()=>{clearTimeout(stall);stall=null};
-  /* The widget rendered but nothing came back: no token, no checkbox prompt, no error callback.
-     Turnstile has no client-side guarantee that any of its callbacks ever fire, so this is the
-     backstop that converts "silently wedged" into an actionable failure with a Retry. */
-  const armStall=(mine)=>{
-    stopStall();
-    stall=setTimeout(()=>{
-      if(destroyed||mine!==generation)return;
-      clear(security('timeout'),true);retryEl.hidden=false;
-    },TURNSTILE_SOLVE_TIMEOUT_MS);
-  };
-  const render=async()=>{
-    if(destroyed)return;
-    generation+=1;
-    const mine=generation;
-    const live=()=>!destroyed&&mine===generation;
-    message(security('loading'));retryEl.hidden=true;
-    armStall(mine);
-    try{
-      api=await loadTurnstile();
-      if(!live()||!document.getElementById(container)){stopStall();return}
-      removeWidget();
-      if(!live()){stopStall();return}
-      widgetId=api.render(`#${container}`,{sitekey:siteKey,action,appearance:'interaction-only',
-        callback:(token)=>{if(!live())return;stopStall();tokenSeenV286=true;stopSlowNoteV286();onToken(token);retryEl.hidden=true;setPassed(true)},
-        /* v193: when Cloudflare escalates to a checkbox, the status used to sit on "Loading
-           security check…" and the buttons it gates stayed disabled — so Sign in read "Checking…"
-           and the passkey button looked broken while the app was simply waiting for a tick. */
-        'before-interactive-callback':()=>{if(!live())return;stopStall();message(security('interactive'))},
-        'after-interactive-callback':()=>{if(!live())return;armStall(mine);message(security('loading'))},
-        'expired-callback':()=>{if(!live())return;stopStall();clear(security('expired'),true);retryEl.hidden=false},
-        'timeout-callback':()=>{if(!live())return;stopStall();clear(security('timeout'),true);retryEl.hidden=false},
-        'error-callback':(errorCode)=>{if(!live())return true;stopStall();logTurnstileError(errorCode);clear(security('connect'),true);retryEl.hidden=false;return true}});
-    }catch{
-      stopStall();
-      /* The one guarantee this whole block exists to make: on ANY failure the user sees what
-         happened and gets a Retry. Never a hidden button under a permanent "Loading…". */
-      if(live()){clear(security('load'),true);retryEl.hidden=false}
-    }
-  };
-  const retryRender=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;render()};
-  const reset=()=>{if(destroyed)return;clear(security('continue'));retryEl.hidden=true;if(api&&widgetId!==undefined)api.reset(widgetId);else render()};
-  const destroy=()=>{
-    if(destroyed)return;
-    destroyed=true;generation+=1;stopStall();stopSlowNoteV286();
-    retryEl.onclick=null;removeWidget();mountedTurnstileControls.delete(control);
-  };
-  const control={reset,destroy};
-  mountedTurnstileControls.add(control);
-  retryEl.onclick=retryRender;
-  await render();
-  return control;
-}
 /* Phone OTP is an explicit runtime provider seam. No provider secret is
    present in the browser. Fixed Auth test OTPs belong only in local/staging
    Supabase configuration and must never create a production phone bypass. */
@@ -9493,10 +9342,7 @@ async function renderPortal(slug){
   let selectedSlot='';                   // an ISO instant chosen from the live slot grid
   let stepIdx=0;
   let bookingSubmissionId=null,bookingSubmissionKey='';
-  let bookingTurnstileToken='',bookingTurnstileControl=null;
-  let bookingChallengeGeneration=0;
   let changeAttempt=null;
-  let turnstileMounted=false;
   let linkedCustomer=false;
   const nowSgtLocal=new Date(Date.now()+8*3600000).toISOString().slice(0,16);
   const svcObj=()=>services.find(s=>s.id===selSvc)||null;
@@ -9614,12 +9460,8 @@ async function renderPortal(slug){
       <label for="pconsent" style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="pconsent" style="width:auto"> <span>Send me offers and updates</span></label>
       <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
-      <div class="challenge"><div id="bookingTurnstile"></div>
-        <p class="challenge-status" id="bookingTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
-        <button class="challenge-retry" id="bookingTurnstileRetry" type="button" hidden>Retry security check</button>
-      </div>
       <div id="perr"></div>
-      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="psend" disabled>${biz.booking_auto_confirm?'Confirm booking':'Send booking request'}</button></div>
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="psend">${biz.booking_auto_confirm?'Confirm booking':'Send booking request'}</button></div>
       ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
     </section>`;
     const stepBody={service:serviceStep,branch:branchStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
@@ -9654,15 +9496,6 @@ async function renderPortal(slug){
       rows.push(['When',esc(selectedSlot?fmtPicked(sgLocalInput(selectedSlot)):fmtPicked($('pt')?.value))]);
       if(biz.booking_policy)rows.push(['Good to know',esc(biz.booking_policy)]);
       el.innerHTML=`<dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
-    };
-    const mountBookingTurnstile=()=>{
-      if(turnstileMounted)return;
-      turnstileMounted=true;
-      const challengeGeneration=++bookingChallengeGeneration;
-      bookingTurnstileToken='';bookingTurnstileControl=null;
-      mountTurnstile(biz.turnstile_site_key,{container:'bookingTurnstile',status:'bookingTurnstileStatus',retry:'bookingTurnstileRetry',action:'public_booking',
-        onToken:(token)=>{if(challengeGeneration!==bookingChallengeGeneration)return;bookingTurnstileToken=token;if($('psend'))$('psend').disabled=!token}})
-        .then(control=>{if(challengeGeneration===bookingChallengeGeneration)bookingTurnstileControl=control});
     };
     /* v183: the live slot grid. It is advisory — a slot can be taken between the read and the
        submit — so the copy never promises a hold, and every fallback lands the customer back on
@@ -9722,7 +9555,7 @@ async function renderPortal(slug){
         if(i===stepIdx)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');
       });
       if(key==='time')loadAvailability();
-      if(key==='details'){buildSummary();mountBookingTurnstile();}
+      if(key==='details')buildSummary();
       const stepEl=root.querySelector(`.pf-step[data-step="${key}"]`);
       const heading=stepEl?.querySelector('h2');
       if(heading)requestAnimationFrame(()=>heading.focus({preventScroll:false}));
@@ -9754,14 +9587,13 @@ async function renderPortal(slug){
       wireTeamChoice();
     };
     wireTeamChoice();
-    /* nestly_v576 (owner: "load quite long when booking appointment"). The human-verification
-       challenge used to mount only when the customer REACHED the last step, so they stared at a
-       disabled Confirm while Cloudflare's script downloaded and the challenge ran — that wait was
-       the whole complaint. Mounting at draw runs it in the background while they pick a service
-       and a time; by the Details step the token is normally already minted. The details-step call
-       stays as the fallback (mountBookingTurnstile is idempotent), and an interactive challenge
-       simply waits, visible, on the step it has always lived on. */
-    mountBookingTurnstile();
+    /* nestly_v747 (owner directive 2026-09-03): the Cloudflare Turnstile challenge is GONE from
+       this form. It was blocking real bookings — as an Invisible widget it cannot escalate to a
+       checkbox, so any visitor Cloudflare was unsure about got a hard failure (error 600010) and
+       a permanently disabled Confirm button. Confirm now starts enabled and the submit carries no
+       token; public-booking no longer asks for one and leans on its per-IP write ceiling, the
+       submission_id idempotency hash and full server-side re-validation instead. This supersedes
+       nestly_v576, which had moved the mount to draw time to hide the challenge's latency. */
     root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
     if($('next-service'))$('next-service').onclick=()=>{if(hasServices&&!serviceChosen){$('err-service').textContent='Please choose a service, or “Just a reservation”.';CUI.announce('Please choose a service',{assertive:true});return;}showStep(stepIdx+1);};
     if($('next-branch'))$('next-branch').onclick=()=>showStep(stepIdx+1);
@@ -9772,7 +9604,6 @@ async function renderPortal(slug){
       showStep(stepIdx+1);
     };
     $('psend').onclick=async()=>{
-      if(!bookingTurnstileToken) return;
       const name=($('pn').value||'').trim();
       const rawPhone=($('pp').value||'').trim();
       const email=($('pe').value||'').trim();
@@ -9797,13 +9628,13 @@ async function renderPortal(slug){
         bookingSubmissionId=crypto.randomUUID();bookingSubmissionKey=nextBookingKey;
       }
       let bookRes;
-      try{bookRes=await submitPublicBookingGateway({...bookingPayload,submission_id:bookingSubmissionId,
-        turnstile_token:bookingTurnstileToken},signedInUser,isPortalCurrent)}
+      try{bookRes=await submitPublicBookingGateway({...bookingPayload,submission_id:bookingSubmissionId},
+        signedInUser,isPortalCurrent)}
       catch(error){
         if(!isPortalCurrent()||!$('perr')?.isConnected)return;
         $('perr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Your booking request could not be sent.'))}</div>`;
         if($('psend'))$('psend').disabled=false;
-        bookingTurnstileControl?.reset();return;
+        return;
       }
       if(!isPortalCurrent())return;
       const msgs={
@@ -9817,7 +9648,6 @@ async function renderPortal(slug){
       const manageUrl=publicAppUrl(`b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`);
       const bookingFormCard=$('bookingFormCard');
       if(!bookingFormCard)return;
-      bookingTurnstileControl?.destroy();bookingTurnstileControl=null;
       bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 tabindex="-1" style="margin-bottom:8px">${esc(m.title)}</h2>
         <p class="muted">${m.body}</p>
         <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${(manageToken&&!linkedCustomer)?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>

@@ -84,7 +84,11 @@ test('public booking uses semantic choices, safe contrast and the exact result h
     assert.match(portal, new RegExp(`<label for="${id}"`));
   }
   assert.match(portal, /id="bookingFormCard"/);
-  assert.match(portal, /const bookingFormCard=\$\('bookingFormCard'\);\s*if\(!bookingFormCard\)return;\s*bookingTurnstileControl\?\.destroy\(\);bookingTurnstileControl=null;\s*bookingFormCard\.innerHTML=/);
+  /* nestly_v747: the challenge teardown between the guard and the innerHTML is gone — the
+     booking form no longer mounts a Turnstile widget. The invariant this line protects is that
+     success is written into the BOOKING CARD (not the whole portal, which would blow away the
+     signed-in context card), and that is still asserted here and on the next line. */
+  assert.match(portal, /const bookingFormCard=\$\('bookingFormCard'\);\s*if\(!bookingFormCard\)return;\s*bookingFormCard\.innerHTML=/);
   assert.doesNotMatch(portal, /root\.querySelector\('\.card'\)\.innerHTML=`<div class="empty"><div class="big">\$\{m\.em\}/,
     'booking success must not overwrite the signed-in context card');
   assert.match(portal, /--grad:linear-gradient\(100deg,\$\{bc\},\$\{bc\}\)/);

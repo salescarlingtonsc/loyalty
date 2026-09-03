@@ -239,7 +239,13 @@ async function submitPublicBookingGateway(body,initiallySignedInUser=null,isCurr
 }
 let turnstileLoader;
 const mountedTurnstileControls=new Set();
-/* V388: route() calls this on every navigation, so it lives in the CORE chunk — but after the
+/* nestly_v747: with Turnstile removed from the booking form too (see renderPortal), nothing in
+   this bundle calls mountTurnstile any more — it is kept, unmounted, so re-enabling a challenge
+   on a customer surface stays a one-call change and so it does not drift away from the parallel
+   copy in app/join.html, which is still live. Do not delete it without deleting that one's
+   contract too. destroyMountedTurnstiles() below is therefore now a no-op in practice.
+
+   V388: route() calls this on every navigation, so it lives in the CORE chunk — but after the
    auth screens stopped mounting challenges, mountTurnstile and this registry are reachable only
    from the customer surface, and the bundle splitter correctly ships them in app-customer.js.
    Core would then reference a registry that is undefined on the merchant surface, which threw
@@ -56791,10 +56797,7 @@ async function renderPortal(slug){
   let selectedSlot='';                   // an ISO instant chosen from the live slot grid
   let stepIdx=0;
   let bookingSubmissionId=null,bookingSubmissionKey='';
-  let bookingTurnstileToken='',bookingTurnstileControl=null;
-  let bookingChallengeGeneration=0;
   let changeAttempt=null;
-  let turnstileMounted=false;
   let linkedCustomer=false;
   const nowSgtLocal=new Date(Date.now()+8*3600000).toISOString().slice(0,16);
   const svcObj=()=>services.find(s=>s.id===selSvc)||null;
@@ -56912,12 +56915,8 @@ async function renderPortal(slug){
       <label for="pconsent" style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="pconsent" style="width:auto"> <span>Send me offers and updates</span></label>
       <p class="muted small" style="margin-top:2px">Occasional news and offers from ${esc(biz.name)} — you can opt out anytime.</p>
-      <div class="challenge"><div id="bookingTurnstile"></div>
-        <p class="challenge-status" id="bookingTurnstileStatus" role="status" aria-live="polite">Loading security check…</p>
-        <button class="challenge-retry" id="bookingTurnstileRetry" type="button" hidden>Retry security check</button>
-      </div>
       <div id="perr"></div>
-      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="psend" disabled>${biz.booking_auto_confirm?'Confirm booking':'Send booking request'}</button></div>
+      <div class="pf-nav"><button class="btn ghost pf-back" type="button" data-back>Back</button><button class="btn" id="psend">${biz.booking_auto_confirm?'Confirm booking':'Send booking request'}</button></div>
       ${biz.booking_policy?`<p class="muted small" style="margin-top:12px;text-align:center">${esc(biz.booking_policy)}</p>`:''}
     </section>`;
     const stepBody={service:serviceStep,branch:branchStep,table:tableStep,team:teamStep,time:timeStep,details:detailsStep};
@@ -56952,15 +56951,6 @@ async function renderPortal(slug){
       rows.push(['When',esc(selectedSlot?fmtPicked(sgLocalInput(selectedSlot)):fmtPicked($('pt')?.value))]);
       if(biz.booking_policy)rows.push(['Good to know',esc(biz.booking_policy)]);
       el.innerHTML=`<dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
-    };
-    const mountBookingTurnstile=()=>{
-      if(turnstileMounted)return;
-      turnstileMounted=true;
-      const challengeGeneration=++bookingChallengeGeneration;
-      bookingTurnstileToken='';bookingTurnstileControl=null;
-      mountTurnstile(biz.turnstile_site_key,{container:'bookingTurnstile',status:'bookingTurnstileStatus',retry:'bookingTurnstileRetry',action:'public_booking',
-        onToken:(token)=>{if(challengeGeneration!==bookingChallengeGeneration)return;bookingTurnstileToken=token;if($('psend'))$('psend').disabled=!token}})
-        .then(control=>{if(challengeGeneration===bookingChallengeGeneration)bookingTurnstileControl=control});
     };
     /* v183: the live slot grid. It is advisory — a slot can be taken between the read and the
        submit — so the copy never promises a hold, and every fallback lands the customer back on
@@ -57020,7 +57010,7 @@ async function renderPortal(slug){
         if(i===stepIdx)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');
       });
       if(key==='time')loadAvailability();
-      if(key==='details'){buildSummary();mountBookingTurnstile();}
+      if(key==='details')buildSummary();
       const stepEl=root.querySelector(`.pf-step[data-step="${key}"]`);
       const heading=stepEl?.querySelector('h2');
       if(heading)requestAnimationFrame(()=>heading.focus({preventScroll:false}));
@@ -57052,14 +57042,13 @@ async function renderPortal(slug){
       wireTeamChoice();
     };
     wireTeamChoice();
-    /* nestly_v576 (owner: "load quite long when booking appointment"). The human-verification
-       challenge used to mount only when the customer REACHED the last step, so they stared at a
-       disabled Confirm while Cloudflare's script downloaded and the challenge ran — that wait was
-       the whole complaint. Mounting at draw runs it in the background while they pick a service
-       and a time; by the Details step the token is normally already minted. The details-step call
-       stays as the fallback (mountBookingTurnstile is idempotent), and an interactive challenge
-       simply waits, visible, on the step it has always lived on. */
-    mountBookingTurnstile();
+    /* nestly_v747 (owner directive 2026-09-03): the Cloudflare Turnstile challenge is GONE from
+       this form. It was blocking real bookings — as an Invisible widget it cannot escalate to a
+       checkbox, so any visitor Cloudflare was unsure about got a hard failure (error 600010) and
+       a permanently disabled Confirm button. Confirm now starts enabled and the submit carries no
+       token; public-booking no longer asks for one and leans on its per-IP write ceiling, the
+       submission_id idempotency hash and full server-side re-validation instead. This supersedes
+       nestly_v576, which had moved the mount to draw time to hide the challenge's latency. */
     root.querySelectorAll('[data-back]').forEach(el=>el.onclick=()=>showStep(stepIdx-1));
     if($('next-service'))$('next-service').onclick=()=>{if(hasServices&&!serviceChosen){$('err-service').textContent='Please choose a service, or “Just a reservation”.';CUI.announce('Please choose a service',{assertive:true});return;}showStep(stepIdx+1);};
     if($('next-branch'))$('next-branch').onclick=()=>showStep(stepIdx+1);
@@ -57070,7 +57059,6 @@ async function renderPortal(slug){
       showStep(stepIdx+1);
     };
     $('psend').onclick=async()=>{
-      if(!bookingTurnstileToken) return;
       const name=($('pn').value||'').trim();
       const rawPhone=($('pp').value||'').trim();
       const email=($('pe').value||'').trim();
@@ -57095,13 +57083,13 @@ async function renderPortal(slug){
         bookingSubmissionId=crypto.randomUUID();bookingSubmissionKey=nextBookingKey;
       }
       let bookRes;
-      try{bookRes=await submitPublicBookingGateway({...bookingPayload,submission_id:bookingSubmissionId,
-        turnstile_token:bookingTurnstileToken},signedInUser,isPortalCurrent)}
+      try{bookRes=await submitPublicBookingGateway({...bookingPayload,submission_id:bookingSubmissionId},
+        signedInUser,isPortalCurrent)}
       catch(error){
         if(!isPortalCurrent()||!$('perr')?.isConnected)return;
         $('perr').innerHTML=`<div class="err">${esc(humanErrorV295(error,'Your booking request could not be sent.'))}</div>`;
         if($('psend'))$('psend').disabled=false;
-        bookingTurnstileControl?.reset();return;
+        return;
       }
       if(!isPortalCurrent())return;
       const msgs={
@@ -57115,7 +57103,6 @@ async function renderPortal(slug){
       const manageUrl=publicAppUrl(`b/${encodeURIComponent(slug)}?manage=${encodeURIComponent(manageToken)}`);
       const bookingFormCard=$('bookingFormCard');
       if(!bookingFormCard)return;
-      bookingTurnstileControl?.destroy();bookingTurnstileControl=null;
       bookingFormCard.innerHTML=`<div class="empty"><div class="big">${m.em}</div><h2 tabindex="-1" style="margin-bottom:8px">${esc(m.title)}</h2>
         <p class="muted">${m.body}</p>
         <p class="small" style="margin-top:10px"><b>What happens next:</b> ${m.next}</p>${(manageToken&&!linkedCustomer)?`<p class="small" style="margin-top:14px">Keep this private link to manage the booking:</p>

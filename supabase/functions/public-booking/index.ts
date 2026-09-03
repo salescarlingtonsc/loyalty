@@ -1,4 +1,4 @@
-import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex, turnstileSiteKey, verifyTurnstile } from '../_shared/gateway.ts';
+import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex } from '../_shared/gateway.ts';
 import { SLUG_PATTERN, UUID_PATTERN, validBookingPayload } from '../_shared/validation.ts';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -52,24 +52,40 @@ Deno.serve(async (req) => {
       if (error || !data) return publicError(req, 404);
       /* v637: identity-free funnel counter — telemetry never blocks the public surface. */
       try { await adminClient().rpc('internal_public_funnel_hit_by_slug_v640', { p_slug: slug, p_surface: 'booking', p_step: 'page_view' }); } catch { /* ignore */ }
-      return json(req, 200, { ...data, turnstile_site_key: turnstileSiteKey() });
+      return json(req, 200, data);
     }
 
     const body = await readJson(req);
     /* v234 CGNAT headroom — see the note in public-join. Customers book from their own phones on
-       shared carrier IPv4, so per-IP ceilings must not assume one IP is one person. Pre-Turnstile,
-       so this stays the tighter of the two. */
+       shared carrier IPv4, so per-IP ceilings must not assume one IP is one person. This is now
+       the OUTER of the two ceilings (see nestly_v747 below); the 30/600 write ceiling is the
+       one that actually bounds abuse. */
     const abuseLimit = await enforceRateLimit(req, 'booking-submit-abuse', 150, 600);
     if (!abuseLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: abuseLimit.retry_after });
-    if (!validBookingPayload(body) || !await verifyTurnstile(req, body.turnstile_token, 'public_booking')) return publicError(req);
+    /* nestly_v747 (owner directive 2026-09-03): Turnstile is REMOVED from the public booking
+       path. This is the same ruling V388 already made for Supabase Auth, applied to the one
+       remaining surface where it was costing real bookings: switching the widget to Invisible
+       left it with no way to escalate to a checkbox, so any visitor Cloudflare was unsure about
+       was hard-failed (client error code 600010) and could not book at all. A challenge that
+       blocks paying customers is a worse outcome than the bots it stops.
+
+       What still stands in front of this endpoint, unchanged: requireOrigin(), the 150/600
+       'booking-submit-abuse' per-IP ceiling above, the 30/600 'booking-submit' per-IP WRITE
+       ceiling below, the submission_id idempotency hash and the request fingerprint (so a
+       replayed submit collapses instead of duplicating), and full server-side re-validation of
+       tenant, service, staff and branch inside internal_public_booking_submit. public-join,
+       public-support-ticket and public-business-application are NOT changed and still verify
+       Turnstile server-side. body.turnstile_token is now ignored if a stale client sends it. */
+    if (!validBookingPayload(body)) return publicError(req);
     let authenticatedUserId = null;
     try {
       authenticatedUserId = await optionalAuthenticatedUserId(req);
     } catch {
       return publicError(req, 401);
     }
-    /* Post-Turnstile, and a duplicate submission is already collapsed by the submission_id
-       fingerprint below, so the ceiling bounds distinct human-verified bookings per IP. */
+    /* A duplicate submission is already collapsed by the submission_id
+       fingerprint below, so this ceiling bounds distinct bookings per IP. Since nestly_v747 it
+       is the primary abuse gate on this endpoint. */
     const writeLimit = await enforceRateLimit(req, 'booking-submit', 30, 600);
     if (!writeLimit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: writeLimit.retry_after });
 

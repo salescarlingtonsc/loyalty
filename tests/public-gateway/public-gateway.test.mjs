@@ -328,16 +328,23 @@ test('malformed public writes consume only broad abuse limits, not narrow shared
   const [joinFn, bookingFn] = await Promise.all([
     read('supabase/functions/public-join/index.ts'), read('supabase/functions/public-booking/index.ts'),
   ]);
+  // nestly_v747: public-booking no longer verifies Turnstile (owner directive 2026-09-03), so
+  // its ordering contract drops the verify step and keeps every other gate in the same order.
   for (const [source, prefix, validator, action, rpcName] of [
     [joinFn, 'join', 'validJoinTokenPayload', 'public_join', 'internal_public_join_v89'],
-    [bookingFn, 'booking', 'validBookingPayload', 'public_booking', 'internal_public_booking_submit'],
+    [bookingFn, 'booking', 'validBookingPayload', null, 'internal_public_booking_submit'],
   ]) {
     const abuse = source.indexOf(`enforceRateLimit(req, '${prefix}-submit-abuse'`);
     const syntax = source.indexOf(`${validator}(body)`);
-    const verify = source.indexOf(`verifyTurnstile(req, body.turnstile_token, '${action}')`);
     const narrow = source.indexOf(`enforceRateLimit(req, '${prefix}-submit'`);
     const rpc = source.indexOf(`adminClient().rpc('${rpcName}'`);
-    assert.ok(abuse >= 0 && syntax > abuse && verify > syntax && narrow > verify && rpc > narrow);
+    if (action) {
+      const verify = source.indexOf(`verifyTurnstile(req, body.turnstile_token, '${action}')`);
+      assert.ok(abuse >= 0 && syntax > abuse && verify > syntax && narrow > verify && rpc > narrow);
+    } else {
+      assert.doesNotMatch(source, /verifyTurnstile\(/);
+      assert.ok(abuse >= 0 && syntax > abuse && narrow > syntax && rpc > narrow);
+    }
   }
 });
 
@@ -381,8 +388,12 @@ test('edge functions use exact-origin CORS, generic errors and mandatory Turnsti
   assert.match(shared, /turnstileBindingValid\(result, expectedAction, expectedHostname, testMode\)/);
   assert.match(joinFn, /verifyTurnstile\(req, body\.turnstile_token, 'public_join'\)/);
   assert.match(joinFn, /turnstile_site_key: turnstileSiteKey\(\)/);
-  assert.match(bookingFn, /verifyTurnstile\(req, body\.turnstile_token, 'public_booking'\)/);
-  assert.match(bookingFn, /turnstile_site_key: turnstileSiteKey\(\)/);
+  /* nestly_v747: Turnstile is mandatory on every public write EXCEPT booking, which the owner
+     removed it from on 2026-09-03 after Invisible mode hard-failed real customers. Asserted as an
+     explicit absence so re-adding it is a deliberate, visible change rather than a silent drift.
+     public-booking's remaining gates are covered by the shared-NAT ordering test above. */
+  assert.doesNotMatch(bookingFn, /verifyTurnstile\(/);
+  assert.doesNotMatch(bookingFn, /turnstileSiteKey\(\)/);
   assert.match(bookingFn, /if \(data\.conflict\) return conflictError\(req\)/);
   assert.match(manageFn, /sha256Hex\(String\(body\.token\)\)/);
   assert.match(manageFn, /if \(data\.conflict\) return conflictError\(req\)/);
@@ -416,6 +427,9 @@ test('public write forms render and reset explicit Turnstile widgets under exact
   const [app, joinPage, vercel, docs] = await Promise.all([
     Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')), read('app/join.html'), read('app/vercel.json'), read('supabase/functions/README.md'),
   ]);
+  /* nestly_v747: app/index.html + app/app.js still CARRY mountTurnstile (kept unmounted so the
+     contract cannot drift from join.html's live copy), so the widget-hygiene assertions below
+     still apply to both. What changed is that the app no longer MOUNTS one — asserted below. */
   for (const page of [app, joinPage]) {
     assert.match(page, /https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
     assert.match(page, /aria-live="polite"/);
@@ -431,13 +445,14 @@ test('public write forms render and reset explicit Turnstile widgets under exact
     assert.doesNotMatch(page, /FRENLY_TURNSTILE_TOKEN/);
     assert.doesNotMatch(page, /TURNSTILE_SECRET_KEY|CLOUDFLARE_SECRET_KEY|secretKey\s*=/);
   }
-  assert.match(app, /action:'public_booking'/);
+  assert.doesNotMatch(app, /action:'public_booking'/);
+  assert.doesNotMatch(app, /bookingTurnstile/);
+  assert.doesNotMatch(app, /turnstile_token:/);
   assert.match(joinPage, /action:'public_join'/);
-  assert.match(app, /turnstile_token:bookingTurnstileToken/);
   assert.match(app, /const mountedTurnstileControls=new Set\(\)/);
   assert.match(app, /function destroyMountedTurnstiles\(\)[\s\S]*control=>control\.destroy\(\)/);
   assert.match(app, /const destroy=\(\)=>\{[\s\S]*retryEl\.onclick=null[\s\S]*removeWidget\(\)[\s\S]*mountedTurnstileControls\.delete\(control\)/);
-  assert.match(app, /bookingTurnstileControl\?\.destroy\(\);bookingTurnstileControl=null/);
+  assert.match(app, /calls mountTurnstile any more/);
   assert.match(joinPage, /turnstile_token:turnstileToken/);
   assert.match(vercel, /script-src[^;]+https:\/\/challenges\.cloudflare\.com/);
   assert.match(vercel, /frame-src https:\/\/challenges\.cloudflare\.com/);

@@ -90,11 +90,16 @@ test('edge validates optional user bearer server-side and never accepts browser 
   assert.match(gateway, /access-control-allow-headers': 'content-type, x-client-info, authorization, apikey'/);
   assert.match(gateway, /if \(!origin \|\| !allowedOrigins\(\)\.includes\(origin\)\) return null/);
 
-  const turnstile = edge.indexOf("verifyTurnstile(req, body.turnstile_token, 'public_booking')");
+  /* nestly_v747: the Turnstile step is gone from this endpoint (owner directive 2026-09-03).
+     The identity ordering this test exists to protect is unchanged: payload shape is validated
+     BEFORE the bearer is resolved, and the fingerprint is computed from the SERVER-resolved user
+     id, never a client-supplied one. */
+  assert.doesNotMatch(edge, /verifyTurnstile\(/);
+  const validate = edge.indexOf('validBookingPayload(body)');
   const authenticate = edge.indexOf('optionalAuthenticatedUserId(req)');
   const fingerprint = edge.indexOf('bookingRequestFingerprint(body, authenticatedUserId)');
   const rpc = edge.indexOf("adminClient().rpc('internal_public_booking_submit'");
-  assert.ok(turnstile >= 0 && authenticate > turnstile && fingerprint > authenticate && rpc > fingerprint);
+  assert.ok(validate >= 0 && authenticate > validate && fingerprint > authenticate && rpc > fingerprint);
   assert.match(edge, /p_authenticated_user: authenticatedUserId/);
   assert.doesNotMatch(edge, /p_(?:customer_)?client_id|body\.(?:customer_)?client_id/);
   assert.match(edge, /catch \{\s+return publicError\(req, 401\)/);

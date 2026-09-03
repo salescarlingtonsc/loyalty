@@ -25,7 +25,10 @@ test('actual public booking submit sends a fresh nonblank bearer and never a cli
   assert.equal(JSON.stringify(calls),JSON.stringify([{name:'public-booking',options:{body,accessToken:'signed-token'}}]));
   assert.equal('client_id' in calls[0].options.body,false);
   const portal=sourceBetween('async function renderPortal(slug){','async function boot(){');
-  assert.match(portal,/submitPublicBookingGateway\(\{\.\.\.bookingPayload,submission_id:bookingSubmissionId,\s*turnstile_token:bookingTurnstileToken\},signedInUser,isPortalCurrent\)/);
+  /* nestly_v747: the submit carries no turnstile_token any more — public-booking stopped asking
+     for one. The rest of the shape is unchanged and still asserted. */
+  assert.match(portal,/submitPublicBookingGateway\(\{\.\.\.bookingPayload,submission_id:bookingSubmissionId\},\s*signedInUser,isPortalCurrent\)/);
+  assert.doesNotMatch(portal,/turnstile_token/);
   assert.doesNotMatch(portal,/bookingPayload\s*=\s*\{[\s\S]*?\bclient_id\b/);
 });
 
