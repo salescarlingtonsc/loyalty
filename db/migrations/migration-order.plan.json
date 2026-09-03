@@ -3762,6 +3762,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260923_nestly_v751_discount_cap_wording.sql",
+      "semanticVersion": "v751",
+      "proposedDeployVersion": "20260923010000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql",
       "semanticVersion": "v749",
       "proposedDeployVersion": "20260924000000"

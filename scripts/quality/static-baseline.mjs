@@ -497,7 +497,14 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   '20260920_nestly_v684_metric_dictionary.sql -> 20260902_nestly_v685_singapore_day_authority.sql',
   '20260920_nestly_v685_shadow_reconciliation.sql -> 20260902_nestly_v686_service_delete_owner_only_rpc.sql',
   '20260920_nestly_v686_discovery_scan.sql -> 20260902_nestly_v687_staff_self_profile.sql',
-  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql'
+  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql',
+  // v751 (a discount's money cap says "capped at $xx" instead of vague "up to") deliberately
+  // deploys BETWEEN v748 and v749 (proposedDeployVersion 20260923010000, between v748's
+  // …000000 and v749's 20260924000000 in the canonical plan) but its filename keeps v748's own
+  // 20260923 source date rather than v749's later 20260924 -- its semantic number (751) is simply
+  // higher than the file it deploys ahead of. Deploy order is unambiguous (the canonical plan);
+  // this is that one adjacent semantic/date crossing, not a real regression.
+  '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v751_discount_cap_wording.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

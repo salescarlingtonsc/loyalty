@@ -1,8 +1,8 @@
 # CI-100-CHECKLIST proof-pack — items 11/12 screenshot index
 
-Commit SHA: `9a42e7ac6063f11aacd9b694aee7f6ad0081ff9b`
+Commit SHA: `fd9105548cc0fe688868d74cdfca77d6adad11ee`
 Capture date: 2026-09-03
-Screenshot capture: captured with playwright-core
+Screenshot capture: PENDING — no playwright-core/playwright module importable in this environment. HTML pages and index were produced; PNG capture was not attempted, per instruction (stop after HTML+index when the driver is unavailable rather than fabricate screenshots).
 
 | State | Payload source | HTML page | Viewport | PNG | sha256 |
 |---|---|---|---|---|---|

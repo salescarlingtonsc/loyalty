@@ -1099,9 +1099,14 @@ function growTierBenefitSentenceV365(benefit){
      where the owner asked for it and what keeps the label inside its 120-character column. */
   const modeV657=String(benefit?.discountScope||'bill');
   const maxV657=Number(String(benefit?.maxDiscount||'').replace(/[^0-9.]/g,''));
+  /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). ", up to 20.00"
+     named neither the currency nor which of the two shapes it was capping — mirrors
+     app.v657_discount_label's new wording: the scope is always spelled out ("the whole bill" or
+     "one item"), never left implicit, and a cap says "capped at $" plus the amount, not a bare
+     number after a comma. */
   const label=kind==='discount_pct'
     ?(Number.isFinite(discount)&&discount>0
-      ?`${String(discount).replace(/\.0+$/,'')}% off${modeV657==='item'?' one item':''}${Number.isFinite(maxV657)&&maxV657>0?`, up to ${maxV657.toFixed(2)}`:''}`:'')
+      ?`${String(discount).replace(/\.0+$/,'')}% off ${modeV657==='item'?'one item':'the whole bill'}${Number.isFinite(maxV657)&&maxV657>0?` — capped at $${maxV657.toFixed(2)}`:''}`:'')
     :kind==='free_item'
     ?((String(benefit?.itemLabel||'').trim()||String(benefit?.productName||'').trim())
         ?`Free ${String(benefit?.productName||benefit?.itemLabel).trim()}`:'')
@@ -26366,8 +26371,14 @@ async function tillPage(){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). A bare
+       "(capped)" told the counter the ceiling was hit but never what it was — the same vagueness
+       the owner flagged. e.label is the tier benefit's own stored text, and nestly_v751 makes that
+       text state its ceiling itself ("30% off the whole bill — capped at $100.00"), so
+       appending "(capped)" here would only repeat what the label already says. Dropped, not
+       replaced. */
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }

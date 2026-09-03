@@ -2340,6 +2340,13 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
+   the points fields under A free gift). The flex rule above is a class selector, so it outranks
+   the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
+   button. The four referral paragraphs that swap with the reward kind are toggled with `hidden`,
+   and from v748 on they were never actually hidden. Restated here at higher specificity so
+   `hidden` means hidden again, whatever display the paragraph otherwise has. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -7197,6 +7204,7 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
 .grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 li.grow-inline-modal-v662,.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v662{
   width:min(calc(100vw - 32px),var(--dialog-w-sm,420px));

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="c59957ddea1afa2777ddc6ae3d416b114d59b0c79903fcd956495396a5d53cba"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="0a6b85191a1a0a06717e3248e042e42b7952e8d25f9b4e30420c663236b41a23"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2333,6 +2333,13 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
+   the points fields under A free gift). The flex rule above is a class selector, so it outranks
+   the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
+   button. The four referral paragraphs that swap with the reward kind are toggled with `hidden`,
+   and from v748 on they were never actually hidden. Restated here at higher specificity so
+   `hidden` means hidden again, whatever display the paragraph otherwise has. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -5691,7 +5698,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c59957ddea1afa2777ddc6ae3d416b114d59b0c79903fcd956495396a5d53cba</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 0a6b85191a1a0a06717e3248e042e42b7952e8d25f9b4e30420c663236b41a23</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9808,8 +9815,14 @@ async function tillPage(){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). A bare
+       "(capped)" told the counter the ceiling was hit but never what it was — the same vagueness
+       the owner flagged. e.label is the tier benefit's own stored text, and nestly_v751 makes that
+       text state its ceiling itself ("30% off the whole bill — capped at $100.00"), so
+       appending "(capped)" here would only repeat what the label already says. Dropped, not
+       replaced. */
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -28432,8 +28445,14 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). A bare
+       "(capped)" told the counter the ceiling was hit but never what it was — the same vagueness
+       the owner flagged. e.label is the tier benefit's own stored text, and nestly_v751 makes that
+       text state its ceiling itself ("30% off the whole bill — capped at $100.00"), so
+       appending "(capped)" here would only repeat what the label already says. Dropped, not
+       replaced. */
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -30563,6 +30582,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'c59957ddea1afa2777ddc6ae3d416b114d59b0c79903fcd956495396a5d53cba',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'0a6b85191a1a0a06717e3248e042e42b7952e8d25f9b4e30420c663236b41a23',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
