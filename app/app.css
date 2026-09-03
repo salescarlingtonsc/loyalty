@@ -1499,6 +1499,7 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
 .grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 li.grow-inline-modal-v662,.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v662{
   width:min(calc(100vw - 32px),var(--dialog-w-sm,420px));
