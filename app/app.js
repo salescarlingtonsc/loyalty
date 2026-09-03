@@ -18428,7 +18428,7 @@ function openCustomerDeleteAccountDialogV749(){
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerDeleteAccountModalV749" role="dialog" aria-modal="true" aria-labelledby="customerDeleteAccountTitleV749" tabindex="-1"><div class="modal-card" style="max-width:560px">
     <div class="row"><div><h2 id="customerDeleteAccountTitleV749">Delete your Peekaa account</h2><p class="muted small" style="margin-top:4px">This happens immediately and cannot be undone.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerDeleteAccountCloseV749" type="button">Close</button></div>
     <div class="imp-note" style="margin-top:12px"><b>What is deleted</b><p class="small" style="margin-top:5px">Your name, phone number, email, date of birth and sign-in. Every business you joined stops seeing you, and their copy of your details is replaced with anonymous placeholders.</p></div>
-    <div class="imp-note" style="margin-top:10px"><b>What is forfeited</b><p class="small" style="margin-top:5px">Unused points, stamps, rewards and store credit at every business. They cannot be moved to a new account.</p></div>
+    <div class="imp-note" style="margin-top:10px"><b>What is forfeited</b><p class="small" style="margin-top:5px">Unused points, stamps, rewards and store credit at every business. They cannot be moved to a new account. Anything a business keeps for you, such as a stored bottle, stays with the business but can no longer be matched to you.</p></div>
     <div class="imp-note" style="margin-top:10px"><b>What is kept, and why</b><p class="small" style="margin-top:5px">Past sales and reward records stay with each business as their accounting record — without your name or contact details attached.</p></div>
     <label for="customerDeleteAccountConfirmV749">Type DELETE to confirm</label>
     <input id="customerDeleteAccountConfirmV749" autocomplete="off" autocapitalize="characters" placeholder="DELETE">
@@ -18458,7 +18458,7 @@ function openCustomerDeleteAccountDialogV749(){
     if(result?.status==='refused'){
       /* The server names what it still holds for you. Its sentence is the truthful one. */
       const names=(result.businesses||[]).map(b=>esc(b.business_name||'a business')).join(', ');
-      outcome.innerHTML=`<div class="err"><b>Nothing was deleted.</b> ${names||'A business'} still holds stored value or items for you. Use or collect them, or ask the business to settle them, then try again.</div>`;
+      outcome.innerHTML=`<div class="err"><b>Nothing was deleted.</b> ${names||'A business'} still holds stored value (money you paid in) for you. Use it up, or ask the business to refund it, then try again.</div>`;
       submit.disabled=false;submit.textContent='Delete my account';typed.disabled=false;return;
     }
     customerDeleteAccountAttemptV749=null;

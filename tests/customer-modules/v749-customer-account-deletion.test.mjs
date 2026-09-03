@@ -6,6 +6,7 @@ const root = new URL('../../', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 const app = (await read('app/index.html')) + '\n' + (await read('app/app.js'));
 const migration = await read('db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql');
+const migrationV750 = await read('db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql');
 
 const section = (src, start, end) => {
   const from = src.indexOf(start);
@@ -73,12 +74,25 @@ test('the migration refuses a business login with 42501 and calls the v473 unlin
   assert.match(migration, /deleted_at = now\(\)/);
 });
 
-test('the migration guards on the actual stored-value and kept-property tables it references', () => {
+test('the original v749 migration guarded on both stored-value and kept-property tables (historical)', () => {
   // Verified against the shipped file rather than assumed: sv_lots/sv_accounts (stored value) and
-  // bar_bottles (kept property) are the tables the refusal branch actually reads.
+  // bar_bottles (kept property) were the tables the original refusal branch read. v750 (below)
+  // supersedes the live function and drops the bar_bottles refusal; this file is unmodified.
   assert.match(migration, /from public\.sv_lots lot join public\.sv_accounts account on account\.id = lot\.account_id/);
   assert.match(migration, /from public\.bar_bottles bottle/);
   assert.match(migration, /bottle\.status in \('stored','called','at_table','expired'\)/);
+});
+
+test('nestly_v750 keeps the sv_lots refusal and drops the bar_bottles refusal', () => {
+  // The header comment names bar_bottles in prose (explaining why the refusal was dropped), so
+  // check the executable SQL body (from `begin;` on) rather than the whole file.
+  const body = migrationV750.slice(migrationV750.indexOf('create or replace function public.customer_delete_account_v749'));
+  assert.match(body, /sv_lots/);
+  assert.doesNotMatch(body, /bar_bottles/);
+});
+
+test('the customer profile dialog copy names a stored bottle as kept property, not a blocker', () => {
+  assert.match(app, /stored bottle/);
 });
 
 test('the migration never touches the value ledgers directly', () => {
