@@ -66,6 +66,6 @@ test('the shell surfaces route to native Face ID, never to a WebAuthn attempt', 
   /* v670 superseded v669's "coming soon" copy with the real feature: in the shell the button
      runs the Keychain credential unlock, and only the web branch ever reaches WebAuthn. */
   assert.match(appSource, /nativeShell\?runBiometricSignIn\(\):runPasskeySignIn\(\)/);
-  assert.match(appSource, /After you sign in, you can turn on Face ID for next time\./);
-  assert.match(appSource, /Face ID sign-in is off\. Turn it on when the app offers it/);
+  assert.match(appSource, /After you sign in, you can turn on Biometric Sign-In for next time\./);
+  assert.match(appSource, /Biometric Sign-In is off\. Turn it on when the app offers it/);
 });

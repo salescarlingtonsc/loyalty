@@ -4960,8 +4960,8 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   const nativeShell=globalThis.Capacitor?.isNativePlatform?.()===true;
   const installedApp=globalThis.navigator?.standalone===true
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
-  /* nestly_v670: in the shell the Face ID button is real again — not WebAuthn (impossible in a
-     WKWebView, v669) but the native Keychain credential: reading it IS the Face ID prompt, and
+  /* nestly_v670/v746: in the shell the biometric button is real again — not WebAuthn (impossible in a
+     WKWebView, v669) but the native Keychain credential: reading it IS the biometric prompt (iOS shows Face ID or Touch ID itself), and
      what comes back signs in through the same signInWithPassword as the form. All state lives
      in this closure; the only external surface is NestlyNativeBridge.biometricSignIn, which
      answers inertly wherever the plugin is absent. */
@@ -4975,26 +4975,26 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     biometricEnrolled=enrolled===true;
     if(available&&biometricEnrolled){
       passkeyButton.hidden=false;passkeyButton.disabled=false;
-      passkeyStatus.textContent='Sign in with Face ID.';
+      passkeyStatus.textContent='Biometric Sign-In is on. Tap the icon to sign in.';
     }else{
       passkeyButton.hidden=true;
       passkeyStatus.textContent=available
-        ?'After you sign in, you can turn on Face ID for next time.'
+        ?'After you sign in, you can turn on Biometric Sign-In for next time.'
         :'';
     }
   };
   const runBiometricSignIn=async()=>{
     if(!biometric)return;
     passkeyButton.disabled=true;signIn.disabled=true;
-    passkeyStatus.textContent='Waiting for Face ID…';
+    passkeyStatus.textContent='Waiting for your device…';
     const saved=await biometric.retrieve();
     if(!isRouteCurrent()||!passkeyButton.isConnected)return;
     if(saved.status!=='ok'){
       signIn.disabled=false;passkeyButton.disabled=false;
       if(saved.status==='missing'){biometricEnrolled=false;refreshBiometricUi();return}
       passkeyStatus.textContent=saved.status==='canceled'
-        ?'Sign in with Face ID.'
-        :'Face ID could not be checked. Use your password.';
+        ?'Biometric Sign-In is on. Tap the icon to sign in.'
+        :'Biometric check did not complete. Use your password.';
       return;
     }
     passkeyStatus.textContent='Signing in…';
@@ -5006,7 +5006,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
          next password sign-in. */
       await biometric.clear();biometricEnrolled=false;
       signIn.disabled=false;refreshBiometricUi();
-      errorHost.innerHTML='<div class="err">Your saved Face ID sign-in no longer matches. Sign in with your password to set it up again.</div>';
+      errorHost.innerHTML='<div class="err">Your saved Biometric Sign-In no longer matches. Sign in with your password to set it up again.</div>';
       return;
     }
     resetClientSessionState({preserveInvitation:true});route();
@@ -5021,16 +5021,16 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     if(!isRouteCurrent()||!errorHost.isConnected)return;
     await new Promise(resolve=>{
       errorHost.innerHTML=`<div class="card" style="margin-top:10px;padding:14px" data-biometric-offer>
-        <b>Sign in with Face ID next time?</b>
-        <p class="muted small" style="margin-top:4px">Your sign-in is kept only on this phone, locked by Face ID. You can turn it off any time in Profile.</p>
+        <b>Turn on Biometric Sign-In?</b>
+        <p class="muted small" style="margin-top:4px">Next time, sign in with your face or fingerprint. Your sign-in is kept only on this device, locked by its biometrics. You can turn it off any time in Profile.</p>
         <div class="row" style="gap:8px;margin-top:10px">
-          <button class="btn sm" type="button" data-biometric-yes>Use Face ID</button>
+          <button class="btn sm" type="button" data-biometric-yes>Turn on</button>
           <button class="btn ghost sm" type="button" data-biometric-no>Not now</button>
         </div></div>`;
       errorHost.querySelector('[data-biometric-yes]').onclick=async(event)=>{
         event.currentTarget.disabled=true;
         const stored=await biometric.store({phone,password});
-        if(errorHost.isConnected)errorHost.innerHTML=stored?'':'<div class="err">Face ID could not be set up. You can try again at your next sign-in.</div>';
+        if(errorHost.isConnected)errorHost.innerHTML=stored?'':'<div class="err">Biometric Sign-In could not be set up. You can try again at your next sign-in.</div>';
         resolve();
       };
       errorHost.querySelector('[data-biometric-no]').onclick=()=>{
@@ -8955,17 +8955,17 @@ async function renderCustomerProfile(requestedView){
       const [{available},enrolled]=await Promise.all([biometric.availability(),biometric.enrolled()]);
       if(!isCurrent()||!passkeyHost.isConnected)return;
       if(!available){
-        passkeyList.innerHTML='<p class="muted small">This device does not offer Face ID or Touch ID. Sign in with your mobile number and password.</p>';return;
+        passkeyList.innerHTML='<p class="muted small">This device has no biometric sign-in available. Sign in with your mobile number and password.</p>';return;
       }
       passkeyList.innerHTML=enrolled
-        ?'<div class="wallet-line"><div><b>Face ID sign-in is on for this phone</b><p class="muted small" style="margin-top:3px">Your sign-in is kept only on this device, locked by Face ID.</p></div><span class="spacer"></span><button class="btn danger sm" type="button" data-biometric-off>Turn off</button></div>'
-        :'<p class="muted small">Face ID sign-in is off. Turn it on when the app offers it at your next password sign-in.</p>';
+        ?'<div class="wallet-line"><div><b>Biometric Sign-In is on for this device</b><p class="muted small" style="margin-top:3px">Sign in with your face or fingerprint. Your sign-in is kept only on this device, locked by its biometrics.</p></div><span class="spacer"></span><button class="btn danger sm" type="button" data-biometric-off>Turn off</button></div>'
+        :'<p class="muted small">Biometric Sign-In is off. Turn it on when the app offers it at your next password sign-in.</p>';
       const off=passkeyList.querySelector('[data-biometric-off]');
       if(off)off.onclick=async()=>{
-        off.disabled=true;passkeyStatus.textContent='Turning off Face ID sign-in…';
+        off.disabled=true;passkeyStatus.textContent='Turning off Biometric Sign-In…';
         const cleared=await biometric.clear();
         if(!isCurrent()||!passkeyHost.isConnected)return;
-        passkeyStatus.textContent=cleared?'Face ID sign-in is off. Your saved sign-in was removed from this phone.':'Face ID sign-in could not be turned off. Try again.';
+        passkeyStatus.textContent=cleared?'Biometric Sign-In is off. Your saved sign-in was removed from this device.':'Biometric Sign-In could not be turned off. Try again.';
         if(cleared)loadPasskeys();else off.disabled=false;
       };
       return;
