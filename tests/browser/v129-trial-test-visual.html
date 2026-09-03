@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="8e904964808597bc0418ba4fd2b86a8f448ace679f0e4010d4465d11c02f30a9"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="d9310385a519aa70b14aab590e6ef76e625e360bc4370ad0e44ba0f6a8480811"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2333,6 +2333,16 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v750 (same owner photo as the padding fix above, same red box around "Tier name" —
+   v748's flex column did not fix the label-to-input distance, only stopped it from being WORSE).
+   MEASURED: the generic `label{margin:16px 0 6px}` rule (this sheet, base element styles) still
+   applied to every <label> inside these paragraphs — a flex item's own margin is not absorbed by
+   its parent's `gap`, the two simply add — so "Tier name" sat 16px below the paragraph's own top
+   edge and 12px above its input (6px of that own margin-bottom plus the paragraph's 6px gap),
+   not the 6px the v748 comment describes. Zeroed here, the same way the paragraph's OWN margin is
+   zeroed three lines up: the flex column's 6px gap becomes the entire, single source of the
+   label-to-input rhythm this dialog already declared. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>label{margin:0}
 /* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
    the points fields under A free gift). The flex rule above is a class selector, so it outranks
    the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
@@ -2364,10 +2374,44 @@ li.grow-inline-modal-v662>p{margin-top:0!important}
 @media(max-width:1180px){.grow-stamps-head-v356{display:none}}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331],
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{gap:18px}
-.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li,
+/* nestly_v750 (owner photo, taken on production the day after v748: "Edit tier" / "Add a tier"
+   flush against the dialog's left edge, title clipped top-left, uneven label-to-input spacing).
+   v748 fixed the label/input flex-column shape but MEASURED THE WRONG SURFACE — a hand-built
+   static rig showed 20px padding on the <li>, which is what every rule in the v658/v662 block
+   above (padding:20px, unconditional, non-!important) says it should be. Rendering the REAL
+   growTiersManageV331 page (tests/browser/generate-v750-tier-dialog-visual.mjs, the production
+   render function against the production stylesheet, not an approximation) shows the truth:
+   getComputedStyle on the dialog's own <li> reported padding: 0 0 0 0, not 20px.
+   THE ACTUAL DEFECT: the tier add/edit form (data-grow-tiers-addform-v331) and the tier delete
+   confirmation (data-grow-tiers-deleteconfirm-v331) are both rendered as direct <li> children of
+   the SAME <ul data-grow-tiers-summary-v331> that holds the ordinary tier rows — see
+   growTiersRowV331/growTiersManageV331 in app/app.js. TWO rules below, both written only for
+   those ordinary rows, reached the pop-ups too because neither excluded them:
+   (1) The zeroing rule (two lines down) strips border/shadow/padding from every direct <li> of
+       this list with !important — correct for a tier row, which supplies its own card look via
+       .grow-tier-card-row-v351 and would otherwise sit in two nested cards, but !important beats
+       ANY specificity, so it also zeroed the pop-ups' padding — their only inset, since a pop-up
+       supplies no inner card of its own.
+   (2) The card rule immediately below this comment sets padding:20px 24px, border and shadow on
+       the same direct <li>s — with no !important, but at the SAME (0,3,1) specificity as
+       "li.grow-inline-modal-v658, ... .grow-tier-form-v501.grow-inline-modal-v658" further down
+       this sheet (the rule actually meant to style these pop-ups), so simply excluding the
+       pop-ups from rule (1) let rule (2) win the tie by source order instead — the pop-up gained
+       an unwanted 1px border and a second box-shadow on top of its own.
+   Both are scoped here by :not(.grow-inline-modal-v658) — the class every one of this list's
+   pop-ups carries — rather than by :not(.imp-note), because the "Turn tiers on/off?" switch
+   confirmation banner (data-grow-switchconfirm-v322) is ALSO an .imp-note direct child of this
+   same list and is meant to stay a flush, zero-padding, tinted note, not become a bordered card;
+   it does not carry grow-inline-modal-v658 and is therefore unaffected by either exclusion.
+   MEASURED AFTER: dialog padding 20/20/20/20 (the v658 rule now wins outright, nothing above it
+   left to compete), title no longer clipped, "Tier name" label sits 6px above its own input (the
+   v658/v748 rules apply once nothing above them zeroes or overrides them), nothing overflows the
+   dialog's right edge. See tests/business-ui/v750-tier-dialog-alignment.test.mjs and
+   docs/qa/evidence/v750-tier-dialog-alignment/. */
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li:not(.grow-inline-modal-v658),
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>li:not(.imp-note){min-height:78px;padding:20px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]{border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(48,36,28,.08);padding:22px}
-.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li{box-shadow:none!important;border:0!important;padding:0!important}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li:not(.grow-inline-modal-v658){box-shadow:none!important;border:0!important;padding:0!important}
 /* nestly_v503 (owner, 2026-08-25, third report: "why still same UI UX - overlapping text").
    THE OVERLAP, MEASURED: 22px — 41% of the "Live tiers (3) | History (12)" strip was covered by
    the tier list, which is why both labels were sliced off along their bottom edge in the owner's
@@ -5698,7 +5742,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 8e904964808597bc0418ba4fd2b86a8f448ace679f0e4010d4465d11c02f30a9</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d9310385a519aa70b14aab590e6ef76e625e360bc4370ad0e44ba0f6a8480811</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -30570,6 +30614,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'8e904964808597bc0418ba4fd2b86a8f448ace679f0e4010d4465d11c02f30a9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'d9310385a519aa70b14aab590e6ef76e625e360bc4370ad0e44ba0f6a8480811',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

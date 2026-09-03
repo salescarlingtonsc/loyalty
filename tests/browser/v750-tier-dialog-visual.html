@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="d9bb0e1b60afa55f22e428efc200d48143db7d718e84f408ca14a4b59b3905a0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="c2fc83f988caf9fb12fcc0d7009812234551a0686df3c169bb1e92cc17cb4c79"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2333,6 +2333,8 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+<<<<<<< HEAD
+=======
 /* nestly_v750 (same owner photo as the padding fix above, same red box around "Tier name" —
    v748's flex column did not fix the label-to-input distance, only stopped it from being WORSE).
    MEASURED: the generic `label{margin:16px 0 6px}` rule (this sheet, base element styles) still
@@ -2343,6 +2345,7 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    zeroed three lines up: the flex column's 6px gap becomes the entire, single source of the
    label-to-input rhythm this dialog already declared. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>label{margin:0}
+>>>>>>> claude/v749-owner-batch2
 /* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
    the points fields under A free gift). The flex rule above is a class selector, so it outranks
    the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
@@ -5741,7 +5744,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d9bb0e1b60afa55f22e428efc200d48143db7d718e84f408ca14a4b59b3905a0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c2fc83f988caf9fb12fcc0d7009812234551a0686df3c169bb1e92cc17cb4c79</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6216,10 +6219,6 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     const $=id=>document.getElementById(id);
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const money=cents=>'SGD '+(Number(cents||0)/100).toFixed(2);
-    /* nestly_v421: the REAL shared component library (app/customer-ui.js), inlined above as
-       FrenlyCustomerUI — the same object production binds CUI to. It used to be hand-stubbed
-       here, with icon() mapping eight names to bullet characters, which made this fixture useless
-       as evidence about icons: exactly what the v401 pass on this page was about. */
     const CUI=window.FrenlyCustomerUI;
     const workspaceLocale='en';
     const workspaceTemplateHtmlV97=(key,{count}={})=>key==='growDraftReady'?'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.':count+' published '+(count===1?'reward':'rewards');
@@ -6392,7 +6391,6 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
    applyCustomerNavCountsV194, which repaints the badges the moment the real numbers land. */
     const fail=error=>{throw error};
     const toast=message=>{window.__lastToast=message};
-    /* Real navigation — see renderFromHashV421 at the foot of this harness. */
     const nav=hash=>{if(typeof hash==='string'&&hash.startsWith('#')){location.hash=hash;window.__renderFromHashV421?.()}};
     const openProtectedGrowPublishReview=()=>{};
     const refreshRetentionPanel=()=>{};
@@ -6450,110 +6448,94 @@ function pruneRewardSiblingsV139(root){
     const M=()=>document.getElementById('main');
     const evidenceParams=new URLSearchParams(location.search);
     const isManager=evidenceParams.get('role')==='manager';
-    const hasExistingDraft=evidenceParams.get('draft')==='existing';
-    const failRecommendationOnce=evidenceParams.get('failOnce')==='1';
-    const concurrentDraft=evidenceParams.get('concurrentDraft')==='1';
-    const emptyPrograms=evidenceParams.get('empty')==='1';
-    const partialOverview=evidenceParams.get('partial')||'';
-    const configuredOff=evidenceParams.get('configured')==='off';
-    const futureRetention=evidenceParams.get('futureRetention')==='1';
-    const fixtureSector=evidenceParams.get('sector')||'facial';
-    const cafeFixture=fixtureSector==='cafe';
-    const classicFixture=fixtureSector==='other';
-    const requestedModules=evidenceParams.get('modules');
-    const selectedModules=requestedModules?requestedModules.split(',').filter(Boolean):['loyalty','retention','referrals','memberships','giftcards'];
-    const S={myRole:isManager?'manager':'owner',myModules:selectedModules,biz:{id:cafeFixture?'business-cafe-harbour':classicFixture?'business-other':'business-spa-glow',currency:'SGD',industry:fixtureSector}};
+    const S={myRole:isManager?'manager':'owner',myModules:['loyalty','retention','referrals','memberships','giftcards'],
+      biz:{id:'business-v750-fixture',currency:'SGD',industry:'cafe'}};
     const canWriteModule=module=>!isManager&&S.myModules.includes(module);
-    const fixture={currentVersion:'published-v1',draft:hasExistingDraft?{id:'draft-v2',version_no:2}:null,
-      loyalty:emptyPrograms?null:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
-      rewards:emptyPrograms?[]:[
-        {id:'11111111-1111-4111-8111-111111111111',active:true,customer_name:'Signature reward',cost_points:500,estimated_cost_cents:400,sort:1},
-        {id:'22222222-2222-4222-8222-222222222222',active:true,customer_name:'Signature reward',cost_points:1500,estimated_cost_cents:900,sort:2},
-        {id:'33333333-3333-4333-8333-333333333333',active:false,customer_name:'Seasonal facial',cost_points:750,sort:3}],
-      birthday:emptyPrograms?null:{program_id:'birthday-1',active:true,customer_label:'Birthday Glow',customer_description:'Available during the birthday month.',fulfillment_kind:'discount_pct',discount_percent:20},
-      products:[],retention:emptyPrograms?[]:[
-        {id:'bring-back-1',program_id:'bring-back-1',name:'Glow regular return',active:!configuredOff,goal_visits:2,period_days:30,reward_taxonomy_id:'taxonomy-1',reward_label:'Glow credit',fulfillment_kind:'credit',credit_cents:1000,starts_on:futureRetention?'2099-01-01':'2026-08-01'},
-        {id:'bring-back-2',program_id:'bring-back-2',name:'Paused facial return',active:false,goal_visits:1,period_days:60,reward_taxonomy_id:'taxonomy-1',reward_label:'Glow credit',fulfillment_kind:'credit',credit_cents:500,starts_on:'2026-08-01'}],
-      taxonomy:[{id:'taxonomy-1',label:'Glow credit',fulfillment_kind:'credit',active:true,sort:1}],
-      /* nestly_v421: the Bring-back page reads bringback_campaigns_v361, the table v361 gave it —
-         NOT retention_programs, which is what this fixture carried and what the overview rows used
-         to read. Without it the page the Bring-back tile opens is permanently empty, which is what
-         it rendered when this harness was first made to run again. One live campaign and one the
-         firm has paused, so both states are on screen. */
-      bbCampaigns:emptyPrograms?[]:[
-        {id:'bring-back-1',name:'Glow regular return',reward_label:'Glow credit',away_days:30,expiry_days:30,active:!configuredOff,created_at:'2026-08-01T00:00:00.000Z'},
-        {id:'bring-back-2',name:'Paused facial return',reward_label:'Glow credit',away_days:60,expiry_days:30,active:false,created_at:'2026-08-02T00:00:00.000Z'}],
-      referral:emptyPrograms?null:{id:'referral-1',enabled:!configuredOff,reward_cents:1000,min_spend_cents:5000},
-      memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
+    /* The tiers page gates almost everything on the programme SPINE (programmeSpineRowsV314),
+       which production populates from a business_programmes read at bootstrap. This fixture never
+       runs that bootstrap, so it is set directly here — a live 'tiers' row, matching the shape
+       programmeSpineRowV428 produces (kind/active), which is what programmeSpineOnV314('tiers')
+       and liveLoyaltyModelKeysV240 both key off. */
+    S.programmes=[{kind:'tiers',active:true},{kind:'points',active:false},{kind:'stamps',active:false},{kind:'referral',active:true}];
+    S.programmesBusinessId=S.biz.id;
+    /* Real production value (app/app.js): gates Memberships out of growTopicDefsV229. Declared,
+       not extracted, because it is a one-line literal with nothing else worth pulling in around
+       it — same call the reward-overview generator makes for its own small constants. */
+    const UNVERIFIED_MODULES_V466=['memberships','giftcards'];
+    /* Stubbed: the workspace-i18n attribute machinery (server-authored copy translation) is
+       orthogonal to layout, and this fixture is not evidence about translated copy. */
+    const workspaceTemplateAttributeV97=()=>'';
+    const workspaceTemplateTextV97=(key,values={})=>key+' '+JSON.stringify(values);
+    /* Stubbed: a customer-side stamp-card preview widget, unrelated to the tier/referral dialogs
+       this fixture measures. */
+    const customerHeroStampCardV422=()=>'';
+    /* Real production pagination helper (app/app.js) — a one-line pure function, declared rather
+       than extracted for the same reason UNVERIFIED_MODULES_V466 is above. Used by the Limited
+       Offer tab strip, which growPage renders even off the tiers/referral surfaces this fixture
+       targets. */
+    const PAGE_SIZE_V584=20;
+    const pageCountV584=total=>Math.max(1,Math.ceil(Math.max(0,Number(total)||0)/PAGE_SIZE_V584));
+    /* Stubbed: an async WhatsApp-automation card loader with its own network reads, unrelated to
+       the tier/referral dialogs this fixture measures. */
+    const loadGrowWaAutomationCardV583=async()=>{};
+    const loadGrowBbWhatsappStripV551=async()=>{};
+    const wirePagerV584=(host,scope,go)=>{
+      if(!host)return;
+      host.querySelectorAll(`[data-pager-v584="${scope}"] [data-pager-go-v584]`).forEach(button=>{
+        button.onclick=()=>{const target=Number(button.dataset.pagerGoV584);if(Number.isFinite(target))go(Math.max(0,target))};
+      });
+    };
+    /* Two tiers already saved, so the "Edit tier" dialog (the one the owner circled) has a real
+       row to open, alongside the "+ Add tier" dialog. */
+    const fixture={
+      loyalty:{id:'programme-1',active:true,loyalty_model:'points_tiers',earn_points_per_dollar:10,redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
+      rewards:[],
+      birthday:null,
+      tiers:[
+        {id:'tier-1',name:'Gold',threshold:1000,points_multiplier:1,perk_note:'10% off every visit',sort:1,paused:false,deleted_at:null,effective_from:null,expires_at:null},
+        {id:'tier-2',name:'Diamond',threshold:5000,points_multiplier:1.5,perk_note:'Free birthday item',sort:2,paused:false,deleted_at:null,effective_from:null,expires_at:null}],
+      tierBenefits:[
+        {id:'benefit-1',tier_id:'tier-1',label:'10% off',limit_count:null,limit_period:null,sort:1,benefit_kind:'discount_pct',discount_percent:10,product_id:null,item_label:null}],
+      products:[{id:'product-1',name:'Iced Latte'}],
+      services:[{id:'service-1',name:'Table service'}],
+      retention:[],bbCampaigns:[],
+      taxonomy:[],
+      referral:{id:'referral-1',enabled:true,reward_cents:1000,min_spend_cents:5000,reward_kind:'points',
+        reward_label:'',friend_enabled:true,friend_reward_points:null,friend_reward_label:''},
+      memberships:[],
       giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
-    window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
-    /* v229's topic filter, the v386 usage window and the rest of the Grow module state used to be
-       restated here one variable at a time; they come from production now (growState above). */
+    window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];
     function fixtureQuery(table){
       const state={single:false,equals:{}};
       const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},not(){return query},gte(){return query},lte(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
         then(resolve,reject){window.__tableReads.push(table);let data=[];
-          if(table==='businesses')data={active_config_version_id:fixture.currentVersion};
+          if(table==='businesses')data={active_config_version_id:'published-v1'};
           else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
           else if(table==='loyalty_rewards')data=fixture.rewards;
+          else if(table==='loyalty_tiers')data=fixture.tiers;
+          else if(table==='tier_benefits_v365')data=fixture.tierBenefits;
+          else if(table==='tier_benefit_scope_v656')data=[];
+          else if(table==='products')data=fixture.products;
+          else if(table==='services')data=fixture.services;
           else if(table==='retention_programs')data=fixture.retention;
           else if(table==='bringback_campaigns_v361')data=fixture.bbCampaigns;
           else if(table==='referral_programs')data=fixture.referral?[fixture.referral]:[];
           else if(table==='membership_plans')data=fixture.memberships;
-          else if(table==='firm_config_versions')data=state.equals.status==='draft'?(fixture.draft?[fixture.draft]:[]):[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
+          else if(table==='firm_config_versions')data=state.equals.status==='draft'?[]:[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
           else if(table==='firm_reward_taxonomy')data=fixture.taxonomy;
-          /* nestly_v456 (audit A). 'bringback_campaigns_v361' joins this set because nestly_v429
-             moved the Bring-back tile's read there — growRewardsSnapshot's retentionRequest is
-             that table now, and public.retention_programs is no longer read by this page at all.
-             The failure set had not moved with it, so `partial=all` left the one table the tile
-             actually depends on answering NORMALLY: the tile rendered a real, data-backed state
-             ("On / View") while the walkthrough asserted 'Unavailable', and the read-failure path
-             it exists to prove was never executed. retention_programs stays listed — harmless,
-             and the day a reader comes back to it the fixture is already honest about it. */
-          const failedTables=partialOverview==='all'
-            ?new Set(['loyalty_programs','loyalty_rewards','retention_programs',
-              'bringback_campaigns_v361','referral_programs','membership_plans'])
-            :new Set(partialOverview==='1'?['referral_programs']:[]);
-          const error=failedTables.has(table)?{message:'Synthetic programme status failure'}:null;
-          return Promise.resolve({data:error?null:data,error}).then(resolve,reject)}};
+          return Promise.resolve({data,error:null}).then(resolve,reject)}};
       return query;
     }
     const sb={from:fixtureQuery,rpc:async(name,args)=>{window.__rpcCalls.push(name);window.__rpcArgs.push({name,args});
-      if(name==='get_active_birthday_program')return partialOverview==='all'?{data:null,error:{message:'Synthetic birthday failure'}}:{data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:fixture.birthday?[fixture.birthday]:[]},error:null};
-      if(name==='owner_list_reward_profitability_products_v122')return {data:{items:fixture.products},error:null};
-      if(name==='business_get_checkout_preferences_v102')return partialOverview==='all'?{data:null,error:{message:'Synthetic gift-card failure'}}:{data:fixture.giftcardPreferences,error:null};
+      if(name==='get_active_birthday_program')return {data:{status:'published',as_of:'2026-08-01T00:00:00.000Z',programs:[]},error:null};
+      if(name==='owner_list_reward_profitability_products_v122')return {data:{items:[]},error:null};
+      if(name==='business_get_checkout_preferences_v102')return {data:fixture.giftcardPreferences,error:null};
       if(name==='get_retention_config_draft')return {data:{programs:fixture.retention,taxonomy:fixture.taxonomy,snapshot_hash:'draft-hash'},error:null};
-      if(name==='create_grow_config_draft_v138')return {data:{version_id:'draft-v2',version_no:2,status:'draft',snapshot_hash:'draft-hash',replayed:false,published:false},error:null};
-      if(name==='ensure_published_retention_in_draft_v138')return {data:{program_id:args.p_program,config_version_id:args.p_config_version,snapshot_hash:'draft-after-retention',replayed:false,published:false},error:null};
-      if(name==='generate_retention_recommendation'){
-        if(failRecommendationOnce&&!window.__recommendationFailed){window.__recommendationFailed=true;return {data:null,error:{message:'Synthetic lost response'}}}
-        const governedRecommendation=cafeFixture
-          ?{model:'stamps',reference_price_cents:1200,suggested_spend_per_stamp_cents:600,suggested_reward_cost:8}
-          :classicFixture
-          ?{model:'classic',reference_price_cents:3000,suggested_spend_per_stamp_cents:null,suggested_reward_cost:null}
-          :{model:'points_tiers',reference_price_cents:6400,suggested_reward_cost:320};
-        const data=concurrentDraft
-          ?{draft_config_version_id:'draft-concurrent',status:'existing_draft',resumed_existing:true,...governedRecommendation,published:false}
-          :{draft_config_version_id:'draft-v2',status:'draft_ready',resumed_existing:false,...governedRecommendation,published:false};
-        window.__lastRecommendation=data;
-        return {data,error:null};
-      }
       if(name==='business_get_welcome_offer_v215')return {data:{status:'none'},error:null};
       if(name==='business_programme_usage_v271')return {data:{items:[]},error:null};
       return {data:{version_id:'draft-v2'},error:null};
     }};
-    async function loyaltyPage(modelOverride,draftVersionId,recommendation,stableRefresh,editorIntent){
-      const host=M();
-      host.innerHTML='<div id="loyaltyAuthority">'+loyaltyAuthorityActionV140({canManage:!isManager,draftVersionId})+'</div><section class="card" id="loyaltyCustomerRedemption">Customer redemption</section><div class="split"><section class="card" id="loyaltyProgramEditor"><h2>Earning editor</h2><label for="lm">Loyalty model</label><select id="lm"><option>Simple points</option></select><label for="lr">Points needed to redeem</label><input id="lr" value="1000"></section><section class="card" id="loyaltyRewardEditor"><h2>Reward editor</h2><button class="btn sm" id="rwAdd">+ Add reward</button><div class="reward-list" id="rwList">'+fixture.rewards.map(reward=>'<button class="btn ghost sm rwEdit" data-reward-id="'+reward.id+'">Edit '+esc(reward.customer_name)+'</button>').join('')+'</div><div id="rwEditor"></div></section></div><section class="card" id="birthdayEditorCard"><label for="birthdayLabel">Birthday benefit</label><input id="birthdayLabel" value="Birthday Glow"></section>';
-      applyGrowLoyaltyEditorIsolationV139(host,editorIntent);
-      host.querySelectorAll('.rwEdit').forEach(button=>button.onclick=()=>{
-        const reward=fixture.rewards.find(item=>item.id===button.dataset.rewardId);
-        window.__openedRewardId=reward?.id||null;
-        $('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value="'+esc(reward?.customer_name||'')+'"><p id="openedRewardIdentity">'+esc(reward?.id||'')+'</p></div>';
-        pruneRewardSiblingsV139(host);
-      });
-      if($('rwAdd'))$('rwAdd').onclick=()=>{$('rwEditor').innerHTML='<div class="reward-editor"><label for="rwCustomerName">Customer-facing name</label><input id="rwCustomerName" value=""></div>';pruneRewardSiblingsV139(host)};
-    }
+    async function loyaltyPage(){}
     async function storedValuePage(){} async function studioPage(){}
     async function retentionPage(draftVersionId=null,editProgramId=null,stableRefresh=false){
   const routeMain=M();
@@ -16137,34 +16119,51 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'d9bb0e1b60afa55f22e428efc200d48143db7d718e84f408ca14a4b59b3905a0',role:S.myRole,
-      viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
-      /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
-         data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
-         tile grid. Both selectors are read, so this measurement survives the next one: the old
-         rows are still what a DRILLED view renders. */
-      title:$('rewardJourneyTitle')?.textContent||'',cards:[...document.querySelectorAll('.grow-topic-card-v343,.grow-programme-row')].map(card=>({tag:card.tagName,programmeKind:card.dataset.growTopicV229||card.dataset.programmeKind||null,kind:card.dataset.rewardsOverviewEdit||null,rewardId:card.dataset.rewardId||null,programId:card.dataset.programId||null,href:card.getAttribute('href'),height:card.getBoundingClientRect().height,width:card.getBoundingClientRect().width,text:card.textContent.trim()})),
-      editButtons:document.querySelectorAll('[data-rewards-overview-edit]').length,openedRewardId:window.__openedRewardId||null,
-      autoSetupButtons:document.querySelectorAll('#growAutoSetup').length,secondaryOpen:$('growSecondarySettings')?.open||false,
-      overviewTop:$('rewardJourneyTitle')?.getBoundingClientRect().top||null,secondaryTop:$('growSecondarySettings')?.getBoundingClientRect().top||null,
-      recommendationCalls:window.__rpcArgs.filter(call=>call.name==='generate_retention_recommendation').map(call=>call.args),
-      growDraftCalls:window.__rpcArgs.filter(call=>call.name==='create_grow_config_draft_v138').map(call=>call.args),
-      recommendationResult:window.__lastRecommendation||null,
-      dialogOpen:Boolean($('rewardAutoSetupModal')),dialogStep:$('rewardAutoStepTitle')?.textContent||'',
-      birthdayRpcCalls:window.__rpcCalls.filter(name=>name==='get_active_birthday_program').length,
-      birthdayTableReads:window.__tableReads.filter(name=>name==='birthday_program_versions').length,
-      retentionName:$('rn')?.value||'',retentionMissing:Boolean($('retentionExactProgramMissing')),
-      authorityLabel:$('loyaltyAuthority')?.textContent.trim()||'',
-      editorIntent:M()?.dataset.growEditorIntent||'',programEditors:document.querySelectorAll('#loyaltyProgramEditor').length,
-      rewardEditors:document.querySelectorAll('#loyaltyRewardEditor').length,birthdayEditors:document.querySelectorAll('#birthdayEditorCard').length,
-      redemptionEditors:document.querySelectorAll('#loyaltyCustomerRedemption').length,rewardLists:document.querySelectorAll('#rwList').length,
-      overviewHomeVisible:Boolean(document.querySelector('.grow-hero')?.offsetParent),
-      activeElement:document.activeElement?.id||'',consoleErrors:window.__consoleErrors||[]});
+    /* Measurement surface for the verify script. Everything below reads the rendered dialog, not a
+       restated approximation of it — the same discipline the generator comment above explains. */
+    window.tierDialogMetrics=()=>{
+      const dialog=document.querySelector('[data-grow-tiers-addform-v331]');
+      const readEl=(el)=>{if(!el)return null;const cs=getComputedStyle(el);const r=el.getBoundingClientRect();
+        return {paddingTop:parseFloat(cs.paddingTop),paddingRight:parseFloat(cs.paddingRight),paddingBottom:parseFloat(cs.paddingBottom),paddingLeft:parseFloat(cs.paddingLeft),
+          top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height,display:cs.display,flexDirection:cs.flexDirection};};
+      const paragraphs=[...document.querySelectorAll('[data-grow-tiers-addform-v331] .grow-setup-sentence-v301:not(.row)')].map(p=>{
+        const label=p.querySelector('label'),input=p.querySelector('input,select,textarea');
+        const labelRect=label?label.getBoundingClientRect():null,inputRect=input?input.getBoundingClientRect():null;
+        return {id:p.id||null,labelText:label?label.textContent.trim():null,
+          rect:p.getBoundingClientRect(),labelRect,inputRect,
+          labelToInputGap:(labelRect&&inputRect)?(inputRect.top-labelRect.bottom):null};
+      });
+      const title=dialog?dialog.querySelector('.grow-points-form-head-v485 b, #growTiersFormTitleV658'):null;
+      return {dialogPresent:Boolean(dialog),dialog:readEl(dialog),
+        dialogRight:dialog?dialog.getBoundingClientRect().right:null,
+        viewportWidth:document.documentElement.clientWidth,
+        title:title?{text:title.textContent.trim(),rect:title.getBoundingClientRect()}:null,
+        head:readEl(dialog?dialog.querySelector('.grow-points-form-head-v485'):null),
+        paragraphs};
+    };
+    window.referralWrapMetrics=()=>{
+      const ids=['growReferralGiftWrapV420','growReferralFriendGiftWrapV421','growReferralPointsWrapV420','growReferralFriendPointsWrapV421'];
+      return Object.fromEntries(ids.map(id=>{
+        const el=$(id);
+        if(!el)return [id,null];
+        const r=el.getBoundingClientRect();
+        return [id,{hidden:el.hasAttribute('hidden'),offsetParent:Boolean(el.offsetParent),height:r.height,display:getComputedStyle(el).display}];
+      }));
+    };
+    window.matchedCascadeFor=(selectorForElement)=>{
+      const el=document.querySelector(selectorForElement);
+      if(!el)return null;
+      const winners=[];
+      for(const sheet of document.styleSheets){
+        let rules;try{rules=sheet.cssRules}catch(error){continue}
+        for(const rule of rules){
+          if(!rule.selectorText)continue;
+          try{if(el.matches(rule.selectorText))winners.push({selector:rule.selectorText,cssText:rule.style.cssText});}catch(error){}
+        }
+      }
+      return winners;
+    };
     window.__consoleErrors=[];window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-    /* nestly_v421: nav() was a no-op, so every tile that DRILLS (#/grow/points, #/grow/tiers,
-       #/grow/bringback — which is how this landing works since V326/V331/V358) did nothing at all
-       when clicked and the walkthrough could only ever see the landing. It routes for real now:
-       set the hash, re-render from it, exactly as the app's own router does. */
     function renderFromHashV421(){
       const routed=(location.hash.startsWith('#/')?location.hash.slice(2):location.hash).split('/');
       const routedSurface=routed[0]==='loyalty'?'rewards':routed[0]==='retention'?'winback':'overview';
