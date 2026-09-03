@@ -257,7 +257,7 @@ test('every migration from v685 forward decides its days through app.sg_*', asyn
 
 test('v685 itself is in scope and clean, so the guard is not measuring an empty set', async () => {
   const files = await inScopeMigrations();
-  const v685 = files.find((f) => f.name.includes('_v685_'));
+  const v685 = files.find((f) => f.name.includes('_v685_singapore_day_authority'));
   assert.ok(v685, 'nestly_v685 is missing from db/migrations');
   assert.deepEqual(violationsIn(v685.sql), []);
   // It must genuinely contain anchors and authority bodies — otherwise the allowlists above

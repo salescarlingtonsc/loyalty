@@ -1,0 +1,59 @@
+HEAD b02dfc61b132e8d046294a831ebca063e66113b0  2026-09-02T17:13:18Z
+== tests/phase0-foundation
+ℹ tests 98
+ℹ pass 98
+ℹ fail 0
+== tests/program-studio
+ℹ tests 72
+ℹ pass 72
+ℹ fail 0
+== tests/ai-reports
+ℹ tests 268
+ℹ pass 268
+ℹ fail 0
+== tests/business-ui
+ℹ tests 1822
+ℹ pass 1822
+ℹ fail 0
+== tests/platform-console
+ℹ tests 273
+ℹ pass 273
+ℹ fail 0
+== tests/browser
+ℹ tests 32
+ℹ pass 32
+ℹ fail 0
+== tests/billing
+ℹ tests 61
+ℹ pass 61
+ℹ fail 0
+== tests/branding
+ℹ tests 5
+ℹ pass 5
+ℹ fail 0
+== tests/customer-modules
+ℹ tests 196
+ℹ pass 196
+ℹ fail 0
+== tests/customer-wallet
+ℹ tests 790
+ℹ pass 790
+ℹ fail 0
+== tests/platform-admin
+ℹ tests 11
+ℹ pass 11
+ℹ fail 0
+== tests/whatsapp
+ℹ tests 94
+ℹ pass 94
+ℹ fail 0
+== tests/platform
+ℹ tests 250
+ℹ pass 250
+ℹ fail 0
+== quality gates
+ai-report-golden-gate: OK — 6/6 packs clean
+Static production baseline checks passed.
+Surface bundles and stamps are current (core 597KB · auth 37KB · customer 724KB · business 2871KB · i18n 215KB).
+CI-READER-CONTRACTS.json and the embedded SQL literal both match the generator source.
+DONE 2026-09-02T17:15:19Z

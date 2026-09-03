@@ -151,7 +151,14 @@ begin
       ('public.platform_conversion_funnel_v312(date,date)',  'current_date', 3),
       ('public.refresh_growth_recommendation_v108(uuid,uuid)', 'date_trunc(''day'',v_now)', 1),
       ('public.platform_sweep_stalled_onboarding_v513(integer)', 'current_date::text', 1),
-      ('app.customer_demographics_v1(uuid,uuid)',            'age(current_date', 1),
+      -- Merged 2026-09-03: the CI wave's nestly_v674 split app.customer_demographics_v1 into a
+      -- gate-free core plus a byte-thin wrapper that only delegates. The age computation, and
+      -- therefore v685's Singapore-day call, now lives in the core; the wrapper's own body has no
+      -- day logic at all. Both halves are pinned: the wrapper must still carry no UTC-day text,
+      -- and the core must carry the authority. db/tests/executed/v744_merge_v685_semantics.sql
+      -- additionally proves the wrapper delegates to that core after the whole chain.
+      ('app.customer_demographics_v1(uuid,uuid)',            'age(current_date', 0),
+      ('app.customer_demographics_core_v674(uuid,uuid)',     'age(current_date', 1),
       ('app.sme_prospect_card_v76(uuid)',                    'current_date-', 2),
       ('public.platform_generate_subscription_reminders_v156(date)',
        'r.current_period_end::date', 3),

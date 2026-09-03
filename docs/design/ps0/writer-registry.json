@@ -2647,6 +2647,17 @@
       "idempotency": "gift_redemption_reversals_v665_idem_uk on (business_id, idempotency_key) returns the first reversal on replay; gift_redemption_reversals_v665_target_uk allows one reversal per thing reversed, ever; an advisory lock on (business, target) serialises concurrent attempts",
       "value": "NON-VALUE. Every reachable table is a free-gift entitlement or an allowance counter — none is a VALUE_TABLE, and nothing here touches credit_ledger, points_ledger, sales or stock_batches. The $0 sale written when the gift was handed over is deliberately LEFT STANDING: app.enforce_sale_reversal_bounds refuses a zero-dollar reversal without package-session provenance, and no money is misstated by a zero row. The reversal records that sale's id beside it instead.",
       "kernel_migratability": "portable — restoring an entitlement is business-scoped and append-only in its evidence; the money path is untouched by design."
+    },
+    {
+      "id": "db.fn:app.seed_golden_business_v682/3",
+      "surface": "db_function",
+      "latest_file": "20260920080000_nestly_v682_golden_corpus.sql",
+      "rows_written": "sales:INSERT",
+      "detected_signals": "sale-policy-ref",
+      "entry_point": "app.seed_golden_business_v682(p_index, p_sector, p_owner) — the v682 golden reconciliation corpus seeder. Deterministic, keyed only on (p_index, p_sector) with no randomness anywhere; provisions one fully-operational synthetic business (businesses, branches, staff, business_workspace_controls_v94, business_subscription_lifecycle_v94, subscriptions, a -infinity reporting_contract_versions_v106 row) plus a deterministic customer/sales population, and returns the independently hand-computed expected headline values BEFORE any row it just inserted is read back. Called only from db/tests/executed/v682_golden_reconciliation.sql and its rollback-suite mirror db/tests/v682_golden_corpus.sql — not reachable from the browser, an Edge Function, or any other product RPC.",
+      "idempotency": "None, and none is needed — a test-fixture seeder, not a customer-facing operation. Re-running with the same (p_index, p_sector) inserts a fresh set of rows each call; only rolled-back SQL test transactions call it, and every call is followed by ROLLBACK.",
+      "kernel": "OUT OF KERNEL SCOPE — test-fixture population only. The one tracked-value-table write (public.sales) is ordinary synthetic transaction history inserted so a reconciliation suite has real rows to check product RPCs against; no ledger, no stored-value or points row, nothing a real checkout kernel would ever call.",
+      "value": "Synthetic-corpus INSERT into public.sales only, priced by closed-form arithmetic from (p_index, p_sector, c) so the function's own returned 'expected' block can be independently checked against get_revenue_truth_v106 / get_ci_daypart_v1 / get_customer_lifecycle_v107 reading those same rows (db/tests/executed/v682_golden_reconciliation.sql). Also inserts non-tracked scaffolding rows (businesses, branches, staff, clients, subscriptions, workspace controls, subscription lifecycle, reporting contract version) so the seeded business is genuinely operational, per docs/qa/CI-CORPUS-FIXTURE-GUIDE.md."
     }
   ],
   "allowlist": [
@@ -3903,6 +3914,22 @@
       "reason": "Phase A/B Customer Intelligence category drill-in, fired on demand when an owner/manager expands a category row in 'What they buy' (nestly_v650). SECURITY DEFINER, business-membership + reports-module gated, read-only — returns the customer list for one node_key. Writes nothing."
     },
     {
+      "id": "browser.rpc:app/app.js:get_ci_funnel_conversion_v1",
+      "reason": "Phase CI-A Customer Intelligence lifecycle funnel card (nestly_v673, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667 (business-membership + reports-module for a merchant, or the platform firm-report authority for an assigned consultant), read-only — returns 1st->2nd->3rd visit conversion with maturity-gated stages, embedding the frozen v672 statistical-authority evidence/rate-block contract. Unlike the v650 quartet above it takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_demographics_v1",
+      "reason": "Phase CI-A Customer Intelligence demographic grid card (nestly_v674, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns the (age_band x gender) revenue/frequency/ATV grid plus an 'unclassified' bucket and coverage rates, reusing v638's classification verbatim and the v672 statistical-authority contract for small-cell suppression. Takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_daypart_v1",
+      "reason": "Phase CI-A Customer Intelligence behaviour card (nestly_v675, wired to the page in nestly_v679). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns weekday and hour-of-day behaviour with an honest exposure denominator, using app.analytics_sale_class_v1 (v628) for sale qualification and the v672 statistical-authority contract for evidence-gated verdicts (busiest_weekday stays a raw count; most_valuable_weekday is evidence-gated). Takes p_branch and respects the top bar's branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_opportunities_v1",
+      "reason": "Pre-existing gap found while governing the v680-v690 wave (this call site and the function it names were already committed in the v672-v678 wave / nestly_v679, not introduced here). Customer Intelligence ranked-opportunities card (nestly_v678, wired to the page in nestly_v679, re-emitted verbatim by nestly_v680's envelope wrap). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns ranked, evidence-citing opportunities (each verdict backed by the v672 statistical-authority evidence/rate-block contract). Writes nothing."
+    },
+    {
       "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",
       "reason": "Service mapping board (#/servicemapping, nestly_v650), reached from Customer Intelligence's category-mix withhold state and from Services. SECURITY DEFINER, business-membership + services-module-READ gated, read-only — returns the service list joined to v647/v648 canonical nodes plus each service's suggested_node_key. Writes nothing; the page renders only when this call succeeds, which is the whole client-side gate."
     },
@@ -3925,6 +3952,10 @@
       "resolves_to": "public.staff_scan_gift_qr_to_till_v666(business, qr_token) — STABLE SECURITY DEFINER, authenticated, till-or-loyalty write. Performs no DML at all. Answers whose pending gift QR this is (returning the one till customer card, app.v666_till_customer_card) and whether the perk behind it can be priced onto a bill (stageable) or handed over with no purchase at all (settle_now, nestly_v681, narrowed by nestly_v682 to free_item only for tier perks — a written 'custom' perk may itself demand a purchase — with min_spend_cents and benefit_kind alongside it). Settling stays with staff_scan_gift_qr_v515 and staging with staff_stage_gift_qr_v665, so this adds no second writer and no second answer to \"was this QR used\".",
       "call_site_finding": "nestly_v666/v681 — one call site, the Record sale keypad's Scan button; v681 turns its answer into a yes/no confirmation for a no-purchase gift, settled through staff_scan_gift_qr_v515 as before. Before it, that scanner settled a gift QR on sight and then reset to an empty keypad, which spent the customer's voucher and identified nobody (owner report 2026-09-01). Every refusal is soft so the caller falls through to v515 for the wording.",
       "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
+    },
+    {
+      "id": "db.backfill:20260922030000_nestly_v735_evidence_pack_extended.sql:sales",
+      "reason": "verification-only INSERT (sales) inside 20260920_nestly_v735_evidence_pack_extended.sql's savepoint v735_verify block (lines 125-329 of db/migrations/20260920_nestly_v735_evidence_pack_extended.sql), executed to prove app.v176_evidence_pack's campaigns candidate reaches findings.ranked on a populated seed and undone by `rollback to savepoint v735_verify` before the migration commits; no row persists. NOT a runtime writer and NOT a real backfill."
     }
   ]
 }

@@ -13,6 +13,14 @@
 --       the older line as a test would have reversed an owner decision. Corrected before commit.
 --   B1b ENTITLEMENT IS WHAT EARNS IT. A member of the SAME firm whose role does not carry the
 --       reports module must still be refused, or "entitled" would mean nothing.
+--   B1c NESTLY_V689 — MODULE ALONE IS NOT ENOUGH. app.can_module reads staff.modules /
+--       staff.module_perms directly and never consults app.role_perms or app.has_perm, so a
+--       per-staff allowlist can hand a role the 'customerintel' entitlement even when that role's
+--       OWN permission set carries no view_finance — exactly the gap the client (FINANCE_MODULES /
+--       roleCanUseModule), v573's get_revenue_truth_v106 gate and v523's own
+--       staff_module_perms_at_v115 already close. A member who holds 'customerintel' per-staff but
+--       whose role lacks view_finance must still be refused, or the module entitlement would be
+--       sufficient on its own — which is the caller nestly_v689 closes.
 --   B2  TENANT. A member of another firm must be refused, and must never receive rows.
 --   B3  ENTITLEMENT SURVIVES. The assigned consultant and the super admin must still be served
 --       — a fix that denies everyone is not a fix.
@@ -55,6 +63,7 @@ declare
   u_owner_a  uuid := '00000000-0000-4000-8000-00000006f103';
   u_owner_b  uuid := '00000000-0000-4000-8000-00000006f104';
   u_nofin    uuid := '00000000-0000-4000-8000-00000006f105';
+  u_ci_nofin uuid := '00000000-0000-4000-8000-00000006f106';
   cons_id    uuid := '00000000-0000-4000-8000-00000006f201';
   co_id      uuid := '00000000-0000-4000-8000-00000006f202';
   svc_pop    uuid := '00000000-0000-4000-8000-00000006f301';
@@ -80,7 +89,7 @@ begin
   insert into auth.users (id, email) values
     (u_sa,'zz-v667-sa@example.test'), (u_cons,'zz-v667-cons@example.test'),
     (u_owner_a,'zz-v667-oa@example.test'), (u_owner_b,'zz-v667-ob@example.test'),
-    (u_nofin,'zz-v667-nofin@example.test')
+    (u_nofin,'zz-v667-nofin@example.test'), (u_ci_nofin,'zz-v667-ci-nofin@example.test')
     on conflict (id) do nothing;
   insert into public.super_admins (user_id, email)
     values (u_sa,'zz-v667-sa@example.test') on conflict do nothing;
@@ -90,14 +99,20 @@ begin
   ---------------------------------------------------------------------------
   /* enabled_modules must actually contain 'reports': the resolver reads it to decide a module's
      mode, so a firm with an empty set has no reports access and B1/B1b would prove nothing.
-     'customerintel' USED to be deliberately omitted here, because listing it would have implied
-     an entitlement no firm could actually hold: nestly_v523 (owner ruling 2026-08-26) removed
-     the hand-placed override only from app.staff_module_perms_at_v115, while
-     app.effective_platform_module_mode_v94 went on answering 'disabled' /
-     'global_platform_only_policy', and v537 re-pointed the capability gate at that resolver.
-     nestly_v668 completes v523 by removing the short-circuit from that resolver too, so the
-     entitlement now means what it says. Firm A therefore CARRIES 'customerintel' and firm B
-     deliberately does not — that contrast is what B8 measures, in both directions. */
+     'customerintel' is listed for firm A and withheld from firm B — that contrast is what B8
+     measures, in both directions.
+
+     This USED to carry a longer note explaining why 'customerintel' could not be listed at all:
+     nestly_v523 (owner ruling 2026-08-26) removed the hand-placed override only from
+     app.staff_module_perms_at_v115, while app.effective_platform_module_mode_v94 went on
+     answering 'disabled' / 'global_platform_only_policy' ahead of the entitlement, so listing the
+     module here would have implied an entitlement no firm could actually hold. That is now
+     history: nestly_v668 removed the short-circuit from the second resolver too, so
+     app.can_module(b,'customerintel') means what enabled_modules says. nestly_v689 then closed the
+     remaining gap ONE LEVEL UP, in the gate that reads app.can_module: the merchant arm now also
+     requires app.has_perm(business,'view_finance'), because app.can_module alone can be satisfied
+     by a per-staff allowlist grant regardless of the holder's role (B1c, below). Firm A's owner
+     satisfies both the module and the permission; firm A's B1c member satisfies only the module. */
   insert into public.businesses (id, name, slug, enabled_modules) values
     (biz_a,'ZZ v667 firm A','zz-v667-a',
       array['dashboard','clients','sales','reports','customerintel']),
@@ -118,6 +133,19 @@ begin
   insert into public.staff (business_id, user_id, role, full_name, active, access_state, modules)
   values (biz_a, u_nofin, 'staff', 'ZZ v667 no-reports', true, 'approved',
           array['dashboard','clients']);
+  /* B1c (nestly_v689). A member of firm A whose PER-STAFF allowlist explicitly grants BOTH
+     'reports' and 'customerintel' — app.can_module(biz_a,'reports') AND
+     app.can_module(biz_a,'customerintel') both resolve true for this user, because app.can_module
+     reads staff.modules directly and never consults app.role_perms — but whose ROLE ('staff')
+     carries no view_finance (app.role_perms('staff') = {view_sales,create_sales}). 'reports' is
+     included deliberately: without it, the OLD (pre-v689) gate would have refused this user for
+     an unrelated reason (no 'reports') and B1c would pass whether or not v689 is applied, proving
+     nothing. WITH 'reports' present, the old gate — which checked only
+     app.can_module(b,'reports') — SERVED this user; only nestly_v689's added view_finance
+     requirement refuses them. */
+  insert into public.staff (business_id, user_id, role, full_name, active, access_state, modules)
+  values (biz_a, u_ci_nofin, 'staff', 'ZZ v667 ci-module-no-finance', true, 'approved',
+          array['dashboard','clients','reports','customerintel']);
 
   /* is_salon_member also requires an OPEN workspace, which v620 resolves through BOTH the
      approval control and the subscription lifecycle. A firm insert seeds both rows in the
@@ -225,6 +253,15 @@ begin
       'fixture owner lacks the reports module, so a refusal below proves nothing about CI '
       'entitlement — B1 would pass vacuously');
   end if;
+  /* nestly_v689: the merchant arm now also requires view_finance directly (app.can_module alone
+     does not check it — see B1c). Owner holds it via app.role_perms('owner'), but assert the real
+     predicate rather than assume the role map, or a refusal below could be blamed on entitlement
+     when it was actually this permission that was missing. */
+  if not app.has_perm(biz_a,'view_finance') then
+    insert into _fail values ('B1-pre',
+      'fixture owner lacks view_finance, so a refusal below proves nothing about CI entitlement — '
+      'B1 would pass vacuously');
+  end if;
 
   /* An ENTITLED merchant owner must be SERVED.
      This assertion was originally written the other way round, on the strength of
@@ -267,6 +304,44 @@ begin
            when others then
              get stacked diagnostics v_err = returned_sqlstate;
              insert into _fail values ('B1b', format('refused with %s, expected 42501', v_err));
+  end;
+
+  ---------------------------------------------------------------------------
+  -- B1c (nestly_v689) — the module entitlement alone is not enough. A member who holds
+  -- 'customerintel' through a PER-STAFF allowlist grant, but whose role carries no view_finance,
+  -- must still be refused. Before v689 this exact caller reached every CI reader: the old gate
+  -- checked app.can_module(b,'reports'), which this user's role satisfies via enabled_modules,
+  -- and never checked view_finance at all.
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub',u_ci_nofin,'role','authenticated')::text, true);
+
+  /* PRECONDITIONS. Both halves of the gap must be real, or the refusal below proves nothing:
+     the member must genuinely hold the module (so this is not just B1b again) and must
+     genuinely lack the permission (so this is not a membership or workspace problem). */
+  if not app.is_salon_member(biz_a) then
+    insert into _fail values ('B1c-pre','the ci-module member is not a salon member; B1c would be vacuous');
+  end if;
+  if not app.can_module(biz_a,'customerintel') then
+    insert into _fail values ('B1c-pre',
+      'the ci-module member does not resolve customerintel at all; B1c would not be testing the '
+      'module-without-permission gap, it would just be B1b again');
+  end if;
+  if app.has_perm(biz_a,'view_finance') then
+    insert into _fail values ('B1c-pre',
+      'the ci-module member holds view_finance after all; B1c would be vacuous — pick a role '
+      'that truly lacks it (app.role_perms confirms staff = {view_sales,create_sales})');
+  end if;
+
+  begin
+    g := public.get_ci_acquisition_v1(biz_a, d_from, d_to);
+    insert into _fail values ('B1c',
+      'a member holding customerintel per-staff but no view_finance reached the CI readers — '
+      'the module entitlement alone was treated as sufficient');
+  exception when insufficient_privilege then null;
+           when others then
+             get stacked diagnostics v_err = returned_sqlstate;
+             insert into _fail values ('B1c', format('refused with %s, expected 42501', v_err));
   end;
 
   ---------------------------------------------------------------------------

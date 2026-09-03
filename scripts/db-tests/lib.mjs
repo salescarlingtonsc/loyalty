@@ -299,8 +299,37 @@ export function discoverPendingMigrations({ watermark = SNAPSHOT_WATERMARK_VERSI
       return m ? { name, version: Number(m[1]), path: join(dir, name) } : null;
     })
     .filter((f) => f && f.version > watermark)
-    /* Ascending version, then filename, so two files sharing a version stay deterministic. */
-    .sort((a, b) => a.version - b.version || a.name.localeCompare(b.name));
+    /* Registered migrations apply in CANONICAL DEPLOY ORDER (db/migrations/migration-order.plan.json
+       proposedDeployVersion) — the order production actually receives them — so a rehearsal here
+       cannot pass in an order prod never runs. Two sessions may legitimately ship twin semantic
+       numbers (main's nestly_v685 Singapore-day authority vs the CI wave's v685 shadow
+       reconciliation, 2026-09-03); ascending NNN put the CI wave's v674 before main's v685 and
+       v685's anchored patch then found nothing to patch, while prod would have applied them the
+       other way round. Unregistered files (dropped by a sibling agent before governance) keep the
+       old contract: after every registered file, ascending NNN, then filename. */
+    .map((f) => ({ ...f, deployVersion: deployVersionByPath().get(`db/migrations/${f.name}`) ?? null }))
+    .sort((a, b) => {
+      if (a.deployVersion && b.deployVersion) return a.deployVersion.localeCompare(b.deployVersion);
+      if (a.deployVersion !== b.deployVersion) return a.deployVersion ? -1 : 1;
+      return a.version - b.version || a.name.localeCompare(b.name);
+    });
+}
+
+let deployVersionCache = null;
+/** path (repo-relative, db/migrations/<file>) -> proposedDeployVersion, from the canonical order plan. */
+function deployVersionByPath() {
+  if (deployVersionCache) return deployVersionCache;
+  deployVersionCache = new Map();
+  const planPath = join(REPO_ROOT, 'db/migrations/migration-order.plan.json');
+  if (existsSync(planPath)) {
+    const plan = JSON.parse(readFileSync(planPath, 'utf8'));
+    for (const item of plan.items ?? []) {
+      if (item.kind === 'executable' && item.path && item.proposedDeployVersion) {
+        deployVersionCache.set(item.path, String(item.proposedDeployVersion));
+      }
+    }
+  }
+  return deployVersionCache;
 }
 
 /**
@@ -323,10 +352,22 @@ export function discoverExecutedTests({ watermark = SNAPSHOT_WATERMARK_VERSION }
     .map((name) => {
       const m = /^v(\d+)/.exec(name);
       const version = m ? Number(m[1]) : null;
+      const path = join(EXECUTED_TESTS_DIR, name);
+      /* Opt-in marker for a file that is not a behavioural suite against the shared schema at
+         all: it builds and drops its own scratch schema (see v427_entitlements.sql's header).
+         Cloning the shared baseline/migrated template for one of these means the file's own
+         `drop schema ... cascade` tears down every object the whole platform has accumulated —
+         thousands of them on the migrated template — which blows past Postgres's
+         max_locks_per_transaction and fails with "out of shared memory", a harness artifact that
+         has nothing to do with the migration the file is actually proving. Declared by the
+         file itself (first line, exact text) rather than inferred, so nothing is silently
+         reclassified. */
+      const isolated = readFileSync(path, 'utf8').split('\n', 1)[0].trim() === '-- db-tests: isolated';
       return {
         name,
-        path: join(EXECUTED_TESTS_DIR, name),
+        path,
         version,
+        isolated,
         /* A test named for a migration NEWER than the frozen baseline is testing behaviour that
            does not exist in the baseline yet, so failing there is the correct answer, not a
            regression. Its gate is the MIGRATED phase. A test at or below the watermark — the

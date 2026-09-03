@@ -1,0 +1,63 @@
+{
+  "description": "A brand-new, sparse firm — only a couple of customers, nobody at risk yet, fully identified revenue.",
+  "pack": {
+    "contract_version": "v176",
+    "scope": {
+      "business_name": "Sparse Sundries",
+      "period_kind": "monthly",
+      "period_start": "2026-08-01",
+      "period_end": "2026-08-31",
+      "prior_period_start": "2026-07-01",
+      "prior_period_end": "2026-07-31"
+    },
+    "confidence_class": "insufficient",
+    "insights": {
+      "identification": {
+        "total_revenue_cents": 20000,
+        "identified_revenue_cents": 20000,
+        "identified_revenue_share_pct": 100.0,
+        "anonymous_sales": 0
+      },
+      "retention": {
+        "customers_served": 2,
+        "new_customers": 1,
+        "returning_customers": 1,
+        "existing_customer_return_rate_pct": 50.0,
+        "prior_period_new_customers": 1,
+        "prior_new_who_returned_this_period": 1,
+        "prior_new_return_rate_pct": 100.0
+      },
+      "at_risk": {
+        "definition": "customers with 2+ lifetime visits whose last visit is 45-180 days before period end",
+        "customers": 0,
+        "their_lifetime_revenue_cents": 0,
+        "recovery_value_one_visit_each_cents": 0
+      },
+      "top_customers": {
+        "rows": [
+          { "label": "Ong M.", "revenue_cents": 20000, "visits": 2, "is_new_this_period": false }
+        ],
+        "top1_share_of_total_revenue_pct": 100.0
+      }
+    },
+    "account_opens": {
+      "report_range": { "requested_to": "2026-08-31", "effective_to": "2026-08-31", "clamped": false }
+    },
+    "evidence_completeness": {
+      "unavailable_sections": []
+    },
+    "opportunities": {
+      "candidates": [
+        {
+          "id": "weekend_return_pattern",
+          "domain": "cadence",
+          "label": "weekend visit and return pattern",
+          "pattern": "Customers who visit on a weekend also tend to return sooner than customers who visit on a weekday.",
+          "evidence_class": "ASSOCIATION"
+        }
+      ]
+    }
+  },
+  "good": "## Summary\nSparse Sundries is a new shop. Revenue was SGD 200.00 from 2 customers this month.\n\n## What went well\n- 1 of 2 customers this month had already bought before, a returning-customer share of 50.0%.\n- 100% of revenue came from identified customers.\n\n## What needs attention\n- With only 2 customers this month, small numbers can be misleading. No regulars are at risk yet (0 customers).\n\n## Your customers\nYour only repeat customer, Ong M., carried all of the identified revenue, SGD 200.00. Customers who visit on a weekend also tend to return sooner than customers who visit on a weekday.\n\n## Do these three things next\n1. Keep greeting each of the 2 customers personally next month.\n2. Track whether the 1 returning customer comes back again.\n3. Watch for the first regular to become at risk after more visits build up.\n",
+  "bad": "## Summary\nSparse Sundries is a new shop. Revenue was SGD 200.00 from 2 customers this month.\n\n## What went well\n- 1 of 2 customers this month had already bought before, a returning-customer share of 50.0%.\n- 100% of revenue came from identified customers.\n\n## What needs attention\n- With only 2 customers this month, small numbers can be misleading. No regulars are at risk yet (0 customers).\n\n## Your customers\nYour only repeat customer, Marcus Lim, carried all of the identified revenue, SGD 200.00. Visiting on a weekend leads to customers returning sooner than a weekday visit.\n\n## Do these three things next\n1. Keep greeting each of the 2 customers personally next month.\n2. Track whether the 1 returning customer comes back again.\n3. Watch for the first regular to become at risk after more visits build up.\n"
+}

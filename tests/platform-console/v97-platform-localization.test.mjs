@@ -361,12 +361,34 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // blocks route the server's exact wording through the normal translated path instead of
   // inspecting error.message directly (nothing to adjust / trial runway beyond 180 days /
   // no subscription exists / no lifecycle row exists).
-  assert.equal(explicit.length,1135,'update the audited explicit-copy inventory when adding runtime UI'); // F130
+  // Merged 2026-09-03: main's F130 (+17) and the CI-100 wave's v727/check-98/v734 strings (+14, itemised
+  // below) are both live, so the inventory is the sum of the two sides' additions.
+  assert.equal(explicit.length,1149,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734
   // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
   // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
   // submitLabel are a ternary expression, not a literal, so they are not metadata matches).
-  assert.equal(metadata.length,860,'update the audited CUI metadata inventory when adding UI metadata'); // F130
+  assert.equal(metadata.length,862,'update the audited CUI metadata inventory when adding UI metadata'); // F130 (+1) + v727 (+2), merged 2026-09-03
   assert.equal(announcements.length,48,'update the audited static announcement inventory when adding announcements'); // V503
+  // nestly_v727 (consultant brief evidence gating, check 93): +5 distinct explicit pt() strings
+  // (Average order, the insufficient-evidence note template, Identified customers, With a
+  // purchase, Inactive 90+ days). 'Top customer revenue' dedupes against an identical string
+  // already introduced by an earlier wave, so it does not add a sixth.
+  // nestly (CI-100 check 98, generation-failure model-failure rendering): +2 distinct explicit
+  // pt() literal-argument strings — the "Report unavailable — {reason}" template and the
+  // 'unknown reason' fallback. aiReportFailureReasonLabel()'s four decideGenerationFailure()
+  // reason sentences (model_unavailable/model_timeout/malformed_output/empty_narrative) are
+  // called as pt(known[key]) — a variable, not a literal — so this regex-based inventory does
+  // not see them; they still carry real zh-CN/ms dictionary entries (added alongside these two),
+  // just outside what this particular static scan can detect.
+  // nestly_v734 (check 97, freshness and stale states): +7 distinct explicit pt() strings from
+  // ciFreshnessCaptionHtmlV734 — 'age unknown', 'under an hour old', '{hours} hours old',
+  // 'Data as of {date} · {age}', 'no recorded sale yet',
+  // 'Data may be out of date — last sale {date}.' and 'never recorded'.
+  // (merged 2026-09-03; the live numbers are below) explicit 1124,'update the audited explicit-copy inventory when adding runtime UI'); // v734
+  // nestly_v727: +2 distinct metadata strings (the new Customer intelligence card's title and
+  // description).
+  // (merged) metadata 850,'update the audited CUI metadata inventory when adding UI metadata'); // v727
+  // (merged) announcements 47,'update the audited static announcement inventory when adding announcements'); // V503
   assert.doesNotMatch(source,/new Error\(\s*(['"])/,'static validation errors must call pt()');
   assert.doesNotMatch(source,/\.textContent\s*=\s*(['"])/,'static runtime element states must call pt()');
   const directErrorDisplays=[...source.matchAll(/error\??\.message/g)]

@@ -24,12 +24,37 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const console_js = readFileSync(join(root, 'app', 'platform-console.js'), 'utf8');
 const v94 = readFileSync(
   join(root, 'db', 'migrations', '20260728_nestly_v94_platform_control_intelligence.sql'), 'utf8');
+/* nestly_v722 re-patches platform_get_assigned_firm_report_v94 in place (extract-and-diff, not
+   a fresh create-or-replace) to add 'evidence' and a section 'status' to kpis/cohorts/
+   customer_intelligence — see docs/qa/CI-100-CHECKLIST.md check 93 and
+   db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql. The CONTRACT test below
+   must see those two keys as live-emitted too, or it would wrongly flag the v727 fix that reads
+   them as inventing an undefined key — the exact defect class this test exists to catch, just in
+   the other direction. Scoped to v722's own patch-v94 block, not the whole migration file, so an
+   unrelated key elsewhere in v722 cannot silently widen this contract. */
+const v722 = readFileSync(
+  join(root, 'db', 'migrations', '20260920_nestly_v722_freshness_and_brief_evidence.sql'), 'utf8');
+const v722PatchStart = v722.indexOf('do $patch_v94$');
+const v722PatchEnd = v722.indexOf('$patch_v94$;', v722PatchStart);
+assert.ok(v722PatchStart > -1 && v722PatchEnd > v722PatchStart,
+  'v722 must contain its platform_get_assigned_firm_report_v94 patch block');
+const v722PatchV94 = v722.slice(v722PatchStart, v722PatchEnd);
 
 const blockStart = console_js.indexOf('function consultativeIntelligenceHtml(');
 const blockEnd = console_js.indexOf('async function renderEnterpriseReport(', blockStart);
 assert.ok(blockStart > -1 && blockEnd > blockStart,
   'consultativeIntelligenceHtml must be a top-level function before renderEnterpriseReport');
 const block = console_js.slice(blockStart, blockEnd);
+
+/* nestly_v734 (check 97): consultativeIntelligenceHtml now calls ciFreshnessCaptionHtmlV734,
+   defined earlier in the file, outside this block slice — pulled in verbatim so this vm context
+   can actually resolve it (see tests/business-ui/v734-ci-freshness-caption.test.mjs for the same
+   pattern used against app.js). */
+const freshnessStart = console_js.indexOf('function ciFreshnessCaptionHtmlV734(payload) {');
+const freshnessEnd = console_js.indexOf('\n  }', freshnessStart) + '\n  }'.length;
+assert.ok(freshnessStart > -1 && freshnessEnd > freshnessStart,
+  'ciFreshnessCaptionHtmlV734 must exist as a top-level function');
+const freshnessBlock = console_js.slice(freshnessStart, freshnessEnd);
 
 /* The two static guards below scan the renderer for key names. They must read CODE, not prose:
    the fix's own comment names the superseded keys in order to explain them, and a scan that
@@ -45,7 +70,10 @@ function render(report, affinity, recommendations) {
     asObject: (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {},
     asArray: (x) => Array.isArray(x) ? x : [],
     currency: (c, cur) => `${cur || 'SGD'} ${((Number(c) || 0) / 100).toFixed(2)}`,
-    pt: (s) => s,
+    dateTime: (v) => `DT:${v}`,
+    pt: (s, vars) => vars
+      ? Object.keys(vars).reduce((out, k) => out.replaceAll(`{${k}}`, String(vars[k])), s)
+      : s,
     platformStatus: (s) => String(s ?? ''),
     localizedEmptyHtml: (msg) => `<div class="empty">${esc(msg)}</div>`,
     localizedRouteNoteHtml: (t, b) => `<div class="note"><b>${esc(t)}</b><p>${esc(b)}</p></div>`,
@@ -60,7 +88,7 @@ function render(report, affinity, recommendations) {
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
-  vm.runInContext(block + '\n__exports.render = consultativeIntelligenceHtml;', context);
+  vm.runInContext(freshnessBlock + '\n' + block + '\n__exports.render = consultativeIntelligenceHtml;', context);
   return context.__exports.render(report, affinity, recommendations, sandbox.CUI);
 }
 
@@ -167,7 +195,8 @@ test('v667 CONTRACT: every payload key the renderer reads is one the LIVE SQL em
     return v94.slice(start, end);
   };
   const liveSql = liveBody('platform_get_assigned_firm_report_v94')
-                + liveBody('platform_get_catalogue_affinity_v94');
+                + liveBody('platform_get_catalogue_affinity_v94')
+                + v722PatchV94;
   const emitted = new Set([...liveSql.matchAll(/'([a-z_]+)'\s*,/g)].map(m => m[1]));
   /* Sanity: the superseded names must NOT be in the live emitted set, or the slice is wrong. */
   for (const dead of ['orders_together', 'attach_rate_pct']) {

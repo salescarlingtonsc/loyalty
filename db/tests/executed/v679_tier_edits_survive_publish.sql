@@ -137,10 +137,17 @@ begin
          (p_silver,p_business,p_config,'Silver',3,1,2,true),
          (p_gold,  p_business,p_config,'Gold', 10,2,3,true);
 
+  -- Merged 2026-09-03: the suite's premise is a FIVE-VISIT client. Since the CI wave's nestly_v709
+  -- the tier resolver counts distinct Singapore visit days over the non-reversed qualifying sales
+  -- (composing main's v677 "a reversed sale is not a visit" with checklist check 4 "visit is not
+  -- transaction"), so five sales stamped on the same instant are ONE visit. The five visits are
+  -- therefore planted on five different days; every assertion below is unchanged.
   insert into public.sales(id,business_id,client_id,kind,amount_cents,earns_points,
-                           counts_as_visit,counts_as_revenue,config_version_id,policy_resolved_at)
-  select gen_random_uuid(),p_business,p_client,'service',1000,true,true,true,p_config,now()
-  from generate_series(1,5);
+                           counts_as_visit,counts_as_revenue,config_version_id,policy_resolved_at,
+                           occurred_at)
+  select gen_random_uuid(),p_business,p_client,'service',1000,true,true,true,p_config,now(),
+         now() - make_interval(days => n)
+  from generate_series(1,5) as n;
 end
 $$;
 grant execute on function pg_temp.v679_tenant(uuid,uuid,uuid,uuid,uuid,uuid,uuid,uuid) to public;

@@ -3388,6 +3388,366 @@
       "version": "20260902160000",
       "name": "nestly_v688_support_mark_read",
       "sourcePath": "db/migrations/20260902_nestly_v688_support_mark_read.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920000000",
+      "name": "nestly_v672_statistical_authority",
+      "sourcePath": "db/migrations/20260920_nestly_v672_statistical_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920010000",
+      "name": "nestly_v673_retention_funnels",
+      "sourcePath": "db/migrations/20260920_nestly_v673_retention_funnels.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920020000",
+      "name": "nestly_v674_demographic_intelligence",
+      "sourcePath": "db/migrations/20260920_nestly_v674_demographic_intelligence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920030000",
+      "name": "nestly_v675_behaviour_service_package",
+      "sourcePath": "db/migrations/20260920_nestly_v675_behaviour_service_package.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920040000",
+      "name": "nestly_v676_internal_drain_authority",
+      "sourcePath": "db/migrations/20260920_nestly_v676_internal_drain_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920050000",
+      "name": "nestly_v678_consultant_spine",
+      "sourcePath": "db/migrations/20260920_nestly_v678_consultant_spine.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920060000",
+      "name": "nestly_v680_ci_envelope",
+      "sourcePath": "db/migrations/20260920_nestly_v680_ci_envelope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920070000",
+      "name": "nestly_v681_return_probability",
+      "sourcePath": "db/migrations/20260920_nestly_v681_return_probability.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920080000",
+      "name": "nestly_v682_golden_corpus",
+      "sourcePath": "db/migrations/20260920_nestly_v682_golden_corpus.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920090000",
+      "name": "nestly_v684_metric_dictionary",
+      "sourcePath": "db/migrations/20260920_nestly_v684_metric_dictionary.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920100000",
+      "name": "nestly_v685_shadow_reconciliation",
+      "sourcePath": "db/migrations/20260920_nestly_v685_shadow_reconciliation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920110000",
+      "name": "nestly_v686_discovery_scan",
+      "sourcePath": "db/migrations/20260920_nestly_v686_discovery_scan.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920120000",
+      "name": "nestly_v687_revenue_truth_synthetic_exclusion",
+      "sourcePath": "db/migrations/20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920130000",
+      "name": "nestly_v689_ci_gate_alignment",
+      "sourcePath": "db/migrations/20260920_nestly_v689_ci_gate_alignment.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920140000",
+      "name": "nestly_v690_dispersion_and_one_floor",
+      "sourcePath": "db/migrations/20260920_nestly_v690_dispersion_and_one_floor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920150000",
+      "name": "nestly_v683_staff_rebooking_loyalty_discount",
+      "sourcePath": "db/migrations/20260920_nestly_v683_staff_rebooking_loyalty_discount.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920160000",
+      "name": "nestly_v688_consultant_spine_v2",
+      "sourcePath": "db/migrations/20260920_nestly_v688_consultant_spine_v2.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920170000",
+      "name": "nestly_v691_outliers_and_confounders",
+      "sourcePath": "db/migrations/20260920_nestly_v691_outliers_and_confounders.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920180000",
+      "name": "nestly_v692_lineage_and_visit_dedupe",
+      "sourcePath": "db/migrations/20260920_nestly_v692_lineage_and_visit_dedupe.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920190000",
+      "name": "nestly_v693_exclusions_and_typed_verdicts",
+      "sourcePath": "db/migrations/20260920_nestly_v693_exclusions_and_typed_verdicts.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920200000",
+      "name": "nestly_v694_demographic_preference",
+      "sourcePath": "db/migrations/20260920_nestly_v694_demographic_preference.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920210000",
+      "name": "nestly_v695_service_cadence_fallback",
+      "sourcePath": "db/migrations/20260920_nestly_v695_service_cadence_fallback.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920220000",
+      "name": "nestly_v696_spine_typed_verdicts",
+      "sourcePath": "db/migrations/20260920_nestly_v696_spine_typed_verdicts.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260920230000",
+      "name": "nestly_v697_service_promotion_dependency",
+      "sourcePath": "db/migrations/20260920_nestly_v697_service_promotion_dependency.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921000000",
+      "name": "nestly_v698_weekend_split_and_branch_timezone",
+      "sourcePath": "db/migrations/20260920_nestly_v698_weekend_split_and_branch_timezone.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921010000",
+      "name": "nestly_v699_visit_day_authority",
+      "sourcePath": "db/migrations/20260920_nestly_v699_visit_day_authority.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921020000",
+      "name": "nestly_v700_behavioural_hardening",
+      "sourcePath": "db/migrations/20260920_nestly_v700_behavioural_hardening.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921030000",
+      "name": "nestly_v702_discovery_verdict_rigor",
+      "sourcePath": "db/migrations/20260920_nestly_v702_discovery_verdict_rigor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921040000",
+      "name": "nestly_v703_envelope_everywhere",
+      "sourcePath": "db/migrations/20260920_nestly_v703_envelope_everywhere.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921050000",
+      "name": "nestly_v705_spine_v3",
+      "sourcePath": "db/migrations/20260920_nestly_v705_spine_v3.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921060000",
+      "name": "nestly_v706_branch_clock_everywhere",
+      "sourcePath": "db/migrations/20260920_nestly_v706_branch_clock_everywhere.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921070000",
+      "name": "nestly_v707_promotion_population",
+      "sourcePath": "db/migrations/20260920_nestly_v707_promotion_population.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921080000",
+      "name": "nestly_v708_discovery_tie_strata",
+      "sourcePath": "db/migrations/20260920_nestly_v708_discovery_tie_strata.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921090000",
+      "name": "nestly_v709_visit_days_cadence_and_tiers",
+      "sourcePath": "db/migrations/20260920_nestly_v709_visit_days_cadence_and_tiers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921100000",
+      "name": "nestly_v710_service_visit_units",
+      "sourcePath": "db/migrations/20260920_nestly_v710_service_visit_units.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921110000",
+      "name": "nestly_v711_bringback_visit_days",
+      "sourcePath": "db/migrations/20260920_nestly_v711_bringback_visit_days.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921120000",
+      "name": "nestly_v712_spine_wording_closures",
+      "sourcePath": "db/migrations/20260920_nestly_v712_spine_wording_closures.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921130000",
+      "name": "nestly_v713_evidence_pack_typed_findings",
+      "sourcePath": "db/migrations/20260920_nestly_v713_evidence_pack_typed_findings.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921140000",
+      "name": "nestly_v714_visit_days_estate",
+      "sourcePath": "db/migrations/20260920_nestly_v714_visit_days_estate.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921150000",
+      "name": "nestly_v715_v179_weekday_visit_days",
+      "sourcePath": "db/migrations/20260920_nestly_v715_v179_weekday_visit_days.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921160000",
+      "name": "nestly_v717_time_basis_and_category_floor",
+      "sourcePath": "db/migrations/20260920_nestly_v717_time_basis_and_category_floor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921170000",
+      "name": "nestly_v721_one_ci_gate",
+      "sourcePath": "db/migrations/20260920_nestly_v721_one_ci_gate.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921180000",
+      "name": "nestly_v725_time_basis_and_shadow_gate",
+      "sourcePath": "db/migrations/20260920_nestly_v725_time_basis_and_shadow_gate.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921190000",
+      "name": "nestly_v718_spine_margin_and_alternatives",
+      "sourcePath": "db/migrations/20260920_nestly_v718_spine_margin_and_alternatives.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921200000",
+      "name": "nestly_v720_evidence_pack_grants",
+      "sourcePath": "db/migrations/20260920_nestly_v720_evidence_pack_grants.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921210000",
+      "name": "nestly_v722_freshness_and_brief_evidence",
+      "sourcePath": "db/migrations/20260920_nestly_v722_freshness_and_brief_evidence.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921220000",
+      "name": "nestly_v724_visit_days_estate_2",
+      "sourcePath": "db/migrations/20260920_nestly_v724_visit_days_estate_2.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260921230000",
+      "name": "nestly_v726_period_validation",
+      "sourcePath": "db/migrations/20260920_nestly_v726_period_validation.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922000000",
+      "name": "nestly_v729_visit_days_estate_3",
+      "sourcePath": "db/migrations/20260920_nestly_v729_visit_days_estate_3.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922010000",
+      "name": "nestly_v730_category_customers_window",
+      "sourcePath": "db/migrations/20260920_nestly_v730_category_customers_window.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922020000",
+      "name": "nestly_v734_synthetic_excluded_everywhere",
+      "sourcePath": "db/migrations/20260920_nestly_v734_synthetic_excluded_everywhere.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922030000",
+      "name": "nestly_v735_evidence_pack_extended",
+      "sourcePath": "db/migrations/20260920_nestly_v735_evidence_pack_extended.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922040000",
+      "name": "nestly_v737_synthetic_excluded_v83_shadow",
+      "sourcePath": "db/migrations/20260920_nestly_v737_synthetic_excluded_v83_shadow.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922050000",
+      "name": "nestly_v738_pack_report_sections",
+      "sourcePath": "db/migrations/20260920_nestly_v738_pack_report_sections.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922060000",
+      "name": "nestly_v739_top_customers_floor",
+      "sourcePath": "db/migrations/20260920_nestly_v739_top_customers_floor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922070000",
+      "name": "nestly_v740_synthetic_excluded_estate_3",
+      "sourcePath": "db/migrations/20260920_nestly_v740_synthetic_excluded_estate_3.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922080000",
+      "name": "nestly_v741_roster_read_audit",
+      "sourcePath": "db/migrations/20260920_nestly_v741_roster_read_audit.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922090000",
+      "name": "nestly_v742_synthetic_excluded_estate_4",
+      "sourcePath": "db/migrations/20260920_nestly_v742_synthetic_excluded_estate_4.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922100000",
+      "name": "nestly_v743_synthetic_scanner",
+      "sourcePath": "db/migrations/20260920_nestly_v743_synthetic_scanner.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260922110000",
+      "name": "nestly_v744_scanner_blind_spots",
+      "sourcePath": "db/migrations/20260920_nestly_v744_scanner_blind_spots.sql"
     }
   ]
 }

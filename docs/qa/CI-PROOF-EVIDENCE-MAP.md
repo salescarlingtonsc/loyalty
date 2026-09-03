@@ -47,3 +47,23 @@ platform surface question is an owner decision, not a test result.
 It does not claim a revised total. The score is recomputed only after every corpus fixture is
 green and mutation-checked, and it is reported as the same four separate numbers the owner ruled
 on — proven, implemented-but-unproven, partial, absent — never merged.
+
+## Superseded note (2026-09-02)
+
+The "No business-wide demographic coverage exists anywhere" row above (checks 31–34 ABSENT) was
+true when this map was written. `db/migrations/20260920_nestly_v674_demographic_intelligence.sql`
+(`db/tests/executed/v674_corpus_demographics.sql`) now claims to close checks 31–34 with a real
+aggregate reader and the flagship cohort-vs-baseline RPC. That claim has not been independently
+re-verdicted by a refuter round in the material available to this update, so it is recorded as
+**BUILT, not re-confirmed** rather than silently marking the old row fixed.
+
+## Full 100-check pass
+
+A complete, check-by-check walk of all 100 checklist items (not only the ones that changed since
+the baseline) — artefact, exact command, predetermined truth, and provisional ledger status for
+each — is recorded separately in
+[`docs/qa/CI-PROOF-EVIDENCE-MAP-2026-09-02.md`](./CI-PROOF-EVIDENCE-MAP-2026-09-02.md), because
+the table shape here (only changed checks, terse) does not fit a full 1–100 pass without losing
+the "what changed and why" focus this file was built for. That file also carries the "Declared
+limits" section for the validator (checks 17/83/85/88) and the "Pre-existing failures found and
+repaired" section for commits `e9963c31` and `bfb69dcb`.

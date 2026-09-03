@@ -84,6 +84,29 @@ async function runExecutedSuite(cluster, phase, template, tests) {
   for (const [i, test] of tests.entries()) {
     const db = `peekaa_t${i}_${phase.toLowerCase()}`;
     const started = Date.now();
+
+    if (test.isolated) {
+      /* Marked `-- db-tests: isolated`: this file builds and tears down its own scratch schema
+         (see its header) and must never be cloned from the shared baseline/migrated template —
+         see the comment in discoverExecutedTests(). Give it a genuinely empty database instead,
+         report it under its own status rather than folding it into ok/FAIL/n/a, and still run it
+         so a real assertion failure inside the file is not silently lost. */
+      cluster.createDatabase(db);
+      try {
+        await cluster.psqlFile(db, test.path);
+        process.stdout.write(`  isolated ${test.name}  (own scratch schema, ${Date.now() - started}ms)\n`);
+      } catch (e) {
+        failures.push({ phase, file: test.path, error: (e.stderr || e.message).trim() });
+        process.stdout.write(`  FAIL  ${test.name}  (isolated)\n`);
+        for (const line of (e.stderr || e.message).trim().split('\n').slice(0, 12)) {
+          process.stdout.write(`        ${line}\n`);
+        }
+      } finally {
+        cluster.dropDatabase(db);
+      }
+      continue;
+    }
+
     cluster.createDatabase(db, { template });
     const pinnedHere = phase === 'BASELINE' && test.migrationPinned;
     try {

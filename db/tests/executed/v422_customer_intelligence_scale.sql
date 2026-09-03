@@ -77,7 +77,18 @@ begin
   select gen_random_uuid(), 'ZZ scale filler '||g, 'zz-scale-filler-'||g
   from generate_series(1, v_filler) g;
 
-  insert into public.businesses (id, name, slug) values (v_biz, 'ZZ scale subject', 'zz-scale-subject');
+  /* nestly_v689 (ci_gate_alignment) tightened get_customer_intelligence_v83's own gate to
+     app.has_perm(business,'view_finance') AND app.can_module(business,'customerintel'). The
+     latter resolves through app.effective_platform_module_mode_v94's sector_entitlement branch,
+     which reads businesses.enabled_modules directly (nestly_v668 removed the short-circuit that
+     used to answer 'disabled' ahead of the entitlement — see the identical note in
+     v667_ci_access_boundaries.sql). The default enabled_modules
+     ('{dashboard,clients,sales,loyalty,retention}', frenly_v2_saas) has never included
+     'customerintel', so even this fixture's owner failed can_module and hit
+     'view_finance_required' until this column was set explicitly. */
+  insert into public.businesses (id, name, slug, enabled_modules) values
+    (v_biz, 'ZZ scale subject', 'zz-scale-subject',
+      array['dashboard','clients','sales','reports','customerintel']);
 
   insert into public.branches (id, business_id, name) values
     (v_branch_a, v_biz, 'Scale branch A'),
@@ -101,6 +112,19 @@ begin
   insert into public.business_subscription_lifecycle_v94 (business_id, state, workspace_paused)
   values (v_biz, 'current', false)
   on conflict (business_id) do update set state='current', workspace_paused=false;
+  /* v620 (nestly_v620_entitlement_authority): app.business_workspace_open_v94 now delegates to
+     app.business_operational_v620, which additionally requires a paid (or trialing)
+     subscriptions row via a LEFT JOIN -- an approved+unpaused workspace with no subscriptions
+     row resolves both the paid and trialing conjuncts to NULL/false, so has_perm(...,
+     'view_finance') refuses even the owner with 'view_finance_required'. This is a v689 report
+     (the merchant arm of app.ci_access_gate_v667 now requires view_finance explicitly), not a
+     permission-catalogue gap: app.role_perms('owner') has always included 'view_finance' — see
+     the same note in v422_baseline_behaviours.sql / v425_referral_typed_payout.sql. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
 
   /* v106 assigns every sale to a period through app.v106_reporting_contract, a per
      (business, branch) timezone+currency contract. With no contract row the lateral join

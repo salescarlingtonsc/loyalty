@@ -85,8 +85,17 @@ test('V405 the KPI drill-down can actually see its own definitions map',()=>{
      shadow it. */
   assert.match(app,/const def=options\.def\|\|DASHBOARD_METRIC_DEFINITIONS_V405\[key\]\|\|\{\};/,
     'the dialog still falls back to the module-scope map');
-  assert.match(app,/const def=DASHBOARD_METRIC_DEFINITIONS_V405\[metric\.key\];/,
+  /* V694: the tile painter's body (the `const def=...` line) moved out of the inline
+     metrics.map(...) callback into its own top-level dashboardMetricTileHtmlV405 (so the
+     "Peekaa recorded revenue" label fix could be independently vm-executed — see
+     tests/business-ui/v694-recorded-revenue-tiles.test.mjs). The call site now hands that
+     function the SAME module-scope lookup as an argument instead of destructuring it inline;
+     the scope guarantee this test protects — the tile painter reads the module-scope map, not
+     a stale function-scoped one — is unchanged. */
+  assert.match(app,/metrics\.map\(metric=>dashboardMetricTileHtmlV405\(metric,DASHBOARD_METRIC_DEFINITIONS_V405\[metric\.key\],previousRange\)\)/,
     'the tile painter reads the same module-scope map');
+  assert.match(app,/^function dashboardMetricTileHtmlV405\(metric,def,previousRange\)\{/m,
+    'the tile painter must be a top-level function, not re-nested inside dashboard()');
   // Nothing may reference the old function-scoped name outside a comment.
   const live=app.split('\n').filter(line=>line.includes('dashboardMetricDefinitionsV141')
     && !/^\s*(\*|\/\*|\/\/)/.test(line));
@@ -154,11 +163,14 @@ test('V408 a KPI drill-down row opens the customer behind it',()=>{
      assertion is on the helper, not on the shape that was broken. */
   assert.match(app,/dialogHandOffNavV468\(close,`#\/client\/\$\{hit\.dataset\.metricClientV408\}`\);/);
   assert.doesNotMatch(app,/close\(\);\s*nav\(`#\/client\//,'close() then nav() is the v183 history race');
-  /* THREE call sites, not four: visits and revenue share one row builder, so the four tiles are
-     served by new / inactive / sales. */
+  /* FOUR call sites: new / inactive / visits / revenue. Before nestly_v719 this was three,
+     because visits and revenue shared one per-sale row builder — but v719 gave the Visits
+     drill-down its OWN grouped-by-visit-day renderer (groupVisitDaysV719, see
+     tests/business-ui/v719-visits-drilldown-days.test.mjs), so it now has its own
+     customerCellV408 call site, separate from revenue's still-per-sale one. */
   const drill=app.slice(app.indexOf('async function openDashboardMetricRowsV388('),
                         app.indexOf('function dashboardMetricWasLineV387('));
-  assert.equal([...drill.matchAll(/customerCellV408\(/g)].length,3);
+  assert.equal([...drill.matchAll(/customerCellV408\(/g)].length,4);
 });
 
 test('V408 redeeming refreshes the customer standing from the server',()=>{

@@ -1,4 +1,17 @@
+-- db-tests: isolated
 -- EXECUTED acceptance for nestly_v427, run end to end on a scratch PostgreSQL 17 instance.
+--
+-- HARNESS NOTE (added when the migrated-schema run started failing "out of shared memory" /
+-- "You might need to increase max_locks_per_transaction"): this file's Part A drops and rebuilds
+-- schema public/app/auth from scratch — see below. The db-tests harness (scripts/db-tests/run.mjs)
+-- used to clone this file's private database from the shared baseline/migrated template like
+-- every other executed test, so its `drop schema ... cascade` tore down every object the whole
+-- platform has accumulated on that template (1739+ by nestly_v711) in one transaction, which
+-- blows past Postgres's default max_locks_per_transaction. That was a harness artifact, not a
+-- migration regression, and it has nothing to do with what this file actually proves. The
+-- `-- db-tests: isolated` marker above tells the harness to give this file its own empty
+-- database instead of a template clone (see discoverExecutedTests() in scripts/db-tests/lib.mjs),
+-- matching the manual invocation instructions below, which never used the shared schema either.
 --
 -- WHY THIS FILE EXISTS SEPARATELY FROM db/tests/v427_entitlement_visibility.sql.
 -- That suite is the production one: it runs against the live database as an owner, uses the real

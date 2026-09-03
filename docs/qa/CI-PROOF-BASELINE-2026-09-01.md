@@ -76,6 +76,12 @@ Live SQL at `db/migrations/20260728_nestly_v94_platform_control_intelligence.sql
 
 `docs/product/PRODUCT-TRUTH.md:228` declares Customer Intelligence platform-only, and `v246:97` hard-disables the `customerintel` module key for every business — the SPA route is correctly unreachable. But `app.ci_reports_gate_v650` ([v650:16-27](../../db/migrations/20260831_nestly_v650_ci_read_layer.sql)) gates the `get_ci_*` RPCs on the ordinary **`reports`** module, not `customerintel`. Any authenticated staff member with normal reports access can call them directly over REST, bypassing the UI. The front-end story is not backed by matching server-side authority.
 
+> **Superseded 2026-09-02.** The gate described above was replaced: `app.ci_access_gate_v667` (v667, aligned by
+> v689 to `customerintel` + `view_finance` per the owner's 2026-08-26 ruling, extended by v713/v721/v725) is now the
+> single authority for every `get_ci_*` reader, the customer-detail reader and the shadow auditor; a reports-only
+> staff member is refused. Proven by `db/tests/executed/v667_ci_access_boundaries.sql`, `v721_corpus_one_ci_gate.sql`
+> (nine principals) and `v725_corpus_time_basis_shadow_gate.sql`. Do not cite this section as the live state.
+
 ### 3.3 Customer names disclosed with no small-cell suppression — check 96
 
 `get_ci_category_customers_v1` ([v650:138-182](../../db/migrations/20260831_nestly_v650_ci_read_layer.sql)) returns raw `full_name` for a filtered category with **no minimum-group-size threshold**. A category containing one customer directly identifies that person. The AI evidence pack does this correctly by contrast, using abbreviated labels via `app.v177_person_label` (`v179:162`).

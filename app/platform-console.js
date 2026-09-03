@@ -1089,6 +1089,12 @@
       'Yearly':'每年',
       'another firm':'另一家企业',
       'not generated yet':'尚未生成',
+      'Report unavailable — {reason}':'报告不可用 — {reason}',
+      'unknown reason':'未知原因',
+      'The report writer is temporarily unavailable.':'报告撰写服务暂时不可用。',
+      'The report writer took too long to respond.':'报告撰写服务响应超时。',
+      'The report writer returned an unusable response.':'报告撰写服务返回了无法使用的内容。',
+      'The report writer returned no content.':'报告撰写服务未返回任何内容。',
       'this contact':'此联系人',
       '{count} archived':'已归档 {count} 条',
       '{lane} is reached through account conversion and onboarding evidence, not by moving a card.':'{lane}需通过账号转换和入驻证据达成，不能靠移动卡片。',
@@ -1463,6 +1469,12 @@
       'Yearly':'Tahunan',
       'another firm':'firma lain',
       'not generated yet':'belum dijana',
+      'Report unavailable — {reason}':'Laporan tidak tersedia — {reason}',
+      'unknown reason':'sebab tidak diketahui',
+      'The report writer is temporarily unavailable.':'Perkhidmatan penulisan laporan tidak tersedia buat sementara waktu.',
+      'The report writer took too long to respond.':'Perkhidmatan penulisan laporan mengambil masa terlalu lama untuk bertindak balas.',
+      'The report writer returned an unusable response.':'Perkhidmatan penulisan laporan mengembalikan respons yang tidak boleh digunakan.',
+      'The report writer returned no content.':'Perkhidmatan penulisan laporan tidak mengembalikan sebarang kandungan.',
       'this contact':'kenalan ini',
       '{count} archived':'{count} diarkibkan',
       '{lane} is reached through account conversion and onboarding evidence, not by moving a card.':'{lane} dicapai melalui penukaran akaun dan bukti penerimaan, bukan dengan memindahkan kad.',
@@ -3580,7 +3592,8 @@
       'This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.':'此平台级暂停将覆盖{scope}。它叠加在商户自己的开关之上——不会更改商户的设置。',
       'This releases the platform hold on {scope}. The firm’s own switch decides sends from here.':'此操作将解除对{scope}的平台暂停。此后由商户自己的开关决定是否发送。',
       'Retention hold placed.':'已设置留存暂停。',
-      'Retention hold released.':'已解除留存暂停。'
+      'Retention hold released.':'已解除留存暂停。',
+      'Peekaa recorded revenue':'Peekaa 记录的收入'
     }),
     ms:Object.freeze({
       'Retention holds':'Penggantungan pengekalan',
@@ -3605,7 +3618,55 @@
       'This platform-side stop covers {scope}. It layers over the firm’s own switch — their setting is not changed.':'Penghentian di peringkat platform ini merangkumi {scope}. Ia diletakkan di atas suis firma sendiri — tetapan mereka tidak diubah.',
       'This releases the platform hold on {scope}. The firm’s own switch decides sends from here.':'Ini melepaskan penggantungan platform pada {scope}. Suis firma sendiri menentukan penghantaran selepas ini.',
       'Retention hold placed.':'Penggantungan pengekalan telah digantung.',
-      'Retention hold released.':'Penggantungan pengekalan telah dilepaskan.'
+      'Retention hold released.':'Penggantungan pengekalan telah dilepaskan.',
+      'Peekaa recorded revenue':'Hasil direkodkan Peekaa'
+    })
+  });
+  /* nestly_v727 (consultant brief evidence gating, check 93): the average-order and
+     top-customer-revenue KPI tiles, the new Customer intelligence card, and the insufficient-
+     evidence note that replaces a currency figure below app.subgroup_evidence_v1's floor. */
+  const PLATFORM_COPY_V727=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Average order':'平均订单',
+      'Not enough data yet ({n} of {floor} customers)':'数据尚不足（{n} / {floor} 位顾客）',
+      'Customer intelligence':'顾客洞察',
+      'Identified-customer coverage and the account it points to, gated by the same evidence floor.':'已识别顾客的覆盖情况，以及其指向的账户，受相同证据门槛限制。',
+      'Identified customers':'已识别顾客',
+      'With a purchase':'有购买记录',
+      'Inactive 90+ days':'90天以上不活跃',
+      'Top customer revenue':'最高顾客收入'
+    }),
+    ms:Object.freeze({
+      'Average order':'Purata pesanan',
+      'Not enough data yet ({n} of {floor} customers)':'Data belum mencukupi ({n} daripada {floor} pelanggan)',
+      'Customer intelligence':'Kecerdasan pelanggan',
+      'Identified-customer coverage and the account it points to, gated by the same evidence floor.':'Liputan pelanggan yang dikenal pasti dan akaun yang ditunjukkannya, tertakluk kepada had bukti yang sama.',
+      'Identified customers':'Pelanggan dikenal pasti',
+      'With a purchase':'Dengan pembelian',
+      'Inactive 90+ days':'Tidak aktif 90+ hari',
+      'Top customer revenue':'Hasil pelanggan teratas'
+    })
+  });
+  /* nestly_v734 (check 97: freshness and stale states) — the consultant brief's shared
+     freshness caption (ciFreshnessCaptionHtmlV734). */
+  const PLATFORM_COPY_V734=Object.freeze({
+    'zh-CN':Object.freeze({
+      'age unknown':'时间未知',
+      'under an hour old':'不到一小时前',
+      '{hours} hours old':'{hours} 小时前',
+      'Data as of {date} · {age}':'数据截至 {date} · {age}',
+      'no recorded sale yet':'尚无记录的销售',
+      'Data may be out of date — last sale {date}.':'数据可能已过时 — 最近一笔销售于 {date}。',
+      'never recorded':'从未记录'
+    }),
+    ms:Object.freeze({
+      'age unknown':'usia tidak diketahui',
+      'under an hour old':'kurang daripada sejam yang lalu',
+      '{hours} hours old':'{hours} jam yang lalu',
+      'Data as of {date} · {age}':'Data setakat {date} · {age}',
+      'no recorded sale yet':'belum ada jualan direkodkan',
+      'Data may be out of date — last sale {date}.':'Data mungkin sudah lapuk — jualan terakhir {date}.',
+      'never recorded':'tidak pernah direkodkan'
     })
   });
   /* V672 — the public support desk. */
@@ -3717,6 +3778,8 @@
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
       ??PLATFORM_COPY_V672[platformLocale]?.[key]
       ??PLATFORM_COPY_F130[platformLocale]?.[key]
+      ??PLATFORM_COPY_V727[platformLocale]?.[key]
+      ??PLATFORM_COPY_V734[platformLocale]?.[key]
       ??key;
     for(const [name,replacement] of Object.entries(variables)){
       value=value.replaceAll(`{${name}}`,String(replacement));
@@ -4139,6 +4202,30 @@
       throw error;
     }
     return result?.data;
+  }
+  /* nestly_v734 (check 97): app.ci_envelope_v680's shared `freshness` block (v722) never had a
+     reader on this side either. This mirrors app.js's ciFreshnessCaptionHtmlV734 renderer
+     exactly -- same fields, same disclosure-only posture, same "no key, no crash" behaviour for
+     a report from a server that predates v722 -- but lives here rather than being imported,
+     because platform-console.js is its own bundle with no shared module boundary with app.js.
+     Wired into consultativeIntelligenceHtml's consultant brief. Age always comes from the
+     server's own freshness.age_hours, never recomputed from this browser's clock. */
+  function ciFreshnessCaptionHtmlV734(payload) {
+    const freshness = payload && typeof payload === 'object' ? payload.freshness : null;
+    /* get_ci_opportunities_v1 keeps its OWN bespoke `freshness` shape (observed_since_min etc.)
+       that app.ci_envelope_v680 passes through untouched (v722) -- it has no `stale` key at all,
+       so this guard is what stops the helper from misreading it as the shared envelope shape. */
+    if (!freshness || typeof freshness !== 'object' || !('stale' in freshness)) return '';
+    const dataAsOfText = freshness.data_as_of ? dateTime(freshness.data_as_of) : null;
+    const ageHours = (freshness.age_hours === null || freshness.age_hours === undefined) ? null : Number(freshness.age_hours);
+    const ageText = ageHours === null ? pt('age unknown')
+      : ageHours < 1 ? pt('under an hour old')
+      : pt('{hours} hours old', { hours: ageHours.toFixed(1) });
+    const freshLine = pt('Data as of {date} · {age}', { date: dataAsOfText || pt('no recorded sale yet'), age: ageText });
+    const staleLine = freshness.stale
+      ? `<p class="muted small ci-freshness-stale-v734" role="status">${escapeHtml(pt('Data may be out of date — last sale {date}.', { date: dataAsOfText || pt('never recorded') }))}${freshness.note ? ` ${escapeHtml(String(freshness.note))}` : ''}</p>`
+      : '';
+    return `<p class="muted small ci-freshness-caption-v734">${escapeHtml(freshLine)}</p>${staleLine}`;
   }
   function dateTime(value) {
     if (!value) return '—';
@@ -5014,6 +5101,24 @@
   function aiReportPeriodLabel(report) {
     return `${platformStatus(report.period_kind)} · ${report.period_start} – ${report.period_end}`;
   }
+  // nestly (CI-100 check 98): supabase/functions/ai-firm-reports/enforce.mjs's
+  // decideGenerationFailure() stores one of four short, stable reason codes on a failed report
+  // (model_unavailable / model_timeout / malformed_output / empty_narrative) — decideNarrativeOutcome
+  // failures and any other stored `error` text still pass through unchanged. This is display-only
+  // translation, never a gate: an unrecognised reason still renders (falls back to the raw stored
+  // text, or 'unknown reason' if the row has none at all), so a failed report is NEVER shown with a
+  // blank reason.
+  function aiReportFailureReasonLabel(reason) {
+    const known={
+      model_unavailable:'The report writer is temporarily unavailable.',
+      model_timeout:'The report writer took too long to respond.',
+      malformed_output:'The report writer returned an unusable response.',
+      empty_narrative:'The report writer returned no content.'
+    };
+    const key=String(reason??'').trim();
+    if(!key)return pt('unknown reason');
+    return known[key]?pt(known[key]):key;
+  }
   function sgCalendarToday() {
     const parts=new Intl.DateTimeFormat('en-CA',{
       timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'
@@ -5081,7 +5186,7 @@
             status:platformStatus(report.status),
             date:report.completed_at?dateTime(report.completed_at):pt('not generated yet')
           }))}${report.model?` · ${escapeHtml(report.model)}`:''}</p>
-          ${report.status==='failed'&&report.error?`<p class="muted small">${escapeHtml(report.error)}</p>`:''}</div>
+          ${report.status==='failed'?`<p class="muted small">${escapeHtml(pt('Report unavailable — {reason}',{reason:aiReportFailureReasonLabel(report.error)}))}</p>`:''}</div>
           <div class="platform-actions">${CUI.status(platformStatus(report.status),aiReportTone(report.status))}
             ${report.narrative_md?`<button type="button" class="btn ghost sm" data-ai-report-view="${escapeHtml(report.id)}">${escapeHtml(pt("Read report"))}</button>`:''}</div>
         </div>`).join('')}</div>`:localizedEmptyHtml('No AI report has been written for this firm yet.')}
@@ -5660,10 +5765,22 @@
     </div>`;
   }
   function consultativeIntelligenceHtml(report,affinity,recommendations,CUI) {
+    /* nestly_v727. app.subgroup_evidence_v1's shape is {n,floor,status:'ok'|'insufficient'} (see
+       db/migrations/20260920_nestly_v672_statistical_authority.sql). v722 attaches this evidence
+       block, plus a section-level 'unavailable' status, to kpis/cohorts/customer_intelligence on
+       public.platform_get_assigned_firm_report_v94 -- and nulls the one rate-like field in each
+       of kpis and customer_intelligence (average_order_cents, top_customer_revenue_cents) below
+       the floor. Counts are never nulled: zero is a legitimate count on an empty business. */
+    const consultantEvidenceNoteHtml=evidence=>{
+      const e=asObject(evidence),n=Number(e.n??0),floor=Number(e.floor??5);
+      return pt('Not enough data yet ({n} of {floor} customers)',{n,floor});
+    };
     const kpis=asObject(report.kpis),intelligence=asObject(report.customer_intelligence);
     const quality=asObject(report.data_quality),pairs=asArray(affinity.pairs);
     const actions=asArray(recommendations.recommendations);
     const confidence=quality.confidence||quality.status||'not_enough_data';
+    const kpisUnavailable=kpis.status==='unavailable';
+    const intelligenceUnavailable=intelligence.status==='unavailable';
     /* nestly_v667. This block read key names that platform_get_assigned_firm_report_v94 has
        never emitted, so four of the six surfaces below rendered fallback zeros or an empty
        state no matter what the firm's real numbers were. The names come from a v94 definition
@@ -5686,26 +5803,42 @@
         <p class="muted small">${escapeHtml(pt("Item-level customer intelligence for this exact firm, branch and date scope. Every recommendation is tied to returned evidence."))}</p></div>
         ${CUI.status(platformStatus(confidence),confidence==='high'||confidence==='ready'?'ok':confidence==='medium'?'new':'off')}
       </div>
+      ${ciFreshnessCaptionHtmlV734(report)}
       <section class="platform-kpis" aria-label="${escapeHtml(pt('Consultant brief KPIs'))}">${[
         ['Customers',String(activeCustomers),'customers'],
         ['Returning rate',returningRate===null
           ?pt('No customers in scope')
           :`${returningRate.toFixed(1)}% (${returningCustomers}/${activeCustomers})`,'retention'],
         ['Transactions',String(Number(kpis.visits??0)),'till'],
-        ['Revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports']
+        ['Peekaa recorded revenue',currency(kpis.net_revenue_cents??0,kpis.currency||'SGD'),'reports'],
+        ['Average order',kpisUnavailable
+          ?consultantEvidenceNoteHtml(kpis.evidence)
+          :currency(kpis.average_order_cents??0,kpis.currency||'SGD'),'reports']
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       <div class="platform-detail-grid">
-        ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?CUI.table({
+        ${CUI.card({title:'Customer groups',description:'Use these groups to plan specific monthly actions, not generic campaigns.',body:cohortRows.length?`${cohorts.status==='unavailable'?`<p class="muted small">${escapeHtml(consultantEvidenceNoteHtml(cohorts.evidence))}</p>`:''}${CUI.table({
           /* Only the count and the definition are emitted per cohort. Columns for orders,
              revenue or a per-cohort return rate would have to be invented, so they are gone
-             rather than shown as zero. */
+             rather than shown as zero. Counts render even when the section is below the
+             evidence floor -- a count is not a rate, and zero-hiding a real count would be its
+             own fabrication. */
           caption:'Customer group performance',headers:['Group','Customers','How this group is defined'],
           rows:cohortRows.map(row=>[
             escapeHtml(platformStatus(row.key)),
             String(row.customers),
             escapeHtml(row.definition)
           ])
-        }):localizedEmptyHtml('The selected scope does not yet have enough customer-group data.')})}
+        })}`:localizedEmptyHtml('The selected scope does not yet have enough customer-group data.')})}
+        ${CUI.card({title:'Customer intelligence',description:'Identified-customer coverage and the account it points to, gated by the same evidence floor.',body:`<ul class="platform-stat-list">
+          <li>${escapeHtml(pt('Identified customers'))}: <b>${escapeHtml(String(Number(intelligence.total_customers??0)))}</b></li>
+          <li>${escapeHtml(pt('With a purchase'))}: <b>${escapeHtml(String(Number(intelligence.customers_with_purchase??0)))}</b></li>
+          <li>${escapeHtml(pt('Inactive 90+ days'))}: <b>${escapeHtml(String(Number(intelligence.customers_over_90_days_inactive??0)))}</b></li>
+          <li>${escapeHtml(pt('Top customer revenue'))}: <b>${
+            intelligenceUnavailable
+              ?escapeHtml(consultantEvidenceNoteHtml(intelligence.evidence))
+              :escapeHtml(currency(intelligence.top_customer_revenue_cents??0,kpis.currency||'SGD'))
+          }</b></li>
+        </ul>`})}
         ${CUI.card({title:'Products bought with services',description:'Attach rate is calculated only from canonical, non-reversed sale lines.',body:affinity.enabled===false
           ?localizedEmptyHtml('Item-level intelligence is disabled for this firm.')
           :pairs.length?CUI.table({
@@ -14160,7 +14293,7 @@
         ['Businesses',summary.business_count||0,'branch'],
         ['Customers',summary.customer_count||0,'customers'],
         ['Sales',summary.sales_count||0,'till'],
-        ['Revenue',currency(summary.revenue_cents||0),'reports']
+        ['Peekaa recorded revenue',currency(summary.revenue_cents||0),'reports']
       ].map(([label,value,icon])=>`<article class="platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}</section>
       ${CUI.table({caption:'Business performance',headers:['Business','Sector','Customers','Revenue'],rows:asArray(report.businesses).map(row=>[
         escapeHtml(row.name),escapeHtml(sectorLabel(row.industry)),String(row.customers||0),currency(row.revenue_cents||0)

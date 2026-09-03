@@ -1,6 +1,15 @@
 -- Rollback-only executed P0 proof: a qualifying sale owns every referral benefit
 -- it caused (both sides, points/stamps/vouchers), and reversal cannot leave that
 -- value spendable without either failing closed or recording an owner override.
+--
+-- nestly_v565 ("every business born the same") seeds AND PUBLISHES loyalty config version 1 at
+-- business creation, so loyalty_programs.current_config_version_id already points at a
+-- PUBLISHED version by the time this fixture runs. Calling publish_loyalty_config directly on
+-- that id fails with 'only a draft may be published'. Fixed by obtaining a real draft first
+-- through public.create_loyalty_config_draft (the flow post-v565 fixtures use, e.g.
+-- v433_v436_stamp_lifecycle.sql phase F) and publishing that instead — it clones the live row
+-- business_set_earning_rule_v359 just wrote, so publishing it is a no-op re-affirmation of the
+-- same values, not a behaviour change.
 \set ON_ERROR_STOP on
 begin;
 
@@ -57,24 +66,48 @@ begin
   insert into public.business_subscription_lifecycle_v94(business_id,workspace_paused)
   values(v_pbiz,false),(v_sbiz,false),(v_vbiz,false)
   on conflict(business_id) do update set workspace_paused=false;
+  /* v620 (nestly_v620_entitlement_authority): business_operational_v620 additionally requires a
+     paid (or trialing) subscriptions row, not merely an approved+unpaused workspace. Without this
+     all three fixtures fail with "owner loyalty configuration access required" under the migrated
+     schema — see the same note in v422_baseline_behaviours.sql. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values(v_pbiz,'active','paid',now() + interval '30 days'),
+        (v_sbiz,'active','paid',now() + interval '30 days'),
+        (v_vbiz,'active','paid',now() + interval '30 days')
+  on conflict(business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
 
   -- Configure every business before the first SHARED value writer; this proves
   -- the supported EXCLUSIVE→SHARED order and never attempts an unsafe upgrade.
+  --
+  -- ORDERING NOTE (added 2026-09-02): nestly_v565 ("every business born the same") added a guard
+  -- inside set_programmes_v314 -- turning 'referral' on in the same p_switches call requires a
+  -- public.referral_programs row to already exist, else it raises
+  -- 'referral_needs_configuration: save the referral reward first' (22023). This fixture used to
+  -- flip {"points":true,"referral":true} (or stamps/referral) in one call and only afterwards call
+  -- save_referral_program_v421, which the v565 guard now refuses. v425_referral_typed_payout.sql
+  -- (e.g. its lines around 333-334, 344-345) already carries the guard-compatible order: enable
+  -- the base earn programme, save the referral reward, THEN enable 'referral' in its own
+  -- set_programmes_v314 call. Reordered to match; no assertion or business logic changed.
   perform public.business_set_earning_rule_v359(v_pbiz,1.0,null,'none',null);
-  perform public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id=v_pbiz limit 1));
-  perform public.set_programmes_v314(v_pbiz,'{"points":true,"referral":true}'::jsonb,gen_random_uuid());
+  perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_pbiz, null, 'v480 acceptance'))::jsonb ->> 'version_id')::uuid);
+  perform public.set_programmes_v314(v_pbiz,'{"points":true}'::jsonb,gen_random_uuid());
   perform public.save_referral_program_v421(v_pbiz,true,'points',100,null,0,true,100,null);
+  perform public.set_programmes_v314(v_pbiz,'{"referral":true}'::jsonb,gen_random_uuid());
 
   perform public.business_set_earning_rule_v359(v_sbiz,1.0,null,'none',null);
-  perform public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id=v_sbiz limit 1));
-  perform public.set_programmes_v314(v_sbiz,'{"stamps":true,"referral":true}'::jsonb,gen_random_uuid());
+  perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_sbiz, null, 'v480 acceptance'))::jsonb ->> 'version_id')::uuid);
+  perform public.set_programmes_v314(v_sbiz,'{"stamps":true}'::jsonb,gen_random_uuid());
   update public.loyalty_programs set active=true,stamp_per_cents=1000 where business_id=v_sbiz;
   perform public.save_referral_program_v421(v_sbiz,true,'stamps',7,null,0,true,7,null);
+  perform public.set_programmes_v314(v_sbiz,'{"referral":true}'::jsonb,gen_random_uuid());
 
   perform public.business_set_earning_rule_v359(v_vbiz,1.0,null,'none',null);
-  perform public.publish_loyalty_config((select current_config_version_id from public.loyalty_programs where business_id=v_vbiz limit 1));
-  perform public.set_programmes_v314(v_vbiz,'{"points":true,"referral":true}'::jsonb,gen_random_uuid());
+  perform public.publish_loyalty_config(((public.create_loyalty_config_draft(v_vbiz, null, 'v480 acceptance'))::jsonb ->> 'version_id')::uuid);
+  perform public.set_programmes_v314(v_vbiz,'{"points":true}'::jsonb,gen_random_uuid());
   perform public.save_referral_program_v421(v_vbiz,true,'voucher',null,'Free Coffee',0,true,null,'Free Coffee');
+  perform public.set_programmes_v314(v_vbiz,'{"referral":true}'::jsonb,gen_random_uuid());
 
   select id into v_ppot from public.business_programmes where business_id=v_pbiz and kind='points';
   select id into v_spot from public.business_programmes where business_id=v_sbiz and kind='stamps';

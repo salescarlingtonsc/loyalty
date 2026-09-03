@@ -4060,7 +4060,7 @@ const DASHBOARD_INACTIVE_PAGE_V406=100;
    so it belongs at module scope where BOTH readers can actually see it. */
 const DASHBOARD_METRIC_DEFINITIONS_V405={
   visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals. Each qualifying sale counts once — several sales by one customer in a day count separately, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v548: visits are sale records, not distinct physical visits — say so */
-  revenue:{label:'Revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
+  revenue:{label:'Peekaa recorded revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
   new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',action:'View customers',buttonLabel:'See new customers',scope:'business'},
   /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
      only, so the number an owner tapped and the list they landed on could never agree. The
@@ -4074,6 +4074,44 @@ const DASHBOARD_METRIC_DEFINITIONS_V405={
      people — is what still holds. */
   inactive:{label:'Inactive customers',definition:'Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.',action:'View inactive customers',buttonLabel:'See inactive customers',scope:'business-current'}
 };
+
+/* nestly_v717 (owed by nestly_v714: "the dashboard's Visits drill-down still lists raw sales in
+   the browser"). v714 made the owner dashboard's Visits KPI count DISTINCT (client, Asia/Singapore
+   visit day) — a split bill is one visit — but this dialog kept listing one row per raw sale, so
+   a tile reading 8 opened a list of 10. This groups the exact same rows validVisitSales() already
+   scopes (counts_as_visit, never a reversal, never a reversed original) by (client_id, SG calendar
+   day), mirroring the server's visit_days definition rather than inventing a near-enough one: an
+   anonymous sale (no client_id — a walk-in) stays its own row, exactly as a sale with no client
+   cannot be folded into anyone else's day. `sgt()` is the one Asia/Singapore formatter this file
+   already uses everywhere else that needs a wall-clock day, so the day key comes from there rather
+   than a second timezone rule invented for this dialog. */
+function groupVisitDaysV719(rows){
+  const groups=new Map();
+  const order=[];
+  for(const row of validVisitSales(rows)){
+    const day=(sgt(row.occurred_at)||'').slice(0,10);
+    const key=row.client_id?`c:${row.client_id}:${day}`:`a:${row.id}`;
+    let group=groups.get(key);
+    if(!group){
+      group={clientId:row.client_id||null,name:row.clients?.full_name||'Walk-in',count:0,amountCents:0,occurredAt:row.occurred_at};
+      groups.set(key,group);
+      order.push(key);
+    }
+    group.count+=1;
+    group.amountCents+=Number(row.amount_cents)||0;
+    /* Show the row under the LATEST sale time on that visit day, so a same-day group sorts where
+       an owner scanning newest-first expects it, not where its earliest ticket happened to land. */
+    if(String(row.occurred_at)>String(group.occurredAt))group.occurredAt=row.occurred_at;
+  }
+  return order.map(key=>groups.get(key)).sort((a,b)=>String(b.occurredAt).localeCompare(String(a.occurredAt)));
+}
+/* The one line the grouped row prints for "what happened that day" — a ticket count and the
+   summed amount, e.g. "2 tickets · SGD 45.00", so a split bill still shows what it added up to
+   without pretending it was two visits. */
+function visitDaySummaryV719(group){
+  const count=Number(group?.count)||0;
+  return `${count===1?'1 ticket':`${count} tickets`} · ${money(group?.amountCents||0)}`;
+}
 
 /* V468 (owner photos 3, 8 and 9: "View visits", "See new customers" and "See inactive customers"
    all did nothing). CUI.activateDialog's teardown unwinds the dialog's pushed history entry with
@@ -4216,8 +4254,17 @@ async function openDashboardMetricRowsV388(options){
     });
     if(!stillOpen())return;
     if(error)return failed(ownerErrorText(error));
-    const scoped=key==='visits'?validVisitSales(data||[]):(data||[]).filter(row=>row?.counts_as_revenue);
-    body.innerHTML=table(['When','Customer',key==='visits'?'Kind':'Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${customerCellV408(row.client_id,row.clients?.full_name||'Walk-in','')}</td><td data-label="${key==='visits'?'Kind':'Amount'}">${key==='visits'?esc(String(row.kind||'')):esc(money(row.amount_cents||0))}</td></tr>`));
+    if(key==='visits'){
+      /* nestly_v717: one row per VISIT DAY, not per raw sale — see groupVisitDaysV719 above.
+         The row count here is what must equal the tile's own count, since both now come from
+         the same (client, SG day) grouping the server's Visits KPI applies. */
+      const groups=groupVisitDaysV719(data||[]);
+      body.innerHTML=table(['When','Customer','Visit'],groups.map(group=>`<tr><td data-label="When">${esc(sgLedgerDateV154(group.occurredAt).date)}</td><td data-label="Customer">${customerCellV408(group.clientId,group.name,'')}</td><td data-label="Visit">${esc(visitDaySummaryV719(group))}</td></tr>`));
+      body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">One visit per customer per day; split bills count once.</p>`);
+      return;
+    }
+    const scoped=(data||[]).filter(row=>row?.counts_as_revenue);
+    body.innerHTML=table(['When','Customer','Amount'],scoped.map(row=>`<tr><td data-label="When">${esc(sgLedgerDateV154(row.occurred_at).date)}</td><td data-label="Customer">${customerCellV408(row.client_id,row.clients?.full_name||'Walk-in','')}</td><td data-label="Amount">${esc(money(row.amount_cents||0))}</td></tr>`));
   }catch(error){failed(ownerErrorText(error))}
 }
 function dashboardMetricWasLineV387(metric,previousRange){
@@ -4226,6 +4273,17 @@ function dashboardMetricWasLineV387(metric,previousRange){
      measured against the same window, so printing the dates three times would be three readings
      of one fact, which is what V200 deleted a whole headline for. */
   return `<span class="metric-was-v387">was ${esc(metric.was)}</span>`;
+}
+/* V694 (check 2, owner-flagged refute of "UI always says Peekaa-recorded revenue unless a
+   reconciled source proves completeness"): the dashboard revenue KPI tile printed a bare
+   `Revenue` label — no different from a claim of total business revenue, which Peekaa cannot
+   prove (see app/revenue-truth.js's own recordedHelper). Pulled out of the inline
+   `kpis.innerHTML=metrics.map(...)` template into its own top-level function so it is
+   independently testable, the same posture as dailyMetricTileV468 below and the renderers
+   tests/business-ui/v679-ci-analyst-panels.test.mjs already executes. Behaviour is otherwise
+   unchanged: same classes, same aria-label helper, same delta chip and "was" line. */
+function dashboardMetricTileHtmlV405(metric,def,previousRange){
+  return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`;
 }
 function dashboardDeltaLegendV385(metrics,previousRange){
   /* V387: `Number(null)` is 0, which IS finite — so the original guard treated "no comparison"
@@ -4676,7 +4734,7 @@ async function dashboard(){
     /* V399: the grid is sized from the tiles that actually rendered — see --kpi-count in the
        stylesheet. Set before innerHTML so the first paint is already the right shape. */
     kpis.style.setProperty('--kpi-count',String(Math.max(1,metrics.length)));
-    kpis.innerHTML=metrics.map(metric=>{const def=DASHBOARD_METRIC_DEFINITIONS_V405[metric.key];return `<button type="button" class="dashboard-metric kpi" data-dashboard-metric="${metric.key}" ${workspaceTemplateAttributeV97('aria-label','viewDashboardMetricDetails',{metric:def.label})}><span class="metric-top"><span class="l">${esc(def.label)}</span><span class="metric-arrow" aria-hidden="true">→</span></span><span class="metric-value-row"><span class="v">${esc(metric.value)}</span>${dashboardDeltaChipV170(metric.delta,previousRange.previousFrom,previousRange.previousTo)}</span>${dashboardMetricWasLineV387(metric,previousRange)}${metric.hint?`<span class="metric-hint">${esc(metric.hint)}</span>`:''}<span class="metric-action-label">${esc(def.buttonLabel||def.action||'View details')}</span></button>`}).join('')+dashboardDeltaLegendV385(metrics,previousRange);
+    kpis.innerHTML=metrics.map(metric=>dashboardMetricTileHtmlV405(metric,DASHBOARD_METRIC_DEFINITIONS_V405[metric.key],previousRange)).join('')+dashboardDeltaLegendV385(metrics,previousRange);
     /* V225 (owner: "once clicked, straight away go to sales"). A KPI tile opened an explanatory
        modal that then offered a link to the report. The tile IS the link — the definition it
        carried is still available inside the report it lands on, so the modal was a stop on the
@@ -31466,6 +31524,20 @@ async function customerIntelligencePage(){
   let lastAcquisitionBundle=null,lastAcquisitionError='',lastFunnelBundle=null,lastFunnelError='',
     lastContactabilityBundle=null,lastContactabilityError='',lastCategoryMixBundle=null,
     lastCategoryMixError='',lastCategoryMixPeriod=null;
+  /* nestly_v679: three CI-A readers (retention funnel v673, demographics v674, weekday
+     behaviour/daypart v675) land on this same page, same independent-bundle-per-section
+     discipline as the v650 block above — a failure in one never blanks the others. Each is
+     rendered by a pure top-level function (funnelConversionPanelHtmlV679/demographicsPanelHtmlV679/
+     behaviourPanelHtmlV679, defined after this page function closes) so a test can execute the
+     renderer directly against a fixture shaped like the RPC's real output; the small wrapper
+     functions just below reuse this page's own ciQuietErrorV650 idiom for the error case, exactly
+     like acquisitionMarkupV650 and its siblings. */
+  let lastFunnelConversionBundle=null,lastFunnelConversionError='',
+    lastDemographicsBundle=null,lastDemographicsError='',
+    lastBehaviourBundle=null,lastBehaviourError='';
+  /* nestly_v685: ranked opportunities (public.get_ci_opportunities_v1, v678) — same independent-
+     bundle-per-section discipline, same ciQuietErrorV650 idiom as every panel above. */
+  let lastOpportunitiesBundle=null,lastOpportunitiesError='';
   const categoryCustomersCacheV650=new Map();// node_key -> {loading,error,data}
   const expandedCategoryNodesV650=new Set();
   const CUSTOMER_INTELLIGENCE_PAGE_SIZE=100;
@@ -31508,6 +31580,7 @@ async function customerIntelligencePage(){
       ${sources.length?`<div class="cui-table-wrap" role="region" aria-label="Acquisition mix"><table class="cui-table"><thead><tr><th>Source</th><th>Evidence</th><th>Customers</th><th>New this period</th><th>Repeat</th></tr></thead><tbody>${sources.map(source=>`<tr><td data-label="Source"><b>${ciViaLabelV650(source.via)}</b></td><td data-label="Evidence" class="muted small">${esc(source.evidence||'')}</td><td data-label="Customers">${Number(source.customers||0)}</td><td data-label="New this period">${Number(source.new_in_period||0)}</td><td data-label="Repeat">${Number(source.repeat_customers||0)}</td></tr>`).join('')}</tbody></table></div>`
         :'<div class="empty">No acquisition activity recorded in this scope yet.</div>'}
       ${ciMeasuredSinceV650(bundle?.observed_since)}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   function ciFunnelStepsMarkupV650(steps){
@@ -31528,6 +31601,7 @@ async function customerIntelligencePage(){
       <h3 class="small" style="margin-top:16px;font-weight:700">Booking</h3>
       ${booking?ciFunnelStepsMarkupV650([['Page views',booking.page_view],['Availability checks',booking.started],['Completed',booking.completed]]):'<div class="empty">No booking funnel data in this scope yet.</div>'}
       ${ciMeasuredSinceV650(bundle?.observed_since)}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   function ciContactabilityGroupMarkupV650(label,group){
@@ -31552,17 +31626,50 @@ async function customerIntelligencePage(){
       ${ciContactabilityGroupMarkupV650('Business offers',bundle.business_offers)}
       ${ciContactabilityGroupMarkupV650('Rewards &amp; points',bundle.rewards_and_points)}
       ${bundle.note?`<p class="muted small" style="margin-top:12px">${esc(bundle.note)}</p>`:''}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650=9000;
-  function ciCategoryCustomersRowsMarkupV650(nodeKey){
+  /* nestly_v685 (check 19): drill parity. The aggregate row's `customer_count` (from
+     get_ci_category_mix_v1) and the drilled `customers` array (from
+     get_ci_category_customers_v1) must describe the SAME cohort. Below the k=5 small-cell
+     floor (v667), the drilled rows are withheld and `suppressed.cohort_size` carries the count
+     instead — so the "showing" half of the parity line reads `suppressed.cohort_size` there,
+     never a misleading 0, and the suppression note replaces "No customers in this category yet."
+     which previously could not be told apart from a genuinely empty category. */
+  function ciCategoryCustomersRowsMarkupV650(nodeKey,expectedCustomerCount){
     const cached=categoryCustomersCacheV650.get(nodeKey);
     if(!cached)return '';
     if(cached.loading)return `<tr><td colspan="4"><div class="empty">Loading customers…</div></td></tr>`;
     if(cached.error)return `<tr><td colspan="4"><div class="err" role="status">${esc(cached.error)}</div></td></tr>`;
     const customers=Array.isArray(cached.data?.customers)?cached.data.customers:[];
-    if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div></td></tr>`;
-    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div></td></tr>`;
+    const suppressed=cached.data?.suppressed||null;
+    const shownCount=suppressed?Number(suppressed.cohort_size||0):customers.length;
+    const parityLine=`<p class="muted small" style="margin:8px 0 0">${Number(expectedCustomerCount||0)} customers · showing ${shownCount}</p>`;
+    if(suppressed){
+      return `<tr><td colspan="4"><div class="empty">${esc(suppressed.note||'Too few customers to name without identifying them.')}</div>${parityLine}</td></tr>`;
+    }
+    if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div>${parityLine}</td></tr>`;
+    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div>${parityLine}</td></tr>`;
+  }
+  /* nestly_v704 (check 66). get_ci_category_mix_v1 (v691) now embeds a per-category
+     `distribution` block {n, mean, median, p90, top1_share_bps, skew_material,
+     mean_excl_top1} — app.distribution_block_v1's own keys, verbatim — plus a `skew_note`
+     string the server already wrote. This renders that block; it never derives a
+     percentage from any other field, only formats top1_share_bps (divide by 100, same as
+     every other bps value already on this page). Below the k=5 floor shared with
+     subgroup_evidence_v1 (v672), or with no distribution at all, this renders nothing. */
+  const CI_CATEGORY_DISTRIBUTION_FLOOR_V704=5;
+  function ciCategoryDistributionRowMarkupV704(category){
+    const dist=category&&category.distribution;
+    if(!dist||typeof dist!=='object')return '';
+    const n=Number(dist.n||0);
+    if(n<CI_CATEGORY_DISTRIBUTION_FLOOR_V704)return '';
+    if(dist.mean==null||dist.median==null)return '';
+    const topShareBps=dist.top1_share_bps;
+    const topPct=(topShareBps===null||topShareBps===undefined)?null:(Number(topShareBps)/100);
+    const skewNote=category.skew_note;
+    return `<tr class="ci-category-distribution-row-v704"><td colspan="3"><p class="muted small" style="margin:4px 0 0"><b>Concentration</b> — median ${esc(scopeMoney(dist.median))} vs mean ${esc(scopeMoney(dist.mean))} per customer${topPct!==null?` · top customer carries ${topPct.toFixed(1)}%`:''}</p>${skewNote?`<p class="muted small" style="margin:2px 0 0">${esc(skewNote)}</p>`:''}</td></tr>`;
   }
   function categoryMixMarkupV650(){
     if(lastCategoryMixError)return ciQuietErrorV650('What they buy could not load.',lastCategoryMixError);
@@ -31585,10 +31692,11 @@ async function customerIntelligencePage(){
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">What they buy</span>
       <h2 id="ciCategoryMixHeadingV650">Category mix</h2></div></div>
       <p class="muted small">All branches</p>
-      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key):''}`).join('')}</tbody></table></div>`
+      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${ciCategoryDistributionRowMarkupV704(category)}${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
         :'<div class="empty">No categorised revenue in this scope yet.</div>'}
       <p class="muted small" style="margin-top:10px">Category view covers ${classifiedPct.toFixed(1)}% of service &amp; retail revenue.${projectedPct>0?` ${projectedPct.toFixed(1)}% projected through current mappings, not snapshots.`:''}</p>
       ${ciMeasuredSinceV650(bundle.observed_since)}
+      ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
   }
   function ciCategoryMixWrapV650(){return `<div id="ciCategoryMixWrapV650">${categoryMixMarkupV650()}</div>`}
@@ -31632,6 +31740,26 @@ async function customerIntelligencePage(){
       row.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle()}};
     });
     CUI.enhance(wrap);
+  }
+  /* nestly_v679: same shape as acquisitionMarkupV650/funnelMarkupV650/contactabilityMarkupV650/
+     categoryMixMarkupV650 above — check this section's own error string first (ciQuietErrorV650,
+     already defined on this page), else hand the bundle to the pure top-level renderer. The
+     renderer itself never sees lastXError, so it stays a plain function of its payload. */
+  function ciFunnelConversionMarkupV679(){
+    if(lastFunnelConversionError)return ciQuietErrorV650('Retention funnel could not load.',lastFunnelConversionError);
+    return funnelConversionPanelHtmlV679(lastFunnelConversionBundle);
+  }
+  function ciDemographicsMarkupV679(){
+    if(lastDemographicsError)return ciQuietErrorV650('Demographics could not load.',lastDemographicsError);
+    return demographicsPanelHtmlV679(lastDemographicsBundle);
+  }
+  function ciBehaviourMarkupV679(){
+    if(lastBehaviourError)return ciQuietErrorV650('When customers come in could not load.',lastBehaviourError);
+    return behaviourPanelHtmlV679(lastBehaviourBundle);
+  }
+  function ciOpportunitiesMarkupV685(){
+    if(lastOpportunitiesError)return ciQuietErrorV650('Ranked opportunities could not load.',lastOpportunitiesError);
+    return opportunitiesPanelHtmlV685(lastOpportunitiesBundle);
   }
   const forecastMarkup=(forecast,currency)=>{
     if(forecast?.status!=='available'){
@@ -31700,7 +31828,7 @@ async function customerIntelligencePage(){
     const economicsMarkupV522=economicsGatedOffV522
       ?''
       :window.NestlySectorEconomics.render(economicsView);
-    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}`;
+    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -31785,7 +31913,8 @@ async function customerIntelligencePage(){
     const [
       truthResponse,lifecycleResponse,briefingResponse,customerResponse,
       economicsResponse,driversResponse,policyResponse,
-      acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse
+      acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse,
+      funnelConversionResponse,demographicsResponse,behaviourResponse,opportunitiesResponse
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -31825,7 +31954,27 @@ async function customerIntelligencePage(){
       sb.rpc('get_ci_acquisition_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
       sb.rpc('get_ci_funnel_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
       sb.rpc('get_ci_contactability_v1',{p_business:S.biz.id}),
-      sb.rpc('get_ci_category_mix_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate})
+      sb.rpc('get_ci_category_mix_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
+      /* nestly_v679: unlike the v650 quartet above, these three CI-A readers DO take p_branch
+         (app.ci_access_gate_v667(p_business,p_branch)) and respect the top bar's branch scope,
+         same convention as truthRequest/lifecycleResponse. p_window_days is passed explicitly
+         rather than relying on the SQL default so a future UI control has somewhere to plug in. */
+      sb.rpc('get_ci_funnel_conversion_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_window_days:60,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_demographics_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_daypart_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      /* nestly_v685: ranked opportunities — branch-scoped like the v679 trio above.
+         nestly_v696: p_extended=>true (the v688 consultant-spine-v2 flag) so each candidate carries
+         incentive/why_now/reversal_condition/alternatives/cost_basis, impact gains scenario_cents +
+         expected_value, and the payload gains report_sections + top_actions. */
+      sb.rpc('get_ci_opportunities_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null,p_extended:true
+      })
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -31875,6 +32024,14 @@ async function customerIntelligencePage(){
     lastContactabilityBundle=contactabilityResponse.data||null;
     lastCategoryMixError=categoryMixResponse.error?.message||'';
     lastCategoryMixBundle=categoryMixResponse.data||null;
+    lastFunnelConversionError=funnelConversionResponse.error?.message||'';
+    lastFunnelConversionBundle=funnelConversionResponse.data||null;
+    lastDemographicsError=demographicsResponse.error?.message||'';
+    lastDemographicsBundle=demographicsResponse.data||null;
+    lastBehaviourError=behaviourResponse.error?.message||'';
+    lastBehaviourBundle=behaviourResponse.data||null;
+    lastOpportunitiesError=opportunitiesResponse.error?.message||'';
+    lastOpportunitiesBundle=opportunitiesResponse.data||null;
     paint(lastPayload);
   };
   $('ciRun').onclick=run;
@@ -31940,6 +32097,402 @@ async function customerIntelligencePage(){
   };
   renderReportScopeNoteV272(isCurrent);
   await run();
+}
+
+/* nestly_v685 (check 79-consumer) — renders public.get_ci_opportunities_v1's payload (nestly_v678,
+   the consultant spine): a ranked, evidence-gated list of business opportunities, always including
+   the 'do_nothing' outcome as a first-class ranked entry when nothing else clears the evidence bar
+   (never an empty list). Pure TOP-LEVEL function, same posture as the v679 panels just below —
+   a test can extract and execute it directly against a fixture shaped like the RPC's real output. */
+function ciOpportunityConfidenceV685(confidence){
+  const c=confidence&&typeof confidence==='object'?confidence:{};
+  return `${Number(c.n)||0}/${Number(c.floor)||0}`;
+}
+function ciOpportunityImpactV685(impact,currency){
+  const i=impact&&typeof impact==='object'?impact:{};
+  if(i.cents===null||i.cents===undefined)return esc(i.reason||'Impact not available.');
+  return esc(scopeMoneyV685(i.cents,currency));
+}
+function scopeMoneyV685(cents,currency='SGD'){
+  return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
+}
+/* nestly_v696 (check p_extended-consumer) — v688 gave get_ci_opportunities_v1 a trailing
+   p_extended flag; the RPC call site above now always passes p_extended:true. Every figure below
+   is read verbatim off the payload — never computed client-side (v145's browser-side-readiness
+   ban applies equally here to expected value: only the server's own return_probability_v681 model
+   may produce that number). */
+function ciOpportunityExpectedValueHtmlV685(impact,currency){
+  const i=impact&&typeof impact==='object'?impact:{};
+  const ev=i.expected_value;
+  if(!ev||typeof ev!=='object')return '';
+  if(ev.status==='unavailable')
+    return `<div><span>Expected value</span><strong>${esc(ev.reason||'Not available.')}</strong></div>`;
+  const inputs=ev.inputs&&typeof ev.inputs==='object'?ev.inputs:{};
+  const counts=[];
+  if(inputs.scored!==undefined&&inputs.scored!==null)counts.push(`${Number(inputs.scored)||0} scored`);
+  if(inputs.abstained!==undefined&&inputs.abstained!==null)counts.push(`${Number(inputs.abstained)||0} abstained`);
+  const countsText=counts.length?` (${counts.join(', ')})`:'';
+  return `<div><span>Expected value</span><strong>${esc(scopeMoneyV685(ev.cents,currency))}${esc(countsText)}</strong></div>`;
+}
+function ciOpportunityScenarioHtmlV685(impact,currency){
+  const i=impact&&typeof impact==='object'?impact:{};
+  if(i.scenario_cents===null||i.scenario_cents===undefined)return '';
+  return `<div><span>Scenario value</span><strong>${esc(scopeMoneyV685(i.scenario_cents,currency))}</strong></div>`;
+}
+function ciOpportunityIncentiveHtmlV685(incentive){
+  const inc=incentive&&typeof incentive==='object'?incentive:null;
+  if(!inc||inc.declared!==true)return '';
+  const label=inc.kind==='none'?'No incentive':`Incentive: ${inc.kind}`;
+  return `<div><span>Incentive</span><strong>${esc(label)}</strong></div>`;
+}
+function ciOpportunityPrimaryAlternativeHtmlV685(alternatives){
+  const list=Array.isArray(alternatives)?alternatives:[];
+  const primary=list.find(a=>a&&a.primary===true)||list[0];
+  if(!primary)return '';
+  return `<div><span>Primary option</span><strong>${esc(primary.what||'Not specified')}</strong></div>`;
+}
+function ciOpportunityWhyNowHtmlV685(text){
+  if(!text)return '';
+  return `<p class="muted small ci-opportunity-why-now"><strong>Why now</strong> ${esc(text)}</p>`;
+}
+function ciOpportunityReversalHtmlV685(text){
+  if(!text)return '';
+  return `<p class="muted small ci-opportunity-reversal"><strong>What would prove this wrong</strong> ${esc(text)}</p>`;
+}
+/* nestly_v716 (checks 22/23/25/66/74/77-consumer) — renders the extended payload's v705+v712
+   additions: materiality, margin guard, business-impact translation (affected customers/revenue/
+   margin/capacity/retention risk), category concentration, and the now-always->=2-kind
+   alternatives array. Every string below is either a fixed, ≤3-word label keyed off a server-
+   supplied status/class, or a figure read verbatim off the payload — nothing is computed here. */
+function ciOpportunityMaterialityChipHtmlV716(materialityClass){
+  const labels={material:'Material',minor:'Minor',unquantified:'Unquantified'};
+  const label=labels[materialityClass];
+  if(!label)return '';
+  return `<span class="pill ci-opportunity-materiality-chip" data-materiality-class="${esc(materialityClass)}">${esc(label)}</span>`;
+}
+function ciOpportunityMarginHtmlV716(marginGuard,currency){
+  const g=marginGuard&&typeof marginGuard==='object'?marginGuard:null;
+  if(!g||!g.status)return '';
+  if(g.status==='ok')
+    return `<div><span>Margin</span><strong>Margin ok (${esc(scopeMoneyV685(g.margin_cents,currency))})</strong></div>`;
+  if(g.status==='blocked')
+    return `<div><span>Margin</span><strong>Blocked: ${esc(g.reason||'')}</strong></div>`;
+  return `<div><span>Margin</span><strong>Enter costs in Settings</strong></div>`;
+}
+function ciOpportunityCapacityHtmlV716(capacity){
+  const c=capacity&&typeof capacity==='object'?capacity:null;
+  if(!c||!c.status||c.status==='not_applicable')return '';
+  if(c.status==='ok'){
+    const pctText=(c.pct===null||c.pct===undefined)?'':` (${esc(String(c.pct))}%)`;
+    return `<div><span>Capacity</span><strong>${Number(c.booked_minutes)||0} of ${Number(c.available_minutes)||0} min booked${pctText}</strong></div>`;
+  }
+  return `<div><span>Capacity</span><strong>${esc(c.reason||'Not available.')}</strong></div>`;
+}
+function ciOpportunityRetentionRiskHtmlV716(retentionRisk){
+  const r=retentionRisk&&typeof retentionRisk==='object'?retentionRisk:null;
+  if(!r||!r.status||r.status==='not_applicable')return '';
+  if(r.status==='ok')
+    return `<div><span>Retention risk</span><strong>${Number(r.at_risk_n)||0} at risk</strong></div>`;
+  return `<div><span>Retention risk</span><strong>${esc(r.reason||'Not available.')}</strong></div>`;
+}
+function ciOpportunityConcentrationHtmlV716(concentration){
+  const c=concentration&&typeof concentration==='object'?concentration:null;
+  if(!c||!c.skew_note)return '';
+  return `<p class="muted small ci-opportunity-concentration">${esc(c.skew_note)}</p>`;
+}
+const CI_ALT_KIND_LABELS_V716={
+  reminder_only:'Reminder only', incentive:'Incentive', operational_change:'Operational change',
+  no_action:'No action', rebooking:'Rebooking', service_recovery:'Service recovery'
+};
+function ciOpportunityAltKindLabelV716(kind){
+  return CI_ALT_KIND_LABELS_V716[kind]||(kind?String(kind):'Option');
+}
+function ciOpportunityAlternativesListHtmlV716(alternatives){
+  const list=Array.isArray(alternatives)?alternatives:[];
+  if(!list.length)return '';
+  const primaryIdx=list.findIndex(a=>a&&a.primary===true);
+  const ordered=primaryIdx>-1?[list[primaryIdx],...list.slice(0,primaryIdx),...list.slice(primaryIdx+1)]:list;
+  return `<div class="ci-opportunity-alternatives">
+    <span class="muted small">Options</span>
+    <ul class="ci-opportunity-alternatives-list">${ordered.map(a=>{
+      const label=ciOpportunityAltKindLabelV716(a&&a.kind);
+      const what=a&&a.what?esc(a.what):'';
+      return `<li${a&&a.primary===true?' data-primary="true"':''}><strong>${esc(label)}</strong>${what?`: ${what}`:''}</li>`;
+    }).join('')}</ul>
+  </div>`;
+}
+function ciOpportunityCardHtmlV685(item,currency){
+  const action=item?.action||{},confidence=item?.confidence||{},impact=item?.impact||{};
+  const scenarioHtml=ciOpportunityScenarioHtmlV685(item?.impact,currency);
+  const expectedValueHtml=ciOpportunityExpectedValueHtmlV685(item?.impact,currency);
+  const incentiveHtml=ciOpportunityIncentiveHtmlV685(item?.incentive);
+  const alternativeHtml=ciOpportunityPrimaryAlternativeHtmlV685(item?.alternatives);
+  const whyNowHtml=ciOpportunityWhyNowHtmlV685(item?.why_now);
+  const reversalHtml=ciOpportunityReversalHtmlV685(item?.reversal_condition);
+  const materialityChipHtml=ciOpportunityMaterialityChipHtmlV716(item?.materiality_class);
+  const marginHtml=ciOpportunityMarginHtmlV716(item?.margin_guard,currency);
+  const capacityHtml=ciOpportunityCapacityHtmlV716(impact.capacity);
+  const retentionRiskHtml=ciOpportunityRetentionRiskHtmlV716(impact.retention_risk);
+  const concentrationHtml=ciOpportunityConcentrationHtmlV716(item?.concentration);
+  const alternativesListHtml=ciOpportunityAlternativesListHtmlV716(item?.alternatives);
+  return `<article class="revenue-opportunity" data-rank-class="${esc(item?.rank_class||'')}">
+    <div class="revenue-opportunity-rank"><span>${Number(item?.rank)||0}</span></div>
+    <div class="revenue-opportunity-main">
+      <p class="revenue-opportunity-finding">${esc(item?.pattern||'No pattern described.')}${materialityChipHtml}</p>
+      <div class="revenue-opportunity-facts">
+        <div><span>Impact</span><strong>${ciOpportunityImpactV685(item?.impact,currency)}</strong></div>
+        <div><span>Evidence class</span><strong class="pill">${esc(item?.evidence_class||'Unknown')}</strong></div>
+        <div><span>Confidence</span><strong>${ciOpportunityConfidenceV685(confidence)}</strong></div>
+        ${scenarioHtml}
+        ${expectedValueHtml}
+        ${incentiveHtml}
+        ${alternativeHtml}
+        ${marginHtml}
+        ${capacityHtml}
+        ${retentionRiskHtml}
+      </div>
+      ${concentrationHtml}
+      <dl class="ci-opportunity-action">
+        <div><dt>Who</dt><dd>${esc(action.who||'Not specified')}</dd></div>
+        <div><dt>What</dt><dd>${esc(action.what||'Not specified')}</dd></div>
+        <div><dt>When</dt><dd>${esc(action.when||'Not specified')}</dd></div>
+        <div><dt>Channel</dt><dd>${esc(action.channel||'Not specified')}</dd></div>
+      </dl>
+      ${whyNowHtml}
+      ${reversalHtml}
+      ${alternativesListHtml}
+      <p class="muted small ci-opportunity-limitation">${esc(item?.limitation||'')}</p>
+    </div>
+  </article>`;
+}
+function ciTopActionsHtmlV685(topActions){
+  const list=Array.isArray(topActions)?topActions:[];
+  if(!list.length)return '';
+  return `<div class="ci-top-actions">
+    <h3 class="ci-top-actions-heading">Top actions</h3>
+    <ol class="ci-top-actions-list">${list.map(item=>`<li>${esc(item?.action?.what||item?.pattern||'Not specified')}</li>`).join('')}</ol>
+  </div>`;
+}
+const CI_REPORT_SECTION_ORDER_V696=['strengths','failures','leakage','margin','unnoticed_behaviour','segments','change'];
+const CI_REPORT_SECTION_LABELS_V696={
+  strengths:'Strengths',failures:'Failures',leakage:'Leakage',margin:'Margin',
+  unnoticed_behaviour:'Unnoticed',segments:'Segments',change:'Change'
+};
+function ciReportSectionBodyHtmlV696(section){
+  if(section&&typeof section==='object'&&!Array.isArray(section))
+    return `<p class="muted small">${esc(section.reason||'Not available.')}</p>`;
+  const ids=Array.isArray(section)?section:[];
+  if(!ids.length)return `<p class="muted small">Nothing surfaced above the evidence floor.</p>`;
+  return `<ul class="ci-report-section-ids">${ids.map(id=>`<li>${esc(id)}</li>`).join('')}</ul>`;
+}
+function ciReportSectionsHtmlV696(sections){
+  const s=sections&&typeof sections==='object'?sections:{};
+  return `<div class="ci-report-sections">${CI_REPORT_SECTION_ORDER_V696.map(key=>`
+    <details class="ci-report-section" data-section="${esc(key)}">
+      <summary>${esc(CI_REPORT_SECTION_LABELS_V696[key]||key)}</summary>
+      <div class="ci-report-section-body">${ciReportSectionBodyHtmlV696(s[key])}</div>
+    </details>`).join('')}</div>`;
+}
+function opportunitiesPanelHtmlV685(payload){
+  if(payload&&payload.error)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
+    'Opportunities could not load',esc(payload.error?.message||payload.error||'Try running the report again.'));
+  if(!payload)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
+    'Ranked opportunities','Run this report to load ranked opportunities.');
+  const currency=payload?.scope?.currency||'SGD';
+  const ranked=Array.isArray(payload.ranked)?payload.ranked:[];
+  const comparisons=payload.comparisons||{};
+  const comparisonsLine=`${Number(comparisons.subgroups_examined)||0} examined · ${Number(comparisons.subgroups_promoted)||0} promoted`;
+  if(!ranked.length)return ciEmptyPanelV679('ciOpportunitiesHeadingV685','Today’s best actions',
+    'Ranked opportunities','No ranked opportunities were returned for this scope.');
+  return `<section class="revenue-truth-section" aria-labelledby="ciOpportunitiesHeadingV685">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Today’s best actions</span>
+    <h2 id="ciOpportunitiesHeadingV685">Ranked opportunities</h2></div></div>
+    ${ciTopActionsHtmlV685(payload.top_actions)}
+    <div class="ci-opportunities-list">${ranked.map(item=>ciOpportunityCardHtmlV685(item,currency)).join('')}</div>
+    ${ciReportSectionsHtmlV696(payload.report_sections)}
+    <p class="muted small ci-opportunities-comparisons" style="margin-top:10px">${esc(comparisonsLine)}</p>
+    ${ciMeasuredSinceInlineV685(payload.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(payload)}
+  </section>`;
+}
+function ciMeasuredSinceInlineV685(observedSince){
+  return observedSince
+    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    :'';
+}
+
+/* nestly_v679 — Customer intelligence gets three more evidence-safe panels: the lifecycle funnel
+   (get_ci_funnel_conversion_v1, v673), demographics (get_ci_demographics_v1, v674) and weekday
+   behaviour (get_ci_daypart_v1, v675). Each renderer below is a pure TOP-LEVEL function — same
+   posture as recoveryReportHtmlV550 — so a test can extract this block and EXECUTE it against a
+   fixture shaped exactly like the deployed RPC's own output, without touching the DOM or any
+   customerIntelligencePage closure state. Error/empty wiring (ciFunnelConversionMarkupV679 and
+   its two siblings) stays inside customerIntelligencePage, reusing its existing ciQuietErrorV650
+   idiom exactly, so a failed RPC withholds the panel the same way every other section on this
+   page already does — never a zero-stuffed table pretending to be a real answer. */
+function ciMeasuredSinceInlineV679(observedSince){
+  return observedSince
+    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    :'';
+}
+/* nestly_v734 (check 97): every CI reader's shared envelope (app.ci_envelope_v680, v722) now
+   carries a top-level `freshness` block -- {data_as_of, observed_since, generated_at, age_hours,
+   stale, note}. v722 shipped that disclosure and nothing on this page ever read it. This is the
+   ONE renderer, reused by every CI panel below (funnelConversionPanelHtmlV679,
+   demographicsPanelHtmlV679, behaviourPanelHtmlV679, opportunitiesPanelHtmlV685) and the v650
+   markups (categoryMixMarkupV650, acquisitionMarkupV650, funnelMarkupV650,
+   contactabilityMarkupV650), plus the platform-console.js consultant brief's own copy.
+   Age is always the server's own age_hours -- never recomputed from the client clock, which
+   cannot be trusted and could silently drift from whatever staleness rule the server enforces.
+   Disclosure only: a stale payload still renders in full underneath this caption, it is never a
+   reason to withhold the panel. A payload from a reader that predates v722 (or a reader that
+   never carries freshness, like an older cached fixture) has no `freshness` key at all -- this
+   renders nothing, not a crash, not a fabricated "data as of never". */
+function ciFreshnessCaptionHtmlV734(payload){
+  const freshness=payload&&typeof payload==='object'?payload.freshness:null;
+  /* get_ci_opportunities_v1 keeps its OWN bespoke `freshness` shape (observed_since_min etc.,
+     v680/v688) that app.ci_envelope_v680 deliberately passes through untouched (v722 -- see the
+     "reader that already sets freshness" branch). That shape has no `stale` key at all, so this
+     guard is what stops this shared helper from misreading it and fabricating "age unknown". */
+  if(!freshness||typeof freshness!=='object'||!('stale' in freshness))return '';
+  const dataAsOfText=freshness.data_as_of?walletDate(freshness.data_as_of,true):null;
+  const ageHours=(freshness.age_hours===null||freshness.age_hours===undefined)?null:Number(freshness.age_hours);
+  const ageText=ageHours===null?'age unknown'
+    :ageHours<1?'under an hour old'
+    :`${ageHours.toFixed(1)} hour${ageHours===1?'':'s'} old`;
+  const freshLine=`Data as of ${dataAsOfText||'no recorded sale yet'} · ${ageText}`;
+  const staleLine=freshness.stale
+    ?`<p class="muted small ci-freshness-stale-v734" role="status">Data may be out of date — last sale ${esc(dataAsOfText||'never recorded')}.${freshness.note?` ${esc(String(freshness.note))}`:''}</p>`
+    :'';
+  return `<p class="muted small ci-freshness-caption-v734">${esc(freshLine)}</p>${staleLine}`;
+}
+function ciEmptyPanelV679(headingId,eyebrow,title,message){
+  return `<section class="revenue-truth-section" aria-labelledby="${headingId}">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">${esc(eyebrow)}</span>
+    <h2 id="${headingId}">${esc(title)}</h2></div></div>
+    <div class="empty">${esc(message)}</div></section>`;
+}
+/* A rate that always carries its own counts — the app.rate_block_v1 shape (numerator/denominator/
+   pct). pct is null when the denominator is zero OR the evidence floor was not cleared; this
+   NEVER renders as 0.0%, only as the page's own not-enough-data idiom. */
+function ciRateBlockV679(block){
+  const b=block&&typeof block==='object'?block:{};
+  const num=Number(b.numerator)||0,den=Number(b.denominator)||0;
+  const pctText=(b.pct===null||b.pct===undefined)?'Not enough data yet':`${Number(b.pct).toFixed(1)}%`;
+  return {num,den,pctText};
+}
+/* app.subgroup_evidence_v1 shape: {n,floor,status}. Only ever used for a caption next to a value
+   the SQL has already nulled out below its own floor — never to re-derive the null itself. */
+function ciEvidenceInsufficientV679(evidence){
+  const ev=evidence&&typeof evidence==='object'?evidence:{};
+  return ev.status==='insufficient';
+}
+function ciEvidenceCaptionV679(evidence){
+  const ev=evidence&&typeof evidence==='object'?evidence:{};
+  if(ev.status!=='insufficient')return '';
+  const floor=Number(ev.floor)||5;
+  return `Not enough data yet (fewer than ${floor}).`;
+}
+
+/* 1. get_ci_funnel_conversion_v1 (nestly_v673) — 1st->2nd->3rd visit conversion, maturity-gated. */
+function funnelConversionPanelHtmlV679(payload){
+  if(!payload||typeof payload!=='object')
+    return ciEmptyPanelV679('ciFunnelConversionHeadingV679','How customers return','Retention funnel','Run this report to load the retention funnel.');
+  const p=payload;
+  const windowDays=Number(p.window_days)||0;
+  const stage1=ciRateBlockV679(p.stage_1_to_2);
+  const stage2=ciRateBlockV679(p.stage_2_to_3);
+  const immature=p.immature&&typeof p.immature==='object'?p.immature:{};
+  const firstImmature=Number(immature.first_stage)||0,secondImmature=Number(immature.second_stage)||0;
+  const bottleneckLabel=p.bottleneck==='first_to_second'?'First to second visit'
+    :p.bottleneck==='second_to_third'?'Second to third visit':null;
+  const bottleneckLine=bottleneckLabel
+    ?`Bottleneck: <b>${esc(bottleneckLabel)}</b>`
+    :(ciEvidenceInsufficientV679(p.evidence)
+      ?`${ciEvidenceCaptionV679(p.evidence)} No bottleneck can be named yet.`
+      :'No bottleneck — the two stages convert about equally.');
+  return `<section class="revenue-truth-section" aria-labelledby="ciFunnelConversionHeadingV679">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">How customers return</span>
+    <h2 id="ciFunnelConversionHeadingV679">Retention funnel</h2></div></div>
+    <p class="muted small">Each stage is measured over a ${windowDays}-day window from the customer's own prior visit, based on ${esc(p.time_basis||'sale_occurred_at')}.</p>
+    <div class="revenue-truth-metrics">
+      <article class="revenue-truth-metric"><span>First to second visit</span><strong>${stage1.num} of ${stage1.den} returned (${stage1.pctText})</strong></article>
+      <article class="revenue-truth-metric"><span>Second to third visit</span><strong>${stage2.num} of ${stage2.den} returned (${stage2.pctText})</strong></article>
+    </div>
+    <p class="muted small" style="margin-top:10px">${firstImmature} customer${firstImmature===1?'':'s'} too recent to judge for the first stage; ${secondImmature} too recent for the second.</p>
+    <p class="muted small">${bottleneckLine}</p>
+    ${ciMeasuredSinceInlineV679(p.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(p)}
+  </section>`;
+}
+
+/* 2. get_ci_demographics_v1 (nestly_v674) — (age_band x gender) revenue/frequency/ATV grid. */
+const CI_AGE_BAND_LABELS_V679={under_20:'Under 20','20_24':'20–24','25_30':'25–30',
+  '31_40':'31–40','41_50':'41–50','51_plus':'51+'};
+function demographicsPanelHtmlV679(payload){
+  if(!payload||typeof payload!=='object')
+    return ciEmptyPanelV679('ciDemographicsHeadingV679','Who they are','Demographics','Run this report to load demographics.');
+  const p=payload;
+  const cells=Array.isArray(p.cells)?p.cells:[];
+  const unclassified=p.unclassified&&typeof p.unclassified==='object'?p.unclassified:{};
+  const coverage=p.coverage&&typeof p.coverage==='object'?p.coverage:{};
+  const rows=cells.map(cell=>{
+    const atvText=(cell.atv_cents===null||cell.atv_cents===undefined)
+      ?(ciEvidenceCaptionV679(cell.evidence)||'Not enough data yet')
+      :esc(money(cell.atv_cents));
+    const genderLabel=cell.gender==='female'?'Female':cell.gender==='male'?'Male':cell.gender==='other'?'Other':(cell.gender||'—');
+    return `<tr><td data-label="Age band">${esc(CI_AGE_BAND_LABELS_V679[cell.age_band]||cell.age_band||'—')}</td><td data-label="Gender">${esc(genderLabel)}</td><td data-label="Customers">${Number(cell.customers)||0}</td><td data-label="Revenue">${esc(money(cell.revenue_cents))}</td><td data-label="Cell visits">${Number(cell.visits)||0}</td><td data-label="Average transaction value">${atvText}</td></tr>`;
+  }).join('');
+  const unclassifiedCustomers=Number(unclassified.customers)||0,unclassifiedRevenue=Number(unclassified.revenue_cents)||0;
+  const demCoverage=ciRateBlockV679(coverage.demographics);
+  const revCoverage=ciRateBlockV679(coverage.revenue);
+  return `<section class="revenue-truth-section" aria-labelledby="ciDemographicsHeadingV679">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Who they are</span>
+    <h2 id="ciDemographicsHeadingV679">Demographics</h2></div></div>
+    ${(cells.length||unclassifiedCustomers)?`<div class="cui-table-wrap" role="region" aria-label="Demographics"><table class="cui-table"><thead><tr><th>Age band</th><th>Gender</th><th>Customers</th><th>Revenue</th><th>Cell visits</th><th>Average transaction value</th></tr></thead><tbody>${rows}<tr><td data-label="Age band">Unclassified</td><td data-label="Gender">—</td><td data-label="Customers">${unclassifiedCustomers}</td><td data-label="Revenue">${esc(money(unclassifiedRevenue))}</td><td data-label="Cell visits">—</td><td data-label="Average transaction value">—</td></tr></tbody></table></div>`
+      :'<div class="empty">No identified customers in this scope yet.</div>'}
+    <p class="muted small" style="margin-top:10px">Demographics known for ${demCoverage.num} of ${demCoverage.den} identified customers (${demCoverage.pctText}).</p>
+    <p class="muted small">Revenue explained by known demographics: ${esc(money(revCoverage.num))} of ${esc(money(revCoverage.den))} (${revCoverage.pctText}).</p>
+    ${ciMeasuredSinceInlineV679(p.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(p)}
+  </section>`;
+}
+
+/* 3. get_ci_daypart_v1 (nestly_v675) — weekday behaviour with an honest exposure denominator;
+   busiest (a raw count) and most-valuable (evidence-gated) are reported separately (check 36). */
+function behaviourPanelHtmlV679(payload){
+  if(!payload||typeof payload!=='object')
+    return ciEmptyPanelV679('ciBehaviourHeadingV679','When customers come in','Weekday behaviour','Run this report to load weekday behaviour.');
+  const p=payload;
+  const weekdays=Array.isArray(p.weekdays)?p.weekdays:[];
+  const busiest=p.busiest_weekday&&typeof p.busiest_weekday==='object'?p.busiest_weekday:null;
+  const mostValuable=p.most_valuable_weekday&&typeof p.most_valuable_weekday==='object'?p.most_valuable_weekday:null;
+  const rows=weekdays.map(weekday=>{
+    const perVisit=(weekday.revenue_per_visit_cents===null||weekday.revenue_per_visit_cents===undefined)
+      ?(ciEvidenceCaptionV679(weekday.evidence)||'Not enough data yet')
+      :esc(money(weekday.revenue_per_visit_cents));
+    const occurrence=ciRateBlockV679(weekday.visits_per_occurrence);
+    return `<tr><td data-label="Weekday">${esc(weekday.label||'')}</td><td data-label="Weekday visits">${Number(weekday.visits)||0}</td><td data-label="Revenue">${esc(money(weekday.revenue_cents))}</td><td data-label="Revenue per visit">${perVisit}</td><td data-label="Occurrences in range">${Number(weekday.weekday_occurrences)||0}</td><td data-label="Visited on">${occurrence.num} of ${occurrence.den} (${occurrence.pctText})</td></tr>`;
+  }).join('');
+  const busiestLine=busiest
+    ?`<b>${esc(busiest.label||'')}</b> — ${Number(busiest.visits)||0} visits`
+    :'Not enough data yet';
+  const mostValuableLine=mostValuable
+    ?`<b>${esc(mostValuable.label||'')}</b> — ${esc(money(mostValuable.revenue_per_visit_cents))} per visit`
+    :'Not enough data yet — no weekday has cleared the evidence floor.';
+  return `<section class="revenue-truth-section" aria-labelledby="ciBehaviourHeadingV679">
+    <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">When customers come in</span>
+    <h2 id="ciBehaviourHeadingV679">Weekday behaviour</h2></div></div>
+    <div class="revenue-truth-metrics">
+      <article class="revenue-truth-metric"><span>Busiest day (by visits)</span><strong>${busiestLine}</strong></article>
+      <article class="revenue-truth-metric"><span>Most valuable day (by revenue per visit)</span><strong>${mostValuableLine}</strong></article>
+    </div>
+    ${weekdays.length?`<div class="cui-table-wrap" role="region" aria-label="Weekday behaviour"><table class="cui-table"><thead><tr><th>Weekday</th><th>Weekday visits</th><th>Revenue</th><th>Revenue per visit</th><th>Occurrences in range</th><th>Visited on</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No weekday activity in this scope yet.</div>'}
+    <p class="muted small" style="margin-top:10px">Time basis: ${esc(p.time_basis||'sale_occurred_at')}.</p>
+    <p class="muted small">${esc(p.basis_note||'')}</p>
+    ${ciMeasuredSinceInlineV679(p.observed_since)}
+    ${ciFreshnessCaptionHtmlV734(p)}
+  </section>`;
 }
 
 /* nestly_v650: Service mapping board. Reached from Customer Intelligence's "What they buy"
@@ -33576,7 +34129,7 @@ async function staffMembersPage(){
    `giftcards` deliberately carries no route: V303 removed gift cards from the business UI and
    the router refuses #/giftcards, so a footer link there would be a door to a refusal. */
 const DAILY_REPORT_METRIC_DEFINITIONS_V468={
-  revenue:{label:'Revenue',action:'View records',buttonLabel:'View sales',
+  revenue:{label:'Peekaa recorded revenue',action:'View records',buttonLabel:'View sales',
     definition:'Every sale record for this day, in this branch scope, whose immutable sale policy counts it as revenue. Reversal records are listed with their negative amount.'},
   visits:{label:'Visits',action:'View records',buttonLabel:'View sales',
     definition:'Original visit sales recorded on this day that have not been reversed, including reversals recorded on a later day. Reversal records are never counted as visits.'},

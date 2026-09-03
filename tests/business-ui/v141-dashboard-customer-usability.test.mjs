@@ -22,6 +22,13 @@ const dashboard=section('async function dashboard(){','/* ---------- customers -
    tile click since v388 threw a silent ReferenceError. Assertions about the map's CONTENT read
    the module-scope block; assertions about the dashboard's own markup still read dashboard(). */
 const metricDefs=section('const DASHBOARD_METRIC_DEFINITIONS_V405={','async function openDashboardMetricRowsV388(');
+/* V694: the KPI tile's own markup (data-dashboard-metric, the aria-label template call) moved OUT
+   of dashboard() into its own top-level dashboardMetricTileHtmlV405 — pulled out so the label fix
+   for check 2 ("Peekaa recorded revenue", not a bare "Revenue") could be independently vm-executed
+   and tested (tests/business-ui/v694-recorded-revenue-tiles.test.mjs), the same posture v679's
+   panel renderers already use. Same precedent as the V405 comment above: assertions about the
+   tile's own markup now read tilePainter; dashboard() still calls it via metrics.map(...). */
+const tilePainter=section('function dashboardMetricTileHtmlV405(metric,def,previousRange){','function dashboardDeltaLegendV385(');
 const customers=section('async function clientsPage(){','async function clientDetail(id){');
 const profile=section('async function clientDetail(id){','/* ---------- quick earn (');
 
@@ -47,7 +54,7 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
   for(const removedKey of ['unique','points','credit']){
     assert.doesNotMatch(dashboard,new RegExp(`key:'${removedKey}'`));
   }
-  assert.match(dashboard,/data-dashboard-metric="\$\{metric\.key\}"/);
+  assert.match(tilePainter,/data-dashboard-metric="\$\{metric\.key\}"/);
   assert.match(metricDefs,/Customer membership or customer records created during the selected period/);
   /* V287 retarget: the definition used to claim "at least 30 days" while the tile drilled
      through to the 30-59 bucket only. The number and the destination must describe the same
@@ -86,7 +93,7 @@ test('V141/V150 every visible KPI is a semantic drilldown with plain definitions
   assert.match(app,/dialogHandOffNavV468\(close,`#\/client\//,
     'the row exit still hands off its history entry');
   assert.doesNotMatch(app,/close\(\);nav\(/,'close() then nav() is the v183 history race');
-  assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
+  assert.match(tilePainter,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
   assert.match(dashboard,/appliedDashboardScopeV141/);
   assert.match(metricDefs,/business-current/); // V405: scope tag lives in the module-scope map
 });
@@ -123,7 +130,7 @@ test('V141 core dashboard copy is localized in Chinese and Malay',()=>{
      Nothing localized was lost — no user could open that dialog. The dictionary coverage
      asserted above is kept so the phrases stay translated if a surface reuses them. */
   assert.doesNotMatch(dashboard,/function openDashboardMetricDetailV141\(/);
-  assert.match(dashboard,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
+  assert.match(tilePainter,/workspaceTemplateAttributeV97\('aria-label','viewDashboardMetricDetails'/);
 });
 
 test('V141 customer directory exposes last-visit choice and date joined',()=>{

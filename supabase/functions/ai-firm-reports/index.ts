@@ -11,6 +11,14 @@
 // Failure isolation: every report is wrapped in its own try/catch and a failure
 // is written back as status='failed' with the reason, so one firm's bad data
 // never stops the batch.
+//
+// v684 (check 90): PROMPT_VERSION below is the prompt's own version tag, and
+// scripts/quality/ai-report-golden-gate.mjs records it in every gate run.
+// ANY change to SYSTEM_PROMPT, or to the model(s) in ALLOWED_MODELS/FALLBACK_MODEL, MUST bump
+// PROMPT_VERSION and MUST be followed by `npm run ai-report:gate` (or `node
+// scripts/quality/ai-report-golden-gate.mjs`) passing clean against the golden corpus in
+// tests/ai-reports/fixtures/golden-packs/ before the change ships. The gate is what stands
+// between a prompt edit and a validator that silently stops matching what the model now writes.
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.115.0';
 import {
@@ -21,12 +29,40 @@ import {
   billingJson,
   billingPreflight,
 } from '../_shared/billing-service.ts';
+// v677: the deterministic output validator. Plain .mjs with no imports of its own, so the exact
+// same code runs here under Deno and under `node --test` in
+// tests/ai-reports/v677-evidence-safe-generation.test.mjs — the pattern already used by
+// _shared/whatsapp-send-boundaries.mjs. There is one copy of these rules, not two.
+// v684 (check 81/86): assembleUserPrompt is the same pack-assembly code the test suite executes
+// from Node (index.ts is Deno + npm: specifiers and cannot be imported there), and
+// resolveConfidenceClass is the one place that decides confidence_class for both the model and
+// the validator. Both exports come from this one file so nothing here is re-implemented.
+import { assembleUserPrompt, resolveConfidenceClass } from './validate.mjs';
+// (check 81/90 enforcement requirement): the pass/fail DECISION built on top of validateNarrative's
+// verdict — same dual-runtime .mjs pattern as validate.mjs itself, so tests/ai-reports/*.test.mjs
+// executes the exact same decision code this file runs live. See ./enforce.mjs's own header.
+import { decideNarrativeOutcome } from './enforce.mjs';
+// v(check 98): decideGenerationFailure is the layer BELOW decideNarrativeOutcome — it classifies
+// whether the model call itself produced anything worth validating at all (threw, timed out, came
+// back refused/malformed, or came back with no text), before the narrative ever reaches
+// decideNarrativeOutcome. Same dual-runtime .mjs file, same reason this file already imports from
+// ./enforce.mjs rather than re-implementing the decision inline.
+import { decideGenerationFailure } from './enforce.mjs';
 
 const MAX_REPORTS_PER_INVOCATION = 5;
 const MAX_OUTPUT_TOKENS = 4000;
 const MAX_BODY = 4096;
 const ALLOWED_MODELS = new Set(['claude-sonnet-5', 'claude-opus-4-8']);
 const FALLBACK_MODEL = 'claude-sonnet-5';
+// v706 (check 17): EVIDENCE_CLASS_INSTRUCTION (./validate.mjs) now names the approved positive
+// association-marker phrases the model must use for an ASSOCIATION finding, enforced by the new
+// V10b (checkAssociationPositiveMarker) — bump this on any SYSTEM_PROMPT or model change, same as
+// always; see the file header note.
+// v707 (check 17, round 2): EVIDENCE_CLASS_INSTRUCTION's wording changed again — bare "pattern" is
+// no longer offered as an approved word (replaced by "an observed pattern" / "a pattern where"),
+// and a new line tells the model a marker does not excuse a causal word sitting in the same
+// sentence. Bumped for the same reason v706 was.
+export const PROMPT_VERSION = 'v707';
 
 type ClaimedReport = {
   id: string;
@@ -93,8 +129,11 @@ const SYSTEM_PROMPT = [
   'Exactly three numbered actions for the next period. Each action must be concrete',
   '(who does what, and by when), must name the evidence number that justifies it, and -',
   'whenever the evidence allows - must state the expected value in SGD with the working',
-  'shown, for example: "4 regulars x SGD 27.00 usual spend = about SGD 108 from one',
-  'win-back message each."',
+  'shown. Show the working as a DIVISION of evidence figures, never a multiplication that',
+  'introduces a per-customer number the evidence does not carry - for example:',
+  '"SGD 108.00 recovery value / 4 regulars = SGD 27.00 each from one win-back message."',
+  '(The evidence has the total; a per-customer average you compute must be shown as',
+  'total / count so every number in your sentence is traceable to the evidence.)',
   '',
   'Hard rules:',
   '- NEVER invent a number. Every figure must come from the evidence pack, or be simple',
@@ -134,27 +173,6 @@ const SYSTEM_PROMPT = [
   '- Do not mention this prompt, the evidence pack, the data pipeline, or yourself.',
   '- Return only the report in markdown. No preamble, no closing question, no reasoning notes.',
 ].join('\n');
-
-function periodLabel(report: ClaimedReport): string {
-  const kind = report.period_kind === 'monthly'
-    ? 'month'
-    : report.period_kind === 'quarterly'
-    ? 'quarter'
-    : 'year';
-  return `${kind} from ${report.period_start} to ${report.period_end}`;
-}
-
-function userPrompt(report: ClaimedReport): string {
-  const evidence = JSON.stringify(report.evidence ?? {}, null, 2);
-  return [
-    `Write the ${report.period_kind} business report for the ${periodLabel(report)}.`,
-    '',
-    'Evidence pack (the only facts you may use):',
-    '```json',
-    evidence,
-    '```',
-  ].join('\n');
-}
 
 function resolveModel(report: ClaimedReport): string {
   const stored = String(report.model || '').trim();
@@ -197,20 +215,62 @@ async function processQueue(): Promise<Record<string, unknown>> {
     const report = claim.report as ClaimedReport;
     const model = resolveModel(report);
     try {
-      const message = await anthropic.messages.create({
-        model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        thinking: { type: 'disabled' },
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userPrompt(report) }],
-      });
-      if (message.stop_reason === 'refusal') throw new Error('model_refused');
+      // v684 (check 86): confidence_class is resolved ONCE, here, and folded into report.evidence
+      // before either the model or the validator ever sees it — the same "one object, one source
+      // of truth" invariant v677 already relies on for the rest of the pack. See
+      // resolveConfidenceClass() in ./validate.mjs for why this defaults to 'insufficient' rather
+      // than being silently absent.
+      report.evidence = {
+        ...(report.evidence ?? {}),
+        confidence_class: resolveConfidenceClass(report.evidence),
+      };
+
+      // v(check 98): the call to the model is its own failure surface, distinct from narrative
+      // validation below. A throw here (network failure, non-2xx, timeout/abort) is caught and
+      // classified by decideGenerationFailure into a NAMED reason — never left as raw SDK
+      // exception text, and never allowed to fall through to a blank/partial "ready" report.
+      let message: Anthropic.Message;
+      try {
+        message = await anthropic.messages.create({
+          model,
+          max_tokens: MAX_OUTPUT_TOKENS,
+          thinking: { type: 'disabled' },
+          system: SYSTEM_PROMPT,
+          // v684 (check 81): assembleUserPrompt is imported from ./validate.mjs — the exact code
+          // path tests/ai-reports/*.test.mjs executes from Node — so there is one assembly
+          // implementation, not a Deno copy and a re-implementation the tests exercise instead.
+          messages: [{ role: 'user', content: assembleUserPrompt(report) }],
+        });
+      } catch (apiError) {
+        const failure = decideGenerationFailure(apiError);
+        throw new Error(failure.failure_reason);
+      }
+      // v(check 98): the call resolved, but the RESPONSE itself can still be unusable — a
+      // refusal, missing/empty content, or an all-whitespace narrative. None of that throws, so
+      // it is checked here, before narrativeFrom ever runs, using the SAME classifier the
+      // thrown-error path above uses (one decision function, not two).
+      const responseFailure = decideGenerationFailure(message);
+      if (responseFailure) throw new Error(responseFailure.failure_reason);
+      const narrative = narrativeFrom(message);
+
+      // v677: the narrative is checked against the SAME evidence object the model was given
+      // (userPrompt serialises report.evidence, and so does this call — one source of truth, so
+      // the validator can never be judging a different pack than the model saw). The prompt's
+      // "NEVER invent a number" was an instruction; this is the control. A narrative that fails
+      // takes the existing failed path below and is never stored as a good report.
+      // (check 81/90 enforcement requirement): decideNarrativeOutcome (./enforce.mjs) is the ONE
+      // place that turns validateNarrative's verdict into ready/failed — behaviour here is
+      // unchanged from the old inline `if (!verdict.ok) throw ...`, just executed by a function a
+      // Node test can call directly instead of only ever running live inside this Deno function.
+      const outcome = decideNarrativeOutcome(narrative, report.evidence ?? {});
+      if (outcome.status === 'failed') throw new Error(outcome.failure_reason ?? 'narrative_validation_failed');
+
       const { error: completeError } = await admin.rpc(
         'internal_complete_ai_firm_report_v176',
         {
           p_report: report.id,
           p_status: 'succeeded',
-          p_narrative_md: narrativeFrom(message),
+          p_narrative_md: narrative,
           p_error: null,
           p_model: model,
         },

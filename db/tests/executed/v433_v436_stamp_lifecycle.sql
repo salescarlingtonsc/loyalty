@@ -73,6 +73,15 @@ begin
    where business_id=v_biz;
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_biz, false) on conflict (business_id) do update set workspace_paused=false;
+  /* v620 (nestly_v620_entitlement_authority): business_operational_v620 additionally requires a
+     paid (or trialing) subscriptions row, not merely an approved+unpaused workspace. Without this
+     the fixture fails with "owner loyalty configuration access required" under the migrated
+     schema — see the same note in v422_baseline_behaviours.sql. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_biz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
   insert into app.platform_feature_flags(feature_key, enabled)
   values ('customer_wallet', true), ('customer_claims', true), ('customer_qr_redemption', true)
   on conflict (feature_key) do update set enabled = true;
@@ -333,11 +342,31 @@ begin
   end if;
   raise notice 'C ok: S$15 earned +3 at the card''s own S$5 rate (filled now 7 of 5)';
 
-  perform app.redeem_reward_core(v_biz, v_client, v_reward_big, 'v433-final-claim-0001', v_branch, null, null);
+  -- nestly_v489 (auto rollover, 2026-08-24) + nestly_v496: since v489, the S$15 sale just above
+  -- already overfilled the card to 7/5, and its AFTER INSERT trigger (trg_v489_stamp_rollover,
+  -- firing after the earn within the same statement) auto-closes the cycle itself with
+  -- origin='completed' the instant it detects filled>=slots — the 2 excess stamps roll onto a
+  -- fresh cycle before this manual claim ever runs. So by the time redeem_reward_core is called
+  -- below, the 5-slot card is already closed with origin 'completed', not 'claimed': the manual
+  -- claim finds no open card holding 5+ stamps and instead takes v478/v489's survivor path (the
+  -- same "origin in ('expired','claimed','completed')" lookup patched into redeem_reward_core),
+  -- returning from_expired_card=true and stamp_card_closed=false rather than closing a cycle of
+  -- its own. This was bisected as a stale fixture (pre-v489 expectation), not a regression.
+  select count(*) into v_n from public.stamp_cycles
+   where business_id = v_biz and client_id = v_client and origin = 'completed' and slots = 5;
+  if v_n <> 1 then
+    raise exception 'C FAIL: the overfilling S$15 sale did not auto-close the 5-slot card (origin completed, % closed cycles)', v_n;
+  end if;
+
+  v_json := app.redeem_reward_core(v_biz, v_client, v_reward_big, 'v433-final-claim-0001', v_branch, null, null)::jsonb;
+  if coalesce((v_json->>'from_expired_card')::boolean, false) is distinct from true
+     or coalesce((v_json->>'stamp_card_closed')::boolean, true) is distinct from false then
+    raise exception 'C FAIL: the manual claim on an already auto-completed card did not take the survivor path: %', v_json;
+  end if;
   select count(*) into v_n from public.stamp_cycles
    where business_id = v_biz and client_id = v_client and origin = 'claimed' and slots = 5;
-  if v_n <> 1 then
-    raise exception 'C FAIL: the final claim did not close the 5-slot card (% closed cycles)', v_n;
+  if v_n <> 0 then
+    raise exception 'C FAIL: the survivor claim on an auto-completed card invented an extra claimed cycle (% found)', v_n;
   end if;
 
   insert into public.sales(business_id, client_id, kind, amount_cents, branch_id)
@@ -438,13 +467,22 @@ begin
     raise exception 'D FAIL: no expired cycle with slots=4 was recorded for client 2';
   end if;
 
-  -- Rule 7: programme OFF — the earned milestone must still be listed and claimable.
+  -- OWNER DECISION PENDING — v435 rule 7 (earned milestone survives deactivation) vs v495
+  -- (stopped programme's gifts leave every surface); current behaviour since v495: no
+  -- availability row. See docs/qa/OWNER-ISSUE-LEDGER.md — "Earned stamp milestone when the
+  -- programme is switched off: v435 rule 7 vs v495". v495's outer `where rows.programme_active`
+  -- filter drops the survivor-arm row entirely once the stamps spine is inactive (arm 1 reports
+  -- `coalesce((select ss.active from stamps_spine ss), false)`), so no row at all comes back for
+  -- this reward — not a different availability value. This block pins that CURRENT behaviour
+  -- only, so a silent change in either direction (a row reappears, or its availability value
+  -- changes) is caught here and must be reconciled against the ledger entry above, not silently
+  -- re-asserted.
   update public.business_programmes set active = false where id = v_spine_stamps;
   select core.availability into v_txt
     from app.reward_availability_v432(v_biz, v_client2, now()) core
    where core.reward_id = v_reward_free;
-  if v_txt is distinct from 'available_at_counter' then
-    raise exception 'D FAIL: with the programme OFF, the earned milestone reads % (expected available_at_counter — rule 7)', v_txt;
+  if v_txt is not null then
+    raise exception 'D FAIL: OWNER DECISION PENDING (docs/qa/OWNER-ISSUE-LEDGER.md — Earned stamp milestone when the programme is switched off: v435 rule 7 vs v495) — expected NO availability row for the earned milestone with the programme OFF (current behaviour since v495), got %', v_txt;
   end if;
   if exists (select 1 from app.reward_availability_v432(v_biz, v_client2, now()) core
               where core.reward_id = v_reward_big) then
@@ -516,6 +554,15 @@ begin
    where business_id=v_pbiz;
   insert into public.business_subscription_lifecycle_v94(business_id, workspace_paused)
   values (v_pbiz, false) on conflict (business_id) do update set workspace_paused=false;
+  /* v620 (nestly_v620_entitlement_authority): business_operational_v620 additionally requires a
+     paid (or trialing) subscriptions row, not merely an approved+unpaused workspace. Without this
+     the fixture fails with "owner loyalty configuration access required" under the migrated
+     schema — see the same note in Phase 0 above / v422_baseline_behaviours.sql. */
+  insert into public.subscriptions(business_id, status, payment_status, current_period_end)
+  values (v_pbiz, 'active', 'paid', now() + interval '30 days')
+  on conflict (business_id) do update
+    set status = 'active', payment_status = 'paid',
+        current_period_end = now() + interval '30 days';
   perform set_config('request.jwt.claims', json_build_object('sub', v_owner, 'role', 'authenticated')::text, true);
   insert into public.loyalty_programs(business_id, active, loyalty_model, kind, configuration_status,
                                       earn_points_per_dollar, expiry_mode, expiry_days)
