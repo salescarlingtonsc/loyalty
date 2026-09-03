@@ -1499,6 +1499,7 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
 .grow-inline-modal-v658 .grow-setup-sentence-v301{margin:0;line-height:1.35}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+.grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>label{margin:0}
 .grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 li.grow-inline-modal-v662,.grow-setup-rewardlist-v301>li.imp-note.grow-inline-modal-v662{
@@ -1521,10 +1522,10 @@ li.grow-inline-modal-v662>p{margin-top:0!important}
 @media(max-width:1180px){.grow-stamps-head-v356{display:none}}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331],
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{gap:18px}
-.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li,
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li:not(.grow-inline-modal-v658),
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>li:not(.imp-note){min-height:78px;padding:20px 24px;border:1px solid var(--hair);border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(48,36,28,.07)}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]{border:1px solid var(--hair);border-radius:18px;background:#fff;box-shadow:0 18px 42px rgba(48,36,28,.08);padding:22px}
-.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li{box-shadow:none!important;border:0!important;padding:0!important}
+.grow-overview[data-programme-view="tiers"] [data-grow-tiers-summary-v331]>li:not(.grow-inline-modal-v658){box-shadow:none!important;border:0!important;padding:0!important}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]{margin-top:10px!important;border:1px solid var(--hair);border-radius:18px;background:#fff;padding:22px}
 .grow-tier-table-head-v343,.grow-tier-table-row-v343{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(140px,1fr) minmax(110px,.75fr) minmax(180px,1fr);gap:16px;align-items:center}
 .grow-overview[data-programme-view="tiers"] [data-grow-tiers-list-v331]>.grow-tier-table-head-v343{min-height:42px;padding:0 24px!important;border:1px solid var(--line)!important;border-radius:12px 12px 0 0!important;box-shadow:none!important;background:#fff!important;color:var(--muted);font-size:12px;font-weight:700}
