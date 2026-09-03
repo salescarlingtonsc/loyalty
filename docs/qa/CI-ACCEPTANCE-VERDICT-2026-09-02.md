@@ -296,3 +296,22 @@ proven by execution rather than asserted. The per-check tally stands at **92 pro
 / 3 external / 0 absent**, now measured at `the merge commit of `3ef53a4a` into `claude/ci-proof-100` (parents `db287b62` and `3ef53a4a`; its own SHA is recorded by git and in the PR)`; nothing in the merge changed a
 scored check's evidence except to re-run it. Authorised by this record: the merge commit and the
 push of `claude/ci-proof-100`. Not authorised: merging PR #21, any deploy, any production migration.
+
+---
+
+# Production go-live record (2026-09-03)
+
+Owner directive: "I want the customer intelligence to be ready and live." Executed the same day.
+
+| Step | Result |
+|---|---|
+| Prerequisites `nestly_v668` (customerintel entitlement takes effect) and `nestly_v669` (numeric honesty) | Applied through the MCP SQL path (byte-faithful, comments kept) and recorded at `20260901110000` / `20260901120000` |
+| CI wave v672–v687 (13 files) | Applied with `supabase db query --linked -f` from the linked checkout; recorded at their reserved slots |
+| **Blocker at v689** | Production stored many function bodies **without comments** (the older MCP apply path stripped them) while the rehearsal cluster kept them, so anchored patches and round-trip checks from v689 onward could never match. Fail-closed, nothing partial. |
+| **Fix: comment normalisation** (`scripts/ops/normalise-function-comments.mjs` + `split-normalise.py`) | Boots the rehearsal chain to exactly production's state, extracts `pg_get_functiondef` for every function the remaining files touch, and emits one guarded block per function: skip when production is byte-identical, **re-emit the rehearsed text only when both sides are identical once comment-stripped**, raise on anything else. 101 functions normalised, zero raises, run in 10-block chunks under the API gateway's 100 s limit. Behaviour and ACLs unchanged by construction. |
+| CI wave v689–v744 (47 files) | Applied in deploy order with every self-check intact; `v703` sent without its psql-only `\set ON_ERROR_STOP` line (the API path cannot parse meta-commands). Ledger: 60 rows at `20260920000000`–`20260922110000`. |
+| Production verification | scanner 0 rows · allowlist 121 · spine present · gate = customerintel + view_finance · all seven cross-wave functions carry both main's v677/v685 semantics and the CI exclusions · spine executable by `authenticated`, not `anon` · evidence pack locked from `authenticated` |
+| Functional probe (real owner principal, rolled back) | `get_ci_opportunities_v1` on an entitled business: period `Asia/Singapore`, exclusions + trace_id present, 11 honest abstentions, 0 opportunities |
+| Frontend | PR #21 merged as `5ab5e4d2`; Vercel served `app-business.js?b=e68bcf5b3fa2` (the merged tree's stamp) at `https://www.peekaa.asia/app` with the CI panels and the console's v734 copy |
+
+Not started: the production-shadow window (check 99) — machinery live since v685/v725, the capture schedule and window are an owner decision; the reviewer panel (80); Sol's record (100).
