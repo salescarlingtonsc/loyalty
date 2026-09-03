@@ -250,8 +250,11 @@ test('V291 a module the sector does not run cannot be granted to a teammate',()=
 test('V291 the reward comparison covers every field a draft can change',()=>{
   const fields=section('function growRewardDiffFieldsV291(','function growRewardDiffOptionsFromSnapshotV291(');
   /* V375: 'Store credit' left the comparison with the column it compared — a reward can no
-     longer pay out credit at all (owner, photo 3). */
-  for(const label of ['Name','Cost','Offered','Expires after','Uses per customer',
+     longer pay out credit at all (owner, photo 3).
+     nestly_v754: 'Expires after' (a day count read from entitlement_expiry_days) became
+     'Expires on' (a date read from claim_available_until) — the points editor's day box now
+     writes the redeem-by deadline, and the publish diff states the same field. */
+  for(const label of ['Name','Cost','Offered','Expires on','Uses per customer',
     'Who can redeem','Branches','Services']){
     assert.match(fields,new RegExp(`label:'${label}'`),`${label} must be compared`);
   }

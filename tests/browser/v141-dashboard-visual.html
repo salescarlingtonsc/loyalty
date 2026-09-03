@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="05a27529389b3d2057a3096838187c060ac2c40fc41eea9e5d6d178c76ed17bd"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="b3533456b51e95d752811c2a02b93791337ff131414d331ddfed171ccdd075d6"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -2334,6 +2334,13 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
+   the points fields under A free gift). The flex rule above is a class selector, so it outranks
+   the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
+   button. The four referral paragraphs that swap with the reward kind are toggled with `hidden`,
+   and from v748 on they were never actually hidden. Restated here at higher specificity so
+   `hidden` means hidden again, whatever display the paragraph otherwise has. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -6858,6 +6865,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'05a27529389b3d2057a3096838187c060ac2c40fc41eea9e5d6d178c76ed17bd',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'b3533456b51e95d752811c2a02b93791337ff131414d331ddfed171ccdd075d6',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

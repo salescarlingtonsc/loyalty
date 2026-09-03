@@ -497,7 +497,16 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   '20260920_nestly_v684_metric_dictionary.sql -> 20260902_nestly_v685_singapore_day_authority.sql',
   '20260920_nestly_v685_shadow_reconciliation.sql -> 20260902_nestly_v686_service_delete_owner_only_rpc.sql',
   '20260920_nestly_v686_discovery_scan.sql -> 20260902_nestly_v687_staff_self_profile.sql',
-  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql'
+  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql',
+  // 2026-09-04: nestly_v754 (a points gift's expiry is the date it stops being redeemable, owner
+  // ruling) was authored and dated 20260923 — the same day as v748, which it sits directly after
+  // in the canonical deploy plan (proposedDeployVersion 20260923040000, between v748's
+  // 20260923000000 and v749's 20260924000000). v749 was committed to source first (App Store
+  // 5.1.1(v), merged earlier), so by filename alone v749 (20260924) sorts ahead of v754
+  // (20260923) even though v754's real position in the deploy order is between v748 and v749, not
+  // after v749. This is the same "authoring date vs. real deploy order" shape as the v586-v589
+  // regression above, not a real ordering mistake.
+  '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v754_gift_expiry_is_a_redeem_by_date.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

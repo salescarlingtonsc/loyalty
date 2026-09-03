@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="0f89d671dddb66260085ae32b65c4b3bc26d937c030d69b940f9e27a133ea31a"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="9c6f86aa3db3810c4f2c1731b2ef9a57a1e6f9128590a787db09a56f69903510"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2333,6 +2333,13 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
+   the points fields under A free gift). The flex rule above is a class selector, so it outranks
+   the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
+   button. The four referral paragraphs that swap with the reward kind are toggled with `hidden`,
+   and from v748 on they were never actually hidden. Restated here at higher specificity so
+   `hidden` means hidden again, whatever display the paragraph otherwise has. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -5691,7 +5698,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 0f89d671dddb66260085ae32b65c4b3bc26d937c030d69b940f9e27a133ea31a</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 9c6f86aa3db3810c4f2c1731b2ef9a57a1e6f9128590a787db09a56f69903510</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -9545,7 +9552,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'0f89d671dddb66260085ae32b65c4b3bc26d937c030d69b940f9e27a133ea31a',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'9c6f86aa3db3810c4f2c1731b2ef9a57a1e6f9128590a787db09a56f69903510',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
