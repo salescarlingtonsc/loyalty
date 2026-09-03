@@ -101,6 +101,12 @@ test('the native project actually carries the plugin the bridge talks to', () =>
   assert.match(controller, /registerPluginInstance\(BiometricCredentialPlugin\(\)\)/);
   const storyboard = readFileSync(new URL('../../ios/App/App/Base.lproj/Main.storyboard', import.meta.url), 'utf8');
   assert.match(storyboard, /customClass="AppViewController"/);
+  /* nestly_v745: the storyboard pin above passed for three builds in which the plugin was never
+     registered, because the root controller is constructed in code. THIS is the authority — the
+     one line that decides whether capacitorDidLoad() ever runs. */
+  const scene = readFileSync(new URL('../../ios/App/App/SceneDelegate.swift', import.meta.url), 'utf8');
+  assert.match(scene, /rootViewController = AppViewController\(\)/);
+  assert.doesNotMatch(scene, /rootViewController = CAPBridgeViewController\(\)/);
   const pbxproj = readFileSync(new URL('../../ios/App/App.xcodeproj/project.pbxproj', import.meta.url), 'utf8');
   assert.match(pbxproj, /BiometricCredential\.swift in Sources/);
   assert.match(pbxproj, /AppViewController\.swift in Sources/);

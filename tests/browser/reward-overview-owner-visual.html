@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="3bdab8495ca5fc2ff9ccfa50b169960acb19168ad7509442c8e329287d292dd2"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -156,6 +156,9 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .password-control.has-passkey input{padding-right:102px}
 .password-control-actions{position:absolute;inset:0 4px 0 auto;display:flex;align-items:center}
 .password-icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:transparent;color:var(--ink2);box-shadow:none;transition:background .18s var(--ease),color .18s var(--ease)}
+/* nestly_v745: display:inline-flex above outranks the UA's [hidden]{display:none}, so a button the
+   code had hidden still painted — which is how the v670 diagnosis was misread on first look. */
+.password-icon-button[hidden]{display:none}
 .password-icon-button:hover{background:var(--tint);color:var(--coral)}
 .password-icon-button:active{background:#F6DDD7}
 .password-icon-button[disabled]{opacity:.38;cursor:not-allowed}
@@ -5674,7 +5677,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 3bdab8495ca5fc2ff9ccfa50b169960acb19168ad7509442c8e329287d292dd2</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -16057,7 +16060,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'794eb0b3a86708d5c60828e624813f2cd7fbe9e2c83bf54835ed4cfbaf290d34',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'3bdab8495ca5fc2ff9ccfa50b169960acb19168ad7509442c8e329287d292dd2',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

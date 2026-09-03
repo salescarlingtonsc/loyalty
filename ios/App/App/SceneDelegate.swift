@@ -8,7 +8,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = CAPBridgeViewController()
+        /* nestly_v745: the root controller is built HERE, in code — Main.storyboard is never
+           instantiated, so the storyboard's class name is decorative. v670 changed only the
+           storyboard and shipped three builds whose Face ID plugin was never registered:
+           the plugin registry had no BiometricCredential and the app reported "this device
+           does not offer Face ID". AppViewController is where registration lives. */
+        window?.rootViewController = AppViewController()
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)

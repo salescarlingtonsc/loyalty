@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="1b9fc447c4eb8d0ae0695a1abe6b960d58e6cfea64004efe71925a2e407fb74c"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -156,6 +156,9 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 .password-control.has-passkey input{padding-right:102px}
 .password-control-actions{position:absolute;inset:0 4px 0 auto;display:flex;align-items:center}
 .password-icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:transparent;color:var(--ink2);box-shadow:none;transition:background .18s var(--ease),color .18s var(--ease)}
+/* nestly_v745: display:inline-flex above outranks the UA's [hidden]{display:none}, so a button the
+   code had hidden still painted — which is how the v670 diagnosis was misread on first look. */
+.password-icon-button[hidden]{display:none}
 .password-icon-button:hover{background:var(--tint);color:var(--coral)}
 .password-icon-button:active{background:#F6DDD7}
 .password-icon-button[disabled]{opacity:.38;cursor:not-allowed}
@@ -5675,7 +5678,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 1b9fc447c4eb8d0ae0695a1abe6b960d58e6cfea64004efe71925a2e407fb74c</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -9529,7 +9532,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'02617429ae319377794f7dfdc3eaea640d672c05e61fbd365ff6df5b414df266',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'1b9fc447c4eb8d0ae0695a1abe6b960d58e6cfea64004efe71925a2e407fb74c',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),
