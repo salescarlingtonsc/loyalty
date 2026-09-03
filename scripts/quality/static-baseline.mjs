@@ -497,7 +497,11 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   '20260920_nestly_v684_metric_dictionary.sql -> 20260902_nestly_v685_singapore_day_authority.sql',
   '20260920_nestly_v685_shadow_reconciliation.sql -> 20260902_nestly_v686_service_delete_owner_only_rpc.sql',
   '20260920_nestly_v686_discovery_scan.sql -> 20260902_nestly_v687_staff_self_profile.sql',
-  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql'
+  '20260920_nestly_v687_revenue_truth_synthetic_exclusion.sql -> 20260902_nestly_v688_support_mark_read.sql',
+  // nestly_v753 (owner ruling 2026-09-04, the birthday-window batch): deliberately deployed
+  // between v748 and v749 (canonical plan slot 20260923030000), so its file date (20260923)
+  // sits one day before v749's (20260924) even though v753 is the higher semantic number.
+  '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v753_birthday_reaches_new_signups.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

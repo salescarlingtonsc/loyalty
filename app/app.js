@@ -5165,6 +5165,7 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     <input id="customerSignupFullName" autocomplete="name" maxlength="200" value="${esc(customerSignupProfileStash()?.fullName||'')}">
     <span class="cui-label-v663" id="customerSignupDobLabel">Date of birth</span>
     ${birthDatePickerHtmlV663('customerSignupDob',customerSignupProfileStash()?.birthDate||'')}
+    <p class="muted small" id="customerSignupDobHelp" style="margin-top:6px">Used to give you birthday gifts from businesses you join. You can turn this off any time in Profile → Birthday benefits.</p>
     <label for="customerSignupGender">Gender</label>
     ${/* nestly_v663 (owner photo A: "make sure male or female must be selected, no other
          option"). The two options were already the only two, and the send handler already

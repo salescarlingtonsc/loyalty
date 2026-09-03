@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **67**.
+Fixture count: **68**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -84,6 +84,7 @@ Fixture count: **67**.
 | `db/tests/executed/v743_corpus_synthetic_scanner.sql` | `db/migrations/20260920_nestly_v743_synthetic_scanner.sql` | 1 | 5 | 5 | `3279d9b169588892db0d8efc8f681551be80f0137148fb2acbf1baa062ed4322` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus_synthetic_scanner --migrated-only` |
 | `db/tests/executed/v744_corpus_scanner_blind_spots.sql` | `db/migrations/20260920_nestly_v744_scanner_blind_spots.sql` | _(none)_ | 2 | 2 | `2b759ea4ba04083f10bb0c24de14653d6c773c3446bb89d8cf03542866e6f794` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v744_corpus_scanner_blind_spots --migrated-only` |
 | `db/tests/executed/v748_corpus_history_points_expiry.sql` | `db/migrations/20260922_nestly_v748_history_states_points_expiry.sql` | _(none)_ | 1 | 1 | `e8749bc38117c0be166e5a5052246b519ff3352d802c583922618c3f76218293` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v748_corpus_history_points_expiry --migrated-only` |
+| `db/tests/executed/v753_corpus_birthday_new_signups.sql` | `db/migrations/20260924_nestly_v753_birthday_reaches_new_signups.sql` | _(none)_ | 1 | 7 | `ac99fb9d608f5791e847a1bd6f409254ee413cd42421d0470897e486f1fcff2a` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v753_corpus_birthday_new_signups --migrated-only` |
 
 ## Notes
 

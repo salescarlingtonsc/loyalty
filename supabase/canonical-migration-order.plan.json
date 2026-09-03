@@ -3757,6 +3757,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260923030000",
+      "name": "nestly_v753_birthday_reaches_new_signups",
+      "sourcePath": "db/migrations/20260923_nestly_v753_birthday_reaches_new_signups.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260924000000",
       "name": "nestly_v749_customer_self_service_account_deletion",
       "sourcePath": "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql"

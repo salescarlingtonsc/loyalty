@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 581,
-  "itemCount": 626,
+  "pendingCount": 582,
+  "itemCount": 627,
   "items": [
     {
       "order": 1,
@@ -6261,6 +6261,16 @@
     },
     {
       "order": 626,
+      "kind": "pending",
+      "version": "20260923030000",
+      "name": "nestly_v753_birthday_reaches_new_signups",
+      "path": "supabase/migrations/20260923030000_nestly_v753_birthday_reaches_new_signups.sql",
+      "octetLength": 21030,
+      "sha256": "ae9dab0aef9dbab4dce2fe2930c187250b575eceea7071f79584852483772b12",
+      "provenance": "local-source"
+    },
+    {
+      "order": 627,
       "kind": "pending",
       "version": "20260924000000",
       "name": "nestly_v749_customer_self_service_account_deletion",
