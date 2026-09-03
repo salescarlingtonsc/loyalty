@@ -13,10 +13,10 @@
 
 | | |
 |---|---|
-| HEAD SHA | `fa496c26c905dd5943c04187571c9d722165ce98` |
-| Branch | `main` |
-| Commit date | 2026-09-04T01:23:41+08:00 |
-| Record generated | 2026-09-03T18:04:25.919Z |
+| HEAD SHA | `a28d282a18376c01d91a175bf2db803c7a7c1ec0` |
+| Branch | `claude/v683-owner-batch` |
+| Commit date | 2026-09-04T02:42:56+08:00 |
+| Record generated | 2026-09-03T18:43:54.605Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
 | Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |

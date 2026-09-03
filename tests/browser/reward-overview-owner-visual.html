@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="ed83f1e777fd6003caaee7e4f9068a2a296139a03568fe0aa150ec22a92e17fa"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2333,6 +2333,13 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
+   the points fields under A free gift). The flex rule above is a class selector, so it outranks
+   the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
+   button. The four referral paragraphs that swap with the reward kind are toggled with `hidden`,
+   and from v748 on they were never actually hidden. Restated here at higher specificity so
+   `hidden` means hidden again, whatever display the paragraph otherwise has. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -5690,7 +5697,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ed83f1e777fd6003caaee7e4f9068a2a296139a03568fe0aa150ec22a92e17fa</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -16086,7 +16093,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'ed83f1e777fd6003caaee7e4f9068a2a296139a03568fe0aa150ec22a92e17fa',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a
