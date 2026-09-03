@@ -8811,7 +8811,7 @@ async function renderCustomerProfile(requestedView){
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Update password</span></button>
     </section>
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
-    ${accountDeletionCardHtml()}
+    ${customerAccountDeletionCardHtmlV749()}
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
          the last thing on the page it acts on — deliberately after account & privacy, so it is
          reached by finishing the page rather than by hunting an icon. -->
@@ -8823,6 +8823,7 @@ async function renderCustomerProfile(requestedView){
      halves swapped, and the shell's own back button (backTo above) returns to the profile. */
   if($('customerMemberQrCardV327'))void loadCustomerMemberQrV327(isCurrent);
   $('customerProfileSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
+  if($('customerDeleteAccountV749'))$('customerDeleteAccountV749').onclick=()=>openCustomerDeleteAccountDialogV749();
   /* v190: applied immediately on change — the person is looking at the surface they just picked,
      so a save button would be a step with nothing behind it. */
   $('walletBody').querySelectorAll('input[name="customerTheme"]').forEach(option=>option.onchange=()=>{
@@ -18400,6 +18401,74 @@ function accountDeletionCardHtml(){
     </div>
     <p class="muted small" style="margin-top:12px">Legally required financial, fraud-prevention and security records may be retained after closure.</p>
     <p class="muted small" style="margin-top:4px">Prefer to write yourself? <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p></section>`;
+}
+
+/* nestly_v749 (owner, 2026-09-04, App Store Review Guideline 5.1.1(v)): "i need to enable
+   account deletion — for iOS purpose. it should delete the customer account entirely." This
+   reverses v188 for CUSTOMER accounts only. Apple requires that an app which registers accounts
+   also lets the person delete one in-app, without a support conversation. Business logins keep
+   the email route above (a workspace owner cannot be deleted by a tap — the server refuses too).
+   The browser does none of the deletion: customer_delete_account_v749 is the single writer; it
+   anonymises every joined customer record, unlinks it, tombstones the platform profile, revokes
+   contacts and push, and bans + soft-deletes the login. The dialog states what is forfeited
+   (points, stamps, credit) and what is kept (the anonymised accounting record) before the button
+   enables, and the server's refusal (stored value / kept property) is printed verbatim. */
+function customerAccountDeletionCardHtmlV749(){
+  return `<section class="card" id="customerAccountDeletionCardV749" style="margin-top:14px"><h2>Delete account</h2>
+    <p class="muted small" style="margin-top:6px">Permanently delete your Peekaa account and the personal details held by every business you joined. Any unused points, stamps or store credit are forfeited. This cannot be undone.</p>
+    <div class="row" style="margin-top:16px;gap:10px;flex-wrap:wrap">
+      <button type="button" class="btn danger" style="width:100%" id="customerDeleteAccountV749">Delete my account</button>
+      <a class="btn ghost" href="/data-request.html">Ask what data is held</a>
+    </div>
+    <p class="muted small" style="margin-top:12px">Legally required financial, fraud-prevention and security records are kept without your name, phone number or email.</p>
+    <p class="muted small" style="margin-top:4px">Prefer a person to do it? <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p></section>`;
+}
+let customerDeleteAccountAttemptV749=null;
+function openCustomerDeleteAccountDialogV749(){
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerDeleteAccountModalV749" role="dialog" aria-modal="true" aria-labelledby="customerDeleteAccountTitleV749" tabindex="-1"><div class="modal-card" style="max-width:560px">
+    <div class="row"><div><h2 id="customerDeleteAccountTitleV749">Delete your Peekaa account</h2><p class="muted small" style="margin-top:4px">This happens immediately and cannot be undone.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerDeleteAccountCloseV749" type="button">Close</button></div>
+    <div class="imp-note" style="margin-top:12px"><b>What is deleted</b><p class="small" style="margin-top:5px">Your name, phone number, email, date of birth and sign-in. Every business you joined stops seeing you, and their copy of your details is replaced with anonymous placeholders.</p></div>
+    <div class="imp-note" style="margin-top:10px"><b>What is forfeited</b><p class="small" style="margin-top:5px">Unused points, stamps, rewards and store credit at every business. They cannot be moved to a new account.</p></div>
+    <div class="imp-note" style="margin-top:10px"><b>What is kept, and why</b><p class="small" style="margin-top:5px">Past sales and reward records stay with each business as their accounting record — without your name or contact details attached.</p></div>
+    <label for="customerDeleteAccountConfirmV749">Type DELETE to confirm</label>
+    <input id="customerDeleteAccountConfirmV749" autocomplete="off" autocapitalize="characters" placeholder="DELETE">
+    <div id="customerDeleteAccountOutcomeV749" role="status" aria-live="polite"></div>
+    <div class="row" style="margin-top:16px"><button class="btn danger" id="customerDeleteAccountSubmitV749" type="button" disabled>Delete my account</button><button class="btn ghost sm" id="customerDeleteAccountCancelV749" type="button">Cancel</button></div>
+  </div></div>`);
+  const modal=$('customerDeleteAccountModalV749');
+  let deactivate;
+  const close=()=>{if(deactivate)deactivate();else modal?.remove()};
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#customerDeleteAccountConfirmV749'});
+  $('customerDeleteAccountCloseV749').onclick=$('customerDeleteAccountCancelV749').onclick=close;
+  const typed=$('customerDeleteAccountConfirmV749'),submit=$('customerDeleteAccountSubmitV749'),outcome=$('customerDeleteAccountOutcomeV749');
+  typed.oninput=()=>{submit.disabled=typed.value.trim().toUpperCase()!=='DELETE'};
+  submit.onclick=async()=>{
+    if(typed.value.trim().toUpperCase()!=='DELETE')return;
+    /* One key per attempt, reused verbatim on retry so a timed-out first call and its retry are
+       ONE deletion server-side. */
+    if(!customerDeleteAccountAttemptV749)customerDeleteAccountAttemptV749=crypto.randomUUID();
+    submit.disabled=true;submit.textContent='Deleting…';typed.disabled=true;
+    const {data,error}=await sb.rpc('customer_delete_account_v749',{p_confirmation:'DELETE',p_idempotency_key:customerDeleteAccountAttemptV749});
+    if(!modal.isConnected)return;
+    if(error){
+      outcome.innerHTML=`<div class="err"><b>Nothing was deleted.</b> ${esc(humanErrorV295(error,'The server refused this request. Please try again.'))}</div>`;
+      submit.disabled=false;submit.textContent='Delete my account';typed.disabled=false;return;
+    }
+    const result=Array.isArray(data)?data[0]:data;
+    if(result?.status==='refused'){
+      /* The server names what it still holds for you. Its sentence is the truthful one. */
+      const names=(result.businesses||[]).map(b=>esc(b.business_name||'a business')).join(', ');
+      outcome.innerHTML=`<div class="err"><b>Nothing was deleted.</b> ${names||'A business'} still holds stored value or items for you. Use or collect them, or ask the business to settle them, then try again.</div>`;
+      submit.disabled=false;submit.textContent='Delete my account';typed.disabled=false;return;
+    }
+    customerDeleteAccountAttemptV749=null;
+    close();
+    killChannels();
+    try{await sb.auth.signOut();}catch(_e){/* the server already deleted every session */}
+    resetClientSessionState();
+    toast('Your Peekaa account has been deleted');
+    location.hash='#/';route();
+  };
 }
 
 /* V593 (owner, photo 1 + written instruction: "shift the entire account & privacy module into

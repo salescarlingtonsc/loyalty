@@ -59,7 +59,14 @@ test('native business access is purchase-free and a signed-in return completes s
 test('every signed-in persona is shown how to close the account, and can never do it itself',()=>{
   assert.doesNotMatch(app,/request_account_deletion_v131/,
     'v188: the browser must not be able to submit a deletion request');
-  assert.doesNotMatch(app,/Type DELETE to confirm/);
+  /* nestly_v749 (owner 2026-09-04, App Store 5.1.1(v)): CUSTOMER accounts may now delete
+     themselves in-app through openCustomerDeleteAccountDialogV749 — which is exactly what closes
+     the ⚖️ 5.1.1(v) exposure recorded above. The typed confirmation therefore exists, but only
+     inside that customer-only dialog; the business closure card stays a mailto route. */
+  const businessCard=between(app,'function accountDeletionCardHtml','function customerAccountDeletionCardHtmlV749');
+  assert.doesNotMatch(businessCard,/Type DELETE/,'the business mailto card must not grow a typed confirmation');
+  const customerDialog=between(app,'function openCustomerDeleteAccountDialogV749','function accountPrivacyFooterHtmlV593');
+  assert.match(customerDialog,/Type DELETE to confirm/,'the customer-only dialog is the one place it lives');
   assert.match(app,/get_account_deletion_request_v131/,
     'an already-submitted request must still be visible to the person who made it');
   assert.match(app,/mailto:admin\.peekaa@gmail\.com/);

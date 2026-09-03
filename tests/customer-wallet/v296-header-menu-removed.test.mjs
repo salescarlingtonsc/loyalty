@@ -43,7 +43,10 @@ test('device notifications sit with the inbox they govern', () => {
 
 test('Sign out is the last card on Profile, and it really signs out', () => {
   const profile = section('async function renderCustomerProfile', 'async function renderCustomerCommunicationsV263');
-  assert.ok(profile.indexOf('accountDeletionCardHtml()') < profile.indexOf('customerProfileSignOutCard'),
+  /* nestly_v749 (owner 2026-09-04, App Store 5.1.1(v)): the customer profile now renders the
+     customer-only self-service deletion card instead of the business mailto card. The ordering
+     invariant is unchanged — Sign out still ends the page, after account & privacy. */
+  assert.ok(profile.indexOf('customerAccountDeletionCardHtmlV749()') < profile.indexOf('customerProfileSignOutCard'),
     'it comes after account & privacy — reached by finishing the page');
   assert.match(profile, /\$\('customerProfileSignOut'\)\.onclick=async\(\)=>\{killChannels\(\);await sb\.auth\.signOut\(\);resetClientSessionState\(\);location\.hash='#\/';route\(\)\}/,
     'the same teardown the header button did: channels killed, session state reset');

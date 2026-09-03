@@ -20,12 +20,27 @@ test('a chart legend cannot hide a slice', () => {
 /* ------------------------------------------------------ account closure goes through Peekaa */
 
 test('no surface offers self-service account deletion any more', () => {
+  // nestly_v749 (owner directive 2026-09-04, App Store 5.1.1(v)) reverses this v188 ban for
+  // CUSTOMER accounts only: Apple requires that an app which lets a person create an account also
+  // lets them delete it, in-app, without a support conversation. Business accounts are unaffected
+  // — accountDeletionCardHtml() still routes to the mailto closure request below, and
+  // openAccountDeletionDialog / the old submit-RPC path never come back for anyone. The typed
+  // 'DELETE' confirmation and the 'Delete your Peekaa account' heading now legitimately exist, but
+  // ONLY inside the new customer-only dialog function — asserted below rather than banned outright.
   assert.doesNotMatch(app, /function openAccountDeletionDialog/);
-  assert.doesNotMatch(app, /Type DELETE to confirm/);
   assert.doesNotMatch(app, /Submit deletion request/);
   assert.doesNotMatch(app, /request_account_deletion_v131/,
     'the browser must not call the submit RPC at all');
-  assert.doesNotMatch(app, /Delete your Peekaa account/);
+
+  const businessCard = app.slice(app.indexOf('function accountDeletionCardHtml'), app.indexOf('function customerAccountDeletionCardHtmlV749'));
+  assert.doesNotMatch(businessCard, /Type DELETE/,
+    'the business mailto card must not grow a typed self-service confirmation');
+
+  const customerDialog = app.slice(app.indexOf('function openCustomerDeleteAccountDialogV749'), app.indexOf('function accountPrivacyFooterHtmlV593'));
+  assert.match(customerDialog, /Delete your Peekaa account/,
+    'the customer-only dialog is where this string is allowed to live');
+  assert.match(customerDialog, /Type DELETE to confirm/,
+    'the customer-only dialog is where this confirmation is allowed to live');
 });
 
 test('closing an account is a real action, not a sentence with an address in it', () => {
