@@ -394,8 +394,10 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nestly_v666 adds one more: giftOnRewardsTab, which names the reward a scanned QR just put on
      screen when it cannot go on the bill (a free item, or a discount whose allowance has gone).
      It carries the reward's own merchant-written name, so it is a template for the same reason
-     tierPerkStaged is. 143 + 1 = 144. */
-  assert.equal(keys.length,144,'mixed-interface interpolation inventory changed without review');
+     tierPerkStaged is. 143 + 1 = 144.
+     nestly_v752 adds one more: birthdayBenefitPreview, the birthday-editor's read-only
+     'Wording customers see' preview label wrapping the server-derived sentence. 144 + 1 = 145. */
+  assert.equal(keys.length,145,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

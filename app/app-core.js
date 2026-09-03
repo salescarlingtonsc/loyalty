@@ -7356,6 +7356,11 @@ function humanErrorV295(error,fallback='That did not go through. Please try agai
   return machineCode?translate(fallback):translate(raw);
 }
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
+  /* nestly_v752: the birthday benefit editor's read-only "Wording customers see" preview, derived
+     server-side (app.v657_discount_label / app.v369_benefit_label) from the structured fields —
+     never typed. The sentence itself arrives already in the owner's own words for THEIR benefit
+     (a product name, a percentage); only the label around it is reviewed copy. */
+  birthdayBenefitPreview:Object.freeze({en:'Customers will see: {sentence}','zh-CN':'客户将看到：{sentence}',ms:'Pelanggan akan melihat: {sentence}'}),
   /* nestly_v415: Save on the Loyalty page publishes now, so a REFUSED publish has to name its
      reason to the owner — and a reason interpolated into a toast is exactly the runtime copy this
      inventory exists to keep reviewable. The reason itself comes from ownerErrorText, i.e. the
@@ -7556,6 +7561,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v752: the birthday-editor's derived-sentence preview label. */
+  'birthdayBenefitPreview',
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config
      can refuse for a real reason the owner has to be able to read and act on. */
   'savedNotLive','stampCardLength','linkNotAWebAddressV471','linkIsOwnAppV561','referralGiftGiven',

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="dba2e3e2b53e6a63b89ae0210f466e8694168ea343ab9f1a788c804b72a6bb9b"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -2333,6 +2333,13 @@ li.grow-inline-modal-v658>*{min-width:0;max-width:100%}
    exactly as they are. */
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row){display:flex;flex-direction:column;align-items:stretch;gap:6px}
 .grow-inline-modal-v658 .grow-setup-sentence-v301:not(.row)>br{display:none}
+/* nestly_v749 (owner photos 8 and 9, the referral pop-up showing the gift field under Points and
+   the points fields under A free gift). The flex rule above is a class selector, so it outranks
+   the browser's own [hidden]{display:none} — the same trap nestly_v745 hit with .password-icon-
+   button. The four referral paragraphs that swap with the reward kind are toggled with `hidden`,
+   and from v748 on they were never actually hidden. Restated here at higher specificity so
+   `hidden` means hidden again, whatever display the paragraph otherwise has. */
+.grow-inline-modal-v658 .grow-setup-sentence-v301[hidden]{display:none!important}
 .grow-inline-modal-v658>.row{margin-top:0!important;justify-content:flex-end}
 /* nestly_v662: the delete confirmations wear the pop-up class too (owner photo 2). They are a
    question and two buttons, not a form, so they take the small dialog width and keep the warning
@@ -5690,7 +5697,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · dba2e3e2b53e6a63b89ae0210f466e8694168ea343ab9f1a788c804b72a6bb9b</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -7112,37 +7119,51 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
    never an existing draft — because publishing someone else's half-finished draft as a side
    effect of saving a birthday gift would ship edits the owner never asked to go live. */
 async function openBirthdayBenefitEditorV364(current,onSaved){
-  const kindNow=current?.fulfillment_kind==='discount_pct'?'discount_pct':'free_item';
+  /* nestly_v752 (owner ruling 2026-09-04: "birthday rewards must also have the same function as
+     tier membership rewards ... real objectives, not just typing words"). What the customer gets
+     is no longer a bare select + one free-text/number field: it is the SAME benefit editor a tier
+     benefit uses (openTierBenefitDialogV657) — a percentage off the whole bill or one eligible
+     item (with an optional money cap), or a free item chosen from the catalogue or typed. The
+     wording customers read is DERIVED from that choice by the same server authorities
+     (app.v657_discount_label / app.v369_benefit_label) a tier benefit's sentence comes from, and
+     is never typed here — 'Wording customers see' below is a live preview, not an input. */
+  const [servicesRes,productsRes]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  const services=servicesRes.data||[];
+  const products=productsRes.data||[];
   const monthMode=(current?.window_mode||'month')!=='days';
+  /* The benefit draft, in the SAME shape openTierBenefitDialogV657 reads and writes
+     (growTiersBenefitDraftFromV365 does the identical mapping for a tier benefit). 'custom' is
+     never offered here — a birthday gift is always a real, structured benefit. */
+  let birthdayBenefitDraftV752={
+    kind:current?.fulfillment_kind==='free_item'?'free_item':'discount_pct',
+    discount:current?.discount_percent==null?'':String(current.discount_percent).replace(/\.00$/,''),
+    productId:current?.product_id||'',
+    productName:current?.product_name||'',
+    itemLabel:current?.manual_item||'',
+    discountScope:current?.discount_scope||'bill',
+    maxDiscount:current?.max_discount_cents==null?'':(Number(current.max_discount_cents)/100).toFixed(2),
+    scopeProductIds:(Array.isArray(current?.scope_product_ids)?current.scope_product_ids:[]).map(String),
+    scopeServiceIds:(Array.isArray(current?.scope_service_ids)?current.scope_service_ids:[]).map(String),
+    limit_count:'',limit_period:'month'
+  };
   document.querySelector('#birthdayBenefitModalV364')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal birthday-gift-modal-v366" id="birthdayBenefitModalV364" role="dialog" aria-modal="true" aria-labelledby="birthdayBenefitTitleV364" tabindex="-1">
     <section class="modal-card" style="max-width:560px">
       <div class="row" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="birthdayBenefitTitleV364" style="margin-top:4px">Birthday gift</h2>
-        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></div>
+        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up, or the customer shows a QR from their own app.</p></div>
         <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('loyalty',{size:32})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="birthdayCloseV364" aria-label="Close birthday gift">Close</button>
       <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('loyalty',{size:16})}</span><b>Give customers a birthday gift</b><input type="checkbox" id="birthdayActiveV364" ${current?.active?'checked':''}></label>
-      ${/* V382 (owner: "why i need to select the box and still can select dropdown of free item /
-           percentage discount?"). The switch is the decision; everything below it is the detail of
-           a gift that is being given. With the switch off the detail is inert rather than
-           half-editable, so the screen only ever offers one thing to decide at a time. */''}
       <div data-birthday-config-v382>
-      <label for="birthdayKindV364" style="margin-top:18px">What do they get?</label>
-      <select id="birthdayKindV364">
-        <option value="free_item" ${kindNow==='free_item'?'selected':''}>A free item</option>
-        <option value="discount_pct" ${kindNow==='discount_pct'?'selected':''}>A percentage discount</option>
-      </select>
-      <div id="birthdayItemWrapV364"${kindNow==='free_item'?'':' hidden'} style="margin-top:8px">
-        <label for="birthdayItemV364" class="muted small">What is it?</label>
-        <input id="birthdayItemV364" placeholder="e.g. Free slice of cake" maxlength="240" value="${esc(current?.manual_item||'')}">
-      </div>
-      <div id="birthdayDiscountWrapV364"${kindNow==='discount_pct'?'':' hidden'} style="margin-top:8px">
-        <label for="birthdayDiscountV364" class="muted small">Discount %</label>
-        <input id="birthdayDiscountV364" inputmode="decimal" placeholder="e.g. 10" value="${current?.discount_percent==null?'':esc(String(current.discount_percent))}">
-      </div>
-      <fieldset style="border:0;padding:0">
+      <label class="small" style="display:block;margin-top:18px;font-weight:600">What do they get?</label>
+      <p class="muted small" id="birthdayBenefitPreviewV752" style="margin-top:4px"></p>
+      <button type="button" class="btn ghost sm" id="birthdayEditBenefitV752" style="margin-top:8px">Edit benefit</button>
+      <fieldset style="border:0;padding:0;margin-top:18px">
         <legend class="small"><b>When can they use it?</b></legend>
         <label class="welcome-offer-optioncard-v350${monthMode?' selected':''}" style="margin-top:10px"><input type="radio" name="birthdayWindowV364" value="month" ${monthMode?'checked':''}><span><b>Their whole birthday month</b><p class="muted small" style="margin-top:2px">Simplest, and what most customers expect.</p></span></label>
         <label class="welcome-offer-optioncard-v350${monthMode?'':' selected'}"><input type="radio" name="birthdayWindowV364" value="days" ${monthMode?'':'checked'}><span><b>A window around the exact date</b><p class="muted small" style="margin-top:2px">Choose how many days either side.</p></span></label>
@@ -7151,14 +7172,9 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
           <span><label for="birthdayAfterV364" class="muted small">Days after</label><input id="birthdayAfterV364" inputmode="numeric" value="${Number(current?.window_days_after)||0}"></span>
         </div>
       </fieldset>
-      ${/* The three copy fields the DB requires (label/description/terms are NOT NULL on
-           birthday_program_versions). They are prefilled from the benefit rather than left blank
-           so the owner is never stopped by a required field they did not know existed — but they
-           stay visible and editable, because this is the wording the customer reads. */''}
       </div>
       <details class="grow-secondary" style="margin-top:16px" data-birthday-config-v382><summary>Wording customers see</summary><div style="padding-top:10px">
-        <label for="birthdayLabelV364" class="muted small">Name</label>
-        <input id="birthdayLabelV364" maxlength="120" placeholder="e.g. Birthday treat" value="${esc(current?.customer_label||'')}">
+        <p class="muted small" id="birthdayLabelPreviewV752" style="margin:0"></p>
         <label for="birthdayDescriptionV364" class="muted small" style="margin-top:10px">Description</label>
         <textarea id="birthdayDescriptionV364" rows="2" maxlength="1000">${esc(current?.customer_description||'')}</textarea>
         <label for="birthdayTermsV364" class="muted small" style="margin-top:10px">Terms</label>
@@ -7173,19 +7189,40 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   let birthdaySaveKeyV424=crypto.randomUUID();
   let deactivate,busy=false;
   const close=()=>deactivate?.();
-  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayKindV364'});
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayEditBenefitV752'});
   $('birthdayCloseV364').onclick=close;
   $('birthdayCancelV364').onclick=close;
   const showError=message=>{
     const box=$('birthdayErrorV364');if(!box)return;
     box.textContent=message||'';box.hidden=!message;
   };
-  const syncKind=()=>{
-    const kind=$('birthdayKindV364').value;
-    $('birthdayItemWrapV364').hidden=kind!=='free_item';
-    $('birthdayDiscountWrapV364').hidden=kind!=='discount_pct';
+  /* The SAME sentence a tier benefit's own dialog previews with — growTierBenefitSentenceV365 —
+     so what the owner reads while editing is exactly what app.v657_discount_label /
+     app.v369_benefit_label will store. */
+  const renderBenefitPreviewV752=()=>{
+    const productName=(products.find(row=>String(row.id)===String(birthdayBenefitDraftV752.productId))||{}).name
+      ||birthdayBenefitDraftV752.productName||'';
+    const sentence=growTierBenefitSentenceV365({...birthdayBenefitDraftV752,productName})||'Choose a benefit below.';
+    $('birthdayBenefitPreviewV752').textContent=sentence;
+    if($('birthdayLabelPreviewV752'))$('birthdayLabelPreviewV752').textContent=`Customers will see: ${sentence}`;
   };
-  $('birthdayKindV364').onchange=syncKind;
+  renderBenefitPreviewV752();
+  $('birthdayEditBenefitV752').onclick=()=>openTierBenefitDialogV657({
+    benefit:birthdayBenefitDraftV752,products,services,
+    onSave:draft=>{
+      /* v682's own ruling, reused: a written ("custom") perk cannot promise "no purchase needed",
+         and a birthday gift is exactly that promise. The tier dialog still offers 'My own
+         wording' — refused here, with the draft otherwise kept exactly as edited. */
+      if(draft.kind==='custom'){
+        birthdayBenefitDraftV752={...draft,kind:birthdayBenefitDraftV752.kind};
+        showError('Choose a discount or a free item — a birthday gift can’t be your own written wording.');
+      }else{
+        birthdayBenefitDraftV752=draft;
+        showError('');
+      }
+      renderBenefitPreviewV752();
+    }
+  });
   const syncWindow=()=>{
     const days=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
     $('birthdayDaysWrapV364').hidden=!days;
@@ -7209,32 +7246,48 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   syncActiveV382();
   $('birthdaySaveV364').onclick=async()=>{
     if(busy)return;
-    const kind=$('birthdayKindV364').value;
-    const item=String($('birthdayItemV364').value||'').trim();
-    const discount=Number($('birthdayDiscountV364').value||'');
+    const kind=birthdayBenefitDraftV752.kind;
     const daysMode=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
     const before=daysMode?Math.round(Number($('birthdayBeforeV364').value||0)):0;
     const after=daysMode?Math.round(Number($('birthdayAfterV364').value||0)):0;
-    if(kind==='free_item'&&!item)return showError('Say what the free item is.');
-    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Enter a discount between 0.01 and 100.');
+    const discount=Number(birthdayBenefitDraftV752.discount||'');
+    const item=String(birthdayBenefitDraftV752.itemLabel||'').trim();
+    if(kind==='custom')return showError('Choose a discount or a free item — a birthday gift can’t be your own written wording.');
+    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Edit the benefit and enter a discount between 0.01 and 100.');
+    if(kind==='free_item'&&!item&&!birthdayBenefitDraftV752.productId)return showError('Edit the benefit and say what the free item is.');
     if(daysMode&&(!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<0||before>182||after>182))
       return showError('Days before and after must each be between 0 and 182.');
-    /* The benefit sentence both defaults are built from, so an owner who never opens the wording
-       section still gets copy that matches what they actually chose. */
-    const benefitText=kind==='discount_pct'?`${discount}% off`:item;
-    const label=String($('birthdayLabelV364').value||'').trim()||'Birthday treat';
+    const productName=(products.find(row=>String(row.id)===String(birthdayBenefitDraftV752.productId))||{}).name||'';
+    const previewSentence=growTierBenefitSentenceV365({...birthdayBenefitDraftV752,productName})||'Birthday treat';
     const description=String($('birthdayDescriptionV364').value||'').trim()
-      ||(daysMode?`${benefitText} around your birthday.`:`${benefitText} during your birthday month.`);
+      ||(daysMode?`${previewSentence} around your birthday.`:`${previewSentence} during your birthday month.`);
     const terms=String($('birthdayTermsV364').value||'').trim()||[
       'One birthday benefit per customer per year.',
       'Your date of birth must be on your customer profile before the visit.',
       'Cannot be exchanged for cash and cannot be combined with other offers.'
     ].join(' ');
     busy=true;showError('');$('birthdaySaveV364').disabled=true;
-    const payload={active:$('birthdayActiveV364').checked,customer_label:label,customer_description:description,
-      customer_terms:terms,fulfillment_kind:kind,window_mode:daysMode?'days':'month',
-      window_days_before:before,window_days_after:after,sort:0};
-    if(kind==='discount_pct')payload.discount_percent=discount;else payload.manual_item=item;
+    /* nestly_v752: customer_label travels only so the server's own not-null pre-check passes —
+       the BEFORE INSERT trigger (app.v752_derive_birthday_benefit_label_trg) overwrites it with
+       the same app.v657_discount_label / app.v369_benefit_label sentence unconditionally, so
+       whatever is sent here is never what a customer actually reads. */
+    const payload={active:$('birthdayActiveV364').checked,customer_label:previewSentence,
+      customer_description:description,customer_terms:terms,fulfillment_kind:kind,
+      window_mode:daysMode?'days':'month',window_days_before:before,window_days_after:after,sort:0};
+    if(kind==='discount_pct'){
+      payload.discount_percent=discount;
+      payload.discount_scope=birthdayBenefitDraftV752.discountScope==='item'?'item':'bill';
+      if(payload.discount_scope==='item'){
+        payload.scope_product_ids=birthdayBenefitDraftV752.scopeProductIds||[];
+        payload.scope_service_ids=birthdayBenefitDraftV752.scopeServiceIds||[];
+      }else{
+        const maxDiscount=Number(String(birthdayBenefitDraftV752.maxDiscount||'').replace(/[^0-9.]/g,''));
+        if(Number.isFinite(maxDiscount)&&maxDiscount>0)payload.max_discount_cents=Math.round(maxDiscount*100);
+      }
+    }else{
+      if(birthdayBenefitDraftV752.productId)payload.product_id=birthdayBenefitDraftV752.productId;
+      else payload.manual_item=item;
+    }
     const finish=message=>{busy=false;$('birthdaySaveV364').disabled=false;showError(message)};
     /* nestly_v429 (A): ONE transaction, not three round trips. This used to be
        create_loyalty_config_draft -> read snapshot_hash -> save_birthday_program_draft ->
@@ -16086,7 +16139,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'af9582e460cd5ca35241f90e451291498bf5d09fea879d876cbeccae8f9d5bc6',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'dba2e3e2b53e6a63b89ae0210f466e8694168ea343ab9f1a788c804b72a6bb9b',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

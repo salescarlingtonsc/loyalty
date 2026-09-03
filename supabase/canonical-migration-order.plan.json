@@ -3760,6 +3760,12 @@
       "version": "20260924000000",
       "name": "nestly_v749_customer_self_service_account_deletion",
       "sourcePath": "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260924010000",
+      "name": "nestly_v752_birthday_gift_is_a_benefit",
+      "sourcePath": "db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql"
     }
   ]
 }

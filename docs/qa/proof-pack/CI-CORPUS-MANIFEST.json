@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 67,
+  "itemCount": 68,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -857,6 +857,17 @@
       "clients_seeded": 1,
       "sha256": "e8749bc38117c0be166e5a5052246b519ff3352d802c583922618c3f76218293",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v748_corpus_history_points_expiry --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v752_corpus_birthday_gift_is_a_benefit.sql",
+      "migrations": [
+        "db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 2,
+      "clients_seeded": 1,
+      "sha256": "a9b6d4e5608beee9272c14e9904961cf980067a1e3865bebab34cc67a70fb536",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v752_corpus_birthday_gift_is_a_benefit --migrated-only"
     }
   ]
 }

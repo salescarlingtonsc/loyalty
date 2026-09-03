@@ -6085,7 +6085,7 @@ async function clientDetail(id){
      till. And a reversed gift must keep reading as given-then-returned, which a single dated list
      says far better than a table cell. */
   const GIFT_KIND_LABEL_V665=Object.freeze({tier_perk:'Tier perk',welcome:'Welcome gift',
-    bringback:'Bring-back voucher',referral:'Referral gift'});
+    bringback:'Bring-back voucher',referral:'Referral gift',birthday:'Birthday gift'});
   const giftsGivenMarkupV665=giftRowsV665.length
     ?`<div class="card" id="c360GiftsGivenV665"><b>Rewards and perks given</b>
       <p class="muted small" style="margin-top:5px">Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.</p>
@@ -7605,6 +7605,11 @@ async function tillPage(){
      request, never an answer — the browser sends the benefit id and evaluate_checkout decides
      what, if anything, comes off. Cleared with the customer, because a perk belongs to a person. */
   let appliedTierBenefitV656=null;
+  /* nestly_v752: the birthday twin of appliedTierBenefitV656 above. A boolean, not an id —
+     app.ps1c_plan_checkout resolves the customer's own live entitlement itself once this is true,
+     the same way it always knew which tier the customer stood on; there is only ever one birthday
+     benefit per business, so there is nothing else to name. */
+  let appliedBirthdayV752=false;
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
@@ -7660,7 +7665,7 @@ async function tillPage(){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null; // v656
+    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
@@ -7676,7 +7681,7 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
-    appliedTierBenefitV656=null; // v656: a perk belongs to a person, not to the screen
+    appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752: a perk belongs to a person, not to the screen
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   function draw(){
@@ -8383,7 +8388,8 @@ async function tillPage(){
     const evalKey=crypto.randomUUID(); // a fresh evaluate key per call is fine — independent of the finalise key
     const {data,error}=await sb.rpc('evaluate_checkout',{p_business:S.biz.id,p_branch:tillBranchId||null,
       p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey,
-      p_tier_benefit:cust?appliedTierBenefitV656:null});
+      p_tier_benefit:cust?appliedTierBenefitV656:null,
+      p_birthday:cust?appliedBirthdayV752:false});
     if(!isTillCurrent())return;
     if(seq!==evalSeq)return; // a newer evaluate superseded this one
     if(error){applyEvalError(error);draw();return false;}
@@ -8420,8 +8426,18 @@ async function tillPage(){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v752: the birthday twin of the tier-benefit line above, reading
+       birthday_benefit_mode/item/capped instead of the tier_benefit_* fields — same shape, same
+       reasoning (level is always 'bill', so only these fields say whether it landed on one item). */
+    const bdayModeV752=String(e.birthday_benefit_mode||'');
+    const bdayItemV752=String(e.birthday_benefit_item||'').trim();
+    const bdayScopeTxtV752=bdayModeV752==='item'
+      ?(bdayItemV752?` · ${bdayItemV752}`:'')
+      :scopeTxt;
     const labelV370=e.source==='tier_benefit'
       ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      :e.source==='birthday_benefit'
+      ?`${String(e.label||'Birthday gift')}${bdayScopeTxtV752}${e.birthday_benefit_capped?' (capped)':''}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -8865,7 +8881,7 @@ async function tillPage(){
     const givenGiftsV665=Array.isArray(catalog.customerGivenGiftsV665?.gifts)
       ?catalog.customerGivenGiftsV665.gifts:[];
     const givenKindLabelV665={tier_perk:'Tier perk',welcome:'Welcome gift',
-      bringback:'Bring-back voucher',referral:'Referral gift'};
+      bringback:'Bring-back voucher',referral:'Referral gift',birthday:'Birthday gift'};
     const givenBannerV665=givenGiftsV665.length
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px" data-given-gifts-v665><b>Already given</b>
         <p class="muted small" style="margin:5px 0">Scanned or handed over for this customer. Undo puts it straight back.</p>
@@ -9728,12 +9744,16 @@ async function tillPage(){
     async function applyStagedTierPerkV665(staged){
       const benefitId=String(staged?.benefit_id||'');
       if(!benefitId)return;
-      const previous=appliedTierBenefitV656;
-      appliedTierBenefitV656=benefitId;
+      /* nestly_v752: staff_stage_gift_qr_v665 stages a birthday discount the SAME way (see its
+         header) and answers with gift_kind:'birthday' — the only difference on this screen is
+         which applied-state flag the re-price call reads back. */
+      const isBirthday=staged?.gift_kind==='birthday';
+      const previousTier=appliedTierBenefitV656,previousBirthday=appliedBirthdayV752;
+      if(isBirthday)appliedBirthdayV752=true;else appliedTierBenefitV656=benefitId;
       const ok=await runEvaluate();
       if(!isTillCurrent())return;
       if(ok===false){
-        appliedTierBenefitV656=previous;
+        appliedTierBenefitV656=previousTier;appliedBirthdayV752=previousBirthday;
         await runEvaluate();
         if(!isTillCurrent())return;
         return toast('That perk could not be applied to this sale.');
@@ -13935,37 +13955,51 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
    never an existing draft — because publishing someone else's half-finished draft as a side
    effect of saving a birthday gift would ship edits the owner never asked to go live. */
 async function openBirthdayBenefitEditorV364(current,onSaved){
-  const kindNow=current?.fulfillment_kind==='discount_pct'?'discount_pct':'free_item';
+  /* nestly_v752 (owner ruling 2026-09-04: "birthday rewards must also have the same function as
+     tier membership rewards ... real objectives, not just typing words"). What the customer gets
+     is no longer a bare select + one free-text/number field: it is the SAME benefit editor a tier
+     benefit uses (openTierBenefitDialogV657) — a percentage off the whole bill or one eligible
+     item (with an optional money cap), or a free item chosen from the catalogue or typed. The
+     wording customers read is DERIVED from that choice by the same server authorities
+     (app.v657_discount_label / app.v369_benefit_label) a tier benefit's sentence comes from, and
+     is never typed here — 'Wording customers see' below is a live preview, not an input. */
+  const [servicesRes,productsRes]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  const services=servicesRes.data||[];
+  const products=productsRes.data||[];
   const monthMode=(current?.window_mode||'month')!=='days';
+  /* The benefit draft, in the SAME shape openTierBenefitDialogV657 reads and writes
+     (growTiersBenefitDraftFromV365 does the identical mapping for a tier benefit). 'custom' is
+     never offered here — a birthday gift is always a real, structured benefit. */
+  let birthdayBenefitDraftV752={
+    kind:current?.fulfillment_kind==='free_item'?'free_item':'discount_pct',
+    discount:current?.discount_percent==null?'':String(current.discount_percent).replace(/\.00$/,''),
+    productId:current?.product_id||'',
+    productName:current?.product_name||'',
+    itemLabel:current?.manual_item||'',
+    discountScope:current?.discount_scope||'bill',
+    maxDiscount:current?.max_discount_cents==null?'':(Number(current.max_discount_cents)/100).toFixed(2),
+    scopeProductIds:(Array.isArray(current?.scope_product_ids)?current.scope_product_ids:[]).map(String),
+    scopeServiceIds:(Array.isArray(current?.scope_service_ids)?current.scope_service_ids:[]).map(String),
+    limit_count:'',limit_period:'month'
+  };
   document.querySelector('#birthdayBenefitModalV364')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal birthday-gift-modal-v366" id="birthdayBenefitModalV364" role="dialog" aria-modal="true" aria-labelledby="birthdayBenefitTitleV364" tabindex="-1">
     <section class="modal-card" style="max-width:560px">
       <div class="row" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="birthdayBenefitTitleV364" style="margin-top:4px">Birthday gift</h2>
-        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></div>
+        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up, or the customer shows a QR from their own app.</p></div>
         <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('loyalty',{size:32})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="birthdayCloseV364" aria-label="Close birthday gift">Close</button>
       <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('loyalty',{size:16})}</span><b>Give customers a birthday gift</b><input type="checkbox" id="birthdayActiveV364" ${current?.active?'checked':''}></label>
-      ${/* V382 (owner: "why i need to select the box and still can select dropdown of free item /
-           percentage discount?"). The switch is the decision; everything below it is the detail of
-           a gift that is being given. With the switch off the detail is inert rather than
-           half-editable, so the screen only ever offers one thing to decide at a time. */''}
       <div data-birthday-config-v382>
-      <label for="birthdayKindV364" style="margin-top:18px">What do they get?</label>
-      <select id="birthdayKindV364">
-        <option value="free_item" ${kindNow==='free_item'?'selected':''}>A free item</option>
-        <option value="discount_pct" ${kindNow==='discount_pct'?'selected':''}>A percentage discount</option>
-      </select>
-      <div id="birthdayItemWrapV364"${kindNow==='free_item'?'':' hidden'} style="margin-top:8px">
-        <label for="birthdayItemV364" class="muted small">What is it?</label>
-        <input id="birthdayItemV364" placeholder="e.g. Free slice of cake" maxlength="240" value="${esc(current?.manual_item||'')}">
-      </div>
-      <div id="birthdayDiscountWrapV364"${kindNow==='discount_pct'?'':' hidden'} style="margin-top:8px">
-        <label for="birthdayDiscountV364" class="muted small">Discount %</label>
-        <input id="birthdayDiscountV364" inputmode="decimal" placeholder="e.g. 10" value="${current?.discount_percent==null?'':esc(String(current.discount_percent))}">
-      </div>
-      <fieldset style="border:0;padding:0">
+      <label class="small" style="display:block;margin-top:18px;font-weight:600">What do they get?</label>
+      <p class="muted small" id="birthdayBenefitPreviewV752" style="margin-top:4px"></p>
+      <button type="button" class="btn ghost sm" id="birthdayEditBenefitV752" style="margin-top:8px">Edit benefit</button>
+      <fieldset style="border:0;padding:0;margin-top:18px">
         <legend class="small"><b>When can they use it?</b></legend>
         <label class="welcome-offer-optioncard-v350${monthMode?' selected':''}" style="margin-top:10px"><input type="radio" name="birthdayWindowV364" value="month" ${monthMode?'checked':''}><span><b>Their whole birthday month</b><p class="muted small" style="margin-top:2px">Simplest, and what most customers expect.</p></span></label>
         <label class="welcome-offer-optioncard-v350${monthMode?'':' selected'}"><input type="radio" name="birthdayWindowV364" value="days" ${monthMode?'':'checked'}><span><b>A window around the exact date</b><p class="muted small" style="margin-top:2px">Choose how many days either side.</p></span></label>
@@ -13974,14 +14008,9 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
           <span><label for="birthdayAfterV364" class="muted small">Days after</label><input id="birthdayAfterV364" inputmode="numeric" value="${Number(current?.window_days_after)||0}"></span>
         </div>
       </fieldset>
-      ${/* The three copy fields the DB requires (label/description/terms are NOT NULL on
-           birthday_program_versions). They are prefilled from the benefit rather than left blank
-           so the owner is never stopped by a required field they did not know existed — but they
-           stay visible and editable, because this is the wording the customer reads. */''}
       </div>
       <details class="grow-secondary" style="margin-top:16px" data-birthday-config-v382><summary>Wording customers see</summary><div style="padding-top:10px">
-        <label for="birthdayLabelV364" class="muted small">Name</label>
-        <input id="birthdayLabelV364" maxlength="120" placeholder="e.g. Birthday treat" value="${esc(current?.customer_label||'')}">
+        <p class="muted small" id="birthdayLabelPreviewV752" style="margin:0"></p>
         <label for="birthdayDescriptionV364" class="muted small" style="margin-top:10px">Description</label>
         <textarea id="birthdayDescriptionV364" rows="2" maxlength="1000">${esc(current?.customer_description||'')}</textarea>
         <label for="birthdayTermsV364" class="muted small" style="margin-top:10px">Terms</label>
@@ -13996,19 +14025,40 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   let birthdaySaveKeyV424=crypto.randomUUID();
   let deactivate,busy=false;
   const close=()=>deactivate?.();
-  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayKindV364'});
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayEditBenefitV752'});
   $('birthdayCloseV364').onclick=close;
   $('birthdayCancelV364').onclick=close;
   const showError=message=>{
     const box=$('birthdayErrorV364');if(!box)return;
     box.textContent=message||'';box.hidden=!message;
   };
-  const syncKind=()=>{
-    const kind=$('birthdayKindV364').value;
-    $('birthdayItemWrapV364').hidden=kind!=='free_item';
-    $('birthdayDiscountWrapV364').hidden=kind!=='discount_pct';
+  /* The SAME sentence a tier benefit's own dialog previews with — growTierBenefitSentenceV365 —
+     so what the owner reads while editing is exactly what app.v657_discount_label /
+     app.v369_benefit_label will store. */
+  const renderBenefitPreviewV752=()=>{
+    const productName=(products.find(row=>String(row.id)===String(birthdayBenefitDraftV752.productId))||{}).name
+      ||birthdayBenefitDraftV752.productName||'';
+    const sentence=growTierBenefitSentenceV365({...birthdayBenefitDraftV752,productName})||'Choose a benefit below.';
+    $('birthdayBenefitPreviewV752').textContent=sentence;
+    if($('birthdayLabelPreviewV752'))$('birthdayLabelPreviewV752').textContent=workspaceTemplateTextV97('birthdayBenefitPreview',{sentence});
   };
-  $('birthdayKindV364').onchange=syncKind;
+  renderBenefitPreviewV752();
+  $('birthdayEditBenefitV752').onclick=()=>openTierBenefitDialogV657({
+    benefit:birthdayBenefitDraftV752,products,services,
+    onSave:draft=>{
+      /* v682's own ruling, reused: a written ("custom") perk cannot promise "no purchase needed",
+         and a birthday gift is exactly that promise. The tier dialog still offers 'My own
+         wording' — refused here, with the draft otherwise kept exactly as edited. */
+      if(draft.kind==='custom'){
+        birthdayBenefitDraftV752={...draft,kind:birthdayBenefitDraftV752.kind};
+        showError('Choose a discount or a free item — a birthday gift can’t be your own written wording.');
+      }else{
+        birthdayBenefitDraftV752=draft;
+        showError('');
+      }
+      renderBenefitPreviewV752();
+    }
+  });
   const syncWindow=()=>{
     const days=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
     $('birthdayDaysWrapV364').hidden=!days;
@@ -14032,32 +14082,48 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   syncActiveV382();
   $('birthdaySaveV364').onclick=async()=>{
     if(busy)return;
-    const kind=$('birthdayKindV364').value;
-    const item=String($('birthdayItemV364').value||'').trim();
-    const discount=Number($('birthdayDiscountV364').value||'');
+    const kind=birthdayBenefitDraftV752.kind;
     const daysMode=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
     const before=daysMode?Math.round(Number($('birthdayBeforeV364').value||0)):0;
     const after=daysMode?Math.round(Number($('birthdayAfterV364').value||0)):0;
-    if(kind==='free_item'&&!item)return showError('Say what the free item is.');
-    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Enter a discount between 0.01 and 100.');
+    const discount=Number(birthdayBenefitDraftV752.discount||'');
+    const item=String(birthdayBenefitDraftV752.itemLabel||'').trim();
+    if(kind==='custom')return showError('Choose a discount or a free item — a birthday gift can’t be your own written wording.');
+    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Edit the benefit and enter a discount between 0.01 and 100.');
+    if(kind==='free_item'&&!item&&!birthdayBenefitDraftV752.productId)return showError('Edit the benefit and say what the free item is.');
     if(daysMode&&(!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<0||before>182||after>182))
       return showError('Days before and after must each be between 0 and 182.');
-    /* The benefit sentence both defaults are built from, so an owner who never opens the wording
-       section still gets copy that matches what they actually chose. */
-    const benefitText=kind==='discount_pct'?`${discount}% off`:item;
-    const label=String($('birthdayLabelV364').value||'').trim()||'Birthday treat';
+    const productName=(products.find(row=>String(row.id)===String(birthdayBenefitDraftV752.productId))||{}).name||'';
+    const previewSentence=growTierBenefitSentenceV365({...birthdayBenefitDraftV752,productName})||'Birthday treat';
     const description=String($('birthdayDescriptionV364').value||'').trim()
-      ||(daysMode?`${benefitText} around your birthday.`:`${benefitText} during your birthday month.`);
+      ||(daysMode?`${previewSentence} around your birthday.`:`${previewSentence} during your birthday month.`);
     const terms=String($('birthdayTermsV364').value||'').trim()||[
       'One birthday benefit per customer per year.',
       'Your date of birth must be on your customer profile before the visit.',
       'Cannot be exchanged for cash and cannot be combined with other offers.'
     ].join(' ');
     busy=true;showError('');$('birthdaySaveV364').disabled=true;
-    const payload={active:$('birthdayActiveV364').checked,customer_label:label,customer_description:description,
-      customer_terms:terms,fulfillment_kind:kind,window_mode:daysMode?'days':'month',
-      window_days_before:before,window_days_after:after,sort:0};
-    if(kind==='discount_pct')payload.discount_percent=discount;else payload.manual_item=item;
+    /* nestly_v752: customer_label travels only so the server's own not-null pre-check passes —
+       the BEFORE INSERT trigger (app.v752_derive_birthday_benefit_label_trg) overwrites it with
+       the same app.v657_discount_label / app.v369_benefit_label sentence unconditionally, so
+       whatever is sent here is never what a customer actually reads. */
+    const payload={active:$('birthdayActiveV364').checked,customer_label:previewSentence,
+      customer_description:description,customer_terms:terms,fulfillment_kind:kind,
+      window_mode:daysMode?'days':'month',window_days_before:before,window_days_after:after,sort:0};
+    if(kind==='discount_pct'){
+      payload.discount_percent=discount;
+      payload.discount_scope=birthdayBenefitDraftV752.discountScope==='item'?'item':'bill';
+      if(payload.discount_scope==='item'){
+        payload.scope_product_ids=birthdayBenefitDraftV752.scopeProductIds||[];
+        payload.scope_service_ids=birthdayBenefitDraftV752.scopeServiceIds||[];
+      }else{
+        const maxDiscount=Number(String(birthdayBenefitDraftV752.maxDiscount||'').replace(/[^0-9.]/g,''));
+        if(Number.isFinite(maxDiscount)&&maxDiscount>0)payload.max_discount_cents=Math.round(maxDiscount*100);
+      }
+    }else{
+      if(birthdayBenefitDraftV752.productId)payload.product_id=birthdayBenefitDraftV752.productId;
+      else payload.manual_item=item;
+    }
     const finish=message=>{busy=false;$('birthdaySaveV364').disabled=false;showError(message)};
     /* nestly_v429 (A): ONE transaction, not three round trips. This used to be
        create_loyalty_config_draft -> read snapshot_hash -> save_birthday_program_draft ->

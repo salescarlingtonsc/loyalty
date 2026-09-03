@@ -3765,6 +3765,12 @@
       "path": "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql",
       "semanticVersion": "v749",
       "proposedDeployVersion": "20260924000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql",
+      "semanticVersion": "v752",
+      "proposedDeployVersion": "20260924010000"
     }
   ]
 }
