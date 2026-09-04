@@ -3209,6 +3209,28 @@ const growPointsEndDateInputV472=value=>{
   if(!Number.isFinite(at.getTime()))return '';
   return new Date(at.getTime()+8*3600000).toISOString().slice(0,10);
 };
+/* nestly_v754: the reverse of "N days from now" for the points quick-add dialog. A stored
+   claim_available_until in the past or already gone reads as "no days to show" — the field is
+   about setting a NEW deadline, not reporting how expired an old one already is — so the editor
+   reopens blank rather than showing a negative or zero count the owner never typed. Rounded up
+   (not down): the value was itself computed at some earlier publish instant, so reopening it a
+   few hours later must not visibly shrink a day the owner is sure they set. */
+const growPointsExpiryDaysFromUntilV754=value=>{
+  if(!value)return '';
+  const at=Date.parse(String(value));
+  if(!Number.isFinite(at))return '';
+  const days=Math.ceil((at-Date.now())/86400000);
+  return days>0?String(days):'';
+};
+/* The live preview shown while the owner types, and echoed back in the read-only detail list —
+   both read the SAME derivation the server uses (now() + N days), so the dialog never promises a
+   date the RPC will not pin. This is a PREVIEW only: the value that is actually stored is computed
+   server-side, at the RPC's own now(), not this one. */
+const growPointsExpiryPreviewDateV754=rawDays=>{
+  const days=Math.round(Number(rawDays));
+  if(!Number.isFinite(days)||days<=0)return '';
+  return walletDate(new Date(Date.now()+days*86400000).toISOString());
+};
 /* reporting-scale:start — keep raw exports complete despite the Data API row cap. */
 const DATA_API_PAGE_SIZE=1000;
 const sgDateBoundary=(date,dayOffset=0)=>{
@@ -16398,9 +16420,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       if(!isWalletSectionCurrent(host)||!button.isConnected)return;
       button.disabled=false;button.querySelector('span').textContent=restoreLabelV397;
       if(intentError){
+        /* nestly_v754: a customer can be looking at a card the server already stopped offering —
+           its claim_available_until passed between the catalogue load and this tap — and
+           customer_create_redemption_intent_v89 refuses it with 22023 'reward is unavailable'.
+           That is not the same failure as "the server is down", so it gets its own sentence
+           instead of the generic retry copy, and the catalogue is reloaded so the stale card is
+           gone rather than tappable again. */
+        const staleGiftV754=intentError.code==='22023'&&/unavailable/i.test(String(intentError.message||''));
         toast(intentError.code==='PGRST202'||intentError.code==='42883'
           ?'Something’s not working right now. Please try again shortly.'
+          :staleGiftV754
+          ?'This gift has expired and can no longer be redeemed with points. Have a look at what else you can redeem.'
           :'This reward could not be prepared. Refresh its balance and try again.');
+        if(staleGiftV754)loadRewards();
         return;
       }
       if(intent?.status==='completed'||intent?.status==='redeemed'){
@@ -35296,7 +35328,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          gift, one clock — so this field is drawn only where there is no other one.
          The number written is entitlement_expiry_days, which the customer already reads as
          "Use within N days of claiming" (v339) and the gift sheet as its claim window (v468). */''}
-    ${growPointsIsStampsV326?'':`<p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddExpiryV520">Expires after <span class="muted">(optional)</span></label><br><input id="growPointsAddExpiryV520" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.expiryDays||'')}" placeholder="e.g. 30"><br><span class="muted small">Days a customer has to use this gift once they take it. Leave blank and it never expires.</span></p>`}
+    ${/* nestly_v754 (owner ruling 2026-09-04, verbatim): "the expiry should be example 90 days —
+         means after 90 days the reward would not be available to redeem with points (will not be
+         shown in the customer app for redemption) and customer will see exactly when the reward
+         will expire & after expiry, customer will use their points to redeem other rewards."
+         So this box is a REDEEM-BY DEADLINE for the gift in the catalogue, counted from when this
+         save publishes it — not the old nestly_v520 reading ("days a customer has to use this
+         gift once they take it"), which was a different, post-claim clock this same box used to
+         write. The days input stays (the owner said "example 90 days"); what changed is what it
+         means, what it writes (p_claim_expires_after_days -> claim_available_until, computed
+         server-side at THIS save, not p_entitlement_expiry_days), and the copy. The live preview
+         span shows what the server will pin; the read-only detail list (growRewardDiffFieldsV291)
+         states the same date once saved. */''}
+    ${growPointsIsStampsV326?'':`<p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddExpiryV520">Expires after <span class="muted">(optional)</span></label><br><input id="growPointsAddExpiryV520" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.expiryDays||'')}" placeholder="e.g. 90"><br><span class="muted small">After this many days this gift can no longer be redeemed with points and disappears from the customer's app. Leave blank and it stays available.</span> <span class="muted small" id="growPointsAddExpiryPreviewV754" data-grow-points-expiry-preview-v754>${esc(growPointsExpiryPreviewDateV754(growPointsAddDraftV326.expiryDays)?`Expires on ${growPointsExpiryPreviewDateV754(growPointsAddDraftV326.expiryDays)}`:'')}</span></p>`}
     ${/* nestly_v472 (owner, batch 11: "Allow to add expiry date for each rewards and display in
          customer view"). The OFFERING window — after this date the gift is no longer offered.
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
@@ -37669,6 +37713,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const first=growPointsFormV410.querySelector('#growPointsAddNameV326');
       if(first&&document.activeElement!==first)first.focus({preventScroll:true});
     }
+    /* nestly_v754: the derived redeem-by date, live, as the owner types — a plain oninput that
+       only touches the one preview span rather than a full quiet rerender, so the field never
+       loses focus or cursor position mid-keystroke. The authoritative value is still computed
+       server-side at save (see business_create_reward_v326/business_update_reward_v326's
+       p_claim_expires_after_days); this is a preview, not the write. */
+    const expiryInputV754=growPointsFormV410.querySelector('#growPointsAddExpiryV520');
+    const expiryPreviewV754=growPointsFormV410.querySelector('#growPointsAddExpiryPreviewV754');
+    if(expiryInputV754&&expiryPreviewV754){
+      expiryInputV754.oninput=()=>{
+        const preview=growPointsExpiryPreviewDateV754(expiryInputV754.value);
+        expiryPreviewV754.textContent=preview?`Expires on ${preview}`:'';
+      };
+    }
   }
   /* nestly_v658: the same dismissal grammar the v410 gift pop-up uses, for the two forms the
      owner asked to become pop-ups. One helper, because three copies of "click the backdrop, press
@@ -37858,8 +37915,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       endsOn:growPointsEndDateInputV472(reward.claim_available_until),
       /* nestly_v477: the owner's own wording, or blank so the placeholder shows the default. */
       whereItWorks:String(reward.where_it_works||''),
-      /* nestly_v520: blank means "no expiry", which is what a gift with a null column has. */
-      expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''};
+      /* nestly_v754: on the POINTS page this box now means "days until this gift stops being
+         redeemable" — the remaining days on the stored claim_available_until, not
+         entitlement_expiry_days (the old, different, post-claim clock this box used to write).
+         Stamps keep the pre-v754 reading; the box is never drawn there (growPointsIsStampsV326),
+         so what it prefills to is moot, and leaving it alone keeps this one line the only thing
+         that changed. Blank means "no expiry", same as before. */
+      expiryDays:growPointsIsStampsV326
+        ?(reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):'')
+        :growPointsExpiryDaysFromUntilV754(reward.claim_available_until)};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -38012,11 +38076,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477,expiryDays:expiryRawV520};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
-    /* nestly_v520: caught here so the owner reads a sentence instead of the server's 22023. The
-       server refuses it too — this is the friendly half of the same rule, not the only one. */
+    /* nestly_v754: caught here so the owner reads a sentence instead of the server's 22023. The
+       server refuses it too — this is the friendly half of the same rule, not the only one. This
+       is now a redeem-by day count (see p_claim_expires_after_days below), not
+       entitlement_expiry_days — the validation shape (whole number, at least 1, blank allowed) is
+       unchanged from nestly_v520, only what the number MEANS changed. */
     const expiryDaysV520=expiryRawV520===''?null:Math.round(Number(expiryRawV520));
     if(expiryRawV520!==''&&(!Number.isFinite(expiryDaysV520)||expiryDaysV520<=0)){
-      growPointsErrorV326='Expires after must be a whole number of days, at least 1. Leave it blank for no expiry.';
+      growPointsErrorV326='Expires after must be a whole number of days, at least 1. Leave it blank and the gift stays available.';
       return growRerenderV322({quiet:true});
     }
     /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
@@ -38052,23 +38119,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
         p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
-        /* nestly_p2-F082: this dialog draws no end-date field, so it must never claim the owner
-           cleared one. null + false is "say nothing" — the writer keeps whatever claim_available_until
-           is already stored on the reward, exactly like growStampsSaveRowV356's inline row editor,
-           which omits both arguments for the same reason. Previously this unconditionally sent
-           p_clear_end_date:true, so ANY save from this dialog (even a pure rename) wiped a date set
-           through the deep reward editor. */
+        /* nestly_v754: this dialog now DOES own claim_available_until on the points page — the
+           "Expires after (days)" box IS that field, expressed as a day count instead of a date.
+           p_claim_available_until stays null (this dialog never picks an absolute date; that
+           stays the deep reward editor's own "Ends at" field) and p_claim_expires_after_days
+           carries the count, computed server-side at THIS save's own now(). Stamps still draw no
+           end-date control at all, so expiryRawV520 is forced '' for them (above) and both these
+           end up null/false — unchanged from the pre-v754 "say nothing" contract nestly_p2-F082
+           established. Clearing is explicit: an empty box on the points page now clears the
+           stored date, the same shape p_clear_expiry_days always had. */
         p_claim_available_until:null,
-        p_clear_end_date:false,
+        p_clear_end_date:!growPointsIsStampsV326&&expiryRawV520==='',
+        p_claim_expires_after_days:expiryDaysV520,
         /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
            stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
            to be an explicit clear, and '' is what the writer reads as one. */
         p_where_it_works:whereV477,
-        /* nestly_v520: null says "keep what is stored"; an empty box on the points form is an
-           EXPLICIT clear, the same contract p_clear_end_date has. On the Stamp Card page neither
-           is sent, so a stamp gift's stored value is left exactly where it was. */
-        p_entitlement_expiry_days:expiryDaysV520,
-        p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''}));
+        /* nestly_v754: entitlement_expiry_days (the OLD post-claim clock this box used to write)
+           is no longer touched from this dialog at all — not set, not cleared. It stays exactly
+           where it is, for whatever else on the estate still reads it. */
+        p_entitlement_expiry_days:null,
+        p_clear_expiry_days:false}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
@@ -38077,7 +38148,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_description:description||null,p_image_ref:imageRef||null,
         p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
         p_where_it_works:whereV477||null,
-        p_entitlement_expiry_days:expiryDaysV520}));
+        /* nestly_v754: see the update branch above — the day count now writes
+           claim_available_until through p_claim_expires_after_days, not entitlement_expiry_days,
+           for a points gift. expiryDaysV520 is always null on the Stamp Card page (expiryRawV520
+           is forced '' there), so this is a no-op for stamps, same as before. */
+        p_entitlement_expiry_days:null,
+        p_claim_expires_after_days:expiryDaysV520}));
     }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
@@ -39884,7 +39960,15 @@ function growRewardDiffFieldsV291({unit='points',tierName=()=>null,branchName=nu
     {label:'Name',read:reward=>String(reward.customer_name||reward.name||'Reward').trim(),show:value=>value},
     {label:'Cost',read:reward=>Math.max(0,num(reward.cost_points)||0),show:value=>`${value} ${unit}`},
     {label:'Offered',read:reward=>reward.active!==false,show:value=>value?'Yes':'No'},
-    {label:'Expires after',read:reward=>num(reward.entitlement_expiry_days),show:value=>value==null?'No expiry':`${value} day${value===1?'':'s'}`},
+    /* nestly_v754: this used to read entitlement_expiry_days (the post-claim "days to use it once
+       taken" clock nestly_v520 wrote from the points quick-add dialog). The dialog's "Expires
+       after (days)" box now writes claim_available_until instead — the redeem-by deadline the
+       owner asked for — so the publish diff states the same date the dialog previews and the
+       customer card prints (customerRewardEndsLineV471), not a day count. A date already in the
+       past still shows here (an owner reviewing a change should see it), unlike the customer
+       card, which draws nothing once it has passed. */
+    {label:'Expires on',read:reward=>reward.claim_available_until||null,
+      show:value=>value==null?'No expiry':walletDate(value)},
     {label:'Uses per customer',read:reward=>num(reward.usage_limit),show:value=>value==null?'Unlimited':String(value)},
     {label:'Who can redeem',read:reward=>{
       const tier=reward.min_tier_id?String(reward.min_tier_id):null;

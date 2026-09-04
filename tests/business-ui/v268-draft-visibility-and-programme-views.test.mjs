@@ -55,8 +55,11 @@ test('V268 (a) only a reward whose draft genuinely differs is marked', () => {
   assert.match(diff, /if\(changes\.length\)changed\.set\(id,changes\);/);
   /* V291 additions: the fields that used to publish silently. */
   const fields = section('function growRewardDiffFieldsV291(', 'function growRewardDiffOptionsFromSnapshotV291(');
-  /* V375: 'Store credit' left the comparison with the fulfilment that produced it. */
-  for (const label of ['Name', 'Cost', 'Offered', 'Expires after',
+  /* V375: 'Store credit' left the comparison with the fulfilment that produced it.
+     nestly_v754: 'Expires after' (a day count read from entitlement_expiry_days) became
+     'Expires on' (a date read from claim_available_until) — the box on the points editor now
+     writes the redeem-by deadline, and the publish diff states the same field. */
+  for (const label of ['Name', 'Cost', 'Offered', 'Expires on',
     'Uses per customer', 'Who can redeem', 'Branches', 'Services']) {
     assert.match(fields, new RegExp(`label:'${label}'`), `${label} must be compared`);
   }

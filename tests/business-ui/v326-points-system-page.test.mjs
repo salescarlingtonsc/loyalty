@@ -171,6 +171,11 @@ function harness() {
      history cutoff from sgDateInputValue() (the single canonical "today in SG" helper) rather
      than re-deriving it from a bare new Date(), so that helper must be in scope here too. */
   const sgDateInputValue_src = slice('const sgDateInputValue=(date=new Date())=>{', '\n};');
+  /* nestly_v754: the points quick-add form's "Expires after (days)" field now renders a live
+     preview span computed by growPointsExpiryPreviewDateV754, which itself calls walletDate —
+     both pulled from source so the harness renders the exact same preview text the product does. */
+  const walletDateV754_src = slice('function walletDate(value,withTime=false){', '\n}');
+  const growPointsExpiryPreviewDateV754_src = slice('const growPointsExpiryPreviewDateV754=rawDays=>{', '\n};');
   const pageBlockSrc = slice(
     "  /* ============ V326 — OWNER'S 5-PHOTO POINTS SYSTEM FLOW, PHOTO 3",
     '      </ul>`;'
@@ -208,6 +213,7 @@ function harness() {
          from the shipped SGT helper. Pulled from source rather than stubbed, so the harness cannot
          disagree with the product about which day is the earliest one on offer. */
       whereDefaultV477_src, growPointsEndDateInputV472_src, sgDateInputValue_src,
+      walletDateV754_src, growPointsExpiryPreviewDateV754_src,
       pageBlockSrc,
       'return {growPointsManageV326,growPointsPublishedV326,growPointsHistoryV326,growPointsConfiguredV326,growPointsOnV326,growPointsIsStampsV326,growPointsSpineKindV326,growPointsPageTitleV326,growPointsRowLabelV326};',
     ].join('\n');
@@ -452,14 +458,17 @@ test('V326 the three new RPCs are called with the exact parameter names the migr
      gained a parameter. The contract this test guards is unchanged — the CALL must name every
      argument the migration declares, because a positional or misnamed argument is how the
      v290 probe put a UUID in a text slot. The new names are pinned with the rest. */
-  /* audit F082: this dialog draws no end-date field, so the update call must never claim an
-     explicit clear on the owner's behalf — p_claim_available_until:null, p_clear_end_date:false
-     is "say nothing, keep what is stored", the same contract growStampsSaveRowV356's inline row
-     editor uses by omitting both arguments. Pinning the literal `null`/`false` here is what would
-     have caught the regression: the prior text pinned `!endsOnV472`, which stayed green while the
-     source unconditionally sent an explicit clear. */
-  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_where_it_works:whereV477\|\|null,\s*\r?\n?\s*p_entitlement_expiry_days:expiryDaysV520\}\)\);/);
-  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:null,\s*\r?\n?\s*p_clear_end_date:false,[\s\S]*?p_where_it_works:whereV477,[\s\S]*?p_entitlement_expiry_days:expiryDaysV520,\s*\r?\n?\s*p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''\}\)\);/);
+  /* nestly_v754 (owner ruling 2026-09-04): the SAME box now means "days until this gift stops
+     being redeemable", so it writes claim_available_until through p_claim_expires_after_days —
+     computed server-side, at the RPC's own now() — instead of p_entitlement_expiry_days.
+     p_entitlement_expiry_days is now ALWAYS null/false from this dialog: the old post-claim
+     clock it used to write is a different, untouched column (audit F082's "this dialog draws no
+     end-date field" is no longer true for points — it draws one, expressed in days). On UPDATE,
+     an empty box on the points page is now an explicit clear of the DATE
+     (p_clear_end_date:!growPointsIsStampsV326&&expiryRawV520===''), the same guard shape
+     p_clear_expiry_days used to carry for the day count. */
+  assert.match(app, /sb\.rpc\('business_create_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,\s*\r?\n?\s*p_description:description\|\|null,p_image_ref:imageRef\|\|null,\s*\r?\n?\s*p_claim_available_until:growPointsEndDateInstantV472\(endsOnV472\),\s*\r?\n?\s*p_where_it_works:whereV477\|\|null,[\s\S]*?p_entitlement_expiry_days:null,\s*\r?\n?\s*p_claim_expires_after_days:expiryDaysV520\}\)\);/);
+  assert.match(app, /sb\.rpc\('business_update_reward_v326',\{\s*\r?\n?\s*p_business:S\.biz\.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,\s*\r?\n?\s*p_description:description\|\|null,p_credit_cents:0,\s*\r?\n?\s*p_image_ref:imageRef\|\|null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,[\s\S]*?p_claim_available_until:null,\s*\r?\n?\s*p_clear_end_date:!growPointsIsStampsV326&&expiryRawV520==='',\s*\r?\n?\s*p_claim_expires_after_days:expiryDaysV520,[\s\S]*?p_where_it_works:whereV477,[\s\S]*?p_entitlement_expiry_days:null,\s*\r?\n?\s*p_clear_expiry_days:false\}\)\);/);
 });
 
 test('V326 pausing/deleting/creating a gift never touches the network on open — only on confirm', () => {
@@ -509,23 +518,31 @@ test('V520 the expiry field is drawn on the points form and NOT on the Stamp Car
     'and it is drawn only when the page is NOT the Stamp Card');
 });
 
-test('V520 an empty box on the points form clears, and the Stamp Card form sends neither', () => {
+test('V520/V754 an empty box on the points form clears, and the Stamp Card form sends neither', () => {
   /* v472 established the contract: null means "keep what is stored", so removing a value has to
      be an explicit clear. The stamp branch must send NO clear — a stamp gift's expiry belongs to
-     a rule this page does not own, and clearing it here would delete it invisibly. */
+     a rule this page does not own, and clearing it here would delete it invisibly.
+     nestly_v754: the thing being cleared is now claim_available_until (p_clear_end_date), not
+     entitlement_expiry_days (p_clear_expiry_days, which this dialog never sends true for any
+     more — see the RPC-call test above). */
   assert.ok(app.includes("const expiryRawV520=growPointsIsStampsV326?'':String($('growPointsAddExpiryV520')?.value||'').trim();"),
     'the stamp page reads the field as empty rather than reading a node that is not there');
-  assert.ok(app.includes("p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''"),
+  assert.ok(app.includes("p_clear_end_date:!growPointsIsStampsV326&&expiryRawV520===''"),
     'so the clear can only ever be sent from the points page');
+  assert.ok(app.includes('p_clear_expiry_days:false'),
+    'this dialog no longer clears entitlement_expiry_days at all — v754 repurposed the field');
 });
 
-test('V520 the typed value survives a photo pick, and is restored when a gift is reopened', () => {
+test('V754 the typed value survives a photo pick, and is restored (as remaining days) when a points gift is reopened', () => {
   /* V349's rule: choosing a photo rerenders the form from the draft, so anything not captured
      into the draft first is silently lost. The new field has to be captured with the rest. */
   assert.ok(app.includes("expiryDays:String($('growPointsAddExpiryV520')?.value??growPointsAddDraftV326.expiryDays??'')"),
     'the capture helper reads it');
-  assert.ok(app.includes("expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''"),
-    'and Edit prefills it from the stored gift');
+  /* nestly_v754: for a POINTS gift, Edit now prefills the box from the remaining days on
+     claim_available_until (growPointsExpiryDaysFromUntilV754), not from entitlement_expiry_days —
+     that old prefill survives only on the Stamp Card path, where the box is never drawn. */
+  assert.ok(app.includes('expiryDays:growPointsIsStampsV326\n        ?(reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):\'\')\n        :growPointsExpiryDaysFromUntilV754(reward.claim_available_until)'),
+    'a points gift Edit prefills the day count from claim_available_until, a stamp gift keeps the old entitlement_expiry_days reading');
   assert.ok(!/\{name:'',points:'',description:'',endsOn:'',whereItWorks:''\}/.test(app),
     'every draft literal carries the new key, so no reset leaves it undefined');
 });

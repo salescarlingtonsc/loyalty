@@ -8361,9 +8361,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       if(!isWalletSectionCurrent(host)||!button.isConnected)return;
       button.disabled=false;button.querySelector('span').textContent=restoreLabelV397;
       if(intentError){
+        /* nestly_v754: a customer can be looking at a card the server already stopped offering —
+           its claim_available_until passed between the catalogue load and this tap — and
+           customer_create_redemption_intent_v89 refuses it with 22023 'reward is unavailable'.
+           That is not the same failure as "the server is down", so it gets its own sentence
+           instead of the generic retry copy, and the catalogue is reloaded so the stale card is
+           gone rather than tappable again. */
+        const staleGiftV754=intentError.code==='22023'&&/unavailable/i.test(String(intentError.message||''));
         toast(intentError.code==='PGRST202'||intentError.code==='42883'
           ?'Something’s not working right now. Please try again shortly.'
+          :staleGiftV754
+          ?'This gift has expired and can no longer be redeemed with points. Have a look at what else you can redeem.'
           :'This reward could not be prepared. Refresh its balance and try again.');
+        if(staleGiftV754)loadRewards();
         return;
       }
       if(intent?.status==='completed'||intent?.status==='redeemed'){

@@ -3765,6 +3765,9 @@
       "path": "db/migrations/20260923_nestly_v751_discount_cap_wording.sql",
       "semanticVersion": "v751",
       "proposedDeployVersion": "20260923010000"
+      "path": "db/migrations/20260923_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
+      "semanticVersion": "v754",
+      "proposedDeployVersion": "20260923040000"
     },
     {
       "kind": "executable",
