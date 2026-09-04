@@ -44574,8 +44574,8 @@ async function appointmentsPage(){
     {data:branches,error:branchError},{data:staffBranches,error:staffBranchError},
     {data:serviceBranches,error:serviceBranchError},{data:staffHours,error:staffHoursError},
     {data:staffOffDays,error:staffOffDaysError},{data:branchHours,error:branchHoursError},
-    {data:branchBreaks,error:branchBreaksError},{data:staffWeeklyOff,error:staffWeeklyOffError},
-    {data:staffWeeklyBreaks,error:staffWeeklyBreaksError}
+    {data:branchBreaks,error:branchBreaksError},{data:staffWeeklyOffLoaded,error:staffWeeklyOffError},
+    {data:staffWeeklyBreaksLoaded,error:staffWeeklyBreaksError}
   ]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone,phone_norm,email',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,price_cents,duration_min,buffer_before_min,buffer_after_min',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
@@ -44601,6 +44601,23 @@ async function appointmentsPage(){
     staffHoursError||staffOffDaysError||branchHoursError||branchBreaksError||staffWeeklyOffError||
     staffWeeklyBreaksError;
   if(loadError)throw loadError;
+  /* nestly_v762 (owner, 2026-09-05: "i tried to apply block time > nothing happened"). These two
+     were page-load consts. The weekly save wrote them correctly — the rows were in the database —
+     but nothing on the page re-read them, so reopening Block time showed the pre-save state and
+     the calendar kept drawing the old week. The owner had no way to tell a save that worked from
+     one that did nothing. They are mutable now, and refreshWeeklyScheduleV762() below re-reads
+     them after a successful save so the screen agrees with the database. */
+  let staffWeeklyOff=staffWeeklyOffLoaded||[],staffWeeklyBreaks=staffWeeklyBreaksLoaded||[];
+  const refreshWeeklyScheduleV762=async()=>{
+    const [offResult,breakResult]=await Promise.all([
+      fetchAllRowsResult(()=>sb.from('staff_recurring_off_days').select('staff_id,weekday',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday')),
+      fetchAllRowsResult(()=>sb.from('staff_recurring_breaks').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday').order('starts_at'))
+    ]);
+    /* A failed refresh keeps the last known rows rather than blanking the calendar: the write
+       already succeeded, and showing an empty week would be the very lie this fixes. */
+    if(!offResult.error)staffWeeklyOff=offResult.data||[];
+    if(!breakResult.error)staffWeeklyBreaks=breakResult.data||[];
+  };
   const clients=cl||[],staff=stf||[];
   const customerPhone=client=>String(client?.phone||client?.phone_norm||'').trim();
   const customerLabel=client=>{
@@ -45085,7 +45102,11 @@ async function appointmentsPage(){
       const hadBreaks=weeklyBreaksForV759(staffId);
       const addedBreaks=wantedBreaks.filter(row=>!hadBreaks.some(old=>breakKeyV759(old)===breakKeyV759(row)));
       const removedBreaks=hadBreaks.filter(row=>!wantedBreaks.some(next=>breakKeyV759(next)===breakKeyV759(row)));
-      if(!added.length&&!removed.length&&!addedBreaks.length&&!removedBreaks.length){close();return}
+      /* nestly_v762: a save with nothing changed used to close the dialog in silence, which
+         reads exactly like a save that failed. It says so instead. */
+      if(!added.length&&!removed.length&&!addedBreaks.length&&!removedBreaks.length){
+        close();toast('Weekly schedule unchanged');return;
+      }
       const save=$('blockTimeSave');CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
       const writes=[];
       /* The unique constraint is (business_id, staff_id, weekday) — naming a narrower conflict
@@ -45109,6 +45130,10 @@ async function appointmentsPage(){
         if(box)box.innerHTML=`<div class="err">${esc(humanErrorV295(failure.error,'That weekly schedule could not be saved.'))}</div>`;
         return;
       }
+      /* nestly_v762: re-read before the dialog closes, so reopening it shows what was just
+         saved and the calendar redraw below draws the new breaks. Awaited, not fired and
+         forgotten: loadCalendar() paints from these arrays. */
+      await refreshWeeklyScheduleV762();
       toast(wanted.length
         ?`Off every ${wanted.sort((a,b)=>a-b).map(day=>WEEKDAY_NAMES_V600[day]).join(' and ')}`
         :(wantedBreaks.length?'Weekly schedule saved':'Repeating days off removed'));
