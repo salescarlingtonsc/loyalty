@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="0dcd8f5fa4ca91b2bd3d78e69383a7ea12518f3173004beba23d65806dbab738"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -895,6 +895,8 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .customer-signin-v764 .btn{min-height:66px;border-radius:999px;font-size:22px;font-weight:700;margin-top:26px!important;box-shadow:0 10px 24px rgba(194,65,53,.22)}
 .customer-signin-links-v764 .btn.ghost.sm{min-height:44px;font-size:15px;border-radius:999px}
 .customer-signin-terms-v764{margin:20px 0 0;text-align:center;font-size:15px;line-height:1.5;color:var(--muted)}
+.customer-signin-v764 #customerPasskeyStatus{text-align:center}
+.customer-signin-v764 #customerPasswordError{text-align:center}
 .customer-signin-terms-v764 a{color:var(--coral);text-decoration:underline;text-underline-offset:2px}
 @media(max-width:380px){.customer-signin-v764 h1{font-size:22px}.customer-signin-prefix-v764{font-size:19px;padding-left:14px}.customer-signin-field-v764 input{font-size:19px}}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -5762,7 +5764,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0dcd8f5fa4ca91b2bd3d78e69383a7ea12518f3173004beba23d65806dbab738</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -16261,7 +16263,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'0dcd8f5fa4ca91b2bd3d78e69383a7ea12518f3173004beba23d65806dbab738',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

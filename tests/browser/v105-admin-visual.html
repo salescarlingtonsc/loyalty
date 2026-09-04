@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="b7809137bbef972dfad8b5f8187b818bf2c54741eab43a9f15bca1d5da2e41d4">
+<meta name="v105-production-component-sha256" content="831a3e84c7d68f33a15066ccd286c88f403041dd717c2d4c1b8304b3e276505d">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -901,6 +901,8 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
 .customer-signin-v764 .btn{min-height:66px;border-radius:999px;font-size:22px;font-weight:700;margin-top:26px!important;box-shadow:0 10px 24px rgba(194,65,53,.22)}
 .customer-signin-links-v764 .btn.ghost.sm{min-height:44px;font-size:15px;border-radius:999px}
 .customer-signin-terms-v764{margin:20px 0 0;text-align:center;font-size:15px;line-height:1.5;color:var(--muted)}
+.customer-signin-v764 #customerPasskeyStatus{text-align:center}
+.customer-signin-v764 #customerPasswordError{text-align:center}
 .customer-signin-terms-v764 a{color:var(--coral);text-decoration:underline;text-underline-offset:2px}
 @media(max-width:380px){.customer-signin-v764 h1{font-size:22px}.customer-signin-prefix-v764{font-size:19px;padding-left:14px}.customer-signin-field-v764 input{font-size:19px}}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -6584,7 +6586,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · b7809137bbef</span>
+<span class="v105-provenance">v105 production-component harness · 831a3e84c7d6</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6709,7 +6711,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'b7809137bbef972dfad8b5f8187b818bf2c54741eab43a9f15bca1d5da2e41d4',
+  sourceHash:'831a3e84c7d68f33a15066ccd286c88f403041dd717c2d4c1b8304b3e276505d',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

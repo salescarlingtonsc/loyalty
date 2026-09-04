@@ -56483,24 +56483,24 @@ function bookingRulesCardHtmlV325(){
   return `<div class="card" style="margin-top:16px">${/* nestly_v612 (owner, photo 5: "Change
       requests" struck through, "Customer Appointment Request" written in). The old name described
       the row in a queue; the owner's names the thing a customer sent. */''}<b>Customer Appointment Request</b>
-      <p class="muted small" style="margin:6px 0 10px">Customers ask to cancel or reschedule from their portal — approve or decline each one in Bookings.</p>
+      <p class="muted small" style="margin:6px 0 10px">What customers can do with appointments from their Peekaa app.</p>
       ${/* nestly_v633 (owner photo 4, the "What customers may do with appointments" card circled
            and marked "move up"; ruled as "push this inside Customer Appointment Request - so it
            will show 4 boxes to check or uncheck"). What a customer MAY do and what happens when
            they do it were two cards asking one question. The two capability switches keep their
            ids, so business_set_customer_capabilities_v89 still reads them exactly as it did —
            this is a move, not a second save path. */''}
-      ${isOwner?`<label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Let linked customers start a booking from their Peekaa programme.</span></span></label>
+      ${isOwner?`<label class="checkrow" for="customerBookingEnabled"><input id="customerBookingEnabled" type="checkbox" disabled><span><b>Customer booking</b><br><span class="muted small">Customers can book an appointment from your Peekaa page.</span></span></label>
       <p id="customerBookingInertWarning" class="muted small" hidden style="margin:2px 0 8px 34px;color:var(--amber)">Customers won\'t see a Book button yet — no active service is shown on your booking page. Add a service (or edit one) and tick “Show on booking page”.</p>
-      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Let customers cancel or reschedule an appointment <b>after you have confirmed it</b>. A request you have not answered yet can always be changed or withdrawn by the customer — this does not affect that.</span></span></label>
+      <label class="checkrow" for="customerAppointmentChangesEnabled"><input id="customerAppointmentChangesEnabled" type="checkbox" disabled><span><b>Customer appointment changes</b><br><span class="muted small">Customers can cancel or move an appointment you already confirmed. A request you have not answered yet can always be changed.</span></span></label>
       ${/* nestly_v641 (owner: "align the boxes after you have compiled them"). Four switches that
            had arrived from two different cards were still wearing two different shapes — two
            bordered .checkrow blocks with a bold title and a description, and two bare inline
            labels whose explanation sat in a loose paragraph below. One card asking one question
            gets one row shape; the staff-choice explanation moves inside its own row, where it
            describes the box it belongs to rather than floating under the pair. */''}
-      <label class="checkrow" for="aac"><input type="checkbox" id="aac" ${S.biz.auto_approve_changes?'checked':''}><span><b>Auto-approve reschedule/cancel requests</b><br><span class="muted small">Accept a customer's change without waiting for you to approve it in Bookings.</span></span></label>
-      <label class="checkrow" for="setStaffChoice"><input type="checkbox" id="setStaffChoice" ${S.biz.booking_staff_choice?'checked':''}><span><b>Let customers choose a team member</b><br><span class="muted small">Off means customers only pick a time and you assign the person. On shows your bookable team and their free times, and you still approve every booking.</span></span></label>
+      <label class="checkrow" for="aac"><input type="checkbox" id="aac" ${S.biz.auto_approve_changes?'checked':''}><span><b>Auto-approve bookings and changes</b><br><span class="muted small">New bookings, reschedules and cancellations are confirmed at once when the time is free. Off: you approve each one in Bookings.</span></span></label>
+      <label class="checkrow" for="setStaffChoice"><input type="checkbox" id="setStaffChoice" ${S.biz.booking_staff_choice?'checked':''}><span><b>Let customers choose a team member</b><br><span class="muted small">Customers pick who serves them and see that person's free times. Off: customers pick a time only and you assign the person.</span></span></label>
       ${/* nestly_v642 (owner: "shift it up to Customer Appointment Request"). The fifth box. It is
            not about appointments, which is why v375 kept it apart — but it IS the same question
            this card asks, what a customer may do, and it was the only thing left on the page
