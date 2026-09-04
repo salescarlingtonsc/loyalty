@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v752
--- (db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql).
+-- (db/migrations/20260924_nestly_v752_birthday_gift_is_a_benefit.sql).
 --
 -- Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v752_corpus --migrated-only
 --

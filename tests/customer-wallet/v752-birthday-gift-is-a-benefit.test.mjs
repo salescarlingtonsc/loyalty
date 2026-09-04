@@ -226,7 +226,7 @@ test('the checkout effect line labels a birthday_benefit source, capped and scop
   assert.equal(run({
     source: 'birthday_benefit', label: '10% off, up to 5.00',
     birthday_benefit_mode: 'bill', birthday_benefit_capped: true
-  }), '10% off, up to 5.00 (capped)');
+  }), '10% off, up to 5.00 — cap applied' /* v751: the runtime marker says the ceiling bit on this bill; the label itself states the limit */);
 
   assert.equal(run({
     source: 'birthday_benefit', label: 'Free item',

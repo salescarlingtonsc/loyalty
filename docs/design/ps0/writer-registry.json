@@ -1531,7 +1531,7 @@
     {
       "id": "db.fn:public.evaluate_checkout/7",
       "surface": "db_function",
-      "latest_file": "20260924010000_nestly_v752_birthday_gift_is_a_benefit.sql",
+      "latest_file": "20260924020000_nestly_v752_birthday_gift_is_a_benefit.sql",
       "rows_written": "checkout_evaluations:INSERT, checkout_evaluation_operations:INSERT",
       "detected_signals": "idem-signal, advisory-lock",
       "entry_point": "evaluate_checkout(p_business,p_branch,p_client,p_lines,p_idempotency_key,p_tier_benefit,p_birthday)",
@@ -1545,7 +1545,7 @@
     {
       "id": "db.fn:public.record_cart_sale/11",
       "surface": "db_function",
-      "latest_file": "20260924010000_nestly_v752_birthday_gift_is_a_benefit.sql",
+      "latest_file": "20260924020000_nestly_v752_birthday_gift_is_a_benefit.sql",
       "rows_written": "benefit_fulfilments:INSERT, budget_periods:INSERT/UPDATE, budget_reservations:INSERT, checkout_discount_lines:INSERT, checkout_evaluations:UPDATE, checkout_sv_tenders:UPDATE, sale_items:INSERT",
       "detected_signals": "idem-signal, advisory-lock, token-consume",
       "entry_point": "record_cart_sale(p_business,p_client,p_branch,p_staff,p_method,p_idempotency_key,p_lines,p_evaluation_id,p_paid,p_occurred_at,p_redemptions)",
@@ -2142,7 +2142,7 @@
       "surface": "db_function",
       "value_impact": true,
       "rows_written": "customer_gift_intents_v515 (status/completion), and THROUGH its four callees: welcome_offer_grants_v215, bringback_grants_v361, referral_grants_v420, tier_benefit_issues_v365, plus the $0 sales rows v361/v420 write",
-      "latest_file": "20260924010000_nestly_v752_birthday_gift_is_a_benefit.sql",
+      "latest_file": "20260924020000_nestly_v752_birthday_gift_is_a_benefit.sql",
       "resolves_to": "The gift dispatcher (nestly_v515). Adds NO permission logic of its own: it calls staff_redeem_welcome_offer_v215 / _bringback_v361 / _referral_v420 / staff_issue_tier_benefit_v365, each SECURITY DEFINER and each re-checking auth.uid() plus its own predicate (create_sales; till|loyalty; till|referrals; till|loyalty), so the three different authorisations survive definer nesting rather than being flattened.",
       "call_site_finding": "none \u2014 advisory-locked on the token hash; a completed intent replays its stored result instead of redeeming twice; a tier perk re-checks the period key at scan so a QR minted before midnight cannot spend the next period; the intent id is passed as staff_issue_tier_benefit_v365's idempotency key because a NULL key there silently burns a second allowance"
     },
@@ -2671,7 +2671,7 @@
     {
       "id": "db.fn:public.staff_confirm_birthday_free_item_v752/4",
       "surface": "db_function",
-      "latest_file": "20260924010000_nestly_v752_birthday_gift_is_a_benefit.sql",
+      "latest_file": "20260924020000_nestly_v752_birthday_gift_is_a_benefit.sql",
       "entry_point": "staff_confirm_birthday_free_item_v752(p_business,p_client,p_branch,p_idempotency_key)",
       "callers": "the counter's QR scan, when staff_scan_gift_qr_to_till_v666 answers settle_now=true for a free_item birthday benefit (mirrors the tier free_item confirm path, nestly_v681)",
       "reads": "customer_birthday_entitlements, birthday_program_versions (guards fulfillment_kind='free_item' before delegating)",

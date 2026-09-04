@@ -1,5 +1,5 @@
 -- EXECUTED acceptance fixture for nestly_v754
--- (db/migrations/20260923_nestly_v754_gift_expiry_is_a_redeem_by_date.sql).
+-- (db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql).
 --
 -- Run: LC_ALL=C node scripts/db-tests/run.mjs --filter=v754_corpus --migrated-only
 --
