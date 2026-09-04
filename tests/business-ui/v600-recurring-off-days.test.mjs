@@ -58,7 +58,15 @@ test('the dialog offers the repeating mode and reads the days already set',()=>{
     'the ticks are read from the days off this person ALREADY has — that is what makes it an amend screen');
   assert.match(dialog,/blockModeV600==='weekly'\)return saveWeeklyOffV600\(\)/,
     'the repeating mode takes the whole submit');
-  assert.match(dialog,/onConflict:'staff_id,weekday'/,'writing a day off twice is not an error');
+  /* nestly_v759 CORRECTION. This assertion used to pin `onConflict:'staff_id,weekday'` — which is
+     what shipped, and what made every save fail: staff_recurring_off_days is
+     UNIQUE (business_id, staff_id, weekday), and Postgres refuses an ON CONFLICT target it cannot
+     match with "there is no unique or exclusion constraint matching the ON CONFLICT
+     specification". The conflict target must be the table's whole key. */
+  assert.match(dialog,/onConflict:'business_id,staff_id,weekday'/,
+    'writing a day off twice is not an error — and the conflict target names the whole unique key');
+  assert.doesNotMatch(dialog,/onConflict:'staff_id,weekday'/,
+    'the narrower target is the v600 defect; it may not come back');
 });
 
 test('the hidden half of the form stops demanding fields nobody can see',()=>{

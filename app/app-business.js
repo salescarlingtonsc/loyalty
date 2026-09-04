@@ -26187,7 +26187,8 @@ async function appointmentsPage(){
     {data:branches,error:branchError},{data:staffBranches,error:staffBranchError},
     {data:serviceBranches,error:serviceBranchError},{data:staffHours,error:staffHoursError},
     {data:staffOffDays,error:staffOffDaysError},{data:branchHours,error:branchHoursError},
-    {data:branchBreaks,error:branchBreaksError},{data:staffWeeklyOff,error:staffWeeklyOffError}
+    {data:branchBreaks,error:branchBreaksError},{data:staffWeeklyOff,error:staffWeeklyOffError},
+    {data:staffWeeklyBreaks,error:staffWeeklyBreaksError}
   ]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone,phone_norm,email',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,price_cents,duration_min,buffer_before_min,buffer_after_min',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
@@ -26202,11 +26203,16 @@ async function appointmentsPage(){
     /* nestly_v598: a weekly day off is now the ONLY thing that means "this person does not work
        this weekday". It used to be inferred from a missing staff_hours row, which is why a shop
        that opened on Sunday still showed every teammate as unavailable. */
-    fetchAllRowsResult(()=>sb.from('staff_recurring_off_days').select('staff_id,weekday',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday'))
+    fetchAllRowsResult(()=>sb.from('staff_recurring_off_days').select('staff_id,weekday',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday')),
+    /* nestly_v759: a repeating break inside a working day (lunch, a standing class). One row per
+       weekday, so the calendar and the public slot list ask the same question of the same shape
+       branch_breaks already uses. */
+    fetchAllRowsResult(()=>sb.from('staff_recurring_breaks').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday').order('starts_at'))
   ]);
   if(!isCurrent())return;
   const loadError=clientError||serviceError||staffError||branchError||staffBranchError||serviceBranchError||
-    staffHoursError||staffOffDaysError||branchHoursError||branchBreaksError||staffWeeklyOffError;
+    staffHoursError||staffOffDaysError||branchHoursError||branchBreaksError||staffWeeklyOffError||
+    staffWeeklyBreaksError;
   if(loadError)throw loadError;
   const clients=cl||[],staff=stf||[];
   const customerPhone=client=>String(client?.phone||client?.phone_norm||'').trim();
@@ -26519,6 +26525,17 @@ async function appointmentsPage(){
             ${WEEKDAY_NAMES_V600.map((dayName,weekday)=>`<label class="checkrow" style="margin:0;flex:0 0 auto" for="blockWeekly-${weekday}"><input type="checkbox" id="blockWeekly-${weekday}" data-weekly-off-v600="${weekday}" style="width:auto"> ${esc(dayName)}</label>`).join('')}
           </div>
           <p class="muted small" id="blockWeeklyHintV600" style="margin-top:10px"></p>
+          <!-- nestly_v759 (owner: a repeating break inside the working day, e.g. 12:00-13:00).
+               It lives here rather than on a rota screen for the same reason the weekly day off
+               does: one dialog decides when a person is unavailable, so two screens cannot
+               disagree. A break spanning several days is stored one row per weekday, the shape
+               branch_breaks already uses, so both availability readers ask the same question. -->
+          <div id="blockWeeklyBreaksV759" style="margin-top:16px;border-top:1px solid var(--line, #e5e7eb);padding-top:12px">
+            <b>Break every week</b>
+            <p class="muted small" style="margin-top:4px">A repeating pause inside the working day — lunch, or a standing commitment. Nothing can be booked with them during it. Customers never see the reason.</p>
+            <div id="blockWeeklyBreakListV759" style="margin-top:10px"></div>
+            <button type="button" class="btn ghost sm" id="blockWeeklyBreakAddV759" style="margin-top:10px">Add a break</button>
+          </div>
         </div>`}
         <div id="blockOnceV600">
         ${editingBlockV291
@@ -26550,6 +26567,64 @@ async function appointmentsPage(){
     let blockModeV600='once';
     const weeklyOffForV600=staffId=>(staffWeeklyOff||[])
       .filter(row=>row.staff_id===staffId).map(row=>Number(row.weekday));
+    /* nestly_v759: the repeating-break editor. Drafts are held in memory and only diffed against
+       what is stored when the owner saves, so ticking a day or removing a row costs no write and
+       Cancel really cancels. A time column comes back as HH:MM:SS; a time input wants HH:MM. */
+    const hhmmV759=value=>String(value||'').slice(0,5);
+    const weeklyBreaksForV759=staffId=>(staffWeeklyBreaks||[])
+      .filter(row=>row.staff_id===staffId)
+      .map(row=>({weekday:Number(row.weekday),start:hhmmV759(row.starts_at),end:hhmmV759(row.ends_at)}));
+    const groupBreaksV759=rows=>{
+      const byWindow=new Map();
+      rows.forEach(row=>{
+        const key=`${row.start}|${row.end}`;
+        if(!byWindow.has(key))byWindow.set(key,{start:row.start,end:row.end,days:[]});
+        byWindow.get(key).days.push(row.weekday);
+      });
+      return [...byWindow.values()].map(entry=>({...entry,days:entry.days.slice().sort((a,b)=>a-b)}));
+    };
+    let breakDraftsV759=[];
+    const renderBreaksV759=()=>{
+      const host=$('blockWeeklyBreakListV759');
+      if(!host)return;
+      host.innerHTML=breakDraftsV759.length?breakDraftsV759.map((entry,index)=>`
+        <div data-break-row-v759="${index}" style="border:1px solid var(--line, #e5e7eb);border-radius:10px;padding:10px;margin-bottom:8px">
+          <div class="split">
+            <div><label for="blockBreakStart-${index}">Start</label><input id="blockBreakStart-${index}" type="time" step="900" data-break-start-v759="${index}" value="${esc(entry.start)}"></div>
+            <div><label for="blockBreakEnd-${index}">End</label><input id="blockBreakEnd-${index}" type="time" step="900" data-break-end-v759="${index}" value="${esc(entry.end)}"></div>
+          </div>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
+            ${WEEKDAY_NAMES_V600.map((dayName,weekday)=>`<label class="checkrow" style="margin:0;flex:0 0 auto" for="blockBreak-${index}-${weekday}"><input type="checkbox" id="blockBreak-${index}-${weekday}" data-break-day-v759="${index}" data-break-weekday-v759="${weekday}" style="width:auto" ${entry.days.includes(weekday)?'checked':''}> ${esc(dayName.slice(0,3))}</label>`).join('')}
+          </div>
+          <div class="row" style="margin-top:8px"><span class="spacer"></span><button type="button" class="btn ghost sm" data-break-remove-v759="${index}">Remove</button></div>
+        </div>`).join(''):'<p class="muted small">No repeating breaks yet.</p>';
+      host.querySelectorAll('[data-break-start-v759]').forEach(field=>{
+        field.onchange=()=>{const draft=breakDraftsV759[Number(field.dataset.breakStartV759)];if(draft)draft.start=field.value};
+      });
+      host.querySelectorAll('[data-break-end-v759]').forEach(field=>{
+        field.onchange=()=>{const draft=breakDraftsV759[Number(field.dataset.breakEndV759)];if(draft)draft.end=field.value};
+      });
+      host.querySelectorAll('[data-break-day-v759]').forEach(box=>{
+        box.onchange=()=>{
+          const draft=breakDraftsV759[Number(box.dataset.breakDayV759)];
+          if(!draft)return;
+          const weekday=Number(box.dataset.breakWeekdayV759);
+          draft.days=box.checked
+            ?[...new Set([...draft.days,weekday])].sort((a,b)=>a-b)
+            :draft.days.filter(day=>day!==weekday);
+        };
+      });
+      host.querySelectorAll('[data-break-remove-v759]').forEach(button=>{
+        button.onclick=()=>{breakDraftsV759.splice(Number(button.dataset.breakRemoveV759),1);renderBreaksV759()};
+      });
+    };
+    /* A new break defaults to every day this person actually works — all seven minus the days
+       off currently ticked above — so the common case is one tap and Save. */
+    const workingDaysV759=()=>{
+      const off=[...weeklyPanelV600.querySelectorAll('[data-weekly-off-v600]')]
+        .filter(box=>box.checked).map(box=>Number(box.dataset.weeklyOffV600));
+      return [0,1,2,3,4,5,6].filter(weekday=>!off.includes(weekday));
+    };
     const paintWeeklyV600=()=>{
       if(!weeklyPanelV600)return;
       const staffId=$('blockTimeStaff').value;
@@ -26561,6 +26636,8 @@ async function appointmentsPage(){
       if(hint)hint.textContent=current.length
         ?`Currently off every ${current.sort((a,b)=>a-b).map(day=>WEEKDAY_NAMES_V600[day]).join(' and ')}.`
         :'No repeating days off yet.';
+      breakDraftsV759=groupBreaksV759(weeklyBreaksForV759(staffId));
+      renderBreaksV759();
     };
     const setBlockModeV600=mode=>{
       if(!weeklyPanelV600||!oncePanelV600)return;
@@ -26569,7 +26646,9 @@ async function appointmentsPage(){
       oncePanelV600.hidden=mode==='weekly';
       $('blockModeOnceV600').setAttribute('aria-pressed',String(mode==='once'));
       $('blockModeWeeklyV600').setAttribute('aria-pressed',String(mode==='weekly'));
-      $('blockTimeSave').textContent=mode==='weekly'?'Save days off':'Save block';
+      /* nestly_v759: the weekly half now saves days off AND repeating breaks, so the button says
+         what it does rather than naming only half of it. */
+      $('blockTimeSave').textContent=mode==='weekly'?'Save weekly schedule':'Save block';
       /* The date and time inputs are `required`; left required while hidden they block submit with
          a validation bubble pointing at nothing the owner can see. */
       ['blockTimeDate','blockTimeStart','blockTimeEnd'].forEach(id=>{
@@ -26581,6 +26660,11 @@ async function appointmentsPage(){
       $('blockModeOnceV600').onclick=()=>setBlockModeV600('once');
       $('blockModeWeeklyV600').onclick=()=>setBlockModeV600('weekly');
       $('blockTimeStaff').addEventListener('change',()=>{if(blockModeV600==='weekly')paintWeeklyV600()});
+      const addBreakV759=$('blockWeeklyBreakAddV759');
+      if(addBreakV759)addBreakV759.onclick=()=>{
+        breakDraftsV759.push({start:'12:00',end:'13:00',days:workingDaysV759()});
+        renderBreaksV759();
+      };
       paintWeeklyV600();
     }
     const saveWeeklyOffV600=async()=>{
@@ -26590,24 +26674,57 @@ async function appointmentsPage(){
       const had=weeklyOffForV600(staffId);
       const added=wanted.filter(day=>!had.includes(day));
       const removed=had.filter(day=>!wanted.includes(day));
-      if(!added.length&&!removed.length){close();return}
+      /* nestly_v759: the repeating breaks are diffed the same way, keyed on the triple the table
+         itself is unique on — (weekday, starts_at, ends_at) — so re-saving an unchanged schedule
+         writes nothing. */
+      const errorHostV759=$('blockTimeError');
+      const breakKeyV759=row=>`${row.weekday}|${row.start}|${row.end}`;
+      const wantedBreaks=[];
+      for(const draft of breakDraftsV759){
+        const start=hhmmV759(draft.start),end=hhmmV759(draft.end);
+        if(!start||!end||end<=start){
+          if(errorHostV759)errorHostV759.innerHTML='<div class="err">A break must end after it starts.</div>';
+          return;
+        }
+        if(!draft.days.length){
+          if(errorHostV759)errorHostV759.innerHTML='<div class="err">Pick at least one day for every break, or remove it.</div>';
+          return;
+        }
+        draft.days.forEach(weekday=>{
+          const row={weekday,start,end};
+          if(!wantedBreaks.some(existing=>breakKeyV759(existing)===breakKeyV759(row)))wantedBreaks.push(row);
+        });
+      }
+      const hadBreaks=weeklyBreaksForV759(staffId);
+      const addedBreaks=wantedBreaks.filter(row=>!hadBreaks.some(old=>breakKeyV759(old)===breakKeyV759(row)));
+      const removedBreaks=hadBreaks.filter(row=>!wantedBreaks.some(next=>breakKeyV759(next)===breakKeyV759(row)));
+      if(!added.length&&!removed.length&&!addedBreaks.length&&!removedBreaks.length){close();return}
       const save=$('blockTimeSave');CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
       const writes=[];
+      /* The unique constraint is (business_id, staff_id, weekday) — naming a narrower conflict
+         target makes Postgres refuse the whole statement with "no unique or exclusion constraint
+         matching the ON CONFLICT specification", which is what it did until v759. */
       if(added.length)writes.push(sb.from('staff_recurring_off_days')
-        .upsert(added.map(weekday=>({business_id:S.biz.id,staff_id:staffId,weekday})),{onConflict:'staff_id,weekday'}));
+        .upsert(added.map(weekday=>({business_id:S.biz.id,staff_id:staffId,weekday})),{onConflict:'business_id,staff_id,weekday'}));
       if(removed.length)writes.push(sb.from('staff_recurring_off_days').delete()
         .eq('business_id',S.biz.id).eq('staff_id',staffId).in('weekday',removed));
+      if(addedBreaks.length)writes.push(sb.from('staff_recurring_breaks')
+        .upsert(addedBreaks.map(row=>({business_id:S.biz.id,staff_id:staffId,weekday:row.weekday,starts_at:row.start,ends_at:row.end})),
+          {onConflict:'business_id,staff_id,weekday,starts_at,ends_at'}));
+      removedBreaks.forEach(row=>writes.push(sb.from('staff_recurring_breaks').delete()
+        .eq('business_id',S.biz.id).eq('staff_id',staffId).eq('weekday',row.weekday)
+        .eq('starts_at',row.start).eq('ends_at',row.end)));
       const results=await Promise.all(writes);
       if(save.isConnected)CUI.setButtonBusy(save,{busy:false});
       const failure=results.find(result=>result?.error);
       if(failure){
         const box=$('blockTimeError');
-        if(box)box.innerHTML=`<div class="err">${esc(humanErrorV295(failure.error,'Those days off could not be saved.'))}</div>`;
+        if(box)box.innerHTML=`<div class="err">${esc(humanErrorV295(failure.error,'That weekly schedule could not be saved.'))}</div>`;
         return;
       }
       toast(wanted.length
         ?`Off every ${wanted.sort((a,b)=>a-b).map(day=>WEEKDAY_NAMES_V600[day]).join(' and ')}`
-        :'Repeating days off removed');
+        :(wantedBreaks.length?'Weekly schedule saved':'Repeating days off removed'));
       close();loadCalendar().catch(fail);
     };
     /* V468: ticking All day does not just ignore the hour inputs, it hides them. Leaving two live
@@ -27584,7 +27701,13 @@ async function appointmentsPage(){
     const staffEnd=staffRow?clockMinutes(staffRow.ends_at):branchEnd;
     const start=Math.max(staffStart??0,branchStart??0),end=Math.min(staffEnd??1440,branchEnd??1440);
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return {state:'unknown',label:'Working hours not set',breaks:[]};
-    const breaks=(branchBreaks||[]).filter(row=>row.branch_id===branchId&&Number(row.weekday)===weekday)
+    /* nestly_v759: this person's own repeating breaks sit alongside the shop's, because the SQL
+       availability core subtracts both. If the calendar drew only one of them the two readers
+       would disagree about the same minute. */
+    const breaks=[
+      ...(branchBreaks||[]).filter(row=>row.branch_id===branchId&&Number(row.weekday)===weekday),
+      ...(staffWeeklyBreaks||[]).filter(row=>row.staff_id===personId&&Number(row.weekday)===weekday)
+    ]
       .map(row=>({start:clockMinutes(row.starts_at),end:clockMinutes(row.ends_at)}))
       .filter(row=>Number.isFinite(row.start)&&Number.isFinite(row.end)&&row.end>row.start);
     return {state:'working',start,end,label:`${minuteClock(start)}–${minuteClock(end)}`,breaks};

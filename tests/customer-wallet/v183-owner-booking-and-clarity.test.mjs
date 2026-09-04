@@ -7,6 +7,7 @@ const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')
 const customerUi=readFileSync(new URL('../../app/customer-ui.js',import.meta.url),'utf8');
 const migration=readFileSync(new URL('../../db/migrations/20260806_nestly_v183_customer_staff_choice_and_live_availability.sql',import.meta.url),'utf8');
 const v598=readFileSync(new URL('../../db/migrations/20260829_nestly_v598_shop_hours_are_the_default.sql',import.meta.url),'utf8');
+const v759=readFileSync(new URL('../../db/migrations/20260929_nestly_v759_staff_recurring_breaks.sql',import.meta.url),'utf8');
 const gateway=readFileSync(new URL('../../supabase/functions/public-booking/index.ts',import.meta.url),'utf8');
 const validation=readFileSync(new URL('../../supabase/functions/_shared/validation.ts',import.meta.url),'utf8');
 const security=readFileSync(new URL('../../supabase/functions/_shared/security.ts',import.meta.url),'utf8');
@@ -243,6 +244,73 @@ test('a rota save is scoped, ordered and refuses to publish an empty rota',()=>{
     'unticking clears the whole rota, which is what restores shop hours');
   assert.doesNotMatch(save,/staff_recurring_off_days/,
     'and the roster never writes a day off — Block time is its one home');
+});
+
+/* ------------------------------------------------------------ nestly_v759 (owner photo 1) */
+
+test('the weekly save names the whole unique key of the table it upserts into',()=>{
+  const save=section(app,'const saveWeeklyOffV600=async()=>{','/* V468: ticking All day does not just ignore');
+  /* nestly_v759 regression. staff_recurring_off_days is UNIQUE (business_id, staff_id, weekday);
+     v600 named only 'staff_id,weekday', and Postgres answers an ON CONFLICT target it cannot
+     match with "there is no unique or exclusion constraint matching the ON CONFLICT
+     specification" — so saving a repeating day off failed for every business, every time. */
+  assert.match(save,/sb\.from\('staff_recurring_off_days'\)[\s\S]{0,240}\{onConflict:'business_id,staff_id,weekday'\}/,
+    "the off-day upsert must name business_id too — the table's unique key includes it");
+  assert.doesNotMatch(save,/onConflict:'staff_id,weekday'/,
+    'the narrower target is what shipped broken; it may not come back');
+  assert.match(save,/sb\.from\('staff_recurring_breaks'\)[\s\S]{0,320}\{onConflict:'business_id,staff_id,weekday,starts_at,ends_at'\}/,
+    "and the breaks upsert names that table's whole unique key");
+});
+
+test('the Every week mode can add, list and remove repeating breaks',()=>{
+  const dialog=section(app,'<div id="blockWeeklyV600"','<div id="blockOnceV600">');
+  assert.match(dialog,/id="blockWeeklyBreaksV759"/,'the breaks section lives inside the weekly panel');
+  assert.match(dialog,/Break every week/);
+  assert.match(dialog,/id="blockWeeklyBreakListV759"/);
+  assert.match(dialog,/id="blockWeeklyBreakAddV759"/);
+  assert.match(dialog,/Customers never see the reason/);
+
+  const editor=section(app,'const renderBreaksV759=()=>{','const workingDaysV759=()=>{');
+  assert.match(editor,/data-break-start-v759/);
+  assert.match(editor,/data-break-end-v759/);
+  assert.match(editor,/WEEKDAY_NAMES_V600\.map\(\(dayName,weekday\)=>/,
+    'seven weekday toggles per break, in the order extract(dow) counts them');
+  assert.match(editor,/data-break-remove-v759/,'every listed break can be removed');
+  assert.match(editor,/No repeating breaks yet\./);
+
+  /* A new break defaults to every day the person actually works — all seven minus the days off
+     ticked immediately above — so the common case is one tap and Save. */
+  const defaults=section(app,'const workingDaysV759=()=>{','const paintWeeklyV600=()=>{');
+  assert.match(defaults,/\[data-weekly-off-v600\]/);
+  assert.match(defaults,/\[0,1,2,3,4,5,6\]\.filter\(weekday=>!off\.includes\(weekday\)\)/);
+});
+
+test('the weekly mode saves one schedule, and refuses an unsaveable break',()=>{
+  const mode=section(app,'const setBlockModeV600=mode=>{','if(weeklyPanelV600){');
+  assert.match(mode,/'Save weekly schedule':'Save block'/,
+    'the button names both halves it now saves');
+  const save=section(app,'const saveWeeklyOffV600=async()=>{','/* V468: ticking All day does not just ignore');
+  assert.match(save,/A break must end after it starts\./);
+  assert.match(save,/Pick at least one day for every break, or remove it\./);
+  assert.match(save,/draft\.days\.forEach\(weekday=>\{/,
+    'a break covering several weekdays is stored one row per weekday');
+  assert.match(save,/if\(!added\.length&&!removed\.length&&!addedBreaks\.length&&!removedBreaks\.length\)/,
+    'an unchanged schedule writes nothing');
+});
+
+test('the calendar draws a personal break, and the SQL core subtracts it too',()=>{
+  const schedule=section(app,'function recordedSchedule(personId,day){','/* V329 (owner:');
+  assert.match(schedule,/staffWeeklyBreaks\|\|\[\]\)\.filter\(row=>row\.staff_id===personId&&Number\(row\.weekday\)===weekday\)/,
+    "the browser calendar merges the person's own breaks with the branch's");
+  /* v432: one availability core — what staff see and what customers are offered is one set of
+     minutes. Both SQL readers must subtract the same table. */
+  assert.match(v759,/from public\.staff_recurring_breaks pause\s*\n\s*where pause\.business_id = p_business and pause\.staff_id = p_staff/,
+    'the write-time guard refuses a booking across a staff break');
+  assert.match(v759,/select 1 from public\.staff_recurring_breaks pause\s*\n\s*where pause\.business_id = v_business\.id/,
+    'and the public slot list never offers one');
+  assert.match(v759,/unique \(business_id, staff_id, weekday, starts_at, ends_at\)/);
+  assert.match(v759,/check \(ends_at > starts_at\)/);
+  assert.match(v759,/alter table public\.staff_recurring_breaks enable row level security/);
 });
 
 /* nestly_v598 supersedes v183's rule here (owner ruling 2026-08-29: "all employees will work on
