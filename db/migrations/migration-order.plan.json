@@ -3771,6 +3771,12 @@
       "path": "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql",
       "semanticVersion": "v750",
       "proposedDeployVersion": "20260924000001"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
+      "semanticVersion": "v751",
+      "proposedDeployVersion": "20260924000002"
     }
   ]
 }

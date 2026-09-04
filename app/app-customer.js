@@ -1069,9 +1069,13 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
          someone to "try again later" when the real answer is "wait a few minutes" or "you are
          offline" is what made this screen feel broken. */
       const startKindV289=customerAuthFailureKindV289(result.error);
-      errorHost.innerHTML=`<div class="err">${startKindV289==='network'||startKindV289==='rate_limited'
-        ?esc(customerAuthErrorMessageV289(result.error,'otp_send'))
-        :(recovering?'If an account exists for this number, a reset code could not be sent. Try again later.':'We could not start account creation. If you already have an account, return and sign in or reset your password.')}</div>`;return;
+      /* nestly_v751 (owner: "forget password does not work" / "not able to create account"): the
+         provider's send failure (Twilio Verify refuses a number that asked for several codes in
+         ten minutes) used to be printed as the generic sentence, which reads like a dead account.
+         Say what actually helps: wait, then try once more. The code path is otherwise unchanged. */
+      errorHost.innerHTML=`<div class="err">${startKindV289==='network'||startKindV289==='rate_limited'||startKindV289==='server'
+        ?esc(customerAuthErrorMessageV289(result.error,'otp_send'))+' '+esc('If several codes were requested for this number in the last 10 minutes, wait 10 minutes before trying again.')
+        :(recovering?'If an account exists for this number, a reset code could not be sent. If several codes were requested recently, wait 10 minutes and try again.':'We could not start account creation. If you already have an account, return and sign in or reset your password. If you just requested a code, wait 10 minutes and try again.')}</div>`;return;
     }
     if(!recovering&&result.data?.session){
       await sb.auth.signOut();

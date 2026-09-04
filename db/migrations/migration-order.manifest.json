@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 626,
-  "executableCount": 612,
+  "itemCount": 627,
+  "executableCount": 613,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -887,10 +887,11 @@
     },
     {
       "sourceDeployVersion": "20260924",
-      "count": 2,
+      "count": 3,
       "paths": [
         "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql",
-        "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql"
+        "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql",
+        "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql"
       ]
     }
   ],
@@ -5902,6 +5903,14 @@
       "semanticVersion": "v750",
       "proposedDeployVersion": "20260924000001",
       "sha256": "7e12c66353e05af54df86266efc0161035550c2b1d10fc53876adf4c6df607ae"
+    },
+    {
+      "order": 627,
+      "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
+      "semanticVersion": "v751",
+      "proposedDeployVersion": "20260924000002",
+      "sha256": "d02fe006341a2f1a6574bc246404f61b129c09e7ca5942844a33ba46b0cf16ac"
     }
   ]
 }

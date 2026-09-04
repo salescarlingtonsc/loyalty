@@ -3766,6 +3766,12 @@
       "version": "20260924000001",
       "name": "nestly_v750_bottle_does_not_block_deletion",
       "sourcePath": "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260924000002",
+      "name": "nestly_v751_deleted_phone_marks_block_rejoin_rewards",
+      "sourcePath": "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql"
     }
   ]
 }

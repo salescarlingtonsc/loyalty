@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 582,
-  "itemCount": 627,
+  "pendingCount": 583,
+  "itemCount": 628,
   "items": [
     {
       "order": 1,
@@ -6277,6 +6277,16 @@
       "path": "supabase/migrations/20260924000001_nestly_v750_bottle_does_not_block_deletion.sql",
       "octetLength": 10863,
       "sha256": "7e12c66353e05af54df86266efc0161035550c2b1d10fc53876adf4c6df607ae",
+      "provenance": "local-source"
+    },
+    {
+      "order": 628,
+      "kind": "pending",
+      "version": "20260924000002",
+      "name": "nestly_v751_deleted_phone_marks_block_rejoin_rewards",
+      "path": "supabase/migrations/20260924000002_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
+      "octetLength": 18091,
+      "sha256": "d02fe006341a2f1a6574bc246404f61b129c09e7ca5942844a33ba46b0cf16ac",
       "provenance": "local-source"
     }
   ]
