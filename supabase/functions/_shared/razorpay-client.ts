@@ -239,6 +239,13 @@ export function razorpayClient(credentials: RazorpayCredentials) {
         path: `/subscriptions/${subscriptionId}/cancel`,
         body: { cancel_at_cycle_end: cancelAtCycleEnd },
       }),
+    /* nestly_v764 — the only way to withdraw a change Razorpay has scheduled for cycle end.
+       There is no PATCH that "unschedules"; this endpoint is it. */
+    cancelScheduledChanges: (subscriptionId: string) =>
+      request<RazorpaySubscription>({
+        method: 'POST',
+        path: `/subscriptions/${subscriptionId}/cancel_scheduled_changes`,
+      }),
     resumeSubscription: (subscriptionId: string) =>
       request<RazorpaySubscription>({
         method: 'POST',

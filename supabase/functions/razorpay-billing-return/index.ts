@@ -28,6 +28,19 @@ function returnOrigin(): string {
   return configured.origin;
 }
 
+/* nestly_v764 — a card change comes back through this same callback (Razorpay Checkout in
+   `subscription_card_change` mode still posts payment_id / subscription_id / signature), but it
+   is not a signup and not a payment: it belongs on the settings page saying the card was
+   updated. `mode=card` rides in the callback URL the command built. It is only a ROUTING hint —
+   the signature check below is unchanged, so the worst a tampered `mode` can do is send a
+   verified return to the wrong one of our own two settings routes. */
+function cardRoutes(origin: string) {
+  return {
+    success: `${origin}/#/settings?billing=card_updated`,
+    cancel: `${origin}/#/settings?billing=canceled`,
+  };
+}
+
 function routes(origin: string, selfServe: boolean) {
   return selfServe
     ? {
@@ -88,6 +101,10 @@ Deno.serve(async (req) => {
   try {
     const fields = await readFields(req);
     const commandId = String(fields.cmd || '');
+    const cardChange = String(fields.mode || '') === 'card';
+    /* Set before the provider lookup so a card change still lands on the card route when
+       Razorpay is unreachable — the lookup only refines the SIGNUP-vs-settings choice. */
+    if (cardChange) target = cardRoutes(origin);
     const paymentId = String(fields.razorpay_payment_id || '');
     const subscriptionId = String(fields.razorpay_subscription_id || '');
     const signature = String(fields.razorpay_signature || '');
@@ -99,11 +116,17 @@ Deno.serve(async (req) => {
           keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
         });
         const subscription = await razorpay.getSubscription(subscriptionId);
-        target = routes(origin, String(subscription.notes?.self_serve || '') === '1');
+        target = cardChange
+          ? cardRoutes(origin)
+          : routes(origin, String(subscription.notes?.self_serve || '') === '1');
         /* A redirect naming a command that is not the one this subscription was created for is
-           not a Peekaa return; route it as a cancellation rather than a success. */
+           not a Peekaa return; route it as a cancellation rather than a success. A CARD CHANGE is
+           the deliberate exception: it runs under a new command id against the subscription the
+           original checkout created, so notes.command_id can never match it. The signature — over
+           payment_id|subscription_id with the API secret — is what proves the return is genuine
+           in both cases; this comparison only tells two of OUR routes apart. */
         if (
-          commandId && UUID.test(commandId) &&
+          !cardChange && commandId && UUID.test(commandId) &&
           String(subscription.notes?.command_id || '') !== commandId
         ) {
           return seeOther(`${target.cancel}&reason=signature`);

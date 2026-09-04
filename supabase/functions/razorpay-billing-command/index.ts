@@ -8,6 +8,14 @@ import {
 } from '../_shared/billing-service.ts';
 import { billingCommandFailureDisposition } from '../_shared/billing-command-recovery.ts';
 import {
+  branchIdentityForCommand,
+  captureUpdateCharge,
+  commandLooksSystemOriginated,
+  listDueRenewalCancels,
+  refreshPaymentMethodFromProvider,
+  remainingCountForCadence,
+} from '../_shared/razorpay-billing-lifecycle.ts';
+import {
   livemodeFromKey,
   razorpayClient,
   razorpayPlanMatchesCatalogue,
@@ -25,6 +33,19 @@ const UUID =
 const TOTAL_COUNT_MONTHLY = 1200;
 const TOTAL_COUNT_ANNUAL = 100;
 const CHECKOUT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+
+/* nestly_v764 — these commands change the subscription IN PLACE. The client re-renders the
+   billing page from the server's own state; handing it a redirect would navigate the owner away
+   from the screen they are standing on for no reason, and a stale one would navigate them
+   somewhere wrong. Only the two commands that must open Razorpay's own sheet carry a URL. */
+const NO_REDIRECT_COMMAND_TYPES = [
+  'change_branches',
+  'change_cadence',
+  'change_capacity',
+  'cancel_at_period_end',
+  'resume',
+  'refresh_payment_method',
+];
 
 function returnOrigin(): string {
   const configured = new URL(requiredEnv('BILLING_RETURN_ORIGIN'));
@@ -119,6 +140,7 @@ function checkoutRedirectUrl({
   commandId,
   description,
   cancelUrl,
+  cardChange = false,
 }: {
   origin: string;
   subscriptionId: string;
@@ -126,6 +148,7 @@ function checkoutRedirectUrl({
   commandId: string;
   description: string;
   cancelUrl: string;
+  cardChange?: boolean;
 }): string {
   /* No secrets travel in this URL: the publishable key id, the subscription id and two of our
      own routes. The page it opens loads Razorpay Checkout with them and nothing else. */
@@ -134,9 +157,15 @@ function checkoutRedirectUrl({
     key: keyId,
     name: 'Peekaa',
     desc: description,
-    cb: `${Deno.env.get('SUPABASE_URL') || ''}/functions/v1/razorpay-billing-return?cmd=${commandId}`,
+    cb: `${Deno.env.get('SUPABASE_URL') || ''}/functions/v1/razorpay-billing-return?cmd=${commandId}${
+      cardChange ? '&mode=card' : ''
+    }`,
     cancel: cancelUrl,
     color: '#0f766e',
+    /* v764 card change: the page passes Razorpay `subscription_card_change: 1` and NO amount —
+       the customer is re-authorising the mandate, not buying anything. The subscription id is the
+       same one; Razorpay swaps the token behind it. */
+    ...(cardChange ? { card_change: '1' } : {}),
   });
   /* The Vercel project's Root Directory is `app`, so app/razorpay-checkout.html is served at
      the ORIGIN ROOT — `/razorpay-checkout.html`, never `/app/...`. (`/app` is a rewrite to
@@ -228,7 +257,7 @@ Deno.serve(async (req) => {
   let providerCallStarted = false;
   let nonExecutionProvenByProvider = false;
   let providerObjectId = '';
-  let redirectUrl = '';
+  let redirectUrl: string | null = '';
   try {
     admin = billingAdminClient();
     // V130 decorates the V124 dispatcher with the locked self-service return
@@ -264,7 +293,9 @@ Deno.serve(async (req) => {
     const cancelUrl = selfServiceOnboarding
       ? `${origin}/business#/onboarding/payment?status=canceled`
       : `${origin}/#/settings?billing=canceled`;
-    redirectUrl = `${origin}/#/settings`;
+    redirectUrl = NO_REDIRECT_COMMAND_TYPES.includes(commandType)
+      ? null
+      : `${origin}/#/settings`;
 
     /* V202/V280 — an extra branch costs exactly what a firm costs, so it is billed as another
        UNIT OF THE BASE PLAN (Razorpay: `quantity`) rather than as a second plan. The constant 1
@@ -273,6 +304,8 @@ Deno.serve(async (req) => {
        unknown resolves to UNDER-billing rather than over-billing. Grandfathered branches are
        'included' and deliberately excluded — the owner already had them. */
     let planUnits = 1;
+    let commandRowData: Record<string, unknown> | null = null;
+    const livemode = livemodeFromKey(keyId) === true;
     {
       const [branchCount, commandRow, subscriptionRow] = await Promise.all([
         admin
@@ -282,7 +315,7 @@ Deno.serve(async (req) => {
           .in('billing_state', ['pending_payment', 'active']),
         admin
           .from('billing_commands')
-          .select('requested_branch_id')
+          .select('*')
           .eq('id', commandId)
           .maybeSingle(),
         admin
@@ -292,6 +325,7 @@ Deno.serve(async (req) => {
           .maybeSingle(),
       ]);
       const { count, error: branchError } = branchCount;
+      commandRowData = (commandRow?.data || null) as Record<string, unknown> | null;
       const isBranchCommand = commandType === 'change_branches' ||
         Boolean(commandRow?.data?.requested_branch_id);
       const declaredBaseCoverage = subscriptionRow?.error
@@ -334,6 +368,7 @@ Deno.serve(async (req) => {
 
     let providerResolved = false;
     let providerConfirmationPending = false;
+    let updateChargePending = false;
 
     if (
       capacityModel &&
@@ -451,11 +486,30 @@ Deno.serve(async (req) => {
           ? 'cycle_end'
           : 'now';
       }
+      /* nestly_v764 — asking for the plan the subscription is ALREADY on is not a change; it is
+         the owner pressing "Keep current cycle" after scheduling one. Razorpay has exactly one
+         way to take a scheduled change back, and PATCHing again is not it. */
+      if (commandType === 'change_cadence' && String(current.plan_id) === planId) {
+        if (current.has_scheduled_changes === true) {
+          await razorpay.cancelScheduledChanges(subscriptionId);
+        }
+        const { error: clearError } = await admin.rpc('clear_billing_schedule_v764', {
+          p_business: businessId,
+        });
+        if (clearError) throw new Error('billing schedule clear failed');
+        providerObjectId = subscriptionId;
+      } else {
       const updated = await razorpay.updateSubscription(subscriptionId, {
         plan_id: planId,
         quantity: planUnits,
         schedule_change_at: scheduleChangeAt,
         customer_notify: 0,
+        /* Razorpay refuses a plan change across periods without it: "remaining_count should be
+           present to update to new plan which has different period". It counts the cycles still
+           to be charged, so it is the target cadence's practical forever, not the current one. */
+        ...(commandType === 'change_cadence'
+          ? { remaining_count: remainingCountForCadence(cadence) }
+          : {}),
       });
       const verified = await razorpay.getSubscription(updated.id || subscriptionId);
       providerObjectId = verified.id || subscriptionId;
@@ -469,11 +523,112 @@ Deno.serve(async (req) => {
       ) {
         throw new Error('Razorpay subscription does not match the requested command');
       }
+
+      /* Ruling 3 — the new cycle starts on the RENEWAL DATE, and the page has to be able to say
+         so ("Monthly billing starts on 5 Sep 2027 · SGD 296 / month"). Razorpay knows the date
+         and the plan; nothing else does until the change lands, so it is recorded now. */
+      if (commandType === 'change_cadence') {
+        const effectiveAt = Number(verified.change_scheduled_at || verified.current_end || 0);
+        const { error: scheduleError } = await admin.rpc('record_billing_schedule_v764', {
+          p_business: businessId,
+          p_kind: 'cadence',
+          p_target_cadence: cadence,
+          p_target_plan_id: planId,
+          p_effective_at: effectiveAt > 0
+            ? new Date(effectiveAt * 1000).toISOString()
+            : null,
+          p_amount_cents: Number(data.base_amount_cents || 0) * planUnits,
+        });
+        if (scheduleError) throw new Error('billing schedule record failed');
+      }
+
+      /* Ruling 1 — a branch added mid-period is CHARGED by Razorpay the moment the PATCH lands,
+         and the only event it emits carries no payment. Read the update invoice back and mirror
+         it through the same synthesis the recovery path uses, so the branch activator fires and
+         the payments history can say which branch, how much, and until when. */
+      if (commandType === 'change_branches' && scheduleChangeAt === 'now') {
+        const branch = await branchIdentityForCommand({
+          admin,
+          businessId,
+          requestedBranchId: commandRowData?.requested_branch_id as string | null,
+        });
+        const capture = await captureUpdateCharge({
+          admin,
+          razorpay,
+          subscriptionId,
+          businessId,
+          livemode,
+          subscription: verified,
+          extraNotes: {
+            reason: 'branch_added',
+            ...(branch
+              ? { branch_id: branch.branch_id, branch_name: branch.branch_name }
+              : {}),
+          },
+        });
+        /* No paid invoice after both looks means the card has not settled (a decline, a 3DS
+           step). That is genuinely UNKNOWN, not failed: the branch stays pending_payment, the
+           owner is told it is still processing, and the nightly heal closes it either way. */
+        updateChargePending = capture.invoices.length === 0;
+      }
+      }
     } else if (!providerResolved && commandType === 'cancel_at_period_end') {
       if (!subscriptionId) throw new Error('Razorpay subscription is not linked');
+      /* nestly_v764 — cancel_at_cycle_end CANNOT be withdrawn at Razorpay ("once cancelled it
+         cannot be reactivated"). So an OWNER pressing "Cancel renewal" must never reach the
+         provider: the intent RPC has already recorded it locally, the subscription keeps working
+         until period end either way, and Resume stays possible right up to the due date — which
+         it would not be if we cancelled at Razorpay the moment the owner clicked. Only the
+         due-date sweep (list_due_renewal_cancels_v764) is allowed to send it, and only because by
+         then there is nothing left to undo. */
+      let systemOriginated = commandLooksSystemOriginated(commandRowData);
+      if (!systemOriginated) {
+        try {
+          const due = await listDueRenewalCancels(admin);
+          systemOriginated = due.some((row) => row.business_id === businessId);
+        } catch {
+          /* Unreadable due list: treat as owner-originated. The sweep runs again tomorrow; a
+             cancellation sent early cannot be taken back. */
+        }
+      }
+      if (!systemOriginated) {
+        providerObjectId = subscriptionId;
+      } else {
+        providerCallStarted = true;
+        const cancelled = await razorpay.cancelSubscription(subscriptionId, 1);
+        providerObjectId = cancelled.id || subscriptionId;
+        providerCallStarted = false;
+        const { error: markError } = await admin.rpc('mark_renewal_cancel_sent_v764', {
+          p_business: businessId,
+        });
+        if (markError) throw new Error('renewal cancel mark failed');
+      }
+    } else if (!providerResolved && commandType === 'update_card') {
+      /* Ruling 5 — Razorpay's own sheet in card-change mode. Nothing is charged and no amount is
+         sent; the customer re-authorises the mandate and Razorpay swaps the token behind the same
+         subscription. The digits refresh through 'refresh_payment_method' on the way back. */
+      if (!subscriptionId) throw new Error('Razorpay subscription is not linked');
+      providerObjectId = subscriptionId;
+      redirectUrl = checkoutRedirectUrl({
+        origin,
+        subscriptionId,
+        keyId,
+        commandId,
+        description: 'Peekaa card update',
+        cancelUrl,
+        cardChange: true,
+      });
+    } else if (!providerResolved && commandType === 'refresh_payment_method') {
+      if (!subscriptionId) throw new Error('Razorpay subscription is not linked');
       providerCallStarted = true;
-      const cancelled = await razorpay.cancelSubscription(subscriptionId, 1);
-      providerObjectId = cancelled.id || subscriptionId;
+      await refreshPaymentMethodFromProvider({
+        admin,
+        razorpay,
+        businessId,
+        subscriptionId,
+      });
+      providerCallStarted = false;
+      providerObjectId = subscriptionId;
     } else if (!providerResolved && commandType === 'resume') {
       if (!subscriptionId) throw new Error('Razorpay subscription is not linked');
       providerCallStarted = true;
@@ -508,6 +663,29 @@ Deno.serve(async (req) => {
       }
     } else if (!providerResolved) {
       throw new Error('billing command is not executable');
+    }
+
+    if (updateChargePending) {
+      const { data: chargePending, error: chargePendingError } = await admin.rpc(
+        'complete_billing_command_v77',
+        {
+          p_command: commandId,
+          p_status: 'uncertain',
+          p_provider_object_id: providerObjectId,
+          p_redirect_url: null,
+          p_error_code: 'provider_update_charge_pending',
+          p_error_message:
+            'Razorpay has not settled the branch charge yet. The branch stays off until the payment appears; retry this command ID or wait for reconciliation.',
+        },
+      );
+      if (chargePendingError) {
+        throw new Error('billing command pending-state persistence failed');
+      }
+      return billingCorsJson(req, 202, {
+        command_id: commandId,
+        status: chargePending?.status || 'uncertain',
+        error: 'provider_update_charge_pending',
+      });
     }
 
     if (providerConfirmationPending) {

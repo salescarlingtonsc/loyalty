@@ -111,7 +111,7 @@ export function isRecoverableProviderSubscription(
   return status === 'authenticated' && Number(subscription?.paid_count || 0) > 0;
 }
 
-async function sha256Hex(value: string): Promise<string> {
+export async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   /* WebCrypto wants a concrete ArrayBuffer; a TextEncoder result is typed over ArrayBufferLike.
      Copying the exact byte range out gives the buffer the signature asks for. */
@@ -138,7 +138,6 @@ export function buildRecoveryEnvelopes({
   recoveredAt: string;
 }): RecoveryEnvelope[] {
   const subscriptionId = String(subscription.id);
-  const notes = subscription.notes || {};
   const envelope = (
     eventType: RecoveryEnvelope['eventType'],
     eventId: string,
@@ -170,46 +169,84 @@ export function buildRecoveryEnvelopes({
   ];
 
   for (const { invoice, payment } of paidInvoices) {
-    const paidAt = isoFromEpoch(invoice.paid_at) || isoFromEpoch(payment.created_at) ||
-      recoveredAt;
     envelopes.push(
-      envelope(
-        'subscription.charged',
-        `recovery_${subscriptionId}_${String(payment.id)}_charged`,
-        paidAt,
-        {
-          /* A real subscription.charged carries the subscription as it stood for THAT cycle. The
-             invoice's billing window is that cycle, so it replaces current_start/current_end;
-             without it every recovered cycle would claim the newest period. */
-          subscription: {
-            entity: {
-              ...subscription,
-              current_start: typeof invoice.billing_start === 'number'
-                ? invoice.billing_start
-                : subscription.current_start ?? null,
-              current_end: typeof invoice.billing_end === 'number'
-                ? invoice.billing_end
-                : subscription.current_end ?? null,
-            },
-          },
-          payment: {
-            entity: {
-              ...payment,
-              /* The applier stores the invoice id as provider_invoice_id and falls back to the
-                 payment id; giving it Razorpay's real invoice id means a later genuine webhook
-                 for the same cycle updates the SAME row instead of creating a second one. */
-              invoice_id: String(invoice.id),
-              /* The subscription's notes are authoritative for business_id — they are what
-                 razorpay_business_v755 reads first, and what the command wrote at checkout. A
-                 payment's own notes are kept underneath for provenance. */
-              notes: { ...(payment.notes || {}), ...notes },
-            },
-          },
-        },
-      ),
+      buildChargedEnvelope({
+        subscription,
+        invoice,
+        payment,
+        eventId: `recovery_${subscriptionId}_${String(payment.id)}_charged`,
+        recoveredAt,
+      }),
     );
   }
   return envelopes;
+}
+
+/* nestly_v764 — ONE synthesised subscription.charged, extracted from the v759 recovery loop so
+   the billing-command path can reuse it verbatim for the invoice Razorpay raises when a
+   subscription is UPDATED mid-period (a branch added: PATCH schedule_change_at 'now' charges the
+   pro-rata immediately and emits only subscription.updated, without a payment). Same envelope,
+   same pipeline, same applier — the only difference is the event id prefix and the extra notes
+   that say WHY the charge happened, which the applier reads into the invoice's reason/detail. */
+export function buildChargedEnvelope({
+  subscription,
+  invoice,
+  payment,
+  eventId,
+  recoveredAt,
+  extraNotes,
+}: {
+  subscription: RecoverySubscription;
+  invoice: RecoveryInvoice;
+  payment: RecoveryPayment;
+  eventId: string;
+  recoveredAt: string;
+  extraNotes?: Record<string, string>;
+}): RecoveryEnvelope {
+  const notes = subscription.notes || {};
+  const paidAt = isoFromEpoch(invoice.paid_at) || isoFromEpoch(payment.created_at) || recoveredAt;
+  return {
+    eventId,
+    eventType: 'subscription.charged',
+    objectId: String(subscription.id),
+    eventCreatedAt: paidAt,
+    payload: {
+      entity: 'event',
+      event: 'subscription.charged',
+      recovered_from: 'provider_api',
+      recovered_at: recoveredAt,
+      payload: {
+        /* A real subscription.charged carries the subscription as it stood for THAT cycle. The
+           invoice's billing window is that cycle, so it replaces current_start/current_end;
+           without it every recovered cycle would claim the newest period. */
+        subscription: {
+          entity: {
+            ...subscription,
+            current_start: typeof invoice.billing_start === 'number'
+              ? invoice.billing_start
+              : subscription.current_start ?? null,
+            current_end: typeof invoice.billing_end === 'number'
+              ? invoice.billing_end
+              : subscription.current_end ?? null,
+          },
+        },
+        payment: {
+          entity: {
+            ...payment,
+            /* The applier stores the invoice id as provider_invoice_id and falls back to the
+               payment id; giving it Razorpay's real invoice id means a later genuine webhook
+               for the same cycle updates the SAME row instead of creating a second one. */
+            invoice_id: String(invoice.id),
+            /* The subscription's notes are authoritative for business_id — they are what
+               razorpay_business_v755 reads first, and what the command wrote at checkout. A
+               payment's own notes are kept underneath for provenance, and the v764 reason /
+               branch keys ride on top so the applier can label the invoice. */
+            notes: { ...(payment.notes || {}), ...notes, ...(extraNotes || {}) },
+          },
+        },
+      },
+    },
+  };
 }
 
 type AdminLike = {
@@ -226,6 +263,88 @@ type RazorpayLike = {
   ) => Promise<{ items?: RecoveryInvoice[] } | null>;
   getPayment: (id: string, options?: { expandCard?: boolean }) => Promise<RecoveryPayment>;
 };
+
+/* The single writer of a synthesised event: ingest into the durable inbox, then apply. Nothing
+   here invents truth — every field came from a fresh GET against Razorpay — and both calls are
+   the EXISTING pipeline, so every invariant the applier enforces still applies. */
+export async function pushRecoveryEnvelope({
+  admin,
+  envelope,
+  livemode,
+}: {
+  admin: AdminLike;
+  envelope: RecoveryEnvelope;
+  livemode: boolean;
+}): Promise<RecoveryEventRecord> {
+  const payloadDigest = await sha256Hex(JSON.stringify(envelope.payload));
+  const { data: inbox, error: inboxError } = await admin.rpc('ingest_billing_event_v755', {
+    p_provider: 'razorpay',
+    p_event_id: envelope.eventId,
+    p_event_type: envelope.eventType,
+    p_object_id: envelope.objectId,
+    p_event_created_at: envelope.eventCreatedAt,
+    p_livemode: livemode,
+    p_payload: envelope.payload,
+    p_payload_sha256: payloadDigest,
+  });
+  if (inboxError) {
+    throw new Error(`recovery ingest failed: ${inboxError.code || inboxError.message || 'rpc'}`);
+  }
+  const duplicate = (inbox as { duplicate?: boolean } | null)?.duplicate === true;
+
+  /* Applied even when the ingest deduped: the applier's duplicate branch is a no-op for the
+     mirrors and re-converges the v94 workspace / v621 branch activation, so a run that died
+     between ingest and apply heals here instead of leaving a durable-but-unapplied event. */
+  const { data: applied, error: applyError } = await admin.rpc(
+    'apply_razorpay_billing_event_v755',
+    { p_event_id: envelope.eventId },
+  );
+  const status = (applied as { status?: string } | null)?.status || null;
+  if (applyError || status === 'failed') {
+    throw new Error(
+      `recovery apply failed: ${applyError?.code || applyError?.message || 'apply_failed'}`,
+    );
+  }
+  return {
+    event_id: envelope.eventId,
+    event_type: envelope.eventType,
+    duplicate,
+    status,
+  };
+}
+
+/* nestly_v764 — mirror ONE settled invoice as a subscription.charged. Used by the branch-add
+   command (the update charge Razorpay never sends an event for) and by the reconciliation heal
+   for a known subscription whose paid invoice has no local row. */
+export async function synthesizeChargedFromInvoice({
+  admin,
+  subscription,
+  invoice,
+  payment,
+  livemode,
+  eventId,
+  extraNotes,
+  now = () => new Date(),
+}: {
+  admin: AdminLike;
+  subscription: RecoverySubscription;
+  invoice: RecoveryInvoice;
+  payment: RecoveryPayment;
+  livemode: boolean;
+  eventId: string;
+  extraNotes?: Record<string, string>;
+  now?: () => Date;
+}): Promise<RecoveryEventRecord> {
+  const envelope = buildChargedEnvelope({
+    subscription,
+    invoice,
+    payment,
+    eventId,
+    recoveredAt: now().toISOString(),
+    extraNotes,
+  });
+  return await pushRecoveryEnvelope({ admin, envelope, livemode });
+}
 
 /* One subscription, start to finish: read it back from Razorpay (never trust the list page we
    were handed — it may be a page old), read its invoices, expand each settled payment, then push
@@ -265,42 +384,7 @@ export async function recoverProviderSubscription({
 
   const events: RecoveryEventRecord[] = [];
   for (const item of envelopes) {
-    const payloadJson = JSON.stringify(item.payload);
-    const payloadDigest = await sha256Hex(payloadJson);
-    const { data: inbox, error: inboxError } = await admin.rpc('ingest_billing_event_v755', {
-      p_provider: 'razorpay',
-      p_event_id: item.eventId,
-      p_event_type: item.eventType,
-      p_object_id: item.objectId,
-      p_event_created_at: item.eventCreatedAt,
-      p_livemode: livemode,
-      p_payload: item.payload,
-      p_payload_sha256: payloadDigest,
-    });
-    if (inboxError) {
-      throw new Error(`recovery ingest failed: ${inboxError.code || inboxError.message || 'rpc'}`);
-    }
-    const duplicate = (inbox as { duplicate?: boolean } | null)?.duplicate === true;
-
-    /* Applied even when the ingest deduped: the applier's duplicate branch is a no-op for the
-       mirrors and re-converges the v94 workspace / v621 branch activation, so a run that died
-       between ingest and apply heals here instead of leaving a durable-but-unapplied event. */
-    const { data: applied, error: applyError } = await admin.rpc(
-      'apply_razorpay_billing_event_v755',
-      { p_event_id: item.eventId },
-    );
-    const status = (applied as { status?: string } | null)?.status || null;
-    if (applyError || status === 'failed') {
-      throw new Error(
-        `recovery apply failed: ${applyError?.code || applyError?.message || 'apply_failed'}`,
-      );
-    }
-    events.push({
-      event_id: item.eventId,
-      event_type: item.eventType,
-      duplicate,
-      status,
-    });
+    events.push(await pushRecoveryEnvelope({ admin, envelope: item, livemode }));
   }
 
   return {

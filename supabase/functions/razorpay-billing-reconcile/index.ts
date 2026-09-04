@@ -33,6 +33,12 @@ import {
   type ProviderRecoveryCounts,
   recoverProviderSubscription,
 } from '../_shared/razorpay-provider-recovery.ts';
+import {
+  healMissingUpdateCharges,
+  type RenewalCancelCounts,
+  runDueRenewalCancels,
+  type UpdateChargeHealCounts,
+} from '../_shared/razorpay-billing-lifecycle.ts';
 
 const LOCAL_OBJECTS_PER_PAGE = 100;
 const PROVIDER_OBJECTS_PER_PAGE = 100;
@@ -935,6 +941,28 @@ Deno.serve(async (req) => {
         limit: PAYMENT_METHOD_BACKFILL_MAX_TENANTS,
       });
 
+      /* nestly_v764 — a subscription we ALREADY mirror can still have a paid invoice we never
+         recorded: the mid-period UPDATE charge (a branch added), which Razorpay settles without
+         ever emitting an event that carries the payment. v759's recovery cannot see it — that
+         path only looks at subscriptions with no local row at all — so the same synthesis is run
+         here for known subscriptions. Bounded, and its failures are counted, never thrown. */
+      const updateCharges: UpdateChargeHealCounts = await healMissingUpdateCharges({
+        admin,
+        razorpay,
+        scope,
+        provider: PROVIDER,
+      });
+
+      /* nestly_v764 — the deferred renewal cancel. "Cancel renewal" is a LOCAL intent because
+         Razorpay's cancel_at_cycle_end cannot be undone; this is the only place it is ever sent,
+         and only for intents the sweep says are due. Marking happens after the provider call, so
+         a failure is retried tomorrow rather than leaving a tenant marked sent whose renewal will
+         still charge. */
+      const renewalCancels: RenewalCancelCounts = await runDueRenewalCancels({
+        admin,
+        razorpay,
+      });
+
       const status = billingReconciliationStatus(cursor);
       const partial = status === 'partial';
       const summary = {
@@ -943,6 +971,8 @@ Deno.serve(async (req) => {
         livemode,
         scoped_businesses: scope.businessIds.length,
         payment_method_backfill: paymentMethodBackfill,
+        update_charges: updateCharges,
+        renewal_cancels: renewalCancels,
         pending_checkout: run.pending_checkout,
         recovered: run.recovered,
         snapshot_at: cursor.snapshot_at,
