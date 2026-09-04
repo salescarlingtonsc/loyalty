@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 630,
-  "executableCount": 616,
+  "itemCount": 631,
+  "executableCount": 617,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -887,13 +887,14 @@
     },
     {
       "sourceDeployVersion": "20260924",
-      "count": 6,
+      "count": 7,
       "paths": [
         "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql",
         "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql",
         "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
         "db/migrations/20260924_nestly_v751_discount_cap_wording.sql",
         "db/migrations/20260924_nestly_v752_birthday_gift_is_a_benefit.sql",
+        "db/migrations/20260924_nestly_v753_birthday_reaches_new_signups.sql",
         "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql"
       ]
     }
@@ -5933,6 +5934,14 @@
     },
     {
       "order": 630,
+      "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v753_birthday_reaches_new_signups.sql",
+      "semanticVersion": "v753",
+      "proposedDeployVersion": "20260924030000",
+      "sha256": "ae9dab0aef9dbab4dce2fe2930c187250b575eceea7071f79584852483772b12"
+    },
+    {
+      "order": 631,
       "kind": "executable",
       "path": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
       "semanticVersion": "v754",

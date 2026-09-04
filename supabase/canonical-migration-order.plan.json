@@ -3787,6 +3787,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260924030000",
+      "name": "nestly_v753_birthday_reaches_new_signups",
+      "sourcePath": "db/migrations/20260924_nestly_v753_birthday_reaches_new_signups.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260924040000",
       "name": "nestly_v754_gift_expiry_is_a_redeem_by_date",
       "sourcePath": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql"

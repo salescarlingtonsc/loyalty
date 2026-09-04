@@ -3792,6 +3792,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v753_birthday_reaches_new_signups.sql",
+      "semanticVersion": "v753",
+      "proposedDeployVersion": "20260924030000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
       "semanticVersion": "v754",
       "proposedDeployVersion": "20260924040000"
