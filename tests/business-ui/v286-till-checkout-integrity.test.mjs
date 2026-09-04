@@ -12,7 +12,9 @@
    (2) Back during a live PayNow QR killed the poll and the on-screen attempt but left the stored
        sessionStorage request behind — the customer paid a sale the server fulfilled, the cashier
        saw nothing and took the money again, and the surviving slot could later resume that
-       customer's QR inside an unrelated sale.
+       customer's QR inside an unrelated sale. nestly_v755: PayNow QR (Stripe Connect) itself is
+       now retired — Razorpay SG has no equivalent — so this defect class is moot; the tests below
+       pin its absence instead of deleting the section outright.
 
    Both are ORDER/GUARD properties, so they are pinned in source. */
 import test from 'node:test';
@@ -60,24 +62,26 @@ test('V286: the composer re-issues the load once the stale one bails', () => {
   assert.match(till, /if\(catalog===null&&!catalogError\)loadCatalog\(\);/);
 });
 
-/* ------------------------------------------------------------------ (2) PayNow on Back */
+/* ------------------------------------------------------------------ (2) PayNow, retired (v755) */
 
-test('V286: Back refuses while a PayNow attempt is outstanding', () => {
+/* nestly_v755: the whole V142 PayNow-QR-via-Stripe-Connect payment attempt (the reason Back used
+   to refuse and a deliberate abandon used to clear a stored provider request) is removed —
+   Razorpay SG has no Stripe Connect equivalent. See RAZORPAY_SWAP_SPEC.md. These two tests used
+   to pin that removed behaviour; they now pin its absence instead of being deleted outright, so a
+   reintroduction of a provider-backed till payment attempt is caught here too. */
+
+test('v755: Back no longer guards on a (removed) PayNow attempt', () => {
   const back = section('  function backToPhoneStep(){', '  function draw(){');
-  assert.match(back, /if\(paynowAttempt\)\{toast\([^)]*\);return\}/);
-  // The refusal must precede the teardown, or the attempt is already gone by the time we look.
-  assert.ok(back.indexOf('if(paynowAttempt)') < back.indexOf('clearCheckoutState('),
-    'the guard must run before clearCheckoutState');
-  // The attempt stays on screen with its "Show QR" affordance rather than being dropped silently.
-  assert.match(till, /id="tPaynowReopen"/);
-  assert.match(till, /\$\('tPaynowReopen'\)\.onclick=\(\)=>renderPaynowDialogV142\(paynowAttempt\)/);
+  assert.doesNotMatch(back, /paynowAttempt/);
+  assert.doesNotMatch(till, /id="tPaynowReopen"/);
+  assert.doesNotMatch(till, /renderPaynowDialogV142/);
 });
 
-test('V286: a deliberate abandon also retires the stored PayNow request', () => {
+test('v755: a deliberate abandon no longer touches a (removed) stored PayNow request', () => {
   const clear = section('  function clearCheckoutState({abandon=false}={}){', '  function resetToStart(){');
-  assert.match(clear, /if\(abandon\)clearPaynowRequestV142\(\);/);
-  // The stored slot is what resumePaynowPaymentV142 replays on the next entry to Record sale.
-  assert.match(till, /if\(readPaynowRequestV142\(\)\)requestAnimationFrame\(\(\)=>resumePaynowPaymentV142\(\)\)/);
+  assert.doesNotMatch(clear, /clearPaynowRequestV142/);
+  assert.doesNotMatch(till, /resumePaynowPaymentV142/);
+  assert.doesNotMatch(till, /readPaynowRequestV142/);
 });
 
 test('V286: every checkout-abandoning call site passes abandon:true', () => {
@@ -94,10 +98,11 @@ test('V286: every checkout-abandoning call site passes abandon:true', () => {
 /* ------------------------------------------------------------------ regressions this must not cause */
 
 test('V286: the idempotency discipline is untouched', () => {
-  // One stable finalise key, cleared with the checkout state; the PayNow request keeps its own.
+  // One stable finalise key, cleared with the checkout state. (v755: the second, PayNow-specific
+  // request/fingerprint idempotency scheme this test used to also pin is retired along with that
+  // payment rail — see the "PayNow, retired" tests above.)
   assert.match(till, /clearWriteAttempt\(FINALISE_SLOT\);/);
   assert.match(till, /p_idempotency_key:finaliseKey/);
-  assert.match(till, /if\(!request\|\|request\.fingerprint!==fingerprint\)request=\{fingerprint,idempotency_key:crypto\.randomUUID\(\)/);
 });
 
 test('V286: the itemized composer still offers the staff-attribution picker (V287)', () => {

@@ -12844,11 +12844,11 @@
       let result=requested;
       if(['pending','processing','uncertain'].includes(requested?.status)){
         if(!sb.functions?.invoke)throw new Error(pt('The billing command executor is unavailable.'));
-        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.command_id}});
+        const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:requested.command_id}});
         if(executed?.error)throw executed.error;
         result=executed?.data||requested;
         if(result?.status==='uncertain'){
-          const recovered=await sb.functions.invoke('stripe-billing-command',{body:{command_id:requested.command_id}});
+          const recovered=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:requested.command_id}});
           if(recovered?.error)throw recovered.error;
           result=recovered?.data||result;
         }

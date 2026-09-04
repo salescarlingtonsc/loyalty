@@ -6,7 +6,7 @@
  * record another session's tree (REG-009; see fixture-cross-tree-guard.mjs). This file proves,
  * executing the real code, that the fix holds:
  *
- *   (a) visual-fixture-urls.mjs derives V104_FIXTURE_URL / V142_FIXTURE_URL from whatever port
+ *   (a) visual-fixture-urls.mjs derives V104_FIXTURE_URL from whatever port
  *       is passed in — not a baked-in 4173 — so regen-visual-fixtures.mjs cannot regress to
  *       silently defaulting again;
  *   (b) NEGATIVE CONTROL, the real script: with a port already bound by something else, running
@@ -45,16 +45,14 @@ import { join } from 'node:path';
 import { visualFixtureUrls } from '../../scripts/quality/visual-fixture-urls.mjs';
 import { buildRepoTestSandbox } from '../../scripts/quality/build-repo-test-sandbox.mjs';
 
-test('visualFixtureUrls derives both URLs from the given port, not a hardcoded one', () => {
+test('visualFixtureUrls derives its URL from the given port, not a hardcoded one', () => {
   assert.deepEqual(visualFixtureUrls(4173), {
     V104_FIXTURE_URL: 'http://127.0.0.1:4173/tests/browser/v104-promotions-visual.html',
-    V142_FIXTURE_URL: 'http://127.0.0.1:4173/tests/browser/v142-connect-paynow-visual.html',
   });
-  // A different port produces different URLs — proves it is a real function of the input, not a
+  // A different port produces a different URL — proves it is a real function of the input, not a
   // constant that happens to print 4173.
   const other = visualFixtureUrls(48173);
   assert.equal(other.V104_FIXTURE_URL, 'http://127.0.0.1:48173/tests/browser/v104-promotions-visual.html');
-  assert.equal(other.V142_FIXTURE_URL, 'http://127.0.0.1:48173/tests/browser/v142-connect-paynow-visual.html');
 });
 
 async function freePort() {

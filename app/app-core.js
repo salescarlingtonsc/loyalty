@@ -6334,7 +6334,7 @@ function renderBusinessSignupChoice(){
     <p class="muted" style="margin-top:7px;line-height:1.55">Choose the path that matches what you are doing now.</p>
     <div class="entry-choice-grid">
       <button type="button" class="entry-choice" id="requestDemoChoice"><span class="entry-choice-icon">${CUI.icon('info',{size:24})}</span><div><h2>Request a demo</h2><p class="muted">Ask Peekaa consultants to contact you. No account or workspace is created.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Request demo ${CUI.icon('forward',{size:16})}</span></button>
-      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:24})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Stripe Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:16})}</span></button>
+      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:24})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Razorpay Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:16})}</span></button>
       <button type="button" class="entry-choice" id="joinBusinessChoice"><span class="entry-choice-icon">${CUI.icon('staff',{size:24})}</span><div><h2>Join an existing business</h2><p class="muted">Use an invitation from your business owner or manager.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Enter invite ${CUI.icon('forward',{size:16})}</span></button>
     </div>
     <button class="btn ghost" id="businessSignupBack" style="width:100%;margin-top:18px">Back to sign in</button>
@@ -6351,7 +6351,7 @@ function renderBusinessDemoRequest(){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessDemoRequestTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="businessDemoRequestTitle" style="margin:14px 0 2px">Request a Peekaa demo</h1>
-    <p class="muted small" style="margin-top:6px">Demo request only. Peekaa consultants will contact you. No owner account, workspace, login, Stripe Checkout, or Super Admin approval is created from this demo request.</p>
+    <p class="muted small" style="margin-top:6px">Demo request only. Peekaa consultants will contact you. No owner account, workspace, login, Razorpay Checkout, or Super Admin approval is created from this demo request.</p>
     <div class="grid2" style="margin-top:14px">
       <div><label for="demoContactName">Your full name</label><input id="demoContactName" autocomplete="name"></div>
       <div><label for="demoBusinessName">Business name</label><input id="demoBusinessName" autocomplete="organization"></div>
@@ -6388,7 +6388,7 @@ function renderBusinessDemoRequest(){
         p_contact_phone:phone,p_sector:sector||null,p_note:notes||null
       });
       if(error)throw error;
-      $('businessDemoRequestStatus').textContent='Sent. A Peekaa consultant will contact you. No account, workspace, login, Stripe Checkout or charge was created.';
+      $('businessDemoRequestStatus').textContent='Sent. A Peekaa consultant will contact you. No account, workspace, login, Razorpay Checkout or charge was created.';
     }catch(_error){
       button.disabled=false;
       $('businessDemoRequestStatus').textContent='';
@@ -6698,9 +6698,9 @@ function renderBusinessApplication(){
   let locale=businessApplicationLanguage();
   globalThis.document?.documentElement?.setAttribute('lang',locale);
   const accountCopy={
-    en:{heading:'Create your Peekaa owner account',intro:'Create a secure owner login. After email confirmation, enter business details and choose Stripe Checkout or manual payment approval. Stripe opens access only after verified payment; manual payment waits for Super Admin approve/reject.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I agree to the Terms of Service and acknowledge the Privacy Policy',consentLead:'I agree to the',terms:'Terms of Service',and:'and acknowledge the',privacy:'Privacy Policy',create:'Create owner account',back:'Back',accept:'Please agree to the Terms of Service and acknowledge the Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to continue business setup. Stripe payment auto-activates after verified payment; manual payment goes to Super Admin for approve/reject.'},
-    'zh-CN':{heading:'创建 Peekaa 店主账户',intro:'请先创建安全登录。登录后，如方案已配置，Peekaa 会打开 Stripe Checkout；如 Stripe 暂不可用，则收集商家资料以便人工付款协助。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我同意服务条款，并知悉隐私政策',consentLead:'我同意',terms:'服务条款',and:'并知悉',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请同意服务条款并确认知悉隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录继续商家设置。如 Stripe 暂不可用，请提交资料以便人工付款协助。'},
-    ms:{heading:'Cipta akaun pemilik Peekaa',intro:'Cipta log masuk selamat dahulu. Selepas log masuk, Peekaa akan membuka Stripe Checkout apabila pelan telah dikonfigurasi, atau mengumpul butiran perniagaan untuk bantuan bayaran manual.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya bersetuju dengan Terma Perkhidmatan dan mengakui Dasar Privasi',consentLead:'Saya bersetuju dengan',terms:'Terma Perkhidmatan',and:'dan mengakui',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila bersetuju dengan Terma Perkhidmatan dan akui Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk meneruskan tetapan perniagaan. Jika Stripe tidak tersedia, hantar butiran untuk bantuan bayaran manual.'}
+    en:{heading:'Create your Peekaa owner account',intro:'Create a secure owner login. After email confirmation, enter business details and choose Razorpay Checkout or manual payment approval. Razorpay opens access only after verified payment; manual payment waits for Super Admin approve/reject.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I agree to the Terms of Service and acknowledge the Privacy Policy',consentLead:'I agree to the',terms:'Terms of Service',and:'and acknowledge the',privacy:'Privacy Policy',create:'Create owner account',back:'Back',accept:'Please agree to the Terms of Service and acknowledge the Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to continue business setup. Razorpay payment auto-activates after verified payment; manual payment goes to Super Admin for approve/reject.'},
+    'zh-CN':{heading:'创建 Peekaa 店主账户',intro:'请先创建安全登录。登录后，如方案已配置，Peekaa 会打开 Razorpay Checkout；如 Razorpay 暂不可用，则收集商家资料以便人工付款协助。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我同意服务条款，并知悉隐私政策',consentLead:'我同意',terms:'服务条款',and:'并知悉',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请同意服务条款并确认知悉隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录继续商家设置。如 Razorpay 暂不可用，请提交资料以便人工付款协助。'},
+    ms:{heading:'Cipta akaun pemilik Peekaa',intro:'Cipta log masuk selamat dahulu. Selepas log masuk, Peekaa akan membuka Razorpay Checkout apabila pelan telah dikonfigurasi, atau mengumpul butiran perniagaan untuk bantuan bayaran manual.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya bersetuju dengan Terma Perkhidmatan dan mengakui Dasar Privasi',consentLead:'Saya bersetuju dengan',terms:'Terma Perkhidmatan',and:'dan mengakui',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila bersetuju dengan Terma Perkhidmatan dan akui Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk meneruskan tetapan perniagaan. Jika Razorpay tidak tersedia, hantar butiran untuk bantuan bayaran manual.'}
   };
   const a=accountCopy[locale]||accountCopy.en;
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
@@ -8150,50 +8150,6 @@ const GROW_USAGE_COMPARE_OPTIONS_V392=Object.freeze([
    against a period nobody chose. */
 function growUsageCompareLabelV392(range){
   return (GROW_USAGE_COMPARE_OPTIONS_V392.find(option=>option.key===(range?.basis||'previous'))||{}).label||'Period before';
-}
-/* ---------- V142 merchant-owned customer payments ---------- */
-async function loadMerchantPaymentsV142(){
-  const wrap=$('merchantPaymentsWrapV142');if(!wrap||!S.biz?.id)return;
-  wrap.setAttribute('aria-busy','true');
-  const {data,error}=await sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id});
-  if(!wrap.isConnected)return;
-  wrap.setAttribute('aria-busy','false');
-  if(error||!data){
-    wrap.innerHTML=CUI.errorState({title:'Customer payments unavailable',message:'Payment setup could not be loaded. No customer payment was affected.',retryId:'merchantPaymentsRetryV142'});
-    $('merchantPaymentsRetryV142').onclick=loadMerchantPaymentsV142;return;
-  }
-  const state=data.status||'not_set_up';
-  const ready=data.paynow_ready===true;
-  const stateCopy=ready
-    ?{label:'Ready',pill:'ok',title:'Ready to accept PayNow',body:'Staff can create a fixed-amount PayNow QR from Record sale. Customer money goes to this business’s connected Stripe account.'}
-    :state==='restricted'
-      ?{label:'Restricted',pill:'off',title:'Stripe needs attention',body:'Customer PayNow QR is unavailable until Stripe clears the account restriction.'}
-      :state==='more_information_needed'
-        ?{label:'More information needed',pill:'new',title:'Finish Stripe setup',body:'Continue the secure Stripe form to complete business, representative or payout-bank requirements.'}
-        :{label:'Not set up',pill:'off',title:'Accept customer payments',body:'Connect this legal business to Stripe. Branches share the same payout account unless they are separate legal merchants.'};
-  wrap.innerHTML=`<div class="row"><div><h2 style="margin:0">Customer payments</h2><p class="muted small" style="margin-top:5px">Separate from your Peekaa subscription.</p></div><span class="spacer"></span><span class="pill ${stateCopy.pill}">${stateCopy.label}</span></div>
-    <div class="imp-note" style="margin-top:16px"><b>${stateCopy.title}</b><p class="small" style="margin-top:6px">${stateCopy.body}</p></div>
-    <ol class="small" style="line-height:1.75;margin:16px 0 0;padding-left:20px"><li>Owner completes Stripe-hosted identity and bank setup.</li><li>Staff enters a sale and taps <b>PayNow QR</b>.</li><li>Customer scans the locked amount; only Stripe confirmation completes the sale and receipt.</li></ol>
-    ${ready?'<p class="muted small" style="margin-top:16px">No API keys or bank details are stored in Peekaa. Manage legal or payout changes through Stripe.</p>'
-      :`<button type="button" class="btn" id="merchantPaymentsSetupV142" style="margin-top:18px">${state==='not_set_up'?'Set up Stripe':'Continue Stripe setup'}</button>`}
-    <div id="merchantPaymentsStatusV142" role="status" aria-live="polite"></div>`;
-  const setup=$('merchantPaymentsSetupV142');if(!setup)return;
-  setup.onclick=async()=>{
-    setup.disabled=true;setup.textContent='Opening Stripe…';
-    const slot=`peekaa:v142:connect:${S.biz.id}`;
-    let key='';try{key=sessionStorage.getItem(slot)||''}catch{}
-    if(!/^[0-9a-f-]{36}$/i.test(key)){key=crypto.randomUUID();try{sessionStorage.setItem(slot,key)}catch{}}
-    const executed=await sb.functions.invoke('stripe-connect-command',{body:{
-      action:'create_onboarding_link',business_id:S.biz.id,idempotency_key:key
-    }});
-    if(!wrap.isConnected)return;
-    if(executed.error||!executed.data?.redirect_url){
-      setup.disabled=false;setup.textContent=state==='not_set_up'?'Set up Stripe':'Continue Stripe setup';
-      $('merchantPaymentsStatusV142').innerHTML='<div class="err" role="alert">Stripe setup could not open. Try again; no account will be duplicated.</div>';return;
-    }
-    try{sessionStorage.removeItem(slot)}catch{}
-    location.assign(executed.data.redirect_url);
-  };
 }
 /* ---------- public customer portal ---------- */
 function relativeLuminanceHexV336(hex){

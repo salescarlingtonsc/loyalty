@@ -115,7 +115,7 @@ test('billing, automation and commission views use delegated v89 platform truth'
   assert.match(source, /integer cents/);
   assert.match(source, /failed_event_count/);
   assert.match(source, /billingCommands\(detail\)/);
-  assert.match(source, /sb\.functions\.invoke\('stripe-billing-command'/);
+  assert.match(source, /sb\.functions\.invoke\('razorpay-billing-command'/);
   assert.match(source, /p_confirmation_hash:preview\.confirmation_hash/);
 });
 

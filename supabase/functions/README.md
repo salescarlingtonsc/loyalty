@@ -90,38 +90,81 @@ unguessable public reference and returns no applicant PII, decision reason, invi
 Do not deploy the frontend until the migration and all public functions it calls are live and
 smoke-tested.
 
-## Peekaa platform billing functions
+## Peekaa platform billing functions (Razorpay, nestly_v755)
 
-The v77 billing pipeline uses three separate functions:
+Platform billing moved from Stripe Subscriptions to **Razorpay Subscriptions**
+(nestly_v755, owner decisions 2026-09-04). Stripe Connect / PayNow POS has no
+Razorpay SG equivalent and was removed rather than ported — see
+`RAZORPAY_SWAP_SPEC.md` in the repo root for the full build spec. The
+`stripe-billing-*` and `stripe-connect-*` functions are retired; do not
+redeploy them.
 
-- `stripe-billing-webhook` verifies Stripe events and is the only path that
-  turns an `invoice.paid` event into paid subscription truth.
-- `stripe-billing-command` executes owner/super-admin checkout, portal and
-  cadence commands. A redirect is never treated as payment.
-- `stripe-billing-reconcile` is the scheduled independent check. It compares
-  Stripe subscription and invoice snapshots against Peekaa, records a bounded
-  reconciliation run and its mismatches, and never fabricates or repairs paid
-  state.
+The v755 billing pipeline uses four separate functions:
 
-Required billing secrets are `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
-`BILLING_RETURN_ORIGIN`, and a random `BILLING_RECONCILIATION_SECRET` of at
-least 32 characters. The reconciliation scheduler must send that last value in
+- `razorpay-billing-webhook` verifies the raw body against
+  `X-Razorpay-Signature` and is the only path that turns a
+  `subscription.charged` event into paid subscription truth. Event dedupe
+  keys on `x-razorpay-event-id` (falling back to a sha256 of the body).
+- `razorpay-billing-command` executes owner/super-admin checkout, cancel,
+  resume and cadence/capacity/branch commands via plain `fetch` + HTTP Basic
+  auth against the Razorpay REST API. A redirect is never treated as
+  payment. Razorpay has no customer billing portal, so `create_portal` is
+  not offered by the client; cancel/resume use the existing
+  `cancel_at_period_end` / `resume` command types instead.
+- `razorpay-billing-reconcile` is the scheduled independent check. It
+  compares Razorpay subscription and payment snapshots against Peekaa,
+  records a bounded reconciliation run and its mismatches, and never
+  fabricates or repairs paid state.
+- `razorpay-billing-return` (new in v755) is the `callback_url` target for
+  Razorpay Checkout.js's `redirect:true` flow. It verifies
+  `razorpay_signature` (HMAC-SHA256 of `payment_id|subscription_id` with the
+  key secret) and 303-redirects to the command's existing success/cancel
+  URLs. It never writes payment truth itself.
+
+Required billing secrets are `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`,
+`RAZORPAY_WEBHOOK_SECRET`, `BILLING_RETURN_ORIGIN`, and a random
+`BILLING_RECONCILIATION_SECRET` of at least 32 characters (unchanged from the
+Stripe pipeline). The reconciliation scheduler must send that last value in
 `x-nestly-reconciliation-secret`. Configure the schedule only after deploying
 the function; recommended frequency is daily during trial and every six hours
-once live. Store the value in the scheduler's secret store, never in SQL,
-frontend code or repository files.
+once live. Store every secret in the scheduler's / Supabase project's secret
+store, never in SQL, frontend code or repository files. Key id prefix
+`rzp_test_` vs `rzp_live_` determines livemode — there is no separate livemode
+flag in the webhook payload. `RAZORPAY_PLAN_MAP_JSON` is an optional
+test-mode override mapping a catalogue price-id column to a live Razorpay
+`plan_...` id, for use before the catalogue is fully configured with real
+plan ids.
 
 Deploy the billing functions during the reviewed release sequence:
 
 ```sh
-supabase functions deploy stripe-billing-webhook --no-verify-jwt
-supabase functions deploy stripe-billing-command
-supabase functions deploy stripe-billing-reconcile --no-verify-jwt
+supabase functions deploy razorpay-billing-webhook --no-verify-jwt
+supabase functions deploy razorpay-billing-command
+supabase functions deploy razorpay-billing-reconcile --no-verify-jwt
+supabase functions deploy razorpay-billing-return --no-verify-jwt
 ```
 
-Then register Stripe webhook delivery for the event allowlist documented by
-v77, invoke one test-mode reconciliation, and retain its run ID as launch
-evidence. A `mismatch` or `failed` result blocks billing launch.
+Then, in the Razorpay dashboard, register **test-mode** webhook delivery
+first (test and live webhooks are configured separately) and tick every event
+this pipeline consumes:
+
+- `subscription.authenticated`
+- `subscription.activated`
+- `subscription.updated`
+- `subscription.resumed`
+- `subscription.pending`
+- `subscription.halted`
+- `subscription.paused`
+- `subscription.cancelled`
+- `subscription.completed`
+- `subscription.charged`
+- `refund.created`
+
+Invoke one test-mode reconciliation and retain its run ID as launch evidence.
+A `mismatch` or `failed` result blocks billing launch. Only move the webhook
+registration to live mode, and swap in `rzp_live_*` secrets, once test-mode
+checkout, webhook delivery and reconciliation have all been proven end to
+end.
 
 ## Peekaa private SME documents
 

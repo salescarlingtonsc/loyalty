@@ -14,10 +14,8 @@
  * Run `npm run bundle-stamp` FIRST if you edited app/app.js, so the generated surface bundles
  * are current before the fixtures are rebuilt from them.
  *
- * EXPECT NOISE FROM v142: its capture mints fresh idempotency UUIDs on every run, so
- * docs/qa/evidence/v142-connect-paynow-pos/ always shows a diff even when nothing changed.
- * Check `git diff` on its metrics.json before committing — if the only differences are
- * *_idempotency_key values, revert that directory rather than committing the churn.
+ * nestly_v755: the v142 Stripe Connect / PayNow QR visual fixture and its capture script are
+ * retired along with the feature (Razorpay SG has no equivalent) — see RAZORPAY_SWAP_SPEC.md.
  *
  * PREVIOUSLY EXCLUDED, NOW REGENERATED: this script used to `git checkout --` two fixtures
  * back to HEAD after generating them — reward-overview-owner-visual.html and
@@ -39,8 +37,8 @@
  * capture silently record another session's tree when the two DIDN'T agree (see
  * fixture-cross-tree-guard.mjs). Now: PORT is overridable via $PORT (default stays 4173 for
  * back-compat); the server refuses to start if that port is already bound by something else,
- * rather than colliding with it; and V104_FIXTURE_URL / V142_FIXTURE_URL are always set to THIS
- * run's own server, so the captures can never coast on a same-numbered default.
+ * rather than colliding with it; and V104_FIXTURE_URL is always set to THIS run's own server,
+ * so the capture can never coast on a same-numbered default.
  */
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -117,7 +115,6 @@ try {
   };
   for (const script of [
     'tests/browser/verify-v104-promotions-visual.mjs',
-    'tests/browser/verify-v142-connect-paynow.mjs',
   ]) {
     process.stdout.write(`  ${script.split('/').pop()} (Chrome capture)\n`);
     await run(process.execPath, [script], { env, stdio: 'ignore' });

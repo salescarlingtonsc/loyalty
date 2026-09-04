@@ -175,16 +175,16 @@ test('V370 a debounced refresh cannot fire into a signed-out session', () => {
 
 /* ------------------------------------------------------- polling visibility */
 
-test('V370 the PayNow till poll suspends while the tab is hidden and resumes on return', () => {
-  const till = section('function paynowSuspendedForVisibilityV370(', 'async function beginPaynowPaymentV142(');
-  assert.match(till, /visibilityState!=='hidden'\)return false/, 'visible tabs poll exactly as before');
-  assert.match(till, /document\.addEventListener\('visibilitychange',paynowHiddenResumeV370\)/);
-  assert.match(till, /if\(!isTillCurrent\(\)\|\|!paynowAttempt\)return;/,
-    'a dialog closed while away must not resurrect its poll');
-  assert.match(till, /if\(paynowSuspendedForVisibilityV370\(attemptId\)\)return;/);
-  /* No cap and no backoff were added: the payment flow itself is untouched, and the first poll
-     after resume reads whatever status the attempt reached while the tab was away. */
-  assert.match(till, /pollPaynowAttemptV142\(attemptId\);/);
+/* nestly_v755: the V142 PayNow-QR-via-Stripe-Connect till payment attempt — and its whole
+   visibility-gated poll this test used to pin — is removed along with the rest of Stripe Connect
+   (Razorpay SG has no equivalent). See RAZORPAY_SWAP_SPEC.md. Pinning its absence here catches a
+   reintroduction of a provider-backed till poll the same way the rest of this file pins the
+   amplification fixes it must not regress. */
+test('v755 the (removed) PayNow till poll and its visibility-suspend helper no longer exist', () => {
+  assert.doesNotMatch(appJs, /function paynowSuspendedForVisibilityV370/);
+  assert.doesNotMatch(appJs, /async function pollPaynowAttemptV142/);
+  assert.doesNotMatch(appJs, /async function beginPaynowPaymentV142/);
+  assert.doesNotMatch(appJs, /async function resumePaynowPaymentV142/);
 });
 
 test('V370 the customer redemption QR poll pauses when hidden and reconciles on return', () => {

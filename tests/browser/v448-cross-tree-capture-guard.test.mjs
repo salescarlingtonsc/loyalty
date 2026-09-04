@@ -1,6 +1,6 @@
 /* V448/V459 — REG-009: the cross-tree capture guard.
  *
- * verify-v104-promotions-visual.mjs and verify-v142-connect-paynow.mjs fetch their fixture over
+ * verify-v104-promotions-visual.mjs fetches its fixture over
  * HTTP, defaulting to port 4173 — a port shared by sibling worktrees and other sessions' own
  * regen servers. If some OTHER session's server answers on that port, the capture used to fetch
  * THEIR fixture, screenshot THEIR render, and print PASS: a real incident (AUDIT-MAP REG-009).
@@ -10,12 +10,12 @@
  *   (a) unit-level, against the guard function itself, with a real tiny HTTP server — a matching
  *       fixture resolves, a mismatched one rejects with a message naming both hashes, and an
  *       unreachable server rejects with a guard-labelled message rather than a raw ECONNREFUSED;
- *   (b) end-to-end, by actually spawning the two real capture scripts with their fixture URL env
- *       var pointed at a server deliberately serving the WRONG bytes, and asserting the process
- *       exits non-zero with the guard's message — proving the wiring inside the scripts, not
- *       just the helper they import. Neither capture script needs a browser driver for this: the
- *       guard runs before either script even imports playwright, so this negative control does
- *       not require Chrome to be installed;
+ *   (b) end-to-end, by actually spawning the real capture script with its fixture URL env var
+ *       pointed at a server deliberately serving the WRONG bytes, and asserting the process
+ *       exits non-zero with the guard's message — proving the wiring inside the script, not
+ *       just the helper it imports. The capture script needs no browser driver for this: the
+ *       guard runs before it even imports playwright, so this negative control does not require
+ *       Chrome to be installed;
  *   (c) NESTLY_V459 — the two-marker poll, mirroring the failure Agent B hit that (a)/(b) do not
  *       cover: a static file server can keep answering from a DELETED docroot's stale inode
  *       forever, with no error. assertFixtureMatchesTree() now polls (bounded attempts, not one
@@ -37,7 +37,6 @@ import { assertFixtureMatchesTree } from '../../scripts/quality/fixture-cross-tr
 
 const root = new URL('../../', import.meta.url);
 const V104_FIXTURE = new URL('./v104-promotions-visual.html', import.meta.url);
-const V142_FIXTURE = new URL('./v142-connect-paynow-visual.html', import.meta.url);
 
 /** Serves fixed `body` bytes for every request until closed. Returns {url, close}. */
 async function serveBytes(body) {
@@ -110,20 +109,6 @@ test('verify-v104: a wrong-tree fixture server makes the real capture script abo
     assert.notEqual(code, 0, 'the capture must exit non-zero');
     assert.match(stdout + stderr, /CROSS-TREE CAPTURE GUARD \(v104\)/);
     // Proves the guard ran BEFORE the (deliberately broken) playwright import was ever reached.
-    assert.doesNotMatch(stdout + stderr, /would-fail-if-ever-imported/);
-  } finally { await server.close(); }
-});
-
-test('verify-v142: a wrong-tree fixture server makes the real capture script abort loudly, no browser needed', async () => {
-  const server = await serveBytes('<!doctype html><title>another session\'s v142 fixture</title>');
-  try {
-    const { code, stdout, stderr } = await runNode('tests/browser/verify-v142-connect-paynow.mjs', {
-      ...process.env,
-      V142_FIXTURE_URL: server.url,
-      PLAYWRIGHT_MODULE: '/nonexistent/would-fail-if-ever-imported/index.js',
-    });
-    assert.notEqual(code, 0, 'the capture must exit non-zero');
-    assert.match(stdout + stderr, /CROSS-TREE CAPTURE GUARD \(v142\)/);
     assert.doesNotMatch(stdout + stderr, /would-fail-if-ever-imported/);
   } finally { await server.close(); }
 });

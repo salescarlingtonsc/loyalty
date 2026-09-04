@@ -1,7 +1,7 @@
 /**
  * CROSS-TREE CAPTURE GUARD (nestly_v448/v459, closes REG-009).
  *
- * tests/browser/verify-v104-promotions-visual.mjs and verify-v142-connect-paynow.mjs fetch a
+ * tests/browser/verify-v104-promotions-visual.mjs fetches a
  * fixture served over HTTP, defaulting to port 4173 — a port shared by sibling worktrees and by
  * other sessions' own regen servers (scripts/quality/regen-visual-fixtures.mjs binds it too).
  * When some OTHER session's server happens to be listening on that port while a capture runs,
@@ -33,10 +33,10 @@
  * chunks by scripts/quality/stamp-app-bundle.mjs, so a tree whose stylesheet is current but whose
  * bundle is stale can serve a fresh-looking index.html and then run last week's JavaScript — the
  * hash alone would catch that too (the bytes differ), but the CSS/JS marker split gives a human a
- * one-line answer to "which half is stale" instead of a raw hash diff. v104/v142's fixtures are
- * single self-contained files (CSS and JS both inlined by their generator — verified: neither
- * embeds a `<script src=` pointing at an external chunk), so "two files" collapses to "two
- * markers within the one file" for these; verify-v441-preview-dock-scope.mjs is the sibling that
+ * one-line answer to "which half is stale" instead of a raw hash diff. v104's fixture is a
+ * single self-contained file (CSS and JS both inlined by its generator — verified: it does not
+ * embed a `<script src=` pointing at an external chunk), so "two files" collapses to "two
+ * markers within the one file" for it; verify-v441-preview-dock-scope.mjs is the sibling that
  * genuinely serves index.html and an external chunk as two files and already has its own
  * same-shaped probe.
  */
