@@ -1982,8 +1982,9 @@ function consumeCustomerJoinHandoffV606(token){
     if(!(Number(raw.at)>Date.now()-CUSTOMER_JOIN_HANDOFF_FRESH_MS_V606))return false;
     pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(raw.slug||'')||pendingCustomerJoinSlugV587;
     pendingCustomerJoinBusinessNameV609=String(raw.name||'').slice(0,120);
-    /* nestly_v612: the /join page's referral code rides the same handoff. */
-    if(raw.ref)pendingCustomerJoinReferralV571=String(raw.ref).trim().toUpperCase().slice(0,32);
+    /* nestly_v758 (owner ruling 3): the business QR/join-token path is a plain "join this
+       business" code and must never carry a referral, however it arrived — so the /join page's
+       ref handoff is no longer read here. */
     rememberCustomerJoinConfirmedV596(raw.token,pendingCustomerJoinSlugV587);
     return true;
   }catch{return false}
@@ -2074,6 +2075,51 @@ function peekShareReferralV576(slug){
   }catch{return ''}
 }
 function clearShareReferralV576(){try{localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576)}catch{}}
+/* nestly_v758 (owner ruling 4): a friend who taps a shared #/wallet/<slug>?ref=CODE link gets the
+   SAME confirmation sheet the printed business QR shows — logo, "Join <business>?", the referral
+   code already in the box and impossible to edit — instead of landing silently on the wallet or
+   registration screen. Armed the moment the router lifts ?ref= off the URL (see the v576 capture
+   above); "asked this visit" is in-memory only, exactly like customerJoinAskedThisVisitV599, so a
+   fresh tap of a fresh link always asks again but a repaint mid-visit never stacks a second sheet. */
+let pendingReferralSheetSlugV576='';
+let customerReferralAskedThisVisitV576=false;
+async function confirmCustomerShareReferralV576(slug,isCurrent){
+  const code=peekShareReferralV576(slug);
+  if(!code)return true; // nothing to confirm — the code was already consumed or expired
+  let preview=null;
+  try{preview=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}`})}catch(error){}
+  if(!isCurrent()||pendingReferralSheetSlugV576!==slug)return true;
+  const name=String(preview?.name||'').trim().slice(0,120);
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.className='modal customer-surface';
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','customerReferralConfirmTitleV576');
+    overlay.innerHTML=`<section class="modal-card customer-join-sheet-v587">
+      <button class="customer-join-close-v587" type="button" id="customerReferralCancelV576" aria-label="${esc(ct('joinConfirmCancelV571'))}" title="${esc(ct('joinConfirmCancelV571'))}">${CUI.icon('close',{size:18})}</button>
+      <div class="customer-join-art-v587" aria-hidden="true"><span class="customer-join-art-glow-v587"></span>${brandWordmark()}</div>
+      <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
+      <h2 id="customerReferralConfirmTitleV576" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
+      <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
+      <label class="small" for="customerJoinReferralV612" style="display:block;text-align:left;margin:2px 2px 6px;font-weight:600">${esc(ct('joinReferralLinkedLabelV654'))}</label>
+      <input id="customerJoinReferralV612" maxlength="32" autocomplete="off" spellcheck="false" value="${esc(code)}" readonly style="margin-bottom:6px">
+      <p class="muted small" style="text-align:left;margin:0 2px 14px">${esc(ct('joinReferralLinkedHintV654'))}</p>
+      <button class="btn customer-join-yes-v587" type="button" id="customerReferralGoV576">${esc(ct('joinConfirmGoV587'))}</button>
+    </section>`;
+    document.body.appendChild(overlay);
+    const close=answer=>{overlay.remove();resolve(answer)};
+    const dismiss=()=>{clearShareReferralV576();close(false)};
+    overlay.querySelector('#customerReferralCancelV576').onclick=dismiss;
+    overlay.addEventListener('mousedown',event=>{if(event.target===overlay)overlay.dataset.pressV576='1'});
+    overlay.addEventListener('click',event=>{
+      if(event.target!==overlay||overlay.dataset.pressV576!=='1')return;
+      overlay.dataset.pressV576='';dismiss();
+    });
+    overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();dismiss()}});
+    overlay.querySelector('#customerReferralGoV576').onclick=()=>close(true);
+    overlay.querySelector('#customerReferralGoV576').focus();
+  });
+}
 /* Fire-and-forget, from the wallet render for the business the code names. The server owns every
    guard; this only decides what to do with its answer. A definitive answer (applied, or a
    refusal that will never change) retires the stored code; "not a member yet" (42501) keeps it
@@ -4032,7 +4078,13 @@ async function route(){
     if(h.startsWith('#/wallet/')&&h.includes('?')){
       const [cleanHash,queryPart]=h.split('?');
       const refCode=new URLSearchParams(queryPart||'').get('ref')||'';
-      if(refCode)rememberShareReferralV576(decodeURIComponent(cleanHash.slice(9)),refCode);
+      if(refCode){
+        const refSlug=normalizeCustomerBusinessIntent(decodeURIComponent(cleanHash.slice(9)));
+        rememberShareReferralV576(refSlug,refCode);
+        /* nestly_v758: a ref link landing here is a fresh share, exactly like a fresh #/join?token=
+           scan (v599) — always ask again, never trust an earlier answer for a different link. */
+        if(refSlug){pendingReferralSheetSlugV576=refSlug;customerReferralAskedThisVisitV576=false;}
+      }
       try{history.replaceState(null,'',`${location.pathname}${location.search}${cleanHash}`)}catch{}
       h=cleanHash;
     }
@@ -4078,10 +4130,22 @@ async function route(){
     if(h.startsWith('#/offer/'))return renderCustomerOfferLandingV290(decodeURIComponent(h.slice(8).split('?')[0]));
     const directCustomerDestination=normalizeCustomerDestination(h);
     if(!S.user&&directCustomerDestination){
-      rememberPendingCustomerDestination(directCustomerDestination);
-      pendingCustomerBusinessSlug=directCustomerDestination.startsWith('#/wallet/')
+      const destinationSlugV576=directCustomerDestination.startsWith('#/wallet/')
         ?normalizeCustomerBusinessIntent(directCustomerDestination.slice(9))
         :'';
+      /* nestly_v758 (owner ruling 4): the friend's referral link opens the same confirmation sheet
+         the printed QR shows, BEFORE sign-up — mirrors the #/join signed-out gate below. */
+      if(destinationSlugV576&&pendingReferralSheetSlugV576===destinationSlugV576&&!customerReferralAskedThisVisitV576){
+        customerReferralAskedThisVisitV576=true;
+        const proceed=await confirmCustomerShareReferralV576(destinationSlugV576,isRouteCurrent);
+        if(!isRouteCurrent())return;
+        if(!proceed){
+          clearShareReferralV576();pendingReferralSheetSlugV576='';
+          return renderCustomerRegistration(isRouteCurrent);
+        }
+      }
+      rememberPendingCustomerDestination(directCustomerDestination);
+      pendingCustomerBusinessSlug=destinationSlugV576;
       return renderCustomerRegistration(isRouteCurrent);
     }
     if(!S.user&&h==='#/join'){
@@ -4186,11 +4250,26 @@ async function route(){
     if(h==='#/customer/settings')return renderCustomerProfile('settings');
     if(h==='#/customer/communications')return renderCustomerCommunicationsV263();
     if(h==='#/wallet'||h.startsWith('#/wallet/')){
+      const walletSlugV576=h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null;
+      /* nestly_v758 (owner ruling 4): a signed-in friend arriving via a referral link sees the same
+         confirmation sheet as a signed-out one. Whether or not they already belong to this
+         business, "Yes" simply lets the normal wallet render continue — the code applies itself
+         once membership is established (applyShareReferralV576 in renderCustomerWallet), and a
+         customer who is not yet a member lands on renderCustomerNotJoinedV289's own "Join" button,
+         the same join-by-slug path #/claim?business=<slug> already uses. */
+      if(walletSlugV576&&pendingReferralSheetSlugV576&&normalizeCustomerBusinessIntent(walletSlugV576)===pendingReferralSheetSlugV576
+        &&!customerReferralAskedThisVisitV576){
+        customerReferralAskedThisVisitV576=true;
+        const slugForSheetV576=pendingReferralSheetSlugV576;
+        const proceed=await confirmCustomerShareReferralV576(slugForSheetV576,isRouteCurrent);
+        if(!isRouteCurrent())return;
+        if(!proceed){clearShareReferralV576();pendingReferralSheetSlugV576='';}
+      }
       const customerCapabilities=await loadCustomerFeatureCapabilities();
       if(!isRouteCurrent())return;
       if(customerCapabilities._load_error)return renderCustomerCapabilityRetry('We could not check your customer access.',customerCapabilities._load_error_reason);
       if(!customerCapabilities.customer_wallet) return renderCustomerWalletUnavailable();
-      return renderCustomerWallet(h.startsWith('#/wallet/')?decodeURIComponent(h.slice(9)):null);
+      return renderCustomerWallet(walletSlugV576);
     }
     /* V288 (audit A2, HIGH 4). Every workspace route was parsed straight out of the hash, so a
        '?' became part of the page key: '#/appointments?view=list&preset=today' resolved to the
@@ -9111,11 +9190,12 @@ async function confirmCustomerJoinV571(token,isCurrent){
   const name=String(preview?.name||preview?.business_name||preview?.business?.name||'').trim();
   pendingCustomerJoinBusinessNameV609=name.slice(0,120);
   pendingCustomerJoinSlugV587=normalizeCustomerBusinessIntent(preview?.slug||preview?.business?.slug||'');
-  /* nestly_v654: the code the friend arrived with — either handed over by the /join page
-     (pendingCustomerJoinReferralV571) or lifted off ?ref= by the router into the v576 store. */
-  const linkedReferralV654=String(pendingCustomerJoinReferralV571
-    ||(pendingCustomerJoinSlugV587?peekShareReferralV576(pendingCustomerJoinSlugV587):'')
-    ||'').trim().toUpperCase().slice(0,32);
+  /* nestly_v758 (owner ruling 3): the printed business QR is a plain "join this business" code —
+     it must NEVER carry or apply a referral, so nothing here reads pendingCustomerJoinReferralV571
+     or the v576 share store, and any referral slot left over from an earlier flow is cleared
+     rather than shown or consumed. A code sitting in the v576 store for this slug from an earlier
+     FRIEND link is left untouched there — it simply is not read on this path. */
+  pendingCustomerJoinReferralV571='';
   return new Promise(resolve=>{
     const overlay=document.createElement('div');
     overlay.className='modal customer-surface';
@@ -9127,16 +9207,6 @@ async function confirmCustomerJoinV571(token,isCurrent){
       <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
       <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
       <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
-      ${/* nestly_v654 (owner photo 13/14: the friend who taps the shared link should land on THIS
-           sheet with the code already in it, uneditable). The code has been travelling with the
-           link since v576 — the router lifts ?ref= off #/wallet/<slug> and remembers it — but this
-           field never read that store, so the friend was shown an empty box and asked to type a
-           code they had already handed over. Read-only rather than disabled: a disabled input is
-           skipped by some assistive tech and, more practically, the Yes handler below reads
-           .value, which a disabled field still has but a customer could no longer verify. */''}
-      <label class="small" for="customerJoinReferralV612" style="display:block;text-align:left;margin:2px 2px 6px;font-weight:600">${esc(ct(linkedReferralV654?'joinReferralLinkedLabelV654':'joinReferralLabelV571'))}</label>
-      <input id="customerJoinReferralV612" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(ct('joinReferralPlaceholderV571'))}"${linkedReferralV654?` value="${esc(linkedReferralV654)}" readonly`:''} style="margin-bottom:${linkedReferralV654?'6':'14'}px">
-      ${linkedReferralV654?`<p class="muted small" style="text-align:left;margin:0 2px 14px">${esc(ct('joinReferralLinkedHintV654'))}</p>`:''}
       <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
     </section>`;
     document.body.appendChild(overlay);
@@ -9157,15 +9227,6 @@ async function confirmCustomerJoinV571(token,isCurrent){
     overlay.querySelector('#customerJoinGoV571').addEventListener('pointerdown',()=>joinFunnelEmitV610('join_yes_pointerdown',{surface:'app-sheet'}));
     overlay.querySelector('#customerJoinGoV571').onclick=()=>{
       joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});
-      /* nestly_v612 (owner): the sheet takes an optional referral code again — v587 removed the
-         field, the owner has now asked for it back with two-sided rewards. The code rides two
-         rails: the in-memory pending slot applies it right after this join, and the v576 share
-         store survives a sign-up or a page load and auto-applies on the wallet render. */
-      const referralCodeV612=String(overlay.querySelector('#customerJoinReferralV612')?.value||'').trim().toUpperCase().slice(0,32);
-      if(referralCodeV612){
-        pendingCustomerJoinReferralV571=referralCodeV612;
-        if(pendingCustomerJoinSlugV587)rememberShareReferralV576(pendingCustomerJoinSlugV587,referralCodeV612);
-      }
       close(true)};
     overlay.querySelector('#customerJoinGoV571').focus();
     /* Same probe as the /join page: what a finger would meet at the Yes centre, two frames

@@ -42,18 +42,18 @@ test('v571 the referral is applied AFTER the join, never before it', () => {
   assert.ok(applyCall > refusal, 'attribution sits past every join-failure return');
 });
 
-/* nestly_v612 (owner, reversing the v587 removal): "allow user to key in referral code so both
-   parties get the rewards." The field is back — OPTIONAL, applied only after the join, with no
-   pre-check that could block a Yes. What v571 protected is untouched: a referral can still never
-   be the reason somebody fails to join. */
-test('nestly_v612 the join sheet takes an optional referral code without blocking the Yes', () => {
+/* nestly_v758 (owner ruling 3, superseding v612): the printed business QR is a plain "join this
+   business" code and must NEVER carry or apply a referral. The field v612 put back is gone again
+   — this time for good on this path — and the sheet must not read a code out of the v576 share
+   store either, nor leave one sitting in the in-memory slot for a later apply. */
+test('nestly_v758 the QR/token join sheet carries no referral field at all', () => {
   const dialog = section(appJs, 'async function confirmCustomerJoinV571(', 'let pendingCustomerJoinReferralV571');
-  assert.match(dialog, /id="customerJoinReferralV612"/, 'the optional field is on the sheet');
-  assert.doesNotMatch(dialog, /customer_check_referral_code_v571/, 'still no pre-check to block on');
+  assert.doesNotMatch(dialog, /id="customerJoinReferralV612"/, 'no referral field on the token-join sheet');
+  assert.doesNotMatch(dialog, /peekShareReferralV576/, 'the sheet never reads a code out of the v576 store');
+  assert.doesNotMatch(dialog, /rememberShareReferralV576/, 'and never writes one back into it either');
+  assert.match(dialog, /pendingCustomerJoinReferralV571=''/, 'any leftover referral slot is cleared, not shown');
   assert.match(dialog, /id="customerJoinGoV571"/, 'one Yes');
   assert.match(dialog, /id="customerJoinCancelV571"[^>]*aria-label/, 'and one close, which is a real control');
-  assert.match(dialog, /rememberShareReferralV576\(pendingCustomerJoinSlugV587,referralCodeV612\)/,
-    'the typed code survives sign-up through the v576 share store');
   // The preview names the business from the key the server actually sends.
   assert.match(dialog, /preview\?\.name\|\|preview\?\.business_name/);
 });

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="8968cf4c66e2d3cba6969a10b150a9c3077cebf2660ad27152d704d5ad9271ac"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ae32af394f07bc530ccb60241555d32a524696b4bb4a662c5dde306112133300"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5742,7 +5742,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 8968cf4c66e2d3cba6969a10b150a9c3077cebf2660ad27152d704d5ad9271ac</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ae32af394f07bc530ccb60241555d32a524696b4bb4a662c5dde306112133300</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -30320,7 +30320,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
         <button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>
       </div>`:''}`:''}
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
-      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Who would you like?</h4><div class="pf-choice appointment-amend-team-v760" id="appointmentAmendTeam" role="group" aria-label="Choose a team member"></div><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Pick a date &amp; time</h4><div id="appointmentAmendSlots" class="appointment-amend-slots-v760"></div><input type="hidden" id="appointmentEditDate" value="${local.slice(0,10)}"><input type="hidden" id="appointmentEditTime" value="${local.slice(11,16)}"><input type="hidden" id="appointmentEditStaff" value="${esc(item.staff_id||'')}"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
+      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     /* A4: every way this dialog can close (X, Escape, backdrop, Done) spends a pending "Book next
        visit" handoff unless the owner is that very moment being sent to the booking form for it —
@@ -30357,7 +30357,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
       editForm.setAttribute('aria-busy',String(pending));
       [...editForm.elements].forEach(control=>{control.disabled=pending});
     };
-    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
     /* V375: one panel at a time, and neither open until the owner picks a tab. */
     const completeTabV375=$('appointmentCompleteTabV375'),completePanelV375=$('appointmentCompletePanelV375');
     const showOutcomePanelV375=which=>{
@@ -30369,7 +30368,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
       completeTabV375?.setAttribute('aria-expanded',String(completeOpen));
       completeTabV375?.setAttribute('aria-selected',String(completeOpen));
     };
-    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)openAmendPickerV760()};
+    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)$('appointmentEditDate').focus()};
     if(completeTabV375)completeTabV375.onclick=()=>showOutcomePanelV375(completePanelV375?.hidden?'complete':null);
     /* V245 (owner: "when i click in jeffrey tan meng lee - i need to have pop up to amend and
        change details. or change staff if needed to"). The amend form — date, time, duration,
@@ -30380,134 +30379,13 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     /* V375 (owner, photo 14: "minimise this" across the amend form). V245 forced it open on every
        card, which is what the owner struck through; it now opens only when the caller explicitly
        asked to edit — the Amend button in the list — or when its own tab is pressed. */
-    /* v760 (owner, photo 2). The amend form used to be a blind date + time + staff typing
-       exercise; it is now the CUSTOMER booking flow's two steps — "Who would you like?" cards and
-       a day-chip + slot-grid picker — reusing the portal's .svc / .pf-day-track / .pf-slot-grid
-       classes so it looks the same. The free starts come from amendAvailabilityDaysV760, which
-       calls availableCalendarStarts: the same core the Day view's green slots use. The chosen
-       date/time/staff are written into the SAME hidden fields the submit handler already read,
-       so the request built for reschedule_appointment_v48 is unchanged. */
-    const amendDayIndexV760=date=>Math.round((Date.parse(`${date}T00:00:00Z`)-Date.parse(`${todaySg}T00:00:00Z`))/86400000);
-    const amendWeekOfV760=date=>{
-      const index=amendDayIndexV760(date);
-      return Number.isFinite(index)?Math.max(0,Math.min(AMEND_WEEKS_V760-1,Math.floor(index/7))):0;
-    };
-    const amendOwnDateV760=eventParts(item.starts_at).date;
-    let amendWeekV760=amendWeekOfV760(amendOwnDateV760);
-    let amendDayV760=amendWeekDaysV760(amendWeekV760).includes(amendOwnDateV760)?amendOwnDateV760:amendWeekDaysV760(amendWeekV760)[0];
-    /* One entry per week, so paging back to a week already read is instant and never re-queries. */
-    const amendWeekCacheV760=new Map();
-    const amendWeekStateV760=week=>amendWeekCacheV760.get(week)||{status:'idle',appointments:[],blocks:[]};
-    const amendTimingV760=()=>{
-      const typed=Number($('appointmentEditDuration')?.value);
-      return {
-        duration:Number.isInteger(typed)&&typed>=15&&typed<=720?typed:duration,
-        before:Math.max(0,Number(service.buffer_before_min)||0),
-        after:Math.max(0,Number(service.buffer_after_min)||0)
-      };
-    };
-    const amendNowMinutesV760=()=>clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date()));
-    const renderAmendTeamV760=()=>{
-      const host=$('appointmentAmendTeam');if(!host)return;
-      const chosen=$('appointmentEditStaff').value;
-      const people=branchStaff(item.branch_id);
-      host.innerHTML=people.length?people.map(person=>`<button class="svc${person.id===chosen?' sel':''}" type="button" aria-pressed="${person.id===chosen}" data-amend-staff="${esc(person.id)}"><span><b data-merchant-content>${esc(staffLabel(person))}</b>${person.role?` <span class="muted small">· ${esc(String(person.role).replace('_',' '))}</span>`:''}</span></button>`).join('')
-        :'<p class="muted small">No team member is assigned to this branch.</p>';
-      host.querySelectorAll('[data-amend-staff]').forEach(button=>button.onclick=()=>{
-        $('appointmentEditStaff').value=button.dataset.amendStaff;
-        invalidateRescheduleEdit();renderAmendTeamV760();renderAmendSlotsV760();
-      });
-    };
-    const amendWeekNavV760=()=>`<div class="row appointment-amend-week-v760" style="gap:8px;margin-bottom:8px">
-      <button type="button" class="btn ghost sm" data-amend-week="-1" ${amendWeekV760<=0?'disabled':''}>‹ Earlier week</button>
-      <span class="muted small">${esc(calendarDayLabel(`${amendWeekDaysV760(amendWeekV760)[0]}T04:00:00.000Z`))} – ${esc(calendarDayLabel(`${amendWeekDaysV760(amendWeekV760)[6]}T04:00:00.000Z`))}</span>
-      <span class="spacer"></span>
-      <button type="button" class="btn ghost sm" data-amend-week="1" ${amendWeekV760>=AMEND_WEEKS_V760-1?'disabled':''}>Later week ›</button>
-    </div>`;
-    const wireAmendWeekNavV760=host=>host.querySelectorAll('[data-amend-week]').forEach(button=>button.onclick=()=>{
-      const next=amendWeekV760+Number(button.dataset.amendWeek);
-      if(next<0||next>=AMEND_WEEKS_V760)return;
-      amendWeekV760=next;amendDayV760=amendWeekDaysV760(next)[0];
-      renderAmendSlotsV760();ensureAmendWeekV760(next);
-    });
-    const renderAmendSlotsV760=()=>{
-      const host=$('appointmentAmendSlots');if(!host)return;
-      const state=amendWeekStateV760(amendWeekV760);
-      if(state.status==='loading'||state.status==='idle'){
-        host.innerHTML=`${amendWeekNavV760()}<p class="muted small">Checking free times…</p>`;wireAmendWeekNavV760(host);return;
-      }
-      if(state.status==='error'){
-        host.innerHTML=`${amendWeekNavV760()}<p class="err" role="alert">Free times could not be read for this week. Try another week, or close and reopen this appointment.</p>`;wireAmendWeekNavV760(host);return;
-      }
-      const staffId=$('appointmentEditStaff').value;
-      if(!staffId){host.innerHTML='<p class="muted small">Choose a team member to see their free times.</p>';return}
-      const days=amendAvailabilityDaysV760({
-        days:amendWeekDaysV760(amendWeekV760),staffId,appointments:state.appointments,blocks:state.blocks,
-        timing:amendTimingV760(),today:todaySg,todayMinutes:amendNowMinutesV760(),
-        excludeAppointmentId:item.id,scheduleFor:recordedSchedule
-      });
-      if(!days.some(day=>day.date===amendDayV760))amendDayV760=days[0]?.date||amendDayV760;
-      const current=days.find(day=>day.date===amendDayV760)||{starts:[]};
-      const chosenTime=$('appointmentEditTime').value,chosenDate=$('appointmentEditDate').value;
-      host.innerHTML=`${amendWeekNavV760()}<div class="pf-day-track" role="group" aria-label="Choose a day">${days.map(day=>`<button class="pf-day${day.date===amendDayV760?' sel':''}" type="button" data-amend-day="${esc(day.date)}" aria-pressed="${day.date===amendDayV760}"><b>${esc(calendarDayLabel(`${day.date}T04:00:00.000Z`))}</b><span class="muted small">${day.starts.length} free</span></button>`).join('')}</div>
-        ${current.starts.length?`<div class="pf-slot-grid" role="group" aria-label="Choose a time">${current.starts.map(start=>{const clock=minuteClock(start);const picked=chosenDate===amendDayV760&&chosenTime===clock;return `<button class="pf-slot${picked?' sel':''}" type="button" data-amend-slot="${esc(clock)}" aria-pressed="${picked}">${esc(clock)}</button>`}).join('')}</div>`
-          :'<p class="muted small" style="margin-top:10px">No free time on this day for this team member and duration. Try another day, another week, another team member, or a shorter duration.</p>'}
-        <p class="muted small" style="margin-top:10px">Free times come from this branch&#39;s opening hours, the team member&#39;s schedule, blocked time and existing appointments. This appointment&#39;s own slot stays available.</p>`;
-      wireAmendWeekNavV760(host);
-      host.querySelectorAll('[data-amend-day]').forEach(button=>button.onclick=()=>{amendDayV760=button.dataset.amendDay;renderAmendSlotsV760()});
-      host.querySelectorAll('[data-amend-slot]').forEach(button=>button.onclick=()=>{
-        $('appointmentEditDate').value=amendDayV760;$('appointmentEditTime').value=button.dataset.amendSlot;
-        invalidateRescheduleEdit();renderAmendSlotsV760();
-      });
-    };
-    /* One week, one read — and the SAME amendAvailabilityDaysV760 path renders it, so a week
-       reached by paging is computed exactly like the week the picker opened on. */
-    const loadAmendWeekV760=async week=>{
-      const days=amendWeekDaysV760(week),from=days[0],to=addDays(days[6],1);
-      const [appointmentResult,blockResult]=await Promise.all([
-        fetchAllRowsResult(()=>sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,services!appointments_service_id_fkey(buffer_before_min,buffer_after_min)',{count:'exact'})
-          .eq('business_id',S.biz.id).eq('branch_id',item.branch_id).gte('starts_at',sgDateBoundary(from)).lt('starts_at',sgDateBoundary(to)).order('starts_at').order('id')),
-        fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:item.branch_id,
-          p_from:sgDateBoundary(from),p_to:sgDateBoundary(to)}).order('starts_at').order('staff_id'))
-      ]);
-      if(!editForm.isConnected)return;
-      amendWeekCacheV760.set(week,appointmentResult.error||blockResult.error
-        ?{status:'error',appointments:[],blocks:[]}
-        :{status:'ready',appointments:appointmentResult.data||[],blocks:blockResult.data||[]});
-      if(week===amendWeekV760)renderAmendSlotsV760();
-    };
-    const ensureAmendWeekV760=week=>{
-      const state=amendWeekStateV760(week);
-      if(state.status==='ready'||state.status==='loading')return;
-      amendWeekCacheV760.set(week,{status:'loading',appointments:[],blocks:[]});
-      loadAmendWeekV760(week).catch(()=>{
-        amendWeekCacheV760.set(week,{status:'error',appointments:[],blocks:[]});
-        if(week===amendWeekV760)renderAmendSlotsV760();
-      });
-    };
-    let amendOpenedV760=false;
-    amendPickerSyncV760=({day=null}={})=>{
-      if(day){amendWeekV760=amendWeekOfV760(day);amendDayV760=day}
-      renderAmendTeamV760();renderAmendSlotsV760();
-      if(day)ensureAmendWeekV760(amendWeekV760);
-    };
-    const openAmendPickerV760=()=>{
-      renderAmendTeamV760();renderAmendSlotsV760();
-      ensureAmendWeekV760(amendWeekV760);
-      if(amendOpenedV760)return;
-      amendOpenedV760=true;
-      requestAnimationFrame(()=>$('appointmentAmendTeam')?.querySelector('button')?.focus());
-    };
     showOutcomePanelV375(startEditing?'amend':null);
-    if(startEditing)openAmendPickerV760();
+    if(startEditing)requestAnimationFrame(()=>$('appointmentEditDate')?.focus());
     $('appointmentRescheduleCancel').onclick=()=>{showOutcomePanelV375(null);toggle?.focus()};
-    /* v760: date, time and staff are now hidden fields written by the picker, which invalidates
-       the pending attempt itself. Duration additionally re-draws the slots, because a longer
-       visit genuinely has fewer free starts. */
-    ['appointmentEditDuration','appointmentEditNote'].forEach(id=>{
+    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
+    ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{
       $(id).addEventListener('input',invalidateRescheduleEdit);$(id).addEventListener('change',invalidateRescheduleEdit);
     });
-    ['input','change'].forEach(eventName=>$('appointmentEditDuration').addEventListener(eventName,()=>renderAmendSlotsV760()));
     editForm.onsubmit=async event=>{
       event.preventDefault();
       const starts=sgIso(`${$('appointmentEditDate').value}T${$('appointmentEditTime').value}`),editedDuration=Number($('appointmentEditDuration').value),editedStaff=$('appointmentEditStaff').value,editedNote=$('appointmentEditNote').value.trim();
@@ -30546,6 +30424,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'8968cf4c66e2d3cba6969a10b150a9c3077cebf2660ad27152d704d5ad9271ac',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ae32af394f07bc530ccb60241555d32a524696b4bb4a662c5dde306112133300',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

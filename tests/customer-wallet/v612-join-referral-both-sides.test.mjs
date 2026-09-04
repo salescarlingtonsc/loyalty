@@ -20,13 +20,13 @@ const app=readFileSync(new URL('../../app/app.js',import.meta.url),'utf8');
 const join=readFileSync(new URL('../../app/join.html',import.meta.url),'utf8');
 const migration=readFileSync(new URL('../../db/migrations/20260830_nestly_v612_referral_immediate_when_no_floor.sql',import.meta.url),'utf8');
 
-test('the /join confirm card takes the code and hands it through sign-up',()=>{
-  assert.match(join,/id="joinReferral"/,'the optional field is on the camera-scan card');
-  assert.match(join,/'nestly\.customer\.shareReferralV576',\s*JSON\.stringify\(\{slug:String\(page\.slug\|\|''\)\.toLowerCase\(\),code:referralCode,at:Date\.now\(\)\}\)/,
-    'the code survives sign-up in the v576 share store the wallet auto-applies from');
-  assert.match(join,/ref:referralCode/,'and rides the app handoff');
-  assert.match(app,/if\(raw\.ref\)pendingCustomerJoinReferralV571=String\(raw\.ref\)/,
-    'the app restores it when consuming the handoff');
+test('nestly_v758 (owner ruling 3): the business QR/join-token path never carries a referral',()=>{
+  /* Superseded by nestly_v758: the printed business QR is a plain "join this business" code and
+   * must never carry or apply a referral, however it arrived. The app no longer restores a
+   * referral off the /join page's handoff even though join.html still writes one — the app-side
+   * consumer is the enforcement point tested here. */
+  assert.doesNotMatch(app,/if\(raw\.ref\)pendingCustomerJoinReferralV571=String\(raw\.ref\)/,
+    'the app no longer restores a referral from the /join page handoff');
 });
 
 test('both surfaces apply through v612 and the join can never be blocked by a code',()=>{
