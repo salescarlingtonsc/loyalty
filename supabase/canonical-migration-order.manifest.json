@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 585,
-  "itemCount": 630,
+  "pendingCount": 586,
+  "itemCount": 631,
   "items": [
     {
       "order": 1,
@@ -6282,6 +6282,16 @@
     {
       "order": 628,
       "kind": "pending",
+      "version": "20260924000002",
+      "name": "nestly_v751_deleted_phone_marks_block_rejoin_rewards",
+      "path": "supabase/migrations/20260924000002_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
+      "octetLength": 18091,
+      "sha256": "d02fe006341a2f1a6574bc246404f61b129c09e7ca5942844a33ba46b0cf16ac",
+      "provenance": "local-source"
+    },
+    {
+      "order": 629,
+      "kind": "pending",
       "version": "20260924010000",
       "name": "nestly_v751_discount_cap_wording",
       "path": "supabase/migrations/20260924010000_nestly_v751_discount_cap_wording.sql",
@@ -6290,7 +6300,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 629,
+      "order": 630,
       "kind": "pending",
       "version": "20260924020000",
       "name": "nestly_v752_birthday_gift_is_a_benefit",
@@ -6300,7 +6310,7 @@
       "provenance": "local-source"
     },
     {
-      "order": 630,
+      "order": 631,
       "kind": "pending",
       "version": "20260924040000",
       "name": "nestly_v754_gift_expiry_is_a_redeem_by_date",

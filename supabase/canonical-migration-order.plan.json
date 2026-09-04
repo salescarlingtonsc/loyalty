@@ -3769,6 +3769,12 @@
     },
     {
       "kind": "pending",
+      "version": "20260924000002",
+      "name": "nestly_v751_deleted_phone_marks_block_rejoin_rewards",
+      "sourcePath": "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20260924010000",
       "name": "nestly_v751_discount_cap_wording",
       "sourcePath": "db/migrations/20260924_nestly_v751_discount_cap_wording.sql"

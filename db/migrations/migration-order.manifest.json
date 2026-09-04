@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 629,
-  "executableCount": 615,
+  "itemCount": 630,
+  "executableCount": 616,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -887,10 +887,11 @@
     },
     {
       "sourceDeployVersion": "20260924",
-      "count": 5,
+      "count": 6,
       "paths": [
         "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql",
         "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql",
+        "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
         "db/migrations/20260924_nestly_v751_discount_cap_wording.sql",
         "db/migrations/20260924_nestly_v752_birthday_gift_is_a_benefit.sql",
         "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql"
@@ -5909,13 +5910,21 @@
     {
       "order": 627,
       "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
+      "semanticVersion": "v751",
+      "proposedDeployVersion": "20260924000002",
+      "sha256": "d02fe006341a2f1a6574bc246404f61b129c09e7ca5942844a33ba46b0cf16ac"
+    },
+    {
+      "order": 628,
+      "kind": "executable",
       "path": "db/migrations/20260924_nestly_v751_discount_cap_wording.sql",
       "semanticVersion": "v751",
       "proposedDeployVersion": "20260924010000",
       "sha256": "8ecd392597d21a09be0ee610a80be2fe83e2530e7a7fd4c3092b2b1adc6fda5a"
     },
     {
-      "order": 628,
+      "order": 629,
       "kind": "executable",
       "path": "db/migrations/20260924_nestly_v752_birthday_gift_is_a_benefit.sql",
       "semanticVersion": "v752",
@@ -5923,7 +5932,7 @@
       "sha256": "c0184da838f0e93d1a9eb38f992d81ba17af579f0efd9691b262b040ce10b69c"
     },
     {
-      "order": 629,
+      "order": 630,
       "kind": "executable",
       "path": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
       "semanticVersion": "v754",

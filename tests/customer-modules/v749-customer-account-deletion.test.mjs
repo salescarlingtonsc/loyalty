@@ -7,6 +7,7 @@ const read = (file) => readFile(new URL(file, root), 'utf8');
 const app = (await read('app/index.html')) + '\n' + (await read('app/app.js'));
 const migration = await read('db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql');
 const migrationV750 = await read('db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql');
+const migrationV751 = await read('db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql');
 
 const section = (src, start, end) => {
   const from = src.indexOf(start);
@@ -100,6 +101,55 @@ test('the migration never touches the value ledgers directly', () => {
   assert.doesNotMatch(lower, /delete from public\.sales/);
   assert.doesNotMatch(lower, /delete from public\.points_ledger/);
   assert.doesNotMatch(lower, /delete from public\.credit_ledger/);
+});
+
+/* -------------------------------------------------- (e2) nestly_v751: deletion marks block rejoin rewards */
+
+test('nestly_v751 creates customer_deletion_marks_v751 with RLS enabled in the same statement', () => {
+  assert.match(migrationV751,
+    /create table if not exists public\.customer_deletion_marks_v751[\s\S]*?;\s*[\s\S]*?alter table public\.customer_deletion_marks_v751 enable row level security;/);
+});
+
+test('nestly_v751 never grants the marks table to anon or authenticated', () => {
+  assert.match(migrationV751,
+    /revoke all on table public\.customer_deletion_marks_v751 from public, anon, authenticated;/);
+});
+
+test('nestly_v751 defines app.phone_recently_deleted_v751 with a 365-day window', () => {
+  const body = migrationV751.slice(migrationV751.indexOf('create or replace function app.phone_recently_deleted_v751'));
+  assert.match(body, /interval '365 days'/);
+});
+
+test('nestly_v751 wires both join-time reward gates through phone_recently_deleted_v751', () => {
+  const welcomeBody = migrationV751.slice(
+    migrationV751.indexOf('create or replace function app.issue_welcome_offer_v215'),
+    migrationV751.indexOf('create or replace function app.referral_referred_is_new_v683'));
+  assert.match(welcomeBody, /phone_recently_deleted_v751\(/);
+
+  const referralBody = migrationV751.slice(
+    migrationV751.indexOf('create or replace function app.referral_referred_is_new_v683'),
+    migrationV751.indexOf('create or replace function public.customer_delete_account_v749'));
+  assert.match(referralBody, /phone_recently_deleted_v751\(/);
+});
+
+test('nestly_v751 writes the deletion marks before the client row is anonymised', () => {
+  const deletionBody = migrationV751.slice(migrationV751.indexOf('create or replace function public.customer_delete_account_v749'));
+  const insertIndex = deletionBody.indexOf('insert into public.customer_deletion_marks_v751');
+  const updateIndex = deletionBody.indexOf("set full_name = 'Erased customer'");
+  assert.notEqual(insertIndex, -1, 'must insert into customer_deletion_marks_v751');
+  assert.notEqual(updateIndex, -1, 'must anonymise the client row');
+  assert.ok(insertIndex < updateIndex, 'the mark must be taken before the client row is erased');
+});
+
+test('nestly_v751 never stores a raw phone in the marks table, only a hash', () => {
+  const deletionBody = migrationV751.slice(migrationV751.indexOf('create or replace function public.customer_delete_account_v749'));
+  assert.match(deletionBody, /insert into public\.customer_deletion_marks_v751\(business_id, phone_hash(?:, request_id)?\)\s*\n\s*values \([^)]*app\.v89_sha256\(/);
+  assert.doesNotMatch(deletionBody,
+    /insert into public\.customer_deletion_marks_v751\([^)]*\)\s*\n\s*values \([^)]*,\s*(?:v_client\.phone_norm|v_auth_phone|app\.norm_phone\(v_auth_phone\))\s*[,)]/);
+});
+
+test('the OTP-send failure branch tells the customer to wait 10 minutes (nestly_v751)', () => {
+  assert.match(app, /wait 10 minutes/);
 });
 
 /* -------------------------------------------------- (f) the business route is untouched */

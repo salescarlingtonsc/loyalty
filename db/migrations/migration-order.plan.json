@@ -3774,6 +3774,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v751_deleted_phone_marks_block_rejoin_rewards.sql",
+      "semanticVersion": "v751",
+      "proposedDeployVersion": "20260924000002"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20260924_nestly_v751_discount_cap_wording.sql",
       "semanticVersion": "v751",
       "proposedDeployVersion": "20260924010000"
