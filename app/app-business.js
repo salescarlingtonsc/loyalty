@@ -9593,8 +9593,8 @@ async function tillPage(){
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     /* V287: re-attributing re-renders so the selected teammate is visible on the control that
-       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
-       a change of attribution can never replay the previous teammate's sale. */
+       set it. The finalise call already carries tillSaleStaffId as p_staff, so a change of
+       attribution can never replay the previous teammate's sale. */
     if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
       tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
