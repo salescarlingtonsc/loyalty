@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **74**.
+Fixture count: **75**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -91,6 +91,7 @@ Fixture count: **74**.
 | `db/tests/executed/v755_corpus_razorpay_billing.sql` | `db/migrations/20260925_nestly_v755_razorpay_billing.sql` | _(none)_ | 1 | 0 | `5a4aa1f1c4d5bdd0a34cb13dccb55bbbe94e9df03bc6180d58457b602b5521f7` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v755_corpus_razorpay_billing --migrated-only` |
 | `db/tests/executed/v756_corpus_self_serve_payment_evidence.sql` | `db/migrations/20260926_nestly_v756_self_serve_payment_evidence.sql` | _(none)_ | 1 | 0 | `78ba06a6b43d02c56513e05e82381e9429cbbd5cd9958ecc0c753afc1c4cd126` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v756_corpus_self_serve_payment_evidence --migrated-only` |
 | `db/tests/executed/v757_corpus_reconcile_run_provider.sql` | `db/migrations/20260927_nestly_v757_reconcile_run_provider_label.sql` | _(none)_ | 0 | 0 | `2f742983ec1bc162d4d7562aeddaee01b7b28ead4d2138d8e630cd0d4d0fcf39` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v757_corpus_reconcile_run_provider --migrated-only` |
+| `db/tests/executed/v758_corpus_billing_summary.sql` | `db/migrations/20260928_nestly_v758_billing_summary_and_payment_method.sql` | _(none)_ | 3 | 0 | `fc79b300f627a3f3274681ad1ef0c67a31bb6733b339a6984233453bc325bc9c` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v758_corpus_billing_summary --migrated-only` |
 
 ## Notes
 

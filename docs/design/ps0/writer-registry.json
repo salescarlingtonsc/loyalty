@@ -3285,6 +3285,10 @@
       "reason": "browser RPC 'get_business_billing_v125' is a finite owner billing reader; it projects provider truth plus the fail-closed no-GST policy and writes no operational or customer value"
     },
     {
+      "id": "browser.rpc:app/app.js:get_business_billing_v758",
+      "reason": "browser RPC 'get_business_billing_v758' is a finite owner billing reader; it delegates to get_business_billing_v125 for the tenant guard and every existing key, and adds only a server-computed summary (branch counts, units, total, renew date, state) plus the display-only stored payment method (kind, brand, last four digits) - it writes nothing"
+    },
+    {
       "id": "browser.rpc:app/app.js:get_business_entitlement_v620",
       "reason": "V620 read-only entitlement-authority getter behind the locked-workspace reason screen. Declared STABLE SECURITY DEFINER so a locked owner (approval pending, trial expired, payment overdue, or paused) can read WHY, gated to that business's active staff or a super admin rather than the workspace-open predicate it reports on. Delegates to app.business_entitlement_v620, which itself performs no DML. It performs no write and resolves to no customer-value writer."
     },

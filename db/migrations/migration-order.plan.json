@@ -3819,6 +3819,12 @@
       "path": "db/migrations/20260927_nestly_v757_reconcile_run_provider_label.sql",
       "semanticVersion": "v757",
       "proposedDeployVersion": "20260927000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260928_nestly_v758_billing_summary_and_payment_method.sql",
+      "semanticVersion": "v758",
+      "proposedDeployVersion": "20260928000000"
     }
   ]
 }

@@ -3814,6 +3814,12 @@
       "version": "20260927000000",
       "name": "nestly_v757_reconcile_run_provider_label",
       "sourcePath": "db/migrations/20260927_nestly_v757_reconcile_run_provider_label.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260928000000",
+      "name": "nestly_v758_billing_summary_and_payment_method",
+      "sourcePath": "db/migrations/20260928_nestly_v758_billing_summary_and_payment_method.sql"
     }
   ]
 }
