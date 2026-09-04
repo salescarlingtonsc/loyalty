@@ -27089,17 +27089,22 @@ async function appointmentsPage(){
   const appointmentOutcomeIsDue=item=>Number.isFinite(new Date(item?.starts_at).getTime())&&new Date(item.starts_at).getTime()<=Date.now();
   const closeAppointmentDetails=({restoreFocus=true}={})=>{detailGate.invalidate();rescheduleGate.invalidate();rescheduleAttempt=null;if(closeAppointmentDialog){const close=closeAppointmentDialog;closeAppointmentDialog=null;close({restoreFocus})}};
   routeDispose=()=>{if(calendarMinuteTimer)clearInterval(calendarMinuteTimer);closeAppointmentDetails();closeBlockedTimeDialog({restoreFocus:false})};
+  /* v760: the clash suggestions still write the SAME hidden fields, but those fields are no longer
+     what the owner sees — the team cards and slot grid are. This hook is published by the open
+     amend picker so a suggestion press repaints the selection instead of silently changing a
+     value nobody can see. */
+  let amendPickerSyncV760=null;
   function renderRescheduleSuggestions(host,payload){
     const available=payload?.available_staff||[],next=payload?.next_best_slots||[];
     host.innerHTML=`<div class="schedule-suggestion"><h3>That time is not available</h3><p class="muted small" style="margin-top:5px">Choose another available staff member or one of the next times below. The appointment has not changed.</p>
       ${available.length?`<p class="muted small" style="margin-top:11px">Available at your requested time</p><div class="schedule-suggestion-actions">${available.map(person=>`<button type="button" class="btn ghost sm rescheduleStaffSuggestion" data-staff="${person.staff_id}">${esc(staffName[person.staff_id]||person.staff_name)}</button>`).join('')}</div>`:''}
       ${next.length?`<p class="muted small" style="margin-top:11px">Next best times today</p><div class="schedule-suggestion-actions">${next.map(slot=>`<button type="button" class="btn ghost sm rescheduleTimeSuggestion" data-start="${esc(slot.starts_at)}" data-staff="${slot.staff_id}">${esc(appointmentTimeRange(slot))} · ${esc(staffName[slot.staff_id]||slot.staff_name)}</button>`).join('')}</div>`:''}</div>`;
     host.querySelectorAll('.rescheduleStaffSuggestion').forEach(button=>button.onclick=()=>{
-      $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';$('appointmentEditStaff').focus();
+      $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';amendPickerSyncV760?.();
     });
     host.querySelectorAll('.rescheduleTimeSuggestion').forEach(button=>button.onclick=()=>{
       const local=sgInput(button.dataset.start);$('appointmentEditDate').value=local.slice(0,10);$('appointmentEditTime').value=local.slice(11,16);
-      $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';$('appointmentEditTime').focus();
+      $('appointmentEditStaff').value=button.dataset.staff;rescheduleAttempt=null;host.innerHTML='';amendPickerSyncV760?.({day:local.slice(0,10)});
     });
   }
   async function openAppointmentDetails(summary,{startEditing=false}={}){
@@ -27117,7 +27122,7 @@ async function appointmentsPage(){
     const stillCurrent=detailGate.begin();
     /* A4: client_id is added so a completed appointment can hand its client off to "Book next
        visit" without a second round trip — everything else on this row was already selected. */
-    const {data,error}=await sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents)')
+    const {data,error}=await sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents,buffer_before_min,buffer_after_min)')
       .eq('business_id',S.biz.id).eq('branch_id',summary.branch_id).eq('id',summary.id).maybeSingle();
     if(!stillCurrent()||!loading.isConnected){removeLoading({restoreFocus:false});return}
     if(error||!data){
@@ -27179,7 +27184,7 @@ async function appointmentsPage(){
         <button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>
       </div>`:''}`:''}
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
-      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
+      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Who would you like?</h4><div class="pf-choice appointment-amend-team-v760" id="appointmentAmendTeam" role="group" aria-label="Choose a team member"></div><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Pick a date &amp; time</h4><div id="appointmentAmendSlots" class="appointment-amend-slots-v760"></div><input type="hidden" id="appointmentEditDate" value="${local.slice(0,10)}"><input type="hidden" id="appointmentEditTime" value="${local.slice(11,16)}"><input type="hidden" id="appointmentEditStaff" value="${esc(item.staff_id||'')}"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     /* A4: every way this dialog can close (X, Escape, backdrop, Done) spends a pending "Book next
        visit" handoff unless the owner is that very moment being sent to the booking form for it —
@@ -27216,6 +27221,7 @@ async function appointmentsPage(){
       editForm.setAttribute('aria-busy',String(pending));
       [...editForm.elements].forEach(control=>{control.disabled=pending});
     };
+    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
     /* V375: one panel at a time, and neither open until the owner picks a tab. */
     const completeTabV375=$('appointmentCompleteTabV375'),completePanelV375=$('appointmentCompletePanelV375');
     const showOutcomePanelV375=which=>{
@@ -27227,7 +27233,7 @@ async function appointmentsPage(){
       completeTabV375?.setAttribute('aria-expanded',String(completeOpen));
       completeTabV375?.setAttribute('aria-selected',String(completeOpen));
     };
-    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)$('appointmentEditDate').focus()};
+    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)openAmendPickerV760()};
     if(completeTabV375)completeTabV375.onclick=()=>showOutcomePanelV375(completePanelV375?.hidden?'complete':null);
     /* V245 (owner: "when i click in jeffrey tan meng lee - i need to have pop up to amend and
        change details. or change staff if needed to"). The amend form — date, time, duration,
@@ -27238,13 +27244,103 @@ async function appointmentsPage(){
     /* V375 (owner, photo 14: "minimise this" across the amend form). V245 forced it open on every
        card, which is what the owner struck through; it now opens only when the caller explicitly
        asked to edit — the Amend button in the list — or when its own tab is pressed. */
+    /* v760 (owner, photo 2). The amend form used to be a blind date + time + staff typing
+       exercise; it is now the CUSTOMER booking flow's two steps — "Who would you like?" cards and
+       a day-chip + slot-grid picker — reusing the portal's .svc / .pf-day-track / .pf-slot-grid
+       classes so it looks the same. The free starts come from amendAvailabilityDaysV760, which
+       calls availableCalendarStarts: the same core the Day view's green slots use. The chosen
+       date/time/staff are written into the SAME hidden fields the submit handler already read,
+       so the request built for reschedule_appointment_v48 is unchanged. */
+    const amendDaysV760=(()=>{
+      const list=[];for(let index=0;index<7;index++)list.push(addDays(todaySg,index));
+      const own=eventParts(item.starts_at).date;
+      if(!list.includes(own)&&own>todaySg)list.push(own);
+      return list.sort();
+    })();
+    let amendDayV760=eventParts(item.starts_at).date;
+    if(!amendDaysV760.includes(amendDayV760))amendDayV760=amendDaysV760[0];
+    let amendStateV760={status:'idle',appointments:[],blocks:[]};
+    const amendTimingV760=()=>{
+      const typed=Number($('appointmentEditDuration')?.value);
+      return {
+        duration:Number.isInteger(typed)&&typed>=15&&typed<=720?typed:duration,
+        before:Math.max(0,Number(service.buffer_before_min)||0),
+        after:Math.max(0,Number(service.buffer_after_min)||0)
+      };
+    };
+    const amendNowMinutesV760=()=>clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date()));
+    const renderAmendTeamV760=()=>{
+      const host=$('appointmentAmendTeam');if(!host)return;
+      const chosen=$('appointmentEditStaff').value;
+      const people=branchStaff(item.branch_id);
+      host.innerHTML=people.length?people.map(person=>`<button class="svc${person.id===chosen?' sel':''}" type="button" aria-pressed="${person.id===chosen}" data-amend-staff="${esc(person.id)}"><span><b data-merchant-content>${esc(staffLabel(person))}</b>${person.role?` <span class="muted small">· ${esc(String(person.role).replace('_',' '))}</span>`:''}</span></button>`).join('')
+        :'<p class="muted small">No team member is assigned to this branch.</p>';
+      host.querySelectorAll('[data-amend-staff]').forEach(button=>button.onclick=()=>{
+        $('appointmentEditStaff').value=button.dataset.amendStaff;
+        invalidateRescheduleEdit();renderAmendTeamV760();renderAmendSlotsV760();
+      });
+    };
+    const renderAmendSlotsV760=()=>{
+      const host=$('appointmentAmendSlots');if(!host)return;
+      if(amendStateV760.status==='loading'){host.innerHTML='<p class="muted small">Checking free times…</p>';return}
+      if(amendStateV760.status==='error'){host.innerHTML='<p class="err" role="alert">Free times could not be read. Try closing and reopening this appointment.</p>';return}
+      const staffId=$('appointmentEditStaff').value;
+      if(!staffId){host.innerHTML='<p class="muted small">Choose a team member to see their free times.</p>';return}
+      const days=amendAvailabilityDaysV760({
+        days:amendDaysV760,staffId,appointments:amendStateV760.appointments,blocks:amendStateV760.blocks,
+        timing:amendTimingV760(),today:todaySg,todayMinutes:amendNowMinutesV760(),
+        excludeAppointmentId:item.id,scheduleFor:recordedSchedule
+      });
+      if(!days.some(day=>day.date===amendDayV760))amendDayV760=days[0]?.date||amendDayV760;
+      const current=days.find(day=>day.date===amendDayV760)||{starts:[]};
+      const chosenTime=$('appointmentEditTime').value,chosenDate=$('appointmentEditDate').value;
+      host.innerHTML=`<div class="pf-day-track" role="group" aria-label="Choose a day">${days.map(day=>`<button class="pf-day${day.date===amendDayV760?' sel':''}" type="button" data-amend-day="${esc(day.date)}" aria-pressed="${day.date===amendDayV760}"><b>${esc(calendarDayLabel(`${day.date}T04:00:00.000Z`))}</b><span class="muted small">${day.starts.length} free</span></button>`).join('')}</div>
+        ${current.starts.length?`<div class="pf-slot-grid" role="group" aria-label="Choose a time">${current.starts.map(start=>{const clock=minuteClock(start);const picked=chosenDate===amendDayV760&&chosenTime===clock;return `<button class="pf-slot${picked?' sel':''}" type="button" data-amend-slot="${esc(clock)}" aria-pressed="${picked}">${esc(clock)}</button>`}).join('')}</div>`
+          :'<p class="muted small" style="margin-top:10px">No free time on this day for this team member and duration. Try another day, another team member, or a shorter duration.</p>'}
+        <p class="muted small" style="margin-top:10px">Free times come from this branch&#39;s opening hours, the team member&#39;s schedule, blocked time and existing appointments. This appointment&#39;s own slot stays available.</p>`;
+      host.querySelectorAll('[data-amend-day]').forEach(button=>button.onclick=()=>{amendDayV760=button.dataset.amendDay;renderAmendSlotsV760()});
+      host.querySelectorAll('[data-amend-slot]').forEach(button=>button.onclick=()=>{
+        $('appointmentEditDate').value=amendDayV760;$('appointmentEditTime').value=button.dataset.amendSlot;
+        invalidateRescheduleEdit();renderAmendSlotsV760();
+      });
+    };
+    const loadAmendAvailabilityV760=async()=>{
+      amendStateV760={status:'loading',appointments:[],blocks:[]};renderAmendSlotsV760();
+      const from=amendDaysV760[0],to=addDays(amendDaysV760[amendDaysV760.length-1],1);
+      const [appointmentResult,blockResult]=await Promise.all([
+        fetchAllRowsResult(()=>sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,services!appointments_service_id_fkey(buffer_before_min,buffer_after_min)',{count:'exact'})
+          .eq('business_id',S.biz.id).eq('branch_id',item.branch_id).gte('starts_at',sgDateBoundary(from)).lt('starts_at',sgDateBoundary(to)).order('starts_at').order('id')),
+        fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:item.branch_id,
+          p_from:sgDateBoundary(from),p_to:sgDateBoundary(to)}).order('starts_at').order('staff_id'))
+      ]);
+      if(!editForm.isConnected)return;
+      amendStateV760=appointmentResult.error||blockResult.error
+        ?{status:'error',appointments:[],blocks:[]}
+        :{status:'ready',appointments:appointmentResult.data||[],blocks:blockResult.data||[]};
+      renderAmendSlotsV760();
+    };
+    let amendOpenedV760=false;
+    amendPickerSyncV760=({day=null}={})=>{
+      if(day)amendDayV760=day;
+      renderAmendTeamV760();renderAmendSlotsV760();
+    };
+    const openAmendPickerV760=()=>{
+      renderAmendTeamV760();
+      if(amendOpenedV760){renderAmendSlotsV760();return}
+      amendOpenedV760=true;
+      loadAmendAvailabilityV760().catch(()=>{amendStateV760={status:'error',appointments:[],blocks:[]};renderAmendSlotsV760()});
+      requestAnimationFrame(()=>$('appointmentAmendTeam')?.querySelector('button')?.focus());
+    };
     showOutcomePanelV375(startEditing?'amend':null);
-    if(startEditing)requestAnimationFrame(()=>$('appointmentEditDate')?.focus());
+    if(startEditing)openAmendPickerV760();
     $('appointmentRescheduleCancel').onclick=()=>{showOutcomePanelV375(null);toggle?.focus()};
-    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
-    ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{
+    /* v760: date, time and staff are now hidden fields written by the picker, which invalidates
+       the pending attempt itself. Duration additionally re-draws the slots, because a longer
+       visit genuinely has fewer free starts. */
+    ['appointmentEditDuration','appointmentEditNote'].forEach(id=>{
       $(id).addEventListener('input',invalidateRescheduleEdit);$(id).addEventListener('change',invalidateRescheduleEdit);
     });
+    ['input','change'].forEach(eventName=>$('appointmentEditDuration').addEventListener(eventName,()=>renderAmendSlotsV760()));
     editForm.onsubmit=async event=>{
       event.preventDefault();
       const starts=sgIso(`${$('appointmentEditDate').value}T${$('appointmentEditTime').value}`),editedDuration=Number($('appointmentEditDuration').value),editedStaff=$('appointmentEditStaff').value,editedNote=$('appointmentEditNote').value.trim();
@@ -27536,8 +27632,12 @@ async function appointmentsPage(){
      future`. A time you cannot book must not look bookable. `earliestBookableMinute` is the
      now-line on today, +Infinity on a past day (nothing is bookable), and -Infinity on a future
      day (everything within working hours is). */
-  function availableCalendarStarts(column,earliestBookableMinute=-Infinity){
-    const {duration,before,after}=selectedCalendarServiceTiming();
+  /* v760: `timing` is optional and defaults to the calendar's selected service, so every existing
+     caller is unchanged. It exists so the Change-appointment picker can ask this SAME core for the
+     free starts of the appointment's own duration and buffers instead of growing a second
+     availability implementation (the v432 rule: one availability core, staff == customer). */
+  function availableCalendarStarts(column,earliestBookableMinute=-Infinity,timing=null){
+    const {duration,before,after}=timing||selectedCalendarServiceTiming();
     if(column.schedule.state!=='working')return [];
     if(earliestBookableMinute===Infinity)return [];
     const starts=[];
@@ -27558,6 +27658,24 @@ async function appointmentsPage(){
       if(!alreadyPassed&&!hitsBreak&&!hitsAppointment&&!hitsBlockedTime)starts.push(start);
     }
     return starts;
+  }
+  /* v760 (owner, photo 2: the Change-appointment form asked the owner to TYPE a date and time
+     blindly, while the customer booking flow shows real free slots). This builds the day-by-day
+     free starts for ONE team member by calling availableCalendarStarts — the same core the Day
+     view's green slots come from — once per day. `excludeAppointmentId` drops the appointment
+     being moved from its own clash check, so its current slot still reads as free. Pure and
+     dependency-injected (`scheduleFor`) so it can be executed in a test. */
+  function amendAvailabilityDaysV760({days,staffId,appointments,blocks,timing,today,todayMinutes,excludeAppointmentId=null,scheduleFor}){
+    return (days||[]).map(day=>{
+      const column={
+        id:staffId,
+        items:(appointments||[]).filter(row=>row.staff_id===staffId&&row.id!==excludeAppointmentId&&eventParts(row.starts_at).date===day),
+        blocks:(blocks||[]).filter(row=>row.staff_id===staffId&&eventParts(row.starts_at).date===day),
+        schedule:scheduleFor(staffId,day)
+      };
+      const earliest=day===today?(Number.isFinite(todayMinutes)?todayMinutes:-Infinity):(day<today?Infinity:-Infinity);
+      return {date:day,starts:availableCalendarStarts(column,earliest,timing)};
+    });
   }
   function recordedSchedule(personId,day){
     const leave=(staffOffDays||[]).find(row=>row.staff_id===personId&&row.starts_on<=day&&row.ends_on>=day);
