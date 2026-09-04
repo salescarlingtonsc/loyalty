@@ -142,7 +142,8 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   assert.match(app, /annualTierV664\?esc\(money\(annualTierV664\.amount_cents\)\)/);
   assert.match(app, /monthlyTierV664\?esc\(money\(monthlyTierV664\.amount_cents\)\)/);
   assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
-  assert.match(app, /per branch \/ \$\{cadenceLabel\} × \$\{branchUnitsV664\}/);
+  /* nestly_v758: the change-plan drawer states the arithmetic as "<unit> per branch × <units>". */
+  assert.match(app, /per branch × \$\{branchUnitsV664\}/);
   assert.doesNotMatch(app, /customer profiles included\. Each additional/);
   assert.match(app, /Staff access included/);
   assert.match(app, /Template-assisted promotion wording/);

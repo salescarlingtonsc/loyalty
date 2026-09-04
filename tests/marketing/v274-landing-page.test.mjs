@@ -316,7 +316,7 @@ test('the landing page does not contradict the in-app per-branch pricing caveat'
   /* nestly_v666: the app states the per-branch rule on the Subscription card ("Every branch is
      charged this tier once") and prices it on the add-branch form; the landing page keeps its own
      sentence. What must not happen is the landing page promising free branches. */
-  assert.match(app, /Every branch is charged this tier once\./);
+  assert.match(app, /Every branch is charged the same amount once\./);
   assert.match(landing, /extra branch is charged like another shop/i,
     'the branch caveat must be repeated, not silently dropped');
   assert.doesNotMatch(landing, /unlimited branches|branches? (?:are |is )?free|no extra cost/i);

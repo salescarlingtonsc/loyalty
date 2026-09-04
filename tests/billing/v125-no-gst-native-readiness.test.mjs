@@ -150,7 +150,8 @@ test('owner and platform billing say GST is not charged and preserve the provide
     Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/platform-console.js'),
   ]);
-  assert.match(owner, /GST not charged[^<]*SGD 0\.00/i);
+  /* nestly_v758: the owner card states the zero-tax rule on the arithmetic line itself. */
+  assert.match(owner, /profile capacity · GST not charged/i);
   assert.match(owner, /Billing cycle[\s\S]+align-items:stretch;flex-wrap:wrap/i);
   assert.doesNotMatch(owner, /Recurring total\$\{plan\.tax_behavior===\s*'exclusive'\?' before GST'/i);
   assert.match(platform, /GST not charged/i);
