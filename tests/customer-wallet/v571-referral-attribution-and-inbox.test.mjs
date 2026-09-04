@@ -46,9 +46,10 @@ test('v571 the referral is applied AFTER the join, never before it', () => {
    business" code and must NEVER carry or apply a referral. The field v612 put back is gone again
    — this time for good on this path — and the sheet must not read a code out of the v576 share
    store either, nor leave one sitting in the in-memory slot for a later apply. */
-test('nestly_v758 the QR/token join sheet carries no referral field at all', () => {
+test('nestly_v761 the QR/token join sheet keeps an optional TYPED referral field, never a prefilled one', () => {
   const dialog = section(appJs, 'async function confirmCustomerJoinV571(', 'let pendingCustomerJoinReferralV571');
-  assert.doesNotMatch(dialog, /id="customerJoinReferralV612"/, 'no referral field on the token-join sheet');
+  assert.match(dialog, /<input id="customerJoinReferralV612"(?![^>]*\b(?:value|readonly)\b)[^>]*placeholder=/, 'an empty, editable referral field: no value, no readonly');
+  assert.match(dialog, /pendingCustomerJoinReferralV571=typedReferralV761/, 'a typed code rides the in-memory slot only');
   assert.doesNotMatch(dialog, /peekShareReferralV576/, 'the sheet never reads a code out of the v576 store');
   assert.doesNotMatch(dialog, /rememberShareReferralV576/, 'and never writes one back into it either');
   assert.match(dialog, /pendingCustomerJoinReferralV571=''/, 'any leftover referral slot is cleared, not shown');

@@ -28,9 +28,10 @@ const section=(from,to)=>{
   return app.slice(start,end);
 };
 
-test('a) the QR/token join sheet has no referral field and applies no stored code',()=>{
+test('a) the QR/token join sheet offers an optional typed referral field and applies no stored code',()=>{
   const dialog=section('async function confirmCustomerJoinV571(','let pendingCustomerJoinReferralV571');
-  assert.doesNotMatch(dialog,/id="customerJoinReferralV612"/,'no referral input on the token-join sheet');
+  assert.match(dialog,/<input id="customerJoinReferralV612"(?![^>]*\b(?:value|readonly)\b)[^>]*placeholder=/,'an empty, editable referral input (nestly_v761) — never prefilled, never read-only');
+  assert.match(dialog,/pendingCustomerJoinReferralV571=typedReferralV761/,'what was typed is what gets applied; empty means nothing');
   assert.doesNotMatch(dialog,/peekShareReferralV576/,'never reads a code out of the v576 share store');
   assert.doesNotMatch(dialog,/rememberShareReferralV576/,'never writes one back into it either');
   assert.match(dialog,/pendingCustomerJoinReferralV571=''/,'any leftover referral slot is cleared, not carried');

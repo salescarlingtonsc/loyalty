@@ -4121,6 +4121,12 @@ async function confirmCustomerJoinV571(token,isCurrent){
       <p class="customer-quest-kicker customer-join-kicker-v587">${esc(ct('joinConfirmKickerV587'))}</p>
       <h2 id="customerJoinConfirmTitleV571" class="customer-join-title-v587">${name?esc(ct('joinConfirmTitleV571',{business:name})):esc(ct('joinConfirmTitleUnknownV571'))}</h2>
       <p class="muted small customer-join-body-v587">${esc(ct('joinConfirmBodyV571'))}</p>
+      ${/* nestly_v761 (owner, 2026-09-04): the QR path keeps an OPTIONAL, typed-in referral code —
+           for a customer who wants to key a friend's code personally. It is never prefilled from
+           the v576 share store (ruling 3 stands: the printed QR carries no referral), and an empty
+           field means no referral rewards for anybody. */''}
+      <label class="small" for="customerJoinReferralV612" style="display:block;text-align:left;margin:2px 2px 6px;font-weight:600">${esc(ct('joinReferralLabelV571'))}</label>
+      <input id="customerJoinReferralV612" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(ct('joinReferralPlaceholderV571'))}" style="margin-bottom:14px">
       <button class="btn customer-join-yes-v587" type="button" id="customerJoinGoV571">${esc(ct('joinConfirmGoV587'))}</button>
     </section>`;
     document.body.appendChild(overlay);
@@ -4141,6 +4147,11 @@ async function confirmCustomerJoinV571(token,isCurrent){
     overlay.querySelector('#customerJoinGoV571').addEventListener('pointerdown',()=>joinFunnelEmitV610('join_yes_pointerdown',{surface:'app-sheet'}));
     overlay.querySelector('#customerJoinGoV571').onclick=()=>{
       joinFunnelEmitV610('join_yes_click',{surface:'app-sheet'});
+      /* nestly_v761: a typed code rides ONLY the in-memory pending slot, applied right after this
+         join. It is deliberately NOT written to the v576 share store — that store is the friend-
+         link rail, and the QR path must not create one. Empty field = nothing applied. */
+      const typedReferralV761=String(overlay.querySelector('#customerJoinReferralV612')?.value||'').trim().toUpperCase().slice(0,32);
+      pendingCustomerJoinReferralV571=typedReferralV761;
       close(true)};
     overlay.querySelector('#customerJoinGoV571').focus();
     /* Same probe as the /join page: what a finger would meet at the Yes centre, two frames
