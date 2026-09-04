@@ -112,9 +112,21 @@ The v755 billing pipeline uses four separate functions:
   not offered by the client; cancel/resume use the existing
   `cancel_at_period_end` / `resume` command types instead.
 - `razorpay-billing-reconcile` is the scheduled independent check. It
-  compares Razorpay subscription and payment snapshots against Peekaa,
-  records a bounded reconciliation run and its mismatches, and never
-  fabricates or repairs paid state.
+  compares Razorpay subscription and payment snapshots against Peekaa and
+  records a bounded reconciliation run and its mismatches. Since nestly_v759
+  it also RECOVERS: a Razorpay subscription that is paid (`active`, or
+  `authenticated` with `paid_count > 0`), belongs to a tenant already in the
+  run's Razorpay scope, and has no local mirror is re-read from the REST API,
+  its paid invoices and payments fetched, and webhook-shaped envelopes are
+  pushed through the existing `ingest_billing_event_v755` ->
+  `apply_razorpay_billing_event_v755` pipeline. It still fabricates nothing —
+  every field comes from a provider GET and there is no second writer of
+  billing truth. Recovery is bounded to 10 subscriptions per run, is
+  idempotent (deterministic event ids, so a re-run dedupes in the inbox), and
+  its failures are counted in the run summary as `recovered:{attempted,
+  succeeded,failed}` rather than failing the run. An abandoned hosted checkout
+  (`created`/`expired`, or an authenticated mandate that has never charged) is
+  never recovered and keeps its `pending_checkout` classification.
 - `razorpay-billing-return` (new in v755) is the `callback_url` target for
   Razorpay Checkout.js's `redirect:true` flow. It verifies
   `razorpay_signature` (HMAC-SHA256 of `payment_id|subscription_id` with the
@@ -134,6 +146,35 @@ flag in the webhook payload. `RAZORPAY_PLAN_MAP_JSON` is an optional
 test-mode override mapping a catalogue price-id column to a live Razorpay
 `plan_...` id, for use before the catalogue is fully configured with real
 plan ids.
+
+### Rotating the webhook secret (nestly_v759)
+
+`RAZORPAY_WEBHOOK_SECRET_PREVIOUS` is an OPTIONAL second webhook secret. The
+webhook accepts a body that verifies against **either** secret and logs which
+one matched as `secret:"current"` or `secret:"previous"` on the accepted line
+(the label only — never a value).
+
+It exists because a rotation is not atomic. Razorpay's own guidance: *"If you
+have changed your webhook secret, remember to use the old secret for webhook
+signature validation while retrying older requests."* Deliveries already queued
+when the dashboard secret changes are still signed with the OLD secret and are
+retried for 24h; verifying against the new secret alone answers every one of
+them `400`, and 24h of failures makes Razorpay disable the endpoint. That is
+exactly the live incident of 2026-09.
+
+Procedure:
+
+1. `supabase secrets set RAZORPAY_WEBHOOK_SECRET_PREVIOUS=<the current secret>`
+2. Change the secret in the Razorpay dashboard, then
+   `supabase secrets set RAZORPAY_WEBHOOK_SECRET=<the new secret>`
+3. Wait at least 24h — Razorpay's full retry window — and watch the accepted
+   log lines. Once none of them says `secret:"previous"`, the old secret is no
+   longer carrying traffic.
+4. `supabase secrets unset RAZORPAY_WEBHOOK_SECRET_PREVIOUS`
+
+Leaving `RAZORPAY_WEBHOOK_SECRET_PREVIOUS` set indefinitely keeps a retired
+secret valid, so step 4 is part of the rotation, not optional. Unset or empty
+is the steady state, in which only `RAZORPAY_WEBHOOK_SECRET` is accepted.
 
 Deploy the billing functions during the reviewed release sequence:
 

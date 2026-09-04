@@ -10,6 +10,7 @@ import {
   RazorpayApiError,
   verifyCheckoutSignature,
   verifyWebhookSignature,
+  verifyWebhookSignatureRotating,
 } from '../../supabase/functions/_shared/razorpay-client.ts';
 
 const root = new URL('../../', import.meta.url);
@@ -165,7 +166,8 @@ test('only a 4xx that is not a 429 proves the provider did not execute', () => {
 
 test('the webhook verifies before writing, dedupes on the event id and derives livemode', async () => {
   const source = await read('supabase/functions/razorpay-billing-webhook/index.ts');
-  const verifyAt = source.indexOf('verifyWebhookSignature(');
+  // v759: the call is the rotating variant, which is still the ONLY verification gate.
+  const verifyAt = source.indexOf('verifyWebhookSignatureRotating(');
   const ingestAt = source.indexOf('ingest_billing_event_v755');
   assert.ok(verifyAt > 0 && ingestAt > verifyAt, 'signature must be verified before any write');
   assert.match(source, /req\.text\(\)/);
@@ -274,4 +276,97 @@ test('no log line can leak the body, the signature or a secret', async () => {
   }
   // And the whole file must never print the secret, logged or otherwise.
   assert.doesNotMatch(source, /console\.[a-z]+\([^)]*(?:rawBody|RAZORPAY_WEBHOOK_SECRET)/);
+});
+
+
+/* ---------------------------------------------------------------------------------------------
+   nestly_v759 — the secret ROTATION window.
+
+   Razorpay: "If you have changed your webhook secret, remember to use the old secret for webhook
+   signature validation while retrying older requests." A delivery queued before the rotation is
+   still signed with the OLD secret and is retried for 24h; verifying against the new secret alone
+   answers all of them 400 and the endpoint is disabled. These tests execute the helper, and read
+   the edge source only to prove which env vars it consults.
+   ------------------------------------------------------------------------------------------- */
+const PREVIOUS_SECRET = 'v759_previous_webhook_secret_fixture';
+
+test('a body signed with the PREVIOUS secret is accepted during the rotation window', async () => {
+  const signedWithPrevious = oracle(PREVIOUS_SECRET, BODY);
+  assert.equal(
+    await verifyWebhookSignatureRotating(BODY, signedWithPrevious, {
+      current: SECRET,
+      previous: PREVIOUS_SECRET,
+    }),
+    'previous',
+  );
+  // And the current secret still wins, reported as its own label.
+  assert.equal(
+    await verifyWebhookSignatureRotating(BODY, oracle(SECRET, BODY), {
+      current: SECRET,
+      previous: PREVIOUS_SECRET,
+    }),
+    'current',
+  );
+});
+
+test('a body signed with NEITHER secret is rejected', async () => {
+  const forged = oracle('v759_attacker_secret', BODY);
+  assert.equal(
+    await verifyWebhookSignatureRotating(BODY, forged, {
+      current: SECRET,
+      previous: PREVIOUS_SECRET,
+    }),
+    null,
+  );
+  // A tampered body replayed with a genuine previous-secret signature is still rejected.
+  const tampered = BODY.replace('"amount":9900', '"amount":19800');
+  assert.notEqual(tampered, BODY);
+  assert.equal(
+    await verifyWebhookSignatureRotating(tampered, oracle(PREVIOUS_SECRET, BODY), {
+      current: SECRET,
+      previous: PREVIOUS_SECRET,
+    }),
+    null,
+  );
+  // An absent signature header fails closed whatever the secrets are.
+  assert.equal(
+    await verifyWebhookSignatureRotating(BODY, '', { current: SECRET, previous: PREVIOUS_SECRET }),
+    null,
+  );
+});
+
+test('with PREVIOUS unset or empty, only the current secret is accepted', async () => {
+  const signedWithPrevious = oracle(PREVIOUS_SECRET, BODY);
+  for (const previous of [undefined, null, '', '   ']) {
+    assert.equal(
+      await verifyWebhookSignatureRotating(BODY, signedWithPrevious, {
+        current: SECRET,
+        previous,
+      }),
+      null,
+      `an unset previous secret must not accept a previous-secret signature (${previous})`,
+    );
+    assert.equal(
+      await verifyWebhookSignatureRotating(BODY, oracle(SECRET, BODY), {
+        current: SECRET,
+        previous,
+      }),
+      'current',
+    );
+  }
+  // An empty CURRENT secret cannot become a wildcard either.
+  assert.equal(
+    await verifyWebhookSignatureRotating(BODY, oracle('', BODY), { current: '', previous: '' }),
+    null,
+  );
+});
+
+test('the webhook reads both rotation env vars and logs which one matched, never its value', async () => {
+  const source = await read('supabase/functions/razorpay-billing-webhook/index.ts');
+  assert.match(source, /requiredEnv\('RAZORPAY_WEBHOOK_SECRET'\)/);
+  assert.match(source, /Deno\.env\.get\('RAZORPAY_WEBHOOK_SECRET_PREVIOUS'\)/);
+  assert.match(source, /verifyWebhookSignatureRotating\(/);
+  // The accepted line carries the LABEL variable, not either secret.
+  assert.match(source, /reason: 'accepted'[\s\S]*?secret: matched,/);
+  assert.doesNotMatch(source, /console\.[a-z]+\([^)]*WEBHOOK_SECRET/);
 });

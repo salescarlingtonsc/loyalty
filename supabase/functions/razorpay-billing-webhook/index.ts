@@ -4,7 +4,11 @@ import {
   requiredEnv,
   sha256Hex,
 } from '../_shared/billing-service.ts';
-import { livemodeFromKey, verifyWebhookSignature } from '../_shared/razorpay-client.ts';
+import {
+  livemodeFromKey,
+  verifyWebhookSignatureRotating,
+  type WebhookSecretMatch,
+} from '../_shared/razorpay-client.ts';
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
@@ -90,14 +94,22 @@ Deno.serve(async (req) => {
       return billingJson(400, { error: 'invalid_signature', reason: 'signature_header_absent' });
     }
 
-    const verified = await verifyWebhookSignature(
+    /* nestly_v759 — the rotation window. RAZORPAY_WEBHOOK_SECRET is the secret the dashboard
+       is configured with now; RAZORPAY_WEBHOOK_SECRET_PREVIOUS, when set and non-empty, is the
+       one it was configured with before. Razorpay signs a queued retry with the secret that was
+       live when the delivery was CREATED, so during a rotation both are genuine. Unset (the
+       steady state) accepts only the current secret. */
+    const matched: WebhookSecretMatch | null = await verifyWebhookSignatureRotating(
       rawBody,
       signature,
-      requiredEnv('RAZORPAY_WEBHOOK_SECRET'),
+      {
+        current: requiredEnv('RAZORPAY_WEBHOOK_SECRET'),
+        previous: Deno.env.get('RAZORPAY_WEBHOOK_SECRET_PREVIOUS') || '',
+      },
     );
     /* Nothing is written before the signature verifies: an unverified body must never become
        production billing evidence, not even in the durable inbox. */
-    if (!verified) {
+    if (!matched) {
       /* sig_len separates the three real causes: a truncated header, a hex digest of the right
          length signed with the WRONG secret (64), and a proxy that rewrote the body. */
       rejected('invalid_signature', {
@@ -230,6 +242,9 @@ Deno.serve(async (req) => {
       else await dispatch;
     }
 
+    /* `matched` is which of the two rotation secrets verified this delivery — the LABEL, never
+       the value. It is what tells the operator whether the previous secret is still carrying
+       traffic, i.e. whether the rotation window can yet be closed. */
     console.info(JSON.stringify({
       scope: 'razorpay-billing-webhook',
       reason: 'accepted',
@@ -237,6 +252,7 @@ Deno.serve(async (req) => {
       event_type: eventType,
       duplicate: inbox?.duplicate === true,
       status: applied?.status || 'processed',
+      secret: matched,
     }));
     return billingJson(200, {
       received: true,

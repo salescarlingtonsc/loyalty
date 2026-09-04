@@ -105,6 +105,37 @@ export async function verifyWebhookSignature(
   return constantTimeEqual(expected, signatureHeader.trim());
 }
 
+/* nestly_v759 — the secret ROTATION window.
+
+   Razorpay's own guidance: "If you have changed your webhook secret, remember to use the old
+   secret for webhook signature validation while retrying older requests." A rotation is not
+   atomic — the deliveries already queued at the moment the dashboard secret changes are still
+   signed with the OLD secret, and Razorpay retries them for 24h. Verifying against the new
+   secret alone answers every one of those 400, and 24h of 400s disables the endpoint.
+
+   So the window accepts EITHER secret and reports which one matched, so the accepted log line
+   can say when the previous secret is still carrying traffic (i.e. when it is safe to remove).
+   `previous` is optional: unset or empty means only the current secret is accepted, which is the
+   steady state. Each candidate is compared with the same constant-time helper — the loop does
+   not short-circuit inside a digest, it only stops once a full digest has matched. */
+export type WebhookSecretMatch = 'current' | 'previous';
+
+export async function verifyWebhookSignatureRotating(
+  rawBody: string,
+  signatureHeader: string,
+  secrets: { current: string; previous?: string | null },
+): Promise<WebhookSecretMatch | null> {
+  const candidates: Array<[WebhookSecretMatch, string]> = [
+    ['current', secrets.current || ''],
+    ['previous', (secrets.previous || '').trim()],
+  ];
+  for (const [label, secret] of candidates) {
+    if (!secret) continue;
+    if (await verifyWebhookSignature(rawBody, signatureHeader, secret)) return label;
+  }
+  return null;
+}
+
 /* Checkout redirect callback: HMAC-SHA256 of `${payment_id}|${subscription_id}` with the API key
    SECRET (not the webhook secret). This proves the redirect came from Razorpay; it is NOT
    evidence of payment — only the webhook writes payment truth. */
@@ -225,6 +256,18 @@ export function razorpayClient(credentials: RazorpayCredentials) {
       }),
     listPayments: (query: Record<string, string | number | undefined>) =>
       request<RazorpayList<RazorpayPayment>>({ method: 'GET', path: '/payments', query }),
+    /* nestly_v759 — a Razorpay subscription's settled cycles are only reachable as INVOICES;
+       there is no "list the payments of this subscription" endpoint. Each invoice carries the
+       payment_id that settled it, which is what the recovery path then expands. */
+    getSubscriptionInvoices: (
+      subscriptionId: string,
+      query?: Record<string, string | number | undefined>,
+    ) =>
+      request<RazorpayList<RazorpayInvoice>>({
+        method: 'GET',
+        path: `/subscriptions/${subscriptionId}/invoices`,
+        query,
+      }),
   };
 }
 
@@ -272,6 +315,23 @@ export type RazorpaySubscription = {
   short_url?: string | null;
   has_scheduled_changes?: boolean;
   change_scheduled_at?: number | null;
+};
+
+export type RazorpayInvoice = {
+  id: string;
+  entity?: string;
+  payment_id?: string | null;
+  subscription_id?: string | null;
+  customer_id?: string | null;
+  amount?: number;
+  amount_paid?: number;
+  currency?: string;
+  status?: string;
+  paid_at?: number | null;
+  issued_at?: number | null;
+  billing_start?: number | null;
+  billing_end?: number | null;
+  notes?: Record<string, string>;
 };
 
 export type RazorpayPayment = {

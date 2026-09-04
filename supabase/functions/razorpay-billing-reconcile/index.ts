@@ -27,6 +27,12 @@ import {
   type PaymentMethodBackfillCounts,
 } from '../_shared/billing-payment-method-backfill.ts';
 import { classifyProviderSubscriptionAbsence } from '../_shared/razorpay-subscription-absence.ts';
+import {
+  isRecoverableProviderSubscription,
+  PROVIDER_RECOVERY_MAX_PER_RUN,
+  type ProviderRecoveryCounts,
+  recoverProviderSubscription,
+} from '../_shared/razorpay-provider-recovery.ts';
 
 const LOCAL_OBJECTS_PER_PAGE = 100;
 const PROVIDER_OBJECTS_PER_PAGE = 100;
@@ -41,6 +47,7 @@ type ReconciliationResult =
   | 'mismatch'
   | 'missing_local'
   | 'missing_provider'
+  | 'repaired'
   | 'failed';
 
 type LocalSubscription = {
@@ -80,6 +87,9 @@ type RunCounts = {
   missing_local: number;
   missing_provider: number;
   unscoped_provider: number;
+  /* nestly_v759 — paid subscriptions the webhook never delivered, replayed through the real
+     pipeline this run. Bounded, and its failures never fail the run. */
+  recovered: ProviderRecoveryCounts;
   failures: number;
 };
 
@@ -190,6 +200,12 @@ function recordResult(
   } else if (result === 'missing_provider') {
     cursor.missing_provider += 1;
     run.missing_provider += 1;
+  } else if (result === 'repaired') {
+    /* The cycle counters are the v77 cursor's fixed shape and carry no 'repaired' slot. A
+       repaired object is IN agreement by the end of the run, so it counts as a cycle match; the
+       repair itself is reported separately as run.recovered and as the item's own result. */
+    cursor.matches += 1;
+    run.matches += 1;
   } else {
     cursor.failures += 1;
     run.failures += 1;
@@ -590,6 +606,10 @@ async function reconcileProviderSubscriptions({
         inCycle.map((provider) => [provider.id, notesBusinessId(provider.notes)]),
       );
       const businessIds = await existingBusinessIds(admin, [...candidates.values()]);
+      /* The RUN's Razorpay tenant scope — the businesses whose `subscriptions.billing_provider`
+         is razorpay. `businessIds` above only proves the business row exists; recovery writes
+         billing truth, so it is additionally gated on the tenant this run is actually for. */
+      const scopedBusinessIds = new Set(scope.businessIds);
       const scoped = inCycle.filter((provider) => {
         const candidate = candidates.get(provider.id);
         return Boolean(candidate && businessIds.has(candidate));
@@ -623,6 +643,71 @@ async function reconcileProviderSubscriptions({
           const absence = classifyProviderSubscriptionAbsence(provider);
           const pending = absence === 'pending_checkout';
           if (pending) run.pending_checkout += 1;
+          const expectedDigest = await digest(razorpaySubscriptionSnapshot(provider));
+
+          /* nestly_v759 — a PAID subscription with no local mirror is not something to report
+             once a night forever; it is a delivery the webhook never got, and everything needed
+             to close it is still readable from Razorpay. Recovery is attempted only for a paid
+             subscription belonging to a tenant already in this run's Razorpay scope, is bounded
+             at PROVIDER_RECOVERY_MAX_PER_RUN, and a failure falls back to the missing_local
+             record rather than ending the run. */
+          if (
+            !pending &&
+            isRecoverableProviderSubscription(provider) &&
+            scopedBusinessIds.has(candidate) &&
+            run.recovered.attempted < PROVIDER_RECOVERY_MAX_PER_RUN
+          ) {
+            run.recovered.attempted += 1;
+            try {
+              const outcome = await recoverProviderSubscription({
+                admin,
+                razorpay,
+                subscriptionId: provider.id,
+                livemode: scope.livemode,
+              });
+              run.recovered.succeeded += 1;
+              recordResult(cursor, run, 'repaired');
+              return {
+                run_id: runId,
+                business_id: candidate,
+                object_type: 'subscription',
+                provider_object_id: provider.id,
+                result: 'repaired',
+                expected_digest: expectedDigest,
+                actual_digest: null,
+                detail: {
+                  reason: 'provider_subscription_recovered',
+                  provider_status: String(provider.status || ''),
+                  metadata_business_id: candidate,
+                  invoices: outcome.invoices,
+                  events: outcome.events,
+                },
+              };
+            } catch (error) {
+              /* An integrity run must still report every other tenant. The attempt and its
+                 reason are recorded on the item, and the object stays missing_local so the next
+                 run tries again. */
+              run.recovered.failed += 1;
+              recordResult(cursor, run, 'missing_local');
+              return {
+                run_id: runId,
+                business_id: candidate,
+                object_type: 'subscription',
+                provider_object_id: provider.id,
+                result: 'missing_local',
+                expected_digest: expectedDigest,
+                actual_digest: null,
+                detail: {
+                  reason: 'provider_subscription_missing_local',
+                  provider_status: String(provider.status || ''),
+                  provider_created_at: epoch(provider.created_at),
+                  metadata_business_id: candidate,
+                  recovery_error: String((error as Error)?.message || 'recovery_failed'),
+                },
+              };
+            }
+          }
+
           recordResult(cursor, run, pending ? 'match' : 'missing_local');
           return {
             run_id: runId,
@@ -630,7 +715,7 @@ async function reconcileProviderSubscriptions({
             object_type: 'subscription',
             provider_object_id: provider.id,
             result: pending ? 'match' : 'missing_local',
-            expected_digest: await digest(razorpaySubscriptionSnapshot(provider)),
+            expected_digest: expectedDigest,
             actual_digest: null,
             detail: pending
               ? {
@@ -791,6 +876,7 @@ Deno.serve(async (req) => {
       missing_local: 0,
       missing_provider: 0,
       unscoped_provider: 0,
+      recovered: { attempted: 0, succeeded: 0, failed: 0 },
       failures: 0,
     };
     try {
@@ -858,6 +944,7 @@ Deno.serve(async (req) => {
         scoped_businesses: scope.businessIds.length,
         payment_method_backfill: paymentMethodBackfill,
         pending_checkout: run.pending_checkout,
+        recovered: run.recovered,
         snapshot_at: cursor.snapshot_at,
         cycle_started_at: cursor.cycle_started_at,
         run,
