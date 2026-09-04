@@ -182,3 +182,96 @@ test('the webhook verifies before writing, dedupes on the event id and derives l
   assert.doesNotMatch(source, /\bstripe[A-Za-z_.]*\s*\(/);
   assert.doesNotMatch(source, /stripe_billing|stripe-signature|ingest_stripe/i);
 });
+
+/* Returns the argument text of every logging call in the webhook: the `rejected(...)` helper and
+   any direct console.warn/info/error. Balanced-paren scan, because these arguments are nested
+   object literals and a regex would stop at the first ')'. */
+function loggedArguments(source) {
+  const calls = [];
+  const pattern = /(?:\brejected|console\.(?:warn|info|error))\s*\(/g;
+  let match;
+  while ((match = pattern.exec(source)) !== null) {
+    let depth = 1;
+    let index = pattern.lastIndex;
+    while (index < source.length && depth > 0) {
+      if (source[index] === '(') depth += 1;
+      else if (source[index] === ')') depth -= 1;
+      index += 1;
+    }
+    calls.push({ start: match.index, text: source.slice(pattern.lastIndex, index - 1) });
+  }
+  return calls;
+}
+
+test('every rejection path names its reason in the log and in the response body', async () => {
+  const source = await read('supabase/functions/razorpay-billing-webhook/index.ts');
+  /* The 2026-09 incident: Razorpay retried a real payment's subscription.activated/charged/
+     authenticated and got 400 every time, with nothing in the logs but "booted". Four distinct
+     faults share that status code, so a silent 400 is indistinguishable from the other three —
+     and Razorpay disables an endpoint after 24h of failures. */
+  const logged = loggedArguments(source);
+  assert.ok(logged.length >= 5, 'the webhook must log its outcomes');
+
+  const reasons = logged
+    .map(({ text }) => text.match(/^\s*'([a-z_]+)'|reason:\s*'([a-z_]+)'/))
+    .filter(Boolean)
+    .map((match) => match[1] || match[2]);
+  for (const reason of [
+    'invalid_signature',
+    'invalid_event_object',
+    'event_envelope_rejected',
+    'event_processing_failed',
+    'accepted',
+  ]) {
+    assert.ok(reasons.includes(reason), `no log line for ${reason}`);
+  }
+
+  // Structured, not prose: each line must carry the delivery identity Razorpay sent.
+  const bySignature = logged.filter(({ text }) => text.includes("'invalid_signature'"));
+  assert.ok(bySignature.length >= 2, 'absent and mismatched signatures must log separately');
+  for (const { text } of bySignature) {
+    assert.match(text, /event_id:/);
+    assert.match(text, /body_bytes:/);
+    assert.match(text, /sig_len:/);
+  }
+  const envelope = logged.find(({ text }) => text.includes("'event_envelope_rejected'"));
+  assert.match(envelope.text, /code: inboxError\.code/);
+  assert.match(envelope.text, /message: inboxError\.message/);
+  const processing = logged.find(({ text }) => text.includes("'event_processing_failed'"));
+  assert.match(processing.text, /status: applied\?\.status/);
+  assert.match(processing.text, /error: applied\?\.error/);
+  const accepted = logged.find(({ text }) => text.includes("'accepted'"));
+  assert.match(accepted.text, /event_type/);
+  assert.match(accepted.text, /duplicate/);
+
+  // The reason also reaches the caller, so a replay from the Razorpay dashboard is diagnosable
+  // without log access.
+  assert.match(source, /error: 'invalid_signature', reason: 'signature_header_absent'/);
+  assert.match(source, /error: 'invalid_signature', reason: 'signature_mismatch'/);
+  assert.match(source, /error: 'invalid_event_object',\s*\n?\s*reason:/);
+  assert.match(source, /error: 'event_envelope_rejected', reason: inboxError\.code/);
+  assert.match(source, /reason: applyError\?\.code \|\| applied\?\.error \|\| 'apply_failed'/);
+});
+
+test('no log line can leak the body, the signature or a secret', async () => {
+  const source = await read('supabase/functions/razorpay-billing-webhook/index.ts');
+  for (const { text } of loggedArguments(source)) {
+    // The body is customer billing data and the payload is the whole of it.
+    assert.doesNotMatch(text, /\brawBody\b/, `a log line references rawBody: ${text}`);
+    assert.doesNotMatch(text, /\bevent\b(?!_)/, `a log line references the parsed event: ${text}`);
+    assert.doesNotMatch(text, /p_payload|payloadDigest/, `a log line references the payload: ${text}`);
+    // Secrets: neither the webhook secret nor the API key, under any spelling.
+    assert.doesNotMatch(text, /RAZORPAY_[A-Z_]*(?:SECRET|KEY)/, `a log line references a secret: ${text}`);
+    assert.doesNotMatch(text, /requiredEnv|Deno\.env/, `a log line reads the environment: ${text}`);
+    assert.doesNotMatch(text, /dispatchSecret|SUPABASE_/, `a log line references a secret: ${text}`);
+    /* The signature itself must never be printed — only its LENGTH, which is what separates an
+       absent header from a truncated one from a wrong-secret digest. */
+    assert.doesNotMatch(
+      text,
+      /\bsignature\b(?!\.length)/,
+      `a log line references the signature value: ${text}`,
+    );
+  }
+  // And the whole file must never print the secret, logged or otherwise.
+  assert.doesNotMatch(source, /console\.[a-z]+\([^)]*(?:rawBody|RAZORPAY_WEBHOOK_SECRET)/);
+});

@@ -22,6 +22,25 @@ type RazorpayEventEnvelope = {
   };
 };
 
+/* nestly_v755 incident 2026-09: Razorpay retried subscription.activated/charged/authenticated
+   for a REAL payment and every attempt was answered 400, with nothing in the function logs but
+   "booted". Four different faults share that one status code, so the logs could not say which —
+   and a webhook Razorpay disables after 24h of failures is exactly the place where the first
+   rejection has to name itself. Every non-2xx path now emits one structured line.
+
+   These lines are read by whoever is holding the incident, so they carry only what identifies
+   the delivery: the event id Razorpay itself sent, the event type, sizes and provider error
+   codes. Never the raw body (it is customer billing data), never the signature, never a secret —
+   the signature's LENGTH is enough to separate "header absent" from "header truncated" from
+   "header present but wrong". */
+function rejected(reason: string, detail: Record<string, unknown> = {}): void {
+  console.warn(JSON.stringify({ scope: 'razorpay-billing-webhook', reason, ...detail }));
+}
+
+function headerEventId(req: Request): string | null {
+  return (req.headers.get('x-razorpay-event-id') || '').trim() || null;
+}
+
 function objectId(event: RazorpayEventEnvelope): string {
   return (
     event.payload?.subscription?.entity?.id ||
@@ -33,11 +52,17 @@ function objectId(event: RazorpayEventEnvelope): string {
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
+    rejected('method_not_allowed', { event_id: headerEventId(req), method: req.method });
     return billingJson(405, { error: 'method_not_allowed' });
   }
 
   const declaredLength = Number(req.headers.get('content-length') || '0');
   if (declaredLength > MAX_WEBHOOK_BYTES) {
+    rejected('payload_too_large', {
+      event_id: headerEventId(req),
+      body_bytes: declaredLength,
+      limit_bytes: MAX_WEBHOOK_BYTES,
+    });
     return billingJson(413, { error: 'payload_too_large' });
   }
 
@@ -45,11 +70,25 @@ Deno.serve(async (req) => {
     /* RAW body. Razorpay signs the exact bytes it sent; parsing and re-serialising would
        reorder keys and fail every genuine event. */
     const rawBody = await req.text();
-    if (new TextEncoder().encode(rawBody).length > MAX_WEBHOOK_BYTES) {
+    const bodyBytes = new TextEncoder().encode(rawBody).length;
+    if (bodyBytes > MAX_WEBHOOK_BYTES) {
+      rejected('payload_too_large', {
+        event_id: headerEventId(req),
+        body_bytes: bodyBytes,
+        limit_bytes: MAX_WEBHOOK_BYTES,
+      });
       return billingJson(413, { error: 'payload_too_large' });
     }
     const signature = req.headers.get('x-razorpay-signature') || '';
-    if (!signature) return billingJson(400, { error: 'invalid_signature' });
+    if (!signature) {
+      rejected('invalid_signature', {
+        event_id: headerEventId(req),
+        body_bytes: bodyBytes,
+        sig_len: 0,
+        detail: 'signature_header_absent',
+      });
+      return billingJson(400, { error: 'invalid_signature', reason: 'signature_header_absent' });
+    }
 
     const verified = await verifyWebhookSignature(
       rawBody,
@@ -58,18 +97,52 @@ Deno.serve(async (req) => {
     );
     /* Nothing is written before the signature verifies: an unverified body must never become
        production billing evidence, not even in the durable inbox. */
-    if (!verified) return billingJson(400, { error: 'invalid_signature' });
+    if (!verified) {
+      /* sig_len separates the three real causes: a truncated header, a hex digest of the right
+         length signed with the WRONG secret (64), and a proxy that rewrote the body. */
+      rejected('invalid_signature', {
+        event_id: headerEventId(req),
+        body_bytes: bodyBytes,
+        sig_len: signature.length,
+        detail: 'signature_mismatch',
+      });
+      return billingJson(400, { error: 'invalid_signature', reason: 'signature_mismatch' });
+    }
 
     let event: RazorpayEventEnvelope;
     try {
       event = JSON.parse(rawBody) as RazorpayEventEnvelope;
     } catch {
-      return billingJson(400, { error: 'invalid_event_object' });
+      rejected('invalid_event_object', {
+        event_id: headerEventId(req),
+        event_type: null,
+        detail: 'body_is_not_json',
+      });
+      return billingJson(400, { error: 'invalid_event_object', reason: 'body_is_not_json' });
     }
     const eventType = String(event.event || '');
-    if (!eventType) return billingJson(400, { error: 'invalid_event_object' });
+    if (!eventType) {
+      rejected('invalid_event_object', {
+        event_id: headerEventId(req),
+        event_type: null,
+        detail: 'event_type_absent',
+      });
+      return billingJson(400, { error: 'invalid_event_object', reason: 'event_type_absent' });
+    }
     const providerObjectId = objectId(event);
-    if (!providerObjectId) return billingJson(400, { error: 'invalid_event_object' });
+    if (!providerObjectId) {
+      /* The envelope named an event we cannot attach to any object — a `contains` shape this
+         function does not read yet. The TYPE is the whole diagnosis, so it is logged. */
+      rejected('invalid_event_object', {
+        event_id: headerEventId(req),
+        event_type: eventType,
+        detail: 'no_subscription_payment_or_refund_id',
+      });
+      return billingJson(400, {
+        error: 'invalid_event_object',
+        reason: 'no_subscription_payment_or_refund_id',
+      });
+    }
 
     const payloadDigest = await sha256Hex(rawBody);
     /* x-razorpay-event-id is Razorpay's own per-event unique id and is the dedupe key. It is
@@ -99,7 +172,16 @@ Deno.serve(async (req) => {
       p_payload_sha256: payloadDigest,
     });
     if (inboxError) {
-      return billingJson(400, { error: 'event_envelope_rejected' });
+      /* The provider's own error text, not ours: an event id that fails the v755 pattern, a
+         livemode check, a missing grant and a schema drift all land here and look identical
+         from the outside. */
+      rejected('event_envelope_rejected', {
+        event_id: eventId,
+        event_type: eventType,
+        code: inboxError.code,
+        message: inboxError.message,
+      });
+      return billingJson(400, { error: 'event_envelope_rejected', reason: inboxError.code });
     }
 
     const { data: applied, error: applyError } = await admin.rpc(
@@ -107,11 +189,22 @@ Deno.serve(async (req) => {
       { p_event_id: eventId },
     );
     if (applyError || applied?.status === 'failed') {
+      /* The event IS durable at this point — this 500 asks Razorpay to retry the apply, and the
+         retry is only worth anything if the reason it failed is on the record. */
+      rejected('event_processing_failed', {
+        event_id: eventId,
+        event_type: eventType,
+        status: applied?.status,
+        error: applied?.error,
+        code: applyError?.code,
+        message: applyError?.message,
+      });
       return billingJson(500, {
         received: true,
         durable: true,
         event_id: eventId,
         error: 'event_processing_failed',
+        reason: applyError?.code || applied?.error || 'apply_failed',
       });
     }
 
@@ -137,6 +230,14 @@ Deno.serve(async (req) => {
       else await dispatch;
     }
 
+    console.info(JSON.stringify({
+      scope: 'razorpay-billing-webhook',
+      reason: 'accepted',
+      event_id: eventId,
+      event_type: eventType,
+      duplicate: inbox?.duplicate === true,
+      status: applied?.status || 'processed',
+    }));
     return billingJson(200, {
       received: true,
       durable: true,
@@ -144,7 +245,14 @@ Deno.serve(async (req) => {
       event_id: eventId,
       status: applied?.status || 'processed',
     });
-  } catch {
+  } catch (error) {
+    /* A missing secret throws out of requiredEnv and used to produce a bare 500 with an empty
+       log — indistinguishable from a Supabase outage. The message names the FAULT, never a
+       value. */
+    rejected('webhook_unavailable', {
+      event_id: headerEventId(req),
+      message: String((error as Error)?.message || 'unknown'),
+    });
     return billingJson(500, { error: 'webhook_unavailable' });
   }
 });
