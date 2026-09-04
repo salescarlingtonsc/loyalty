@@ -223,7 +223,8 @@ test('each branch row says which of the six states it is in', () => {
   assert.equal(label('included'), 'Included');
   assert.equal(label('active'), 'Billed');
   assert.equal(label('pending_payment'), 'Awaiting payment');
-  assert.equal(label('canceling', { billing_cancel_at: '2027-09-04T00:00:00+08:00' }), 'Stops 4 Sep 2027');
+  /* nestly_v764 (owner ruling 2): the act is "Switch off", so the row says when it switches off. */
+  assert.equal(label('canceling', { billing_cancel_at: '2027-09-04T00:00:00+08:00' }), 'Switches off 4 Sep 2027');
   assert.equal(label('unsubscribed'), 'Unsubscribed');
   assert.equal(label('suspended'), 'Payment lapsed');
 });
@@ -251,9 +252,11 @@ test('the page reads get_business_billing_v758 and falls back to the read it wra
 
 test('the branch actions are still the v665 RPCs, with the confirmation unchanged', () => {
   assert.match(app, /sb\.rpc\(kind==='stop'\?'business_unsubscribe_branch_v665':'business_resubscribe_branch_v665'/);
-  assert.match(app, /function subscriptionBranchUnsubscribeConfirmV665\(record\)\{/);
-  assert.match(app, /It keeps taking bookings and sales until \$\{[^}]+\}, then switches off\./);
-  assert.match(app, /Nothing is refunded for the time already paid/);
+  /* nestly_v764 (owner ruling 2): the same two RPCs and the same three promises — it keeps
+     working until the date, it is not charged after, nothing is refunded — said as "Switch off". */
+  assert.match(app, /function branchSwitchOffConfirmV764\(record\)\{/);
+  assert.match(app, /It keeps working until then\. Not charged after\./);
+  assert.match(app, /Nothing is refunded, and its customers, sales and bookings stay in your reports\./);
   assert.match(app, /data-branch-stop-v758/);
   assert.match(app, /data-branch-keep-v758/);
   // the company-level rows are gone from the per-branch dialog

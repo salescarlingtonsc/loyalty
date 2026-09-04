@@ -15,9 +15,16 @@
   var description = params.get('desc') || 'Peekaa subscription';
   var name = params.get('name') || 'Peekaa';
   var color = params.get('color') || '#0f766e';
+  /* nestly_v764 (owner ruling 5): the same sheet in card-change mode. Razorpay is asked to
+     replace the card on the subscription, not to take a payment, so NO amount and no description
+     are sent — sending either turns this back into a charge. */
+  var cardChange = params.get('card_change') === '1';
   var button = document.getElementById('pay');
   var error = document.getElementById('err');
-  document.getElementById('desc').textContent = description;
+  document.getElementById('desc').textContent = cardChange
+    ? 'Enter the card you want future payments taken from.'
+    : description;
+  if (cardChange) button.textContent = 'Update card securely with Razorpay';
 
   function fail(message) {
     error.textContent = message;
@@ -57,11 +64,10 @@
          razorpay_subscription_id and razorpay_signature to razorpay-billing-return, which
          verifies the signature and sends the browser back into the app. Payment truth still
          comes only from the subscription.charged webhook. */
-      var checkout = new window.Razorpay({
+      var options = {
         key: keyId,
         subscription_id: subscriptionId,
         name: name,
-        description: description,
         callback_url: callbackUrl,
         redirect: true,
         theme: { color: color },
@@ -71,7 +77,10 @@
             if (cancelUrl) leave(cancelUrl);
           }
         }
-      });
+      };
+      if (cardChange) options.subscription_card_change = 1;
+      else options.description = description;
+      var checkout = new window.Razorpay(options);
       opened = true;
       checkout.open();
     } catch (e) {

@@ -78,11 +78,17 @@ test('the numbers are stated where branches are listed, bought, and paid for', (
   assert.match(app, /Every branch is charged the same amount once\./);
   assert.match(app, /A branch added part-way through a paid period is charged only for the time left in it\./);
   assert.match(app, /First branch is included\./);
-  assert.match(app, /Added mid-period: charged only for the rest of the period\./);
-  assert.match(app, /Stopped: keeps working until renewal, not charged after\./);
+  /* nestly_v764 (owner ruling 1 & 2): the same two promises, in the owner's words — "Added
+     today" and "Switched off". Neither is weakened: the pro-rata rule and the "keeps working
+     until renewal, not charged after" rule are both still stated. */
+  assert.match(app, /Added today: charged only for the days left\./);
+  assert.match(app, /Switched off: keeps working until renewal, not charged after\./);
   assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
   // V202's promise is still made, in the shorter v666 wording
-  assert.match(app, /Charged from the secure payment page; the branch stays switched off until that payment confirms\./);
+  /* nestly_v764: adding a branch is now charged on the card already on file (Razorpay charges the
+     pro-rated difference immediately), so there is no payment page to send the owner to. The
+     promise that the branch is off until the payment confirms is unchanged. */
+  assert.match(app, /Charged today on the card you already pay with; the branch switches on when that payment confirms\./);
 });
 
 test('the branch checkout stops charging for the base plan a second time', () => {

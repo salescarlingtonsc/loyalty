@@ -49937,6 +49937,67 @@ async function branchAddPriceNoteV666(branchList){
     branches:unitsNow+1
   };
 }
+/* nestly_v764 (owner ruling 1): "Set up <branch> today? Pro-rata SGD X (covers until <period
+   end>) will be charged now to <Brand> ending <last4>". The owner sees the money BEFORE a branch
+   is created, and the button they press says the amount they are agreeing to. Returns a promise
+   for true/false so the create path reads as one straight line. */
+async function branchProrataPreviewV764(branchName){
+  const {data,error}=await sb.rpc('preview_branch_addition_v764',
+    {p_business:S.biz.id,p_branch_name:branchName});
+  /* A workspace whose database has not been migrated yet keeps the flow it had — the confirmation
+     is an improvement to it, never a gate in front of it. */
+  if(error||!data)return null;
+  /* 'unavailable' means the server could not price today (no subscription, no period): the flow
+     continues without a figure rather than showing one nobody can stand behind. */
+  if(String(data.status||'')!=='ok'||!Number(data.prorata_cents))return null;
+  return data;
+}
+/* The command id behind a charge Razorpay has not confirmed yet, kept per branch so the row can
+   retry THAT charge — never start a second one. Session-scoped: a retry is for the owner sitting
+   in front of the branch they just added. */
+function branchPaymentRetrySlotV764(){return `nestly:v764:branch-payment:${S.biz?.id||''}`}
+function readBranchPaymentRetriesV764(){
+  try{return JSON.parse(sessionStorage.getItem(branchPaymentRetrySlotV764())||'{}')||{}}catch{return {}}
+}
+function rememberBranchPaymentRetryV764(branchId,commandId){
+  if(!branchId||!commandId)return;
+  try{
+    const all=readBranchPaymentRetriesV764();all[branchId]=commandId;
+    sessionStorage.setItem(branchPaymentRetrySlotV764(),JSON.stringify(all));
+  }catch{}
+}
+function forgetBranchPaymentRetryV764(branchId){
+  try{
+    const all=readBranchPaymentRetriesV764();delete all[branchId];
+    sessionStorage.setItem(branchPaymentRetrySlotV764(),JSON.stringify(all));
+  }catch{}
+}
+function openBranchProrataConfirmV764(preview,branchName){
+  const copy=branchProrataConfirmLinesV764(preview,branchName);
+  return new Promise(resolve=>{
+    const modal=document.createElement('div');modal.className='modal';modal.tabIndex=-1;
+    modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+    modal.setAttribute('aria-labelledby','branchProrataTitleV764');
+    modal.innerHTML=`<section class="modal-card" style="max-width:460px">
+      <h2 id="branchProrataTitleV764" style="margin:0;font-size:1.05rem" data-merchant-content>${esc(copy.title)}</h2>
+      <p class="small" style="margin:10px 0 0">${esc(copy.body)}</p>
+      <div class="row" style="margin-top:18px;flex-wrap:wrap">
+        <button type="button" class="btn" id="branchProrataConfirmV764">${esc(copy.confirm)}</button>
+        <button type="button" class="btn ghost" id="branchProrataCancelV764">${esc(copy.cancel)}</button>
+      </div>
+    </section>`;
+    document.body.appendChild(modal);
+    let deactivate=null,settled=false;
+    const finish=value=>{
+      if(settled)return;settled=true;
+      if(deactivate){const done=deactivate;deactivate=null;done({restoreFocus:true})}else modal.remove();
+      resolve(value);
+    };
+    deactivate=CUI.activateDialog(modal,{onClose:()=>finish(false),initialFocus:'#branchProrataConfirmV764'});
+    modal.querySelector('#branchProrataConfirmV764').onclick=()=>finish(true);
+    modal.querySelector('#branchProrataCancelV764').onclick=()=>finish(false);
+  });
+}
 function branchBillingSentenceV280(counts){
   const total=Number(counts?.total||0),included=Number(counts?.included||0),
     billable=Number(counts?.billable||0),lapsed=Number(counts?.lapsed||0);
@@ -50078,7 +50139,7 @@ async function branchesPage(){
          <div class="imp-note" style="margin-top:14px" id="brBillingNoteV666">
            <b>This is your ${branchOrdinalWordV666(branchList.length+1)} branch.</b>
            <p class="small" style="margin-top:6px" id="brBillingLinesV666">Checking your plan…</p>
-           <p class="small" style="margin-top:6px">Charged from the secure payment page; the branch stays switched off until that payment confirms.</p></div>`}
+           <p class="small" style="margin-top:6px">Charged today on the card you already pay with; the branch switches on when that payment confirms.</p></div>`}
       <div class="row" style="margin-top:16px"><button class="btn" id="brSave">${b?'Save changes':'Create branch'}</button>
       <button class="btn ghost sm" id="brCancel">Cancel</button></div>`;
     /* nestly_v658: the branch form is the only one of the five that serves BOTH create and edit,
@@ -50128,6 +50189,13 @@ async function branchesPage(){
       /* One key per attempt, stable across retries: a double-tap or a retry after a dropped
          response replays the SAME branch and the SAME command rather than minting a second
          branch and a second charge. */
+      /* nestly_v764 (owner ruling 1): nothing is created and nothing is charged until the owner
+         has read what today costs and pressed the button that says the amount. */
+      const previewV764=await branchProrataPreviewV764(payload.name);
+      if(previewV764&&!(await openBranchProrataConfirmV764(previewV764,payload.name))){
+        CUI.setButtonBusy($('brSave'),{busy:false});
+        return;
+      }
       if(!branchAddAttemptKey)branchAddAttemptKey=crypto.randomUUID();
       const copyFrom=$('brCopyFrom')?$('brCopyFrom').value||null:null;
       invalidateBranchScopeCacheV370(); // V370: a new branch changes every scope selector
@@ -50141,16 +50209,28 @@ async function branchesPage(){
         CUI.setButtonBusy($('brSave'),{busy:false});
         return fail(new Error('The branch was created but no payment could be started. Retry with the same details.'));
       }
-      CUI.setButtonBusy($('brSave'),{busy:true,label:'Opening secure payment…'});
+      CUI.setButtonBusy($('brSave'),{busy:true,label:'Charging your card…'});
       const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
-      if(executed.error||!executed.data?.redirect_url){
+      if(executed.error){
         CUI.setButtonBusy($('brSave'),{busy:false});
         /* The branch row survives on purpose. The attempt key is kept too, so "Create branch"
            again resumes THIS branch and this charge instead of creating another one. */
         return fail(new Error('Payment could not be started. Your branch is saved and switched off — press Create branch again to retry the payment.'));
       }
       branchAddAttemptKey=null;
-      location.href=executed.data.redirect_url;
+      /* nestly_v764: adding a branch is charged on the card already on file, so there is no
+         payment page to hand the browser to any more. The list is re-read where it stands and the
+         row itself says whether it is Billed or still Awaiting payment. A charge Razorpay has not
+         confirmed keeps its command id, so the row can offer Retry payment rather than a second
+         branch. */
+      if(executed.data?.redirect_url){location.href=executed.data.redirect_url;return}
+      const uncertain=executed.data?.status==='uncertain';
+      if(uncertain)rememberBranchPaymentRetryV764(added?.branch_id||added?.id,commandId);
+      toast(uncertain
+        ?`${payload.name} is saved. The payment is still confirming.`
+        :`${payload.name} is set up and paid for.`);
+      dismissFormModalV658($('brForm')); // nestly_v658
+      load();
     };
   }
   async function load(){
@@ -50184,6 +50264,8 @@ async function branchesPage(){
                inside Edit); deleting one is rare, irreversible and billing-relevant, so it asks
                for the branch's name to be typed back. The default branch is never deletable. -->
           ${b.is_default?'':`<button class="btn ghost sm" data-name="${esc(b.name)}" onclick="deleteBranchV285('${b.id}',this)">Delete</button>`}
+          ${/* nestly_v764: a branch whose charge Razorpay has not confirmed can retry THAT charge. */''}
+          ${b.billing_state==='pending_payment'&&readBranchPaymentRetriesV764()[b.id]?`<button class="btn ghost sm" type="button" data-branch-retry-payment-v764="${b.id}">Retry payment</button>`:''}
           ${/* nestly_v606: opening hours are a fact about THIS branch, so they open from its own
                card rather than from a business-wide screen that never named it. */''}
           <button class="btn ghost sm" type="button" data-branch-hours-open-v606="${b.id}" aria-expanded="${openHoursIdV606===b.id?'true':'false'}">${openHoursIdV606===b.id?'Close hours':'Opening hours'}</button>
@@ -50205,6 +50287,21 @@ async function branchesPage(){
     }).join('');
     /* nestly_v606: the toggle and the editor it fills. One card open at a time — two grids of the
        same seven weekdays on one screen is how the wrong branch gets edited. */
+    document.querySelectorAll('[data-branch-retry-payment-v764]').forEach(button=>button.onclick=async()=>{
+      const branchId=button.dataset.branchRetryPaymentV764;
+      const commandId=readBranchPaymentRetriesV764()[branchId];
+      if(!commandId)return;
+      CUI.setButtonBusy(button,{busy:true,label:'Charging…'});
+      const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+      if(executed.error||executed.data?.status==='uncertain'){
+        if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+        toast('The payment is still confirming. Try again in a moment.');
+        return;
+      }
+      forgetBranchPaymentRetryV764(branchId);
+      toast('Payment confirmed');
+      load();
+    });
     document.querySelectorAll('[data-branch-hours-open-v606]').forEach(button=>button.onclick=()=>{
       const id=button.dataset.branchHoursOpenV606;
       openHoursIdV606=openHoursIdV606===id?null:id;
@@ -55139,6 +55236,127 @@ function billingSummaryFallbackV758(billing,branchRows){
     cancel_at_period_end:!!b.cancel_at_period_end
   };
 }
+/* nestly_v764 (owner rulings 2026-09-05). Five lifecycle facts the billing page never said:
+   what a mid-period branch costs BEFORE it is charged, when a switched-off branch actually
+   switches off, when a changed billing cycle starts, that a cancelled renewal can still be
+   resumed (and when it stops being resumable), and which card the next payment goes to.
+   Every one of them is a sentence, so every one of them is built by a pure function here and
+   executed by a test, rather than assembled inside the renderer where only a regex could see it. */
+function billingCadenceWordV764(cadence){
+  return cadence==='annual'?'Annual':cadence==='monthly'?'Monthly':'';
+}
+/* The date a cycle change takes effect. Annual → monthly waits for the paid year to end; monthly
+   → annual starts at the end of the current month (owner ruling 3). Returned as an ISO instant so
+   billingDateV758 is still the only thing that formats a date on this page. */
+function billingCadenceEffectiveAtV764(currentCadence,nextCadence,renewsAt,now){
+  if(!currentCadence||!nextCadence||currentCadence===nextCadence)return null;
+  if(currentCadence==='annual'&&nextCadence==='monthly')return renewsAt||null;
+  const at=now?new Date(now):new Date();
+  if(Number.isNaN(at.getTime()))return renewsAt||null;
+  const parts=new Intl.DateTimeFormat('en-SG',{year:'numeric',month:'2-digit',timeZone:'Asia/Singapore'})
+    .formatToParts(at).reduce((all,part)=>{all[part.type]=part.value;return all},{});
+  const year=Number(parts.year),month=Number(parts.month);
+  if(!year||!month)return renewsAt||null;
+  const lastDay=new Date(Date.UTC(year,month,0)).getUTCDate();
+  return `${year}-${String(month).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}T23:59:59+08:00`;
+}
+/* The scheduled-change and cancelled-renewal lines, and the words on the two confirmations that
+   change money. Reads the subscription fields (scheduled_*, renewal_cancel_*) and the server
+   summary together, because either one alone can only tell half of it. */
+function billingLifecycleLinesV764(billing,summary,paymentMethod){
+  const b=billing||{},s=summary||{};
+  const scheduled=s.scheduled_change&&s.scheduled_change.cadence
+    ?s.scheduled_change
+    :(b.scheduled_cadence?{cadence:b.scheduled_cadence,effective_at:b.scheduled_effective_at,
+        amount_cents:b.scheduled_amount_cents}:null);
+  /* The server carries the intent on `summary` (get_business_billing_v758); the subscription
+     columns are read too, so the lines are right on a workspace whose summary predates them. */
+  const requestedAt=s.renewal_cancel_requested_at||b.renewal_cancel_requested_at||null;
+  const sentAt=s.renewal_cancel_sent_at||b.renewal_cancel_sent_at||null;
+  const endsOn=billingDateV758(s.renews_at||b.next_payment_at||b.current_period_end);
+  const card=billingCardTextV758(paymentMethod);
+  const currentLabel=s.plan_label==='Annual'||s.plan_label==='Monthly'?s.plan_label:null;
+  const out={
+    scheduled_line:'',scheduled_undo_label:'',scheduled_undo_cadence:'',
+    cancel_line:'',cancel_confirm:'',resume_label:'',resume_confirm:'',final_line:'',
+    show_cancel:false,show_resume:false,show_final:false
+  };
+  if(scheduled){
+    const word=billingCadenceWordV764(scheduled.cadence);
+    const period=scheduled.cadence==='annual'?'year':'month';
+    const startsOn=billingDateV758(scheduled.effective_at);
+    const amount=Number(scheduled.amount_cents||0);
+    out.scheduled_line=`${word||'New'} billing starts on ${startsOn||'your next billing date'}`
+      +(amount>0?` · ${moneyShortV758(amount)} / ${period}`:'');
+    if(currentLabel&&currentLabel!==word){
+      out.scheduled_undo_label=`Keep ${currentLabel.toLowerCase()}`;
+      out.scheduled_undo_cadence=currentLabel==='Annual'?'annual':'monthly';
+    }
+  }
+  if(sentAt){
+    out.show_final=true;
+    out.final_line=`Renewal cancel is final · ends ${endsOn||'at your next billing date'} · Start a new plan`;
+  }else if(requestedAt){
+    out.show_resume=true;
+    out.cancel_line=`Renewal cancelled · access until ${endsOn||'your next billing date'}`;
+    out.resume_label='Resume renewal';
+    out.resume_confirm=`Resume renewals? Next payment ${moneyShortV758(Number(s.total_cents||0))}`
+      +` on ${endsOn||'your next billing date'} to ${card}.`;
+  }else{
+    out.show_cancel=true;
+    const resumeUntil=billingDateV758(s.renewal_cancel_final_after||b.renewal_cancel_final_after);
+    out.cancel_confirm=`Cancel renewal? Everything keeps working until ${endsOn||'your next billing date'}.`
+      +` Nothing is refunded.`
+      +(resumeUntil?` You can resume until ${resumeUntil}.`:'');
+  }
+  return out;
+}
+/* Owner ruling 1: the confirmation the owner reads BEFORE a branch is created and charged. The
+   amount is an estimate of what Razorpay will bill today, so it is said as one ("About"); the
+   exact figure recorded afterwards is Razorpay's own invoice. */
+function branchProrataConfirmLinesV764(preview,branchName){
+  const p=preview||{};
+  const amount=moneyShortV758(Number(p.prorata_cents||0));
+  const coversUntil=billingDateV758(p.period_end);
+  const name=String(branchName||'').trim();
+  return {
+    title:name?`Set up ${name} today?`:'Set up this branch today?',
+    body:`About ${amount} charged now to ${billingCardTextV758(p.card)}.`
+      +(coversUntil?` Covers until ${coversUntil}.`:''),
+    confirm:`Set up today and pay ${amount}`,
+    cancel:'Cancel',
+    amount
+  };
+}
+/* Owner ruling 2: "Switch off", in the words a shopkeeper uses, with the date it actually stops. */
+function branchSwitchOffConfirmV764(record){
+  const on=String(record?.billed_until||'').trim();
+  return `Switch off "${record?.branch}"${on&&on!=='—'?` on ${on}`:''}?\n\n`
+    +`It keeps working until then. Not charged after.\n`
+    +(String(record?.unit_amount||'').trim()?`You stop paying ${String(record.unit_amount).trim()} for this branch.\n`:'')
+    +`Nothing is refunded, and its customers, sales and bookings stay in your reports.`;
+}
+/* Owner ruling 1, second half: the payments list must say WHICH branch and until WHEN. */
+function billingInvoiceReasonTextV764(row,planLabel){
+  const reason=String(row?.reason||'').trim();
+  const detail=row&&typeof row.detail==='object'&&row.detail?row.detail:{};
+  const from=billingDateV758(detail.covers_from||row?.period_start);
+  const until=billingDateV758(detail.covers_until||row?.period_end);
+  /* One period, one year: "5 Mar – 4 Sep 2027" rather than the year twice on a 12-word line. */
+  const sameYear=from&&until&&from.slice(-4)===until.slice(-4);
+  const span=from&&until?`${sameYear?from.slice(0,-5):from} – ${until}`:until?`until ${until}`:'';
+  if(reason==='branch_added'){
+    const name=String(detail.branch_name||'').trim();
+    return [`Branch${name?` ${name}`:''}`,span].filter(Boolean).join(' · ');
+  }
+  if(reason==='plan_changed')return 'Plan change';
+  if(reason==='initial'||reason==='renewal'){
+    const plan=billingCadenceWordV764(row?.cadence||detail.cadence)
+      ||(planLabel==='Annual'||planLabel==='Monthly'?planLabel:'');
+    return [`${plan?plan+' plan':'Plan'}`,span].filter(Boolean).join(' · ');
+  }
+  return 'Subscription';
+}
 /* One read for the whole page. v758 returns everything v125 does plus `summary` and
    `payment_method`; a workspace still on v125 falls back to it rather than showing an error, and
    the summary is then computed from the identical payload above. */
@@ -55163,11 +55381,26 @@ const BILLING_LAYOUT_STYLE_V758=`<style id="billingLayoutStyleV758">
 </style>`;
 function billingSummaryCardV758(lines,options){
   const opts=options||{};
+  /* nestly_v764: the lifecycle lines sit under the renewal line — the same card, because a
+     scheduled cycle change and a cancelled renewal are answers to "when does this renew", not a
+     separate subject. Built by billingLifecycleLinesV764 so a test reads the sentences. */
+  const life=opts.lifecycle||{};
   const primary=opts.primaryLabel
     ?`<button type="button" class="btn" id="billingChoosePlanV758">${esc(opts.primaryLabel)}</button>`:'';
-  const secondary=opts.cancelAtPeriodEnd
-    ?'<button type="button" class="btn ghost" id="billingResume">Resume renewal</button>'
-    :opts.hasSubscription?'<button type="button" class="btn ghost" id="billingCancel">Cancel renewal</button>':'';
+  const secondary=life.show_resume
+    ?`<button type="button" class="btn ghost" id="billingResume">${esc(life.resume_label||'Resume renewal')}</button>`
+    :life.show_final?''
+    :opts.hasSubscription&&life.show_cancel!==false?'<button type="button" class="btn ghost" id="billingCancel">Cancel renewal</button>':'';
+  /* Ruling 5: the card the next payment goes to is changed from where it is named. */
+  const updateCard=opts.hasSubscription
+    ?'<button type="button" class="btn ghost" id="billingUpdateCardV764">Update card</button>':'';
+  const lifecycleLines=[
+    life.scheduled_line
+      ?`<p class="small" style="margin:6px 0 0">${esc(life.scheduled_line)}${life.scheduled_undo_label
+        ?` · <button type="button" class="btn ghost sm" id="billingKeepCadenceV764" data-cadence="${esc(life.scheduled_undo_cadence||'')}">${esc(life.scheduled_undo_label)}</button>`:''}</p>`:'',
+    life.cancel_line?`<p class="small" style="margin:6px 0 0">${esc(life.cancel_line)}</p>`:'',
+    life.final_line?`<p class="small" style="margin:6px 0 0">${esc(life.final_line)}</p>`:''
+  ].join('');
   return `${BILLING_LAYOUT_STYLE_V758}<section class="card" style="padding:18px;margin-bottom:18px" aria-label="Your subscription">
     <div class="row" style="align-items:flex-start;gap:10px">
       <h2 style="font-size:1.05rem;margin:0;line-height:1.35" data-merchant-content>${esc(lines.title)}</h2>
@@ -55177,7 +55410,8 @@ function billingSummaryCardV758(lines,options){
     <p style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums;margin:10px 0 0">${esc(lines.amount)}</p>
     ${lines.arithmetic?`<p class="muted small" style="margin:2px 0 0">${esc(lines.arithmetic)}</p>`:''}
     <p class="muted small" style="margin:6px 0 0">${esc(lines.renewal)}</p>
-    ${primary||secondary?`<div class="row" style="margin-top:14px;flex-wrap:wrap">${primary}${secondary}</div>`:''}
+    ${lifecycleLines}
+    ${primary||secondary||updateCard?`<div class="row" style="margin-top:14px;flex-wrap:wrap">${primary}${secondary}${updateCard}</div>`:''}
   </section>`;
 }
 /* nestly_v628. What the row could not hold: the branch's own contact details. Read-only, built
@@ -55209,22 +55443,11 @@ function openSubscriptionBranchDetailV628(payload){
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#subscriptionBranchCloseV628'});
   document.getElementById('subscriptionBranchCloseV628').onclick=close;
 }
-/* nestly_v665 (owner: "all branches must be charged - unless user switch it off. (there must be a
-   unsubscribe button) and ask for confirmation"). The confirmation names the branch, the money and
-   the date the branch actually stops — an owner who presses this must know they keep the shop
-   working until the day they have paid to, and that nothing is refunded.
-   nestly_v758: the control moved out of the branch pop-up and onto the branch's own row, which is
-   where the owner is already looking at that branch's money. The words are unchanged. */
-function subscriptionBranchUnsubscribeConfirmV665(record){
-  const amount=String(record?.unit_amount||'').trim();
-  return `Unsubscribe "${record?.branch}"?\n\n`
-    +`It keeps taking bookings and sales until ${record?.billed_until&&record.billed_until!=='—'?record.billed_until:'the end of the period you have paid for'}, then switches off.\n`
-    +(amount?`You stop paying ${amount} for this branch from the next billing date.\n`:'')
-    +`Nothing is refunded for the time already paid, and its customers, sales and bookings stay in your reports.`;
-}
 async function runBranchBillingActionV758(record,button,kind){
-  if(kind==='stop'&&!confirm(subscriptionBranchUnsubscribeConfirmV665(record)))return;
-  CUI.setButtonBusy(button,{busy:true,label:kind==='stop'?'Unsubscribing…':'Keeping…'});
+  /* nestly_v764 (owner ruling 2): the act is "Switch off", and the confirmation says the date it
+     switches off, that it keeps working until then, and that nothing is refunded. */
+  if(kind==='stop'&&!confirm(branchSwitchOffConfirmV764(record)))return;
+  CUI.setButtonBusy(button,{busy:true,label:kind==='stop'?'Switching off…':'Keeping…'});
   const {data,error}=await sb.rpc(kind==='stop'?'business_unsubscribe_branch_v665':'business_resubscribe_branch_v665',
     {p_business:S.biz.id,p_branch:record.branch_id,p_idempotency_key:crypto.randomUUID()});
   if(error){
@@ -55232,8 +55455,8 @@ async function runBranchBillingActionV758(record,button,kind){
     toast(ownerErrorText(error));return;
   }
   toast(kind==='stop'
-    ?(data?.status==='replayed'?'That branch is already stopping'
-      :`${record.branch} stops on ${billingDateV758(data?.effective_at)||'your next billing date'}`)
+    ?(data?.status==='replayed'?'That branch is already switching off'
+      :`${record.branch} switches off on ${billingDateV758(data?.effective_at)||'your next billing date'}`)
     :(data?.billing_state==='included'?`${record.branch} stays on your plan`
       :`${record.branch} is back — pay for it from Branches to switch it on`));
   loadBillingConfig();
@@ -55243,7 +55466,7 @@ async function runBranchBillingActionV758(record,button,kind){
 function billingBranchPillV758(branch){
   const state=String(branch?.billing_state||'');
   if(state==='suspended')return {label:'Payment lapsed',tone:'no'};
-  if(state==='canceling')return {label:`Stops ${billingDateV758(branch?.billing_cancel_at)||'at renewal'}`,tone:'off'};
+  if(state==='canceling')return {label:`Switches off ${billingDateV758(branch?.billing_cancel_at)||'at renewal'}`,tone:'off'};
   if(state==='unsubscribed')return {label:'Unsubscribed',tone:'no'};
   if(state==='pending_payment')return {label:'Awaiting payment',tone:'new'};
   if(state==='included')return {label:'Included',tone:'ok'};
@@ -55275,9 +55498,9 @@ function subscriptionBranchListV758(billing,summary){
      the owner has no way to know it would be handled. It is labelled instead. */
   const action=branch=>{
     const state=String(branch.billing_state||'');
-    if(state==='canceling')return `<button type="button" class="btn ghost sm" data-branch-keep-v758="${payload(branch)}"><span class="v758-wide">Keep this branch</span><span class="v758-narrow">Keep</span></button>`;
+    if(state==='canceling')return `<button type="button" class="btn ghost sm" data-branch-keep-v758="${payload(branch)}">Keep</button>`;
     if(branch.is_default===true)return '';
-    if(subscribedStates.includes(state)&&subscribedCount>1)return `<button type="button" class="btn ghost sm" data-branch-stop-v758="${payload(branch)}"><span class="v758-wide">Stop at renewal</span><span class="v758-narrow">Stop</span></button>`;
+    if(subscribedStates.includes(state)&&subscribedCount>1)return `<button type="button" class="btn ghost sm" data-branch-stop-v758="${payload(branch)}">Switch off</button>`;
     return '';
   };
   /* The row never wraps its action under the name: the name and its pills are one shrinking
@@ -55294,11 +55517,11 @@ function subscriptionBranchListV758(billing,summary){
       </div>
       <div style="flex:0 0 auto">${action(branch)}</div>
     </li>`;}).join('')}</ul>
-  <p class="muted small" style="margin:0 0 18px">First branch is included.${unitLabel?` Each extra branch adds ${esc(unitLabel)}.`:''} Added mid-period: charged only for the rest of the period. Stopped: keeps working until renewal, not charged after.</p>`;
+  <p class="muted small" style="margin:0 0 18px">First branch is included.${unitLabel?` Each extra branch adds ${esc(unitLabel)}.`:''} Added today: charged only for the days left. Switched off: keeps working until renewal, not charged after.</p>`;
 }
 /* nestly_v758: the payments the owner has actually been charged, with the provider's own receipt
    where the provider gave us one — and no link at all where it did not, rather than a dead one. */
-function billingInvoiceTableV758(billing){
+function billingInvoiceTableV758(billing,summary){
   const rows=(Array.isArray(billing?.invoices)?billing.invoices:[]).slice(0,20);
   const head='<h3 style="font-size:.95rem;margin:0 0 8px">Payments</h3>';
   if(!rows.length)return `${head}<p class="muted small" style="margin:0 0 18px">No invoices yet</p>`;
@@ -55306,24 +55529,28 @@ function billingInvoiceTableV758(billing){
      stacked-table rule turned each payment into a four-row label/value block, four screenfuls for
      four payments, so a phone gets the same four facts on ONE line instead. Same data, rendered
      twice, one of the two hidden by the style block above — never two different sets of numbers. */
+  const planLabel=summary&&(summary.plan_label==='Annual'||summary.plan_label==='Monthly')?summary.plan_label:null;
   const cell=row=>({
     when:billingDateV758(row.paid_at||row.period_start)||'—',
+    /* nestly_v764 (owner ruling 1): "which branch, how much, and until when". */
+    what:billingInvoiceReasonTextV764(row,planLabel)||'Subscription',
     amount:moneyShortV758(Number(row.total_cents||0)),
     status:billingStatusWordV758(row.status),
     url:String(row.provider_receipt_url||row.hosted_invoice_url||'').trim()
   });
   return `${head}<div class="cui-table-wrap v758-invoice-table" style="margin-bottom:18px"><table class="cui-table">
-    <thead><tr><th>Date</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead>
+    <thead><tr><th>Date</th><th>What</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead>
     <tbody>${rows.map(row=>{const value=cell(row);
       return `<tr>
         <td>${esc(value.when)}</td>
+        <td data-merchant-content>${esc(value.what)}</td>
         <td>${esc(value.amount)}</td>
         <td>${esc(value.status)}</td>
         <td>${value.url?`<a href="${esc(value.url)}" target="_blank" rel="noopener">Receipt</a>`:'—'}</td>
       </tr>`;}).join('')}</tbody>
   </table></div>
   <ul class="v758-invoice-list" style="list-style:none;padding:0;margin:0 0 18px">${rows.map(row=>{const value=cell(row);
-    return `<li style="padding:9px 0;border-bottom:1px solid var(--line)">${esc(value.when)} · ${esc(value.amount)} · ${esc(value.status)}${value.url?` · <a href="${esc(value.url)}" target="_blank" rel="noopener">Receipt</a>`:''}</li>`;}).join('')}</ul>`;
+    return `<li style="padding:9px 0;border-bottom:1px solid var(--line)">${esc(value.when)} · <span data-merchant-content>${esc(value.what)}</span> · ${esc(value.amount)} · ${esc(value.status)}${value.url?` · <a href="${esc(value.url)}" target="_blank" rel="noopener">Receipt</a>`:''}</li>`;}).join('')}</ul>`;
 }
 /* ---------- provider-backed subscription billing ---------- */
 /* nestly_v756: after Razorpay checkout the browser returns to
@@ -55336,7 +55563,9 @@ function settingsBillingReturnStateV756(){
   const hashQuery=String(location.hash||'').split('?')[1]||'';
   const hashState=new URLSearchParams(hashQuery).get('billing');
   const searchState=new URLSearchParams(location.search||'').get('billing');
-  return {processing:String(hashState||searchState||'')==='processing'};
+  const value=String(hashState||searchState||'');
+  /* nestly_v764: the card-change sheet returns to the same route with billing=card_updated. */
+  return {processing:value==='processing',cardUpdated:value==='card_updated'};
 }
 function settingsBillingReturnStripV756(){
   try{
@@ -55385,6 +55614,7 @@ function settingsBillingReturnStopV756(){
   if(settingsBillingReturnTimerV756){clearTimeout(settingsBillingReturnTimerV756);settingsBillingReturnTimerV756=null}
 }
 let settingsBillingPollActiveV756=false;
+let settingsBillingCardRefreshActiveV764=false;
 async function loadBillingConfig(){
   const wrap=$('billingWrap');if(!wrap||!S.biz?.id)return;
   wrap.setAttribute('aria-busy','true');
@@ -55525,6 +55755,13 @@ async function loadBillingConfig(){
        no button. Cancel/Resume renewal live on the summary card; this drawer only confirms a plan
        change, and says so plainly when there is nothing to change. */
     const unchangedPlan=providerSubscription&&sameCadence&&sameCapacity;
+    /* nestly_v764 (owner ruling 3): a cycle change takes effect on the renewal date — annual →
+       monthly at the end of the paid year, monthly → annual at the end of this month — so the
+       before/after says WHEN rather than implying "now". */
+    const cadenceEffectiveAtV764=providerSubscription
+      ?billingCadenceEffectiveAtV764(b.terms?.cadence,selectedCadence,summaryV758.renews_at,new Date()):null;
+    const cadenceEffectiveTextV764=cadenceEffectiveAtV764
+      ?`From ${billingDateV758(cadenceEffectiveAtV764)||'your next billing date'}`:'New';
     const action=!providerSubscription?'Start secure checkout'
       :!sameCadence?'Change billing cycle'
       :!sameCapacity?'Increase capacity'
@@ -55543,13 +55780,18 @@ async function loadBillingConfig(){
        (get_business_billing_v758's `summary`); everything below is the same page as before, moved
        one tap down so it cannot compete with the answer. */
     const summaryLinesV758=billingSummaryLinesV758(summaryV758,S.biz?.name,b.payment_method);
+    /* nestly_v764: what happens next to this subscription — a cycle change already booked for the
+       renewal date, or a renewal the owner has cancelled and can still resume. */
+    const lifecycleV764=billingLifecycleLinesV764(b,summaryV758,b.payment_method);
     wrap.innerHTML=`${billingSummaryCardV758(summaryLinesV758,{
-        primaryLabel:providerSubscription?'Change plan':'Choose plan',
+        primaryLabel:lifecycleV764.show_final?'Start a new plan'
+          :providerSubscription?'Change plan':'Choose plan',
         hasSubscription:providerSubscription,
-        cancelAtPeriodEnd:!!b.cancel_at_period_end
+        cancelAtPeriodEnd:!!b.cancel_at_period_end,
+        lifecycle:lifecycleV764
       })}
       ${subscriptionBranchListV758(b,summaryV758)}
-      ${billingInvoiceTableV758(b)}
+      ${billingInvoiceTableV758(b,summaryV758)}
       <details id="billingChangePlanV758" style="margin-top:4px"><summary style="cursor:pointer;font-weight:700">Change plan</summary>
       <fieldset style="border:0;padding:0;margin:14px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">How often you pay</legend>
         <div class="row" style="align-items:stretch;flex-wrap:wrap">
@@ -55562,7 +55804,7 @@ async function loadBillingConfig(){
       <p class="muted small" style="margin-top:7px">Your customers are counted across every branch together — ${currentCustomers.toLocaleString('en-SG')} profiles stored now. Capacity can be increased later; it is never reduced below what you already store. More than ${salesAssistedAboveV664.toLocaleString('en-SG')} profiles is arranged with Peekaa support.</p>
       ${tierBlockedReasonV664?`<div class="imp-note" style="margin-top:10px" role="status">${esc(tierBlockedReasonV664)} <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></div>`:''}
       <div class="card" style="margin-top:16px;background:var(--sand)"><p class="muted small" style="margin:0">Now and after this change</p>
-        <p style="margin:6px 0 0;font-weight:700;font-variant-numeric:tabular-nums">Now: ${esc(summaryLinesV758.plan_label?`${moneyShortV758(Number(summaryV758.total_cents||0))} / ${summaryLinesV758.period}`:'No plan')} → New: ${esc(moneyShortV758(total))} / ${cadenceLabel}</p>
+        <p style="margin:6px 0 0;font-weight:700;font-variant-numeric:tabular-nums">Now: ${esc(summaryLinesV758.plan_label?`${summaryLinesV758.plan_label} ${moneyShortV758(Number(summaryV758.total_cents||0))} / ${summaryLinesV758.period}`:'No plan')} → ${esc(cadenceEffectiveTextV764)}: ${esc(billingCadenceWordV764(selectedCadence))} ${esc(moneyShortV758(total))} / ${cadenceLabel}</p>
         <p class="muted small" style="margin:6px 0 0">${esc(moneyShortV758(unitAmountV664))} per branch × ${branchUnitsV664} ${branchUnitsV664===1?'branch':'branches'} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity · GST not charged</p>
         <p class="muted small" style="margin:6px 0 0">Every branch is charged the same amount once. A branch added part-way through a paid period is charged only for the time left in it.</p>
       </div>
@@ -55585,8 +55827,10 @@ async function loadBillingConfig(){
     $('billingCapacity').onchange=()=>{selectedCapacity=Number($('billingCapacity').value);renderPlan()};
     const execute=async(type,cadence,capacity)=>{
       const status=$('billingCommandStatus'),buttons=wrap.querySelectorAll('button');buttons.forEach(button=>button.disabled=true);
-      status.textContent=type==='cancel_at_period_end'?'Cancelling at the end of the current billing period…'
-        :type==='resume'?'Resuming the subscription…'
+      status.textContent=type==='cancel_at_period_end'?'Cancelling the renewal…'
+        :type==='resume'?'Resuming the renewal…'
+        :type==='update_card'?'Opening the secure card page…'
+        :type==='refresh_payment_method'?'Refreshing your card details…'
         :'Submitting the exact plan to Razorpay…';
       const fingerprint=JSON.stringify({type,cadence:cadence||null,capacity:capacity||null});
       let attempt=readBillingAttempt();
@@ -55605,16 +55849,25 @@ async function loadBillingConfig(){
       if(executed.error){buttons.forEach(button=>button.disabled=false);status.textContent='Peekaa could not confirm Razorpay’s result. Retry this same selection to recover the exact provider request; do not start a different request yet.';return}
       const result=executed.data||requested;
       if(result.redirect_url){clearBillingAttempt(attempt.key);location.assign(result.redirect_url);return}
+      let message='';
       if(['failed','canceled'].includes(result.status)){
         clearBillingAttempt(attempt.key);
-        status.textContent='Razorpay did not complete this billing request. Review the selection and try again with a new request.';
+        message='Razorpay did not complete this billing request. Review the selection and try again with a new request.';
       }else if(result.status==='uncertain'){
-        status.textContent='Razorpay still needs payment confirmation. Retry this same selection after completing payment; Peekaa will recover the exact request.';
+        message='Razorpay still needs payment confirmation. Retry this same selection after completing payment; Peekaa will recover the exact request.';
       }else{
         clearBillingAttempt(attempt.key);
-        status.textContent='Request submitted. The current plan remains shown until Razorpay confirms payment and the subscription webhook is received.';
+        message=type==='cancel_at_period_end'?'Renewal cancelled. Everything keeps working until your billing date.'
+          :type==='resume'?'Renewal resumed.'
+          :type==='refresh_payment_method'?'Card updated'
+          :'Request submitted. The current plan remains shown until Razorpay confirms payment and the subscription webhook is received.';
       }
-      buttons.forEach(button=>button.disabled=false);
+      /* nestly_v764: a command that does not hand the browser to Razorpay changes the page's own
+         facts (a cancelled renewal, a scheduled cycle, a new card). The card is re-read and
+         re-drawn where it stands — this screen never navigates for these. */
+      await loadBillingConfig();
+      const settled=$('billingCommandStatus');
+      if(settled)settled.textContent=message;
     };
     /* nestly_v628 (owner photo 1): the branch name opens what the row could not fit, and
        "+ Add branch" leads to the ONE flow that can create and charge for a branch — the Branches
@@ -55647,8 +55900,43 @@ async function loadBillingConfig(){
       const type=!providerSubscription?'create_checkout':!sameCadence?'change_cadence':'change_capacity';
       return execute(type,selectedCadence,selectedCapacity);
     };
-    if($('billingCancel'))$('billingCancel').onclick=()=>execute('cancel_at_period_end',null,null);
-    if($('billingResume'))$('billingResume').onclick=()=>execute('resume',null,null);
+    /* nestly_v764 (owner ruling 4): both directions are confirmed in the owner's own words, and
+       the resume confirmation names the money, the date and the card it will be taken from. */
+    if($('billingCancel'))$('billingCancel').onclick=()=>{
+      if(lifecycleV764.cancel_confirm&&!confirm(lifecycleV764.cancel_confirm))return;
+      return setRenewalIntentV764(true);
+    };
+    if($('billingResume'))$('billingResume').onclick=()=>{
+      if(lifecycleV764.resume_confirm&&!confirm(lifecycleV764.resume_confirm))return;
+      return setRenewalIntentV764(false);
+    };
+    /* The intent is local until the cron sends it to Razorpay (a Razorpay cancel cannot be
+       undone), so this is an owner RPC, not a provider command. Once it HAS been sent there is
+       no Resume button to press. */
+    async function setRenewalIntentV764(cancel){
+      const status=$('billingCommandStatus'),buttons=wrap.querySelectorAll('button');
+      buttons.forEach(button=>{button.disabled=true});
+      if(status)status.textContent=cancel?'Cancelling the renewal…':'Resuming the renewal…';
+      const {error}=await sb.rpc('set_renewal_intent_v764',{p_business:S.biz.id,p_cancel:cancel});
+      if(error){
+        buttons.forEach(button=>{button.disabled=false});
+        if(status)status.textContent=ownerErrorText(error);
+        return;
+      }
+      await loadBillingConfig();
+      const settled=$('billingCommandStatus');
+      if(settled)settled.textContent=cancel
+        ?'Renewal cancelled. Everything keeps working until your billing date.'
+        :'Renewal resumed.';
+    }
+    /* Ruling 3's undo: go back to the cycle they are on now. Same command that scheduled it. */
+    if($('billingKeepCadenceV764'))$('billingKeepCadenceV764').onclick=()=>{
+      const back=$('billingKeepCadenceV764').dataset.cadence
+        ||(b.terms?.cadence==='annual'?'annual':'monthly');
+      return execute('change_cadence',back,Number(b.terms?.customer_capacity||selectedCapacity));
+    };
+    /* Ruling 5: Razorpay's own card-change sheet, then the digits refresh on return. */
+    if($('billingUpdateCardV764'))$('billingUpdateCardV764').onclick=()=>execute('update_card',null,null);
   };
 
   renderPlan();
@@ -55657,6 +55945,31 @@ async function loadBillingConfig(){
      sees "trialing" and the lowest tier until they refresh by hand. Poll the SAME
      fetchBusinessBillingV758 read this card already uses, every 2s for up to 90s, and stop the
      moment status/payment_status/provider_subscription_id/capacity actually changes. */
+  /* nestly_v764 (owner ruling 5): back from Razorpay's card-change sheet. The webhook does not
+     carry the new digits, so the page asks the provider for the latest payment method right now
+     and re-draws — the owner sees the new card in seconds, not after the nightly backfill. */
+  if(billingReturnStateV756.cardUpdated&&!settingsBillingCardRefreshActiveV764){
+    settingsBillingCardRefreshActiveV764=true;
+    settingsBillingReturnStripV756();
+    const cardNode=$('billingCommandStatus');
+    if(cardNode)cardNode.textContent='Refreshing your card details…';
+    (async()=>{
+      /* The stored digits are marked stale FIRST — so a failed refresh leaves "Card on file"
+         rather than the old card's four digits — and the command then fills them in. */
+      try{await sb.rpc('refresh_payment_method_request_v764',{p_business:S.biz.id})}catch{}
+      const requested=await sb.rpc('request_billing_command_v124',{
+        p_business:S.biz.id,p_command_type:'refresh_payment_method',p_cadence:null,
+        p_customer_capacity:null,p_idempotency_key:crypto.randomUUID()});
+      const commandId=requested.data?.command_id||null;
+      if(commandId)await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+      settingsBillingCardRefreshActiveV764=false;
+      if(!wrap.isConnected)return;
+      const {data:refreshed}=await fetchBusinessBillingV758(S.biz.id);
+      await loadBillingConfig();
+      const settled=$('billingCommandStatus');
+      if(settled)settled.textContent=`Card updated · ${billingCardTextV758(refreshed?.payment_method)}`;
+    })();
+  }
   if(billingReturnStateV756.processing&&!settingsBillingPollActiveV756){
     settingsBillingPollActiveV756=true;
     const baselineV756=settingsBillingReturnSignatureV756(b,currentCapacity);

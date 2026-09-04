@@ -54,7 +54,13 @@ test('the owner is told a charge is coming before it happens', () => {
      figures instead of paragraphs: which branch this is, what it costs, what the total becomes,
      and that the payment page charges it. Assert those, not the retired sentences. */
   assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
-  assert.match(app, /Charged from the secure payment page; the branch stays switched off until that payment confirms\./);
+  /* nestly_v764 (owner ruling 1): the charge now happens on the card already on file, and the
+     owner confirms the pro-rated amount in a dialog BEFORE the branch is created — so the promise
+     is stated twice, and neither statement is weaker than the sentence it replaces. */
+  assert.match(app, /Charged today on the card you already pay with; the branch switches on when that payment confirms\./);
+  assert.match(app, /branchProrataPreviewV764\(payload\.name\)/);
+  assert.match(app, /openBranchProrataConfirmV764\(previewV764,payload\.name\)/);
+  assert.match(app, /confirm:`Set up today and pay \$\{amount\}`/);
   assert.match(app, /branchAddPriceNoteV666/);
   assert.match(app, /Total for \$\{quote\.branches\}/);
 });
