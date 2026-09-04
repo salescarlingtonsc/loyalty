@@ -70,10 +70,16 @@ test('the numbers are stated where branches are listed, bought, and paid for', (
   /* nestly_v666: the create form now prices the branch instead of explaining the policy. */
   assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
   /* nestly_v664: the subscription card no longer quotes one unit and explains the rest in prose —
-     the Amount due IS the tier amount times the billable branch count, and the sentence beside it
-     states the rule and the proration the owner asked for. */
-  assert.match(app, /Every branch is charged this tier once\./);
+     the total IS the per-branch amount times the billable branch count, and the sentence beside it
+     states the rule and the proration the owner asked for.
+     nestly_v758 moved those two sentences into the Change plan drawer and the branch list, and
+     dropped the word "tier" from owner-facing copy. The arithmetic and the two promises are
+     unchanged, so they are pinned in their new wording rather than weakened. */
+  assert.match(app, /Every branch is charged the same amount once\./);
   assert.match(app, /A branch added part-way through a paid period is charged only for the time left in it\./);
+  assert.match(app, /First branch is included\./);
+  assert.match(app, /Added mid-period: charged only for the rest of the period\./);
+  assert.match(app, /Stopped: keeps working until renewal, not charged after\./);
   assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
   // V202's promise is still made, in the shorter v666 wording
   assert.match(app, /Charged from the secure payment page; the branch stays switched off until that payment confirms\./);

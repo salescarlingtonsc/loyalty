@@ -170,10 +170,14 @@ test('poller respects isCancelled and performs no further fetches once cancelled
   assert.equal(fetchCalls, seenAfterCancel, 'no fetch should happen after isCancelled() flips true');
 });
 
-/* Wiring check: loadBillingConfig must be the only caller, must reuse get_business_billing_v125
-   (never a new RPC), and must gate capacity on the freshly-fetched terms rather than a hardcoded
-   lowest tier — asserted structurally (not a broad grep) against the call site itself. */
-test('loadBillingConfig wires the poller onto its own get_business_billing_v125 read, gated on billing=processing', () => {
+/* Wiring check: loadBillingConfig must be the only caller, must reuse the SAME billing read the
+   card itself renders from (never a second, different RPC), and must gate capacity on the
+   freshly-fetched terms rather than a hardcoded lowest tier — asserted structurally (not a broad
+   grep) against the call site itself.
+   nestly_v758: that read is fetchBusinessBillingV758, which asks for get_business_billing_v758 and
+   falls back to the get_business_billing_v125 it wraps. Still one read, still shared with the
+   render — which is the property this test exists to hold. */
+test('loadBillingConfig wires the poller onto its own billing read, gated on billing=processing', () => {
   const fnStart = app.indexOf('async function loadBillingConfig(){');
   const fnEnd = app.indexOf('\n/* ---------- customer sign-up QR ---------- */');
   assert.ok(fnStart > -1 && fnEnd > fnStart, 'loadBillingConfig anchors must exist');
@@ -182,7 +186,12 @@ test('loadBillingConfig wires the poller onto its own get_business_billing_v125 
   assert.match(fn, /settingsBillingReturnPollV756\(/);
   // reuses the same RPC inside the poll's fetchState — no new/second billing RPC introduced.
   const fetchStateBlock = fn.slice(fn.indexOf('fetchState:async'), fn.indexOf('onChange:'));
-  assert.match(fetchStateBlock, /sb\.rpc\('get_business_billing_v125',\{p_business:S\.biz\.id\}\)/);
+  assert.match(fetchStateBlock, /fetchBusinessBillingV758\(S\.biz\.id\)/);
+  // the render above it uses the very same read, so the poll can never compare against a
+  // different payload than the one on screen.
+  assert.match(fn, /await Promise\.all\(\[\s*\n\s*fetchBusinessBillingV758\(S\.biz\.id\),/);
+  // and that helper is a wrapper over the v125 read, not a second billing contract.
+  assert.match(app, /async function fetchBusinessBillingV758\(businessId\)\{[\s\S]{0,600}?sb\.rpc\('get_business_billing_v125',\{p_business:businessId\}\)/);
   assert.doesNotMatch(fn, /sb\.rpc\('get_self_serve_checkout_v130'/, 'must not invent a new RPC for this poll');
   // capacity default comes from the freshly fetched terms, not a hardcoded lowest tier.
   assert.match(fn, /currentCapacity=Math\.max\(minimumCapacity,Number\(b\.terms\?\.customer_capacity\|\|0\)\)/);

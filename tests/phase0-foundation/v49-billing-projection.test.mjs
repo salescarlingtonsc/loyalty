@@ -70,7 +70,14 @@ test('v49 rollback suite checks ACL, projection math, owner access, and non-owne
 test('owner-only Settings uses the V124 projection and generic retryable errors without raw database text',()=>{
   const billing=section('async function loadBillingConfig()','/* ---------- customer sign-up QR ---------- */');
   assert.match(app,/if\(pageKey==='settings'&&S\.myRole!=='owner'\)[\s\S]*Only the owner can open Settings\./);
-  assert.match(billing,/sb\.rpc\('get_business_billing_v125',\{p_business:S\.biz\.id\}\)/);
+  /* nestly_v758: the card reads get_business_billing_v758, which returns the v125 projection plus
+     a server-computed summary and payment method, and falls back to v125 itself where v758 is not
+     deployed yet. The V49 guarantee is unchanged — Settings renders from the OWNER-scoped billing
+     projection and from nothing else — so it is pinned on that read and on the fallback inside it,
+     rather than on a name the projection has outgrown. */
+  assert.match(billing,/fetchBusinessBillingV758\(S\.biz\.id\)/);
+  assert.match(app,/async function fetchBusinessBillingV758\(businessId\)\{[\s\S]{0,600}?sb\.rpc\('get_business_billing_v758',\{p_business:businessId\}\)[\s\S]{0,400}?sb\.rpc\('get_business_billing_v125',\{p_business:businessId\}\)/);
+  assert.doesNotMatch(billing,/sb\.rpc\('get_business_billing_v(?!758)/,'no second, different billing read');
   assert.match(billing,/const money=c=>'SGD '/);
   /* nestly_v664: the card prices from the server's capacity tiers, so the per-1,000 block amount
      is no longer part of what it renders. What must stay pinned is that the amount comes from the

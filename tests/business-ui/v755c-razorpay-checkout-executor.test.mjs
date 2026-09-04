@@ -117,8 +117,10 @@ test('v755 the billing settings screen offers Cancel/Resume instead of the retir
     'Razorpay has no customer billing portal; create_portal must not be requested by the client');
   assert.doesNotMatch(app, /id="billingPortal"/);
   assert.doesNotMatch(app, /Open Stripe billing portal/);
-  assert.match(app, /id="billingCancel">Cancel at period end</);
-  assert.match(app, /id="billingResume">Resume subscription</);
+  /* nestly_v758 renamed both buttons to the words an owner uses ("Cancel renewal" / "Resume
+     renewal") and moved them onto the summary card. Same two commands, same two ids. */
+  assert.match(app, /id="billingCancel">Cancel renewal</);
+  assert.match(app, /id="billingResume">Resume renewal</);
   assert.match(app, /execute\('cancel_at_period_end',null,null\)/);
   assert.match(app, /execute\('resume',null,null\)/);
 });

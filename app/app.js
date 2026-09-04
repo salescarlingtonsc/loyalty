@@ -54616,18 +54616,175 @@ async function settingsPage(){
    PayNow QR) was unreachable dead code — loadMerchantPaymentsV142 had no caller and no host
    #merchantPaymentsWrapV142 element anywhere in the app. Razorpay SG has no equivalent to
    Stripe Connect, so it is removed rather than ported; see RAZORPAY_SWAP_SPEC.md. */
-/* nestly_v612 (owner, photo 1: a table drawn across the Subscription page — Business Name, a row
-   per branch, the plan, "Expires on XXX", Ongoing/Expired, and a payment method column; confirmed
-   as "those six, one row per branch").
-   IT IS A VIEW, NOT A BILLING CHANGE. The owner was asked directly and chose one company plan with
-   a per-branch breakdown, so every row carries the SAME plan, renewal date, status and payment
-   method — because there is one subscription. Showing a different status per branch would be a
-   drawing of a product Peekaa does not sell, and the first person to read it would believe one
-   branch could lapse while the others ran on. What differs down the table is the branch, which is
-   the thing the owner wanted to see their money against. */
-/* nestly_v628. What the row could not hold: the branch's own contact details beside the plan facts
-   every branch shares. Read-only, built from the row already on screen — no second read, and no
-   action, so a mis-tap costs a Close. */
+/* nestly_v758 (owner, 2026-09-04: "just show me what I subscribed to, how many branches, how much
+   in total, and the renew date"). The billing page answers those four questions in four lines
+   before anything else is drawn. Everything that used to compete with them — the cycle radios, the
+   capacity ladder, the reference price, the inclusions — is still here, one tap down, in the
+   Change plan drawer and the Details expander. */
+function billingDateV758(value){
+  if(!value)return '';
+  const at=new Date(value);
+  if(Number.isNaN(at.getTime()))return '';
+  /* Singapore time, and a THREE-letter month: en-SG's own short month is "Sept" for September,
+     which is the only month that reads differently from every other date on this page. Built from
+     the parts so the truncation is deliberate rather than a locale accident. */
+  const parts=new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'})
+    .formatToParts(at).reduce((all,part)=>{all[part.type]=part.value;return all},{});
+  if(!parts.day||!parts.month||!parts.year)return '';
+  return `${parts.day} ${String(parts.month).slice(0,3)} ${parts.year}`;
+}
+function billingPeriodWordV758(planLabel){return planLabel==='Monthly'?'month':'year'}
+/* nestly_v758: the billing page's own money format, and ONLY this page's. The shared money()
+   helper prints every cent for a till receipt, which is right there and wrong here — an owner
+   reading "how much in total" is reading a headline, and "SGD 10,000" is the headline.
+   Thousands are grouped, whole amounts drop the cents, and anything with cents keeps them. */
+function moneyShortV758(cents){
+  const value=(Number.isFinite(Number(cents))?Number(cents):0)/100;
+  /* SGD is hardcoded on purpose: Peekaa bills in SGD whatever currency the tenant SELLS in, and
+     v49 pins that this card never reads S.biz.currency. */
+  const decimals=Number.isInteger(value)?0:2;
+  return `SGD ${value.toLocaleString('en-SG',{minimumFractionDigits:decimals,maximumFractionDigits:decimals})}`;
+}
+/* "paid" is what the provider calls it; "Paid" is what a person reads. */
+function billingStatusWordV758(status){
+  return String(status||'—').replaceAll('_',' ').replace(/\b[a-z]/g,letter=>letter.toUpperCase());
+}
+/* The card is named only when we actually know it. "Card on file" is what we say when the provider
+   confirmed a payment method but not its last four digits, and we never invent digits. */
+function billingCardTextV758(method){
+  const last4=String(method?.last4||'').trim();
+  const brand=String(method?.brand||'').trim();
+  const kind=String(method?.kind||'').trim();
+  if(kind&&kind!=='card')return 'Payment method on file';
+  if(last4)return `${brand||'Card'} ending ${last4}`;
+  if(brand||kind)return 'Card on file';
+  return 'No card yet';
+}
+/* The four lines. Pure — no DOM, no Supabase — so a test executes it with a payload instead of
+   grepping the markup for a sentence (docs: "Source-regex tests are vacuous"). */
+function billingSummaryLinesV758(summary,businessName,paymentMethod){
+  const s=summary||{};
+  const state=s.cancel_at_period_end&&String(s.state||'')==='active'?'canceling':String(s.state||'none');
+  const planLabel=s.plan_label==='Annual'||s.plan_label==='Monthly'?s.plan_label:null;
+  const planText=planLabel?`${planLabel} plan`:state==='trial'?'Free trial':'No plan';
+  const period=billingPeriodWordV758(planLabel);
+  const capacity=Math.max(0,Number(s.capacity||0));
+  const title=[String(businessName||'').trim()||'This business',planText]
+    .concat(planLabel&&capacity?[`Up to ${capacity.toLocaleString('en-SG')} profiles`]:[]).join(' · ');
+  const total=Math.max(0,Number(s.branches_total||0));
+  const stopping=Math.max(0,Number(s.branches_stopping||0)),lapsed=Math.max(0,Number(s.branches_lapsed||0));
+  const unsubscribed=Math.max(0,Number(s.branches_unsubscribed||0));
+  /* The count on this line is the count the total is built from — units, not "billable" — because
+     an owner who reads "1 billable" beside a two-branch price has been given two numbers that
+     cannot both be true. The first branch is charged, at the plan price; it is the extra ones that
+     add to it, and the sentence says so in the same breath. */
+  const units=Math.max(1,Number(s.units||1+Math.max(0,Number(s.branches_billable||0))));
+  let branches=`${total} ${total===1?'branch':'branches'} · ${units} charged (first is in the plan price)`;
+  if(stopping>0)branches+=` · ${stopping} stopping at renewal`;
+  if(lapsed>0)branches+=` · ${lapsed} payment lapsed`;
+  if(unsubscribed>0)branches+=` · ${unsubscribed} unsubscribed`;
+  const trialEnd=billingDateV758(s.trial_ends_at);
+  const totalCents=Number(s.total_cents||0);
+  const amount=state==='trial'
+    ?`SGD 0 until ${trialEnd||'your trial ends'}${planLabel?` · then ${moneyShortV758(totalCents)} / ${period}`:''}`
+    :planLabel?`${moneyShortV758(totalCents)} / ${period}`:'No charges yet';
+  /* Where the headline number comes from, under the headline number. */
+  const unitCents=Number(s.unit_amount_cents||0);
+  const arithmetic=planLabel&&unitCents>0
+    ?`${units} ${units===1?'branch':'branches'} × ${moneyShortV758(unitCents)} / ${period}`:'';
+  const renewsOn=billingDateV758(s.renews_at);
+  const when=state==='canceling'?`Ends on ${renewsOn||'your next billing date'} · will not renew`
+    :state==='past_due'||state==='unpaid'?'Payment failed · we will retry'
+    :renewsOn?`Renews on ${renewsOn}`:'No renewal date yet';
+  const renewal=`${when} · ${billingCardTextV758(paymentMethod)}`;
+  const pill=state==='active'?{label:'Active',tone:'ok'}
+    :state==='trial'?{label:'Trial',tone:'new'}
+    :state==='past_due'?{label:'Payment failed',tone:'no'}
+    :state==='canceling'?{label:`Cancels ${renewsOn||'at renewal'}`,tone:'off'}
+    :state==='unpaid'?{label:'Unpaid',tone:'no'}
+    :state==='canceled'?{label:'Canceled',tone:'off'}
+    :{label:'No plan',tone:'off'};
+  return {title,branches,amount,arithmetic,units,renewal,pill,state,period,plan_label:planLabel};
+}
+/* get_business_billing_v758 computes `summary` on the server, from the same rows this page reads.
+   This is the fallback for a workspace whose database has not been migrated yet: the same
+   arithmetic, from the same payload, so the page never goes blank waiting for a deploy. */
+function billingSummaryFallbackV758(billing,branchRows){
+  const b=billing||{};
+  const counts=branchBillingCountsV280(Array.isArray(branchRows)?branchRows:[]);
+  const cadence=b.terms?.cadence;
+  const planLabel=cadence==='annual'?'Annual':cadence==='monthly'?'Monthly':null;
+  const capacity=Math.max(0,Number(b.terms?.customer_capacity||0));
+  const tier=(Array.isArray(b.capacity_tiers)?b.capacity_tiers:[])
+    .filter(item=>item&&item.cadence===cadence&&Number(item.capacity_ceiling)>0)
+    .sort((left,right)=>Number(left.capacity_ceiling)-Number(right.capacity_ceiling))
+    .find(item=>Number(item.capacity_ceiling)>=capacity)||null;
+  const billable=counts.total?counts.billable:Math.max(0,Number(b.billable_branch_count||0));
+  const units=1+billable;
+  const unit=tier?Number(tier.amount_cents):Number(b.terms?.amount_cents||0);
+  const status=String(b.status||'');
+  const state=b.cancel_at_period_end?'canceling'
+    :status==='past_due'||b.payment_status==='past_due'?'past_due'
+    :status==='unpaid'?'unpaid'
+    :status==='canceled'?'canceled'
+    :status==='trialing'?'trial'
+    :status==='active'?'active'
+    :planLabel?'active':'none';
+  return {
+    plan_label:planLabel,capacity,
+    branches_total:counts.total,branches_included:counts.included,branches_billable:billable,
+    branches_stopping:counts.stopping,branches_lapsed:counts.lapsed,branches_unsubscribed:counts.unsubscribed,
+    unit_amount_cents:unit,units,total_cents:unit*units,
+    renews_at:b.next_payment_at||b.provider?.current_period_end||b.current_period_end||null,
+    state,trial_ends_at:b.trial_ends_at||b.provider?.trial_end||null,
+    cancel_at_period_end:!!b.cancel_at_period_end
+  };
+}
+/* One read for the whole page. v758 returns everything v125 does plus `summary` and
+   `payment_method`; a workspace still on v125 falls back to it rather than showing an error, and
+   the summary is then computed from the identical payload above. */
+async function fetchBusinessBillingV758(businessId){
+  const attempt=await sb.rpc('get_business_billing_v758',{p_business:businessId});
+  const code=String(attempt.error?.code||'');
+  if(!attempt.error||(code!=='PGRST202'&&code!=='42883'))return attempt;
+  return sb.rpc('get_business_billing_v125',{p_business:businessId});
+}
+/* The only two things on this page that must differ between a desk and a phone, in one place:
+   the payments list swaps for the payments table, and the row buttons shorten. Emitted with the
+   card rather than added to the app stylesheet, because it styles nothing outside this page. */
+const BILLING_LAYOUT_STYLE_V758=`<style id="billingLayoutStyleV758">
+.v758-narrow{display:none}
+.v758-invoice-list{display:none}
+@media(max-width:768px){
+  .v758-wide{display:none}
+  .v758-narrow{display:inline}
+  .v758-invoice-table{display:none}
+  .v758-invoice-list{display:block}
+}
+</style>`;
+function billingSummaryCardV758(lines,options){
+  const opts=options||{};
+  const primary=opts.primaryLabel
+    ?`<button type="button" class="btn" id="billingChoosePlanV758">${esc(opts.primaryLabel)}</button>`:'';
+  const secondary=opts.cancelAtPeriodEnd
+    ?'<button type="button" class="btn ghost" id="billingResume">Resume renewal</button>'
+    :opts.hasSubscription?'<button type="button" class="btn ghost" id="billingCancel">Cancel renewal</button>':'';
+  return `${BILLING_LAYOUT_STYLE_V758}<section class="card" style="padding:18px;margin-bottom:18px" aria-label="Your subscription">
+    <div class="row" style="align-items:flex-start;gap:10px">
+      <h2 style="font-size:1.05rem;margin:0;line-height:1.35" data-merchant-content>${esc(lines.title)}</h2>
+      <span class="spacer"></span><span class="pill ${lines.pill.tone}">${esc(lines.pill.label)}</span>
+    </div>
+    <p class="muted small" style="margin:8px 0 0">${esc(lines.branches)}</p>
+    <p style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums;margin:10px 0 0">${esc(lines.amount)}</p>
+    ${lines.arithmetic?`<p class="muted small" style="margin:2px 0 0">${esc(lines.arithmetic)}</p>`:''}
+    <p class="muted small" style="margin:6px 0 0">${esc(lines.renewal)}</p>
+    ${primary||secondary?`<div class="row" style="margin-top:14px;flex-wrap:wrap">${primary}${secondary}</div>`:''}
+  </section>`;
+}
+/* nestly_v628. What the row could not hold: the branch's own contact details. Read-only, built
+   from the row already on screen — no second read.
+   nestly_v758: payment frequency, billed-until and payment method left this dialog. They are one
+   company's facts, said once, at the top of the page. */
 function openSubscriptionBranchDetailV628(payload){
   let record=null;
   try{record=JSON.parse(payload||'null')}catch{record=null}
@@ -54636,10 +54793,7 @@ function openSubscriptionBranchDetailV628(payload){
     ['Branch',record.branch],
     ['Address',record.address],
     ['Phone',record.phone],
-    ['Email',record.email],
-    ['Payment frequency',record.frequency],
-    ['Billed until',record.billed_until],
-    ['Payment method',record.method]
+    ['Email',record.email]
   ].filter(([,value])=>String(value||'').trim()&&String(value).trim()!=='—');
   const modal=document.createElement('div');modal.className='modal';modal.tabIndex=-1;
   modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
@@ -54648,166 +54802,129 @@ function openSubscriptionBranchDetailV628(payload){
     <div class="row"><div><p class="eyebrow">Branch</p><h2 id="subscriptionBranchTitleV628" style="margin-top:4px" data-merchant-content>${esc(record.branch||'Branch')}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="subscriptionBranchCloseV628" aria-label="Close branch details">Close</button></div>
     ${record.is_default?'<p class="muted small" style="margin-top:6px">Main branch.</p>':''}
     <dl class="customer-booking-detail-list-v613">${rows.map(([label,value])=>`<div><dt class="muted small">${esc(label)}</dt><dd data-merchant-content>${esc(value)}</dd></div>`).join('')}</dl>
-    ${/* Stated once, here, rather than as a paragraph under the table the owner struck out: it is
-         the answer to "why does every row look the same", which is a question you only ask while
-         looking at one row. */''}
-    <p class="muted small" style="margin-top:14px">One subscription covers the whole company, so every branch shares this plan, billing date and payment method.</p>
-    ${subscriptionBranchBillingActionsV665(record)}
+    <p class="muted small" style="margin-top:14px">One plan covers the whole company, for every branch.</p>
   </section>`;
   document.body.appendChild(modal);
   let deactivate=null;
   const close=()=>{if(deactivate){const done=deactivate;deactivate=null;done({restoreFocus:true})}else modal.remove()};
   deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#subscriptionBranchCloseV628'});
   document.getElementById('subscriptionBranchCloseV628').onclick=close;
-  wireSubscriptionBranchBillingActionsV665(modal,record,close);
 }
 /* nestly_v665 (owner: "all branches must be charged - unless user switch it off. (there must be a
-   unsubscribe button) and ask for confirmation").
-   Two states, two controls, and never both: a branch that is being paid for can be switched off,
-   and a branch already stopping can be kept. The confirmation names the branch, the money and the
-   date the branch actually stops — an owner who presses this must know they keep the shop working
-   until the day they have paid to, and that nothing is refunded. */
-function subscriptionBranchBillingActionsV665(record){
-  const state=String(record?.billing_state||'');
-  if(state==='canceling'){
-    return `<div class="imp-note" style="margin-top:16px" role="status">
-      <b>Stopping on ${esc(record.cancel_at||'the next billing date')}.</b>
-      <p class="small" style="margin-top:6px">It keeps taking bookings and sales until then, and is not charged again after it.</p>
-      <button type="button" class="btn ghost sm" id="branchKeepV665" style="margin-top:10px">Keep this branch</button>
-      <p class="muted small" id="branchBillingStatusV665" role="status" aria-live="polite" style="margin-top:8px"></p></div>`;
-  }
-  if(!['included','pending_payment','active'].includes(state))return '';
-  if(Number(record?.others_subscribed||0)<1){
-    return `<p class="muted small" style="margin-top:16px">This is your only subscribed branch. To stop paying altogether, cancel the subscription from the plan below rather than switching this branch off.</p>`;
-  }
-  return `<hr style="border:none;border-top:1px solid var(--line);margin:16px 0 12px">
-    <button type="button" class="btn ghost sm" id="branchUnsubscribeV665">Unsubscribe this branch</button>
-    <p class="muted small" style="margin-top:8px">Stops the charge for this branch from your next billing date. It keeps working until then.</p>
-    <p class="muted small" id="branchBillingStatusV665" role="status" aria-live="polite" style="margin-top:8px"></p>`;
+   unsubscribe button) and ask for confirmation"). The confirmation names the branch, the money and
+   the date the branch actually stops — an owner who presses this must know they keep the shop
+   working until the day they have paid to, and that nothing is refunded.
+   nestly_v758: the control moved out of the branch pop-up and onto the branch's own row, which is
+   where the owner is already looking at that branch's money. The words are unchanged. */
+function subscriptionBranchUnsubscribeConfirmV665(record){
+  const amount=String(record?.unit_amount||'').trim();
+  return `Unsubscribe "${record?.branch}"?\n\n`
+    +`It keeps taking bookings and sales until ${record?.billed_until&&record.billed_until!=='—'?record.billed_until:'the end of the period you have paid for'}, then switches off.\n`
+    +(amount?`You stop paying ${amount} for this branch from the next billing date.\n`:'')
+    +`Nothing is refunded for the time already paid, and its customers, sales and bookings stay in your reports.`;
 }
-function wireSubscriptionBranchBillingActionsV665(modal,record,close){
-  const status=()=>modal.querySelector('#branchBillingStatusV665');
-  const run=async(rpc,button,busyLabel)=>{
-    CUI.setButtonBusy(button,{busy:true,label:busyLabel});
-    const {data,error}=await sb.rpc(rpc,{
-      p_business:S.biz.id,p_branch:record.branch_id,p_idempotency_key:crypto.randomUUID()});
-    if(error){
-      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
-      const host=status();if(host)host.textContent=ownerErrorText(error);
-      return null;
-    }
-    return data;
-  };
-  const unsubscribe=modal.querySelector('#branchUnsubscribeV665');
-  if(unsubscribe)unsubscribe.onclick=async()=>{
-    const money=String(record.unit_amount||'').trim();
-    const confirmed=confirm(`Unsubscribe "${record.branch}"?\n\n`
-      +`It keeps taking bookings and sales until ${record.billed_until&&record.billed_until!=='—'?record.billed_until:'the end of the period you have paid for'}, then switches off.\n`
-      +(money?`You stop paying ${money} for this branch from the next billing date.\n`:'')
-      +`Nothing is refunded for the time already paid, and its customers, sales and bookings stay in your reports.`);
-    if(!confirmed)return;
-    const result=await run('business_unsubscribe_branch_v665',unsubscribe,'Unsubscribing…');
-    if(!result)return;
-    toast(result.status==='replayed'
-      ?'That branch is already stopping'
-      :`${record.branch} stops on ${result.effective_at?sgt(result.effective_at):'your next billing date'}`);
-    close();loadBillingConfig();
-  };
-  const keep=modal.querySelector('#branchKeepV665');
-  if(keep)keep.onclick=async()=>{
-    const result=await run('business_resubscribe_branch_v665',keep,'Keeping…');
-    if(!result)return;
-    toast(result.billing_state==='included'
-      ?`${record.branch} stays on your plan`
-      :`${record.branch} is back — pay for it from Branches to switch it on`);
-    close();loadBillingConfig();
-  };
+async function runBranchBillingActionV758(record,button,kind){
+  if(kind==='stop'&&!confirm(subscriptionBranchUnsubscribeConfirmV665(record)))return;
+  CUI.setButtonBusy(button,{busy:true,label:kind==='stop'?'Unsubscribing…':'Keeping…'});
+  const {data,error}=await sb.rpc(kind==='stop'?'business_unsubscribe_branch_v665':'business_resubscribe_branch_v665',
+    {p_business:S.biz.id,p_branch:record.branch_id,p_idempotency_key:crypto.randomUUID()});
+  if(error){
+    if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+    toast(ownerErrorText(error));return;
+  }
+  toast(kind==='stop'
+    ?(data?.status==='replayed'?'That branch is already stopping'
+      :`${record.branch} stops on ${billingDateV758(data?.effective_at)||'your next billing date'}`)
+    :(data?.billing_state==='included'?`${record.branch} stays on your plan`
+      :`${record.branch} is back — pay for it from Branches to switch it on`));
+  loadBillingConfig();
 }
-function subscriptionBranchTableV612(billing){
+/* nestly_v662/v665/v758: a branch's own state, in the words the Branches page already uses, so the
+   same branch does not read as "Payment lapsed" there and "Ongoing" here. */
+function billingBranchPillV758(branch){
+  const state=String(branch?.billing_state||'');
+  if(state==='suspended')return {label:'Payment lapsed',tone:'no'};
+  if(state==='canceling')return {label:`Stops ${billingDateV758(branch?.billing_cancel_at)||'at renewal'}`,tone:'off'};
+  if(state==='unsubscribed')return {label:'Unsubscribed',tone:'no'};
+  if(state==='pending_payment')return {label:'Awaiting payment',tone:'new'};
+  if(state==='included')return {label:'Included',tone:'ok'};
+  if(state==='active')return {label:'Billed',tone:'ok'};
+  return {label:'Not billed',tone:'off'};
+}
+/* nestly_v612 asked for a row per branch against the money. nestly_v758 keeps exactly that and
+   drops the four columns that repeated one company fact down every row: what is left is the
+   branch, what it costs the owner today, and the one thing they can do about it. */
+function subscriptionBranchListV758(billing,summary){
   const branches=Array.isArray(billing?.__branchesV612)?billing.__branchesV612:[];
-  if(!branches.length)return '';
-  const cadence=billing?.terms?.cadence==='annual'?'Annual'
-    :billing?.terms?.cadence==='monthly'?'Monthly':'—';
-  const amount=Number(billing?.terms?.amount_cents||billing?.amount_due_cents||0);
-  const plan=cadence==='—'?'—':`${cadence}${amount?` · ${money(amount)}${cadence==='Annual'?'/year':'/month'}`:''}`;
-  const expires=billing?.next_payment_at?sgt(billing.next_payment_at)
-    :billing?.provider?.current_period_end?sgt(billing.provider.current_period_end):'—';
-  /* "Ongoing" is the owner's own word for a subscription that has not lapsed. Anything the provider
-     does not call active or trialing is reported as it is rather than dressed up. */
-  const status=billing?.status==='active'||billing?.status==='trialing'
-    ?'<span class="pill ok">Ongoing</span>'
-    :`<span class="pill off">${esc(String(billing?.status||'unknown').replaceAll('_',' '))}</span>`;
-  const methodPlain=billing?.payment_method?.brand
-    ?`${String(billing.payment_method.brand)}${billing.payment_method.last4?` ····${String(billing.payment_method.last4)}`:''}`
-    :billing?.provider?.subscription_id?'On file':'Not set';
-  /* nestly_v628 (owner photo 1). Four marks on this table:
-       • the business name column struck out — every row carried the same value, so it was a
-         column that could never distinguish two rows. It is the heading above the table now;
-       • "Plan" renamed Payment Frequency, which is what the cell actually holds (Annual/Monthly);
-       • "Expires on" renamed Billed until — the subscription does not expire on that date, it is
-         paid up to it, and the owner's word is the accurate one;
-       • the branch name underlined, "when clicked, then pop-up to see details";
-       • the paragraph beneath struck out. */
-  /* nestly_v662: a branch's own state, in the words the Branches page already uses, so the same
-     branch does not read as "Payment lapsed" there and "Ongoing" here. Only a branch that is
-     genuinely running falls through to the subscription-level pill above. */
-  /* nestly_v665: a branch the owner has switched off is not "Ongoing" and is not "lapsed" — it is
-     paid up to a date and stopping, or already stopped. Both say which. */
-  const branchStatusV662=branch=>branch.billing_state==='suspended'
-    ?'<span class="pill no">Payment lapsed</span>'
-    :branch.billing_state==='canceling'
-    ?`<span class="pill off">Stops ${esc(branch.billing_cancel_at?sgt(branch.billing_cancel_at):'at the billing date')}</span>`
-    :branch.billing_state==='unsubscribed'
-    ?'<span class="pill no">Unsubscribed</span>'
-    :branch.billing_state==='pending_payment'
-    ?'<span class="pill new">Awaiting payment</span>'
-    :branch.active===false
-    ?'<span class="pill no">Deactivated</span>'
-    :status;
-  /* nestly_v665: the pop-up is where a branch's own money lives, so it is where the owner turns
-     that money off. It carries the branch's id and billing state, and how many OTHER branches are
-     still subscribed — the server refuses to leave a company with none, and the button must say
-     so before it is pressed rather than after. */
-  /* The per-branch amount, taken from the tier the company is actually on, so the confirmation
-     can name the money being switched off instead of describing it. */
-  const unitAmountLabelV665=(()=>{
-    const tiers=Array.isArray(billing?.capacity_tiers)?billing.capacity_tiers:[];
-    const cadenceKey=billing?.terms?.cadence,capacityNow=Number(billing?.terms?.customer_capacity||0);
-    const tier=tiers.filter(item=>item.cadence===cadenceKey)
-      .sort((left,right)=>Number(left.capacity_ceiling)-Number(right.capacity_ceiling))
-      .find(item=>Number(item.capacity_ceiling)>=capacityNow);
-    return tier?`${money(tier.amount_cents)}${cadenceKey==='annual'?' / year':' / month'}`:'';
-  })();
-  const subscribedStatesV665=['included','pending_payment','active'];
-  const subscribedCountV665=branches
-    .filter(branch=>subscribedStatesV665.includes(branch.billing_state)).length;
-  const detailPayload=branch=>esc(JSON.stringify({
+  const period=billingPeriodWordV758(summary?.plan_label);
+  const unitCents=Number(summary?.unit_amount_cents||0);
+  const billedUntil=billingDateV758(summary?.renews_at);
+  const subscribedStates=['included','pending_payment','active'];
+  const subscribedCount=branches.filter(branch=>subscribedStates.includes(branch.billing_state)).length;
+  const unitLabel=unitCents?`${moneyShortV758(unitCents)} / ${period}`:'';
+  const payload=branch=>esc(JSON.stringify({
     branch:branch.name||'',address:branch.address||'',phone:branch.phone||'',email:branch.email||'',
     is_default:branch.is_default===true,active:branch.active!==false,
-    frequency:plan,billed_until:expires,method:methodPlain,
     branch_id:branch.id||'',billing_state:branch.billing_state||'',
-    cancel_at:branch.billing_cancel_at?sgt(branch.billing_cancel_at):'',
-    unit_amount:unitAmountLabelV665,others_subscribed:Math.max(0,subscribedCountV665-
-      (subscribedStatesV665.includes(branch.billing_state)?1:0))
+    billed_until:billedUntil||'—',unit_amount:unitLabel
   }));
-  /* nestly_v664 (owner: "hide all the information about the subscription per branch inside the
-     individual branches > only click into the branches then will pop up the info"). Payment
-     frequency, Billed until and Payment method leave the table — every row carried the same three
-     values, which is what made one company subscription read as one subscription per branch. They
-     are already in the popup openSubscriptionBranchDetailV628 draws, which is where the owner
-     asked for them. Status stays on the row by ruling: a branch whose payment lapsed is the one
-     row that needs attention, and needing a click to find it is how it gets missed. */
-  return `<div class="subscription-company-head-v628"><h2 class="subscription-company-v628" data-merchant-content>${esc(S.biz?.name||'This business')}</h2>
-    <span class="spacer"></span>
-    <button type="button" class="btn sm" id="subscriptionAddBranchV628">+ Add branch</button></div>
-  <div class="cui-table-wrap" style="margin-bottom:6px"><table data-responsive="true" class="cui-table">
-    <tr><th>Branch</th><th>Status</th></tr>
-    ${branches.map(branch=>`<tr>
-      <td><button type="button" class="subscription-branch-open-v628" data-subscription-branch-v628="${detailPayload(branch)}" data-merchant-content>${esc(branch.name||'—')}</button></td>
-      <td>${branchStatusV662(branch)}</td>
-    </tr>`).join('')}
+  const head=`<div class="row" style="align-items:center;margin:0 0 8px"><h3 style="font-size:.95rem;margin:0">Branches</h3><span class="spacer"></span><button type="button" class="btn sm" id="subscriptionAddBranchV628">+ Add branch</button></div>`;
+  if(!branches.length)return `${head}<p class="muted small" style="margin:0 0 18px">No branches yet.</p>`;
+  /* nestly_v758: the main branch is never offered "Stop at renewal" here. The v665 RPC would
+     handle it — it refuses the last subscribed branch and moves the default otherwise — but a
+     one-tap link that switches off the shop the whole account is named after reads as a trap, and
+     the owner has no way to know it would be handled. It is labelled instead. */
+  const action=branch=>{
+    const state=String(branch.billing_state||'');
+    if(state==='canceling')return `<button type="button" class="btn ghost sm" data-branch-keep-v758="${payload(branch)}"><span class="v758-wide">Keep this branch</span><span class="v758-narrow">Keep</span></button>`;
+    if(branch.is_default===true)return '';
+    if(subscribedStates.includes(state)&&subscribedCount>1)return `<button type="button" class="btn ghost sm" data-branch-stop-v758="${payload(branch)}"><span class="v758-wide">Stop at renewal</span><span class="v758-narrow">Stop</span></button>`;
+    return '';
+  };
+  /* The row never wraps its action under the name: the name and its pills are one shrinking
+     column, the button is a fixed one beside it. On a phone the pills drop under the name; the
+     button stays where a thumb expects it. */
+  return `${head}
+  <ul style="list-style:none;padding:0;margin:0 0 10px">${branches.map(branch=>{
+    const pill=billingBranchPillV758(branch);
+    return `<li style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;flex:1 1 auto">
+        <button type="button" class="subscription-branch-open-v628" data-subscription-branch-v628="${payload(branch)}" data-merchant-content style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(branch.name||'—')}</button>
+        <span class="pill ${pill.tone}">${esc(pill.label)}</span>
+        ${branch.is_default===true?'<span class="pill off">Main branch</span>':''}
+      </div>
+      <div style="flex:0 0 auto">${action(branch)}</div>
+    </li>`;}).join('')}</ul>
+  <p class="muted small" style="margin:0 0 18px">First branch is included.${unitLabel?` Each extra branch adds ${esc(unitLabel)}.`:''} Added mid-period: charged only for the rest of the period. Stopped: keeps working until renewal, not charged after.</p>`;
+}
+/* nestly_v758: the payments the owner has actually been charged, with the provider's own receipt
+   where the provider gave us one — and no link at all where it did not, rather than a dead one. */
+function billingInvoiceTableV758(billing){
+  const rows=(Array.isArray(billing?.invoices)?billing.invoices:[]).slice(0,20);
+  const head='<h3 style="font-size:.95rem;margin:0 0 8px">Payments</h3>';
+  if(!rows.length)return `${head}<p class="muted small" style="margin:0 0 18px">No invoices yet</p>`;
+  /* A payment is four short facts. On a wide screen they are four columns; on a phone the generic
+     stacked-table rule turned each payment into a four-row label/value block, four screenfuls for
+     four payments, so a phone gets the same four facts on ONE line instead. Same data, rendered
+     twice, one of the two hidden by the style block above — never two different sets of numbers. */
+  const cell=row=>({
+    when:billingDateV758(row.paid_at||row.period_start)||'—',
+    amount:moneyShortV758(Number(row.total_cents||0)),
+    status:billingStatusWordV758(row.status),
+    url:String(row.provider_receipt_url||row.hosted_invoice_url||'').trim()
+  });
+  return `${head}<div class="cui-table-wrap v758-invoice-table" style="margin-bottom:18px"><table class="cui-table">
+    <thead><tr><th>Date</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead>
+    <tbody>${rows.map(row=>{const value=cell(row);
+      return `<tr>
+        <td>${esc(value.when)}</td>
+        <td>${esc(value.amount)}</td>
+        <td>${esc(value.status)}</td>
+        <td>${value.url?`<a href="${esc(value.url)}" target="_blank" rel="noopener">Receipt</a>`:'—'}</td>
+      </tr>`;}).join('')}</tbody>
   </table></div>
-  <p class="muted small" style="margin:0 0 16px">Tap a branch to see its plan, billing date and payment method.</p>`;
+  <ul class="v758-invoice-list" style="list-style:none;padding:0;margin:0 0 18px">${rows.map(row=>{const value=cell(row);
+    return `<li style="padding:9px 0;border-bottom:1px solid var(--line)">${esc(value.when)} · ${esc(value.amount)} · ${esc(value.status)}${value.url?` · <a href="${esc(value.url)}" target="_blank" rel="noopener">Receipt</a>`:''}</li>`;}).join('')}</ul>`;
 }
 /* ---------- provider-backed subscription billing ---------- */
 /* nestly_v756: after Razorpay checkout the browser returns to
@@ -54877,7 +54994,7 @@ async function loadBillingConfig(){
      billing contract has no business growing a column for a layout. A failure is not fatal: the
      plan card is what this page is for, so the table simply does not draw. */
   const [{data:b,error},branchResultV612]=await Promise.all([
-    sb.rpc('get_business_billing_v125',{p_business:S.biz.id}),
+    fetchBusinessBillingV758(S.biz.id),
     /* nestly_v628: address, phone and email join the read because the branch name is a door to a
        details popup now (owner photo 1: "when clicked, then pop-up to see details"). Nothing new
        is fetched per click — the popup is built from the row this table already drew. */
@@ -54950,9 +55067,15 @@ async function loadBillingConfig(){
      is charged another unit for it, and this card never said so — which is how a single added
      branch turned into a Stripe page the owner read as "pay for 2 branches". Fail-soft: if the
      count cannot be read the sentence is simply omitted, never guessed. */
-  const branchRowsV280=await sb.from('branches').select('billing_state').eq('business_id',S.biz.id)
-    .then(result=>result.error?null:(result.data||[])).catch(()=>null);
-  const branchCountsV280=branchRowsV280?branchBillingCountsV280(branchRowsV280):null;
+  /* nestly_v758: the branch rows were read a SECOND time here for their counts. They are already
+     in hand from the read above, so the count comes from those rows and the page makes one fewer
+     round trip. */
+  const branchRowsV280=Array.isArray(b.__branchesV612)?b.__branchesV612:null;
+  const branchCountsV280=branchRowsV280&&branchRowsV280.length?branchBillingCountsV280(branchRowsV280):null;
+  /* The four summary lines come from the server (get_business_billing_v758). A workspace whose
+     database is still on v125 gets the identical figures computed from the identical payload. */
+  const summaryV758=b.summary&&typeof b.summary==='object'
+    ?b.summary:billingSummaryFallbackV758(b,branchRowsV280||[]);
   const renderPlan=()=>{
     const plan=byCadence[selectedCadence];
     if(!plan){
@@ -54992,15 +55115,16 @@ async function loadBillingConfig(){
     const unitAmountV664=selectedTierV664?Number(selectedTierV664.amount_cents):0;
     const total=unitAmountV664*branchUnitsV664;
     const cadenceLabel=selectedCadence==='annual'?'year':'month';
-    const equivalent=selectedCadence==='annual'?money(total/12)+' / month equivalent':money(total)+' / month';
-    const statusPill=b.status==='active'?'ok':b.status==='trialing'?'new':'off';
     const guarantee=b.money_back_window?.money_back_request_until
       ?`Money-back request deadline under your previously accepted terms: <strong>${esc(sgt(b.money_back_window.money_back_request_until))}</strong>. It does not reset after plan changes.`
       :'Subscription fees are non-refundable after payment, except where required by law or Peekaa agrees otherwise in writing.';
     const sameCadence=b.terms?.cadence===selectedCadence,sameCapacity=Number(b.terms?.customer_capacity||0)===selectedCapacity;
     /* nestly_v755: Razorpay has no customer billing portal, so "Manage billing" (which used to
-       open one via create_portal) is retired. When the plan is unchanged, the primary button is
-       hidden and the row shows only the Cancel/Resume action below instead. */
+       open one via create_portal) is retired.
+       nestly_v758: for the same reason there is no "Update card" button on the summary card —
+       there is no command behind it, and a button that cannot do the thing it names is worse than
+       no button. Cancel/Resume renewal live on the summary card; this drawer only confirms a plan
+       change, and says so plainly when there is nothing to change. */
     const unchangedPlan=providerSubscription&&sameCadence&&sameCapacity;
     const action=!providerSubscription?'Start secure checkout'
       :!sameCadence?'Change billing cycle'
@@ -55015,27 +55139,46 @@ async function loadBillingConfig(){
       ?'This capacity is not available for card checkout yet — contact Peekaa support to start it.'
       :'';
     const checkoutBlockedV664=Boolean(tierBlockedReasonV664)&&action!=='Manage billing';
-    wrap.innerHTML=`${subscriptionBranchTableV612(b)}<div class="row"><div><b>Peekaa subscription</b><p class="muted small" style="margin-top:3px">One plan.${annualSavingCents&&annualSavingCents>0?` Annual saves ${esc(money(annualSavingCents))} against monthly billing.`:''}</p></div><span class="spacer"></span><span class="pill ${statusPill}">${esc(b.status||'not started')}</span></div>
-      <fieldset style="border:0;padding:0;margin:16px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">Billing cycle</legend>
+    /* nestly_v758: four lines the owner can read without a click — what they are on, how many
+       branches, the one total, and when it renews with which card. The server computes them
+       (get_business_billing_v758's `summary`); everything below is the same page as before, moved
+       one tap down so it cannot compete with the answer. */
+    const summaryLinesV758=billingSummaryLinesV758(summaryV758,S.biz?.name,b.payment_method);
+    wrap.innerHTML=`${billingSummaryCardV758(summaryLinesV758,{
+        primaryLabel:providerSubscription?'Change plan':'Choose plan',
+        hasSubscription:providerSubscription,
+        cancelAtPeriodEnd:!!b.cancel_at_period_end
+      })}
+      ${subscriptionBranchListV758(b,summaryV758)}
+      ${billingInvoiceTableV758(b)}
+      <details id="billingChangePlanV758" style="margin-top:4px"><summary style="cursor:pointer;font-weight:700">Change plan</summary>
+      <fieldset style="border:0;padding:0;margin:14px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">How often you pay</legend>
         <div class="row" style="align-items:stretch;flex-wrap:wrap">
           <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" ${selectedCadence==='annual'?'checked':''}> <strong>Annual · ${annualTierV664?esc(money(annualTierV664.amount_cents)):'—'}/year</strong><br><span class="muted small">${annualTierV664?esc(money(Number(annualTierV664.amount_cents)/12))+' / month equivalent per branch':'Annual pricing is arranged with Peekaa support at this capacity'}</span></label>
           <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="monthly" ${selectedCadence==='monthly'?'checked':''}> <strong>Monthly · ${monthlyTierV664?esc(money(monthlyTierV664.amount_cents)):'—'}/month</strong><br><span class="muted small">${monthlyTierV664?'Cancel renewal before the next billing date':'Monthly billing is not offered at this capacity'}</span></label>
         </div>
       </fieldset>
-      ${referenceCents>0?`<p class="muted small" style="margin-top:10px">Reference price: ${esc(money(referenceCents))}/month. This is comparison information only; it is not a checkout charge.</p>`:''}
       <label for="billingCapacity" style="display:block;margin-top:16px;font-weight:700">Customer capacity</label>
       <select id="billingCapacity" style="margin-top:6px;max-width:340px">${capacityLadderV664.map(value=>`<option value="${value}" ${value===selectedCapacity?'selected':''}>Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select>
       <p class="muted small" style="margin-top:7px">Your customers are counted across every branch together — ${currentCustomers.toLocaleString('en-SG')} profiles stored now. Capacity can be increased later; it is never reduced below what you already store. More than ${salesAssistedAboveV664.toLocaleString('en-SG')} profiles is arranged with Peekaa support.</p>
       ${tierBlockedReasonV664?`<div class="imp-note" style="margin-top:10px" role="status">${esc(tierBlockedReasonV664)} <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></div>`:''}
-      <div class="card" style="margin-top:16px;background:var(--sand)"><div class="row"><div><span class="muted small">Amount due</span><div style="font-size:1.8rem;font-weight:750;font-variant-numeric:tabular-nums">${money(total)} <span class="muted small">/ ${cadenceLabel}</span></div><div class="muted small">${equivalent} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity</div><div class="muted small" style="margin-top:4px">${esc(money(unitAmountV664))} per branch / ${cadenceLabel} × ${branchUnitsV664} ${branchUnitsV664===1?'branch':'branches'}</div><div class="muted small" style="margin-top:6px">GST not charged · SGD 0.00</div></div></div></div>
-      <div class="row" style="margin-top:14px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
-      <p class="muted small" style="margin-top:10px">Every branch is charged this tier once. ${branchCountsV280?`You have ${esc(branchBillingSentenceV280(branchCountsV280))}. `:''}A branch added part-way through a paid period is charged only for the time left in it.</p>
-      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">What is included</summary><ul class="small" style="columns:2;column-width:240px">${includedModules.map(module=>`<li>${esc(module)}</li>`).join('')}</ul><p class="muted small"><strong>Template-assisted promotion wording</strong> helps reword factual offer content; the owner reviews and publishes it. It does not use generative AI or invent prices, dates or claims.</p></details>
+      <div class="card" style="margin-top:16px;background:var(--sand)"><p class="muted small" style="margin:0">Now and after this change</p>
+        <p style="margin:6px 0 0;font-weight:700;font-variant-numeric:tabular-nums">Now: ${esc(summaryLinesV758.plan_label?`${moneyShortV758(Number(summaryV758.total_cents||0))} / ${summaryLinesV758.period}`:'No plan')} → New: ${esc(moneyShortV758(total))} / ${cadenceLabel}</p>
+        <p class="muted small" style="margin:6px 0 0">${esc(moneyShortV758(unitAmountV664))} per branch × ${branchUnitsV664} ${branchUnitsV664===1?'branch':'branches'} · ${selectedCapacity.toLocaleString('en-SG')} profile capacity · GST not charged</p>
+        <p class="muted small" style="margin:6px 0 0">Every branch is charged the same amount once. A branch added part-way through a paid period is charged only for the time left in it.</p>
+      </div>
+      <div class="row" style="margin-top:14px">${unchangedPlan?'<p class="muted small" style="margin:0">This is the plan you are on now.</p>':`<button type="button" class="btn" id="billingPrimary"${checkoutBlockedV664?' disabled':''}>${esc(action)}</button>`}</div>
+      </details>
+      <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Details</summary>
+      ${annualSavingCents&&annualSavingCents>0?`<p class="muted small" style="margin-top:10px">Annual saves ${esc(money(annualSavingCents))} against paying monthly.</p>`:''}
+      ${referenceCents>0?`<p class="muted small" style="margin-top:10px">Reference price: ${esc(money(referenceCents))}/month. This is comparison information only; it is not a checkout charge.</p>`:''}
+      <div class="row" style="margin-top:10px;align-items:flex-start"><span class="pill ok">Staff access included</span><p class="muted small" style="margin:2px 0 0">Use a unique login and least-privilege role for every team member. Staff count never changes this plan's price.</p></div>
+      <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700">What is included</summary><ul class="small" style="columns:2;column-width:240px">${includedModules.map(module=>`<li>${esc(module)}</li>`).join('')}</ul><p class="muted small"><strong>Template-assisted promotion wording</strong> helps reword factual offer content; the owner reviews and publishes it. It does not use generative AI or invent prices, dates or claims.</p></details>
       <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Not included in this price</summary><ul class="small">${exclusions.map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details>
       <p class="muted small" style="margin-top:14px">${guarantee}</p>
-      <div class="row" style="margin-top:14px">${unchangedPlan?'':`<button type="button" class="btn" id="billingPrimary"${checkoutBlockedV664?' disabled':''}>${esc(action)}</button>`}${unchangedPlan?(b.cancel_at_period_end?'<button type="button" class="btn ghost" id="billingResume">Resume subscription</button>':'<button type="button" class="btn ghost" id="billingCancel">Cancel at period end</button>'):''}</div>
-      <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:8px">Razorpay Checkout securely collects payment details. Peekaa changes access only after provider confirmation.</p>
-      <p class="muted small" style="margin-top:14px">Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p>`;
+      <p class="muted small" style="margin-top:14px">Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · <a href="mailto:admin.peekaa@gmail.com">admin.peekaa@gmail.com</a></p>
+      </details>
+      <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:12px">Razorpay Checkout collects payment details securely. Access changes only after Razorpay confirms payment.</p>`;
     wrap.querySelectorAll('[name="billingCadence"]').forEach(input=>{
       input.checked=input.value===selectedCadence;
       input.onchange=()=>{selectedCadence=input.value;renderPlan()};
@@ -55074,14 +55217,33 @@ async function loadBillingConfig(){
       }
       buttons.forEach(button=>button.disabled=false);
     };
-    /* nestly_v628 (owner photo 1): the branch name opens what this row could not fit, and
-       "+ Add Branch" leads to the ONE flow that can create and charge for a branch. Owner ruling:
-       it opens the Branches add form rather than growing a second Stripe hand-off here — two
-       screens that can both charge a card is exactly the shape v281 exists to prevent. */
+    /* nestly_v628 (owner photo 1): the branch name opens what the row could not fit, and
+       "+ Add branch" leads to the ONE flow that can create and charge for a branch — the Branches
+       add form, rather than a second checkout hand-off here. */
     wrap.querySelectorAll('[data-subscription-branch-v628]').forEach(button=>{
       button.onclick=()=>openSubscriptionBranchDetailV628(button.dataset.subscriptionBranchV628);
     });
+    /* nestly_v758: one action per branch row, on the row itself. */
+    const branchRecordV758=value=>{try{return JSON.parse(value||'null')}catch{return null}};
+    wrap.querySelectorAll('[data-branch-stop-v758]').forEach(button=>{
+      button.onclick=()=>{const record=branchRecordV758(button.dataset.branchStopV758);
+        if(record)runBranchBillingActionV758(record,button,'stop')};
+    });
+    wrap.querySelectorAll('[data-branch-keep-v758]').forEach(button=>{
+      button.onclick=()=>{const record=branchRecordV758(button.dataset.branchKeepV758);
+        if(record)runBranchBillingActionV758(record,button,'keep')};
+    });
     if($('subscriptionAddBranchV628'))$('subscriptionAddBranchV628').onclick=()=>{branchesAutoOpenAddV628=true;nav('#/branches')};
+    /* The summary card's primary button opens the drawer that already holds the choices; it never
+       charges anything itself. Confirming inside the drawer is what calls the checkout command. */
+    if($('billingChoosePlanV758'))$('billingChoosePlanV758').onclick=()=>{
+      const drawer=$('billingChangePlanV758');
+      if(!drawer)return;
+      drawer.open=true;
+      drawer.scrollIntoView({block:'start',behavior:'smooth'});
+      const focusTarget=drawer.querySelector('input,select,button');
+      if(focusTarget)focusTarget.focus();
+    };
     if($('billingPrimary'))$('billingPrimary').onclick=()=>{
       const type=!providerSubscription?'create_checkout':!sameCadence?'change_cadence':'change_capacity';
       return execute(type,selectedCadence,selectedCapacity);
@@ -55089,11 +55251,12 @@ async function loadBillingConfig(){
     if($('billingCancel'))$('billingCancel').onclick=()=>execute('cancel_at_period_end',null,null);
     if($('billingResume'))$('billingResume').onclick=()=>execute('resume',null,null);
   };
+
   renderPlan();
   /* nestly_v756: a card that just landed from Razorpay Checkout renders once from the payload
      this same RPC returned before the webhook confirmed anything, then sits there — the owner
      sees "trialing" and the lowest tier until they refresh by hand. Poll the SAME
-     get_business_billing_v125 read this card already uses, every 2s for up to 90s, and stop the
+     fetchBusinessBillingV758 read this card already uses, every 2s for up to 90s, and stop the
      moment status/payment_status/provider_subscription_id/capacity actually changes. */
   if(billingReturnStateV756.processing&&!settingsBillingPollActiveV756){
     settingsBillingPollActiveV756=true;
@@ -55104,7 +55267,7 @@ async function loadBillingConfig(){
       baseline:baselineV756,
       isCancelled:()=>!wrap.isConnected,
       fetchState:async()=>{
-        const {data:nb,error:nerr}=await sb.rpc('get_business_billing_v125',{p_business:S.biz.id});
+        const {data:nb,error:nerr}=await fetchBusinessBillingV758(S.biz.id);
         if(nerr||!nb)return {signature:baselineV756,payload:null};
         const nCustomers=Math.max(0,Number(nb.current_customer_count||0));
         const nMinimum=Math.max(1000,Math.ceil(nCustomers/1000)*1000);
