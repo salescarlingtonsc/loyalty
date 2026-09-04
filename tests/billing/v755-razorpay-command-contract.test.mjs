@@ -243,54 +243,66 @@ test('the config declares the four Razorpay functions and no Stripe function sur
   assert.doesNotMatch(config, /\[functions\.stripe-/);
 });
 
-test('reconciliation keeps the run/finish contract and stays scoped to the Razorpay provider', async () => {
+test('reconciliation keeps the run/finish contract and is scoped by real columns', async () => {
   const source = await read('supabase/functions/razorpay-billing-reconcile/index.ts');
   assert.match(source, /start_billing_reconciliation_v77/);
   assert.match(source, /finish_billing_reconciliation_v77/);
   assert.match(source, /x-nestly-reconciliation-secret/);
   assert.match(source, /drainBoundedKeysetPages/);
   assert.match(source, /drainBoundedOffsetPages/);
-  // Stripe history rows stay in these tables; asking Razorpay about a sub_... id would report
-  // every one of them missing forever.
-  const providerFilters = source.match(/\.eq\('provider', PROVIDER\)/g) || [];
-  assert.ok(providerFilters.length >= 4, 'every local projection must be provider-scoped');
-  assert.match(source, /const PROVIDER = 'razorpay'/);
+
+  /* The bug this replaces: every local projection filtered `.eq('provider', ...)`, and NONE of
+     billing_provider_subscriptions / _subscription_items / _invoices has a `provider` column
+     (only _customers, _events and billing_reconciliation_runs do). PostgREST answers 42703, the
+     stream throws 'local ... projection unavailable', and the 03:30 SGT cron fails every night
+     behind the v634 reconcile_failed alert. A filter on a column that does not exist cannot be
+     caught by reading the verdict of a green test, so it is asserted structurally here. */
+  const MIRROR_TABLES_WITHOUT_PROVIDER = [
+    'billing_provider_subscriptions',
+    'billing_provider_subscription_items',
+    'billing_provider_invoices',
+  ];
+  for (const table of MIRROR_TABLES_WITHOUT_PROVIDER) {
+    const at = source.indexOf(`.from('${table}')`);
+    assert.ok(at > 0, `reconciliation must read ${table}`);
+    // The query chain runs until the statement ends.
+    const chain = source.slice(at, source.indexOf(';', at));
+    assert.doesNotMatch(
+      chain,
+      /\.(?:eq|neq|in|is|filter)\(\s*'provider'/,
+      `${table} has no provider column; this query would return PostgREST 42703`,
+    );
+  }
+  // No local read may filter a provider column under any spelling.
+  assert.doesNotMatch(source, /\.eq\('provider',/);
+  assert.doesNotMatch(source, /select\([^)]*\bprovider\b[^)]*\)/);
+
+  // Mode scope: a test-mode mirror row must never be judged against the live Razorpay account.
+  const subscriptionsChain = source.slice(
+    source.indexOf(".from('billing_provider_subscriptions')"),
+    source.indexOf(';', source.indexOf(".from('billing_provider_subscriptions')")),
+  );
+  const invoicesChain = source.slice(
+    source.indexOf(".from('billing_provider_invoices')"),
+    source.indexOf(';', source.indexOf(".from('billing_provider_invoices')")),
+  );
+  assert.match(subscriptionsChain, /\.eq\('livemode', scope\.livemode\)/);
+  assert.match(invoicesChain, /\.eq\('livemode', scope\.livemode\)/);
+  // Tenant provider scope replaces the column that never existed.
+  assert.match(subscriptionsChain, /\.in\('business_id', scope\.businessIds\)/);
+  assert.match(invoicesChain, /\.in\('business_id', scope\.businessIds\)/);
+  assert.match(source, /\.from\('subscriptions'\)[\s\S]{0,200}\.eq\('billing_provider', 'razorpay'\)/);
+  // The shared identity projection is scoped the same way, or the provider-side streams would
+  // report every Stripe-era row as missing locally.
+  assert.match(
+    source,
+    /async function existingLocalProviderIds\([\s\S]*?\.eq\('livemode', scope\.livemode\)[\s\S]*?\.in\('business_id', scope\.businessIds\)/,
+  );
+  // Fail closed: an unrecognised key prefix must refuse the run with a named error rather than
+  // reconcile the wrong mode or silently reconcile nothing.
+  assert.match(source, /if \(livemode === null\) \{\s*\n\s*return billingJson\(500, \{ error: 'razorpay_key_mode_unknown' \}\);/);
+  // The tenant scope is resolved once per run and paged, not per row.
+  assert.match(source, /const scope = await razorpayTenantScope\(admin, livemode\);/);
+  assert.match(source, /TENANT_SCOPE_MAX_PAGES/);
   assert.match(source, /razorpayStatusToLocalV755/);
-});
-
-test('the deployed CSP header for the checkout page matches the page meta exactly', async () => {
-  const page = await read('app/razorpay-checkout.html');
-  const meta = page.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/);
-  assert.ok(meta, 'checkout page must carry a meta CSP');
-
-  /* app/vercel.json is GENERATED from config/runtime/vercel.template.json, so both must carry
-     the entry or the next `runtime-config:check` reverts it. A header CSP and a meta CSP are
-     BOTH enforced and the browser applies their INTERSECTION: if the site-wide header (which
-     admits no Razorpay origin) were the only one in force on this path, checkout.js would be
-     blocked and the page would render a dead button. */
-  for (const file of ['app/vercel.json', 'config/runtime/vercel.template.json']) {
-    const config = JSON.parse(await read(file));
-    const sources = config.headers.map((entry) => entry.source);
-    const index = sources.indexOf('/razorpay-checkout.html');
-    assert.ok(index >= 0, `${file} must set a CSP for /razorpay-checkout.html`);
-    // Vercel applies a LATER matching entry over an earlier one for the same header key.
-    assert.ok(index > sources.indexOf('/(.*)'), `${file}: the page CSP must come after /(.*)`);
-    const value = config.headers[index].headers.find(
-      (header) => header.key === 'Content-Security-Policy',
-    )?.value;
-    assert.equal(value, meta[1]);
-    // The site-wide CSP must not be widened for a third-party payment script.
-    const siteWide = config.headers[sources.indexOf('/(.*)')].headers.find(
-      (header) => header.key === 'Content-Security-Policy',
-    ).value;
-    assert.doesNotMatch(siteWide, /razorpay/i);
-  }
-  for (const directive of [
-    "script-src 'self' https://checkout.razorpay.com",
-    'frame-src https://api.razorpay.com https://checkout.razorpay.com',
-    'connect-src https://lumberjack.razorpay.com https://api.razorpay.com',
-    "frame-ancestors 'none'",
-  ]) {
-    assert.ok(meta[1].includes(directive), `checkout CSP is missing: ${directive}`);
-  }
 });

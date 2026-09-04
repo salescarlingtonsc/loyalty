@@ -14,6 +14,7 @@ import {
   type BillingReconciliationCursor,
 } from '../_shared/billing-reconciliation.ts';
 import {
+  livemodeFromKey,
   RazorpayApiError,
   razorpayClient,
   type RazorpayClient,
@@ -227,12 +228,58 @@ function notesBusinessId(notes: Record<string, string> | undefined): string | nu
   return typeof value === 'string' && UUID.test(value) ? value : null;
 }
 
+/* nestly_v755 fix — the mirror tables carry NO `provider` column. Only
+   billing_provider_customers, billing_provider_events and billing_reconciliation_runs do;
+   billing_provider_subscriptions / _subscription_items / _invoices never did. Filtering on it
+   returned PostgREST 42703, which surfaced as 'local subscription projection unavailable' and
+   would have failed the 03:30 SGT cron every night behind the v634 reconcile_failed alert.
+
+   Two real scopes replace the imaginary one:
+   - `livemode`, which these tables DO carry. A test-mode mirror row must never be judged against
+     the live Razorpay account, or the other way round: the object simply does not exist in the
+     other account and every row would be reported missing_provider forever.
+   - the tenant's own `subscriptions.billing_provider`, which is where "this business is on
+     Razorpay" is actually recorded. That is how the Stripe history rows stay out of a Razorpay
+     run without a column that does not exist. */
+type ReconciliationScope = {
+  livemode: boolean;
+  businessIds: string[];
+};
+
+const TENANT_SCOPE_PAGE = 1000;
+const TENANT_SCOPE_MAX_PAGES = 20;
+
+async function razorpayTenantScope(
+  admin: ReturnType<typeof billingAdminClient>,
+  livemode: boolean,
+): Promise<ReconciliationScope> {
+  const businessIds: string[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < TENANT_SCOPE_MAX_PAGES; page += 1) {
+    let query = admin
+      .from('subscriptions')
+      .select('business_id')
+      .eq('billing_provider', 'razorpay')
+      .order('business_id', { ascending: true })
+      .limit(TENANT_SCOPE_PAGE);
+    if (after) query = query.gt('business_id', after);
+    const { data, error } = await query;
+    if (error) throw new Error('razorpay tenant scope unavailable');
+    const rows = (data || []) as Array<{ business_id: string }>;
+    for (const row of rows) businessIds.push(String(row.business_id));
+    if (rows.length < TENANT_SCOPE_PAGE) break;
+    after = String(rows[rows.length - 1].business_id);
+  }
+  return { livemode, businessIds: [...new Set(businessIds)] };
+}
+
 async function existingLocalProviderIds(
   admin: ReturnType<typeof billingAdminClient>,
   table: 'billing_provider_subscriptions' | 'billing_provider_invoices',
   column: 'provider_subscription_id' | 'provider_invoice_id',
   providerIds: string[],
   snapshotAt: string,
+  scope: ReconciliationScope,
 ): Promise<Set<string>> {
   if (!providerIds.length) return new Set();
   // Existence is evaluated against cycle membership. A post-snapshot update
@@ -240,7 +287,8 @@ async function existingLocalProviderIds(
   const { data, error } = await admin
     .from(table)
     .select(column)
-    .eq('provider', PROVIDER)
+    .eq('livemode', scope.livemode)
+    .in('business_id', scope.businessIds)
     .in(column, providerIds)
     .lte('created_at', snapshotAt);
   if (error) throw new Error('local provider identity projection unavailable');
@@ -280,12 +328,14 @@ async function reconcileSubscriptions({
   runId,
   cursor,
   run,
+  scope,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
   razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
+  scope: ReconciliationScope;
 }) {
   if (cursor.local_subscriptions_complete) {
     return {
@@ -301,12 +351,14 @@ async function reconcileSubscriptions({
     maxPages: MAX_PAGES_PER_STREAM,
     keyOf: (row) => row.provider_subscription_id,
     fetchPage: async (after, limit) => {
-      /* Provider-scoped: the Stripe history rows stay in these tables untouched, and asking
-         Razorpay about a `sub_...` id would report every one of them missing forever. */
+      /* Scoped by mode and by the tenants actually on Razorpay: the Stripe history rows stay in
+         this table untouched, and asking Razorpay about a `sub_...` id would report every one of
+         them missing forever. There is no `provider` column here to filter on. */
       let query = admin
         .from('billing_provider_subscriptions')
         .select('business_id,provider_subscription_id,status,current_period_end')
-        .eq('provider', PROVIDER)
+        .eq('livemode', scope.livemode)
+        .in('business_id', scope.businessIds)
         .lte('created_at', cursor.snapshot_at)
         .order('provider_subscription_id', { ascending: true })
         .limit(limit);
@@ -319,10 +371,11 @@ async function reconcileSubscriptions({
       const providerSubscriptionIds = rows.map(
         ({ provider_subscription_id }) => provider_subscription_id,
       );
+      /* This table carries neither `provider` nor `livemode` nor `business_id`; its only scope
+         is the parent subscription ids, which are already scoped by the page above. */
       const { data: itemRows, error: itemError } = await admin
         .from('billing_provider_subscription_items')
         .select('provider_subscription_id,provider_price_id,quantity')
-        .eq('provider', PROVIDER)
         .in('provider_subscription_id', providerSubscriptionIds);
       if (itemError) throw new Error('local subscription item projection unavailable');
       const itemsBySubscription = new Map<string, SubscriptionItemSnapshot[]>();
@@ -394,12 +447,14 @@ async function reconcileInvoices({
   runId,
   cursor,
   run,
+  scope,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
   razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
+  scope: ReconciliationScope;
 }) {
   if (cursor.local_invoices_complete) {
     return { after: cursor.local_invoices_after, complete: true, pages: 0, processed: 0 };
@@ -415,7 +470,8 @@ async function reconcileInvoices({
         .select(
           'business_id,provider_invoice_id,status,total_cents,amount_paid_cents,paid_at,provider_payment_intent_id',
         )
-        .eq('provider', PROVIDER)
+        .eq('livemode', scope.livemode)
+        .in('business_id', scope.businessIds)
         .lte('created_at', cursor.snapshot_at)
         .order('provider_invoice_id', { ascending: true })
         .limit(limit);
@@ -488,12 +544,14 @@ async function reconcileProviderSubscriptions({
   runId,
   cursor,
   run,
+  scope,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
   razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
+  scope: ReconciliationScope;
 }) {
   if (cursor.provider_subscriptions_complete) {
     return {
@@ -536,6 +594,7 @@ async function reconcileProviderSubscriptions({
         'provider_subscription_id',
         scoped.map(({ id }) => id),
         cursor.snapshot_at,
+        scope,
       );
       const missingIds = new Set(
         providerIdsMissingLocally(scoped.map(({ id }) => id), localIds),
@@ -575,12 +634,14 @@ async function reconcileProviderInvoices({
   runId,
   cursor,
   run,
+  scope,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
   razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
+  scope: ReconciliationScope;
 }) {
   if (cursor.provider_invoices_complete) {
     return {
@@ -628,6 +689,7 @@ async function reconcileProviderInvoices({
         'provider_invoice_id',
         localKeys,
         cursor.snapshot_at,
+        scope,
       );
       const missing = scoped.filter(
         (payment) => !localIds.has(payment.id) && !localIds.has(String(payment.invoice_id || '')),
@@ -678,6 +740,14 @@ Deno.serve(async (req) => {
       keyId: requiredEnv('RAZORPAY_KEY_ID'),
       keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
     });
+    /* Fail closed on an unrecognised key prefix. Every local projection is scoped by livemode,
+       so a run that cannot say which mode it is in would either compare test rows against the
+       live account or silently reconcile nothing — both of which look like a clean run. */
+    const livemode = livemodeFromKey(requiredEnv('RAZORPAY_KEY_ID'));
+    if (livemode === null) {
+      return billingJson(500, { error: 'razorpay_key_mode_unknown' });
+    }
+    const scope = await razorpayTenantScope(admin, livemode);
     const resume = await priorCursor(admin);
     const cursor = resume || newBillingReconciliationCursor(completedSecondSnapshot());
     const { data: runId, error: startError } = await admin.rpc(
@@ -704,11 +774,19 @@ Deno.serve(async (req) => {
         runId,
         cursor,
         run,
+        scope,
       });
       cursor.local_subscriptions_after = subscriptionPage.after;
       cursor.local_subscriptions_complete = subscriptionPage.complete;
 
-      const invoicePage = await reconcileInvoices({ admin, razorpay, runId, cursor, run });
+      const invoicePage = await reconcileInvoices({
+        admin,
+        razorpay,
+        runId,
+        cursor,
+        run,
+        scope,
+      });
       cursor.local_invoices_after = invoicePage.after;
       cursor.local_invoices_complete = invoicePage.complete;
 
@@ -718,6 +796,7 @@ Deno.serve(async (req) => {
         runId,
         cursor,
         run,
+        scope,
       });
       cursor.provider_subscriptions_after = providerSubscriptionPage.after;
       cursor.provider_subscriptions_complete = providerSubscriptionPage.complete;
@@ -728,6 +807,7 @@ Deno.serve(async (req) => {
         runId,
         cursor,
         run,
+        scope,
       });
       cursor.provider_invoices_after = providerInvoicePage.after;
       cursor.provider_invoices_complete = providerInvoicePage.complete;
@@ -737,6 +817,8 @@ Deno.serve(async (req) => {
       const summary = {
         partial,
         provider: PROVIDER,
+        livemode,
+        scoped_businesses: scope.businessIds.length,
         snapshot_at: cursor.snapshot_at,
         cycle_started_at: cursor.cycle_started_at,
         run,
