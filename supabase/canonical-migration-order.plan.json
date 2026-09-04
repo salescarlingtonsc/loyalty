@@ -3826,6 +3826,12 @@
       "version": "20260929000000",
       "name": "nestly_v759_staff_recurring_breaks",
       "sourcePath": "db/migrations/20260929_nestly_v759_staff_recurring_breaks.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260929010000",
+      "name": "nestly_v760_shared_provider_customers",
+      "sourcePath": "db/migrations/20260929_nestly_v760_shared_provider_customers.sql"
     }
   ]
 }

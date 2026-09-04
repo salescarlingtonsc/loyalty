@@ -3831,6 +3831,12 @@
       "path": "db/migrations/20260929_nestly_v759_staff_recurring_breaks.sql",
       "semanticVersion": "v759",
       "proposedDeployVersion": "20260929000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260929_nestly_v760_shared_provider_customers.sql",
+      "semanticVersion": "v760",
+      "proposedDeployVersion": "20260929010000"
     }
   ]
 }
