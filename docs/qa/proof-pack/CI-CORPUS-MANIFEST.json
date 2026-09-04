@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 71,
+  "itemCount": 72,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -901,6 +901,17 @@
       "clients_seeded": 1,
       "sha256": "9c60d0fe52246c97c5a6d8737dc8c9bc440703ff74247bbe9333054312654a77",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v754_corpus_gift_redeem_by_date --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v755_corpus_razorpay_billing.sql",
+      "migrations": [
+        "db/migrations/20260925_nestly_v755_razorpay_billing.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 0,
+      "sha256": "5a4aa1f1c4d5bdd0a34cb13dccb55bbbe94e9df03bc6180d58457b602b5521f7",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v755_corpus_razorpay_billing --migrated-only"
     }
   ]
 }
