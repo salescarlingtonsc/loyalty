@@ -937,15 +937,18 @@ begin
      where proc.prokind = 'f'
        and proc.pronamespace::regnamespace::text in ('public','app')
        and proc.prosrc like '%billing_provider%'
-       and proc.prosrc ~ 'billing_provider\s*=\s*''stripe'''
+       and proc.prosrc ~* '(where|and|or|on|when|\()\s*(\w+\.)?billing_provider\s*=\s*''stripe'''
      order by 2
   loop
     v_definition := pg_catalog.pg_get_functiondef(v_function.oid);
+    -- Comparison contexts only (WHERE / AND / OR / ON / an opening parenthesis). A bare
+    -- `billing_provider = 'stripe'` also appears as an UPDATE ... SET assignment inside the
+    -- Stripe event applier, and `set billing_provider in (...)` is not SQL.
     v_patched := regexp_replace(
       v_definition,
-      'billing_provider\s*=\s*''stripe''',
-      'billing_provider in (''stripe'',''razorpay'')',
-      'g'
+      '(where|and|or|on|when|\()(\s*)(\w+\.)?billing_provider\s*=\s*''stripe''',
+      '\1\2\3billing_provider in (''stripe'',''razorpay'')',
+      'gi'
     );
     if v_patched = v_definition then
       raise exception 'v755 could not repoint the provider test in %', v_function.label;
@@ -960,6 +963,36 @@ begin
   raise notice 'v755 relaxed the provider test in % function(s)', v_count;
 end
 $v755_provider_readers$;
+
+-- =============================================================================================
+-- 7b · Tiered capacities satisfy the v124 terms check (latent v664 defect, first hit here).
+-- =============================================================================================
+-- billing_subscription_terms_v124 carries `check (customer_capacity = capacity_blocks * 1000)`.
+-- v664's projector sets customer_capacity to the tier ceiling (10,000+) but left capacity_blocks
+-- at the v124 block count (1 when there is no capacity item), so the very first tiered
+-- subscription event ever projected violates the check and the whole event fails. Nothing on
+-- the Stripe path ever reached production (billing_provider_events = 0 rows), which is why this
+-- was never observed. Patched in place by extract-and-diff so the rest of the projector is
+-- guaranteed to be the live body, not a retyped one.
+do $v755_terms_blocks$
+declare
+  v_definition text := pg_get_functiondef('app.project_billing_terms_v124()'::regprocedure);
+  v_needle constant text := E'    v_customer_capacity := v_tier.capacity_ceiling;\n';
+  v_replacement constant text :=
+    E'    v_customer_capacity := v_tier.capacity_ceiling;\n'
+    || E'    v_blocks := greatest(1, v_customer_capacity / 1000);\n';
+  v_occurrences integer;
+begin
+  v_occurrences := (length(v_definition) - length(replace(v_definition, v_needle, '')))
+                   / length(v_needle);
+  if v_occurrences <> 1 then
+    raise exception 'v755 expected exactly one tier-ceiling assignment in project_billing_terms_v124, found %',
+      v_occurrences using errcode = '55000';
+  end if;
+  execute replace(v_definition, v_needle, v_replacement);
+end
+$v755_terms_blocks$;
+revoke all on function app.project_billing_terms_v124() from public, anon, authenticated;
 
 -- =============================================================================================
 -- 8 · The reconcile cron calls the Razorpay reconciler.
