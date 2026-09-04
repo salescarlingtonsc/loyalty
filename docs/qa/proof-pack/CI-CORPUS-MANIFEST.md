@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **68**.
+Fixture count: **70**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -85,6 +85,8 @@ Fixture count: **68**.
 | `db/tests/executed/v744_corpus_scanner_blind_spots.sql` | `db/migrations/20260920_nestly_v744_scanner_blind_spots.sql` | _(none)_ | 2 | 2 | `2b759ea4ba04083f10bb0c24de14653d6c773c3446bb89d8cf03542866e6f794` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v744_corpus_scanner_blind_spots --migrated-only` |
 | `db/tests/executed/v748_corpus_history_points_expiry.sql` | `db/migrations/20260922_nestly_v748_history_states_points_expiry.sql` | _(none)_ | 1 | 1 | `e8749bc38117c0be166e5a5052246b519ff3352d802c583922618c3f76218293` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v748_corpus_history_points_expiry --migrated-only` |
 | `db/tests/executed/v751_corpus_discount_cap_wording.sql` | `db/migrations/20260924_nestly_v751_discount_cap_wording.sql` | _(none)_ | 1 | 0 | `3d454bf89dbfb03eb0360e095968bcde48eac2751d397ca14728350a9e13bd82` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v751_corpus_discount_cap_wording --migrated-only` |
+| `db/tests/executed/v752_corpus_birthday_gift_is_a_benefit.sql` | `db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql` | _(none)_ | 2 | 1 | `a9b6d4e5608beee9272c14e9904961cf980067a1e3865bebab34cc67a70fb536` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v752_corpus_birthday_gift_is_a_benefit --migrated-only` |
+| `db/tests/executed/v754_corpus_gift_redeem_by_date.sql` | `db/migrations/20260923_nestly_v754_gift_expiry_is_a_redeem_by_date.sql` | _(none)_ | 1 | 1 | `1bc09fa6e6e10a0119befb425823ec42b7f15cec8fb91279a96a15c192220ef6` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v754_corpus_gift_redeem_by_date --migrated-only` |
 
 ## Notes
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="v142-production-source-sha256" content="f6c43ef126d3cbaa333a30f4bcc18da8ed25c3cb6b8b02ec74e995f70092b195"><title>Peekaa V142 production Record sale acceptance</title><style>
+  <meta name="v142-production-source-sha256" content="3505aac37bc93a4462ab399dd2f4e88ae1eb95fb107aa1979342194f9147fa3f"><title>Peekaa V142 production Record sale acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5742,7 +5742,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v142-shell{max-width:920px;margin:auto}.v142-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · f6c43ef126d3cbaa333a30f4bcc18da8ed25c3cb6b8b02ec74e995f70092b195</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
+  </style></head><body><div class="v142-shell"><p class="v142-provenance">Actual production Record sale renderer · 3505aac37bc93a4462ab399dd2f4e88ae1eb95fb107aa1979342194f9147fa3f</p><main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
   'use strict';
 
@@ -6891,6 +6891,11 @@ async function tillPage(){
      request, never an answer — the browser sends the benefit id and evaluate_checkout decides
      what, if anything, comes off. Cleared with the customer, because a perk belongs to a person. */
   let appliedTierBenefitV656=null;
+  /* nestly_v752: the birthday twin of appliedTierBenefitV656 above. A boolean, not an id —
+     app.ps1c_plan_checkout resolves the customer's own live entitlement itself once this is true,
+     the same way it always knew which tier the customer stood on; there is only ever one birthday
+     benefit per business, so there is nothing else to name. */
+  let appliedBirthdayV752=false;
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
@@ -6946,7 +6951,7 @@ async function tillPage(){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null; // v656
+    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
@@ -6962,7 +6967,7 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
-    appliedTierBenefitV656=null; // v656: a perk belongs to a person, not to the screen
+    appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752: a perk belongs to a person, not to the screen
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   function draw(){
@@ -7669,7 +7674,8 @@ async function tillPage(){
     const evalKey=crypto.randomUUID(); // a fresh evaluate key per call is fine — independent of the finalise key
     const {data,error}=await sb.rpc('evaluate_checkout',{p_business:S.biz.id,p_branch:tillBranchId||null,
       p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey,
-      p_tier_benefit:cust?appliedTierBenefitV656:null});
+      p_tier_benefit:cust?appliedTierBenefitV656:null,
+      p_birthday:cust?appliedBirthdayV752:false});
     if(!isTillCurrent())return;
     if(seq!==evalSeq)return; // a newer evaluate superseded this one
     if(error){applyEvalError(error);draw();return false;}
@@ -7706,8 +7712,23 @@ async function tillPage(){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). e.label is the
+       benefit's own stored text, and nestly_v751 makes that text state its ceiling itself
+       ("30% off the whole bill — capped at $100.00"). What the label cannot say is whether the
+       ceiling BIT on this particular bill — that is a runtime fact of this sale — so the bare
+       "(capped)" becomes " — cap applied": the counter reads the limit from the label and, when it
+       actually took effect, sees that too. */
+    /* nestly_v752: the birthday twin of the tier-benefit line, reading birthday_benefit_mode/item/
+       capped instead of the tier_benefit_* fields — same shape, same reasoning. */
+    const bdayModeV752=String(e.birthday_benefit_mode||'');
+    const bdayItemV752=String(e.birthday_benefit_item||'').trim();
+    const bdayScopeTxtV752=bdayModeV752==='item'
+      ?(bdayItemV752?` · ${bdayItemV752}`:'')
+      :scopeTxt;
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' — cap applied':''}`
+      :e.source==='birthday_benefit'
+      ?`${String(e.label||'Birthday gift')}${bdayScopeTxtV752}${e.birthday_benefit_capped?' — cap applied':''}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -8151,7 +8172,7 @@ async function tillPage(){
     const givenGiftsV665=Array.isArray(catalog.customerGivenGiftsV665?.gifts)
       ?catalog.customerGivenGiftsV665.gifts:[];
     const givenKindLabelV665={tier_perk:'Tier perk',welcome:'Welcome gift',
-      bringback:'Bring-back voucher',referral:'Referral gift'};
+      bringback:'Bring-back voucher',referral:'Referral gift',birthday:'Birthday gift'};
     const givenBannerV665=givenGiftsV665.length
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px" data-given-gifts-v665><b>Already given</b>
         <p class="muted small" style="margin:5px 0">Scanned or handed over for this customer. Undo puts it straight back.</p>
@@ -9014,12 +9035,16 @@ async function tillPage(){
     async function applyStagedTierPerkV665(staged){
       const benefitId=String(staged?.benefit_id||'');
       if(!benefitId)return;
-      const previous=appliedTierBenefitV656;
-      appliedTierBenefitV656=benefitId;
+      /* nestly_v752: staff_stage_gift_qr_v665 stages a birthday discount the SAME way (see its
+         header) and answers with gift_kind:'birthday' — the only difference on this screen is
+         which applied-state flag the re-price call reads back. */
+      const isBirthday=staged?.gift_kind==='birthday';
+      const previousTier=appliedTierBenefitV656,previousBirthday=appliedBirthdayV752;
+      if(isBirthday)appliedBirthdayV752=true;else appliedTierBenefitV656=benefitId;
       const ok=await runEvaluate();
       if(!isTillCurrent())return;
       if(ok===false){
-        appliedTierBenefitV656=previous;
+        appliedTierBenefitV656=previousTier;appliedBirthdayV752=previousBirthday;
         await runEvaluate();
         if(!isTillCurrent())return;
         return toast('That perk could not be applied to this sale.');
@@ -9596,7 +9621,7 @@ async function tillPage(){
   }
   if(phone.length===8)doFind();
 }
-  window.v142Metrics=()=>({sourceHash:'f6c43ef126d3cbaa333a30f4bcc18da8ed25c3cb6b8b02ec74e995f70092b195',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
+  window.v142Metrics=()=>({sourceHash:'3505aac37bc93a4462ab399dd2f4e88ae1eb95fb107aa1979342194f9147fa3f',viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
     amountLocked:document.querySelector('#tPaynowModalV142 .imp-note b')?.textContent.trim()||'',qrExpiry:document.querySelector('#tPaynowModalV142 .imp-note')?.nextElementSibling?.textContent.trim()||'',
     qrVisible:!!document.querySelector('#tPaynowQrV142 canvas'),qrRawData:window.__qrRawData||'',remoteQrImage:!!document.querySelector('#tPaynowModalV142 img[src^="http"]'),receiptVisible:!!document.getElementById('posReceiptV142'),printVisible:!!document.getElementById('tPrintReceiptV142'),printRequested:window.__printRequested,
     servicePhoneVisible:/customer service phone|support phone/i.test(document.body.innerText),touchTargets:[...document.querySelectorAll('button')].filter(node=>node.offsetParent!==null).map(node=>node.getBoundingClientRect().height),

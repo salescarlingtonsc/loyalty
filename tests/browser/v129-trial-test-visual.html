@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d9310385a519aa70b14aab590e6ef76e625e360bc4370ad0e44ba0f6a8480811"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ce3f61af5113df7a4d9e051cdf76353edc5a31c07b664bf3689d013939fcef2b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5742,7 +5742,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d9310385a519aa70b14aab590e6ef76e625e360bc4370ad0e44ba0f6a8480811</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ce3f61af5113df7a4d9e051cdf76353edc5a31c07b664bf3689d013939fcef2b</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7524,7 +7524,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
      till. And a reversed gift must keep reading as given-then-returned, which a single dated list
      says far better than a table cell. */
   const GIFT_KIND_LABEL_V665=Object.freeze({tier_perk:'Tier perk',welcome:'Welcome gift',
-    bringback:'Bring-back voucher',referral:'Referral gift'});
+    bringback:'Bring-back voucher',referral:'Referral gift',birthday:'Birthday gift'});
   const giftsGivenMarkupV665=giftRowsV665.length
     ?`<div class="card" id="c360GiftsGivenV665"><b>Rewards and perks given</b>
       <p class="muted small" style="margin-top:5px">Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.</p>
@@ -9044,6 +9044,11 @@ async function tillPage(){
      request, never an answer — the browser sends the benefit id and evaluate_checkout decides
      what, if anything, comes off. Cleared with the customer, because a perk belongs to a person. */
   let appliedTierBenefitV656=null;
+  /* nestly_v752: the birthday twin of appliedTierBenefitV656 above. A boolean, not an id —
+     app.ps1c_plan_checkout resolves the customer's own live entitlement itself once this is true,
+     the same way it always knew which tier the customer stood on; there is only ever one birthday
+     benefit per business, so there is nothing else to name. */
+  let appliedBirthdayV752=false;
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
@@ -9099,7 +9104,7 @@ async function tillPage(){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null; // v656
+    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
@@ -9115,7 +9120,7 @@ async function tillPage(){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
-    appliedTierBenefitV656=null; // v656: a perk belongs to a person, not to the screen
+    appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752: a perk belongs to a person, not to the screen
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   function draw(){
@@ -9822,7 +9827,8 @@ async function tillPage(){
     const evalKey=crypto.randomUUID(); // a fresh evaluate key per call is fine — independent of the finalise key
     const {data,error}=await sb.rpc('evaluate_checkout',{p_business:S.biz.id,p_branch:tillBranchId||null,
       p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey,
-      p_tier_benefit:cust?appliedTierBenefitV656:null});
+      p_tier_benefit:cust?appliedTierBenefitV656:null,
+      p_birthday:cust?appliedBirthdayV752:false});
     if(!isTillCurrent())return;
     if(seq!==evalSeq)return; // a newer evaluate superseded this one
     if(error){applyEvalError(error);draw();return false;}
@@ -9859,8 +9865,23 @@ async function tillPage(){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). e.label is the
+       benefit's own stored text, and nestly_v751 makes that text state its ceiling itself
+       ("30% off the whole bill — capped at $100.00"). What the label cannot say is whether the
+       ceiling BIT on this particular bill — that is a runtime fact of this sale — so the bare
+       "(capped)" becomes " — cap applied": the counter reads the limit from the label and, when it
+       actually took effect, sees that too. */
+    /* nestly_v752: the birthday twin of the tier-benefit line, reading birthday_benefit_mode/item/
+       capped instead of the tier_benefit_* fields — same shape, same reasoning. */
+    const bdayModeV752=String(e.birthday_benefit_mode||'');
+    const bdayItemV752=String(e.birthday_benefit_item||'').trim();
+    const bdayScopeTxtV752=bdayModeV752==='item'
+      ?(bdayItemV752?` · ${bdayItemV752}`:'')
+      :scopeTxt;
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' — cap applied':''}`
+      :e.source==='birthday_benefit'
+      ?`${String(e.label||'Birthday gift')}${bdayScopeTxtV752}${e.birthday_benefit_capped?' — cap applied':''}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -10304,7 +10325,7 @@ async function tillPage(){
     const givenGiftsV665=Array.isArray(catalog.customerGivenGiftsV665?.gifts)
       ?catalog.customerGivenGiftsV665.gifts:[];
     const givenKindLabelV665={tier_perk:'Tier perk',welcome:'Welcome gift',
-      bringback:'Bring-back voucher',referral:'Referral gift'};
+      bringback:'Bring-back voucher',referral:'Referral gift',birthday:'Birthday gift'};
     const givenBannerV665=givenGiftsV665.length
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px" data-given-gifts-v665><b>Already given</b>
         <p class="muted small" style="margin:5px 0">Scanned or handed over for this customer. Undo puts it straight back.</p>
@@ -11167,12 +11188,16 @@ async function tillPage(){
     async function applyStagedTierPerkV665(staged){
       const benefitId=String(staged?.benefit_id||'');
       if(!benefitId)return;
-      const previous=appliedTierBenefitV656;
-      appliedTierBenefitV656=benefitId;
+      /* nestly_v752: staff_stage_gift_qr_v665 stages a birthday discount the SAME way (see its
+         header) and answers with gift_kind:'birthday' — the only difference on this screen is
+         which applied-state flag the re-price call reads back. */
+      const isBirthday=staged?.gift_kind==='birthday';
+      const previousTier=appliedTierBenefitV656,previousBirthday=appliedBirthdayV752;
+      if(isBirthday)appliedBirthdayV752=true;else appliedTierBenefitV656=benefitId;
       const ok=await runEvaluate();
       if(!isTillCurrent())return;
       if(ok===false){
-        appliedTierBenefitV656=previous;
+        appliedTierBenefitV656=previousTier;appliedBirthdayV752=previousBirthday;
         await runEvaluate();
         if(!isTillCurrent())return;
         return toast('That perk could not be applied to this sale.');
@@ -15398,37 +15423,51 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
    never an existing draft — because publishing someone else's half-finished draft as a side
    effect of saving a birthday gift would ship edits the owner never asked to go live. */
 async function openBirthdayBenefitEditorV364(current,onSaved){
-  const kindNow=current?.fulfillment_kind==='discount_pct'?'discount_pct':'free_item';
+  /* nestly_v752 (owner ruling 2026-09-04: "birthday rewards must also have the same function as
+     tier membership rewards ... real objectives, not just typing words"). What the customer gets
+     is no longer a bare select + one free-text/number field: it is the SAME benefit editor a tier
+     benefit uses (openTierBenefitDialogV657) — a percentage off the whole bill or one eligible
+     item (with an optional money cap), or a free item chosen from the catalogue or typed. The
+     wording customers read is DERIVED from that choice by the same server authorities
+     (app.v657_discount_label / app.v369_benefit_label) a tier benefit's sentence comes from, and
+     is never typed here — 'Wording customers see' below is a live preview, not an input. */
+  const [servicesRes,productsRes]=await Promise.all([
+    sb.from('services').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+  ]);
+  const services=servicesRes.data||[];
+  const products=productsRes.data||[];
   const monthMode=(current?.window_mode||'month')!=='days';
+  /* The benefit draft, in the SAME shape openTierBenefitDialogV657 reads and writes
+     (growTiersBenefitDraftFromV365 does the identical mapping for a tier benefit). 'custom' is
+     never offered here — a birthday gift is always a real, structured benefit. */
+  let birthdayBenefitDraftV752={
+    kind:current?.fulfillment_kind==='free_item'?'free_item':'discount_pct',
+    discount:current?.discount_percent==null?'':String(current.discount_percent).replace(/\.00$/,''),
+    productId:current?.product_id||'',
+    productName:current?.product_name||'',
+    itemLabel:current?.manual_item||'',
+    discountScope:current?.discount_scope||'bill',
+    maxDiscount:current?.max_discount_cents==null?'':(Number(current.max_discount_cents)/100).toFixed(2),
+    scopeProductIds:(Array.isArray(current?.scope_product_ids)?current.scope_product_ids:[]).map(String),
+    scopeServiceIds:(Array.isArray(current?.scope_service_ids)?current.scope_service_ids:[]).map(String),
+    limit_count:'',limit_period:'month'
+  };
   document.querySelector('#birthdayBenefitModalV364')?.remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal birthday-gift-modal-v366" id="birthdayBenefitModalV364" role="dialog" aria-modal="true" aria-labelledby="birthdayBenefitTitleV364" tabindex="-1">
     <section class="modal-card" style="max-width:560px">
       <div class="row" style="align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0"><p class="eyebrow">Programmes</p><h2 id="birthdayBenefitTitleV364" style="margin-top:4px">Birthday gift</h2>
-        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></div>
+        <p class="muted small" style="margin-top:6px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up, or the customer shows a QR from their own app.</p></div>
         <span class="welcome-offer-hero-v350" aria-hidden="true">${CUI.icon('loyalty',{size:32})}</span>
       </div>
       <button type="button" class="btn ghost sm welcome-offer-close-v350" id="birthdayCloseV364" aria-label="Close birthday gift">Close</button>
       <label class="welcome-offer-togglerow-v350" style="margin-top:18px"><span class="welcome-offer-togglerow-icon-v350" aria-hidden="true">${CUI.icon('loyalty',{size:16})}</span><b>Give customers a birthday gift</b><input type="checkbox" id="birthdayActiveV364" ${current?.active?'checked':''}></label>
-      ${/* V382 (owner: "why i need to select the box and still can select dropdown of free item /
-           percentage discount?"). The switch is the decision; everything below it is the detail of
-           a gift that is being given. With the switch off the detail is inert rather than
-           half-editable, so the screen only ever offers one thing to decide at a time. */''}
       <div data-birthday-config-v382>
-      <label for="birthdayKindV364" style="margin-top:18px">What do they get?</label>
-      <select id="birthdayKindV364">
-        <option value="free_item" ${kindNow==='free_item'?'selected':''}>A free item</option>
-        <option value="discount_pct" ${kindNow==='discount_pct'?'selected':''}>A percentage discount</option>
-      </select>
-      <div id="birthdayItemWrapV364"${kindNow==='free_item'?'':' hidden'} style="margin-top:8px">
-        <label for="birthdayItemV364" class="muted small">What is it?</label>
-        <input id="birthdayItemV364" placeholder="e.g. Free slice of cake" maxlength="240" value="${esc(current?.manual_item||'')}">
-      </div>
-      <div id="birthdayDiscountWrapV364"${kindNow==='discount_pct'?'':' hidden'} style="margin-top:8px">
-        <label for="birthdayDiscountV364" class="muted small">Discount %</label>
-        <input id="birthdayDiscountV364" inputmode="decimal" placeholder="e.g. 10" value="${current?.discount_percent==null?'':esc(String(current.discount_percent))}">
-      </div>
-      <fieldset style="border:0;padding:0">
+      <label class="small" style="display:block;margin-top:18px;font-weight:600">What do they get?</label>
+      <p class="muted small" id="birthdayBenefitPreviewV752" style="margin-top:4px"></p>
+      <button type="button" class="btn ghost sm" id="birthdayEditBenefitV752" style="margin-top:8px">Edit benefit</button>
+      <fieldset style="border:0;padding:0;margin-top:18px">
         <legend class="small"><b>When can they use it?</b></legend>
         <label class="welcome-offer-optioncard-v350${monthMode?' selected':''}" style="margin-top:10px"><input type="radio" name="birthdayWindowV364" value="month" ${monthMode?'checked':''}><span><b>Their whole birthday month</b><p class="muted small" style="margin-top:2px">Simplest, and what most customers expect.</p></span></label>
         <label class="welcome-offer-optioncard-v350${monthMode?'':' selected'}"><input type="radio" name="birthdayWindowV364" value="days" ${monthMode?'':'checked'}><span><b>A window around the exact date</b><p class="muted small" style="margin-top:2px">Choose how many days either side.</p></span></label>
@@ -15437,14 +15476,9 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
           <span><label for="birthdayAfterV364" class="muted small">Days after</label><input id="birthdayAfterV364" inputmode="numeric" value="${Number(current?.window_days_after)||0}"></span>
         </div>
       </fieldset>
-      ${/* The three copy fields the DB requires (label/description/terms are NOT NULL on
-           birthday_program_versions). They are prefilled from the benefit rather than left blank
-           so the owner is never stopped by a required field they did not know existed — but they
-           stay visible and editable, because this is the wording the customer reads. */''}
       </div>
       <details class="grow-secondary" style="margin-top:16px" data-birthday-config-v382><summary>Wording customers see</summary><div style="padding-top:10px">
-        <label for="birthdayLabelV364" class="muted small">Name</label>
-        <input id="birthdayLabelV364" maxlength="120" placeholder="e.g. Birthday treat" value="${esc(current?.customer_label||'')}">
+        <p class="muted small" id="birthdayLabelPreviewV752" style="margin:0"></p>
         <label for="birthdayDescriptionV364" class="muted small" style="margin-top:10px">Description</label>
         <textarea id="birthdayDescriptionV364" rows="2" maxlength="1000">${esc(current?.customer_description||'')}</textarea>
         <label for="birthdayTermsV364" class="muted small" style="margin-top:10px">Terms</label>
@@ -15459,19 +15493,40 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   let birthdaySaveKeyV424=crypto.randomUUID();
   let deactivate,busy=false;
   const close=()=>deactivate?.();
-  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayKindV364'});
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'#birthdayEditBenefitV752'});
   $('birthdayCloseV364').onclick=close;
   $('birthdayCancelV364').onclick=close;
   const showError=message=>{
     const box=$('birthdayErrorV364');if(!box)return;
     box.textContent=message||'';box.hidden=!message;
   };
-  const syncKind=()=>{
-    const kind=$('birthdayKindV364').value;
-    $('birthdayItemWrapV364').hidden=kind!=='free_item';
-    $('birthdayDiscountWrapV364').hidden=kind!=='discount_pct';
+  /* The SAME sentence a tier benefit's own dialog previews with — growTierBenefitSentenceV365 —
+     so what the owner reads while editing is exactly what app.v657_discount_label /
+     app.v369_benefit_label will store. */
+  const renderBenefitPreviewV752=()=>{
+    const productName=(products.find(row=>String(row.id)===String(birthdayBenefitDraftV752.productId))||{}).name
+      ||birthdayBenefitDraftV752.productName||'';
+    const sentence=growTierBenefitSentenceV365({...birthdayBenefitDraftV752,productName})||'Choose a benefit below.';
+    $('birthdayBenefitPreviewV752').textContent=sentence;
+    if($('birthdayLabelPreviewV752'))$('birthdayLabelPreviewV752').textContent=workspaceTemplateTextV97('birthdayBenefitPreview',{sentence});
   };
-  $('birthdayKindV364').onchange=syncKind;
+  renderBenefitPreviewV752();
+  $('birthdayEditBenefitV752').onclick=()=>openTierBenefitDialogV657({
+    benefit:birthdayBenefitDraftV752,products,services,
+    onSave:draft=>{
+      /* v682's own ruling, reused: a written ("custom") perk cannot promise "no purchase needed",
+         and a birthday gift is exactly that promise. The tier dialog still offers 'My own
+         wording' — refused here, with the draft otherwise kept exactly as edited. */
+      if(draft.kind==='custom'){
+        birthdayBenefitDraftV752={...draft,kind:birthdayBenefitDraftV752.kind};
+        showError('Choose a discount or a free item — a birthday gift can’t be your own written wording.');
+      }else{
+        birthdayBenefitDraftV752=draft;
+        showError('');
+      }
+      renderBenefitPreviewV752();
+    }
+  });
   const syncWindow=()=>{
     const days=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
     $('birthdayDaysWrapV364').hidden=!days;
@@ -15495,32 +15550,48 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
   syncActiveV382();
   $('birthdaySaveV364').onclick=async()=>{
     if(busy)return;
-    const kind=$('birthdayKindV364').value;
-    const item=String($('birthdayItemV364').value||'').trim();
-    const discount=Number($('birthdayDiscountV364').value||'');
+    const kind=birthdayBenefitDraftV752.kind;
     const daysMode=document.querySelector('input[name="birthdayWindowV364"]:checked')?.value==='days';
     const before=daysMode?Math.round(Number($('birthdayBeforeV364').value||0)):0;
     const after=daysMode?Math.round(Number($('birthdayAfterV364').value||0)):0;
-    if(kind==='free_item'&&!item)return showError('Say what the free item is.');
-    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Enter a discount between 0.01 and 100.');
+    const discount=Number(birthdayBenefitDraftV752.discount||'');
+    const item=String(birthdayBenefitDraftV752.itemLabel||'').trim();
+    if(kind==='custom')return showError('Choose a discount or a free item — a birthday gift can’t be your own written wording.');
+    if(kind==='discount_pct'&&!(discount>0&&discount<=100))return showError('Edit the benefit and enter a discount between 0.01 and 100.');
+    if(kind==='free_item'&&!item&&!birthdayBenefitDraftV752.productId)return showError('Edit the benefit and say what the free item is.');
     if(daysMode&&(!Number.isFinite(before)||!Number.isFinite(after)||before<0||after<0||before>182||after>182))
       return showError('Days before and after must each be between 0 and 182.');
-    /* The benefit sentence both defaults are built from, so an owner who never opens the wording
-       section still gets copy that matches what they actually chose. */
-    const benefitText=kind==='discount_pct'?`${discount}% off`:item;
-    const label=String($('birthdayLabelV364').value||'').trim()||'Birthday treat';
+    const productName=(products.find(row=>String(row.id)===String(birthdayBenefitDraftV752.productId))||{}).name||'';
+    const previewSentence=growTierBenefitSentenceV365({...birthdayBenefitDraftV752,productName})||'Birthday treat';
     const description=String($('birthdayDescriptionV364').value||'').trim()
-      ||(daysMode?`${benefitText} around your birthday.`:`${benefitText} during your birthday month.`);
+      ||(daysMode?`${previewSentence} around your birthday.`:`${previewSentence} during your birthday month.`);
     const terms=String($('birthdayTermsV364').value||'').trim()||[
       'One birthday benefit per customer per year.',
       'Your date of birth must be on your customer profile before the visit.',
       'Cannot be exchanged for cash and cannot be combined with other offers.'
     ].join(' ');
     busy=true;showError('');$('birthdaySaveV364').disabled=true;
-    const payload={active:$('birthdayActiveV364').checked,customer_label:label,customer_description:description,
-      customer_terms:terms,fulfillment_kind:kind,window_mode:daysMode?'days':'month',
-      window_days_before:before,window_days_after:after,sort:0};
-    if(kind==='discount_pct')payload.discount_percent=discount;else payload.manual_item=item;
+    /* nestly_v752: customer_label travels only so the server's own not-null pre-check passes —
+       the BEFORE INSERT trigger (app.v752_derive_birthday_benefit_label_trg) overwrites it with
+       the same app.v657_discount_label / app.v369_benefit_label sentence unconditionally, so
+       whatever is sent here is never what a customer actually reads. */
+    const payload={active:$('birthdayActiveV364').checked,customer_label:previewSentence,
+      customer_description:description,customer_terms:terms,fulfillment_kind:kind,
+      window_mode:daysMode?'days':'month',window_days_before:before,window_days_after:after,sort:0};
+    if(kind==='discount_pct'){
+      payload.discount_percent=discount;
+      payload.discount_scope=birthdayBenefitDraftV752.discountScope==='item'?'item':'bill';
+      if(payload.discount_scope==='item'){
+        payload.scope_product_ids=birthdayBenefitDraftV752.scopeProductIds||[];
+        payload.scope_service_ids=birthdayBenefitDraftV752.scopeServiceIds||[];
+      }else{
+        const maxDiscount=Number(String(birthdayBenefitDraftV752.maxDiscount||'').replace(/[^0-9.]/g,''));
+        if(Number.isFinite(maxDiscount)&&maxDiscount>0)payload.max_discount_cents=Math.round(maxDiscount*100);
+      }
+    }else{
+      if(birthdayBenefitDraftV752.productId)payload.product_id=birthdayBenefitDraftV752.productId;
+      else payload.manual_item=item;
+    }
     const finish=message=>{busy=false;$('birthdaySaveV364').disabled=false;showError(message)};
     /* nestly_v429 (A): ONE transaction, not three round trips. This used to be
        create_loyalty_config_draft -> read snapshot_hash -> save_birthday_program_draft ->
@@ -18686,7 +18757,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          gift, one clock — so this field is drawn only where there is no other one.
          The number written is entitlement_expiry_days, which the customer already reads as
          "Use within N days of claiming" (v339) and the gift sheet as its claim window (v468). */''}
-    ${growPointsIsStampsV326?'':`<p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddExpiryV520">Expires after <span class="muted">(optional)</span></label><br><input id="growPointsAddExpiryV520" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.expiryDays||'')}" placeholder="e.g. 30"><br><span class="muted small">Days a customer has to use this gift once they take it. Leave blank and it never expires.</span></p>`}
+    ${/* nestly_v754 (owner ruling 2026-09-04, verbatim): "the expiry should be example 90 days —
+         means after 90 days the reward would not be available to redeem with points (will not be
+         shown in the customer app for redemption) and customer will see exactly when the reward
+         will expire & after expiry, customer will use their points to redeem other rewards."
+         So this box is a REDEEM-BY DEADLINE for the gift in the catalogue, counted from when this
+         save publishes it — not the old nestly_v520 reading ("days a customer has to use this
+         gift once they take it"), which was a different, post-claim clock this same box used to
+         write. The days input stays (the owner said "example 90 days"); what changed is what it
+         means, what it writes (p_claim_expires_after_days -> claim_available_until, computed
+         server-side at THIS save, not p_entitlement_expiry_days), and the copy. The live preview
+         span shows what the server will pin; the read-only detail list (growRewardDiffFieldsV291)
+         states the same date once saved. */''}
+    ${growPointsIsStampsV326?'':`<p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddExpiryV520">Expires after <span class="muted">(optional)</span></label><br><input id="growPointsAddExpiryV520" class="grow-setup-input-v301" inputmode="numeric" value="${esc(growPointsAddDraftV326.expiryDays||'')}" placeholder="e.g. 90"><br><span class="muted small">After this many days this gift can no longer be redeemed with points and disappears from the customer's app. Leave blank and it stays available.</span> <span class="muted small" id="growPointsAddExpiryPreviewV754" data-grow-points-expiry-preview-v754>${esc(growPointsExpiryPreviewDateV754(growPointsAddDraftV326.expiryDays)?`Expires on ${growPointsExpiryPreviewDateV754(growPointsAddDraftV326.expiryDays)}`:'')}</span></p>`}
     ${/* nestly_v472 (owner, batch 11: "Allow to add expiry date for each rewards and display in
          customer view"). The OFFERING window — after this date the gift is no longer offered.
          A date input, not a datetime: an owner thinks in days, and the value is resolved to the
@@ -21059,6 +21142,19 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const first=growPointsFormV410.querySelector('#growPointsAddNameV326');
       if(first&&document.activeElement!==first)first.focus({preventScroll:true});
     }
+    /* nestly_v754: the derived redeem-by date, live, as the owner types — a plain oninput that
+       only touches the one preview span rather than a full quiet rerender, so the field never
+       loses focus or cursor position mid-keystroke. The authoritative value is still computed
+       server-side at save (see business_create_reward_v326/business_update_reward_v326's
+       p_claim_expires_after_days); this is a preview, not the write. */
+    const expiryInputV754=growPointsFormV410.querySelector('#growPointsAddExpiryV520');
+    const expiryPreviewV754=growPointsFormV410.querySelector('#growPointsAddExpiryPreviewV754');
+    if(expiryInputV754&&expiryPreviewV754){
+      expiryInputV754.oninput=()=>{
+        const preview=growPointsExpiryPreviewDateV754(expiryInputV754.value);
+        expiryPreviewV754.textContent=preview?`Expires on ${preview}`:'';
+      };
+    }
   }
   /* nestly_v658: the same dismissal grammar the v410 gift pop-up uses, for the two forms the
      owner asked to become pop-ups. One helper, because three copies of "click the backdrop, press
@@ -21248,8 +21344,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       endsOn:growPointsEndDateInputV472(reward.claim_available_until),
       /* nestly_v477: the owner's own wording, or blank so the placeholder shows the default. */
       whereItWorks:String(reward.where_it_works||''),
-      /* nestly_v520: blank means "no expiry", which is what a gift with a null column has. */
-      expiryDays:reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):''};
+      /* nestly_v754: on the POINTS page this box now means "days until this gift stops being
+         redeemable" — the remaining days on the stored claim_available_until, not
+         entitlement_expiry_days (the old, different, post-claim clock this box used to write).
+         Stamps keep the pre-v754 reading; the box is never drawn there (growPointsIsStampsV326),
+         so what it prefills to is moot, and leaving it alone keeps this one line the only thing
+         that changed. Blank means "no expiry", same as before. */
+      expiryDays:growPointsIsStampsV326
+        ?(reward.entitlement_expiry_days?String(reward.entitlement_expiry_days):'')
+        :growPointsExpiryDaysFromUntilV754(reward.claim_available_until)};
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growPointsErrorV326='';
     growRerenderV322({quiet:true});
   });
@@ -21402,11 +21505,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477,expiryDays:expiryRawV520};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
-    /* nestly_v520: caught here so the owner reads a sentence instead of the server's 22023. The
-       server refuses it too — this is the friendly half of the same rule, not the only one. */
+    /* nestly_v754: caught here so the owner reads a sentence instead of the server's 22023. The
+       server refuses it too — this is the friendly half of the same rule, not the only one. This
+       is now a redeem-by day count (see p_claim_expires_after_days below), not
+       entitlement_expiry_days — the validation shape (whole number, at least 1, blank allowed) is
+       unchanged from nestly_v520, only what the number MEANS changed. */
     const expiryDaysV520=expiryRawV520===''?null:Math.round(Number(expiryRawV520));
     if(expiryRawV520!==''&&(!Number.isFinite(expiryDaysV520)||expiryDaysV520<=0)){
-      growPointsErrorV326='Expires after must be a whole number of days, at least 1. Leave it blank for no expiry.';
+      growPointsErrorV326='Expires after must be a whole number of days, at least 1. Leave it blank and the gift stays available.';
       return growRerenderV322({quiet:true});
     }
     /* nestly_v463 (owner ruling R3a/R3b). With "+ Add level" retired, the stranded-gift chips are
@@ -21442,23 +21548,27 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_business:S.biz.id,p_reward:growPointsEditingV326,p_name:name,p_points:points,
         p_description:description||null,p_credit_cents:0,
         p_image_ref:imageRef||null,p_clear_image:growPointsRemovePhotoV343&&!imageRef,
-        /* nestly_p2-F082: this dialog draws no end-date field, so it must never claim the owner
-           cleared one. null + false is "say nothing" — the writer keeps whatever claim_available_until
-           is already stored on the reward, exactly like growStampsSaveRowV356's inline row editor,
-           which omits both arguments for the same reason. Previously this unconditionally sent
-           p_clear_end_date:true, so ANY save from this dialog (even a pure rename) wiped a date set
-           through the deep reward editor. */
+        /* nestly_v754: this dialog now DOES own claim_available_until on the points page — the
+           "Expires after (days)" box IS that field, expressed as a day count instead of a date.
+           p_claim_available_until stays null (this dialog never picks an absolute date; that
+           stays the deep reward editor's own "Ends at" field) and p_claim_expires_after_days
+           carries the count, computed server-side at THIS save's own now(). Stamps still draw no
+           end-date control at all, so expiryRawV520 is forced '' for them (above) and both these
+           end up null/false — unchanged from the pre-v754 "say nothing" contract nestly_p2-F082
+           established. Clearing is explicit: an empty box on the points page now clears the
+           stored date, the same shape p_clear_expiry_days always had. */
         p_claim_available_until:null,
-        p_clear_end_date:false,
+        p_clear_end_date:!growPointsIsStampsV326&&expiryRawV520==='',
+        p_claim_expires_after_days:expiryDaysV520,
         /* nestly_v477: the EMPTY STRING is sent deliberately. null means "leave whatever is
            stored alone" (so an old bundle cannot wipe the owner's wording); clearing the box has
            to be an explicit clear, and '' is what the writer reads as one. */
         p_where_it_works:whereV477,
-        /* nestly_v520: null says "keep what is stored"; an empty box on the points form is an
-           EXPLICIT clear, the same contract p_clear_end_date has. On the Stamp Card page neither
-           is sent, so a stamp gift's stored value is left exactly where it was. */
-        p_entitlement_expiry_days:expiryDaysV520,
-        p_clear_expiry_days:!growPointsIsStampsV326&&expiryRawV520===''}));
+        /* nestly_v754: entitlement_expiry_days (the OLD post-claim clock this box used to write)
+           is no longer touched from this dialog at all — not set, not cleared. It stays exactly
+           where it is, for whatever else on the estate still reads it. */
+        p_entitlement_expiry_days:null,
+        p_clear_expiry_days:false}));
     }else{
       const spineId=growPointsSpineIdV326;
       if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
@@ -21467,7 +21577,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_description:description||null,p_image_ref:imageRef||null,
         p_claim_available_until:growPointsEndDateInstantV472(endsOnV472),
         p_where_it_works:whereV477||null,
-        p_entitlement_expiry_days:expiryDaysV520}));
+        /* nestly_v754: see the update branch above — the day count now writes
+           claim_available_until through p_claim_expires_after_days, not entitlement_expiry_days,
+           for a points gift. expiryDaysV520 is always null on the Stamp Card page (expiryRawV520
+           is forced '' there), so this is a no-op for stamps, same as before. */
+        p_entitlement_expiry_days:null,
+        p_claim_expires_after_days:expiryDaysV520}));
     }
     if(!isGrowCurrent())return;
     growPointsBusyV326=false;
@@ -23274,7 +23389,15 @@ function growRewardDiffFieldsV291({unit='points',tierName=()=>null,branchName=nu
     {label:'Name',read:reward=>String(reward.customer_name||reward.name||'Reward').trim(),show:value=>value},
     {label:'Cost',read:reward=>Math.max(0,num(reward.cost_points)||0),show:value=>`${value} ${unit}`},
     {label:'Offered',read:reward=>reward.active!==false,show:value=>value?'Yes':'No'},
-    {label:'Expires after',read:reward=>num(reward.entitlement_expiry_days),show:value=>value==null?'No expiry':`${value} day${value===1?'':'s'}`},
+    /* nestly_v754: this used to read entitlement_expiry_days (the post-claim "days to use it once
+       taken" clock nestly_v520 wrote from the points quick-add dialog). The dialog's "Expires
+       after (days)" box now writes claim_available_until instead — the redeem-by deadline the
+       owner asked for — so the publish diff states the same date the dialog previews and the
+       customer card prints (customerRewardEndsLineV471), not a day count. A date already in the
+       past still shows here (an owner reviewing a change should see it), unlike the customer
+       card, which draws nothing once it has passed. */
+    {label:'Expires on',read:reward=>reward.claim_available_until||null,
+      show:value=>value==null?'No expiry':walletDate(value)},
     {label:'Uses per customer',read:reward=>num(reward.usage_limit),show:value=>value==null?'Unlimited':String(value)},
     {label:'Who can redeem',read:reward=>{
       const tier=reward.min_tier_id?String(reward.min_tier_id):null;
@@ -27668,6 +27791,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
      request, never an answer — the browser sends the benefit id and evaluate_checkout decides
      what, if anything, comes off. Cleared with the customer, because a perk belongs to a person. */
   let appliedTierBenefitV656=null;
+  /* nestly_v752: the birthday twin of appliedTierBenefitV656 above. A boolean, not an id —
+     app.ps1c_plan_checkout resolves the customer's own live entitlement itself once this is true,
+     the same way it always knew which tier the customer stood on; there is only ever one birthday
+     benefit per business, so there is nothing else to name. */
+  let appliedBirthdayV752=false;
   let evalTimer=null;      // debounce handle for re-evaluate on a sale-line change
   let evalExpiryTimer=null;// one-shot handle: flips 'ready'->'expired' when expires_at passes
   let staleConfirm=false;  // after an auto re-evaluate at finalise: "please confirm the new total" (LOCKS the cart)
@@ -27723,7 +27851,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
        walk-ins meant serving customer A and then customer B offered B customer A's packages —
        and could consume A's sessions on B's sale. Every return to the phone step now drops the
        whole snapshot; the branch items refetch is cheap next to a wrong redemption. */
-    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null; // v656
+    catalog=null;catalogError=null;tillItemSearchV392='';appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752
     step=1;phone='';cust=null;walkin=false;notFoundPhone=null;invalidMsg=null;saleIdem=null;quickAddIdem=null;tender=null;busy=false;doneInfo=null;
     cart=[];saleCommitted=false;saleResult=null;checkoutError=null;tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
@@ -27739,7 +27867,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
-    appliedTierBenefitV656=null; // v656: a perk belongs to a person, not to the screen
+    appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752: a perk belongs to a person, not to the screen
     step=1;cust=null;walkin=false;saleIdem=null;tender=null;cart=[];tillStageV373='items';tillItemsTabV374='items';tillManualQtyV404={};draw();
   }
   function draw(){
@@ -28446,7 +28574,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const evalKey=crypto.randomUUID(); // a fresh evaluate key per call is fine — independent of the finalise key
     const {data,error}=await sb.rpc('evaluate_checkout',{p_business:S.biz.id,p_branch:tillBranchId||null,
       p_client:cust?cust.client_id:null,p_lines:lines,p_idempotency_key:evalKey,
-      p_tier_benefit:cust?appliedTierBenefitV656:null});
+      p_tier_benefit:cust?appliedTierBenefitV656:null,
+      p_birthday:cust?appliedBirthdayV752:false});
     if(!isTillCurrent())return;
     if(seq!==evalSeq)return; // a newer evaluate superseded this one
     if(error){applyEvalError(error);draw();return false;}
@@ -28483,8 +28612,23 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const tierScopeTxtV657=tierModeV657==='item'
       ?(tierItemV657?` · ${tierItemV657}`:'')
       :scopeTxt;
+    /* nestly_v751 (owner: "discount received is capped at $xx. now is very vague"). e.label is the
+       benefit's own stored text, and nestly_v751 makes that text state its ceiling itself
+       ("30% off the whole bill — capped at $100.00"). What the label cannot say is whether the
+       ceiling BIT on this particular bill — that is a runtime fact of this sale — so the bare
+       "(capped)" becomes " — cap applied": the counter reads the limit from the label and, when it
+       actually took effect, sees that too. */
+    /* nestly_v752: the birthday twin of the tier-benefit line, reading birthday_benefit_mode/item/
+       capped instead of the tier_benefit_* fields — same shape, same reasoning. */
+    const bdayModeV752=String(e.birthday_benefit_mode||'');
+    const bdayItemV752=String(e.birthday_benefit_item||'').trim();
+    const bdayScopeTxtV752=bdayModeV752==='item'
+      ?(bdayItemV752?` · ${bdayItemV752}`:'')
+      :scopeTxt;
     const labelV370=e.source==='tier_benefit'
-      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' (capped)':''}`
+      ?`${String(e.label||'Tier benefit')}${tierScopeTxtV657}${e.tier_benefit_capped?' — cap applied':''}`
+      :e.source==='birthday_benefit'
+      ?`${String(e.label||'Birthday gift')}${bdayScopeTxtV752}${e.birthday_benefit_capped?' — cap applied':''}`
       :`Discount${scopeTxt}`;
     return `<li class="ck-effect"><span class="ck-effect-label">${CUI.icon('loyalty',{size:16})}<span>${esc(labelV370)}</span></span><span>−${money(amt)}</span></li>`;
   }
@@ -28928,7 +29072,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const givenGiftsV665=Array.isArray(catalog.customerGivenGiftsV665?.gifts)
       ?catalog.customerGivenGiftsV665.gifts:[];
     const givenKindLabelV665={tier_perk:'Tier perk',welcome:'Welcome gift',
-      bringback:'Bring-back voucher',referral:'Referral gift'};
+      bringback:'Bring-back voucher',referral:'Referral gift',birthday:'Birthday gift'};
     const givenBannerV665=givenGiftsV665.length
       ?`<div class="permission-banner welcome-offer-v215 till-tier-benefits-v369" style="margin-bottom:14px" data-given-gifts-v665><b>Already given</b>
         <p class="muted small" style="margin:5px 0">Scanned or handed over for this customer. Undo puts it straight back.</p>
@@ -29791,12 +29935,16 @@ async function svRunTopupFlow({branches,state,testOnly}){
     async function applyStagedTierPerkV665(staged){
       const benefitId=String(staged?.benefit_id||'');
       if(!benefitId)return;
-      const previous=appliedTierBenefitV656;
-      appliedTierBenefitV656=benefitId;
+      /* nestly_v752: staff_stage_gift_qr_v665 stages a birthday discount the SAME way (see its
+         header) and answers with gift_kind:'birthday' — the only difference on this screen is
+         which applied-state flag the re-price call reads back. */
+      const isBirthday=staged?.gift_kind==='birthday';
+      const previousTier=appliedTierBenefitV656,previousBirthday=appliedBirthdayV752;
+      if(isBirthday)appliedBirthdayV752=true;else appliedTierBenefitV656=benefitId;
       const ok=await runEvaluate();
       if(!isTillCurrent())return;
       if(ok===false){
-        appliedTierBenefitV656=previous;
+        appliedTierBenefitV656=previousTier;appliedBirthdayV752=previousBirthday;
         await runEvaluate();
         if(!isTillCurrent())return;
         return toast('That perk could not be applied to this sale.');
@@ -30614,6 +30762,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'d9310385a519aa70b14aab590e6ef76e625e360bc4370ad0e44ba0f6a8480811',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ce3f61af5113df7a4d9e051cdf76353edc5a31c07b664bf3689d013939fcef2b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

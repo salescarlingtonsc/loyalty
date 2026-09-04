@@ -3762,15 +3762,6 @@
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260923_nestly_v751_discount_cap_wording.sql",
-      "semanticVersion": "v751",
-      "proposedDeployVersion": "20260923010000"
-      "path": "db/migrations/20260923_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
-      "semanticVersion": "v754",
-      "proposedDeployVersion": "20260923040000"
-    },
-    {
-      "kind": "executable",
       "path": "db/migrations/20260924_nestly_v749_customer_self_service_account_deletion.sql",
       "semanticVersion": "v749",
       "proposedDeployVersion": "20260924000000"
@@ -3780,9 +3771,24 @@
       "path": "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql",
       "semanticVersion": "v750",
       "proposedDeployVersion": "20260924000001"
-      "path": "db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql",
-      "semanticVersion": "v752",
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v751_discount_cap_wording.sql",
+      "semanticVersion": "v751",
       "proposedDeployVersion": "20260924010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v752_birthday_gift_is_a_benefit.sql",
+      "semanticVersion": "v752",
+      "proposedDeployVersion": "20260924020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
+      "semanticVersion": "v754",
+      "proposedDeployVersion": "20260924040000"
     }
   ]
 }
