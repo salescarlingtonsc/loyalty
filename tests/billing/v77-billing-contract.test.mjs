@@ -197,10 +197,10 @@ test('v77 synchronizes Stripe items and rejects cross-business provider relinkin
   assert.match(apply, /Stripe invoice is already linked to another business/i);
 });
 
-test('v77 billing commands use DB fingerprints and a real idempotent Stripe executor', async () => {
+test('v77 billing commands use DB fingerprints and a real idempotent Razorpay executor', async () => {
   const [sql, executor] = await Promise.all([
     read(sourcePath),
-    read('supabase/functions/stripe-billing-command/index.ts'),
+    read('supabase/functions/razorpay-billing-command/index.ts'),
   ]);
   const request = functionBlock(sql, 'public', 'request_billing_command_v77');
   assert.match(request, /digest\(convert_to\(/i);
@@ -211,38 +211,44 @@ test('v77 billing commands use DB fingerprints and a real idempotent Stripe exec
   assert.match(executor, /authentication_required/);
   assert.match(executor, /command_not_available/);
   assert.match(executor, /claim_billing_command_v130/);
-  assert.match(executor, /provider_idempotency_key/);
-  assert.match(executor, /stripe\.checkout\.sessions\.create/);
-  assert.match(executor, /stripe\.billingPortal\.sessions\.create/);
-  assert.doesNotMatch(executor, /stripe\.billingPortal\.sessions\.retrieve/);
+  // Razorpay has no Idempotency-Key header (provider_idempotency_key was Stripe's mechanism);
+  // the notes.command_id lookup on the subscription list is the Razorpay-native replacement.
+  assert.doesNotMatch(executor, /provider_idempotency_key/);
+  assert.match(executor, /findSubscriptionByCommand/);
+  assert.match(executor, /razorpay\.createSubscription\(\{/);
+  // Razorpay has no billing portal at all: create_portal always completes 'failed' with a named
+  // code, so there is no portal-create call and correspondingly no retrieve-recovery quirk.
+  assert.doesNotMatch(executor, /razorpay\.createPortalSession|billingPortal/);
+  assert.match(executor, /p_error_code: 'provider_portal_unavailable'/);
   assert.match(executor, /portalRecoveryReplay/);
-  assert.match(executor, /stripe\.subscriptions\.update/);
+  assert.match(executor, /razorpay\.updateSubscription\(subscriptionId/);
   assert.match(executor, /complete_billing_command_v77/);
-  assert.match(executor, /proration_behavior: 'none'/);
+  // schedule_change_at is Razorpay's proration-direction analogue: 'cycle_end' for a decrease/
+  // downgrade (no refund), 'now' for an increase/upgrade (charged immediately).
+  assert.match(executor, /schedule_change_at: scheduleChangeAt/);
   assert.doesNotMatch(executor, /invoice\.paid|paid_normalized/);
 });
 
 test('v77 webhook verifies the raw signed body before durable dispatch', async () => {
   const [webhook, shared, config] = await Promise.all([
-    read('supabase/functions/stripe-billing-webhook/index.ts'),
+    read('supabase/functions/razorpay-billing-webhook/index.ts'),
     read('supabase/functions/_shared/billing-service.ts'),
     read('supabase/config.toml'),
   ]);
-  assert.match(webhook, /npm:stripe@18\.5\.0/);
   assert.match(webhook, /const rawBody = await req\.text\(\)/);
-  assert.match(webhook, /constructEventAsync\(\s*rawBody,\s*signature/i);
-  assert.match(webhook, /STRIPE_WEBHOOK_SECRET/);
-  assert.match(webhook, /ingest_stripe_billing_event_v77[\s\S]+apply_stripe_billing_event_v77/);
+  assert.match(webhook, /verifyWebhookSignature\(\s*\n?\s*rawBody,\s*\n?\s*signature/);
+  assert.match(webhook, /RAZORPAY_WEBHOOK_SECRET/);
+  assert.match(webhook, /ingest_billing_event_v755[\s\S]+apply_razorpay_billing_event_v755/);
   assert.match(webhook, /durable: true/);
   assert.match(shared, /npm:@supabase\/supabase-js@2\.110\.7/);
   assert.match(shared, /SUPABASE_SECRET_KEYS[\s\S]+SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(
     config,
-    /\[functions\.stripe-billing-webhook\]\s+verify_jwt = false/,
+    /\[functions\.razorpay-billing-webhook\]\nverify_jwt = false/,
   );
   assert.match(
     config,
-    /\[functions\.stripe-billing-command\]\s+verify_jwt = true/,
+    /\[functions\.razorpay-billing-command\]\nverify_jwt = true/,
   );
   assert.match(shared, /PUBLIC_GATEWAY_ALLOWED_ORIGINS/);
   assert.match(shared, /access-control-allow-origin/);

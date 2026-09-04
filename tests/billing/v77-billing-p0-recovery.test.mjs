@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   billingReconciliationStatus,
   drainBoundedKeysetPages,
-  drainBoundedProviderPages,
+  drainBoundedOffsetPages,
   newBillingReconciliationCursor,
   parseBillingReconciliationCursor,
   providerIdsMissingLocally,
@@ -29,15 +29,13 @@ async function drain(rows,{after=null,maxPages=2}={}){
   return{result,consumed};
 }
 
+// v755: Razorpay's list endpoints are offset paginated (count/skip), not Stripe's cursor-by-id
+// starting_after. drainBoundedOffsetPages carries the offset reached as the persisted cursor.
 async function drainProvider(rows,{after=null,maxPages=1}={}){
   const consumed=[];
-  const result=await drainBoundedProviderPages({
-    after,maxPages,
-    fetchPage:async cursor=>{
-      const start=cursor?rows.findIndex(row=>row.id===cursor)+1:0;
-      const data=rows.slice(start,start+100);
-      return{data,has_more:start+data.length<rows.length};
-    },
+  const result=await drainBoundedOffsetPages({
+    after,pageSize:100,maxPages,
+    fetchPage:async(skip,count)=>rows.slice(skip,skip+count),
     consumePage:async page=>consumed.push(...page)
   });
   return{result,consumed};
@@ -89,12 +87,14 @@ test('keyset drain refuses a non-advancing or unsorted page',async()=>{
   }),/keyset did not advance/i);
 });
 
-test('101+ provider subscriptions resume with Stripe starting_after semantics',async()=>{
+test('101+ provider subscriptions resume with Razorpay offset (count/skip) semantics',async()=>{
   const rows=makeRows(101,'sub');
   const first=await drainProvider(rows);
   assert.equal(first.result.complete,false);
   assert.equal(first.result.processed,100);
-  assert.equal(first.result.after,'sub_0100');
+  // The persisted cursor is the OFFSET reached, not the last row's id (Razorpay has no
+  // starting_after — only count/skip).
+  assert.equal(first.result.after,'100');
   const cursor=newBillingReconciliationCursor('2026-07-26T00:00:00.000Z');
   cursor.provider_subscriptions_after=first.result.after;
   const restored=parseBillingReconciliationCursor(JSON.stringify(cursor));
@@ -169,11 +169,15 @@ test('post-provider persistence and ambiguous Stripe failures stay uncertain',()
   }),'failed');
 });
 
-test('executor retrieves or replays the same Stripe idempotency evidence before completion',async()=>{
+test('executor retrieves or replays the same recovery evidence before completion (notes.command_id, not an idempotency header)',async()=>{
+  // The claim/complete contract and its recovery bookkeeping (status vocabulary, recovery_required
+  // flag, prior_provider_object_id) live in the provider-agnostic v77 migration and are unchanged
+  // by the Razorpay swap; only the PROVIDER-SIDE replay mechanism differs (Razorpay has no
+  // Idempotency-Key header, so notes.command_id on the subscription is the reuse key instead).
   const [executor,sql,reconcile]=await Promise.all([
-    read('supabase/functions/stripe-billing-command/index.ts'),
+    read('supabase/functions/razorpay-billing-command/index.ts'),
     read('db/migrations/20260726_nestly_v77_stripe_billing.sql'),
-    read('supabase/functions/stripe-billing-reconcile/index.ts')
+    read('supabase/functions/razorpay-billing-reconcile/index.ts')
   ]);
   assert.match(sql,/status in \('pending','processing','uncertain','completed','failed','canceled'\)/);
   assert.match(sql,/status in \('running','partial','clean','mismatch','failed'\)/);
@@ -186,9 +190,15 @@ test('executor retrieves or replays the same Stripe idempotency evidence before 
     /data\.recovery_required[\s\S]{0,80}data\.prior_provider_object_id/,
   );
   assert.match(executor,/portalRecoveryReplay/);
+  // Razorpay's create_portal never calls the provider at all (there is no portal), so there is no
+  // retrieve-endpoint quirk to work around — the Stripe-era comment explaining that quirk has no
+  // Razorpay analogue and is correctly absent.
   assert.doesNotMatch(executor,/billingPortal\.sessions\.retrieve/);
-  assert.match(executor,/Billing Portal sessions have no retrieve endpoint/);
-  assert.match(executor,/\{ idempotencyKey \}/);
+  // No Idempotency-Key header exists on this provider; findSubscriptionByCommand (notes.command_id
+  // lookup) is consulted BEFORE createSubscription and is the actual replay-safety mechanism.
+  assert.doesNotMatch(executor,/idempotencyKey/);
+  assert.match(executor,/async function findSubscriptionByCommand/);
+  assert.match(executor,/String\(item\.notes\?\.command_id \|\| ''\) === commandId/);
   assert.match(executor,/p_status: disposition/);
   assert.match(executor,/provider_result_uncertain/);
   assert.match(executor,/retry_same_command_id/);
@@ -199,12 +209,8 @@ test('executor retrieves or replays the same Stripe idempotency evidence before 
   assert.match(reconcile,/p_cursor_end: JSON\.stringify\(cursor\)/);
   assert.match(reconcile,/\.gt\('provider_subscription_id', after\)/);
   assert.match(reconcile,/\.gt\('provider_invoice_id', after\)/);
-  assert.match(reconcile,/stripe\.subscriptions\.list\(\{/);
-  assert.match(reconcile,/status: 'all'/);
-  assert.match(reconcile,/stripe\.invoices\.list\(\{/);
-  assert.match(reconcile,/created: \{ lte: createdLte \}/);
-  assert.match(reconcile,/starting_after: after/);
-  assert.match(reconcile,/has_more: page\.has_more/);
+  assert.match(reconcile,/razorpay\.listSubscriptions\(\{/);
+  assert.match(reconcile,/razorpay\.listPayments\(\{/);
   assert.match(reconcile,/result: 'missing_local'/);
   assert.match(reconcile,/existingBusinessIds/);
   assert.match(reconcile,/unscoped_provider/);
@@ -215,6 +221,8 @@ test('executor retrieves or replays the same Stripe idempotency evidence before 
     2,
   );
   assert.doesNotMatch(reconcile,/\.lte\('updated_at', (?:snapshotAt|cursor\.snapshot_at)\)/);
-  assert.match(reconcile,/snapshot pins membership, not historical row values/);
-  assert.match(reconcile,/current\/live state at reconciliation time/);
+  // Razorpay's list has no created-at filter, so the snapshot boundary (a subscription/payment
+  // created after the boundary belongs to the next reconciliation cycle) is applied client-side.
+  assert.match(reconcile,/Razorpay's list has no created-at filter, so the snapshot boundary is applied here/);
+  assert.match(reconcile,/provider\.created_at \|\| 0\) <= createdLte/);
 });

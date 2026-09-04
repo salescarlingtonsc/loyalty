@@ -55,14 +55,31 @@ test('v124 first-paid money-back request window is immutable and exact', async (
   assert.match(sql, /money-back request/i);
 });
 
-test('Stripe executor uses base plus capacity-block items and proration for upgrades', async () => {
-  const edge = await read('supabase/functions/stripe-billing-command/index.ts');
+test('Razorpay executor resolves one tier plan and prices it by quantity, not by a second line item', async () => {
+  // v755: Razorpay subscriptions carry exactly ONE plan. The old Stripe model (a base price plus
+  // a separate "capacity block" price, proration on upgrade) has no Razorpay analogue — a tier is
+  // now one plan_id, and everything that used to be extra line items is folded into `quantity`.
+  const edge = await read('supabase/functions/razorpay-billing-command/index.ts');
   assert.match(edge, /claim_billing_command_v130/i);
-  assert.match(edge, /extra_capacity_blocks/i);
-  assert.match(edge, /provider_capacity_price_id/i);
   assert.match(edge, /requested_customer_capacity/i);
-  assert.match(edge, /stripePendingUpdateParamsV125\(items, metadata\)/i);
-  assert.match(edge, /verifiedSubscription\.pending_update/);
+  assert.match(edge, /const capacityModel = data\.pricing_model === 'v124_customer_capacity'/);
+  // Plan resolution: catalogue price id -> resolvePlanId (with the RAZORPAY_PLAN_MAP_JSON
+  // override), validated against the catalogue's own cadence/amount/currency before use.
+  assert.match(edge, /const cataloguePlanId = String\(data\.provider_base_price_id \|\| ''\)/);
+  assert.match(edge, /const planId = resolvePlanId\(cataloguePlanId\)/);
+  assert.match(edge, /await validateV755Plan\(razorpay, data, planId\)/);
+  // A catalogue row that still asks for a second priced item (the old capacity-block shape) is
+  // refused outright rather than silently under- or over-charging.
+  assert.match(
+    edge,
+    /Razorpay subscriptions carry one plan; the catalogue must price the whole tier as the base plan/,
+  );
+  // quantity IS the pricing lever now: base coverage plus billable branches, floored at one.
+  assert.match(edge, /planUnits = Math\.max\(1, baseUnits \+ branchUnits\)/);
+  assert.match(edge, /quantity: planUnits/);
+  // A scheduled-but-not-yet-applied change is the Razorpay analogue of Stripe's pending_update:
+  // the capacity model treats it as unconfirmed rather than granting unpaid capacity.
+  assert.match(edge, /providerConfirmationPending = capacityModel && verified\.has_scheduled_changes === true/);
   assert.match(edge, /p_status:\s*'uncertain'/);
   assert.match(edge, /provider_confirmation_pending/);
   assert.doesNotMatch(edge, /const extraSeats = Number\(data\.extra_seats/);
@@ -84,12 +101,13 @@ test('V124 rejects customer-capacity decreases through every subscription-change
   );
 });
 
-test('Stripe reconciliation detects price and customer-capacity quantity drift', async () => {
-  const worker = await read('supabase/functions/stripe-billing-reconcile/index.ts');
+test('Razorpay reconciliation detects plan and customer-capacity quantity drift', async () => {
+  const worker = await read('supabase/functions/razorpay-billing-reconcile/index.ts');
   assert.match(worker, /billing_provider_subscription_items/);
   assert.match(worker, /provider_price_id,quantity/);
-  assert.match(worker, /price_id:\s*item\.price\.id/);
-  assert.match(worker, /quantity:\s*Number\(item\.quantity\s*\|\|\s*0\)/);
+  // The plan id and quantity ARE the subscription shape now (no line items to diff separately).
+  assert.match(worker, /price_id:\s*String\(subscription\.plan_id \|\| ''\)/);
+  assert.match(worker, /quantity:\s*Number\(subscription\.quantity \|\| 0\)/);
   assert.match(worker, /itemsBySubscription\.get\(local\.provider_subscription_id\)/);
 });
 
@@ -136,7 +154,7 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   assert.match(app, /sessionStorage\.setItem\(billingAttemptSlot/);
   assert.match(app, /attempt\.command_id/);
   assert.match(app, /\['failed','canceled'\]\.includes\(result\.status\)/);
-  assert.match(app, /Stripe did not complete this billing request/);
+  assert.match(app, /Razorpay did not complete this billing request/);
   assert.doesNotMatch(app, /Your current subscription is unchanged; try again\./);
 });
 

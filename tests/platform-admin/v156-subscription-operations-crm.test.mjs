@@ -5,7 +5,7 @@ import test from 'node:test';
 const migration = readFileSync(new URL('../../db/migrations/20260804_nestly_v156_subscription_operations_crm.sql', import.meta.url), 'utf8');
 const mirror = readFileSync(new URL('../../supabase/migrations/20260804120000_nestly_v156_subscription_operations_crm.sql', import.meta.url), 'utf8');
 const consoleSource = readFileSync(new URL('../../app/platform-console.js', import.meta.url), 'utf8');
-const webhook = readFileSync(new URL('../../supabase/functions/stripe-billing-webhook/index.ts', import.meta.url), 'utf8');
+const webhook = readFileSync(new URL('../../supabase/functions/razorpay-billing-webhook/index.ts', import.meta.url), 'utf8');
 const dispatcher = readFileSync(new URL('../../supabase/functions/subscription-document-dispatch/index.ts', import.meta.url), 'utf8');
 const pdf = readFileSync(new URL('../../supabase/functions/_shared/subscription-document-pdf-v156.ts', import.meta.url), 'utf8');
 const supabaseConfig = readFileSync(new URL('../../supabase/config.toml', import.meta.url), 'utf8');
@@ -53,9 +53,11 @@ test('Stripe paid invoice is the only automatic receipt and CRM won trigger', ()
 });
 
 test('webhook processing and email dispatch remain idempotent and fail closed', () => {
-  assert.match(webhook, /constructEventAsync/);
-  assert.match(webhook, /ingest_stripe_billing_event_v77/);
-  assert.match(webhook, /apply_stripe_billing_event_v77/);
+  // v755: the webhook contract is Razorpay's now — a constant-time HMAC verification of the raw
+  // body, dispatched into the same durable inbox/apply pair (renamed, provider-neutral shape).
+  assert.match(webhook, /verifyWebhookSignature/);
+  assert.match(webhook, /ingest_billing_event_v755/);
+  assert.match(webhook, /apply_razorpay_billing_event_v755/);
   assert.match(webhook, /SUBSCRIPTION_OPERATIONS_DISPATCH_SECRET/);
   assert.match(dispatcher, /RESEND_API_KEY/);
   assert.match(dispatcher, /TRANSACTIONAL_EMAIL_FROM/);

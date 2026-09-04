@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(resolve(root, 'app/app.js'), 'utf8');
-const fn = readFileSync(resolve(root, 'supabase/functions/stripe-billing-command/index.ts'), 'utf8');
+const fn = readFileSync(resolve(root, 'supabase/functions/razorpay-billing-command/index.ts'), 'utf8');
 const mig = readFileSync(resolve(root, 'db/migrations/20260807_nestly_v202_branch_add_and_billing.sql'), 'utf8');
 const lock = readFileSync(resolve(root, 'db/migrations/20260807_nestly_v202b_branch_insert_only_via_paid_rpc.sql'), 'utf8');
 

@@ -26,19 +26,28 @@ test('V125 records one fail-closed no-GST platform policy and catalogue contract
   assert.match(sql, /GST not charged/i);
 });
 
-test('Stripe catalogue and executor pin exclusive prices and keep automatic tax disabled', async () => {
-  const [setup, edge] = await Promise.all([
-    read('scripts/stripe/setup-v124-catalog.mjs'),
-    read('supabase/functions/stripe-billing-command/index.ts'),
-  ]);
+test('Stripe catalogue bootstrap still pins exclusive prices (Stripe history is untouched)', async () => {
+  // scripts/stripe/setup-v124-catalog.mjs is the ORIGINAL Stripe catalogue bootstrap: it created
+  // the historical price rows this platform once billed from, and it is not rewritten by the
+  // Razorpay swap. The invariant it protects (no-GST => exclusive pricing) is unchanged.
+  const setup = await read('scripts/stripe/setup-v124-catalog.mjs');
   assert.match(setup, /tax_behavior:\s*'exclusive'/i);
   assert.match(setup, /price\.tax_behavior\s*===\s*'exclusive'/i);
-  assert.match(edge, /price\.tax_behavior\s*===\s*'exclusive'/i);
-  assert.match(edge, /data\.tax_behavior\s*!==\s*'exclusive'/i);
-  assert.match(edge, /automatic_tax:\s*\{\s*enabled:\s*false\s*\}/i);
-  assert.match(edge, /default_tax_rates:\s*\[\]/i);
-  assert.match(edge, /stripeSubscriptionHasNoTaxV125\(verifiedSubscription\)/i);
-  assert.match(edge, /stripe\.subscriptions\.retrieve\(subscriptionId\)/i);
+});
+
+test('Razorpay catalogue and executor pin exclusive prices; Razorpay has no automatic tax to disable', async () => {
+  // Razorpay has no tax engine to turn off, so the v125 guard now lives entirely in the catalogue
+  // check: the platform is not GST-registered, so the catalogue row must still declare exclusive
+  // pricing before a plan is ever created or matched at the provider.
+  const edge = await read('supabase/functions/razorpay-billing-command/index.ts');
+  assert.match(edge, /data\.tax_behavior !== 'exclusive'/);
+  assert.match(edge, /Peekaa is not GST-registered; catalogue tax behavior must be exclusive/);
+  // The plan is fetched from Razorpay and checked against the reviewed catalogue (cadence,
+  // amount, currency) before any subscription is created or changed — the Razorpay analogue of
+  // Stripe's subscription-shape verification.
+  assert.match(edge, /const plan = await razorpay\.getPlan\(planId\)/);
+  assert.match(edge, /razorpayPlanMatchesCatalogue\(plan, \{/);
+  assert.match(edge, /Razorpay plans do not match the reviewed catalogue/);
 });
 
 test('pending Stripe subscription changes contain only supported no-tax-safe fields', () => {

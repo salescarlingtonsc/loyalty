@@ -34,11 +34,11 @@ const app = read('app/index.html') + appJs;
 const consoleJs = read('app/platform-console.js');
 const landing = read('app/landing.html');
 const brandConfig = read('app/brand-config.js');
-const stripeCommand = read('supabase/functions/stripe-billing-command/index.ts');
+const stripeCommand = read('supabase/functions/razorpay-billing-command/index.ts');
 
-/* ── S1: the Stripe return route reaches the processing state ─────────────── */
+/* ── S1: the provider return route reaches the processing state ───────────── */
 
-test('the route Stripe returns to is still the one this fix targets', () => {
+test('the route the provider returns to is still the one this fix targets', () => {
   assert.match(stripeCommand, /\/business#\/onboarding\/payment\?status=processing/,
     'success_url must still be the self-serve payment return route');
   assert.match(stripeCommand, /\/business#\/onboarding\/payment\?status=canceled/,
@@ -72,10 +72,10 @@ test('the processing state renders the waiting copy, not a second demand for pay
   assert.ok(renderer.length > 0, 'the single payment-pending renderer must exist');
   assert.match(renderer, /Setting up your Peekaa workspace…/,
     'a returning payer sees a setting-up heading, not "Payment confirmation pending"');
-  assert.match(renderer, /Open Stripe Checkout again/,
+  assert.match(renderer, /Open Razorpay Checkout again/,
     'the primary button must not read "Complete secure payment" in the processing state');
-  assert.match(renderer, /Payment was returned from Stripe/);
-  assert.match(renderer, /Stripe Checkout was closed without payment/,
+  assert.match(renderer, /Payment was returned from Razorpay/);
+  assert.match(renderer, /Razorpay Checkout was closed without payment/,
     'the canceled variant must keep its own honest copy');
 });
 

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(resolve(root, 'app/index.html'), 'utf8') +
   readFileSync(resolve(root, 'app/app.js'), 'utf8');
-const fn = readFileSync(resolve(root, 'supabase/functions/stripe-billing-command/index.ts'), 'utf8');
+const fn = readFileSync(resolve(root, 'supabase/functions/razorpay-billing-command/index.ts'), 'utf8');
 const mig = readFileSync(
   resolve(root, 'db/migrations/20260811_nestly_v280_branch_billing_units_and_promotion_version.sql'),
   'utf8',
