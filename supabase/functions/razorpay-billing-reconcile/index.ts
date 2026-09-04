@@ -1,4 +1,3 @@
-import Stripe from 'npm:stripe@18.5.0';
 import {
   billingAdminClient,
   billingJson,
@@ -8,17 +7,25 @@ import {
 import {
   billingReconciliationStatus,
   drainBoundedKeysetPages,
-  drainBoundedProviderPages,
+  drainBoundedOffsetPages,
   newBillingReconciliationCursor,
   parseBillingReconciliationCursor,
   providerIdsMissingLocally,
   type BillingReconciliationCursor,
 } from '../_shared/billing-reconciliation.ts';
+import {
+  RazorpayApiError,
+  razorpayClient,
+  type RazorpayClient,
+  type RazorpayPayment,
+  type RazorpaySubscription,
+} from '../_shared/razorpay-client.ts';
 
 const LOCAL_OBJECTS_PER_PAGE = 100;
 const PROVIDER_OBJECTS_PER_PAGE = 100;
 const MAX_PAGES_PER_STREAM = 1;
 const MAX_PROVIDER_LOOKUP_CONCURRENCY = 8;
+const PROVIDER = 'razorpay';
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -34,7 +41,6 @@ type LocalSubscription = {
   provider_subscription_id: string;
   status: string;
   current_period_end: string | null;
-  cancel_at_period_end: boolean;
 };
 
 type LocalSubscriptionItem = {
@@ -52,12 +58,8 @@ type LocalInvoice = {
   business_id: string;
   provider_invoice_id: string;
   status: string;
-  paid_normalized: boolean;
-  subtotal_ex_tax_cents: number;
-  tax_cents: number;
   total_cents: number;
   amount_paid_cents: number;
-  amount_remaining_cents: number;
   paid_at: string | null;
 };
 
@@ -77,6 +79,24 @@ function epoch(value: unknown): string | null {
     : null;
 }
 
+/* The SAME status map the v755 migration applies when it writes a subscription. Reconciliation
+   compares like with like: comparing Razorpay's raw vocabulary against our stored vocabulary
+   would report every healthy subscription as a mismatch. */
+export function razorpayStatusToLocalV755(status: string): string {
+  const map: Record<string, string> = {
+    created: 'incomplete',
+    authenticated: 'active',
+    active: 'active',
+    pending: 'past_due',
+    halted: 'unpaid',
+    paused: 'paused',
+    cancelled: 'canceled',
+    completed: 'canceled',
+    expired: 'incomplete_expired',
+  };
+  return map[status] || status;
+}
+
 function reconciliationAuthorized(req: Request): boolean {
   const expected = requiredEnv('BILLING_RECONCILIATION_SECRET');
   const supplied = req.headers.get('x-nestly-reconciliation-secret') || '';
@@ -84,93 +104,59 @@ function reconciliationAuthorized(req: Request): boolean {
 }
 
 async function digest(value: Record<string, unknown>): Promise<string> {
-  const entries = Object.entries(value).sort(([left], [right]) =>
-    left.localeCompare(right)
-  );
+  const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
   return sha256Hex(JSON.stringify(Object.fromEntries(entries)));
 }
 
-function stripeSubscriptionSnapshot(
-  subscription: Stripe.Subscription,
+function razorpaySubscriptionSnapshot(
+  subscription: RazorpaySubscription,
 ): Record<string, unknown> {
-  const raw = subscription as Stripe.Subscription & {
-    current_period_end?: number;
-  };
-  const itemPeriodEnds = subscription.items.data
-    .map((item) =>
-      (item as typeof item & { current_period_end?: number }).current_period_end
-    )
-    .filter((value): value is number => typeof value === 'number');
   return {
-    status: subscription.status,
-    current_period_end: epoch(
-      raw.current_period_end ??
-        (itemPeriodEnds.length ? Math.max(...itemPeriodEnds) : null),
-    ),
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    items: subscription.items.data
-      .map((item) => ({
-        price_id: item.price.id,
-        quantity: Number(item.quantity || 0),
-      }))
-      .sort((left, right) =>
-        left.price_id.localeCompare(right.price_id) ||
-        left.quantity - right.quantity
-      ),
+    status: razorpayStatusToLocalV755(String(subscription.status)),
+    current_period_end: epoch(subscription.current_end),
+    has_scheduled_changes: subscription.has_scheduled_changes === true,
+    items: [
+      {
+        price_id: String(subscription.plan_id || ''),
+        quantity: Number(subscription.quantity || 0),
+      },
+    ],
   };
 }
 
 function localSubscriptionSnapshot(
   subscription: LocalSubscription,
   items: SubscriptionItemSnapshot[],
+  hasScheduledChanges: boolean,
 ): Record<string, unknown> {
   return {
     status: subscription.status,
     current_period_end: subscription.current_period_end,
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    items: [...items].sort((left, right) =>
-      left.price_id.localeCompare(right.price_id) ||
-      left.quantity - right.quantity
+    has_scheduled_changes: hasScheduledChanges,
+    items: [...items].sort(
+      (left, right) =>
+        left.price_id.localeCompare(right.price_id) || left.quantity - right.quantity,
     ),
   };
 }
 
-function stripeInvoiceSnapshot(invoice: Stripe.Invoice): Record<string, unknown> {
-  const raw = invoice as Stripe.Invoice & {
-    subtotal_excluding_tax?: number | null;
-    status_transitions?: { paid_at?: number | null };
-  };
+/* Razorpay has no invoice object on the Subscriptions API that we consume; the captured PAYMENT
+   is the settled money, and v755 stores it as one billing_provider_invoices row. The digest
+   therefore only compares what a payment can express. */
+function razorpayPaymentSnapshot(payment: RazorpayPayment): Record<string, unknown> {
   return {
-    status: invoice.status,
-    paid_normalized:
-      invoice.status === 'paid' && Boolean(raw.status_transitions?.paid_at),
-    subtotal_ex_tax_cents:
-      raw.subtotal_excluding_tax == null
-        ? invoice.subtotal
-        : raw.subtotal_excluding_tax,
-    tax_cents: Math.max(
-      invoice.total -
-        (raw.subtotal_excluding_tax == null
-          ? invoice.subtotal
-          : raw.subtotal_excluding_tax),
-      0,
-    ),
-    total_cents: invoice.total,
-    amount_paid_cents: invoice.amount_paid,
-    amount_remaining_cents: invoice.amount_remaining,
-    paid_at: epoch(raw.status_transitions?.paid_at),
+    status: payment.status === 'captured' ? 'paid' : String(payment.status),
+    total_cents: Number(payment.amount || 0),
+    amount_paid_cents: payment.status === 'captured' ? Number(payment.amount || 0) : 0,
+    paid_at: payment.status === 'captured' ? epoch(payment.created_at) : null,
   };
 }
 
 function localInvoiceSnapshot(invoice: LocalInvoice): Record<string, unknown> {
   return {
     status: invoice.status,
-    paid_normalized: invoice.paid_normalized,
-    subtotal_ex_tax_cents: invoice.subtotal_ex_tax_cents,
-    tax_cents: invoice.tax_cents,
     total_cents: invoice.total_cents,
     amount_paid_cents: invoice.amount_paid_cents,
-    amount_remaining_cents: invoice.amount_remaining_cents,
     paid_at: invoice.paid_at,
   };
 }
@@ -200,6 +186,15 @@ function recordResult(
   }
 }
 
+/* A 4xx from Razorpay is the object genuinely not being there; anything else (timeout, 429, 5xx)
+   is our own inability to look, which is a failure, not evidence of a missing object. */
+function lookupResult(error: unknown): ReconciliationResult {
+  return error instanceof RazorpayApiError && error.status >= 400 && error.status < 500 &&
+      error.status !== 429
+    ? 'missing_provider'
+    : 'failed';
+}
+
 async function insertEvidence(
   admin: ReturnType<typeof billingAdminClient>,
   items: Record<string, unknown>[],
@@ -217,40 +212,19 @@ async function mapWithConcurrency<T, R>(
   const results = new Array<R>(rows.length);
   let next = 0;
   await Promise.all(
-    Array.from(
-      { length: Math.min(concurrency, rows.length) },
-      async () => {
-        while (next < rows.length) {
-          const index = next++;
-          results[index] = await worker(rows[index]);
-        }
-      },
-    ),
+    Array.from({ length: Math.min(concurrency, rows.length) }, async () => {
+      while (next < rows.length) {
+        const index = next++;
+        results[index] = await worker(rows[index]);
+      }
+    }),
   );
   return results;
 }
 
-function metadataBusinessId(value: unknown): string | null {
+function notesBusinessId(notes: Record<string, string> | undefined): string | null {
+  const value = notes?.business_id;
   return typeof value === 'string' && UUID.test(value) ? value : null;
-}
-
-function providerBusinessId(
-  provider: Stripe.Subscription | Stripe.Invoice,
-): string | null {
-  const raw = provider as unknown as {
-    metadata?: Record<string, string>;
-    subscription_details?: { metadata?: Record<string, string> } | null;
-    parent?: {
-      subscription_details?: { metadata?: Record<string, string> } | null;
-    } | null;
-  };
-  return (
-    metadataBusinessId(raw.metadata?.business_id) ||
-    metadataBusinessId(raw.subscription_details?.metadata?.business_id) ||
-    metadataBusinessId(
-      raw.parent?.subscription_details?.metadata?.business_id,
-    )
-  );
 }
 
 async function existingLocalProviderIds(
@@ -266,6 +240,7 @@ async function existingLocalProviderIds(
   const { data, error } = await admin
     .from(table)
     .select(column)
+    .eq('provider', PROVIDER)
     .in(column, providerIds)
     .lte('created_at', snapshotAt);
   if (error) throw new Error('local provider identity projection unavailable');
@@ -296,20 +271,18 @@ async function priorCursor(
     .limit(1)
     .maybeSingle();
   if (error) throw new Error('reconciliation cursor unavailable');
-  return data?.status === 'partial'
-    ? parseBillingReconciliationCursor(data.cursor_end)
-    : null;
+  return data?.status === 'partial' ? parseBillingReconciliationCursor(data.cursor_end) : null;
 }
 
 async function reconcileSubscriptions({
   admin,
-  stripe,
+  razorpay,
   runId,
   cursor,
   run,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
-  stripe: Stripe;
+  razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
@@ -328,13 +301,12 @@ async function reconcileSubscriptions({
     maxPages: MAX_PAGES_PER_STREAM,
     keyOf: (row) => row.provider_subscription_id,
     fetchPage: async (after, limit) => {
-      // The snapshot pins membership, not historical row values: rows created
-      // by the boundary stay in the cycle even if a later webhook updates them.
+      /* Provider-scoped: the Stripe history rows stay in these tables untouched, and asking
+         Razorpay about a `sub_...` id would report every one of them missing forever. */
       let query = admin
         .from('billing_provider_subscriptions')
-        .select(
-          'business_id,provider_subscription_id,status,current_period_end,cancel_at_period_end',
-        )
+        .select('business_id,provider_subscription_id,status,current_period_end')
+        .eq('provider', PROVIDER)
         .lte('created_at', cursor.snapshot_at)
         .order('provider_subscription_id', { ascending: true })
         .limit(limit);
@@ -350,10 +322,9 @@ async function reconcileSubscriptions({
       const { data: itemRows, error: itemError } = await admin
         .from('billing_provider_subscription_items')
         .select('provider_subscription_id,provider_price_id,quantity')
+        .eq('provider', PROVIDER)
         .in('provider_subscription_id', providerSubscriptionIds);
-      if (itemError) {
-        throw new Error('local subscription item projection unavailable');
-      }
+      if (itemError) throw new Error('local subscription item projection unavailable');
       const itemsBySubscription = new Map<string, SubscriptionItemSnapshot[]>();
       for (const item of (itemRows || []) as LocalSubscriptionItem[]) {
         const items = itemsBySubscription.get(item.provider_subscription_id) || [];
@@ -368,20 +339,20 @@ async function reconcileSubscriptions({
         MAX_PROVIDER_LOOKUP_CONCURRENCY,
         async (local) => {
           try {
-            const provider = await stripe.subscriptions.retrieve(
-              local.provider_subscription_id,
-            );
-            const expected = stripeSubscriptionSnapshot(provider);
+            const provider = await razorpay.getSubscription(local.provider_subscription_id);
+            const expected = razorpaySubscriptionSnapshot(provider);
             const actual = localSubscriptionSnapshot(
               local,
               itemsBySubscription.get(local.provider_subscription_id) || [],
+              provider.has_scheduled_changes === true,
             );
             const [expectedDigest, actualDigest] = await Promise.all([
               digest(expected),
               digest(actual),
             ]);
-            const result =
-              expectedDigest === actualDigest ? 'match' : 'mismatch';
+            const result: ReconciliationResult = expectedDigest === actualDigest
+              ? 'match'
+              : 'mismatch';
             return {
               result,
               item: {
@@ -392,17 +363,11 @@ async function reconcileSubscriptions({
                 result,
                 expected_digest: expectedDigest,
                 actual_digest: actualDigest,
-                detail:
-                  result === 'match'
-                    ? {}
-                    : { provider: expected, nestly: actual },
+                detail: result === 'match' ? {} : { provider: expected, nestly: actual },
               },
             };
           } catch (error) {
-            const result: ReconciliationResult =
-              error instanceof Stripe.errors.StripeInvalidRequestError
-                ? 'missing_provider'
-                : 'failed';
+            const result = lookupResult(error);
             return {
               result,
               item: {
@@ -425,24 +390,19 @@ async function reconcileSubscriptions({
 
 async function reconcileInvoices({
   admin,
-  stripe,
+  razorpay,
   runId,
   cursor,
   run,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
-  stripe: Stripe;
+  razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
 }) {
   if (cursor.local_invoices_complete) {
-    return {
-      after: cursor.local_invoices_after,
-      complete: true,
-      pages: 0,
-      processed: 0,
-    };
+    return { after: cursor.local_invoices_after, complete: true, pages: 0, processed: 0 };
   }
   return drainBoundedKeysetPages<LocalInvoice>({
     after: cursor.local_invoices_after,
@@ -450,38 +410,43 @@ async function reconcileInvoices({
     maxPages: MAX_PAGES_PER_STREAM,
     keyOf: (row) => row.provider_invoice_id,
     fetchPage: async (after, limit) => {
-      // Membership is snapshot-pinned by creation time. Selected projection
-      // fields remain the current/live state at reconciliation time.
       let query = admin
         .from('billing_provider_invoices')
         .select(
-          'business_id,provider_invoice_id,status,paid_normalized,subtotal_ex_tax_cents,tax_cents,total_cents,amount_paid_cents,amount_remaining_cents,paid_at',
+          'business_id,provider_invoice_id,status,total_cents,amount_paid_cents,paid_at,provider_payment_intent_id',
         )
+        .eq('provider', PROVIDER)
         .lte('created_at', cursor.snapshot_at)
         .order('provider_invoice_id', { ascending: true })
         .limit(limit);
       if (after) query = query.gt('provider_invoice_id', after);
       const { data, error } = await query;
       if (error) throw new Error('local invoice projection unavailable');
-      return (data || []) as LocalInvoice[];
+      return (data || []) as unknown as LocalInvoice[];
     },
     consumePage: async (rows) => {
       const outcomes = await mapWithConcurrency(
         rows,
         MAX_PROVIDER_LOOKUP_CONCURRENCY,
         async (local) => {
+          /* v755 writes provider_payment_intent_id = the captured payment id and uses the
+             Razorpay invoice id (or that same payment id) as the invoice key, so the payment is
+             always reachable from the local row. */
+          const paymentId = String(
+            (local as unknown as { provider_payment_intent_id?: string })
+              .provider_payment_intent_id || local.provider_invoice_id,
+          );
           try {
-            const provider = await stripe.invoices.retrieve(
-              local.provider_invoice_id,
-            );
-            const expected = stripeInvoiceSnapshot(provider);
+            const provider = await razorpay.getPayment(paymentId);
+            const expected = razorpayPaymentSnapshot(provider);
             const actual = localInvoiceSnapshot(local);
             const [expectedDigest, actualDigest] = await Promise.all([
               digest(expected),
               digest(actual),
             ]);
-            const result =
-              expectedDigest === actualDigest ? 'match' : 'mismatch';
+            const result: ReconciliationResult = expectedDigest === actualDigest
+              ? 'match'
+              : 'mismatch';
             return {
               result,
               item: {
@@ -492,17 +457,11 @@ async function reconcileInvoices({
                 result,
                 expected_digest: expectedDigest,
                 actual_digest: actualDigest,
-                detail:
-                  result === 'match'
-                    ? {}
-                    : { provider: expected, nestly: actual },
+                detail: result === 'match' ? {} : { provider: expected, nestly: actual },
               },
             };
           } catch (error) {
-            const result: ReconciliationResult =
-              error instanceof Stripe.errors.StripeInvalidRequestError
-                ? 'missing_provider'
-                : 'failed';
+            const result = lookupResult(error);
             return {
               result,
               item: {
@@ -525,13 +484,13 @@ async function reconcileInvoices({
 
 async function reconcileProviderSubscriptions({
   admin,
-  stripe,
+  razorpay,
   runId,
   cursor,
   run,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
-  stripe: Stripe;
+  razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
@@ -545,31 +504,30 @@ async function reconcileProviderSubscriptions({
     };
   }
   const createdLte = Math.floor(Date.parse(cursor.snapshot_at) / 1000);
-  return drainBoundedProviderPages<Stripe.Subscription>({
+  return drainBoundedOffsetPages<RazorpaySubscription>({
     after: cursor.provider_subscriptions_after,
+    pageSize: PROVIDER_OBJECTS_PER_PAGE,
     maxPages: MAX_PAGES_PER_STREAM,
-    fetchPage: async (after) => {
-      const page = await stripe.subscriptions.list({
-        status: 'all',
-        created: { lte: createdLte },
-        limit: PROVIDER_OBJECTS_PER_PAGE,
-        ...(after ? { starting_after: after } : {}),
-      });
-      return { data: page.data, has_more: page.has_more };
+    fetchPage: async (skip, count) => {
+      const page = await razorpay.listSubscriptions({ count, skip });
+      return page?.items || [];
     },
     consumePage: async (providers) => {
+      /* Razorpay's list has no created-at filter, so the snapshot boundary is applied here.
+         A subscription created after the boundary belongs to the NEXT cycle and must not be
+         reported missing from a projection that had not been written yet. */
+      const inCycle = providers.filter(
+        (provider) => Number(provider.created_at || 0) <= createdLte,
+      );
       const candidates = new Map(
-        providers.map((provider) => [provider.id, providerBusinessId(provider)]),
+        inCycle.map((provider) => [provider.id, notesBusinessId(provider.notes)]),
       );
-      const businessIds = await existingBusinessIds(
-        admin,
-        [...candidates.values()],
-      );
-      const scoped = providers.filter((provider) => {
+      const businessIds = await existingBusinessIds(admin, [...candidates.values()]);
+      const scoped = inCycle.filter((provider) => {
         const candidate = candidates.get(provider.id);
         return Boolean(candidate && businessIds.has(candidate));
       });
-      const unscoped = providers.length - scoped.length;
+      const unscoped = inCycle.length - scoped.length;
       cursor.unscoped_provider += unscoped;
       run.unscoped_provider += unscoped;
       const localIds = await existingLocalProviderIds(
@@ -580,10 +538,7 @@ async function reconcileProviderSubscriptions({
         cursor.snapshot_at,
       );
       const missingIds = new Set(
-        providerIdsMissingLocally(
-          scoped.map(({ id }) => id),
-          localIds,
-        ),
+        providerIdsMissingLocally(scoped.map(({ id }) => id), localIds),
       );
       const missing = scoped.filter(({ id }) => missingIds.has(id));
       const items = await Promise.all(
@@ -599,13 +554,11 @@ async function reconcileProviderSubscriptions({
             object_type: 'subscription',
             provider_object_id: provider.id,
             result: 'missing_local',
-            expected_digest: await digest(
-              stripeSubscriptionSnapshot(provider),
-            ),
+            expected_digest: await digest(razorpaySubscriptionSnapshot(provider)),
             actual_digest: null,
             detail: {
               reason: 'provider_subscription_missing_local',
-              provider_created_at: epoch(provider.created),
+              provider_created_at: epoch(provider.created_at),
               metadata_business_id: candidate,
             },
           };
@@ -618,13 +571,13 @@ async function reconcileProviderSubscriptions({
 
 async function reconcileProviderInvoices({
   admin,
-  stripe,
+  razorpay,
   runId,
   cursor,
   run,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
-  stripe: Stripe;
+  razorpay: RazorpayClient;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
@@ -638,49 +591,50 @@ async function reconcileProviderInvoices({
     };
   }
   const createdLte = Math.floor(Date.parse(cursor.snapshot_at) / 1000);
-  return drainBoundedProviderPages<Stripe.Invoice>({
+  return drainBoundedOffsetPages<RazorpayPayment>({
     after: cursor.provider_invoices_after,
+    pageSize: PROVIDER_OBJECTS_PER_PAGE,
     maxPages: MAX_PAGES_PER_STREAM,
-    fetchPage: async (after) => {
-      const page = await stripe.invoices.list({
-        created: { lte: createdLte },
-        limit: PROVIDER_OBJECTS_PER_PAGE,
-        ...(after ? { starting_after: after } : {}),
-      });
-      return { data: page.data, has_more: page.has_more };
+    fetchPage: async (skip, count) => {
+      const page = await razorpay.listPayments({ to: createdLte, count, skip });
+      return page?.items || [];
     },
     consumePage: async (providers) => {
+      /* Only a CAPTURED payment is money we should hold an invoice row for. An authorized or
+         failed payment is not settled revenue and its absence locally is correct. */
+      const inCycle = providers.filter(
+        (payment) =>
+          payment.status === 'captured' && Number(payment.created_at || 0) <= createdLte,
+      );
       const candidates = new Map(
-        providers.map((provider) => [provider.id, providerBusinessId(provider)]),
+        inCycle.map((payment) => [payment.id, notesBusinessId(payment.notes)]),
       );
-      const businessIds = await existingBusinessIds(
-        admin,
-        [...candidates.values()],
-      );
-      const scoped = providers.filter((provider) => {
-        const candidate = candidates.get(provider.id);
+      const businessIds = await existingBusinessIds(admin, [...candidates.values()]);
+      const scoped = inCycle.filter((payment) => {
+        const candidate = candidates.get(payment.id);
         return Boolean(candidate && businessIds.has(candidate));
       });
-      const unscoped = providers.length - scoped.length;
+      const unscoped = inCycle.length - scoped.length;
       cursor.unscoped_provider += unscoped;
       run.unscoped_provider += unscoped;
+      /* v755 keys an invoice on payment.invoice_id when Razorpay issued one and on the payment
+         id otherwise, so both candidates are checked before calling a payment unprojected. */
+      const localKeys = scoped.flatMap((payment) =>
+        [payment.invoice_id || '', payment.id].filter(Boolean) as string[]
+      );
       const localIds = await existingLocalProviderIds(
         admin,
         'billing_provider_invoices',
         'provider_invoice_id',
-        scoped.map(({ id }) => id),
+        localKeys,
         cursor.snapshot_at,
       );
-      const missingIds = new Set(
-        providerIdsMissingLocally(
-          scoped.map(({ id }) => id),
-          localIds,
-        ),
+      const missing = scoped.filter(
+        (payment) => !localIds.has(payment.id) && !localIds.has(String(payment.invoice_id || '')),
       );
-      const missing = scoped.filter(({ id }) => missingIds.has(id));
       const items = await Promise.all(
-        missing.map(async (provider) => {
-          const candidate = candidates.get(provider.id);
+        missing.map(async (payment) => {
+          const candidate = candidates.get(payment.id);
           if (!candidate || !businessIds.has(candidate)) {
             throw new Error('scoped provider invoice lost business mapping');
           }
@@ -689,13 +643,13 @@ async function reconcileProviderInvoices({
             run_id: runId,
             business_id: candidate,
             object_type: 'invoice',
-            provider_object_id: provider.id,
+            provider_object_id: String(payment.invoice_id || payment.id),
             result: 'missing_local',
-            expected_digest: await digest(stripeInvoiceSnapshot(provider)),
+            expected_digest: await digest(razorpayPaymentSnapshot(payment)),
             actual_digest: null,
             detail: {
               reason: 'provider_invoice_missing_local',
-              provider_created_at: epoch(provider.created),
+              provider_created_at: epoch(payment.created_at),
               metadata_business_id: candidate,
             },
           };
@@ -716,18 +670,16 @@ Deno.serve(async (req) => {
   }
   try {
     if (!reconciliationAuthorized(req)) {
-      return billingJson(401, {
-        error: 'reconciliation_authentication_required',
-      });
+      return billingJson(401, { error: 'reconciliation_authentication_required' });
     }
 
     const admin = billingAdminClient();
-    const stripe = new Stripe(requiredEnv('STRIPE_SECRET_KEY'), {
-      httpClient: Stripe.createFetchHttpClient(),
+    const razorpay = razorpayClient({
+      keyId: requiredEnv('RAZORPAY_KEY_ID'),
+      keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
     });
     const resume = await priorCursor(admin);
-    const cursor =
-      resume || newBillingReconciliationCursor(completedSecondSnapshot());
+    const cursor = resume || newBillingReconciliationCursor(completedSecondSnapshot());
     const { data: runId, error: startError } = await admin.rpc(
       'start_billing_reconciliation_v77',
       { p_run_mode: 'scheduled', p_cursor_start: JSON.stringify(cursor) },
@@ -748,7 +700,7 @@ Deno.serve(async (req) => {
     try {
       const subscriptionPage = await reconcileSubscriptions({
         admin,
-        stripe,
+        razorpay,
         runId,
         cursor,
         run,
@@ -756,30 +708,23 @@ Deno.serve(async (req) => {
       cursor.local_subscriptions_after = subscriptionPage.after;
       cursor.local_subscriptions_complete = subscriptionPage.complete;
 
-      const invoicePage = await reconcileInvoices({
-        admin,
-        stripe,
-        runId,
-        cursor,
-        run,
-      });
+      const invoicePage = await reconcileInvoices({ admin, razorpay, runId, cursor, run });
       cursor.local_invoices_after = invoicePage.after;
       cursor.local_invoices_complete = invoicePage.complete;
 
       const providerSubscriptionPage = await reconcileProviderSubscriptions({
         admin,
-        stripe,
+        razorpay,
         runId,
         cursor,
         run,
       });
       cursor.provider_subscriptions_after = providerSubscriptionPage.after;
-      cursor.provider_subscriptions_complete =
-        providerSubscriptionPage.complete;
+      cursor.provider_subscriptions_complete = providerSubscriptionPage.complete;
 
       const providerInvoicePage = await reconcileProviderInvoices({
         admin,
-        stripe,
+        razorpay,
         runId,
         cursor,
         run,
@@ -791,6 +736,7 @@ Deno.serve(async (req) => {
       const partial = status === 'partial';
       const summary = {
         partial,
+        provider: PROVIDER,
         snapshot_at: cursor.snapshot_at,
         cycle_started_at: cursor.cycle_started_at,
         run,
@@ -822,15 +768,12 @@ Deno.serve(async (req) => {
           provider_invoices: cursor.provider_invoices_complete,
         },
       };
-      const { error: finishError } = await admin.rpc(
-        'finish_billing_reconciliation_v77',
-        {
-          p_run: runId,
-          p_status: status,
-          p_cursor_end: JSON.stringify(cursor),
-          p_summary: summary,
-        },
-      );
+      const { error: finishError } = await admin.rpc('finish_billing_reconciliation_v77', {
+        p_run: runId,
+        p_status: status,
+        p_cursor_end: JSON.stringify(cursor),
+        p_summary: summary,
+      });
       if (finishError) throw new Error('reconciliation completion failed');
       return billingJson(200, { run_id: runId, status, ...summary });
     } catch {
@@ -840,6 +783,7 @@ Deno.serve(async (req) => {
         p_cursor_end: JSON.stringify(cursor),
         p_summary: {
           partial: true,
+          provider: PROVIDER,
           snapshot_at: cursor.snapshot_at,
           run,
           cycle: {

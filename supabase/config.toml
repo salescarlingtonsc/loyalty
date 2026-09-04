@@ -13,22 +13,21 @@ verify_jwt = false
 [functions.public-support-ticket]
 verify_jwt = false
 
-[functions.stripe-billing-webhook]
+[functions.razorpay-billing-webhook]
 verify_jwt = false
 
-[functions.stripe-billing-command]
+[functions.razorpay-billing-command]
 verify_jwt = true
 
-[functions.stripe-billing-reconcile]
+[functions.razorpay-billing-reconcile]
+verify_jwt = false
+
+# nestly_v755: Razorpay Checkout POSTs the redirect callback as a browser form submission and
+# cannot present a Supabase JWT. It verifies the razorpay_signature itself and writes nothing.
+[functions.razorpay-billing-return]
 verify_jwt = false
 
 [functions.subscription-document-dispatch]
-verify_jwt = false
-
-[functions.stripe-connect-command]
-verify_jwt = true
-
-[functions.stripe-connect-webhook]
 verify_jwt = false
 
 [functions.customer-push-dispatch]

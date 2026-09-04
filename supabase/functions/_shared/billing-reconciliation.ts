@@ -26,11 +26,6 @@ export type KeysetDrainResult = {
   processed: number;
 };
 
-export type ProviderPage<T> = {
-  data: T[];
-  has_more: boolean;
-};
-
 export type BillingReconciliationStatus = 'partial' | 'clean' | 'mismatch';
 
 export function newBillingReconciliationCursor(
@@ -160,45 +155,6 @@ export async function drainBoundedKeysetPages<T>({
   return { after: cursor, complete: false, pages, processed };
 }
 
-export async function drainBoundedProviderPages<T extends { id: string }>({
-  after,
-  maxPages,
-  fetchPage,
-  consumePage,
-}: {
-  after: string | null;
-  maxPages: number;
-  fetchPage: (after: string | null) => Promise<ProviderPage<T>>;
-  consumePage: (rows: T[]) => Promise<void>;
-}): Promise<KeysetDrainResult> {
-  let cursor = after;
-  let pages = 0;
-  let processed = 0;
-  while (pages < maxPages) {
-    const page = await fetchPage(cursor);
-    const rows = page.data;
-    const ids = rows.map((row) => row.id);
-    if (
-      ids.some((id) => !id) ||
-      new Set(ids).size !== ids.length ||
-      (cursor !== null && ids.includes(cursor))
-    ) {
-      throw new Error('billing provider pagination did not advance');
-    }
-    if (page.has_more && !rows.length) {
-      throw new Error('billing provider pagination returned an empty continuation');
-    }
-    await consumePage(rows);
-    if (rows.length) cursor = rows[rows.length - 1].id;
-    processed += rows.length;
-    pages += 1;
-    if (!page.has_more) {
-      return { after: cursor, complete: true, pages, processed };
-    }
-  }
-  return { after: cursor, complete: false, pages, processed };
-}
-
 export function billingReconciliationStatus(
   cursor: BillingReconciliationCursor,
 ): BillingReconciliationStatus {
@@ -222,4 +178,53 @@ export function providerIdsMissingLocally(
 ): string[] {
   const local = new Set(localProviderIds);
   return providerIds.filter((id) => !local.has(id));
+}
+
+/* nestly_v755 — Razorpay lists are offset paginated (count/skip), not keyset-by-id like Stripe's
+   starting_after. The bound is the same: at most `maxPages` pages per invocation, and the cursor
+   that survives into the next run is the offset reached. The offset is carried in the same
+   `string | null` cursor field, so the persisted cursor shape does not change.
+
+   An offset walk over a moving list can miss or repeat rows; that is why the caller pins
+   membership with a snapshot timestamp and treats a repeat as a re-check rather than an error.
+   The one thing this DOES enforce is forward progress: a page that returns nothing while
+   claiming more rows would loop forever, so it terminates the stream instead. */
+export function offsetCursorValue(offset: number): string {
+  return String(Math.max(0, Math.floor(offset)));
+}
+
+export function parseOffsetCursor(after: string | null): number {
+  const parsed = Number(after);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+export async function drainBoundedOffsetPages<T>({
+  after,
+  pageSize,
+  maxPages,
+  fetchPage,
+  consumePage,
+}: {
+  after: string | null;
+  pageSize: number;
+  maxPages: number;
+  fetchPage: (skip: number, count: number) => Promise<T[]>;
+  consumePage: (rows: T[]) => Promise<void>;
+}): Promise<KeysetDrainResult> {
+  let skip = parseOffsetCursor(after);
+  let pages = 0;
+  let processed = 0;
+  while (pages < maxPages) {
+    const rows = await fetchPage(skip, pageSize);
+    pages += 1;
+    if (rows.length) {
+      await consumePage(rows);
+      skip += rows.length;
+      processed += rows.length;
+    }
+    if (rows.length < pageSize) {
+      return { after: offsetCursorValue(skip), complete: true, pages, processed };
+    }
+  }
+  return { after: offsetCursorValue(skip), complete: false, pages, processed };
 }

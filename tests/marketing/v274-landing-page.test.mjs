@@ -235,6 +235,12 @@ test('every security header block survives the rewrite change untouched', () => 
   const sources = vercel.headers.map((block) => block.source);
   assert.deepEqual(sources, [
     '/(.*)',
+    /* nestly_v755: the Razorpay checkout page needs the three Razorpay origins, and a header CSP
+       and a meta CSP are both enforced as an INTERSECTION — so the exemption has to be a
+       per-path header block. It sits AFTER '/(.*)' because Vercel lets a later matching entry
+       win for the same header key, and it is the ONLY path that admits a third-party payment
+       script; the site-wide block above is unchanged. */
+    '/razorpay-checkout.html',
     '/sw.js',
     '/runtime-config.js',
     '/runtime-config-loader.js',

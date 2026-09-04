@@ -6,7 +6,7 @@
  * files signed deliveries in public.whatsapp_webhook_events. Nothing consumes
  * that table yet.
  *
- * Shape follows stripe-billing-webhook/index.ts: verify the provider signature
+ * Shape follows razorpay-billing-webhook/index.ts: verify the provider signature
  * over the RAW body, hand the envelope to a SECURITY DEFINER ingest RPC, return
  * a small JSON acknowledgement. No CORS — a webhook has no browser origin, and
  * offering one would only widen the surface.
