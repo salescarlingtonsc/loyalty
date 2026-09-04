@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **72**.
+Fixture count: **73**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -89,6 +89,7 @@ Fixture count: **72**.
 | `db/tests/executed/v753_corpus_birthday_new_signups.sql` | `db/migrations/20260924_nestly_v753_birthday_reaches_new_signups.sql` | _(none)_ | 1 | 7 | `ac99fb9d608f5791e847a1bd6f409254ee413cd42421d0470897e486f1fcff2a` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v753_corpus_birthday_new_signups --migrated-only` |
 | `db/tests/executed/v754_corpus_gift_redeem_by_date.sql` | `db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql` | _(none)_ | 1 | 1 | `9c60d0fe52246c97c5a6d8737dc8c9bc440703ff74247bbe9333054312654a77` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v754_corpus_gift_redeem_by_date --migrated-only` |
 | `db/tests/executed/v755_corpus_razorpay_billing.sql` | `db/migrations/20260925_nestly_v755_razorpay_billing.sql` | _(none)_ | 1 | 0 | `5a4aa1f1c4d5bdd0a34cb13dccb55bbbe94e9df03bc6180d58457b602b5521f7` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v755_corpus_razorpay_billing --migrated-only` |
+| `db/tests/executed/v756_corpus_self_serve_payment_evidence.sql` | `db/migrations/20260926_nestly_v756_self_serve_payment_evidence.sql` | _(none)_ | 1 | 0 | `78ba06a6b43d02c56513e05e82381e9429cbbd5cd9958ecc0c753afc1c4cd126` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v756_corpus_self_serve_payment_evidence --migrated-only` |
 
 ## Notes
 

@@ -3807,6 +3807,12 @@
       "path": "db/migrations/20260925_nestly_v755_razorpay_billing.sql",
       "semanticVersion": "v755",
       "proposedDeployVersion": "20260925000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260926_nestly_v756_self_serve_payment_evidence.sql",
+      "semanticVersion": "v756",
+      "proposedDeployVersion": "20260926000000"
     }
   ]
 }

@@ -3802,6 +3802,12 @@
       "version": "20260925000000",
       "name": "nestly_v755_razorpay_billing",
       "sourcePath": "db/migrations/20260925_nestly_v755_razorpay_billing.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260926000000",
+      "name": "nestly_v756_self_serve_payment_evidence",
+      "sourcePath": "db/migrations/20260926_nestly_v756_self_serve_payment_evidence.sql"
     }
   ]
 }

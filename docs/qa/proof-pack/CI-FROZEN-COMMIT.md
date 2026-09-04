@@ -13,10 +13,10 @@
 
 | | |
 |---|---|
-| HEAD SHA | `d3c8d00b1d782ca4266114d82bfc2ad69881aeaa` |
+| HEAD SHA | `7a3a59a103d588f9951aef90487f879d9bef584a` |
 | Branch | `claude/razorpay-billing-v755` |
-| Commit date | 2026-09-04T16:10:31+08:00 |
-| Record generated | 2026-09-04T08:11:47.427Z |
+| Commit date | 2026-09-04T17:05:18+08:00 |
+| Record generated | 2026-09-04T09:06:32.736Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
 | Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |
@@ -29,8 +29,8 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 
 | Manifest | `.sha256` file contents | Independently recomputed SHA-256 | Match |
 |---|---|---|---|
-| `db/migrations/migration-order.manifest.json` | `09964050dcc6ef49ba1da97368d7e15ee98cbae855bcc6a3b6f7d1f83424acf7  migration-order.manifest.json` | `09964050dcc6ef49ba1da97368d7e15ee98cbae855bcc6a3b6f7d1f83424acf7` | MATCH |
-| `supabase/canonical-migration-order.manifest.json` | `5143932b0ca3acbb1d4045f72656e06e2966f07b94305c8c5476ce72a24ba001  canonical-migration-order.manifest.json` | `5143932b0ca3acbb1d4045f72656e06e2966f07b94305c8c5476ce72a24ba001` | MATCH |
+| `db/migrations/migration-order.manifest.json` | `96b57ba71d03b864ba805a0455ba09c396fb55c0f84ddf309ebafd2f85217c4c  migration-order.manifest.json` | `96b57ba71d03b864ba805a0455ba09c396fb55c0f84ddf309ebafd2f85217c4c` | MATCH |
+| `supabase/canonical-migration-order.manifest.json` | `6542b010896be7b8e20205e2d008258ddb524a495412707409e3d80eb52482dd  canonical-migration-order.manifest.json` | `6542b010896be7b8e20205e2d008258ddb524a495412707409e3d80eb52482dd` | MATCH |
 
 ## Migrations dated 2026-09-02
 
