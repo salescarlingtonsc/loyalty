@@ -3832,6 +3832,12 @@
       "version": "20260929010000",
       "name": "nestly_v760_shared_provider_customers",
       "sourcePath": "db/migrations/20260929_nestly_v760_shared_provider_customers.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260930000000",
+      "name": "nestly_v763_self_serve_activation_by_tier",
+      "sourcePath": "db/migrations/20260930_nestly_v763_self_serve_activation_by_tier.sql"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 76,
+  "itemCount": 77,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -956,6 +956,17 @@
       "clients_seeded": 0,
       "sha256": "6dbb68bf21f0b484547bc0bb2b325ea499f759d452bf119739e5cae6af7db922",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v760_corpus_shared_provider_customers --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v763_corpus_self_serve_activation.sql",
+      "migrations": [
+        "db/migrations/20260930_nestly_v763_self_serve_activation_by_tier.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 0,
+      "sha256": "ff021dfeaf9700d7d768b690b4947fe04c5eebb2e3d4ff15efdc02f1e8877fda",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v763_corpus_self_serve_activation --migrated-only"
     }
   ]
 }
