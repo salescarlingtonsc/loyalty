@@ -56,7 +56,8 @@ test('V375 the amend form is minimised until a tab is pressed, and Amend still o
      default. The guarantee is now the pair: nothing is open on a plain view, and the Amend entry
      point — the one that passes startEditing — still lands straight in the form with focus. */
   assert.match(render, /showOutcomePanelV375\(startEditing\?'amend':null\);/);
-  assert.match(render, /if\(startEditing\)requestAnimationFrame\(\(\)=>\$\('appointmentEditDate'\)\?\.focus\(\)\);/);
+  /* v760: the Amend entry point now opens the slot picker rather than focusing a date input. */
+  assert.match(render, /if\(startEditing\)openAmendPickerV760\(\);/);
   assert.doesNotMatch(render, /editForm\.hidden=false;toggle\.setAttribute\('aria-expanded','true'\);/);
   // The two outcomes are tabs over one panel area, and only one can be open.
   assert.match(render, /id="appointmentEditToggle" role="tab"/);
@@ -67,7 +68,12 @@ test('V375 the amend form is minimised until a tab is pressed, and Amend still o
 test('V245 the popup can change staff, time and details, and is gated on write access', () => {
   const render = app.slice(app.indexOf('function renderAppointmentDetails('), app.indexOf('editForm.onsubmit='));
   // Staff reassignment is a real control listing that branch's people, defaulting to the current one.
-  assert.match(render, /<select id="appointmentEditStaff" required>\$\{branchStaff\(item\.branch_id\)\.map\(person=>`<option value="\$\{person\.id\}" \$\{person\.id===item\.staff_id\?'selected':''\}/);
+  /* v760: staff reassignment is now the customer flow's tappable team cards over the same branch
+     roster, with the current staff preselected, writing the hidden appointmentEditStaff field the
+     save path already read. */
+  assert.match(render, /const people=branchStaff\(item\.branch_id\);/);
+  assert.match(render, /data-amend-staff="\$\{esc\(person\.id\)\}"/);
+  assert.match(render, /<input type="hidden" id="appointmentEditStaff" value="\$\{esc\(item\.staff_id\|\|''\)\}">/);
   for (const field of ['appointmentEditDate', 'appointmentEditTime', 'appointmentEditDuration', 'appointmentEditNote']) {
     assert.match(render, new RegExp(`id="${field}"`), `${field} must be amendable`);
   }

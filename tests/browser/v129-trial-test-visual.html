@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ce3f61af5113df7a4d9e051cdf76353edc5a31c07b664bf3689d013939fcef2b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="8968cf4c66e2d3cba6969a10b150a9c3077cebf2660ad27152d704d5ad9271ac"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5742,7 +5742,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ce3f61af5113df7a4d9e051cdf76353edc5a31c07b664bf3689d013939fcef2b</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 8968cf4c66e2d3cba6969a10b150a9c3077cebf2660ad27152d704d5ad9271ac</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -8897,13 +8897,11 @@ async function tillPage(){
   routeMain.innerHTML=CUI.loadingState({title:'Record sale',iconName:'till'});
   const [
     {data:tillStaff,error:tillStaffError},{data:tillBranches,error:tillBranchError},
-    {data:tillStaffBranches,error:tillStaffBranchError},
-    {data:merchantPaymentStatus,error:merchantPaymentStatusError}
+    {data:tillStaffBranches,error:tillStaffBranchError}
   ]=await Promise.all([
     sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
     sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
-    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
-    sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id})
+    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   if(!isTillCurrent())return;
   if(tillStaffError||tillBranchError||tillStaffBranchError)throw tillStaffError||tillBranchError||tillStaffBranchError;
@@ -8953,15 +8951,15 @@ async function tillPage(){
   let tillBranchId=accessibleTillBranches.some(branch=>branch.id===selectedBranchId)?selectedBranchId:
     (accessibleTillBranches.find(branch=>branch.is_default)?.id||accessibleTillBranches[0]?.id||'');
   const canRecordSales=hasRoleCapability('create_sales')&&Boolean(tillBranchId);
-  const verifiedPaynowReady=!merchantPaymentStatusError&&merchantPaymentStatus?.paynow_ready===true;
   /* nestly_v578 (owner mark, photo 2: a banknote sketched onto Cash and a card onto Card — "add
      an icon"). One map, read by BOTH tender rows below (the catalogue cart's and the legacy
      amount-only card's), so the two can never end up with different pictograms for the same
-     tender. PayNow QR reuses the paynow mark: it is the same rail, taken a different way. */
-  const tillTenderIconV578=value=>({cash:'cash',card:'card',paynow:'paynow',paynow_qr:'paynow',other:'other'}[value]||'other');
+     tender. */
+  const tillTenderIconV578=value=>({cash:'cash',card:'card',paynow:'paynow',other:'other'}[value]||'other');
   const legacyTenderOptions=[['cash','Cash'],['card','Card'],['paynow','External PayNow'],['other','Other']];
-  const cartTenderOptions=[['cash','Cash'],['card','Card'],
-    ...(verifiedPaynowReady?[['paynow_qr','PayNow QR']]:[]),['paynow','External PayNow'],['other','Other']];
+  /* nestly_v755: PayNow QR (a Stripe Connect / Stripe-hosted PayNow rail) is removed — Razorpay SG
+     has no equivalent. External PayNow (manual, no provider) is unaffected. */
+  const cartTenderOptions=[['cash','Cash'],['card','Card'],['paynow','External PayNow'],['other','Other']];
   const canScanRedemption=()=>canScanCustomerRedemption({
     createSales:hasRoleCapability('create_sales'),
     clientsReadable:branchCanRead(tillBranchId,'clients'),
@@ -9059,9 +9057,6 @@ async function tillPage(){
      please confirm the new total" and a Confirm button that does nothing looked like. */
   let staleReevaluationsV257=0;
   let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
-  let paynowAttempt=null;  // V142 provider-backed attempt; while present the cart and amount stay locked
-  let paynowPollTimer=null;
-  const PAYNOW_SLOT=`peekaa:v142:paynow:${S.biz.id}`;
   // v67 stored-value tender: reserve_checkout_sv_tender result bound to the CURRENT evaluation token.
   // Structurally never offered in prod (the server reports stored_value.spendable=false). All figures
   // (available/reserved/remaining) are server-authoritative; the client computes nothing. A new
@@ -9071,7 +9066,7 @@ async function tillPage(){
   const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
   // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
   // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
-  const cartLocked=()=>!!(checkoutError||staleConfirm||payError||paynowAttempt);
+  const cartLocked=()=>!!(checkoutError||staleConfirm||payError);
   // A cart-sale line (service/product/custom) is priced by evaluate_checkout and finalised by ONE record_cart_sale;
   // everything else (package/membership) is an "extra" line with its own idempotency key + RPC.
   const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom'||l.type==='bundle';
@@ -9082,19 +9077,10 @@ async function tillPage(){
 
   /* Wipe every trace of a checkout attempt: timers, the evaluation, and the STABLE finalise key.
      Called on reset, on Back, and when toggling modes — a deliberate cancel per §2. */
-  /* V286: `abandon` marks a DELIBERATE end of this checkout (Back, reset, walk-in switch, branch
-     change, finalise). Dropping paynowAttempt alone killed the poll and the on-screen attempt but
-     left the sessionStorage PayNow request behind, so the next entry to Record sale resumed it —
-     re-creating the earlier customer's QR against an unrelated sale. A deliberate abandon drops the
-     stored request too. There is no provider cancel API (stripe-connect-command exposes only
-     create_paynow), so a LIVE attempt is never abandoned silently: backToPhoneStep refuses while
-     one is outstanding, and the branch picker is disabled by cartLocked(). */
   function clearCheckoutState({abandon=false}={}){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
-    if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
-    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
-    if(abandon)clearPaynowRequestV142();
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
@@ -9113,11 +9099,6 @@ async function tillPage(){
      cart was a walk-in, the customer-less catalogue snapshot. */
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
-    /* V286: Back used to abandon a live PayNow QR — the poll died, the attempt vanished from the
-       screen, and the customer still paid a sale the server then fulfilled, so the cashier took the
-       money twice. Nothing can cancel a Stripe PayNow attempt from here, so the only honest answer
-       is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
-    if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
     appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752: a perk belongs to a person, not to the screen
@@ -10792,14 +10773,10 @@ async function tillPage(){
       </div>`
       :'';
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
-    /* PayNow QR is customer-bound: the v142 edge command rejects the request unless client_id is a
-       uuid (create_paynow -> invalid_request), so it is HIDDEN for a walk-in rather than offered and
-       failing at the counter. Cash / card / external PayNow / other are unaffected. */
-    const tenderOptions=walkin?cartTenderOptions.filter(([value])=>value!=='paynow_qr'):cartTenderOptions;
+    const tenderOptions=cartTenderOptions;
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
       <div class="frontline-tenders" id="tTenders">${tenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${CUI.icon(tillTenderIconV578(value),{size:20})}<span>${label}</span></button>`).join('')}</div>
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
-    const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
       <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:16})}<span>${saleCommitted
@@ -10811,7 +10788,7 @@ async function tillPage(){
         :'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:20})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
-    const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
+    const actionHtml=checkoutError?'':checkoutActionHtml();
     /* nestly_v577 (owner mark, photo 1): the "points are worked out when the sale is recorded"
        sentence is struck through. Points remain the server's answer — record_cart_sale returns
        them and the receipt prints them — the screen simply no longer narrates it. */
@@ -10830,7 +10807,6 @@ async function tillPage(){
       ${combinedTotalV257}
       <div id="tcErr"></div>
       ${tenderHtml}
-      ${paynowHtml}
       ${partialHtml}
       ${actionHtml}`;
   }
@@ -11029,8 +11005,8 @@ async function tillPage(){
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     /* V287: re-attributing re-renders so the selected teammate is visible on the control that
-       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
-       a change of attribution can never replay the previous teammate's sale. */
+       set it. The finalise call already carries tillSaleStaffId as p_staff, so a change of
+       attribution can never replay the previous teammate's sale. */
     if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
       tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
@@ -11270,7 +11246,6 @@ async function tillPage(){
     if($('tNewCheckout'))$('tNewCheckout').onclick=startNewCheckout;
     if($('tRefreshEval'))$('tRefreshEval').onclick=refreshEval;
     if($('tRetryGifts'))$('tRetryGifts').onclick=doCartCheckout;
-    if($('tPaynowReopen'))$('tPaynowReopen').onclick=()=>renderPaynowDialogV142(paynowAttempt);
     if($('tFinishPartial'))$('tFinishPartial').onclick=()=>finishCartReceipt();
     if($('tSvUse'))$('tSvUse').onclick=applySvTender;
     if($('tSvRemove'))$('tSvRemove').onclick=removeSvTender;
@@ -11343,150 +11318,10 @@ async function tillPage(){
      cancel/cart-change; each extra carries its own stable uuid `key`. If the kernel finalise fails we
      STOP (no extra attempted) and recover per §2 (stale re-confirm / retry / conflict). If it
      succeeds it is LOCKED (saleCommitted) and never re-run; a retry re-invokes only the failed extras. */
-  function readPaynowRequestV142(){try{return JSON.parse(sessionStorage.getItem(PAYNOW_SLOT)||'null')}catch{return null}}
-  function writePaynowRequestV142(value){try{sessionStorage.setItem(PAYNOW_SLOT,JSON.stringify(value))}catch{}}
-  function clearPaynowRequestV142(){try{sessionStorage.removeItem(PAYNOW_SLOT)}catch{}}
-  function closePaynowDialogV142(){
-    const modal=$('tPaynowModalV142');if(!modal)return;
-    if(typeof modal._deactivate==='function')modal._deactivate();else modal.remove();
-  }
-  function renderPaynowDialogV142(attempt){
-    if(!attempt)return;
-    closePaynowDialogV142();
-    const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'Selected branch';
-    const qr=attempt.qr||{};
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tPaynowModalV142" role="dialog" aria-modal="true" aria-labelledby="tPaynowTitleV142" tabindex="-1"><div class="modal-card" style="max-width:500px;text-align:center">
-      <div class="row"><div style="text-align:left"><h2 id="tPaynowTitleV142">PayNow · ${money(attempt.amount_cents)}</h2><p class="muted small" data-merchant-content>${esc(S.biz.name)} · ${esc(branchName)}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tPaynowCloseV142">Close</button></div>
-      ${qr.data?`<div id="tPaynowQrV142" role="img" data-merchant-content aria-label="PayNow QR for ${esc(money(attempt.amount_cents))}" style="display:grid;place-items:center;width:min(300px,100%);aspect-ratio:1;margin:18px auto;padding:14px;background:#fff;border:1px solid var(--line);border-radius:14px"></div>`:CUI.loadingState({title:'Waiting for payment confirmation',iconName:'till'})}
-      <div class="imp-note" style="text-align:left"><b>Amount locked: ${money(attempt.amount_cents)}</b><p class="small" style="margin-top:5px">The customer cannot change this amount. Keep this screen open until Stripe confirms payment.</p></div>
-      <p class="muted small" style="margin-top:10px">Stripe PayNow QRs stay valid for up to 1 hour. This exact total is held for the full QR payment window.</p>
-      ${qr.hosted_instructions_url?`<a class="btn ghost" href="${esc(qr.hosted_instructions_url)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">Open Stripe payment page</a>`:''}
-      <p class="muted small" id="tPaynowStatusV142" role="status" aria-live="polite" style="margin-top:14px">${attempt.status==='processing'?'Confirming payment…':'Awaiting payment…'}</p>
-    </div></div>`);
-    const modal=$('tPaynowModalV142');
-    modal._deactivate=CUI.activateDialog(modal,{onClose:()=>modal.remove(),initialFocus:'#tPaynowCloseV142'});
-    $('tPaynowCloseV142').onclick=()=>modal._deactivate();
-    const qrHost=$('tPaynowQrV142');
-    if(qrHost&&qr.data)new QRCode(qrHost,{text:String(qr.data),width:260,height:260,correctLevel:QRCode.CorrectLevel.M});
-  }
-  function completePaynowReceiptV142(status){
-    const lines=(status.server_lines||[]).map(line=>({label:line.name||'Item',qty:Number(line.qty||1),
-      amount:Number(line.unit_price_cents||0)*Number(line.qty||1)}));
-    doneInfo={receipt:true,name:status.customer_name||'Customer',tender:'PayNow (Stripe verified)',
-      saleId:status.sale_id||null,lines,effects:status.applied_effects||[],
-      subtotal:Number(status.subtotal_cents||0),discount:Number(status.discount_total_cents||0),
-      gst:Number(status.gst_cents||0),total:Number(status.amount_cents||0),extras:[],hasSale:true,extrasTotal:0,
-      pointsEarned:Number(status.points_earned||0),pointsTotal:Number(status.points_total||0),
-      pointsBalanceConsistent:true,duplicate:false,paymentReference:status.payment_reference||null,
-      businessName:status.business_name||S.biz.name,branchName:status.branch_name||'',paidAt:status.paid_at||new Date().toISOString()};
-    saleCommitted=true;paynowAttempt=null;clearPaynowRequestV142();
-    if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
-    closePaynowDialogV142();checkoutError=null;step=3;draw();
-  }
-  /* V370: the PayNow poll ran at 2s forever with no visibility gate — a till tablet left on a
-     payment screen asked the database 1,800 times an hour whether a QR nobody was showing had
-     been paid. It now SUSPENDS while the tab is hidden and resumes the instant it is shown, so
-     the payment flow itself is unchanged: no cap, no backoff, no missed terminal state (the
-     first poll after resume reads the current status, whatever happened while away). */
-  let paynowHiddenResumeV370=null;
-  function paynowSuspendedForVisibilityV370(attemptId){
-    if(globalThis.document?.visibilityState!=='hidden')return false;
-    if(paynowHiddenResumeV370)return true;
-    paynowHiddenResumeV370=()=>{
-      if(globalThis.document?.visibilityState==='hidden')return;
-      document.removeEventListener('visibilitychange',paynowHiddenResumeV370);
-      paynowHiddenResumeV370=null;
-      /* Only resume a poll that is still wanted: the dialog may have been closed, or the
-         attempt cleared, while the tab was away. paynowAttempt is nulled by every terminal
-         path (completePaynowReceiptV142, the failure branches, closePaynowDialogV142). */
-      if(!isTillCurrent()||!paynowAttempt)return;
-      pollPaynowAttemptV142(attemptId);
-    };
-    document.addEventListener('visibilitychange',paynowHiddenResumeV370);
-    return true;
-  }
-  async function pollPaynowAttemptV142(attemptId){
-    if(!attemptId)return;
-    if(paynowSuspendedForVisibilityV370(attemptId))return;
-    const {data,error}=await sb.rpc('get_pos_paynow_attempt_v142',{p_attempt:attemptId});
-    if(!isTillCurrent())return;
-    if(error){paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2500);return;}
-    if(data.status==='succeeded'){completePaynowReceiptV142(data);return;}
-    if(['refund_required','refund_pending'].includes(data.status)){
-      if(paynowAttempt)paynowAttempt.status=data.status;
-      const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent=data.status==='refund_pending'
-        ?'Stripe accepted the refund request and is still processing it—do not charge this customer again.'
-        :'Payment was received, but the sale could not complete. The refund request is being sent—do not charge this customer again.';
-      paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),3000);return;
-    }
-    if(data.status==='refund_failed'){
-      if(paynowAttempt)paynowAttempt.status=data.status;
-      const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent='Stripe could not complete the automatic refund. Issue a manual refund in Stripe and contact the customer. Do not charge again.';
-      paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),10000);return;
-    }
-    if(['failed','canceled','expired','fulfilment_failed','refunded'].includes(data.status)){
-      clearPaynowRequestV142();paynowAttempt=null;closePaynowDialogV142();
-      payError=null;
-      if(step===2&&cust&&cartSaleLines().length)onSaleLinesChanged();else draw();
-      const message=data.status==='refunded'
-        ?'Stripe confirms the payment was refunded. Start a new checkout only if the customer still wants to pay.'
-        :data.status==='expired'?'This QR expired without a confirmed payment. Check the total and create a new QR.'
-        :'Payment did not complete. Check the total and create a new QR.';
-      cartErr(message);return;
-    }
-    if(paynowAttempt)paynowAttempt.status=data.status;
-    const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent=data.status==='processing'?'Confirming payment…':'Awaiting payment…';
-    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2000);
-  }
-  async function beginPaynowPaymentV142(){
-    if(extraLines().length)return cartErr('PayNow QR supports the checked sale total only. Complete package or membership purchases separately.');
-    let request=readPaynowRequestV142();
-    /* The attributed teammate is part of the idempotency fingerprint: changing who is credited is
-       a different sale, and must not silently replay the previous attribution. */
-    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillSaleStaffId||tillStaffId,evalResult.evaluation_id].join(':');
-    if(!request||request.fingerprint!==fingerprint)request={fingerprint,idempotency_key:crypto.randomUUID(),
-      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillSaleStaffId||tillStaffId,evaluation_id:evalResult.evaluation_id};
-    writePaynowRequestV142(request);
-    busy=true;const btn=$('tCartConfirm')||$('tPayRetry');if(btn){btn.disabled=true;btn.textContent='Creating QR…'}
-    const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
-    if(!isTillCurrent())return;
-    busy=false;
-    if(executed.error||!executed.data?.attempt_id){payError={kind:'retry'};draw();cartErr(executed.data?.message||'PayNow QR could not be created. Retry uses the same payment attempt.');return;}
-    request={...request,attempt_id:executed.data.attempt_id};writePaynowRequestV142(request);
-    payError=null;paynowAttempt=executed.data;draw();renderPaynowDialogV142(paynowAttempt);
-    if(paynowPollTimer)clearTimeout(paynowPollTimer);
-    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(paynowAttempt.attempt_id),800);
-  }
-  async function resumePaynowPaymentV142(){
-    const request=readPaynowRequestV142();
-    if(!request||request.business_id!==S.biz.id)return;
-    const required=['idempotency_key','branch_id','client_id','staff_id','evaluation_id'];
-    if(required.some(key=>!/^[0-9a-f-]{36}$/i.test(String(request[key]||'')))){
-      clearPaynowRequestV142();return;
-    }
-    if(accessibleTillBranches.some(branch=>branch.id===request.branch_id)){
-      tillBranchId=request.branch_id;selectedBranchId=request.branch_id;
-    }
-    busy=true;
-    const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
-    if(!isTillCurrent())return;
-    busy=false;
-    if(executed.error||!executed.data?.attempt_id){
-      if(/^[0-9a-f-]{36}$/i.test(String(request.attempt_id||''))){
-        paynowAttempt={attempt_id:request.attempt_id,status:'checking',expires_at:null,amount_cents:0};
-        toast('Payment outcome is still being checked. Do not create another QR yet.');
-        paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(request.attempt_id),500);
-        return;
-      }
-      toast('The previous PayNow request is still reserved. Retry when the connection returns; do not create another QR.');
-      return;
-    }
-    writePaynowRequestV142({...request,attempt_id:executed.data.attempt_id});
-    paynowAttempt=executed.data;
-    renderPaynowDialogV142(paynowAttempt);
-    if(paynowPollTimer)clearTimeout(paynowPollTimer);
-    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(paynowAttempt.attempt_id),500);
-  }
+  /* nestly_v755: the whole V142 PayNow-QR-via-Stripe-Connect payment attempt lifecycle (request
+     storage, poll, dialog, receipt, visibility-gated resume) is removed here — Razorpay SG has
+     no equivalent to Stripe Connect. Cash / card / external PayNow (manual) / other tenders are
+     unaffected; see RAZORPAY_SWAP_SPEC.md. */
   async function doCartCheckout(){
     if(busy)return;
     const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
@@ -11497,9 +11332,6 @@ async function tillPage(){
       if(!tender)return cartErr('Choose how the customer paid');
     }
     if(walkin&&extras.length)return cartErr('Packages and memberships need a customer. Switch to a customer to sell them.');
-    // Defensive: the PayNow QR tender is not rendered for a walk-in (the v142 command requires a client).
-    if(walkin&&tender==='paynow_qr')return cartErr('PayNow QR needs a customer. Take cash, card, external PayNow or other.');
-    if(tender==='paynow_qr')return beginPaynowPaymentV142();
     busy=true;checkoutError=null;
     const confirmBtn=$('tCartConfirm')||$('tStaleConfirm')||$('tPayRetry')||$('tRetryGifts');
     if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
@@ -11765,7 +11597,6 @@ async function tillPage(){
      call, just a jump straight to the customer's card. */
   if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
   draw();
-  if(readPaynowRequestV142())requestAnimationFrame(()=>resumePaynowPaymentV142());
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
     if(canScanRedemption())requestAnimationFrame(()=>{
@@ -27644,13 +27475,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
   routeMain.innerHTML=CUI.loadingState({title:'Record sale',iconName:'till'});
   const [
     {data:tillStaff,error:tillStaffError},{data:tillBranches,error:tillBranchError},
-    {data:tillStaffBranches,error:tillStaffBranchError},
-    {data:merchantPaymentStatus,error:merchantPaymentStatusError}
+    {data:tillStaffBranches,error:tillStaffBranchError}
   ]=await Promise.all([
     sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
     sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
-    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id),
-    sb.rpc('get_merchant_payment_status_v142',{p_business:S.biz.id})
+    sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   if(!isTillCurrent())return;
   if(tillStaffError||tillBranchError||tillStaffBranchError)throw tillStaffError||tillBranchError||tillStaffBranchError;
@@ -27700,15 +27529,15 @@ async function svRunTopupFlow({branches,state,testOnly}){
   let tillBranchId=accessibleTillBranches.some(branch=>branch.id===selectedBranchId)?selectedBranchId:
     (accessibleTillBranches.find(branch=>branch.is_default)?.id||accessibleTillBranches[0]?.id||'');
   const canRecordSales=hasRoleCapability('create_sales')&&Boolean(tillBranchId);
-  const verifiedPaynowReady=!merchantPaymentStatusError&&merchantPaymentStatus?.paynow_ready===true;
   /* nestly_v578 (owner mark, photo 2: a banknote sketched onto Cash and a card onto Card — "add
      an icon"). One map, read by BOTH tender rows below (the catalogue cart's and the legacy
      amount-only card's), so the two can never end up with different pictograms for the same
-     tender. PayNow QR reuses the paynow mark: it is the same rail, taken a different way. */
-  const tillTenderIconV578=value=>({cash:'cash',card:'card',paynow:'paynow',paynow_qr:'paynow',other:'other'}[value]||'other');
+     tender. */
+  const tillTenderIconV578=value=>({cash:'cash',card:'card',paynow:'paynow',other:'other'}[value]||'other');
   const legacyTenderOptions=[['cash','Cash'],['card','Card'],['paynow','External PayNow'],['other','Other']];
-  const cartTenderOptions=[['cash','Cash'],['card','Card'],
-    ...(verifiedPaynowReady?[['paynow_qr','PayNow QR']]:[]),['paynow','External PayNow'],['other','Other']];
+  /* nestly_v755: PayNow QR (a Stripe Connect / Stripe-hosted PayNow rail) is removed — Razorpay SG
+     has no equivalent. External PayNow (manual, no provider) is unaffected. */
+  const cartTenderOptions=[['cash','Cash'],['card','Card'],['paynow','External PayNow'],['other','Other']];
   const canScanRedemption=()=>canScanCustomerRedemption({
     createSales:hasRoleCapability('create_sales'),
     clientsReadable:branchCanRead(tillBranchId,'clients'),
@@ -27806,9 +27635,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
      please confirm the new total" and a Confirm button that does nothing looked like. */
   let staleReevaluationsV257=0;
   let payError=null;       // {kind:'retry'|'conflict'} — finalise failure (LOCKS the cart so the same idempotency key is reused)
-  let paynowAttempt=null;  // V142 provider-backed attempt; while present the cart and amount stay locked
-  let paynowPollTimer=null;
-  const PAYNOW_SLOT=`peekaa:v142:paynow:${S.biz.id}`;
   // v67 stored-value tender: reserve_checkout_sv_tender result bound to the CURRENT evaluation token.
   // Structurally never offered in prod (the server reports stored_value.spendable=false). All figures
   // (available/reserved/remaining) are server-authoritative; the client computes nothing. A new
@@ -27818,7 +27644,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
   const FINALISE_SLOT='frenly.till.cartFinalise'; // sessionStorage slot for the STABLE finalise idempotency key (writeAttemptKey pattern, F2)
   // The cart is LOCKED (no picker, qty or remove) whenever a finalise is mid-recovery or extras are pending,
   // so a retry reuses the same idempotency key instead of minting a fresh one and double-charging.
-  const cartLocked=()=>!!(checkoutError||staleConfirm||payError||paynowAttempt);
+  const cartLocked=()=>!!(checkoutError||staleConfirm||payError);
   // A cart-sale line (service/product/custom) is priced by evaluate_checkout and finalised by ONE record_cart_sale;
   // everything else (package/membership) is an "extra" line with its own idempotency key + RPC.
   const isCartSaleLine=l=>l.type==='service'||l.type==='product'||l.type==='custom'||l.type==='bundle';
@@ -27829,19 +27655,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
 
   /* Wipe every trace of a checkout attempt: timers, the evaluation, and the STABLE finalise key.
      Called on reset, on Back, and when toggling modes — a deliberate cancel per §2. */
-  /* V286: `abandon` marks a DELIBERATE end of this checkout (Back, reset, walk-in switch, branch
-     change, finalise). Dropping paynowAttempt alone killed the poll and the on-screen attempt but
-     left the sessionStorage PayNow request behind, so the next entry to Record sale resumed it —
-     re-creating the earlier customer's QR against an unrelated sale. A deliberate abandon drops the
-     stored request too. There is no provider cancel API (stripe-connect-command exposes only
-     create_paynow), so a LIVE attempt is never abandoned silently: backToPhoneStep refuses while
-     one is outstanding, and the branch picker is disabled by cartLocked(). */
   function clearCheckoutState({abandon=false}={}){
     if(evalTimer){clearTimeout(evalTimer);evalTimer=null;}
     if(evalExpiryTimer){clearTimeout(evalExpiryTimer);evalExpiryTimer=null;}
-    if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
-    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;paynowAttempt=null;
-    if(abandon)clearPaynowRequestV142();
+    evalState='idle';evalResult=null;evalError=null;staleConfirm=false;staleReevaluationsV257=0;payError=null;svTender=null;svBusy=false;
     clearWriteAttempt(FINALISE_SLOT);
   }
   function resetToStart(){
@@ -27860,11 +27677,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
      cart was a walk-in, the customer-less catalogue snapshot. */
   function backToPhoneStep(){
     if(checkoutError){toast('Finish or retry the unfinished items first');return}
-    /* V286: Back used to abandon a live PayNow QR — the poll died, the attempt vanished from the
-       screen, and the customer still paid a sale the server then fulfilled, so the cashier took the
-       money twice. Nothing can cancel a Stripe PayNow attempt from here, so the only honest answer
-       is to refuse and keep the attempt (and its "Show QR" button) on screen until it settles. */
-    if(paynowAttempt){toast('A PayNow payment is still being confirmed — wait for it to complete or expire first');return}
     clearCheckoutState({abandon:true});
     catalog=null;catalogError=null;tillItemSearchV392=''; // v281 audit: see resetToStart — the snapshot is per-customer
     appliedTierBenefitV656=null;appliedBirthdayV752=false; // v656/v752: a perk belongs to a person, not to the screen
@@ -29539,14 +29351,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
       </div>`
       :'';
     // tender — needed to finalise a kernel sale; frozen while the cart is locked (retry keeps method)
-    /* PayNow QR is customer-bound: the v142 edge command rejects the request unless client_id is a
-       uuid (create_paynow -> invalid_request), so it is HIDDEN for a walk-in rather than offered and
-       failing at the counter. Cash / card / external PayNow / other are unaffected. */
-    const tenderOptions=walkin?cartTenderOptions.filter(([value])=>value!=='paynow_qr'):cartTenderOptions;
+    const tenderOptions=cartTenderOptions;
     const tenderHtml=(cart.length&&!locked)?`<fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
       <div class="frontline-tenders" id="tTenders">${tenderOptions.map(([value,label])=>`<button type="button" class="btn ghost" data-tender="${value}" aria-pressed="${tender===value}">${CUI.icon(tillTenderIconV578(value),{size:20})}<span>${label}</span></button>`).join('')}</div>
       ${!hasSale?'<p class="muted small" style="margin-top:6px">No points-earning items in this cart — the tender shows on your receipt only.</p>':''}</fieldset>`:'';
-    const paynowHtml=paynowAttempt?`<div class="imp-note" role="status" style="margin-top:12px"><b>PayNow QR · ${money(evalResult?.total_cents||0)}</b><p class="small" style="margin-top:5px">${esc(paynowAttempt.status==='processing'?'Payment is being confirmed.':'Waiting for the customer to pay the locked amount.')}</p><button type="button" class="btn ghost sm" id="tPaynowReopen" style="margin-top:8px">Show QR</button></div>`:'';
     // extras partial-failure panel (kernel already committed — this is the ONLY place a retry runs just the failed extras)
     const partialHtml=checkoutError?`<div class="err" role="alert" style="margin-top:12px"><b>Some steps did not finish</b><p style="margin:4px 0 0">${esc(checkoutError)}</p></div>
       <div class="till-cart-status ${saleCommitted?'ok':''}">${CUI.icon(saleCommitted?'check':'info',{size:16})}<span>${saleCommitted
@@ -29558,7 +29366,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         :'No points-earning sale in this cart'}</span></div>
       <button class="btn" id="tRetryGifts" style="width:100%;margin-top:12px;padding:16px">${CUI.icon('retention',{size:20})} Retry unfinished</button>
       <button class="btn ghost sm" id="tFinishPartial" style="width:100%;margin-top:8px">See receipt (with what failed)</button>`:'';
-    const actionHtml=(checkoutError||paynowAttempt)?'':checkoutActionHtml();
+    const actionHtml=checkoutError?'':checkoutActionHtml();
     /* nestly_v577 (owner mark, photo 1): the "points are worked out when the sale is recorded"
        sentence is struck through. Points remain the server's answer — record_cart_sale returns
        them and the receipt prints them — the screen simply no longer narrates it. */
@@ -29577,7 +29385,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
       ${combinedTotalV257}
       <div id="tcErr"></div>
       ${tenderHtml}
-      ${paynowHtml}
       ${partialHtml}
       ${actionHtml}`;
   }
@@ -29776,8 +29583,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
       CUI.announce('Branch changed. Checkout catalogue refreshed.');draw();
     };
     /* V287: re-attributing re-renders so the selected teammate is visible on the control that
-       set it. The finalise and PayNow idempotency fingerprints already carry tillSaleStaffId, so
-       a change of attribution can never replay the previous teammate's sale. */
+       set it. The finalise call already carries tillSaleStaffId as p_staff, so a change of
+       attribution can never replay the previous teammate's sale. */
     if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
       tillSaleStaffId=event.target.value||tillActingStaffId;draw();
     };
@@ -30017,7 +29824,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
     if($('tNewCheckout'))$('tNewCheckout').onclick=startNewCheckout;
     if($('tRefreshEval'))$('tRefreshEval').onclick=refreshEval;
     if($('tRetryGifts'))$('tRetryGifts').onclick=doCartCheckout;
-    if($('tPaynowReopen'))$('tPaynowReopen').onclick=()=>renderPaynowDialogV142(paynowAttempt);
     if($('tFinishPartial'))$('tFinishPartial').onclick=()=>finishCartReceipt();
     if($('tSvUse'))$('tSvUse').onclick=applySvTender;
     if($('tSvRemove'))$('tSvRemove').onclick=removeSvTender;
@@ -30090,150 +29896,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
      cancel/cart-change; each extra carries its own stable uuid `key`. If the kernel finalise fails we
      STOP (no extra attempted) and recover per §2 (stale re-confirm / retry / conflict). If it
      succeeds it is LOCKED (saleCommitted) and never re-run; a retry re-invokes only the failed extras. */
-  function readPaynowRequestV142(){try{return JSON.parse(sessionStorage.getItem(PAYNOW_SLOT)||'null')}catch{return null}}
-  function writePaynowRequestV142(value){try{sessionStorage.setItem(PAYNOW_SLOT,JSON.stringify(value))}catch{}}
-  function clearPaynowRequestV142(){try{sessionStorage.removeItem(PAYNOW_SLOT)}catch{}}
-  function closePaynowDialogV142(){
-    const modal=$('tPaynowModalV142');if(!modal)return;
-    if(typeof modal._deactivate==='function')modal._deactivate();else modal.remove();
-  }
-  function renderPaynowDialogV142(attempt){
-    if(!attempt)return;
-    closePaynowDialogV142();
-    const branchName=accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'Selected branch';
-    const qr=attempt.qr||{};
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="tPaynowModalV142" role="dialog" aria-modal="true" aria-labelledby="tPaynowTitleV142" tabindex="-1"><div class="modal-card" style="max-width:500px;text-align:center">
-      <div class="row"><div style="text-align:left"><h2 id="tPaynowTitleV142">PayNow · ${money(attempt.amount_cents)}</h2><p class="muted small" data-merchant-content>${esc(S.biz.name)} · ${esc(branchName)}</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="tPaynowCloseV142">Close</button></div>
-      ${qr.data?`<div id="tPaynowQrV142" role="img" data-merchant-content aria-label="PayNow QR for ${esc(money(attempt.amount_cents))}" style="display:grid;place-items:center;width:min(300px,100%);aspect-ratio:1;margin:18px auto;padding:14px;background:#fff;border:1px solid var(--line);border-radius:14px"></div>`:CUI.loadingState({title:'Waiting for payment confirmation',iconName:'till'})}
-      <div class="imp-note" style="text-align:left"><b>Amount locked: ${money(attempt.amount_cents)}</b><p class="small" style="margin-top:5px">The customer cannot change this amount. Keep this screen open until Stripe confirms payment.</p></div>
-      <p class="muted small" style="margin-top:10px">Stripe PayNow QRs stay valid for up to 1 hour. This exact total is held for the full QR payment window.</p>
-      ${qr.hosted_instructions_url?`<a class="btn ghost" href="${esc(qr.hosted_instructions_url)}" target="_blank" rel="noopener noreferrer" style="margin-top:12px">Open Stripe payment page</a>`:''}
-      <p class="muted small" id="tPaynowStatusV142" role="status" aria-live="polite" style="margin-top:14px">${attempt.status==='processing'?'Confirming payment…':'Awaiting payment…'}</p>
-    </div></div>`);
-    const modal=$('tPaynowModalV142');
-    modal._deactivate=CUI.activateDialog(modal,{onClose:()=>modal.remove(),initialFocus:'#tPaynowCloseV142'});
-    $('tPaynowCloseV142').onclick=()=>modal._deactivate();
-    const qrHost=$('tPaynowQrV142');
-    if(qrHost&&qr.data)new QRCode(qrHost,{text:String(qr.data),width:260,height:260,correctLevel:QRCode.CorrectLevel.M});
-  }
-  function completePaynowReceiptV142(status){
-    const lines=(status.server_lines||[]).map(line=>({label:line.name||'Item',qty:Number(line.qty||1),
-      amount:Number(line.unit_price_cents||0)*Number(line.qty||1)}));
-    doneInfo={receipt:true,name:status.customer_name||'Customer',tender:'PayNow (Stripe verified)',
-      saleId:status.sale_id||null,lines,effects:status.applied_effects||[],
-      subtotal:Number(status.subtotal_cents||0),discount:Number(status.discount_total_cents||0),
-      gst:Number(status.gst_cents||0),total:Number(status.amount_cents||0),extras:[],hasSale:true,extrasTotal:0,
-      pointsEarned:Number(status.points_earned||0),pointsTotal:Number(status.points_total||0),
-      pointsBalanceConsistent:true,duplicate:false,paymentReference:status.payment_reference||null,
-      businessName:status.business_name||S.biz.name,branchName:status.branch_name||'',paidAt:status.paid_at||new Date().toISOString()};
-    saleCommitted=true;paynowAttempt=null;clearPaynowRequestV142();
-    if(paynowPollTimer){clearTimeout(paynowPollTimer);paynowPollTimer=null;}
-    closePaynowDialogV142();checkoutError=null;step=3;draw();
-  }
-  /* V370: the PayNow poll ran at 2s forever with no visibility gate — a till tablet left on a
-     payment screen asked the database 1,800 times an hour whether a QR nobody was showing had
-     been paid. It now SUSPENDS while the tab is hidden and resumes the instant it is shown, so
-     the payment flow itself is unchanged: no cap, no backoff, no missed terminal state (the
-     first poll after resume reads the current status, whatever happened while away). */
-  let paynowHiddenResumeV370=null;
-  function paynowSuspendedForVisibilityV370(attemptId){
-    if(globalThis.document?.visibilityState!=='hidden')return false;
-    if(paynowHiddenResumeV370)return true;
-    paynowHiddenResumeV370=()=>{
-      if(globalThis.document?.visibilityState==='hidden')return;
-      document.removeEventListener('visibilitychange',paynowHiddenResumeV370);
-      paynowHiddenResumeV370=null;
-      /* Only resume a poll that is still wanted: the dialog may have been closed, or the
-         attempt cleared, while the tab was away. paynowAttempt is nulled by every terminal
-         path (completePaynowReceiptV142, the failure branches, closePaynowDialogV142). */
-      if(!isTillCurrent()||!paynowAttempt)return;
-      pollPaynowAttemptV142(attemptId);
-    };
-    document.addEventListener('visibilitychange',paynowHiddenResumeV370);
-    return true;
-  }
-  async function pollPaynowAttemptV142(attemptId){
-    if(!attemptId)return;
-    if(paynowSuspendedForVisibilityV370(attemptId))return;
-    const {data,error}=await sb.rpc('get_pos_paynow_attempt_v142',{p_attempt:attemptId});
-    if(!isTillCurrent())return;
-    if(error){paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2500);return;}
-    if(data.status==='succeeded'){completePaynowReceiptV142(data);return;}
-    if(['refund_required','refund_pending'].includes(data.status)){
-      if(paynowAttempt)paynowAttempt.status=data.status;
-      const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent=data.status==='refund_pending'
-        ?'Stripe accepted the refund request and is still processing it—do not charge this customer again.'
-        :'Payment was received, but the sale could not complete. The refund request is being sent—do not charge this customer again.';
-      paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),3000);return;
-    }
-    if(data.status==='refund_failed'){
-      if(paynowAttempt)paynowAttempt.status=data.status;
-      const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent='Stripe could not complete the automatic refund. Issue a manual refund in Stripe and contact the customer. Do not charge again.';
-      paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),10000);return;
-    }
-    if(['failed','canceled','expired','fulfilment_failed','refunded'].includes(data.status)){
-      clearPaynowRequestV142();paynowAttempt=null;closePaynowDialogV142();
-      payError=null;
-      if(step===2&&cust&&cartSaleLines().length)onSaleLinesChanged();else draw();
-      const message=data.status==='refunded'
-        ?'Stripe confirms the payment was refunded. Start a new checkout only if the customer still wants to pay.'
-        :data.status==='expired'?'This QR expired without a confirmed payment. Check the total and create a new QR.'
-        :'Payment did not complete. Check the total and create a new QR.';
-      cartErr(message);return;
-    }
-    if(paynowAttempt)paynowAttempt.status=data.status;
-    const statusNode=$('tPaynowStatusV142');if(statusNode)statusNode.textContent=data.status==='processing'?'Confirming payment…':'Awaiting payment…';
-    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(attemptId),2000);
-  }
-  async function beginPaynowPaymentV142(){
-    if(extraLines().length)return cartErr('PayNow QR supports the checked sale total only. Complete package or membership purchases separately.');
-    let request=readPaynowRequestV142();
-    /* The attributed teammate is part of the idempotency fingerprint: changing who is credited is
-       a different sale, and must not silently replay the previous attribution. */
-    const fingerprint=[S.biz.id,tillBranchId,cust.client_id,tillSaleStaffId||tillStaffId,evalResult.evaluation_id].join(':');
-    if(!request||request.fingerprint!==fingerprint)request={fingerprint,idempotency_key:crypto.randomUUID(),
-      business_id:S.biz.id,branch_id:tillBranchId,client_id:cust.client_id,staff_id:tillSaleStaffId||tillStaffId,evaluation_id:evalResult.evaluation_id};
-    writePaynowRequestV142(request);
-    busy=true;const btn=$('tCartConfirm')||$('tPayRetry');if(btn){btn.disabled=true;btn.textContent='Creating QR…'}
-    const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
-    if(!isTillCurrent())return;
-    busy=false;
-    if(executed.error||!executed.data?.attempt_id){payError={kind:'retry'};draw();cartErr(executed.data?.message||'PayNow QR could not be created. Retry uses the same payment attempt.');return;}
-    request={...request,attempt_id:executed.data.attempt_id};writePaynowRequestV142(request);
-    payError=null;paynowAttempt=executed.data;draw();renderPaynowDialogV142(paynowAttempt);
-    if(paynowPollTimer)clearTimeout(paynowPollTimer);
-    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(paynowAttempt.attempt_id),800);
-  }
-  async function resumePaynowPaymentV142(){
-    const request=readPaynowRequestV142();
-    if(!request||request.business_id!==S.biz.id)return;
-    const required=['idempotency_key','branch_id','client_id','staff_id','evaluation_id'];
-    if(required.some(key=>!/^[0-9a-f-]{36}$/i.test(String(request[key]||'')))){
-      clearPaynowRequestV142();return;
-    }
-    if(accessibleTillBranches.some(branch=>branch.id===request.branch_id)){
-      tillBranchId=request.branch_id;selectedBranchId=request.branch_id;
-    }
-    busy=true;
-    const executed=await sb.functions.invoke('stripe-connect-command',{body:{action:'create_paynow',...request}});
-    if(!isTillCurrent())return;
-    busy=false;
-    if(executed.error||!executed.data?.attempt_id){
-      if(/^[0-9a-f-]{36}$/i.test(String(request.attempt_id||''))){
-        paynowAttempt={attempt_id:request.attempt_id,status:'checking',expires_at:null,amount_cents:0};
-        toast('Payment outcome is still being checked. Do not create another QR yet.');
-        paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(request.attempt_id),500);
-        return;
-      }
-      toast('The previous PayNow request is still reserved. Retry when the connection returns; do not create another QR.');
-      return;
-    }
-    writePaynowRequestV142({...request,attempt_id:executed.data.attempt_id});
-    paynowAttempt=executed.data;
-    renderPaynowDialogV142(paynowAttempt);
-    if(paynowPollTimer)clearTimeout(paynowPollTimer);
-    paynowPollTimer=setTimeout(()=>pollPaynowAttemptV142(paynowAttempt.attempt_id),500);
-  }
+  /* nestly_v755: the whole V142 PayNow-QR-via-Stripe-Connect payment attempt lifecycle (request
+     storage, poll, dialog, receipt, visibility-gated resume) is removed here — Razorpay SG has
+     no equivalent to Stripe Connect. Cash / card / external PayNow (manual) / other tenders are
+     unaffected; see RAZORPAY_SWAP_SPEC.md. */
   async function doCartCheckout(){
     if(busy)return;
     const saleLines=cartSaleLines(), extras=extraLines(), hasSale=saleLines.length>0;
@@ -30244,9 +29910,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
       if(!tender)return cartErr('Choose how the customer paid');
     }
     if(walkin&&extras.length)return cartErr('Packages and memberships need a customer. Switch to a customer to sell them.');
-    // Defensive: the PayNow QR tender is not rendered for a walk-in (the v142 command requires a client).
-    if(walkin&&tender==='paynow_qr')return cartErr('PayNow QR needs a customer. Take cash, card, external PayNow or other.');
-    if(tender==='paynow_qr')return beginPaynowPaymentV142();
     busy=true;checkoutError=null;
     const confirmBtn=$('tCartConfirm')||$('tStaleConfirm')||$('tPayRetry')||$('tRetryGifts');
     if(confirmBtn){confirmBtn.disabled=true;confirmBtn.textContent='Working…'}
@@ -30512,7 +30175,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
      call, just a jump straight to the customer's card. */
   if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
   draw();
-  if(readPaynowRequestV142())requestAnimationFrame(()=>resumePaynowPaymentV142());
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
     if(canScanRedemption())requestAnimationFrame(()=>{
@@ -30658,7 +30320,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
         <button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>
       </div>`:''}`:''}
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
-      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><div class="split"><div><label for="appointmentEditDate">Date</label><input id="appointmentEditDate" type="date" required value="${local.slice(0,10)}"></div><div><label for="appointmentEditTime">Time</label><input id="appointmentEditTime" type="time" required step="900" value="${local.slice(11,16)}"></div></div><div class="split"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><div><label for="appointmentEditStaff">Assigned staff</label><select id="appointmentEditStaff" required>${branchStaff(item.branch_id).map(person=>`<option value="${person.id}" ${person.id===item.staff_id?'selected':''}>${esc(staffLabel(person))}</option>`).join('')}</select></div></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
+      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Who would you like?</h4><div class="pf-choice appointment-amend-team-v760" id="appointmentAmendTeam" role="group" aria-label="Choose a team member"></div><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Pick a date &amp; time</h4><div id="appointmentAmendSlots" class="appointment-amend-slots-v760"></div><input type="hidden" id="appointmentEditDate" value="${local.slice(0,10)}"><input type="hidden" id="appointmentEditTime" value="${local.slice(11,16)}"><input type="hidden" id="appointmentEditStaff" value="${esc(item.staff_id||'')}"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     /* A4: every way this dialog can close (X, Escape, backdrop, Done) spends a pending "Book next
        visit" handoff unless the owner is that very moment being sent to the booking form for it —
@@ -30695,6 +30357,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
       editForm.setAttribute('aria-busy',String(pending));
       [...editForm.elements].forEach(control=>{control.disabled=pending});
     };
+    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
     /* V375: one panel at a time, and neither open until the owner picks a tab. */
     const completeTabV375=$('appointmentCompleteTabV375'),completePanelV375=$('appointmentCompletePanelV375');
     const showOutcomePanelV375=which=>{
@@ -30706,7 +30369,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
       completeTabV375?.setAttribute('aria-expanded',String(completeOpen));
       completeTabV375?.setAttribute('aria-selected',String(completeOpen));
     };
-    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)$('appointmentEditDate').focus()};
+    if(toggle)toggle.onclick=()=>{const open=editForm.hidden;showOutcomePanelV375(open?'amend':null);if(open)openAmendPickerV760()};
     if(completeTabV375)completeTabV375.onclick=()=>showOutcomePanelV375(completePanelV375?.hidden?'complete':null);
     /* V245 (owner: "when i click in jeffrey tan meng lee - i need to have pop up to amend and
        change details. or change staff if needed to"). The amend form — date, time, duration,
@@ -30717,13 +30380,134 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     /* V375 (owner, photo 14: "minimise this" across the amend form). V245 forced it open on every
        card, which is what the owner struck through; it now opens only when the caller explicitly
        asked to edit — the Amend button in the list — or when its own tab is pressed. */
+    /* v760 (owner, photo 2). The amend form used to be a blind date + time + staff typing
+       exercise; it is now the CUSTOMER booking flow's two steps — "Who would you like?" cards and
+       a day-chip + slot-grid picker — reusing the portal's .svc / .pf-day-track / .pf-slot-grid
+       classes so it looks the same. The free starts come from amendAvailabilityDaysV760, which
+       calls availableCalendarStarts: the same core the Day view's green slots use. The chosen
+       date/time/staff are written into the SAME hidden fields the submit handler already read,
+       so the request built for reschedule_appointment_v48 is unchanged. */
+    const amendDayIndexV760=date=>Math.round((Date.parse(`${date}T00:00:00Z`)-Date.parse(`${todaySg}T00:00:00Z`))/86400000);
+    const amendWeekOfV760=date=>{
+      const index=amendDayIndexV760(date);
+      return Number.isFinite(index)?Math.max(0,Math.min(AMEND_WEEKS_V760-1,Math.floor(index/7))):0;
+    };
+    const amendOwnDateV760=eventParts(item.starts_at).date;
+    let amendWeekV760=amendWeekOfV760(amendOwnDateV760);
+    let amendDayV760=amendWeekDaysV760(amendWeekV760).includes(amendOwnDateV760)?amendOwnDateV760:amendWeekDaysV760(amendWeekV760)[0];
+    /* One entry per week, so paging back to a week already read is instant and never re-queries. */
+    const amendWeekCacheV760=new Map();
+    const amendWeekStateV760=week=>amendWeekCacheV760.get(week)||{status:'idle',appointments:[],blocks:[]};
+    const amendTimingV760=()=>{
+      const typed=Number($('appointmentEditDuration')?.value);
+      return {
+        duration:Number.isInteger(typed)&&typed>=15&&typed<=720?typed:duration,
+        before:Math.max(0,Number(service.buffer_before_min)||0),
+        after:Math.max(0,Number(service.buffer_after_min)||0)
+      };
+    };
+    const amendNowMinutesV760=()=>clockMinutes(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(new Date()));
+    const renderAmendTeamV760=()=>{
+      const host=$('appointmentAmendTeam');if(!host)return;
+      const chosen=$('appointmentEditStaff').value;
+      const people=branchStaff(item.branch_id);
+      host.innerHTML=people.length?people.map(person=>`<button class="svc${person.id===chosen?' sel':''}" type="button" aria-pressed="${person.id===chosen}" data-amend-staff="${esc(person.id)}"><span><b data-merchant-content>${esc(staffLabel(person))}</b>${person.role?` <span class="muted small">· ${esc(String(person.role).replace('_',' '))}</span>`:''}</span></button>`).join('')
+        :'<p class="muted small">No team member is assigned to this branch.</p>';
+      host.querySelectorAll('[data-amend-staff]').forEach(button=>button.onclick=()=>{
+        $('appointmentEditStaff').value=button.dataset.amendStaff;
+        invalidateRescheduleEdit();renderAmendTeamV760();renderAmendSlotsV760();
+      });
+    };
+    const amendWeekNavV760=()=>`<div class="row appointment-amend-week-v760" style="gap:8px;margin-bottom:8px">
+      <button type="button" class="btn ghost sm" data-amend-week="-1" ${amendWeekV760<=0?'disabled':''}>‹ Earlier week</button>
+      <span class="muted small">${esc(calendarDayLabel(`${amendWeekDaysV760(amendWeekV760)[0]}T04:00:00.000Z`))} – ${esc(calendarDayLabel(`${amendWeekDaysV760(amendWeekV760)[6]}T04:00:00.000Z`))}</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost sm" data-amend-week="1" ${amendWeekV760>=AMEND_WEEKS_V760-1?'disabled':''}>Later week ›</button>
+    </div>`;
+    const wireAmendWeekNavV760=host=>host.querySelectorAll('[data-amend-week]').forEach(button=>button.onclick=()=>{
+      const next=amendWeekV760+Number(button.dataset.amendWeek);
+      if(next<0||next>=AMEND_WEEKS_V760)return;
+      amendWeekV760=next;amendDayV760=amendWeekDaysV760(next)[0];
+      renderAmendSlotsV760();ensureAmendWeekV760(next);
+    });
+    const renderAmendSlotsV760=()=>{
+      const host=$('appointmentAmendSlots');if(!host)return;
+      const state=amendWeekStateV760(amendWeekV760);
+      if(state.status==='loading'||state.status==='idle'){
+        host.innerHTML=`${amendWeekNavV760()}<p class="muted small">Checking free times…</p>`;wireAmendWeekNavV760(host);return;
+      }
+      if(state.status==='error'){
+        host.innerHTML=`${amendWeekNavV760()}<p class="err" role="alert">Free times could not be read for this week. Try another week, or close and reopen this appointment.</p>`;wireAmendWeekNavV760(host);return;
+      }
+      const staffId=$('appointmentEditStaff').value;
+      if(!staffId){host.innerHTML='<p class="muted small">Choose a team member to see their free times.</p>';return}
+      const days=amendAvailabilityDaysV760({
+        days:amendWeekDaysV760(amendWeekV760),staffId,appointments:state.appointments,blocks:state.blocks,
+        timing:amendTimingV760(),today:todaySg,todayMinutes:amendNowMinutesV760(),
+        excludeAppointmentId:item.id,scheduleFor:recordedSchedule
+      });
+      if(!days.some(day=>day.date===amendDayV760))amendDayV760=days[0]?.date||amendDayV760;
+      const current=days.find(day=>day.date===amendDayV760)||{starts:[]};
+      const chosenTime=$('appointmentEditTime').value,chosenDate=$('appointmentEditDate').value;
+      host.innerHTML=`${amendWeekNavV760()}<div class="pf-day-track" role="group" aria-label="Choose a day">${days.map(day=>`<button class="pf-day${day.date===amendDayV760?' sel':''}" type="button" data-amend-day="${esc(day.date)}" aria-pressed="${day.date===amendDayV760}"><b>${esc(calendarDayLabel(`${day.date}T04:00:00.000Z`))}</b><span class="muted small">${day.starts.length} free</span></button>`).join('')}</div>
+        ${current.starts.length?`<div class="pf-slot-grid" role="group" aria-label="Choose a time">${current.starts.map(start=>{const clock=minuteClock(start);const picked=chosenDate===amendDayV760&&chosenTime===clock;return `<button class="pf-slot${picked?' sel':''}" type="button" data-amend-slot="${esc(clock)}" aria-pressed="${picked}">${esc(clock)}</button>`}).join('')}</div>`
+          :'<p class="muted small" style="margin-top:10px">No free time on this day for this team member and duration. Try another day, another week, another team member, or a shorter duration.</p>'}
+        <p class="muted small" style="margin-top:10px">Free times come from this branch&#39;s opening hours, the team member&#39;s schedule, blocked time and existing appointments. This appointment&#39;s own slot stays available.</p>`;
+      wireAmendWeekNavV760(host);
+      host.querySelectorAll('[data-amend-day]').forEach(button=>button.onclick=()=>{amendDayV760=button.dataset.amendDay;renderAmendSlotsV760()});
+      host.querySelectorAll('[data-amend-slot]').forEach(button=>button.onclick=()=>{
+        $('appointmentEditDate').value=amendDayV760;$('appointmentEditTime').value=button.dataset.amendSlot;
+        invalidateRescheduleEdit();renderAmendSlotsV760();
+      });
+    };
+    /* One week, one read — and the SAME amendAvailabilityDaysV760 path renders it, so a week
+       reached by paging is computed exactly like the week the picker opened on. */
+    const loadAmendWeekV760=async week=>{
+      const days=amendWeekDaysV760(week),from=days[0],to=addDays(days[6],1);
+      const [appointmentResult,blockResult]=await Promise.all([
+        fetchAllRowsResult(()=>sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,services!appointments_service_id_fkey(buffer_before_min,buffer_after_min)',{count:'exact'})
+          .eq('business_id',S.biz.id).eq('branch_id',item.branch_id).gte('starts_at',sgDateBoundary(from)).lt('starts_at',sgDateBoundary(to)).order('starts_at').order('id')),
+        fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:item.branch_id,
+          p_from:sgDateBoundary(from),p_to:sgDateBoundary(to)}).order('starts_at').order('staff_id'))
+      ]);
+      if(!editForm.isConnected)return;
+      amendWeekCacheV760.set(week,appointmentResult.error||blockResult.error
+        ?{status:'error',appointments:[],blocks:[]}
+        :{status:'ready',appointments:appointmentResult.data||[],blocks:blockResult.data||[]});
+      if(week===amendWeekV760)renderAmendSlotsV760();
+    };
+    const ensureAmendWeekV760=week=>{
+      const state=amendWeekStateV760(week);
+      if(state.status==='ready'||state.status==='loading')return;
+      amendWeekCacheV760.set(week,{status:'loading',appointments:[],blocks:[]});
+      loadAmendWeekV760(week).catch(()=>{
+        amendWeekCacheV760.set(week,{status:'error',appointments:[],blocks:[]});
+        if(week===amendWeekV760)renderAmendSlotsV760();
+      });
+    };
+    let amendOpenedV760=false;
+    amendPickerSyncV760=({day=null}={})=>{
+      if(day){amendWeekV760=amendWeekOfV760(day);amendDayV760=day}
+      renderAmendTeamV760();renderAmendSlotsV760();
+      if(day)ensureAmendWeekV760(amendWeekV760);
+    };
+    const openAmendPickerV760=()=>{
+      renderAmendTeamV760();renderAmendSlotsV760();
+      ensureAmendWeekV760(amendWeekV760);
+      if(amendOpenedV760)return;
+      amendOpenedV760=true;
+      requestAnimationFrame(()=>$('appointmentAmendTeam')?.querySelector('button')?.focus());
+    };
     showOutcomePanelV375(startEditing?'amend':null);
-    if(startEditing)requestAnimationFrame(()=>$('appointmentEditDate')?.focus());
+    if(startEditing)openAmendPickerV760();
     $('appointmentRescheduleCancel').onclick=()=>{showOutcomePanelV375(null);toggle?.focus()};
-    const invalidateRescheduleEdit=()=>{rescheduleGate.invalidate();setReschedulePending(false);rescheduleAttempt=null;feedback.innerHTML=''};
-    ['appointmentEditDate','appointmentEditTime','appointmentEditDuration','appointmentEditStaff','appointmentEditNote'].forEach(id=>{
+    /* v760: date, time and staff are now hidden fields written by the picker, which invalidates
+       the pending attempt itself. Duration additionally re-draws the slots, because a longer
+       visit genuinely has fewer free starts. */
+    ['appointmentEditDuration','appointmentEditNote'].forEach(id=>{
       $(id).addEventListener('input',invalidateRescheduleEdit);$(id).addEventListener('change',invalidateRescheduleEdit);
     });
+    ['input','change'].forEach(eventName=>$('appointmentEditDuration').addEventListener(eventName,()=>renderAmendSlotsV760()));
     editForm.onsubmit=async event=>{
       event.preventDefault();
       const starts=sgIso(`${$('appointmentEditDate').value}T${$('appointmentEditTime').value}`),editedDuration=Number($('appointmentEditDuration').value),editedStaff=$('appointmentEditStaff').value,editedNote=$('appointmentEditNote').value.trim();
@@ -30762,6 +30546,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ce3f61af5113df7a4d9e051cdf76353edc5a31c07b664bf3689d013939fcef2b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'8968cf4c66e2d3cba6969a10b150a9c3077cebf2660ad27152d704d5ad9271ac',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

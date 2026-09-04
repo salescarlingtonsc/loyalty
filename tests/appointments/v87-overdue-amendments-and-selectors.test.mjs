@@ -46,7 +46,10 @@ test('booked appointments expose direct, prefilled amendments including overdue 
      What this test cares about is unchanged and still asserted: the Amend entry point opens the
      form and moves focus into it. */
   assert.match(calendar,/showOutcomePanelV375\(startEditing\?'amend':null\);/);
-  assert.match(calendar,/if\(startEditing\)requestAnimationFrame\(\(\)=>\$\('appointmentEditDate'\)\?\.focus\(\)\);/);
+  /* v760 replaces the blind date/time inputs with the customer flow's picker, so the Amend entry
+     point now opens the PICKER (which focuses the first team card) instead of a date field. The
+     guarantee — Amend lands inside the amend panel, ready to edit — is unchanged. */
+  assert.match(calendar,/if\(startEditing\)openAmendPickerV760\(\);/);
   assert.match(calendar,/This booked appointment is overdue\. You can move it to a future slot/);
   assert.match(calendar,/The new start must be in the future/);
   assert.match(calendar,/sb\.rpc\('reschedule_appointment_v48'/);
