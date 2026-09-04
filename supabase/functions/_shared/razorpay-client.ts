@@ -214,8 +214,15 @@ export function razorpayClient(credentials: RazorpayCredentials) {
         path: `/subscriptions/${subscriptionId}/resume`,
         body: { resume_at: 'now' },
       }),
-    getPayment: (paymentId: string) =>
-      request<RazorpayPayment>({ method: 'GET', path: `/payments/${paymentId}` }),
+    /* `expand[]=card` is the only way to get last4/network for a card payment: the bare payment
+       object carries `card_id` but no card body. Razorpay reads repeated `expand[]` params, so
+       the option is spelled with the literal bracket key rather than a normalised name. */
+    getPayment: (paymentId: string, options?: { expandCard?: boolean }) =>
+      request<RazorpayPayment>({
+        method: 'GET',
+        path: `/payments/${paymentId}`,
+        query: options?.expandCard ? { 'expand[]': 'card' } : undefined,
+      }),
     listPayments: (query: Record<string, string | number | undefined>) =>
       request<RazorpayList<RazorpayPayment>>({ method: 'GET', path: '/payments', query }),
   };
@@ -275,6 +282,14 @@ export type RazorpayPayment = {
   order_id?: string | null;
   invoice_id?: string | null;
   method?: string;
+  card_id?: string | null;
+  card?: {
+    id?: string;
+    last4?: string | null;
+    network?: string | null;
+    type?: string | null;
+    issuer?: string | null;
+  } | null;
   captured?: boolean;
   created_at?: number;
   notes?: Record<string, string>;

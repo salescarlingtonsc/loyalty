@@ -21,6 +21,11 @@ import {
   type RazorpayPayment,
   type RazorpaySubscription,
 } from '../_shared/razorpay-client.ts';
+import {
+  backfillPaymentMethods,
+  PAYMENT_METHOD_BACKFILL_MAX_TENANTS,
+  type PaymentMethodBackfillCounts,
+} from '../_shared/billing-payment-method-backfill.ts';
 
 const LOCAL_OBJECTS_PER_PAGE = 100;
 const PROVIDER_OBJECTS_PER_PAGE = 100;
@@ -812,6 +817,17 @@ Deno.serve(async (req) => {
       cursor.provider_invoices_after = providerInvoicePage.after;
       cursor.provider_invoices_complete = providerInvoicePage.complete;
 
+      /* v758 — bounded, best-effort card-label backfill. It runs AFTER the invoice streams so it
+         can only ever see tenants whose paid invoices are already projected, and its failures are
+         counted rather than thrown: a missing card label must never fail an integrity run. */
+      const paymentMethodBackfill: PaymentMethodBackfillCounts = await backfillPaymentMethods({
+        admin,
+        razorpay,
+        scope,
+        provider: PROVIDER,
+        limit: PAYMENT_METHOD_BACKFILL_MAX_TENANTS,
+      });
+
       const status = billingReconciliationStatus(cursor);
       const partial = status === 'partial';
       const summary = {
@@ -819,6 +835,7 @@ Deno.serve(async (req) => {
         provider: PROVIDER,
         livemode,
         scoped_businesses: scope.businessIds.length,
+        payment_method_backfill: paymentMethodBackfill,
         snapshot_at: cursor.snapshot_at,
         cycle_started_at: cursor.cycle_started_at,
         run,
