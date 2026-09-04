@@ -3844,6 +3844,12 @@
       "version": "20260930010000",
       "name": "nestly_v764_birthday_rejoin_guard_and_tombstone_ban",
       "sourcePath": "db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261001000000",
+      "name": "nestly_v765_billing_lifecycle",
+      "sourcePath": "db/migrations/20261001_nestly_v765_billing_lifecycle.sql"
     }
   ]
 }

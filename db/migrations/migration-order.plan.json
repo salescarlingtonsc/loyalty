@@ -3849,6 +3849,12 @@
       "path": "db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql",
       "semanticVersion": "v764",
       "proposedDeployVersion": "20260930010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261001_nestly_v765_billing_lifecycle.sql",
+      "semanticVersion": "v765",
+      "proposedDeployVersion": "20261001000000"
     }
   ]
 }

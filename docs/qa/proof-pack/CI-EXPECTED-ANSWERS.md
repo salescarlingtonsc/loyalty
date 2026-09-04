@@ -12,7 +12,7 @@ against live in exactly one place (the fixture itself) and this document, not tw
 that can drift apart.
 
 Fixtures with an extracted truth table: **46**. Flagged (no truth-table
-marker found): **32**.
+marker found): **33**.
 
 ## Flagged — no truth-table marker found
 
@@ -54,6 +54,7 @@ values.
 * `db/tests/executed/v760_corpus_shared_provider_customers.sql`
 * `db/tests/executed/v763_corpus_self_serve_activation.sql`
 * `db/tests/executed/v764_corpus_birthday_rejoin_guard.sql`
+* `db/tests/executed/v765_corpus_billing_lifecycle.sql`
 
 ## Truth tables, verbatim
 

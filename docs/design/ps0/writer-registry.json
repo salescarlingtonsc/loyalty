@@ -3289,6 +3289,18 @@
       "reason": "browser RPC 'get_business_billing_v758' is a finite owner billing reader; it delegates to get_business_billing_v125 for the tenant guard and every existing key, and adds only a server-computed summary (branch counts, units, total, renew date, state) plus the display-only stored payment method (kind, brand, last four digits) - it writes nothing"
     },
     {
+      "id": "browser.rpc:app/app.js:preview_branch_addition_v764",
+      "reason": "browser RPC 'preview_branch_addition_v764' is a finite owner billing reader; it prices a branch addition from the tenant's own plan tier and billing period and returns the estimate plus the display-only card digits, and it writes nothing at all"
+    },
+    {
+      "id": "browser.rpc:app/app.js:set_renewal_intent_v764",
+      "reason": "browser RPC 'set_renewal_intent_v764' writes only the local, reversible renewal-cancel intent on the owner's own subscription; it never calls the payment provider, never alters payment truth, customer value or stored value, and refuses once the cancel has been transmitted"
+    },
+    {
+      "id": "browser.rpc:app/app.js:refresh_payment_method_request_v764",
+      "reason": "browser RPC 'refresh_payment_method_request_v764' clears the display-only stored card digits so the nightly reconcile refetches them after a card change; it touches no payment truth, no subscription truth and no customer value"
+    },
+    {
       "id": "browser.rpc:app/app.js:get_business_entitlement_v620",
       "reason": "V620 read-only entitlement-authority getter behind the locked-workspace reason screen. Declared STABLE SECURITY DEFINER so a locked owner (approval pending, trial expired, payment overdue, or paused) can read WHY, gated to that business's active staff or a super admin rather than the workspace-open predicate it reports on. Delegates to app.business_entitlement_v620, which itself performs no DML. It performs no write and resolves to no customer-value writer."
     },
