@@ -219,10 +219,16 @@ test('the checkout page loads Razorpay under its own CSP and carries no secret',
   assert.match(page, /frame-src https:\/\/api\.razorpay\.com https:\/\/checkout\.razorpay\.com/);
   assert.match(page, /connect-src https:\/\/lumberjack\.razorpay\.com https:\/\/api\.razorpay\.com/);
   assert.match(page, /src="https:\/\/checkout\.razorpay\.com\/v1\/checkout\.js"/);
-  assert.match(page, /subscription_id: subscriptionId/);
-  assert.match(page, /redirect: true/);
   assert.match(page, /Pay securely with Razorpay/);
-  assert.doesNotMatch(page, /key_secret|KEY_SECRET|rzp_(?:test|live)_/);
+  /* The CSP grants no 'unsafe-inline', so the opener MUST live in an external same-origin file.
+     The first live run shipped it inline and the page sat on "Opening Razorpay…" forever. */
+  assert.doesNotMatch(page, /<script>/, 'no inline <script> block: the CSP would block it');
+  assert.match(page, /<script src="\/razorpay-checkout\.js"><\/script>/);
+  assert.match(page, /script-src 'self' https:\/\/checkout\.razorpay\.com https:\/\/cdn\.razorpay\.com/);
+  const opener = await read('app/razorpay-checkout.js');
+  assert.match(opener, /subscription_id: subscriptionId/);
+  assert.match(opener, /redirect: true/);
+  assert.doesNotMatch(page + opener, /key_secret|KEY_SECRET|rzp_(?:test|live)_/);
   // app/index.html's CSP must not be widened for a third-party payment script.
   const app = await read('app/index.html');
   assert.doesNotMatch(app, /razorpay/i);
