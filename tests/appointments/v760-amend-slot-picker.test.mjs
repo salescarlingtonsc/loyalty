@@ -56,12 +56,15 @@ const support = `
 `;
 
 const build = new Function(`
+  const todaySg='2026-09-01';
+  const addDays=(date,days)=>{const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)};
   ${support}
   ${extractFunction('availableCalendarStarts')}
+  ${extractFunction('amendWeekDaysV760')}
   ${extractFunction('amendAvailabilityDaysV760')}
-  return {availableCalendarStarts,amendAvailabilityDaysV760};
+  return {availableCalendarStarts,amendWeekDaysV760,amendAvailabilityDaysV760,todaySg};
 `);
-const { amendAvailabilityDaysV760 } = build();
+const { amendAvailabilityDaysV760, amendWeekDaysV760, todaySg } = build();
 
 const DAY = '2026-09-10';                    // a future day, so nothing is filtered as "already passed"
 const sgAt = clock => `${DAY}T${clock}:00+08:00`;
@@ -133,4 +136,37 @@ test('v760 the amend panel is the customer flow markup wired to the same save pa
   assert.match(render, /id="appointmentEditNote"/);
   assert.match(render, /id="appointmentRescheduleSave">Confirm amendment</);
   assert.match(render, /id="appointmentRescheduleCancel">Keep current appointment</);
+});
+
+/* v760b (coordinator: "a fixed 7-day window means an owner cannot move an appointment two weeks
+   out"). Paging is a week offset over the same day-window builder, and the week it lands on is
+   fed through the SAME amendAvailabilityDaysV760 path — so a slot two weeks out is offered on
+   exactly the terms one tomorrow is. */
+test('v760 paging forward offers a day 14 days out through the same availability path', () => {
+  assert.equal(todaySg, '2026-09-01', 'the extracted window builder is anchored to the test today');
+  assert.equal(amendWeekDaysV760(0)[0], todaySg, 'week 0 starts today — paging can never reach the past');
+  const week2 = amendWeekDaysV760(2);
+  assert.equal(week2.length, 7);
+  assert.equal(week2[0], '2026-09-15', 'two pages forward is 14 days out');
+
+  const days = amendAvailabilityDaysV760({
+    days: week2, staffId: 'staff-1', appointments: [], blocks: [],
+    timing: { duration: 60, before: 0, after: 0 },
+    today: todaySg, todayMinutes: 600, excludeAppointmentId: null,
+    scheduleFor: () => workingDay()
+  });
+  const fortnightOut = days.find(day => day.date === '2026-09-15');
+  assert.ok(fortnightOut, 'the day 14 days out must be one of the chips');
+  assert.deepEqual(fortnightOut.starts.slice(0, 3), [540, 555, 570],
+    'and it must offer real free starts, not an empty chip');
+
+  // The picker pages within a bounded window and reads that week's own rows.
+  assert.match(app, /const AMEND_WEEKS_V760=12;/);
+  const render = app.slice(app.indexOf('function renderAppointmentDetails('), app.indexOf('function wireAppointmentActions('));
+  assert.match(render, /data-amend-week="-1" \$\{amendWeekV760<=0\?'disabled':''\}>‹ Earlier week/);
+  assert.match(render, /data-amend-week="1" \$\{amendWeekV760>=AMEND_WEEKS_V760-1\?'disabled':''\}>Later week ›/);
+  assert.match(render, /amendWeekV760=next;amendDayV760=amendWeekDaysV760\(next\)\[0\];/);
+  assert.match(render, /renderAmendSlotsV760\(\);ensureAmendWeekV760\(next\);/);
+  assert.match(render, /const days=amendWeekDaysV760\(week\),from=days\[0\],to=addDays\(days\[6\],1\);/);
+  assert.match(render, /days:amendWeekDaysV760\(amendWeekV760\),staffId,appointments:state\.appointments,blocks:state\.blocks,/);
 });

@@ -45566,15 +45566,17 @@ async function appointmentsPage(){
        calls availableCalendarStarts: the same core the Day view's green slots use. The chosen
        date/time/staff are written into the SAME hidden fields the submit handler already read,
        so the request built for reschedule_appointment_v48 is unchanged. */
-    const amendDaysV760=(()=>{
-      const list=[];for(let index=0;index<7;index++)list.push(addDays(todaySg,index));
-      const own=eventParts(item.starts_at).date;
-      if(!list.includes(own)&&own>todaySg)list.push(own);
-      return list.sort();
-    })();
-    let amendDayV760=eventParts(item.starts_at).date;
-    if(!amendDaysV760.includes(amendDayV760))amendDayV760=amendDaysV760[0];
-    let amendStateV760={status:'idle',appointments:[],blocks:[]};
+    const amendDayIndexV760=date=>Math.round((Date.parse(`${date}T00:00:00Z`)-Date.parse(`${todaySg}T00:00:00Z`))/86400000);
+    const amendWeekOfV760=date=>{
+      const index=amendDayIndexV760(date);
+      return Number.isFinite(index)?Math.max(0,Math.min(AMEND_WEEKS_V760-1,Math.floor(index/7))):0;
+    };
+    const amendOwnDateV760=eventParts(item.starts_at).date;
+    let amendWeekV760=amendWeekOfV760(amendOwnDateV760);
+    let amendDayV760=amendWeekDaysV760(amendWeekV760).includes(amendOwnDateV760)?amendOwnDateV760:amendWeekDaysV760(amendWeekV760)[0];
+    /* One entry per week, so paging back to a week already read is instant and never re-queries. */
+    const amendWeekCacheV760=new Map();
+    const amendWeekStateV760=week=>amendWeekCacheV760.get(week)||{status:'idle',appointments:[],blocks:[]};
     const amendTimingV760=()=>{
       const typed=Number($('appointmentEditDuration')?.value);
       return {
@@ -45595,33 +45597,52 @@ async function appointmentsPage(){
         invalidateRescheduleEdit();renderAmendTeamV760();renderAmendSlotsV760();
       });
     };
+    const amendWeekNavV760=()=>`<div class="row appointment-amend-week-v760" style="gap:8px;margin-bottom:8px">
+      <button type="button" class="btn ghost sm" data-amend-week="-1" ${amendWeekV760<=0?'disabled':''}>‹ Earlier week</button>
+      <span class="muted small">${esc(calendarDayLabel(`${amendWeekDaysV760(amendWeekV760)[0]}T04:00:00.000Z`))} – ${esc(calendarDayLabel(`${amendWeekDaysV760(amendWeekV760)[6]}T04:00:00.000Z`))}</span>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost sm" data-amend-week="1" ${amendWeekV760>=AMEND_WEEKS_V760-1?'disabled':''}>Later week ›</button>
+    </div>`;
+    const wireAmendWeekNavV760=host=>host.querySelectorAll('[data-amend-week]').forEach(button=>button.onclick=()=>{
+      const next=amendWeekV760+Number(button.dataset.amendWeek);
+      if(next<0||next>=AMEND_WEEKS_V760)return;
+      amendWeekV760=next;amendDayV760=amendWeekDaysV760(next)[0];
+      renderAmendSlotsV760();ensureAmendWeekV760(next);
+    });
     const renderAmendSlotsV760=()=>{
       const host=$('appointmentAmendSlots');if(!host)return;
-      if(amendStateV760.status==='loading'){host.innerHTML='<p class="muted small">Checking free times…</p>';return}
-      if(amendStateV760.status==='error'){host.innerHTML='<p class="err" role="alert">Free times could not be read. Try closing and reopening this appointment.</p>';return}
+      const state=amendWeekStateV760(amendWeekV760);
+      if(state.status==='loading'||state.status==='idle'){
+        host.innerHTML=`${amendWeekNavV760()}<p class="muted small">Checking free times…</p>`;wireAmendWeekNavV760(host);return;
+      }
+      if(state.status==='error'){
+        host.innerHTML=`${amendWeekNavV760()}<p class="err" role="alert">Free times could not be read for this week. Try another week, or close and reopen this appointment.</p>`;wireAmendWeekNavV760(host);return;
+      }
       const staffId=$('appointmentEditStaff').value;
       if(!staffId){host.innerHTML='<p class="muted small">Choose a team member to see their free times.</p>';return}
       const days=amendAvailabilityDaysV760({
-        days:amendDaysV760,staffId,appointments:amendStateV760.appointments,blocks:amendStateV760.blocks,
+        days:amendWeekDaysV760(amendWeekV760),staffId,appointments:state.appointments,blocks:state.blocks,
         timing:amendTimingV760(),today:todaySg,todayMinutes:amendNowMinutesV760(),
         excludeAppointmentId:item.id,scheduleFor:recordedSchedule
       });
       if(!days.some(day=>day.date===amendDayV760))amendDayV760=days[0]?.date||amendDayV760;
       const current=days.find(day=>day.date===amendDayV760)||{starts:[]};
       const chosenTime=$('appointmentEditTime').value,chosenDate=$('appointmentEditDate').value;
-      host.innerHTML=`<div class="pf-day-track" role="group" aria-label="Choose a day">${days.map(day=>`<button class="pf-day${day.date===amendDayV760?' sel':''}" type="button" data-amend-day="${esc(day.date)}" aria-pressed="${day.date===amendDayV760}"><b>${esc(calendarDayLabel(`${day.date}T04:00:00.000Z`))}</b><span class="muted small">${day.starts.length} free</span></button>`).join('')}</div>
+      host.innerHTML=`${amendWeekNavV760()}<div class="pf-day-track" role="group" aria-label="Choose a day">${days.map(day=>`<button class="pf-day${day.date===amendDayV760?' sel':''}" type="button" data-amend-day="${esc(day.date)}" aria-pressed="${day.date===amendDayV760}"><b>${esc(calendarDayLabel(`${day.date}T04:00:00.000Z`))}</b><span class="muted small">${day.starts.length} free</span></button>`).join('')}</div>
         ${current.starts.length?`<div class="pf-slot-grid" role="group" aria-label="Choose a time">${current.starts.map(start=>{const clock=minuteClock(start);const picked=chosenDate===amendDayV760&&chosenTime===clock;return `<button class="pf-slot${picked?' sel':''}" type="button" data-amend-slot="${esc(clock)}" aria-pressed="${picked}">${esc(clock)}</button>`}).join('')}</div>`
-          :'<p class="muted small" style="margin-top:10px">No free time on this day for this team member and duration. Try another day, another team member, or a shorter duration.</p>'}
+          :'<p class="muted small" style="margin-top:10px">No free time on this day for this team member and duration. Try another day, another week, another team member, or a shorter duration.</p>'}
         <p class="muted small" style="margin-top:10px">Free times come from this branch&#39;s opening hours, the team member&#39;s schedule, blocked time and existing appointments. This appointment&#39;s own slot stays available.</p>`;
+      wireAmendWeekNavV760(host);
       host.querySelectorAll('[data-amend-day]').forEach(button=>button.onclick=()=>{amendDayV760=button.dataset.amendDay;renderAmendSlotsV760()});
       host.querySelectorAll('[data-amend-slot]').forEach(button=>button.onclick=()=>{
         $('appointmentEditDate').value=amendDayV760;$('appointmentEditTime').value=button.dataset.amendSlot;
         invalidateRescheduleEdit();renderAmendSlotsV760();
       });
     };
-    const loadAmendAvailabilityV760=async()=>{
-      amendStateV760={status:'loading',appointments:[],blocks:[]};renderAmendSlotsV760();
-      const from=amendDaysV760[0],to=addDays(amendDaysV760[amendDaysV760.length-1],1);
+    /* One week, one read — and the SAME amendAvailabilityDaysV760 path renders it, so a week
+       reached by paging is computed exactly like the week the picker opened on. */
+    const loadAmendWeekV760=async week=>{
+      const days=amendWeekDaysV760(week),from=days[0],to=addDays(days[6],1);
       const [appointmentResult,blockResult]=await Promise.all([
         fetchAllRowsResult(()=>sb.from('appointments').select('id,starts_at,ends_at,status,staff_id,services!appointments_service_id_fkey(buffer_before_min,buffer_after_min)',{count:'exact'})
           .eq('business_id',S.biz.id).eq('branch_id',item.branch_id).gte('starts_at',sgDateBoundary(from)).lt('starts_at',sgDateBoundary(to)).order('starts_at').order('id')),
@@ -45629,21 +45650,31 @@ async function appointmentsPage(){
           p_from:sgDateBoundary(from),p_to:sgDateBoundary(to)}).order('starts_at').order('staff_id'))
       ]);
       if(!editForm.isConnected)return;
-      amendStateV760=appointmentResult.error||blockResult.error
+      amendWeekCacheV760.set(week,appointmentResult.error||blockResult.error
         ?{status:'error',appointments:[],blocks:[]}
-        :{status:'ready',appointments:appointmentResult.data||[],blocks:blockResult.data||[]};
-      renderAmendSlotsV760();
+        :{status:'ready',appointments:appointmentResult.data||[],blocks:blockResult.data||[]});
+      if(week===amendWeekV760)renderAmendSlotsV760();
+    };
+    const ensureAmendWeekV760=week=>{
+      const state=amendWeekStateV760(week);
+      if(state.status==='ready'||state.status==='loading')return;
+      amendWeekCacheV760.set(week,{status:'loading',appointments:[],blocks:[]});
+      loadAmendWeekV760(week).catch(()=>{
+        amendWeekCacheV760.set(week,{status:'error',appointments:[],blocks:[]});
+        if(week===amendWeekV760)renderAmendSlotsV760();
+      });
     };
     let amendOpenedV760=false;
     amendPickerSyncV760=({day=null}={})=>{
-      if(day)amendDayV760=day;
+      if(day){amendWeekV760=amendWeekOfV760(day);amendDayV760=day}
       renderAmendTeamV760();renderAmendSlotsV760();
+      if(day)ensureAmendWeekV760(amendWeekV760);
     };
     const openAmendPickerV760=()=>{
-      renderAmendTeamV760();
-      if(amendOpenedV760){renderAmendSlotsV760();return}
+      renderAmendTeamV760();renderAmendSlotsV760();
+      ensureAmendWeekV760(amendWeekV760);
+      if(amendOpenedV760)return;
       amendOpenedV760=true;
-      loadAmendAvailabilityV760().catch(()=>{amendStateV760={status:'error',appointments:[],blocks:[]};renderAmendSlotsV760()});
       requestAnimationFrame(()=>$('appointmentAmendTeam')?.querySelector('button')?.focus());
     };
     showOutcomePanelV375(startEditing?'amend':null);
@@ -45973,6 +46004,14 @@ async function appointmentsPage(){
       if(!alreadyPassed&&!hitsBreak&&!hitsAppointment&&!hitsBlockedTime)starts.push(start);
     }
     return starts;
+  }
+  /* v760b (coordinator: "a fixed 7-day window means an owner cannot move an appointment two
+     weeks out"). The chip row is one week of a paged window. Week 0 starts TODAY — that is the
+     floor, so paging can never offer a past day — and AMEND_WEEKS_V760 caps how far forward the
+     Later-week button goes. Named and side-effect-free so a test can execute it. */
+  const AMEND_WEEKS_V760=12;
+  function amendWeekDaysV760(week){
+    const days=[];for(let index=0;index<7;index++)days.push(addDays(todaySg,week*7+index));return days;
   }
   /* v760 (owner, photo 2: the Change-appointment form asked the owner to TYPE a date and time
      blindly, while the customer booking flow shows real free slots). This builds the day-by-day
