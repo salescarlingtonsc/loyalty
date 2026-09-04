@@ -54810,6 +54810,64 @@ function subscriptionBranchTableV612(billing){
   <p class="muted small" style="margin:0 0 16px">Tap a branch to see its plan, billing date and payment method.</p>`;
 }
 /* ---------- provider-backed subscription billing ---------- */
+/* nestly_v756: after Razorpay checkout the browser returns to
+   `/#/settings?billing=processing`. Mirrors V286's own return-state parsing
+   (selfServePaymentReturnStateV286) but reads the `billing` key this screen's return URL
+   actually carries, and the strip technique below mirrors how the rest of this file rewrites
+   the address bar with history.replaceState rather than a full navigation — this screen stays
+   on #/settings, it never changes route the way V286's activated redirect does. */
+function settingsBillingReturnStateV756(){
+  const hashQuery=String(location.hash||'').split('?')[1]||'';
+  const hashState=new URLSearchParams(hashQuery).get('billing');
+  const searchState=new URLSearchParams(location.search||'').get('billing');
+  return {processing:String(hashState||searchState||'')==='processing'};
+}
+function settingsBillingReturnStripV756(){
+  try{
+    const hash=String(location.hash||'');
+    const qIndex=hash.indexOf('?');
+    if(qIndex<0)return;
+    const hashPath=hash.slice(0,qIndex),params=new URLSearchParams(hash.slice(qIndex+1));
+    if(!params.has('billing'))return;
+    params.delete('billing');
+    const rest=params.toString();
+    history.replaceState(null,'',`${location.pathname}${location.search}${hashPath}${rest?'?'+rest:''}`);
+  }catch{}
+}
+/* The comparison signature this screen polls on: the same fields request_billing_command_v124 /
+   the Razorpay webhook change once a checkout is confirmed. Capacity is included because a
+   capacity change (not just a fresh subscription) is also a Razorpay-return outcome. */
+function settingsBillingReturnSignatureV756(b,capacity){
+  return JSON.stringify({
+    status:b?.status||null,
+    payment_status:b?.payment_status||null,
+    provider_subscription_id:b?.provider?.subscription_id||null,
+    capacity:Number(capacity)||0
+  });
+}
+/* Standalone poller — no DOM, no sb reference — so it can be driven directly in a test with a
+   stub fetchState/onChange/onTimeout instead of grepping source text. loadBillingConfig() below
+   is the only caller and supplies the real Supabase fetch + re-render. Up to ~90s at a 2s
+   interval (45 attempts), matching V286's own "poll every 2s" cadence just extended for a
+   webhook that can lag Checkout by longer than the onboarding activation poll expects. */
+let settingsBillingReturnTimerV756=null;
+function settingsBillingReturnPollV756({fetchState,baseline,onChange,onTimeout,intervalMs=2000,maxAttempts=45,isCancelled=()=>false}){
+  let attempts=0;
+  const tick=async()=>{
+    if(isCancelled())return;
+    attempts+=1;
+    const {signature,payload}=await fetchState();
+    if(isCancelled())return;
+    if(signature!==baseline){onChange(payload,signature);return}
+    if(attempts>=maxAttempts){onTimeout();return}
+    settingsBillingReturnTimerV756=setTimeout(tick,intervalMs);
+  };
+  settingsBillingReturnTimerV756=setTimeout(tick,intervalMs);
+}
+function settingsBillingReturnStopV756(){
+  if(settingsBillingReturnTimerV756){clearTimeout(settingsBillingReturnTimerV756);settingsBillingReturnTimerV756=null}
+}
+let settingsBillingPollActiveV756=false;
 async function loadBillingConfig(){
   const wrap=$('billingWrap');if(!wrap||!S.biz?.id)return;
   wrap.setAttribute('aria-busy','true');
@@ -54855,7 +54913,11 @@ async function loadBillingConfig(){
   const plans=Array.isArray(b.plans)?b.plans:[],byCadence=Object.fromEntries(plans.map(plan=>[plan.cadence,plan]));
   const currentCustomers=Math.max(0,Number(b.current_customer_count||0));
   const minimumCapacity=Math.max(1000,Math.ceil(currentCustomers/1000)*1000);
+  /* nestly_v756: whatever the tenant's own subscription row already says (fresh from this same
+     fetch), never a hardcoded lowest tier — this line was already correct for a normal load, and
+     stays the single source both for that and for the Razorpay-return poll below. */
   const currentCapacity=Math.max(minimumCapacity,Number(b.terms?.customer_capacity||0));
+  const billingReturnStateV756=settingsBillingReturnStateV756();
   const initialCadence=byCadence[b.terms?.cadence]?b.terms.cadence:'annual';
   let selectedCadence=byCadence[initialCadence]?initialCadence:(byCadence.annual?'annual':'monthly');
   const money=c=>'SGD '+((Number.isFinite(Number(c))?Number(c):0)/100).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -55027,6 +55089,48 @@ async function loadBillingConfig(){
     if($('billingResume'))$('billingResume').onclick=()=>execute('resume',null,null);
   };
   renderPlan();
+  /* nestly_v756: a card that just landed from Razorpay Checkout renders once from the payload
+     this same RPC returned before the webhook confirmed anything, then sits there — the owner
+     sees "trialing" and the lowest tier until they refresh by hand. Poll the SAME
+     get_business_billing_v125 read this card already uses, every 2s for up to 90s, and stop the
+     moment status/payment_status/provider_subscription_id/capacity actually changes. */
+  if(billingReturnStateV756.processing&&!settingsBillingPollActiveV756){
+    settingsBillingPollActiveV756=true;
+    const baselineV756=settingsBillingReturnSignatureV756(b,currentCapacity);
+    const statusNode=$('billingCommandStatus');
+    if(statusNode)statusNode.textContent='Confirming payment…';
+    settingsBillingReturnPollV756({
+      baseline:baselineV756,
+      isCancelled:()=>!wrap.isConnected,
+      fetchState:async()=>{
+        const {data:nb,error:nerr}=await sb.rpc('get_business_billing_v125',{p_business:S.biz.id});
+        if(nerr||!nb)return {signature:baselineV756,payload:null};
+        const nCustomers=Math.max(0,Number(nb.current_customer_count||0));
+        const nMinimum=Math.max(1000,Math.ceil(nCustomers/1000)*1000);
+        const nCapacity=Math.max(nMinimum,Number(nb.terms?.customer_capacity||0));
+        return {signature:settingsBillingReturnSignatureV756(nb,nCapacity),payload:nb};
+      },
+      onChange:()=>{
+        settingsBillingPollActiveV756=false;
+        settingsBillingReturnStripV756();
+        if(!wrap.isConnected)return;
+        loadBillingConfig().then(()=>{
+          const confirmedNode=$('billingCommandStatus');
+          if(confirmedNode)confirmedNode.textContent='Payment confirmed';
+        });
+      },
+      onTimeout:()=>{
+        settingsBillingPollActiveV756=false;
+        if(!wrap.isConnected)return;
+        const timeoutNode=$('billingCommandStatus');
+        if(timeoutNode){
+          timeoutNode.innerHTML='Still waiting for the payment provider. <button type="button" class="btn ghost sm" id="billingReturnRefreshV756" style="margin-left:6px">Refresh</button>';
+          const refreshButton=$('billingReturnRefreshV756');
+          if(refreshButton)refreshButton.onclick=()=>loadBillingConfig();
+        }
+      }
+    });
+  }
 }
 /* ---------- customer sign-up QR ---------- */
 /* ---------- customer app actions (moved out of Bookings by V223) ---------- */
