@@ -26,6 +26,7 @@ import {
   PAYMENT_METHOD_BACKFILL_MAX_TENANTS,
   type PaymentMethodBackfillCounts,
 } from '../_shared/billing-payment-method-backfill.ts';
+import { classifyProviderSubscriptionAbsence } from '../_shared/razorpay-subscription-absence.ts';
 
 const LOCAL_OBJECTS_PER_PAGE = 100;
 const PROVIDER_OBJECTS_PER_PAGE = 100;
@@ -71,6 +72,9 @@ type LocalInvoice = {
 
 type RunCounts = {
   processed: number;
+  /* Abandoned or in-flight hosted checkouts. Reported so the run is honest about what it saw,
+     but deliberately NOT a discrepancy: it must never drive status 'mismatch'. */
+  pending_checkout: number;
   matches: number;
   mismatches: number;
   missing_local: number;
@@ -611,20 +615,36 @@ async function reconcileProviderSubscriptions({
           if (!candidate || !businessIds.has(candidate)) {
             throw new Error('scoped provider subscription lost business mapping');
           }
-          recordResult(cursor, run, 'missing_local');
+          /* v758 — billing_reconciliation_items.result carries a CHECK constraint
+             ('match','missing_local','missing_provider','mismatch','repaired','failed'), so a
+             pending checkout CANNOT get its own result value without a migration. It is written
+             as 'match' — nothing is out of agreement — and identified by detail.reason, with the
+             count surfaced in the run summary as `pending_checkout`. */
+          const absence = classifyProviderSubscriptionAbsence(provider);
+          const pending = absence === 'pending_checkout';
+          if (pending) run.pending_checkout += 1;
+          recordResult(cursor, run, pending ? 'match' : 'missing_local');
           return {
             run_id: runId,
             business_id: candidate,
             object_type: 'subscription',
             provider_object_id: provider.id,
-            result: 'missing_local',
+            result: pending ? 'match' : 'missing_local',
             expected_digest: await digest(razorpaySubscriptionSnapshot(provider)),
             actual_digest: null,
-            detail: {
-              reason: 'provider_subscription_missing_local',
-              provider_created_at: epoch(provider.created_at),
-              metadata_business_id: candidate,
-            },
+            detail: pending
+              ? {
+                reason: 'provider_subscription_unpaid_checkout',
+                provider_status: String(provider.status || ''),
+                provider_created_at: epoch(provider.created_at),
+                metadata_business_id: candidate,
+                command_id: provider.notes?.command_id || null,
+              }
+              : {
+                reason: 'provider_subscription_missing_local',
+                provider_created_at: epoch(provider.created_at),
+                metadata_business_id: candidate,
+              },
           };
         }),
       );
@@ -765,6 +785,7 @@ Deno.serve(async (req) => {
 
     const run: RunCounts = {
       processed: 0,
+      pending_checkout: 0,
       matches: 0,
       mismatches: 0,
       missing_local: 0,
@@ -836,6 +857,7 @@ Deno.serve(async (req) => {
         livemode,
         scoped_businesses: scope.businessIds.length,
         payment_method_backfill: paymentMethodBackfill,
+        pending_checkout: run.pending_checkout,
         snapshot_at: cursor.snapshot_at,
         cycle_started_at: cursor.cycle_started_at,
         run,

@@ -237,3 +237,63 @@ test('the reconcile run reports the backfill and runs it after the invoice strea
   assert.ok(finishAt > backfillAt, 'backfill must precede the run finish');
   assert.match(source, /payment_method_backfill: paymentMethodBackfill,/);
 });
+
+/* v758 follow-up — an abandoned hosted checkout is not a mismatch. */
+import {
+  classifyProviderSubscriptionAbsence,
+  PENDING_AUTHENTICATED_WINDOW_MS,
+} from '../../supabase/functions/_shared/razorpay-subscription-absence.ts';
+
+const NOW = Date.parse('2026-09-04T12:00:00Z');
+const secondsAgo = (ms) => Math.floor((NOW - ms) / 1000);
+
+test('unpaid and expired checkouts classify as pending, active gaps stay missing_local', () => {
+  assert.equal(classifyProviderSubscriptionAbsence({ status: 'created' }, NOW), 'pending_checkout');
+  assert.equal(classifyProviderSubscriptionAbsence({ status: 'expired' }, NOW), 'pending_checkout');
+  // The live finding: Cubbly's opened-but-unpaid checkout.
+  assert.equal(
+    classifyProviderSubscriptionAbsence(
+      { status: 'created', paid_count: 0, created_at: secondsAgo(3 * 86400 * 1000) },
+      NOW,
+    ),
+    'pending_checkout',
+  );
+  // Money is moving with no mirror — that is exactly what reconciliation exists to catch.
+  assert.equal(
+    classifyProviderSubscriptionAbsence({ status: 'active', paid_count: 1 }, NOW),
+    'missing_local',
+  );
+  assert.equal(classifyProviderSubscriptionAbsence({ status: 'halted' }, NOW), 'missing_local');
+  assert.equal(classifyProviderSubscriptionAbsence({}, NOW), 'missing_local');
+});
+
+test('authenticated with no charge is pending for 24h only', () => {
+  const inFlight = { status: 'authenticated', paid_count: 0, created_at: secondsAgo(60 * 60 * 1000) };
+  assert.equal(classifyProviderSubscriptionAbsence(inFlight, NOW), 'pending_checkout');
+  const stale = {
+    status: 'authenticated',
+    paid_count: 0,
+    created_at: secondsAgo(PENDING_AUTHENTICATED_WINDOW_MS + 60_000),
+  };
+  assert.equal(classifyProviderSubscriptionAbsence(stale, NOW), 'missing_local');
+  const charged = { status: 'authenticated', paid_count: 1, created_at: secondsAgo(60_000) };
+  assert.equal(classifyProviderSubscriptionAbsence(charged, NOW), 'missing_local');
+});
+
+test('the pending result value stays inside the items CHECK constraint', async () => {
+  const migration = await read('db/migrations/20260726_nestly_v77_stripe_billing.sql');
+  const check = migration.match(/result text not null check \(result in \(([^)]*)\)\)/);
+  assert.ok(check, 'billing_reconciliation_items result CHECK not found');
+  const allowed = check[1].split(',').map((value) => value.trim().replace(/'/g, ''));
+  assert.ok(!allowed.includes('pending_checkout'), 'constraint changed — revisit the encoding');
+  const source = await read('supabase/functions/razorpay-billing-reconcile/index.ts');
+  const written = [...source.matchAll(/result: pending \? '([a-z_]+)' : '([a-z_]+)'/g)];
+  assert.equal(written.length, 1, 'pending encoding not found exactly once');
+  assert.deepEqual([written[0][1], written[0][2]], ['match', 'missing_local']);
+  for (const value of [written[0][1], written[0][2]]) assert.ok(allowed.includes(value));
+  // A pending checkout must not land in the discrepancy counters that raise a mismatch run.
+  assert.match(source, /recordResult\(cursor, run, pending \? 'match' : 'missing_local'\);/);
+  assert.match(source, /reason: 'provider_subscription_unpaid_checkout',/);
+  assert.match(source, /command_id: provider\.notes\?\.command_id \|\| null,/);
+  assert.match(source, /pending_checkout: run\.pending_checkout,/);
+});
