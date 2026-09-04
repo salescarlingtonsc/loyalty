@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **77**.
+Fixture count: **78**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -94,6 +94,7 @@ Fixture count: **77**.
 | `db/tests/executed/v758_corpus_billing_summary.sql` | `db/migrations/20260928_nestly_v758_billing_summary_and_payment_method.sql` | _(none)_ | 3 | 0 | `fc79b300f627a3f3274681ad1ef0c67a31bb6733b339a6984233453bc325bc9c` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v758_corpus_billing_summary --migrated-only` |
 | `db/tests/executed/v760_corpus_shared_provider_customers.sql` | `db/migrations/20260929_nestly_v760_shared_provider_customers.sql` | _(none)_ | 1 | 0 | `6dbb68bf21f0b484547bc0bb2b325ea499f759d452bf119739e5cae6af7db922` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v760_corpus_shared_provider_customers --migrated-only` |
 | `db/tests/executed/v763_corpus_self_serve_activation.sql` | `db/migrations/20260930_nestly_v763_self_serve_activation_by_tier.sql` | _(none)_ | 1 | 0 | `ff021dfeaf9700d7d768b690b4947fe04c5eebb2e3d4ff15efdc02f1e8877fda` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v763_corpus_self_serve_activation --migrated-only` |
+| `db/tests/executed/v764_corpus_birthday_rejoin_guard.sql` | `db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql` | _(none)_ | 1 | 4 | `a48bd6f634722d214f528a3fc8ffa6ccb41bdb61c4e3002a8077bda5277f6df8` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v764_corpus_birthday_rejoin_guard --migrated-only` |
 
 ## Notes
 

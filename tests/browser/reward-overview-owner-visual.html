@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="40362a353a3880e761dc83680c9223d1087f596500e68f9d8f4ecf815d47de27"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -876,6 +876,27 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
 .customer-entry-footer>.legal-links{margin-top:0}
+/* nestly_v764: the customer sign-in screen restyled to the owner's photo (2026-09-05). Scoped to
+   the one card; the shell's duplicate mark and footer nav are hidden on this screen only. */
+.wallet-inner:has(>.customer-signin-v764) .wallet-head,.wallet-inner:has(>.customer-signin-v764) .customer-entry-footer{display:none}
+.card.customer-signin-v764{background:transparent;border:0;box-shadow:none;border-radius:0;padding:6px 2px 28px}
+.customer-signin-hero-v764{text-align:center;padding:14px 0 22px}
+.customer-signin-logo-v764{display:block;width:min(58%,200px);height:auto;margin:0 auto 20px}
+.customer-signin-v764 h1{margin:0 auto;max-width:22ch;font-size:25px;line-height:1.25;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.customer-signin-field-v764{position:relative;display:flex;align-items:center;margin-top:16px;background:var(--card,#fff);border:1px solid var(--hair);border-radius:22px;min-height:66px;box-shadow:0 8px 24px rgba(74,44,32,.07)}
+.customer-signin-field-v764:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+.customer-signin-prefix-v764{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;padding:0 4px 0 20px;font-size:22px;font-weight:600;color:var(--muted)}
+.customer-signin-field-password-v764 .customer-signin-prefix-v764{color:var(--coral)}
+.customer-signin-field-v764 input{flex:1 1 auto;min-width:0;width:100%;margin:0;min-height:64px;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:22px;font-size:22px;padding:0 18px 0 8px}
+.customer-signin-field-v764 input::placeholder{color:var(--muted);opacity:.75}
+.customer-signin-field-v764 .password-control{flex:1 1 auto;min-width:0}
+.customer-signin-field-v764 .password-control input{padding-left:8px}
+.customer-signin-field-v764 .password-control-actions{inset:0 10px 0 auto}
+.customer-signin-v764 .btn{min-height:66px;border-radius:999px;font-size:22px;font-weight:700;margin-top:26px!important;box-shadow:0 10px 24px rgba(194,65,53,.22)}
+.customer-signin-links-v764 .btn.ghost.sm{min-height:44px;font-size:15px;border-radius:999px}
+.customer-signin-terms-v764{margin:20px 0 0;text-align:center;font-size:15px;line-height:1.5;color:var(--muted)}
+.customer-signin-terms-v764 a{color:var(--coral);text-decoration:underline;text-underline-offset:2px}
+@media(max-width:380px){.customer-signin-v764 h1{font-size:22px}.customer-signin-prefix-v764{font-size:19px;padding-left:14px}.customer-signin-field-v764 input{font-size:19px}}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry[hidden]{display:none}.challenge.challenge-passed{min-height:0;margin-top:0}.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
@@ -5741,7 +5762,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 40362a353a3880e761dc83680c9223d1087f596500e68f9d8f4ecf815d47de27</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -16240,7 +16261,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'40362a353a3880e761dc83680c9223d1087f596500e68f9d8f4ecf815d47de27',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

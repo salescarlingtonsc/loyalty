@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 638,
-  "executableCount": 624,
+  "itemCount": 639,
+  "executableCount": 625,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -904,6 +904,14 @@
       "paths": [
         "db/migrations/20260929_nestly_v759_staff_recurring_breaks.sql",
         "db/migrations/20260929_nestly_v760_shared_provider_customers.sql"
+      ]
+    },
+    {
+      "sourceDeployVersion": "20260930",
+      "count": 2,
+      "paths": [
+        "db/migrations/20260930_nestly_v763_self_serve_activation_by_tier.sql",
+        "db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql"
       ]
     }
   ],
@@ -6011,6 +6019,14 @@
       "semanticVersion": "v763",
       "proposedDeployVersion": "20260930000000",
       "sha256": "cdb5660da2cf68df3acc7448e64cf94a2261632482ef05398e60dde0b41b3bb8"
+    },
+    {
+      "order": 639,
+      "kind": "executable",
+      "path": "db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql",
+      "semanticVersion": "v764",
+      "proposedDeployVersion": "20260930010000",
+      "sha256": "1466b136d7c1e0238a1bd14314b1780c20b1c207af920010b2688c5b49ac5407"
     }
   ]
 }

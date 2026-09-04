@@ -17,7 +17,9 @@ test('normal customer login uses phone and password without touching OTP transpo
      depend on Turnstile loading. */
   assert.match(login,/sb\.auth\.signInWithPassword\(\{phone,password\}\)/);
   assert.doesNotMatch(login,/captchaToken|mountTurnstile|authChallengeHtml/);
-  assert.match(login,/Normal sign-in does not send an OTP/);
+  /* nestly_v764: the screen was restyled to the owner's photo; the OTP-free promise is now
+     proven by the doesNotMatch below rather than by a sentence on the card. */
+  assert.doesNotMatch(login,/Normal sign-in does not send an OTP/);
   assert.doesNotMatch(login,/signInWithOtp|signUp|auth\.resend|verifyOtp|loadCustomerPhoneOtpCapabilities|customerPhoneOtpAvailable/);
   assert.match(login,/id="customerCreateAccount"/);
   assert.match(login,/id="customerForgotPassword"/);

@@ -652,6 +652,14 @@ function customerAuthFailureKindV289(error){
   if(code==='otp_expired'||message.includes('token has expired'))return 'otp_invalid';
   if(code==='phone_not_confirmed'||message.includes('phone not confirmed'))return 'phone_unconfirmed';
   if(code==='invalid_credentials'||message.includes('invalid login credentials'))return 'invalid_credentials';
+  /* nestly_v764 (owner: "a fresh password is not allowed to sign up again"). The auth logs for
+     2026-09-04 show what the generic sentence was hiding: `422 Password is known to be weak and
+     easy to guess` — leaked-password protection refusing a password that appears in a public
+     breach list. The OLD password passed only because it happened not to be on that list; the
+     deleted account had nothing to do with it. Named so the screen can say what to change. */
+  if(code==='weak_password'||name==='WeakPasswordError'||message.includes('known to be weak')
+    ||message.includes('has been pwned')||message.includes('weak password'))return 'weak_password';
+  if(code==='user_already_exists'||code==='phone_exists'||message.includes('already registered'))return 'user_exists';
   if(status>=500||code==='unexpected_failure')return 'server';
   return 'unknown';
 }
@@ -754,20 +762,32 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
    type="button", so Chrome and Safari had nothing to recognise and never prompted. The phone field
    also carried autocomplete="tel", which is not the username hint a manager pairs a credential to
    — and "username webauthn" is the documented pairing for passkey autofill as well. */
+/* nestly_v764: the two field prefixes on the sign-in screen. Inline so they need no icon set
+   and no emoji font (a flag emoji is two letters on Windows). */
+const SG_FLAG_SVG_V764='<svg viewBox="0 0 36 24" width="34" height="23" aria-hidden="true" focusable="false"><rect width="36" height="24" rx="4" fill="#fff"/><path d="M4 0h28a4 4 0 0 1 4 4v8H0V4a4 4 0 0 1 4-4Z" fill="#EF3340"/><circle cx="9.5" cy="6" r="3.6" fill="#fff"/><circle cx="10.9" cy="6" r="3.1" fill="#EF3340"/><g fill="#fff"><circle cx="12.2" cy="4.1" r=".7"/><circle cx="14.4" cy="5.2" r=".7"/><circle cx="13.9" cy="7.6" r=".7"/><circle cx="11.4" cy="8" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/></g><rect x=".5" y=".5" width="35" height="23" rx="3.5" fill="none" stroke="rgba(0,0,0,.08)"/></svg>';
+const LOCK_SVG_V764='<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg>';
 function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeTone='success'}={}){
   if(!isRouteCurrent())return;
-  customerRegistrationShell(`<section class="card" aria-labelledby="customerPasswordTitle">
-    <div class="row"><span aria-hidden="true">${CUI.icon('customers',{size:24})}</span><div><h1 id="customerPasswordTitle">Welcome to ${esc(BRAND.productName)}</h1><p class="muted small" style="margin-top:5px">Sign in with your mobile number and password. Normal sign-in does not send an OTP.</p></div></div>
+  /* nestly_v764 (owner photo 1, 2026-09-05: "change my UI UX of my customer log in — follow
+     photo 1"; "just style only"). The same form, the same ids, the same handlers: what changed is
+     the skin. The hero is the brand mark and one tagline instead of an icon and two sentences;
+     each field is a white pill with its own prefix (the Singapore flag and +65 for the number, a
+     lock for the password); the primary button is a full-width pill; the legal line sits under
+     the card in the photo's wording. The shell's own header logo and footer nav are hidden on
+     this screen only (app.css, :has) so the mark is not shown twice. */
+  customerRegistrationShell(`<section class="card customer-signin-v764" aria-labelledby="customerPasswordTitle">
+    <div class="customer-signin-hero-v764"><img class="customer-signin-logo-v764" src="${esc(BRAND?.logoPath||'/brand/peekaa-logo.png')}" alt="${esc(BRAND.productName)}" width="210" height="140" decoding="async"><h1 id="customerPasswordTitle">Sign in to earn points and unlock amazing rewards!</h1></div>
     <form id="customerPasswordForm" novalidate>
-    <label for="customerPasswordPhone">Singapore mobile number</label>
-    <input id="customerPasswordPhone" name="username" type="tel" inputmode="tel" autocomplete="username webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}">
-    <label for="customerPassword">Password</label>
-    ${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}
+    <label for="customerPasswordPhone" class="sr-only">Singapore mobile number</label>
+    <div class="customer-signin-field-v764"><span class="customer-signin-prefix-v764" aria-hidden="true">${SG_FLAG_SVG_V764}<b>+65</b></span><input id="customerPasswordPhone" name="username" type="tel" inputmode="tel" autocomplete="username webauthn" placeholder="8123 4567" value="${esc(customerRegistrationState.phone.replace(/^\+65/,''))}"></div>
+    <label for="customerPassword" class="sr-only">Password</label>
+    <div class="customer-signin-field-v764 customer-signin-field-password-v764"><span class="customer-signin-prefix-v764" aria-hidden="true">${LOCK_SVG_V764}</span>${passwordControlHtml('customerPassword',{autocomplete:'current-password',passkeyButtonId:'customerPasskeySignIn',name:'password'})}</div>
     <div id="customerPasswordError" role="alert" aria-live="assertive">${notice?`<p class="muted small" style="margin-top:10px${noticeTone==='success'?';color:var(--green)':''}">${esc(notice)}</p>`:''}</div>
     <button class="btn" id="customerPasswordSignIn" type="submit" style="width:100%;margin-top:16px">${CUI.icon('forward',{size:20})}<span>Sign in</span></button>
     </form>
-    <div class="row" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
+    <div class="row customer-signin-links-v764" style="margin-top:12px;gap:8px"><button class="btn ghost sm" id="customerCreateAccount" type="button">Create account</button><span class="spacer"></span><button class="btn ghost sm" id="customerForgotPassword" type="button">Forgot password?</button></div>
     <p id="customerPasskeyStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
+    <p class="customer-signin-terms-v764">By signing in, you agree to our <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a> and <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
   </section>`);
   bindPasswordVisibility(root);
   const signIn=$('customerPasswordSignIn'),phoneInput=$('customerPasswordPhone');
@@ -1073,7 +1093,9 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
          provider's send failure (Twilio Verify refuses a number that asked for several codes in
          ten minutes) used to be printed as the generic sentence, which reads like a dead account.
          Say what actually helps: wait, then try once more. The code path is otherwise unchanged. */
-      errorHost.innerHTML=`<div class="err">${startKindV289==='network'||startKindV289==='rate_limited'||startKindV289==='server'
+      errorHost.innerHTML=`<div class="err">${startKindV289==='weak_password'&&!recovering
+        ?'This password appears in a known data breach, so it cannot protect your account. Choose a different password — nothing has been created yet.'
+        :startKindV289==='network'||startKindV289==='rate_limited'||startKindV289==='server'
         ?esc(customerAuthErrorMessageV289(result.error,'otp_send'))+' '+esc('If several codes were requested for this number in the last 10 minutes, wait 10 minutes before trying again.')
         :(recovering?'If an account exists for this number, a reset code could not be sent. If several codes were requested recently, wait 10 minutes and try again.':'We could not start account creation. If you already have an account, return and sign in or reset your password. If you just requested a code, wait 10 minutes and try again.')}</div>`;return;
     }

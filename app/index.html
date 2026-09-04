@@ -989,6 +989,27 @@ td>.err{display:inline-block;max-width:100%;margin:0;padding:6px 10px;line-heigh
   color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .customer-entry-footer{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 8px;margin-top:14px;color:var(--muted);font-size:11.5px}
 .customer-entry-footer>.legal-links{margin-top:0}
+/* nestly_v764: the customer sign-in screen restyled to the owner's photo (2026-09-05). Scoped to
+   the one card; the shell's duplicate mark and footer nav are hidden on this screen only. */
+.wallet-inner:has(>.customer-signin-v764) .wallet-head,.wallet-inner:has(>.customer-signin-v764) .customer-entry-footer{display:none}
+.card.customer-signin-v764{background:transparent;border:0;box-shadow:none;border-radius:0;padding:6px 2px 28px}
+.customer-signin-hero-v764{text-align:center;padding:14px 0 22px}
+.customer-signin-logo-v764{display:block;width:min(58%,200px);height:auto;margin:0 auto 20px}
+.customer-signin-v764 h1{margin:0 auto;max-width:22ch;font-size:25px;line-height:1.25;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.customer-signin-field-v764{position:relative;display:flex;align-items:center;margin-top:16px;background:var(--card,#fff);border:1px solid var(--hair);border-radius:22px;min-height:66px;box-shadow:0 8px 24px rgba(74,44,32,.07)}
+.customer-signin-field-v764:focus-within{border-color:var(--coral);box-shadow:0 0 0 3px rgba(194,65,53,.14)}
+.customer-signin-prefix-v764{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;padding:0 4px 0 20px;font-size:22px;font-weight:600;color:var(--muted)}
+.customer-signin-field-password-v764 .customer-signin-prefix-v764{color:var(--coral)}
+.customer-signin-field-v764 input{flex:1 1 auto;min-width:0;width:100%;margin:0;min-height:64px;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:22px;font-size:22px;padding:0 18px 0 8px}
+.customer-signin-field-v764 input::placeholder{color:var(--muted);opacity:.75}
+.customer-signin-field-v764 .password-control{flex:1 1 auto;min-width:0}
+.customer-signin-field-v764 .password-control input{padding-left:8px}
+.customer-signin-field-v764 .password-control-actions{inset:0 10px 0 auto}
+.customer-signin-v764 .btn{min-height:66px;border-radius:999px;font-size:22px;font-weight:700;margin-top:26px!important;box-shadow:0 10px 24px rgba(194,65,53,.22)}
+.customer-signin-links-v764 .btn.ghost.sm{min-height:44px;font-size:15px;border-radius:999px}
+.customer-signin-terms-v764{margin:20px 0 0;text-align:center;font-size:15px;line-height:1.5;color:var(--muted)}
+.customer-signin-terms-v764 a{color:var(--coral);text-decoration:underline;text-underline-offset:2px}
+@media(max-width:380px){.customer-signin-v764 h1{font-size:22px}.customer-signin-prefix-v764{font-size:19px;padding-left:14px}.customer-signin-field-v764 input{font-size:19px}}
 .build-identity{font-variant-numeric:tabular-nums;white-space:nowrap}
 .challenge{margin-top:18px;min-height:82px}.challenge-status{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
 .challenge-retry[hidden]{display:none}.challenge.challenge-passed{min-height:0;margin-top:0}.challenge-retry{display:inline-flex;align-items:center;min-height:44px;background:none;color:var(--coral);font-size:13px;font-weight:600;padding:6px 0;text-decoration:underline}
@@ -5920,7 +5941,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=2829646f0f0f","customer":"/app-customer.js?b=24030d4dd3ab","business":"/app-business.js?b=c3382b8571ef","i18n":"/app-i18n.js?b=79f8a5608f2b"}
+{"auth":"/app-auth.js?b=2829646f0f0f","customer":"/app-customer.js?b=446c9be14140","business":"/app-business.js?b=c3382b8571ef","i18n":"/app-i18n.js?b=79f8a5608f2b"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

@@ -3838,6 +3838,12 @@
       "version": "20260930000000",
       "name": "nestly_v763_self_serve_activation_by_tier",
       "sourcePath": "db/migrations/20260930_nestly_v763_self_serve_activation_by_tier.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260930010000",
+      "name": "nestly_v764_birthday_rejoin_guard_and_tombstone_ban",
+      "sourcePath": "db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql"
     }
   ]
 }
