@@ -3796,6 +3796,12 @@
       "version": "20260924040000",
       "name": "nestly_v754_gift_expiry_is_a_redeem_by_date",
       "sourcePath": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260925000000",
+      "name": "nestly_v755_razorpay_billing",
+      "sourcePath": "db/migrations/20260925_nestly_v755_razorpay_billing.sql"
     }
   ]
 }

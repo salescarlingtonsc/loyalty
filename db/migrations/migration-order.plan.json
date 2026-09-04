@@ -3801,6 +3801,12 @@
       "path": "db/migrations/20260924_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
       "semanticVersion": "v754",
       "proposedDeployVersion": "20260924040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260925_nestly_v755_razorpay_billing.sql",
+      "semanticVersion": "v755",
+      "proposedDeployVersion": "20260925000000"
     }
   ]
 }

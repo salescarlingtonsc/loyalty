@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 587,
-  "itemCount": 632,
+  "pendingCount": 588,
+  "itemCount": 633,
   "items": [
     {
       "order": 1,
@@ -6327,6 +6327,16 @@
       "path": "supabase/migrations/20260924040000_nestly_v754_gift_expiry_is_a_redeem_by_date.sql",
       "octetLength": 22048,
       "sha256": "8bcf5369c617dbe4a0ab79d936032a3068e966d5b7f164e3ad23ac1f7d63b54d",
+      "provenance": "local-source"
+    },
+    {
+      "order": 633,
+      "kind": "pending",
+      "version": "20260925000000",
+      "name": "nestly_v755_razorpay_billing",
+      "path": "supabase/migrations/20260925000000_nestly_v755_razorpay_billing.sql",
+      "octetLength": 45775,
+      "sha256": "e636d0274a202062ef2f24ba358e573f0c4d33c6494c3d80e382b7962235127e",
       "provenance": "local-source"
     }
   ]
