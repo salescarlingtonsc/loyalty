@@ -505,6 +505,13 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   // higher than the file it deploys ahead of. Deploy order is unambiguous (the canonical plan);
   // this is that one adjacent semantic/date crossing, not a real regression.
   '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v751_discount_cap_wording.sql'
+  // v752 (this owner ruling: the birthday gift becomes a real benefit) was authored 2026-09-04 but
+  // filed under its 20260923 db/migrations date-prefix to match the supabase twin's deploy slot
+  // ordering (20260924010000, after v749's 20260924000000) rather than its true authoring date —
+  // db/migrations sorts by that prefix, which lands one day before v749's 20260924 filename even
+  // though v752 deploys strictly after it. Not a real ordering regression: the canonical plan's
+  // proposedDeployVersion is what actually orders these two at apply time.
+  '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v752_birthday_gift_is_a_benefit.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

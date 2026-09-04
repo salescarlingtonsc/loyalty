@@ -7677,10 +7677,11 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        staff_tier_benefits_for_client_v365 clause for clause on the server, so the card below can
        never promise a perk the counter would refuse. Fails closed and silently, the same rule the
        v427 entitlements follow: no rows, no error card. */
-    const [catalogResult,entitlementsResultV427,tierPerkResultV501]=await Promise.all([
+    const [catalogResult,entitlementsResultV427,tierPerkResultV501,birthdayBenefitResultV752]=await Promise.all([
       customerRpc('customer_get_reward_catalog',args),
       customerRpc('customer_get_entitlements_v427',{p_business_slug:businessSlug}),
-      customerRpc('customer_get_tier_benefits_v501',{p_business_slug:businessSlug})
+      customerRpc('customer_get_tier_benefits_v501',{p_business_slug:businessSlug}),
+      customerRpc('customer_get_birthday_benefit',{p_business_slug:businessSlug})
     ]);
     /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
     const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
@@ -7877,7 +7878,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        the server already decided what is active, derived the status from expires_at, and wrote the
        instructions sentence — a browser second-guessing any of that is how the promise and the
        counter start to disagree. */
-    const entitlementSourceChipV429={welcome:'Welcome gift',bringback:'We miss you',referral:'Referral'};
+    const entitlementSourceChipV429={welcome:'Welcome gift',bringback:'We miss you',referral:'Referral',birthday:'Birthday gift'};
     const entitlementCurrencyV429=b?.currency||'SGD';
     const entitlementCardV429=grant=>{
       const chip=entitlementSourceChipV429[String(grant?.source||'')]||'Gift';
@@ -7997,6 +7998,25 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        unrecognised payload leaves it empty, which is the fail-closed rule above. */
     const entitlementsV429=!entitlementsResultV427?.error&&Array.isArray(entitlementsResultV427?.data?.active)
       ?entitlementsResultV427.data.active:[];
+    /* nestly_v752 (owner ruling 2026-09-04: the birthday gift is a real benefit and the customer
+       must see it and let the counter scan its QR — the same door welcome/bringback/referral
+       already have). customer_get_birthday_benefit already derives 'display' through the same
+       app.v369_benefit_label / app.v657_discount_label authorities a tier discount uses; the id
+       key (added by nestly_v752) is present only while the entitlement is genuinely available and
+       in its window (app.c45_safe_birthday_entitlement), so a spent or expired one naturally
+       yields no QR button below — no separate eligibility check needed here. */
+    const birthdayBenefitDataV752=!birthdayBenefitResultV752?.error?birthdayBenefitResultV752?.data:null;
+    if(birthdayBenefitDataV752?.status==='available'&&birthdayBenefitDataV752?.id){
+      entitlementsV429.push({
+        source:'birthday',
+        id:birthdayBenefitDataV752.id,
+        label:birthdayBenefitDataV752.display||birthdayBenefitDataV752.label,
+        granted_at:birthdayBenefitDataV752?.validity?.available_from||null,
+        expires_at:birthdayBenefitDataV752?.validity?.available_until||null,
+        min_spend_cents:0,
+        instructions:birthdayBenefitDataV752.description||''
+      });
+    }
     /* nestly_v502 (owner: "yes keep it visible greyed out until 1 sep"). EVERY perk this
        customer's tier carries is listed; the card above greys the ones that cannot be used right
        now and says when they return. This is a deliberate departure from the v422 ruling for

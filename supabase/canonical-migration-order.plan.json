@@ -3769,9 +3769,15 @@
     },
     {
       "kind": "pending",
+<<<<<<< HEAD
       "version": "20260924000001",
       "name": "nestly_v750_bottle_does_not_block_deletion",
       "sourcePath": "db/migrations/20260924_nestly_v750_bottle_does_not_block_deletion.sql"
+=======
+      "version": "20260924010000",
+      "name": "nestly_v752_birthday_gift_is_a_benefit",
+      "sourcePath": "db/migrations/20260923_nestly_v752_birthday_gift_is_a_benefit.sql"
+>>>>>>> claude/v752-owner-batch2
     }
   ]
 }

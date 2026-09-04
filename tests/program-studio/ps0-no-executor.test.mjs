@@ -371,8 +371,8 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      different ways is how the till and the customer's app come to disagree. Acceptance suite:
      db/tests/v665_gift_staging_and_reversal.sql — 16 assertions run rolled-back against
      production, including that the kernel refuses a spent perk and prices a restored one. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes|nestly_v665_gift_staging_and_reversal)/;
-  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/;
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes|nestly_v665_gift_staging_and_reversal|nestly_v752_birthday_gift_is_a_benefit)/;
+  const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v752_birthday_gift_is_a_benefit)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;
     const re = new RegExp(`create\\s+or\\s+replace\\s+function\\s+${fn.replace('.', '\\.')}\\s*\\(`, 'i');
@@ -530,7 +530,7 @@ test('checkout_discount_lines is written ONLY by the kernel finaliser (record_ca
      every insert still sits inside it, and every row still traces to a consumed evaluation token.
      The assertions below re-prove all of that against the v656 body rather than taking it on
      trust. */
-    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope)/,
+    assert.match(file, /(frenly_v(58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v752_birthday_gift_is_a_benefit)/,
       `${file} must not insert into checkout_discount_lines outside the v58/v59/v67/v370/v573/v656 kernel migrations`);
     const finaliserAt = sql.search(/create\s+or\s+replace\s+function\s+public\.record_cart_sale\s*\(/i);
     const evalAt = sql.search(/create\s+or\s+replace\s+function\s+public\.evaluate_checkout\s*\(/i);
