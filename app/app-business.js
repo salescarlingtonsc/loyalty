@@ -36461,9 +36461,10 @@ function settingsBillingReturnPollV756({fetchState,baseline,onChange,onTimeout,i
   const tick=async()=>{
     if(isCancelled())return;
     attempts+=1;
-    const {signature,payload}=await fetchState();
+    let next=null;
+    try{next=await fetchState();}catch(error){next=null;/* a transient fetch failure is not a state change: keep polling */}
     if(isCancelled())return;
-    if(signature!==baseline){onChange(payload,signature);return}
+    if(next&&next.signature!==baseline){onChange(next.payload,next.signature);return}
     if(attempts>=maxAttempts){onTimeout();return}
     settingsBillingReturnTimerV756=setTimeout(tick,intervalMs);
   };
