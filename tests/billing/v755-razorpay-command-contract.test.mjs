@@ -245,7 +245,8 @@ test('the config declares the four Razorpay functions and no Stripe function sur
 
 test('reconciliation keeps the run/finish contract and is scoped by real columns', async () => {
   const source = await read('supabase/functions/razorpay-billing-reconcile/index.ts');
-  assert.match(source, /start_billing_reconciliation_v77/);
+  assert.match(source, /start_billing_reconciliation_v757/);
+  assert.match(source, /p_provider:\s*PROVIDER/);
   assert.match(source, /finish_billing_reconciliation_v77/);
   assert.match(source, /x-nestly-reconciliation-secret/);
   assert.match(source, /drainBoundedKeysetPages/);

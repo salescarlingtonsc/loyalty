@@ -14,7 +14,7 @@ test('scheduled billing reconciliation compares provider and Nestly payment trut
   assert.match(worker, /razorpayClient/);
   assert.match(worker, /BILLING_RECONCILIATION_SECRET/);
   assert.match(worker, /x-nestly-reconciliation-secret/);
-  assert.match(worker, /start_billing_reconciliation_v77/);
+  assert.match(worker, /start_billing_reconciliation_v757/);
   assert.match(worker, /p_run_mode: 'scheduled'/);
   assert.match(worker, /billing_provider_subscriptions/);
   assert.match(worker, /razorpay\.getSubscription/);

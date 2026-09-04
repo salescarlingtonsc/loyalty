@@ -751,8 +751,8 @@ Deno.serve(async (req) => {
     const resume = await priorCursor(admin);
     const cursor = resume || newBillingReconciliationCursor(completedSecondSnapshot());
     const { data: runId, error: startError } = await admin.rpc(
-      'start_billing_reconciliation_v77',
-      { p_run_mode: 'scheduled', p_cursor_start: JSON.stringify(cursor) },
+      'start_billing_reconciliation_v757',
+      { p_run_mode: 'scheduled', p_cursor_start: JSON.stringify(cursor), p_provider: PROVIDER },
     );
     if (startError || !runId) {
       return billingJson(500, { error: 'reconciliation_start_failed' });

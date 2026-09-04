@@ -3813,6 +3813,12 @@
       "path": "db/migrations/20260926_nestly_v756_self_serve_payment_evidence.sql",
       "semanticVersion": "v756",
       "proposedDeployVersion": "20260926000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260927_nestly_v757_reconcile_run_provider_label.sql",
+      "semanticVersion": "v757",
+      "proposedDeployVersion": "20260927000000"
     }
   ]
 }
