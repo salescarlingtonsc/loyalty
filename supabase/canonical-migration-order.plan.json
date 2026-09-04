@@ -3820,6 +3820,12 @@
       "version": "20260928000000",
       "name": "nestly_v758_billing_summary_and_payment_method",
       "sourcePath": "db/migrations/20260928_nestly_v758_billing_summary_and_payment_method.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20260929000000",
+      "name": "nestly_v759_staff_recurring_breaks",
+      "sourcePath": "db/migrations/20260929_nestly_v759_staff_recurring_breaks.sql"
     }
   ]
 }

@@ -3825,6 +3825,14 @@
       "reason": "nestly_v598 browser direct write to non-value config table staff_recurring_off_days (UPSERT); a weekly day off for one teammate, keyed (staff_id, weekday). Written when a day is ticked Closed on the Staff Members roster. Since v598 the shop's opening hours are every teammate's default working window, so a day off must be STATED here rather than inferred from a missing staff_hours row — this row is the only thing that makes somebody unavailable on a recurring weekday. RLS-gated owner setup data: it changes which times a customer is OFFERED, never a balance, benefit or sale."
     },
     {
+      "id": "browser.write:app/app.js:staff_recurring_breaks:DELETE",
+      "reason": "nestly_v759 browser direct write to non-value config table staff_recurring_breaks (DELETE); withdrawing a repeating weekly break, either by removing the break row in the Block time dialog or by unticking one of its weekdays. RLS-gated owner setup data, not customer value."
+    },
+    {
+      "id": "browser.write:app/app.js:staff_recurring_breaks:UPSERT",
+      "reason": "nestly_v759 browser direct write to non-value config table staff_recurring_breaks (UPSERT); a repeating break inside one teammate's working day (lunch, a standing commitment), keyed (business_id, staff_id, weekday, starts_at, ends_at). Written from Appointments -> Block time -> Every week. RLS-gated owner setup data: it changes which times a customer is OFFERED and which the booking guard accepts, never a balance, benefit or sale."
+    },
+    {
       "id": "browser.write:app/app.js:waitlist:INSERT",
       "reason": "browser direct write to non-value catalog/config table waitlist (INSERT); RLS-gated setup data, not customer value"
     },

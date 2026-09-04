@@ -3825,6 +3825,12 @@
       "path": "db/migrations/20260928_nestly_v758_billing_summary_and_payment_method.sql",
       "semanticVersion": "v758",
       "proposedDeployVersion": "20260928000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20260929_nestly_v759_staff_recurring_breaks.sql",
+      "semanticVersion": "v759",
+      "proposedDeployVersion": "20260929000000"
     }
   ]
 }
