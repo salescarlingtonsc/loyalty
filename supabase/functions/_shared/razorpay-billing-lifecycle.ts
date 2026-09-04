@@ -273,7 +273,13 @@ export type DueRenewalCancel = {
 };
 
 export function normalizeDueRenewalCancels(data: unknown): DueRenewalCancel[] {
-  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  /* v765's list_due_renewal_cancels_v764 answers {status:'ok', due:[...]}; a bare array is
+     also accepted so a future reshaping cannot silently empty the sweep. */
+  const envelope = data && typeof data === 'object' && !Array.isArray(data)
+    ? (data as Record<string, unknown>)
+    : null;
+  const source = envelope && Array.isArray(envelope.due) ? envelope.due : data;
+  const rows = Array.isArray(source) ? source : source ? [source] : [];
   return rows
     .map((row) => {
       const record = (row || {}) as Record<string, unknown>;

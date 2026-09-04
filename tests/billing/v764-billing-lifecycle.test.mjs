@@ -656,3 +656,14 @@ test('in-place commands hand back no redirect', () => {
     /redirectUrl = NO_REDIRECT_COMMAND_TYPES\.includes\(commandType\)\s*\n?\s*\? null/,
   );
 });
+
+
+test('the due renewal-cancel list unwraps the {status, due:[...]} envelope the v765 RPC returns', async () => {
+  const rows = normalizeDueRenewalCancels({ status: 'ok', due: [
+    { business_id: 'b1', provider_subscription_id: 'sub_1' },
+    { business_id: '', provider_subscription_id: 'sub_2' },
+  ] });
+  assert.deepEqual(rows, [{ business_id: 'b1', provider_subscription_id: 'sub_1' }]);
+  assert.deepEqual(normalizeDueRenewalCancels([{ business_id: 'b2', subscription_id: 'sub_3' }]),
+    [{ business_id: 'b2', provider_subscription_id: 'sub_3' }]);
+});
