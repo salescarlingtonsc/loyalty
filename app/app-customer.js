@@ -69,7 +69,6 @@ function recordCustomerSessionStartV256(businessId,locale){
 function customerJoinAlreadyConfirmedV596(token){
   return !!String(token||'')&&customerJoinConfirmedV596.token===String(token);
 }
-function clearShareReferralV576(){try{localStorage.removeItem(SHARE_REFERRAL_STORE_KEY_V576)}catch{}}
 /* Fire-and-forget, from the wallet render for the business the code names. The server owns every
    guard; this only decides what to do with its answer. A definitive answer (applied, or a
    refusal that will never change) retires the stored code; "not a member yet" (42501) keeps it

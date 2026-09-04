@@ -65,6 +65,14 @@ async function runRootRoute({
     killCharts:()=>{},
     passwordRecoveryError:false,
     passwordRecoveryActive:false,
+    /* nestly_v758: the ref-link confirmation sheet is gated on this module-level state, which
+       lives outside the extracted route() body. None of these cases arrive with a ?ref= share
+       code pending, so the stubs simply keep the gate closed. */
+    pendingReferralSheetSlugV576:'',
+    customerReferralAskedThisVisitV576:false,
+    confirmCustomerShareReferralV576:async()=>true,
+    clearShareReferralV576:()=>{},
+    esc:value=>String(value??''),
     pendingCustomerInvitationToken:'',
     pendingCustomerBusinessSlug:'',
     pendingCustomerDestination:'',
