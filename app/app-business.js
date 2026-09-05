@@ -36813,7 +36813,7 @@ function billingLifecycleLinesV764(billing,summary,paymentMethod){
     out.show_resume=true;
     out.cancel_line=`Renewal cancelled · access until ${endsOn||'your next billing date'}`;
     out.resume_label='Resume renewal';
-    out.resume_confirm=`Resume renewals? Next payment ${moneyShortV758(Number(s.total_cents||0))}`
+    out.resume_confirm=`Resume renewal? Next payment ${moneyShortV758(Number(s.total_cents||0))}`
       +` on ${endsOn||'your next billing date'} to ${card}.`;
   }else{
     out.show_cancel=true;
@@ -37444,12 +37444,13 @@ async function loadBillingConfig(){
     };
     /* nestly_v764 (owner ruling 4): both directions are confirmed in the owner's own words, and
        the resume confirmation names the money, the date and the card it will be taken from. */
-    if($('billingCancel'))$('billingCancel').onclick=()=>{
-      if(lifecycleV764.cancel_confirm&&!confirm(lifecycleV764.cancel_confirm))return;
+    /* v769: the app's own dialog (confirmActionV386), as every other confirmation on this page. */
+    if($('billingCancel'))$('billingCancel').onclick=async()=>{
+      if(lifecycleV764.cancel_confirm&&!await confirmActionV386(lifecycleV764.cancel_confirm,{confirmLabel:'Cancel renewal',cancelLabel:'Keep renewing'}))return;
       return setRenewalIntentV764(true);
     };
-    if($('billingResume'))$('billingResume').onclick=()=>{
-      if(lifecycleV764.resume_confirm&&!confirm(lifecycleV764.resume_confirm))return;
+    if($('billingResume'))$('billingResume').onclick=async()=>{
+      if(lifecycleV764.resume_confirm&&!await confirmActionV386(lifecycleV764.resume_confirm,{confirmLabel:'Resume renewal',cancelLabel:'Not now'}))return;
       return setRenewalIntentV764(false);
     };
     /* The intent is local until the cron sends it to Razorpay (a Razorpay cancel cannot be
