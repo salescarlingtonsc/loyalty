@@ -15,6 +15,11 @@ export const requiredStaticHtmlEntries = Object.freeze([
   'landing.html',
   'offline.html',
   'privacy.html',
+  /* nestly_v755 (c8b08111 / 3a5476c0: "Razorpay edge functions replace Stripe billing and
+     Connect"): Razorpay Checkout runs on its OWN page, deliberately, so that app/index.html's
+     CSP never has to allow a third-party script origin. It carries its own scoped CSP and its
+     own app/vercel.json header rule, so it is a required release artifact, not stray output. */
+  'razorpay-checkout.html',
   // nestly_v672: the public support desk, rewritten from /support.
   'support.html',
   'terms.html'

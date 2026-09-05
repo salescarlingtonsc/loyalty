@@ -41,7 +41,11 @@ test('native business access is purchase-free and a signed-in return completes s
   assert.doesNotMatch(app,/New business accounts are created on the Nestly website/);
   assert.match(app,/Subscription changes are not available in this app/);
   assert.match(app,/if\s*\(NestlyNativeBridge\.isNative\)[\s\S]{0,600}renderNativeBusinessCompanion/);
-  assert.match(app,/Continue to secure Stripe Checkout/,'web Stripe onboarding must remain present');
+  /* nestly_v782: the contract here is that the WEB purchase path still exists (the native app is
+     purchase-free only because the web one is not). 3a5476c0 / c8b08111 moved that path from
+     Stripe to Razorpay, so the button now reads "Continue to secure Razorpay Checkout". The
+     assertion is unchanged in substance — only the provider it names. */
+  assert.match(app,/Continue to secure Razorpay Checkout/,'web Razorpay onboarding must remain present');
   assert.match(app,/nativeBusinessSignIn'\)\.onclick=returnToNativeSignIn/);
   const source=between(app,'async function returnToNativeSignIn(){','function renderNativeBusinessCompanion(){');
   const events=[];

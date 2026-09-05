@@ -99,7 +99,12 @@ test('v755 both self-service surfaces run the one executor, so the two copies ca
 });
 
 test('v755 the poll that waits for provider confirmation is unchanged and still terminates, in Razorpay copy', () => {
-  assert.match(app, /if\(attempts<15\)setTimeout\(poll,2000\)/,
+  /* nestly_v782: the bound moved 15 -> 90 attempts in a9d5694d (nestly_v766) — deliberately, and
+     for a measured reason: "the onboarding poll waits up to 3 minutes for the webhook (Razorpay
+     took 66s), not 31s". The contract this test guards is that the poll is BOUNDED at all, not
+     that it stops at any particular attempt, so the bound is pinned as a literal number rather
+     than as 15 — a poll rewritten to `while(true)` or `if(attempts)` still fails here. */
+  assert.match(app, /if\(attempts<90\)setTimeout\(poll,2000\)/,
     'the processing poll must stay bounded: an infinite poll is another way to be stuck');
   assert.match(app, /Razorpay has not confirmed activation yet\. Use Check payment again/,
     'the poll must end on an instruction, not on silence');
