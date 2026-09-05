@@ -19,15 +19,14 @@ test('a token-less #/join that follows a join opens that wallet instead of the m
   const fallback=join.indexOf('customerLastJoinedSlugV767()');
   const missing=join.indexOf('This join link is missing or invalid');
   assert.ok(fallback>0&&fallback<missing,'the remembered slug is consulted before the error is printed');
-  /* The token is released only after the passkey prompt, so a re-entrant render replays an
-     idempotent join rather than finding nothing. */
+  /* The slug is remembered before the token is released, so a re-entrant render replays an
+     idempotent join rather than finding nothing. (nestly_v780 removed the passkey prompt that
+     used to sit between the two; the ordering still holds.) */
   const success=join.indexOf("joinFunnelEmitV610('join_rpc_succeeded'");
   const release=join.indexOf("rememberPendingCustomerJoinToken('')",success);
   const remember=join.indexOf('rememberCustomerLastJoinedSlugV767(slug)');
-  const passkey=join.indexOf('await maybeOfferCustomerPasskeySetup({isCurrent})',success);
-  assert.ok(remember>success&&remember<passkey,'the joined slug is remembered before the passkey prompt');
-  assert.ok(release>passkey,'the pending token survives until after the passkey prompt');
-  assert.doesNotMatch(join.slice(success,passkey),/rememberPendingCustomerJoinToken\(''\)/);
+  assert.ok(remember>success&&remember<release,'the joined slug is remembered before the token is released');
+  assert.doesNotMatch(join,/maybeOfferCustomerPasskeySetup/,'nestly_v780: no passkey prompt in the join flow');
   assert.match(join.slice(success,release),/invalidatePersonaCacheV370\(\)/);
 });
 

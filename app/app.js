@@ -5757,8 +5757,6 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
         nav('#/join');return;
       }
       if(!pendingCustomerBusinessSlug){
-        await maybeOfferCustomerPasskeySetup({isCurrent:isRouteCurrent});
-        if(!isRouteCurrent())return;
         nav(takePendingCustomerDestination('#/wallet'));return;
       }
       const {data:personas,error:personasError}=await sb.rpc('get_my_personas');
@@ -7355,60 +7353,12 @@ function customerPasskeyErrorMessage(error,{action='setup'}={}){
     :'Passkey setup was not completed. You can add it later from Profile.';
   return detailV468?`${baseV468} (${detailV468})`:baseV468;
 }
-async function maybeOfferCustomerPasskeySetup({isCurrent=()=>true}={}){
-  const userId=S.user?.id||'';
-  if(!userId||!customerPasskeySupported({management:true}))return false;
-  const promptKey=`nestly.customer.passkeyPrompt.${userId}`;
-  if(sessionStorage.getItem(promptKey)==='skipped')return false;
-  let listed=null;
-  try{listed=await sb.auth.passkey.list()}catch(error){return false}
-  if(!isCurrent())return false;
-  if(listed?.error)return false;
-  const passkeys=Array.isArray(listed?.data)?listed.data:(Array.isArray(listed?.data?.passkeys)?listed.data.passkeys:[]);
-  if(passkeys.length)return false;
-  return new Promise(resolve=>{
-    const overlay=document.createElement('div');
-    overlay.className='modal customer-surface appointment-detail-modal';overlay.tabIndex=-1;
-    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-    overlay.setAttribute('aria-labelledby','customerPasskeyPromptTitle');
-    overlay.innerHTML=`<section class="modal-card" style="max-width:500px"><div class="row appointment-detail-head"><div><h2 id="customerPasskeyPromptTitle">Enable Face ID or Touch ID?</h2><p class="muted small" style="margin-top:5px">Add a passkey on this device so next time you can sign in without typing your password.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerPasskeyPromptClose" type="button" aria-label="Close passkey setup">${CUI.icon('close',{size:20})}</button></div>
-      <div class="appointment-detail-section"><p class="muted small">Your face or fingerprint stays on your device. Peekaa only stores the public passkey needed to recognise this login.</p><p id="customerPasskeyPromptStatus" class="muted small" role="status" aria-live="polite" style="margin-top:10px"></p></div>
-      <div class="appointment-detail-actions"><button class="btn" id="customerPasskeyPromptAdd" type="button">${CUI.icon('add',{size:16})}<span>Enable now</span></button><button class="btn ghost" id="customerPasskeyPromptSkip" type="button">Not now</button></div></section>`;
-    document.body.appendChild(overlay);
-    let deactivate=null,done=false;
-    const close=outcome=>{
-      if(done)return;done=true;
-      if(deactivate)deactivate({restoreFocus:false});else overlay.remove();
-      resolve(outcome);
-    };
-    deactivate=CUI.activateDialog(overlay,{onClose:()=>close('dismissed'),initialFocus:'#customerPasskeyPromptAdd'});
-    overlay.addEventListener('click',event=>{if(event.target===overlay)close('dismissed')});
-    overlay.querySelector('#customerPasskeyPromptClose').onclick=()=>close('dismissed');
-    overlay.querySelector('#customerPasskeyPromptSkip').onclick=()=>{
-      sessionStorage.setItem(promptKey,'skipped');
-      close('skipped');
-    };
-    overlay.querySelector('#customerPasskeyPromptAdd').onclick=async()=>{
-      const button=overlay.querySelector('#customerPasskeyPromptAdd');
-      const status=overlay.querySelector('#customerPasskeyPromptStatus');
-      button.disabled=true;status.textContent='Follow your device prompt to enable Face ID or Touch ID.';
-      /* V468: registerPasskey resolves {error} for a server refusal but THROWS for a browser-side
-         WebAuthn rejection. An unhandled throw here left the button disabled and the status stuck
-         on "Follow your device prompt…" forever — a genuinely dead dialog, and silent, because an
-         async onclick's rejection reaches no error handler. Both outcomes now land in one place. */
-      let error=null;
-      try{({error}=await sb.auth.registerPasskey()||{})}catch(thrown){error=thrown}
-      if(!isCurrent()||!overlay.isConnected)return close('stale');
-      if(error){
-        button.disabled=false;status.textContent=customerPasskeyErrorMessage(error,{action:'setup'});
-        return;
-      }
-      status.textContent='Face ID or Touch ID is ready for your next sign-in.';
-      CUI.announce('Passkey enabled.');
-      close('registered');
-    };
-  });
-}
+/* nestly_v780 (owner, 2026-09-05): the post-sign-in passkey enrolment sheet is
+   gone. It reappeared on every sign-in ("Not now" only lasted the tab session), and on the owner's
+   iPhone tapping "Enable now" did not work. The owner wants the phone's OWN biometrics: the
+   browser's saved-password autofill unlocked by Face ID or Touch ID, which needs no prompt from us.
+   The native shell's Keychain Biometric Sign-In (v670/v746) and Profile passkey management are
+   untouched. */
 async function syncVerifiedCustomerRelationshipsOnce(isCurrent=()=>true){
   const userId=S.user?.id||null;
   if(!userId)return {attempted:false,linked:false};
@@ -9603,11 +9553,11 @@ async function renderCustomerQrJoin(){
       openCustomerReferralAppliedSheetV777(referralResult);
   }
   status.textContent='Programme joined. Opening your wallet…';
-  /* nestly_v767: remembered BEFORE the passkey prompt and the token is released only now — a
-     re-entrant render during that prompt replays an idempotent join instead of finding nothing. */
+  /* nestly_v767: remembered before the token is released — a re-entrant render replays an
+     idempotent join instead of finding nothing. (nestly_v780 removed the passkey prompt that
+     used to sit between the two.) */
   rememberCustomerLastJoinedSlugV767(slug);
   invalidatePersonaCacheV370();
-  await maybeOfferCustomerPasskeySetup({isCurrent});
   rememberPendingCustomerJoinToken('');
   if(!isCurrent()){nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');return;}
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');

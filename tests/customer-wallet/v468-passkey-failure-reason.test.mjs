@@ -25,7 +25,7 @@ const slice = (start, end) => {
 };
 
 const message = new Function(
-  `${slice('function customerPasskeyErrorMessage(', '\nasync function maybeOfferCustomerPasskeySetup')}
+  `${slice('function customerPasskeyErrorMessage(', '\n/* nestly_v780')}
    return customerPasskeyErrorMessage;`)();
 
 test('V468 a cancelled Face ID sheet is not reported as a broken setup', () => {
@@ -68,13 +68,14 @@ test('V468 the codes that already had plain-English answers keep them, unchanged
     /Finish account verification/);
 });
 
-test('V468 neither passkey button can be stranded by a thrown WebAuthn rejection', () => {
+test('V468 the Profile passkey button cannot be stranded by a thrown WebAuthn rejection', () => {
   /* registerPasskey resolves {error} for a server refusal but THROWS for a browser-side
      rejection. An unhandled throw left the button disabled and the status stuck on "Follow your
      device prompt…" — a dead dialog, and silent, because an async onclick's rejection reaches no
-     handler. Both call sites must funnel a throw into the same error path. */
+     handler. The call site must funnel a throw into the same error path. (nestly_v780 removed
+     the post-sign-in prompt, so the Profile card is the only one left.) */
   const sites = [...app.matchAll(/try\{\(\{error\}=await sb\.auth\.registerPasskey\(\)\|\|\{\}\)\}catch\(thrown\)\{error=thrown\}/g)];
-  assert.equal(sites.length, 2, 'the signup prompt and the Profile card both guard the throw');
+  assert.equal(sites.length, 1, 'the Profile card guards the throw');
   assert.doesNotMatch(app, /const \{error\}=await sb\.auth\.registerPasskey\(\);/,
     'no unguarded registerPasskey call may remain');
 });

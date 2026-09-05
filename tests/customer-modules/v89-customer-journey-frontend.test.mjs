@@ -141,12 +141,12 @@ test('passkey sign-in and complete customer passkey management are capability ga
   const app=((await read('app/index.html'))+'\n'+(await read('app/app.js')));
   assert.match(app,/experimental:\{passkey:true\}/);
   assert.match(app,/function customerPasskeySupported\(\{management=false\}=\{\}\)/);
-  assert.match(app,/async function maybeOfferCustomerPasskeySetup\(\{isCurrent=\(\)=>true\}=\{\}\)/);
-  assert.match(app,/await maybeOfferCustomerPasskeySetup\(\{isCurrent:isRouteCurrent\}\)/);
-  assert.match(app,/id="customerPasskeyPromptAdd"[\s\S]*Enable now/);
-  assert.match(app,/sb\.auth\.passkey\.list\(\)[\s\S]*if\(passkeys\.length\)return false/);
+  /* nestly_v780: the post-sign-in "Enable Face ID or Touch ID?" prompt was removed (owner,
+     2026-09-05) — customers use their phone's own saved-password biometrics instead. */
+  assert.doesNotMatch(app,/maybeOfferCustomerPasskeySetup/);
+  assert.doesNotMatch(app,/Enable Face ID or Touch ID\?/);
   assert.match(app,/\.modal\{position:fixed;inset:0;z-index:210/,
-    'passkey setup must stay above the delayed PWA install prompt on mobile');
+    'customer dialogs must stay above the delayed PWA install prompt on mobile');
   assert.match(app,/sb\.auth\.signInWithPasskey\(\)/);
   /* V388: the only honest remaining reason a passkey is unavailable is browser support. */
   assert.match(app,/if\(!passkeySupported\)\{[\s\S]*Passkeys are not supported in this browser/);
