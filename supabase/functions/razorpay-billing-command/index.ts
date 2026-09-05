@@ -558,8 +558,11 @@ Deno.serve(async (req) => {
       /* v768: a branch DECREASE is scheduled for cycle end by design (ruling 2: it keeps working
          until renewal, nothing refunded). has_scheduled_changes is then the confirmation, not a
          pending state — the owner's page already says the date. */
+      /* v769: the same holds for a cadence change — it is ALWAYS scheduled for the renewal date
+         (ruling 3), and the page already says "Monthly billing starts on …". Only a change asked
+         for NOW (a capacity increase, a branch added) can still be waiting on the provider. */
       providerConfirmationPending = capacityModel && verified.has_scheduled_changes === true &&
-        !(commandType === 'change_branches' && scheduleChangeAt === 'cycle_end');
+        scheduleChangeAt === 'now';
       if (
         !providerConfirmationPending &&
         !subscriptionMatchesCommandV755(verified, commandType, planId, planUnits)

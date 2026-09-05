@@ -55518,7 +55518,7 @@ function billingSummaryCardV758(lines,options){
   const lifecycleLines=[
     life.scheduled_line
       ?`<p class="small" style="margin:6px 0 0">${esc(life.scheduled_line)}${life.scheduled_undo_label
-        ?` · <button type="button" class="btn ghost sm" id="billingKeepCadenceV764" data-cadence="${esc(life.scheduled_undo_cadence||'')}">${esc(life.scheduled_undo_label)}</button>`:''}</p>`:'',
+        ?` · <button type="button" class="billing-textlink-v769" id="billingKeepCadenceV764" data-cadence="${esc(life.scheduled_undo_cadence||'')}" style="background:none;border:0;padding:0;margin:0;font:inherit;color:var(--accent,#b91c1c);text-decoration:underline;cursor:pointer">${esc(life.scheduled_undo_label)}</button>`:''}</p>`:'',
     life.cancel_line?`<p class="small" style="margin:6px 0 0">${esc(life.cancel_line)}</p>`:'',
     life.final_line?`<p class="small" style="margin:6px 0 0">${esc(life.final_line)}</p>`:''
   ].join('');
@@ -56010,6 +56010,9 @@ async function loadBillingConfig(){
         message=type==='cancel_at_period_end'?'Renewal cancelled. Everything keeps working until your billing date.'
           :type==='resume'?'Renewal resumed.'
           :type==='refresh_payment_method'?'Card updated'
+          /* v769: a cycle change is scheduled, never paid for now — the line under the price
+             says the date; "confirms payment" was the wrong promise for it. */
+          :type==='change_cadence'?'Saved. The line under your price says when it takes effect.'
           :'Request submitted. The current plan remains shown until Razorpay confirms payment and the subscription webhook is received.';
       }
       /* nestly_v764: a command that does not hand the browser to Razorpay changes the page's own
