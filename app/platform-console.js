@@ -15328,6 +15328,13 @@
     const canWrite=context.canWrite===true;
     const salesStaff=context.access?.role==='sales_staff';
     main.innerHTML=loading(CUI,'Pipeline','Loading your pipeline…','customers');
+    /* nestly_v787 (owner 2026-09-06: "where is all my businesses?"): a live business that signed up on
+       its own has no CRM record until someone gives it one. An admin's console does that here, before
+       the board is read, so every workspace sits in Closed. Not a trigger — see the v787 migration.
+       A failure (or a console that has not caught up with the migration) only skips the sync. */
+    if(!salesStaff&&canWrite){
+      try{await rpc(sb,'platform_pipeline_sync_live_firms_v787',{})}catch{/* the board still loads */}
+    }
     let payload;
     try{
       payload=asObject(await rpc(sb,'platform_pipeline_board_v785',{

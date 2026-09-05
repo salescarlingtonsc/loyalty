@@ -225,6 +225,9 @@ test('v785 the dispatcher sends the pipeline route and the old board tab to rend
   const block=source.slice(source.indexOf('const PIPELINE_LANES_V785='),source.indexOf('// nestly_v779 (owner, 2026-09-05): a firm\'s payments, branch by branch.'));
   assert.match(block,/requestStageMove\(\{\.\.\.item,prospect_id:item\.id\},toStage,context\)/,'every lane move goes through the evidence flow');
   assert.match(block,/rpc\(sb,'platform_pipeline_board_v785'/);
+  // v787: an admin console registers self-serve workspaces before reading the board; a failure is swallowed.
+  assert.match(block,/if\(!salesStaff&&canWrite\)\{\s*try\{await rpc\(sb,'platform_pipeline_sync_live_firms_v787',\{\}\)\}catch\{/);
+  assert.ok(block.indexOf("platform_pipeline_sync_live_firms_v787")<block.indexOf("rpc(sb,'platform_pipeline_board_v785'"),'the sync runs before the board read');
   assert.match(block,/rpc\(sb,'platform_pipeline_prospect_v785'/);
   assert.match(block,/rpc\(sb,'platform_pipeline_set_schedule_v785'/);
   assert.match(block,/rpc\(sb,'platform_pipeline_add_note_v785'/);

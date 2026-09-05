@@ -3945,6 +3945,12 @@
       "path": "db/migrations/20261006_nestly_v786_branch_subscriptions.sql",
       "semanticVersion": "v786",
       "proposedDeployVersion": "20261006070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v787_live_firms_on_the_pipeline.sql",
+      "semanticVersion": "v787",
+      "proposedDeployVersion": "20261006080000"
     }
   ]
 }
