@@ -177,7 +177,7 @@ test('V325 bio is one field on the existing Workspace & brand form, one save, on
   assert.match(brandPanel, /maxlength="500"/);
   // Rides the SAME single UPDATE workspaceBrandPanelHtmlV259 already writes.
   assert.match(brandWiring, /const bio=\(\$\('bbio'\)\?\.value\|\|''\)\.trim\(\)\|\|null;/);
-  assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber,bio\}\)\.eq\('id',S\.biz\.id\)/);
+  assert.match(brandWiring, /review_url:reviewUrl,\n\s*bio\}\)\.eq\('id',S\.biz\.id\)/); // nestly_v788: legal_name/registration_number left this write
   assert.equal((app.match(/id="bbio"/g) || []).length, 1, 'bio must not be split into a second form');
   // The one read site: the public portal, reusing get_business_public via internal_public_booking_page.
   assert.match(app, /\$\{biz\.bio\?`<p class="muted small" style="margin-top:6px">\$\{esc\(biz\.bio\)\}<\/p>`:''\}/);
@@ -267,6 +267,6 @@ test('V325 the branch contact card edits address/phone through the SAME write pa
   /* nestly_v577: the section used to end at serviceBufferPointerCardHtmlV325, which photo 9
      removed. Anchored on the next surviving declaration instead. */
   const branchCard = section(app, 'async function loadBranchContactCardV325(){', 'function businessLinkNormaliseV471(');
-  assert.match(branchCard, /saveBranchFieldsV325\(id,\{phone,address\}\)/);
+  assert.match(branchCard, /saveBranchFieldsV325\(id,\{phone,address,\.\.\.readBranchIdentityFieldsV788\('ciBrV788-'\+id\)\}\)/); // nestly_v788: the card saves the branch's receipt identity too
   assert.match(app, /Add or remove branches entirely in <a href="#\/branches">Branches<\/a>/);
 });

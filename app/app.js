@@ -25810,7 +25810,10 @@ async function tillPage(){
     {data:tillStaffBranches,error:tillStaffBranchError}
   ]=await Promise.all([
     sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
-    sb.from('branches').select('id,name,code,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    /* nestly_v788: the receipt prints the BRANCH's registered name, UEN and GST status (owner:
+       branches may be different ACRA entities under the same boss), so the till reads them here
+       with the branch it is already choosing. */
+    sb.from('branches').select('id,name,code,is_default,legal_name,registration_number,gst_registered,gst_registration_number,gst_rate_bps').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   if(!isTillCurrent())return;
@@ -26790,7 +26793,9 @@ async function tillPage(){
     if(!evalResult)return '';
     const r=evalResult;
     const rows=(r.applied_effects||[]).map(effectRowHtml).join('');
-    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(r.gst_cents)}</span></div>`:'';
+    /* nestly_v788: GST is added ON TOP of listed prices at a registered branch, so the row names
+       the rate rather than saying "incl." — the subtotal above it is before GST. */
+    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>${gstRowLabelV788(accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null)}</span><span>${money(r.gst_cents)}</span></div>`:'';
     const totalCls=evalState==='expired'?' ck-stale':'';
     const breakdown=`<div class="ck-panel"${evalState==='expired'?' data-checking':''} aria-label="Amount payable">
         <div class="ck-row"><span>Subtotal</span><span>${money(r.subtotal_cents)}</span></div>
@@ -28358,6 +28363,7 @@ async function tillPage(){
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
       duplicate:r?r.duplicate:false,businessName:S.biz.name,
       branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
+      branchIdentityV788:accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null,
       paidAt:new Date().toISOString(),paymentReference:null};
     checkoutError=null;clearCheckoutState({abandon:true});step=3;draw(); // V286: a finalised sale retires any stored PayNow request
   }
@@ -28372,10 +28378,8 @@ async function tillPage(){
              receipt — the one drawn when a sale finished without a cart payload — printed neither,
              so the same counter could hand out two receipts and only one of them said who was
              paid. Same three lines, same fields, same fallbacks. */''}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
-        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
-        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
+        ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
+        ${receiptIdentityHtmlV788(accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null,S.biz.name,'')}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -28401,7 +28405,7 @@ async function tillPage(){
     const breakdown=d.hasSale?`<div class="ck-panel" style="text-align:left" aria-label="Amount charged">
         <div class="ck-row"><span>Subtotal</span><span>${money(d.subtotal)}</span></div>
         ${appliedEffects.map(effectRowHtml).join('')}
-        ${d.gst>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(d.gst)}</span></div>`:''}
+        ${d.gst>0?`<div class="ck-row ck-gst"><span>${gstRowLabelV788(d.branchIdentityV788)}</span><span>${money(d.gst)}</span></div>`:''}
         <div class="ck-total"><span>Total</span><span>${money(d.total)}</span></div>
       </div>`:'';
     const extraRows=d.extras.map(x=>{
@@ -28420,10 +28424,8 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
-        ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
-        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
+        ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
+        ${receiptIdentityHtmlV788(d.branchIdentityV788,d.businessName||S.biz.name,d.branchName)}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
@@ -50154,6 +50156,58 @@ function branchBillingSentenceV280(counts){
    branches, so that card cannot fork into a duplicate single-branch form. This is the ONE write
    path both screens call; branchesPage's own edit form below now calls it too instead of running
    its own update. */
+/* nestly_v788 (owner ruling 2026-09-06: "shift the company name & UEN number and (GST or not) to
+   individual branches, because branches may be different ACRA operating under the same boss").
+   The receipt's three identity lines, drawn from the BRANCH the sale was rung up at:
+     registered name — the branch's legal_name, or the workspace name when none is set;
+     trading as      — the workspace name, only when it differs from the registered name;
+     UEN             — the branch's registration_number, when set;
+     GST             — "GST Reg. No. …" for a registered branch, else "Not GST registered".
+   Both till receipts (cart and fallback) call this one function so they can never disagree. */
+function receiptIdentityHtmlV788(branch,businessName,branchName){
+  const b=branch||{};
+  const registered=String(b.legal_name||'').trim();
+  const trading=String(businessName||'').trim();
+  const shown=registered||trading;
+  const gst=b.gst_registered
+    ?`GST Reg. No. ${b.gst_registration_number?esc(String(b.gst_registration_number)):'—'}`
+    :'Not GST registered';
+  return `<p class="small" data-merchant-content style="margin:4px 0"><b>${esc(shown)}</b>${branchName?` · ${esc(branchName)}`:''}</p>
+        ${registered&&trading&&registered!==trading?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(trading)}</p>`:''}
+        ${b.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(String(b.registration_number))}</p>`:''}
+        <p class="muted small" data-merchant-content style="margin:0">${gst}</p>`;
+}
+/* The GST row's label on the cart and the receipt: the branch's rate, e.g. "GST 9%". */
+function gstRowLabelV788(branch){
+  const bps=Number(branch?.gst_rate_bps);
+  const pct=Number.isFinite(bps)&&bps>0?(bps/100).toFixed(2).replace(/\.?0+$/,''):'';
+  return pct?`GST ${pct}%`:'GST';
+}
+/* The four registration fields shared by the Branches form and the Business Profile card, read
+   back from the inputs by id prefix. Blank text is stored as NULL; the GST number is kept even
+   when GST is switched off so switching it back on does not lose it. */
+function branchIdentityFieldsHtmlV788(prefix,b){
+  const x=b||{};
+  return `<label for="${prefix}Legal">Registered company name (for receipts)</label>
+      <input id="${prefix}Legal" maxlength="200" placeholder="Company Name Pte. Ltd." value="${esc(x.legal_name||'')}">
+      <p class="muted small" style="margin-top:4px">Printed on this branch's receipts. Leave blank to use your workspace name.</p>
+      <label for="${prefix}Uen">Business registration number / UEN</label>
+      <input id="${prefix}Uen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(x.registration_number||'')}">
+      <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
+        <input type="checkbox" id="${prefix}Gst" style="width:auto" ${x.gst_registered?'checked':''}> GST registered</label>
+      <p class="muted small" style="margin-top:4px">When on, Record sale adds ${(Number(x.gst_rate_bps)>0?Number(x.gst_rate_bps)/100:9)}% GST on top of your listed prices at this branch.</p>
+      <label for="${prefix}GstNo">GST registration number</label>
+      <input id="${prefix}GstNo" maxlength="60" placeholder="e.g. M9-1234567-8" value="${esc(x.gst_registration_number||'')}">`;
+}
+function readBranchIdentityFieldsV788(prefix){
+  return {
+    legal_name:($(prefix+'Legal')?.value||'').trim()||null,
+    registration_number:($(prefix+'Uen')?.value||'').trim()||null,
+    gst_registered:!!$(prefix+'Gst')?.checked,
+    gst_registration_number:($(prefix+'GstNo')?.value||'').trim()||null
+  };
+}
 async function saveBranchFieldsV325(branchId,fields){
   return sb.from('branches').update(fields).eq('id',branchId).eq('business_id',S.biz.id);
 }
@@ -50264,6 +50318,10 @@ async function branchesPage(){
       <div><label for="brPhone">Phone</label><input id="brPhone" value="${b?esc(b.phone||''):''}"></div></div>
       <div class="split"><div><label for="brEmail">Email</label><input id="brEmail" type="email" value="${b?esc(b.email||''):''}"></div>
       <div><label for="brAddr">Address</label><input id="brAddr" value="${b?esc(b.address||''):''}"></div></div>
+      ${/* nestly_v788: this branch's registered name, UEN and GST — the receipt at Record sale
+            prints these for the branch the sale was rung up at. */''}
+      <div style="margin-top:12px"><b class="small">Receipts &amp; GST for this branch</b></div>
+      ${branchIdentityFieldsHtmlV788('br',b)}
       ${b?`<label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="brActive" style="width:auto" ${b.active?'checked':''}> Active</label>`
        :`<label for="brCopyFrom" style="margin-top:16px">Copy settings from</label>
@@ -50317,8 +50375,9 @@ async function branchesPage(){
     $('brSave').onclick=async()=>{
       const name=$('brName').value.trim();
       if(name.length<2) return toast('Branch name required');
+      const identityV788=readBranchIdentityFieldsV788('br');
       const payload={name,phone:$('brPhone').value.trim()||null,email:$('brEmail').value.trim()||null,
-        address:$('brAddr').value.trim()||null,
+        address:$('brAddr').value.trim()||null,...identityV788,
         ...( $('brActive') ? {active:$('brActive').checked} : {} )};
       CUI.setButtonBusy($('brSave'),{busy:true,label:b?'Saving…':'Creating…'});
       /* V202: editing a branch is still a plain update, but CREATING one is a billable act
@@ -50351,6 +50410,14 @@ async function branchesPage(){
         p_phone:payload.phone,p_email:payload.email,p_copy_from:copyFrom,
         p_cadence:cadenceV786,p_idempotency_key:branchAddAttemptKey});
       if(addError){fail(addError);CUI.setButtonBusy($('brSave'),{busy:false});return}
+      /* nestly_v788: the add RPC carries name/address/phone/email; the registration fields follow
+         as the same plain update an edit makes, on the id it returned. A failure here leaves the
+         branch created and says so — the owner fixes the fields with Edit. */
+      const newBranchIdV788=added?.branch_id||added?.id;
+      if(newBranchIdV788&&(identityV788.legal_name||identityV788.registration_number||identityV788.gst_registered||identityV788.gst_registration_number)){
+        const {error:identityError}=await saveBranchFieldsV325(newBranchIdV788,identityV788);
+        if(identityError)toast('Branch created, but its receipt details did not save — open Edit to set them.');
+      }
       const commandId=added?.command_id;
       if(!commandId){
         CUI.setButtonBusy($('brSave'),{busy:false});
@@ -57658,10 +57725,8 @@ async function loadSignupConfig(host){
    wireWorkspaceBrandV259() is the single `#bsave` handler; both were LIFTED out of settingsPage,
    not copied — Settings now shows the same one-line pointer card V243 left for the other two.
 
-   Two fields in here are not customer-facing: the registered company name and the UEN, which
-   exist for receipts. They stay in the form anyway. Splitting one save into two so that a legal
-   name could live elsewhere would buy tidiness with a second write path over the same row, and
-   that is a worse trade than an owner finding "for receipts" on a customer-facing screen. */
+   The registered company name and the UEN used to be in here too (V188); nestly_v788 moved them
+   to the branch, because branches may be different ACRA entities. */
 /* nestly_v421: whether the customer-facing wording field belongs on screen. 'Other' is the only
    sector with no customer-readable name of its own, so it is the only one that needs the field —
    plus any firm that already has wording saved, whose text would otherwise be live with nothing
@@ -57724,12 +57789,10 @@ function workspaceBrandPanelHtmlV259(){
            parenthetical was also wrong by then — the bio shows in the customer app under the
            business name, which is where the same photo's arrow points it. */''}
       <label for="bbio">Company bio</label><textarea id="bbio" rows="2" maxlength="500" placeholder="A short description shown to customers">${esc(S.biz.bio||'')}</textarea>
-      <label for="blegal">Registered company name (for receipts)</label>
-      <input id="blegal" maxlength="200" placeholder="Company Name Pte. Ltd." value="${esc(S.biz.legal_name||'')}">
-      <p class="muted small" style="margin-top:4px">Printed on every receipt. Leave blank to use your workspace name.</p>
-      <label for="buen">Business registration number / UEN</label>
-      <input id="buen" maxlength="60" placeholder="e.g. 202612345A" value="${esc(S.biz.registration_number||'')}">
-      <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
+      ${/* nestly_v788: the registered company name and UEN moved to each BRANCH (owner: branches may
+            be different ACRA entities under the same boss), with the GST switch beside them. The
+            receipt at Record sale prints whichever branch the sale was rung up at. */''}
+      <p class="muted small" style="margin-top:12px">Registered company name, UEN and GST are set per branch in <a href="#/branches">Branches</a> — each branch's receipts print its own.</p>
       <label for="bru">Public review link (Google, Facebook, etc.)</label><input id="bru" type="url" inputmode="url" placeholder="https://g.page/your-business/review" value="${esc(S.biz.review_url||'')}" aria-describedby="bruHint">
       <p class="muted small" id="bruHint" style="margin-top:4px">Optional. Must start with https://. Shown to customers in their wallet — it is offered to everyone, never used to hide low ratings.</p>
       ${/* V385 (owner markup, photo 8: the portal link struck through with "delete", the save
@@ -57754,11 +57817,9 @@ function wireWorkspaceBrandV259(){
       $('bru').focus();return toast('Public review link is not a web address. Try something like g.page/your-business/review');
     }
     const reviewUrl=reviewUrlNormalisedV471||null;
-    /* V188: legal_name and registration_number already existed on businesses but nothing ever
-       asked for them, so every receipt in production printed only a workspace nickname. They
-       ride this same UPDATE — no new call site. */
-    const legalName=($('blegal')?.value||'').trim()||null;
-    const registrationNumber=($('buen')?.value||'').trim()||null;
+    /* V188 put legal_name and registration_number on this form; nestly_v788 moved them to the
+       branch (branches.legal_name / registration_number), so this write no longer touches the
+       business columns — sending them from here would blank a firm's application identity. */
     /* V325: bio rides this same UPDATE — no new call site. */
     const bio=($('bbio')?.value||'').trim()||null;
     /* V385: industry is editable here now, and industry_label is the wording customers read.
@@ -57771,9 +57832,9 @@ function wireWorkspaceBrandV259(){
     invalidateBusinessRecordCacheV370(); // V370: the cached firm row is now stale
     const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
       industry,industry_label:industryLabel,review_url:reviewUrl,
-      legal_name:legalName,registration_number:registrationNumber,bio}).eq('id',S.biz.id);
+      bio}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),industry,industry_label:industryLabel,review_url:reviewUrl,legal_name:legalName,registration_number:registrationNumber,bio});
+    Object.assign(S.biz,{name:$('bn').value.trim(),industry,industry_label:industryLabel,review_url:reviewUrl,bio});
     toast('Saved');route();
   };
 }
@@ -57826,14 +57887,14 @@ function customerInterfaceDoneCardHtmlV325(){
    contact details for branches that already exist. */
 function businessProfileBranchCardHtmlV325(){
   return `<div class="card" style="margin-top:16px"><b>Branch contact details</b>
-    <p class="muted small" style="margin:6px 0 10px">Address and phone shown to customers, per branch. Add or remove branches entirely in <a href="#/branches">Branches</a>.</p>
+    <p class="muted small" style="margin:6px 0 10px">Address and phone shown to customers, and the registered company name, UEN and GST printed on receipts — per branch. Add or remove branches entirely in <a href="#/branches">Branches</a>.</p>
     <div id="ciBranchContactV325">${CUI.loadingState({title:'Loading branches',iconName:'branch'})}</div>
   </div>`;
 }
 async function loadBranchContactCardV325(){
   const host=$('ciBranchContactV325');
   if(!host)return;
-  const {data:branches,error}=await sb.from('branches').select('id,name,code,address,phone,is_default,active')
+  const {data:branches,error}=await sb.from('branches').select('id,name,code,address,phone,is_default,active,legal_name,registration_number,gst_registered,gst_registration_number,gst_rate_bps')
     .eq('business_id',S.biz.id).eq('active',true).order('is_default',{ascending:false}).order('name');
   if(!host.isConnected)return;
   if(error){host.innerHTML=`<p class="err small">${esc(error.message||'Branches could not be loaded.')}</p>`;return}
@@ -57845,6 +57906,7 @@ async function loadBranchContactCardV325(){
         <div><label for="ciBrPhoneV325-${esc(b.id)}">Phone</label><input id="ciBrPhoneV325-${esc(b.id)}" value="${esc(b.phone||'')}"></div>
         <div><label for="ciBrAddrV325-${esc(b.id)}">Address</label><input id="ciBrAddrV325-${esc(b.id)}" value="${esc(b.address||'')}"></div>
       </div>
+      ${branchIdentityFieldsHtmlV788('ciBrV788-'+esc(b.id),b)}
       <div style="margin-top:10px"><button class="btn ghost sm" data-branch-save-v325="${esc(b.id)}">Save</button></div>
     </div>`).join('');
   host.querySelectorAll('[data-branch-save-v325]').forEach(button=>button.onclick=async()=>{
@@ -57852,7 +57914,7 @@ async function loadBranchContactCardV325(){
     const phone=($('ciBrPhoneV325-'+id)?.value||'').trim()||null;
     const address=($('ciBrAddrV325-'+id)?.value||'').trim()||null;
     CUI.setButtonBusy(button,{busy:true,label:'Saving…'});
-    const {error:saveError}=await saveBranchFieldsV325(id,{phone,address});
+    const {error:saveError}=await saveBranchFieldsV325(id,{phone,address,...readBranchIdentityFieldsV788('ciBrV788-'+id)});
     if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(saveError)return fail(saveError);
     toast('Branch details saved');

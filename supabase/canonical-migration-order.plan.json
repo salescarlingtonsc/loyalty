@@ -3946,6 +3946,12 @@
       "version": "20261006080000",
       "name": "nestly_v787_live_firms_on_the_pipeline",
       "sourcePath": "db/migrations/20261006_nestly_v787_live_firms_on_the_pipeline.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006090000",
+      "name": "nestly_v788_branch_receipt_identity_gst",
+      "sourcePath": "db/migrations/20261006_nestly_v788_branch_receipt_identity_gst.sql"
     }
   ]
 }

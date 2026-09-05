@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="24bb8fdfe02c69b1124fd308b43362cd69d56a6822e463ef6881b1bff39ca5b6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="30496471b6b4d3da9771c5ee92f108716a8fbc5aba67455c97b3b524ef81620b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5763,7 +5763,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 24bb8fdfe02c69b1124fd308b43362cd69d56a6822e463ef6881b1bff39ca5b6</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 30496471b6b4d3da9771c5ee92f108716a8fbc5aba67455c97b3b524ef81620b</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -8926,7 +8926,10 @@ async function tillPage(){
     {data:tillStaffBranches,error:tillStaffBranchError}
   ]=await Promise.all([
     sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
-    sb.from('branches').select('id,name,code,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    /* nestly_v788: the receipt prints the BRANCH's registered name, UEN and GST status (owner:
+       branches may be different ACRA entities under the same boss), so the till reads them here
+       with the branch it is already choosing. */
+    sb.from('branches').select('id,name,code,is_default,legal_name,registration_number,gst_registered,gst_registration_number,gst_rate_bps').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   if(!isTillCurrent())return;
@@ -9906,7 +9909,9 @@ async function tillPage(){
     if(!evalResult)return '';
     const r=evalResult;
     const rows=(r.applied_effects||[]).map(effectRowHtml).join('');
-    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(r.gst_cents)}</span></div>`:'';
+    /* nestly_v788: GST is added ON TOP of listed prices at a registered branch, so the row names
+       the rate rather than saying "incl." — the subtotal above it is before GST. */
+    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>${gstRowLabelV788(accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null)}</span><span>${money(r.gst_cents)}</span></div>`:'';
     const totalCls=evalState==='expired'?' ck-stale':'';
     const breakdown=`<div class="ck-panel"${evalState==='expired'?' data-checking':''} aria-label="Amount payable">
         <div class="ck-row"><span>Subtotal</span><span>${money(r.subtotal_cents)}</span></div>
@@ -11474,6 +11479,7 @@ async function tillPage(){
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
       duplicate:r?r.duplicate:false,businessName:S.biz.name,
       branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
+      branchIdentityV788:accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null,
       paidAt:new Date().toISOString(),paymentReference:null};
     checkoutError=null;clearCheckoutState({abandon:true});step=3;draw(); // V286: a finalised sale retires any stored PayNow request
   }
@@ -11488,10 +11494,8 @@ async function tillPage(){
              receipt — the one drawn when a sale finished without a cart payload — printed neither,
              so the same counter could hand out two receipts and only one of them said who was
              paid. Same three lines, same fields, same fallbacks. */''}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
-        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
-        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
+        ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
+        ${receiptIdentityHtmlV788(accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null,S.biz.name,'')}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -11517,7 +11521,7 @@ async function tillPage(){
     const breakdown=d.hasSale?`<div class="ck-panel" style="text-align:left" aria-label="Amount charged">
         <div class="ck-row"><span>Subtotal</span><span>${money(d.subtotal)}</span></div>
         ${appliedEffects.map(effectRowHtml).join('')}
-        ${d.gst>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(d.gst)}</span></div>`:''}
+        ${d.gst>0?`<div class="ck-row ck-gst"><span>${gstRowLabelV788(d.branchIdentityV788)}</span><span>${money(d.gst)}</span></div>`:''}
         <div class="ck-total"><span>Total</span><span>${money(d.total)}</span></div>
       </div>`:'';
     const extraRows=d.extras.map(x=>{
@@ -11536,10 +11540,8 @@ async function tillPage(){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
-        ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
-        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
+        ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
+        ${receiptIdentityHtmlV788(d.branchIdentityV788,d.businessName||S.biz.name,d.branchName)}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
@@ -27448,7 +27450,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
     {data:tillStaffBranches,error:tillStaffBranchError}
   ]=await Promise.all([
     sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
-    sb.from('branches').select('id,name,code,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    /* nestly_v788: the receipt prints the BRANCH's registered name, UEN and GST status (owner:
+       branches may be different ACRA entities under the same boss), so the till reads them here
+       with the branch it is already choosing. */
+    sb.from('branches').select('id,name,code,is_default,legal_name,registration_number,gst_registered,gst_registration_number,gst_rate_bps').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   if(!isTillCurrent())return;
@@ -28428,7 +28433,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
     if(!evalResult)return '';
     const r=evalResult;
     const rows=(r.applied_effects||[]).map(effectRowHtml).join('');
-    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(r.gst_cents)}</span></div>`:'';
+    /* nestly_v788: GST is added ON TOP of listed prices at a registered branch, so the row names
+       the rate rather than saying "incl." — the subtotal above it is before GST. */
+    const gstLine=r.gst_cents>0?`<div class="ck-row ck-gst"><span>${gstRowLabelV788(accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null)}</span><span>${money(r.gst_cents)}</span></div>`:'';
     const totalCls=evalState==='expired'?' ck-stale':'';
     const breakdown=`<div class="ck-panel"${evalState==='expired'?' data-checking':''} aria-label="Amount payable">
         <div class="ck-row"><span>Subtotal</span><span>${money(r.subtotal_cents)}</span></div>
@@ -29996,6 +30003,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       pointsBalanceConsistent:pointsReceipt.balanceConsistent,
       duplicate:r?r.duplicate:false,businessName:S.biz.name,
       branchName:accessibleTillBranches.find(branch=>branch.id===tillBranchId)?.name||'',
+      branchIdentityV788:accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null,
       paidAt:new Date().toISOString(),paymentReference:null};
     checkoutError=null;clearCheckoutState({abandon:true});step=3;draw(); // V286: a finalised sale retires any stored PayNow request
   }
@@ -30010,10 +30018,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
              receipt — the one drawn when a sale finished without a cart payload — printed neither,
              so the same counter could hand out two receipts and only one of them said who was
              paid. Same three lines, same fields, same fallbacks. */''}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||S.biz.name||'')}</b></p>
-        ${S.biz.legal_name&&S.biz.name&&S.biz.legal_name!==S.biz.name?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
-        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
+        ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
+        ${receiptIdentityHtmlV788(accessibleTillBranches.find(branch=>branch.id===tillBranchId)||null,S.biz.name,'')}
         <h2 style="margin:8px 0 4px">${outcome.heading}</h2>
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
@@ -30039,7 +30045,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const breakdown=d.hasSale?`<div class="ck-panel" style="text-align:left" aria-label="Amount charged">
         <div class="ck-row"><span>Subtotal</span><span>${money(d.subtotal)}</span></div>
         ${appliedEffects.map(effectRowHtml).join('')}
-        ${d.gst>0?`<div class="ck-row ck-gst"><span>incl. GST</span><span>${money(d.gst)}</span></div>`:''}
+        ${d.gst>0?`<div class="ck-row ck-gst"><span>${gstRowLabelV788(d.branchIdentityV788)}</span><span>${money(d.gst)}</span></div>`:''}
         <div class="ck-total"><span>Total</span><span>${money(d.total)}</span></div>
       </div>`:'';
     const extraRows=d.extras.map(x=>{
@@ -30058,10 +30064,8 @@ async function svRunTopupFlow({branches,state,testOnly}){
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:anyExtraFailed?'Checkout saved. Some items did not finish.':'Checkout saved. Ready for the next customer.',iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card till-cart-card pos-receipt" id="posReceiptV142" style="text-align:center">
         ${CUI.icon(anyExtraFailed?'info':'check',{size:32})}
-        <p class="small" data-merchant-content style="margin:4px 0"><b>${esc(S.biz.legal_name||d.businessName||S.biz.name)}</b>${d.branchName?` · ${esc(d.branchName)}`:''}</p>
-        ${S.biz.legal_name&&(d.businessName||S.biz.name)&&S.biz.legal_name!==(d.businessName||S.biz.name)?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(d.businessName||S.biz.name)}</p>`:''}
-        ${S.biz.registration_number?`<p class="muted small" data-merchant-content style="margin:0">UEN ${esc(S.biz.registration_number)}</p>`:''}
-        ${S.biz.gst_registered?'':'<p class="muted small" style="margin:0">Not GST registered</p>'}
+        ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
+        ${receiptIdentityHtmlV788(d.branchIdentityV788,d.businessName||S.biz.name,d.branchName)}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
         <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
@@ -30519,6 +30523,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'24bb8fdfe02c69b1124fd308b43362cd69d56a6822e463ef6881b1bff39ca5b6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'30496471b6b4d3da9771c5ee92f108716a8fbc5aba67455c97b3b524ef81620b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -269,7 +269,7 @@ test('V259 Workspace & brand moved to Customer Interface as ONE form with ONE sa
   /* V385 (owner, photo 12): the booking policy moved to Appointment Setting, so it is no longer
      this form's marker. The registered company name is — it is the field V259 kept here on the
      "one interleaved form, one save" reasoning, and it is still behind the same single #bsave. */
-  assert.match(app, /<label for="blegal">Registered company name \(for receipts\)<\/label>/);
+  assert.match(app, /<label for="\$\{prefix\}Legal">Registered company name \(for receipts\)<\/label>/); // nestly_v788: per branch now
   assert.doesNotMatch(app, /<label for="bp">Booking policy \(shown on your portal\)<\/label>/,
     'the booking policy belongs to Appointment Setting now');
   assert.equal((app.match(/id="bp"/g) || []).length, 1, 'exactly one booking policy field, on one page');

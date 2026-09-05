@@ -371,7 +371,17 @@ test('the PS-1C checkout PRICING (plan) is byte-UNCHANGED by every PS-2 incremen
      different ways is how the till and the customer's app come to disagree. Acceptance suite:
      db/tests/v665_gift_staging_and_reversal.sql — 16 assertions run rolled-back against
      production, including that the kernel refuses a spent perk and prices a restored one. */
-  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes|nestly_v665_gift_staging_and_reversal|nestly_v752_birthday_gift_is_a_benefit)/;
+  /* nestly_v788 (owner ruling 2026-09-06: "shift the company name & UEN number and (GST or not) to
+     individual branches ... all prices set are before GST"). Same reasoning as v370/v394/v488: the
+     GST line is part of the priced total, so WHOSE registration it is (the branch's, not the
+     business's) and WHICH WAY it goes (added on top of the discounted net, not carved out of it)
+     can only live in the pricing authority. The whole diff is the GST block at the end of the
+     function — one SELECT re-pointed at public.branches by p_branch, one formula, and v_total :=
+     v_net + v_gst — restated from the v752 text after a whitespace-stripped hash match against
+     production. Added to allowedPlan ONLY; record_cart_sale and evaluate_checkout are untouched.
+     Acceptance suite: db/tests/v788_branch_receipt_identity_gst.sql (6 checks, proven rolled-back
+     against production before apply). The PS-2A shadow increments (v61-v64) remain barred. */
+  const allowedPlan = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v488_product_bundles_and_bottle_checkpoints|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v657_discount_two_shapes|nestly_v665_gift_staging_and_reversal|nestly_v752_birthday_gift_is_a_benefit|nestly_v788_branch_receipt_identity_gst)/;
   const allowedTender = /(frenly_v(51_sale_line_items|58_ps1c_checkout_kernel|59_ps1c1_cart_hardening|60_ps1c2_execution_state|67_ps2live_checkout_tender)|nestly_v370_tier_discount_at_checkout|nestly_v394_tier_lifecycle_checkout|nestly_v573_module_off_reaches_the_rpcs|nestly_v656_tier_discount_scope|nestly_v752_birthday_gift_is_a_benefit)/;
   for (const fn of kernelFns) {
     const allowed = fn === 'app.ps1c_plan_checkout' ? allowedPlan : allowedTender;

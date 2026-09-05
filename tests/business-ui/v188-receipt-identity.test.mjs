@@ -6,10 +6,11 @@ const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 test('a receipt identifies the company that was actually paid', () => {
   // businesses.legal_name and registration_number already existed but nothing ever asked for
   // them, so every receipt in production printed only a workspace nickname.
-  assert.match(app, /id="blegal"/);
-  assert.match(app, /id="buen"/);
-  assert.match(app, /legal_name:legalName,registration_number:registrationNumber/);
-  assert.match(app, /S\.biz\.legal_name\|\|d\.businessName\|\|S\.biz\.name/);
+  // nestly_v788: the fields now live on the BRANCH (branches may be different ACRA entities
+  // under one boss), and both till receipts draw them from one function.
+  assert.match(app, /id="\$\{prefix\}Legal"/);
+  assert.match(app, /id="\$\{prefix\}Uen"/);
+  assert.match(app, /receiptIdentityHtmlV788\(d\.branchIdentityV788,d\.businessName\|\|S\.biz\.name,d\.branchName\)/);
   /* nestly_v654 (owner photo 6: "in a standard receipt must indicate pte ltd (company name) and
      its UEN ... even after i input it"). Two things were wrong and only one of them was here.
      The wording: the form asks for a "Business registration number / UEN" and the receipt said
@@ -17,7 +18,7 @@ test('a receipt identifies the company that was actually paid', () => {
      database — the partial unique index over registration_number evaluates
      app.normalized_business_identity_v79, which was granted to postgres alone, so an owner typing
      a UEN got 42501 and NOTHING in the form saved. Fixed by nestly_v654's grant. */
-  assert.match(app, /UEN \$\{esc\(S\.biz\.registration_number\)\}/);
+  assert.match(app, /UEN \$\{esc\(String\(b\.registration_number\)\)\}/);
   assert.doesNotMatch(app, /Reg\. no\./);
 });
 
@@ -26,15 +27,16 @@ test('v654 the fallback receipt names the company too', () => {
      company identity at all, so one counter could hand out two receipts and only one of them said
      who had been paid. */
   const fallback = app.slice(app.indexOf('function drawStep3()'), app.indexOf('function drawCartReceipt()'));
-  assert.match(fallback, /S\.biz\.legal_name\|\|S\.biz\.name/);
-  assert.match(fallback, /UEN \$\{esc\(S\.biz\.registration_number\)\}/);
-  assert.match(fallback, /Not GST registered/);
+  assert.match(fallback, /receiptIdentityHtmlV788\(accessibleTillBranches\.find\(branch=>branch\.id===tillBranchId\)\|\|null,S\.biz\.name,''\)/);
+  const identity = app.slice(app.indexOf('function receiptIdentityHtmlV788('), app.indexOf('function gstRowLabelV788('));
+  assert.match(identity, /Not GST registered/);
 });
 
 test('the trading name is kept when it differs from the registered name', () => {
-  assert.match(app, /trading as \$\{esc\(d\.businessName\|\|S\.biz\.name\)\}/);
-  // and a non-GST business says so, rather than leaving the customer to wonder
-  assert.match(app, /Not GST registered/);
+  const identity = app.slice(app.indexOf('function receiptIdentityHtmlV788('), app.indexOf('function gstRowLabelV788('));
+  assert.match(identity, /registered&&trading&&registered!==trading\?`<p class="muted small" data-merchant-content style="margin:0">trading as \$\{esc\(trading\)\}<\/p>`/);
+  // and a non-GST branch says so, rather than leaving the customer to wonder
+  assert.match(identity, /Not GST registered/);
 });
 
 test('the customer sees their points balance as its own line', () => {

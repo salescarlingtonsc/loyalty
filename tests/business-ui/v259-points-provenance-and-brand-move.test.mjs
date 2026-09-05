@@ -174,7 +174,7 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
      write with it — so the rule this test guards is unchanged and still exact. Every field the
      one UPDATE writes is in the one panel, and the panel holds no field the UPDATE ignores.
      'bilabel' joined both at once (owner, photo 11). */
-  for (const id of ['bn', 'bi', 'bilabel', 'bbio', 'blegal', 'buen', 'bru']) {
+  for (const id of ['bn', 'bi', 'bilabel', 'bbio', 'bru']) { // nestly_v788: blegal/buen moved to the branch
     assert.match(brandPanel, new RegExp(`id="${id}"`), `${id} must not be split out of the form`);
   }
   assert.doesNotMatch(brandPanel, /id="bp"/, 'the booking policy is saved by Appointment Setting now');
@@ -185,7 +185,7 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
   assert.doesNotMatch(bsaveUpdate, /booking_policy/, 'this save must not blank a column it no longer shows');
   assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name:\$\('bn'\)\.value\.trim\(\),/);
   assert.match(brandWiring, /industry,industry_label:industryLabel,review_url:reviewUrl,/);
-  assert.match(brandWiring, /legal_name:legalName,registration_number:registrationNumber,bio\}\)\.eq\('id',S\.biz\.id\)/);
+  assert.match(brandWiring, /review_url:reviewUrl,\n\s*bio\}\)\.eq\('id',S\.biz\.id\)/); // nestly_v788: legal_name/registration_number left this write
 });
 
 /* V269 SUPERSEDES the pointer half of this test: the owner read the pointer card and told us to
