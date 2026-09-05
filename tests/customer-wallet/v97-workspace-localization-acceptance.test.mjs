@@ -396,8 +396,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      It carries the reward's own merchant-written name, so it is a template for the same reason
      tierPerkStaged is. 143 + 1 = 144.
      nestly_v752 adds one more: birthdayBenefitPreview, the birthday-editor's read-only
-     'Wording customers see' preview label wrapping the server-derived sentence. 144 + 1 = 145. */
-  assert.equal(keys.length,145,'mixed-interface interpolation inventory changed without review');
+     'Wording customers see' preview label wrapping the server-derived sentence. 144 + 1 = 145.
+     nestly_v782 adds one more: cardUpdatedV782, the confirmation shown after a
+     refresh_payment_method command settles. ea4a5262 wrote it as an interpolated template literal
+     straight into .textContent, so it reached zh-CN and ms readers in English; it carries the
+     card description billingCardTextV758 derives, which is why it is a template. 145 + 1 = 146. */
+  assert.equal(keys.length,146,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

@@ -68,7 +68,14 @@ test('the owner is told a charge is coming before it happens', () => {
 test('the copy picker offers the branches, and says what copies', () => {
   assert.match(app, /id="brCopyFrom"/);
   assert.match(app, /p_copy_from:copyFrom/);
-  assert.match(app, /Copies opening hours, which services it offers, who works there/);
+  /* nestly_v782: the picker's helper text no longer claims to copy staff. Owner ruling in
+     4178ce99 (nestly_v772): "who works there should not be ported over" — business_copy_branch_
+     settings_v202 stopped copying staff_branches, and the text was rewritten to say what it
+     actually copies and where staff are assigned instead. nestly_v773 ("rewards are the same at
+     every branch") removed loyalty overrides from the same list. The contract this test guards —
+     the picker SAYS what copies — is unchanged; only the truthful list of what copies is. */
+  assert.match(app, /Copies the opening hours, breaks and services offered from the branch you choose/);
+  assert.match(app, /Who works there is assigned per branch on Staff Members/);
   // products are firm-wide; the RPC says so rather than silently copying nothing
   assert.match(mig, /products are firm-wide and need no copy/);
 });

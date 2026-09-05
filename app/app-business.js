@@ -1958,13 +1958,19 @@ function wireManualBusinessApplicationFallback(){
 /* v770 (owner: "when there's error you need to tell me which area is wrong"): each refusal
    start_self_serve_business_v130 can raise, said in the owner's words and pointing at the field
    to fix. The generic sentence stays only for a failure the server did not name. */
-/* v773: is this workspace address already someone's? get_business_public is the anon-callable
-   read the booking portal uses; a row means taken, no row means free, an error means unknown. */
+/* v773: is this workspace address already someone's? nestly_v782: v773 asked that with a direct
+   browser call to the get_business_public RPC, but a public frontend may not call a gateway RPC
+   directly (and naming it as a call here would itself trip the guard) — the
+   public business lookup is reachable only through the edge gateway (tests/public-gateway).
+   public-booking's GET answers the same question by HTTP status: 200 the address belongs to a
+   business, 404 no business answers to it, anything else unknown. Only the `false` answer is
+   acted on, so an unknown fails safe into the normal error path. */
 async function selfServeSlugTakenV773(slug){
   try{
-    const {data,error}=await sb.rpc('get_business_public',{p_slug:String(slug||'')});
-    if(error)return null;
-    return !!(data&&(Array.isArray(data)?data.length:data.id||data.slug||data.name));
+    const response=await fetch(publicFunctionUrl('public-booking',`?slug=${encodeURIComponent(String(slug||''))}`),{credentials:'omit'});
+    if(response.status===200)return true;
+    if(response.status===404)return false;
+    return null;
   }catch{return null}
 }
 function selfServeStartErrorTextV770(error){
@@ -2078,7 +2084,6 @@ function renderOnboard(){
       let setupKey=sessionStorage.getItem(setupSlot)||crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
       if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Policy.</div>';return}
       $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
-      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
       const startArgs=()=>({
         p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
         p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
@@ -2086,6 +2091,10 @@ function renderOnboard(){
         p_cadence:cadence,p_customer_capacity:Number($('customerCapacity').value),
         p_legal_accepted:true,p_idempotency_key:setupKey
       });
+      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
+      /* nestly_v782: the invalidate used to sit above the startArgs closure v773 introduced,
+         which pushed it out of the V370 guard's window. It is behaviourally identical here —
+         only a function definition sat between — and now it is demonstrably immediate. */
       let started=await sb.rpc('start_self_serve_business_v130',startArgs());
       /* v773: a 23505 is either the address or a stale setup key. The address is checked by
          name; if it is free, the key was the clash — take a fresh one and try once more. */
@@ -2093,6 +2102,11 @@ function renderOnboard(){
         const slugTaken=await selfServeSlugTakenV773($('businessSlug').value.trim());
         if(slugTaken===false){
           setupKey=crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
+          /* nestly_v782: V370 requires every call that can create a persona to drop the persona
+             cache immediately before it runs. v773's retry is a SECOND such call, and the awaited
+             slug check between it and the invalidate above is long enough for a concurrent read to
+             have refilled the cache. Invalidate again, right here. */
+          invalidatePersonaCacheV370();
           started=await sb.rpc('start_self_serve_business_v130',startArgs());
         }
       }
@@ -12385,11 +12399,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     return programmePointCostCentsV262>0?programmePointCostCentsV262:1;
   };
   if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
-  document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
-    const idx=modeInput.dataset.boExpiry;
-    bindExpiryModeUi(modeInput,document.querySelector(`[data-bo-days="${idx}"]`),document.querySelector(`[data-bo-days-field="${idx}"]`));
-  });
-  /* nestly_v773: no per-branch override handlers — see branchOverrideRows above. */
+  /* nestly_v773: no per-branch override handlers — see branchOverrideRows above.
+     nestly_v782: the per-branch expiry wiring loop that stood here went with them (its selector
+     names are deliberately not spelled out — the guard test greps for them). v773 made
+     branchOverrideRows() return '', so the loop queried for markup that can no longer be
+     rendered and bound nothing on every loyalty-page render. */
   const loyaltySave=$('lsave');
   if(loyaltySave)loyaltySave.onclick=async()=>{
     /* nestly_v435: the stamps model no longer renders the points-expiry control here. */
@@ -38530,7 +38544,7 @@ async function loadBillingConfig(){
       const {data:refreshed}=await fetchBusinessBillingV758(S.biz.id);
       await loadBillingConfig();
       const settled=$('billingCommandStatus');
-      if(settled)settled.textContent=`Card updated · ${billingCardTextV758(refreshed?.payment_method)}`;
+      if(settled)settled.textContent=workspaceTemplateTextV97('cardUpdatedV782',{card:billingCardTextV758(refreshed?.payment_method)});
     })();
   }
   if(billingReturnStateV756.processing&&!settingsBillingPollActiveV756){

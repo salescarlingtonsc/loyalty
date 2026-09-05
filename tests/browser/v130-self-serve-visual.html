@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="7ab5ab83dcfeb61c9f0bda433d8d9cccdb4fc8b08a90b930656030ecae2af7ff"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="669cc7dfa566b5132bd7bd0d96b43272a20dde395c6df3a125643c3ca8c16e52"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6385,7 +6385,6 @@ async function wireAccountDeletionButton(){
       let setupKey=sessionStorage.getItem(setupSlot)||crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
       if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Policy.</div>';return}
       $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
-      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
       const startArgs=()=>({
         p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
         p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
@@ -6393,6 +6392,10 @@ async function wireAccountDeletionButton(){
         p_cadence:cadence,p_customer_capacity:Number($('customerCapacity').value),
         p_legal_accepted:true,p_idempotency_key:setupKey
       });
+      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
+      /* nestly_v782: the invalidate used to sit above the startArgs closure v773 introduced,
+         which pushed it out of the V370 guard's window. It is behaviourally identical here —
+         only a function definition sat between — and now it is demonstrably immediate. */
       let started=await sb.rpc('start_self_serve_business_v130',startArgs());
       /* v773: a 23505 is either the address or a stale setup key. The address is checked by
          name; if it is free, the key was the clash — take a fresh one and try once more. */
@@ -6400,6 +6403,11 @@ async function wireAccountDeletionButton(){
         const slugTaken=await selfServeSlugTakenV773($('businessSlug').value.trim());
         if(slugTaken===false){
           setupKey=crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
+          /* nestly_v782: V370 requires every call that can create a persona to drop the persona
+             cache immediately before it runs. v773's retry is a SECOND such call, and the awaited
+             slug check between it and the invalidate above is long enough for a concurrent read to
+             have refilled the cache. Invalidate again, right here. */
+          invalidatePersonaCacheV370();
           started=await sb.rpc('start_self_serve_business_v130',startArgs());
         }
       }

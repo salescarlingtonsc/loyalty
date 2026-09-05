@@ -19209,7 +19209,6 @@ function renderOnboard(){
       let setupKey=sessionStorage.getItem(setupSlot)||crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
       if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Policy.</div>';return}
       $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
-      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
       const startArgs=()=>({
         p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
         p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
@@ -19217,6 +19216,10 @@ function renderOnboard(){
         p_cadence:cadence,p_customer_capacity:Number($('customerCapacity').value),
         p_legal_accepted:true,p_idempotency_key:setupKey
       });
+      invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
+      /* nestly_v782: the invalidate used to sit above the startArgs closure v773 introduced,
+         which pushed it out of the V370 guard's window. It is behaviourally identical here —
+         only a function definition sat between — and now it is demonstrably immediate. */
       let started=await sb.rpc('start_self_serve_business_v130',startArgs());
       /* v773: a 23505 is either the address or a stale setup key. The address is checked by
          name; if it is free, the key was the clash — take a fresh one and try once more. */
@@ -19224,6 +19227,11 @@ function renderOnboard(){
         const slugTaken=await selfServeSlugTakenV773($('businessSlug').value.trim());
         if(slugTaken===false){
           setupKey=crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
+          /* nestly_v782: V370 requires every call that can create a persona to drop the persona
+             cache immediately before it runs. v773's retry is a SECOND such call, and the awaited
+             slug check between it and the invalidate above is long enough for a concurrent read to
+             have refilled the cache. Invalidate again, right here. */
+          invalidatePersonaCacheV370();
           started=await sb.rpc('start_self_serve_business_v130',startArgs());
         }
       }
@@ -21098,6 +21106,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* V295: the Dashboard schedule card names the day it is showing, so the dated form is
      interpolated copy and belongs in the reviewed inventory like every other one. */
   scheduleHeadingDay:Object.freeze({en:'Schedule · {date}','zh-CN':'排程 · {date}',ms:'Jadual · {date}'}),
+  /* nestly_v782: the "Card updated" confirmation after a refresh_payment_method command.
+     ea4a5262 wrote it as an interpolated template literal straight into .textContent, which is
+     exactly the runtime copy v97 exists to catch — it reached zh-CN and ms readers in English. */
+  cardUpdatedV782:Object.freeze({en:'Card updated · {card}','zh-CN':'银行卡已更新 · {card}',ms:'Kad dikemas kini · {card}'}),
   pointCostDerived:Object.freeze({en:'Cost per point: {cost}. Every reward uses this to work out its point price.','zh-CN':'每积分成本：{cost}。每个奖励都以此计算其积分价格。',ms:'Kos setiap mata: {cost}. Setiap ganjaran menggunakannya untuk mengira harga matanya.'}),
   parkExpiryPreview:Object.freeze({en:'Expires {expires} · {days} days','zh-CN':'于 {expires} 到期 · {days} 天',ms:'Luput {expires} · {days} hari'}),
   parkExpiryPreviewTier:Object.freeze({en:'Expires {expires} · {days} days · {tier}','zh-CN':'于 {expires} 到期 · {days} 天 · {tier}',ms:'Luput {expires} · {days} hari · {tier}'}),
@@ -21302,7 +21314,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'wizardStepWho','wizardStepReward','wizardStepSafety','wizardStepReview',
   'availableStaff','availableStaffMany',
   'selectedStaffFree','selectedStaffFreeFairer','recentInWindow','accountMenuForBusiness',
-  'performancePeriodRange','scheduleHeadingDay','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
+  'performancePeriodRange','scheduleHeadingDay','cardUpdatedV782','pointCostDerived','parkExpiryPreview','parkExpiryPreviewTier','parkKeptUntil',
   'sortByAscending','sortByDescending','bottlePercentLeft',
   'bookingRequestWaiting','bookingRequestsWaitingMany','bookingRequestsBadge',
   'staffKeptHasRecord','staffKeptHasRecords',
@@ -30654,11 +30666,11 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     return programmePointCostCentsV262>0?programmePointCostCentsV262:1;
   };
   if($('lx')&&$('lxd')&&$('lxdField'))bindExpiryModeUi($('lx'),$('lxd'),$('lxdField'));
-  document.querySelectorAll('[data-bo-expiry]').forEach(modeInput=>{
-    const idx=modeInput.dataset.boExpiry;
-    bindExpiryModeUi(modeInput,document.querySelector(`[data-bo-days="${idx}"]`),document.querySelector(`[data-bo-days-field="${idx}"]`));
-  });
-  /* nestly_v773: no per-branch override handlers — see branchOverrideRows above. */
+  /* nestly_v773: no per-branch override handlers — see branchOverrideRows above.
+     nestly_v782: the per-branch expiry wiring loop that stood here went with them (its selector
+     names are deliberately not spelled out — the guard test greps for them). v773 made
+     branchOverrideRows() return '', so the loop queried for markup that can no longer be
+     rendered and bound nothing on every loyalty-page render. */
   const loyaltySave=$('lsave');
   if(loyaltySave)loyaltySave.onclick=async()=>{
     /* nestly_v435: the stamps model no longer renders the points-expiry control here. */
@@ -57182,7 +57194,7 @@ async function loadBillingConfig(){
       const {data:refreshed}=await fetchBusinessBillingV758(S.biz.id);
       await loadBillingConfig();
       const settled=$('billingCommandStatus');
-      if(settled)settled.textContent=`Card updated · ${billingCardTextV758(refreshed?.payment_method)}`;
+      if(settled)settled.textContent=workspaceTemplateTextV97('cardUpdatedV782',{card:billingCardTextV758(refreshed?.payment_method)});
     })();
   }
   if(billingReturnStateV756.processing&&!settingsBillingPollActiveV756){

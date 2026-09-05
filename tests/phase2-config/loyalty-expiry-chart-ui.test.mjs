@@ -75,10 +75,19 @@ test('firm and branch save contracts bind mode immediately and omit inactive exp
   assert.match(app, /id="lxdField" \$\{firmExpiryNeedsDays\?'':'hidden'\}/);
   assert.match(app, /value="\$\{firmExpiryDays\}" \$\{firmExpiryNeedsDays\?'required':'disabled'\}/);
   assert.match(app, /bindExpiryModeUi\(\$\('lx'\),\$\('lxd'\),\$\('lxdField'\)\)/);
-  assert.match(app, /document\.querySelectorAll\('\[data-bo-expiry\]'\)[\s\S]*bindExpiryModeUi\(modeInput/);
-  assert.match(app, /data-bo-days-field="\$\{idx\}" \$\{branchExpiryShowsDays\?'':'hidden'\}/);
-  assert.match(app, /data-expiry-allow-inherit="true"/);
-  assert.match(app, /if\(expiryDays!==undefined\)override\.expiry_days=expiryDays/);
+  /* nestly_v782: the three per-branch expiry assertions that stood here are retired, by owner
+     ruling in 1568b344 (nestly_v773): "remove per-branch override; if the company edits rewards
+     from any branch, all branches follow". The Branch settings editor was removed from the
+     loyalty page, so there is no branch expiry field to show/hide and no branch override to
+     serialize. What replaces them asserts that ABSENCE, so re-introducing a per-branch expiry
+     control is a deliberate, visible change rather than silent drift. The FIRM contract this
+     test exists for is untouched and still asserted above and below. */
+  assert.match(app, /const branchOverrideRows=\(\)=>'';/,
+    'v773: the loyalty page renders no per-branch override editor');
+  assert.doesNotMatch(app, /data-bo-days-field|data-bo-expiry|branchExpiryShowsDays|data-expiry-allow-inherit/,
+    'v773: no per-branch expiry-days field may be rendered, and nothing may wire one');
+  assert.doesNotMatch(app, /override\.expiry_days=/,
+    'v773: the branch save path must not serialize a per-branch expiry window');
   assert.match(app, /if\(expiryDays!==undefined\)row\.expiry_days=expiryDays/);
   assert.match(app, /Number\.isNaN\(expiryDays\)[\s\S]*positive whole-number expiry window/);
   assert.doesNotMatch(app, /expiry_days:parseInt\(\$\('lxd'\)/,

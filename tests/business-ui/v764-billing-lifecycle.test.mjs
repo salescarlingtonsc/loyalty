@@ -312,7 +312,11 @@ test('the card is changed through Razorpay and the digits are refreshed on the w
   assert.ok(block.indexOf("refresh_payment_method_request_v764") < block.indexOf("'refresh_payment_method'"),
     'the stored digits are marked stale before the refresh is asked for');
   assert.match(block, /p_command_type:'refresh_payment_method'/);
-  assert.match(block, /Card updated · \$\{billingCardTextV758\(refreshed\?\.payment_method\)\}/);
+  /* nestly_v782: the sentence is unchanged, but it is no longer an interpolated template
+     literal written straight into .textContent — that form is exactly what v97 forbids, and it
+     reached zh-CN and ms readers in English. It now goes through the reviewed v97 template
+     'cardUpdatedV782', still carrying billingCardTextV758's card description. */
+  assert.match(block, /workspaceTemplateTextV97\('cardUpdatedV782',\{card:billingCardTextV758\(refreshed\?\.payment_method\)\}\)/);
 });
 
 test('the checkout page opens the card-change sheet without an amount', () => {
