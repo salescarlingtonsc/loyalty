@@ -19046,6 +19046,23 @@ function wireManualBusinessApplicationFallback(){
     }
   };
 }
+/* v770 (owner: "when there's error you need to tell me which area is wrong"): each refusal
+   start_self_serve_business_v130 can raise, said in the owner's words and pointing at the field
+   to fix. The generic sentence stays only for a failure the server did not name. */
+function selfServeStartErrorTextV770(error){
+  const code=String(error?.code||'');
+  const text=String(error?.message||'').toLowerCase();
+  if(code==='23505'||text.includes('already in use'))return 'That workspace address is already taken. Change the "Workspace address" field and try again.';
+  if(text.includes('already assigned to a business workspace'))return 'This login already owns a workspace, so it cannot start another. Sign in to that workspace, or sign up with a different email.';
+  if(text.includes('locked to the existing selection'))return 'You already started a setup with different choices. Reload this page to continue that setup, or sign out and start again.';
+  if(text.includes('confirmed owner email'))return 'Your email is not confirmed yet. Open the confirmation email, then try again.';
+  if(text.includes('published sector'))return 'Choose a business sector from the list.';
+  if(text.includes('capacity'))return 'Choose a customer capacity from the list.';
+  if(text.includes('plan is not available'))return 'That billing cycle is not available right now. Choose the other cycle, or contact Peekaa support.';
+  if(text.includes('valid owner, business, plan'))return 'Fill in your full name, business name and workspace address, then try again.';
+  if(!error)return 'The setup was not saved. Try again; if it repeats, contact Peekaa support.';
+  return `The setup was not saved: ${String(error.message||'unknown error')}.`;
+}
 function renderOnboard(){
   const setupEpoch=++businessSetupRenderEpoch;
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
@@ -19146,7 +19163,7 @@ function renderOnboard(){
         p_cadence:cadence,p_customer_capacity:Number($('customerCapacity').value),
         p_legal_accepted:true,p_idempotency_key:setupKey
       });
-      if(started.error||!started.data?.business_id){$('startSelfServe').disabled=false;$('onboardStatus').textContent='We could not save this setup. Check every field and choose another workspace address if it is already used.';return}
+      if(started.error||!started.data?.business_id){$('startSelfServe').disabled=false;$('onboardStatus').textContent=selfServeStartErrorTextV770(started.error);return}
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
     };
@@ -50239,7 +50256,9 @@ async function branchesPage(){
      A one-shot flag rather than a query param: this router splits the hash on '/' without
      stripping a query, so '#/branches?add=1' would not resolve to a page at all. Cleared as it is
      read, so a later visit to Branches opens the list as it always has. */
-  if(branchesAutoOpenAddV628){branchesAutoOpenAddV628=false;openForm(null)}
+  /* v772: the form used to open here, BEFORE load() had filled branchList, so a company with
+     three outlets was told "This is your first branch" and offered nothing to copy from (owner
+     photo, 2026-09-05). The flag is consumed inside load(), once the list exists. */
   function openForm(b){
     editId=b?b.id:null;
     $('brForm').innerHTML=`<b>${b?'Edit branch':'New branch'}</b>
@@ -50251,10 +50270,10 @@ async function branchesPage(){
         <input type="checkbox" id="brActive" style="width:auto" ${b.active?'checked':''}> Active</label>`
        :`<label for="brCopyFrom" style="margin-top:16px">Copy settings from</label>
          <select id="brCopyFrom">
+           ${branchList.filter(item=>item.active).map(item=>`<option value="${esc(item.id)}"${item.is_default?' selected':''}>${esc(item.name)}${item.is_default?' (main branch)':''}</option>`).join('')}
            <option value="">Start empty</option>
-           ${branchList.filter(item=>item.active).map(item=>`<option value="${esc(item.id)}"${item.is_default?' selected':''}>${esc(item.name)}</option>`).join('')}
          </select>
-         <p class="muted small" style="margin-top:6px">Copies opening hours, which services it offers, who works there, and any loyalty settings that branch overrides. Prices and products are already shared across every branch.</p>
+         <p class="muted small" style="margin-top:6px">Copies the opening hours, breaks and services offered from the branch you choose. Who works there is assigned per branch on Staff Members. Prices, products and rewards are the same at every branch.</p>
          ${/* nestly_v666 (owner: "the wordings too chunky - just indicate this new branch is the
               second branch - Jess Salon (Tampines) = $1,188 / year and total = $xx / year"). The
               note was three sentences of policy; what an owner needs before pressing Create is
@@ -50370,6 +50389,7 @@ async function branchesPage(){
     if(!isCurrent())return;
     if(error) return fail(error);
     branchList=br||[];staffList=st||[];
+    if(branchesAutoOpenAddV628){branchesAutoOpenAddV628=false;openForm(null)}
     if(!branchList.length){$('brList').innerHTML=`<div class="card">${CUI.emptyState({iconName:'branch',title:'No branches yet',body:'Add your first branch so sales, bookings, staff access and reports can be scoped correctly.'})}</div>`;return}
     const {data:sbRows,error:sbErr}=await sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id);
     if(!isCurrent())return;

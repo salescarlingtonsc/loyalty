@@ -3868,6 +3868,12 @@
       "version": "20261003000000",
       "name": "nestly_v768_keep_branch_stays_paid",
       "sourcePath": "db/migrations/20261003_nestly_v768_keep_branch_stays_paid.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261004000000",
+      "name": "nestly_v772_branch_copy_without_staff",
+      "sourcePath": "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql"
     }
   ]
 }

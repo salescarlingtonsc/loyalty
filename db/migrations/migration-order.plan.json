@@ -3873,6 +3873,12 @@
       "path": "db/migrations/20261003_nestly_v768_keep_branch_stays_paid.sql",
       "semanticVersion": "v768",
       "proposedDeployVersion": "20261003000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql",
+      "semanticVersion": "v772",
+      "proposedDeployVersion": "20261004000000"
     }
   ]
 }
