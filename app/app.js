@@ -23576,6 +23576,8 @@ async function clientsPage(){
     $('form').innerHTML=`<div class="cui-card-head"><h2>New customer</h2><p>Only the name is required. Contact and consent details can be added now or later.</p></div>
       <div class="split"><div><label for="cn">Full name <span aria-hidden="true">*</span></label><input id="cn" required autocomplete="name"></div><div><label for="cp">Phone</label><input id="cp" type="tel" autocomplete="tel" placeholder="+65"></div></div>
       <div class="split"><div><label for="ce">Email</label><input id="ce" type="email" autocomplete="email"></div><div><label for="cb">Birth date</label><input id="cb" type="date"></div></div>
+      
+      <label for="cg">Gender <span class="muted small">(optional · helps your reports)</span></label><select id="cg"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select>
       <label for="cc">Marketing consent (PDPA)</label><select id="cc"><option value="false">No</option><option value="true">Yes — consented</option></select>
       ${canWriteReferrals?`<label for="cr">Referred by (friend's code, optional)</label><input id="cr" placeholder="e.g. 4F7K2A" style="text-transform:uppercase">`:''}
       <div class="row" style="margin-top:16px">${CUI.action({id:'save',label:'Save customer',iconName:'check'})}
@@ -23589,7 +23591,7 @@ async function clientsPage(){
       CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
       const {data:created,error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
         p_idempotency_key:createClientIdempotencyKey,p_full_name:full_name,p_phone:$('cp').value||null,
-        p_email:$('ce').value||null,p_birth_date:$('cb').value||null,p_gender:null,
+        p_email:$('ce').value||null,p_birth_date:$('cb').value||null,p_gender:$('cg').value||null,
         p_marketing_consent:consent,p_referrer_code:canWriteReferrals?($('cr').value||null):null,p_source:'admin add-customer'});
       if(!isCustomersCurrent())return;
       if(error){CUI.setButtonBusy(saveButton,{busy:false});return fail(error)}
@@ -24451,6 +24453,7 @@ async function clientDetail(id){
       <div class="cui-card-head"><h2 id="c360EditTitle">Edit customer</h2><p>Correct this customer's name, contact details or consent. Every change is recorded with its before and after values.</p></div>
       <div class="split"><div><label for="ecn">Full name <span aria-hidden="true">*</span></label><input id="ecn" required autocomplete="name"></div><div><label for="ecp">Phone</label><input id="ecp" type="tel" autocomplete="tel" placeholder="+65"></div></div>
       <div class="split"><div><label for="ece">Email</label><input id="ece" type="email" autocomplete="email"></div><div><label for="ecb">Birth date</label><input id="ecb" type="date"></div></div>
+      <label for="ecg">Gender <span class="muted small">(optional)</span></label><select id="ecg"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select>
       <div><label for="ecc">Marketing consent (PDPA)</label><select id="ecc"><option value="false">No</option><option value="true">Yes — consented</option></select></div>
       <p class="err small" id="ecErr" role="alert" hidden></p>
       <div class="row" style="margin-top:16px">${CUI.action({id:'ecSave',label:'Save changes',iconName:'check'})}
@@ -24716,6 +24719,8 @@ async function clientDetail(id){
       editGender=editableFields?.['gender']||null;
       $('ecn').value=c.full_name||'';$('ecp').value=c.phone||'';$('ece').value=c.email||'';
       $('ecb').value=editableFields?.birth_date||'';
+      /* nestly_v781: the stored value is now shown and editable (owner ruling 2026-09-05). */
+      if($('ecg'))$('ecg').value=editGender||'';
       $('ecc').value=c.marketing_consent?'true':'false';
       setEditError('');editCard.hidden=false;$('ecn').focus();
     };
@@ -24728,7 +24733,7 @@ async function clientDetail(id){
       CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
       const {error:updateError}=await sb.rpc('staff_update_client_v170',{p_business:S.biz.id,p_client:id,
         p_full_name:full_name,p_phone:$('ecp').value||null,p_email:$('ece').value||null,
-        p_birth_date:$('ecb').value||null,p_gender:editGender,
+        p_birth_date:$('ecb').value||null,p_gender:($('ecg')&&$('ecg').value)||editGender||null,
         p_marketing_consent:$('ecc').value==='true'});
       if(!isClientDetailCurrent())return;
       CUI.setButtonBusy(saveButton,{busy:false});
@@ -26188,6 +26193,8 @@ async function tillPage(){
         <h2 style="margin:8px 0 2px">New customer</h2>
         <p class="muted small"><span data-merchant-content>${esc(notFoundPhone||phone)}</span> <span data-workspace-i18n>isn't in your system yet</span></p>
         <div style="text-align:left"><label for="tName">Name</label><input id="tName" placeholder="Customer's name">
+        
+        <div class="split" style="margin-top:10px"><div><label for="tDob">Birthday <span class="muted small">(optional)</span></label><input id="tDob" type="date"></div><div><label for="tGender">Gender <span class="muted small">(optional)</span></label><select id="tGender"><option value="">Not set</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></div></div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
           <input type="checkbox" id="tConsent" style="width:auto"> Marketing consent given</label></div>
         <div id="tErr2"></div>
@@ -26203,6 +26210,7 @@ async function tillPage(){
       if(!quickAddIdem) quickAddIdem=crypto.randomUUID();
       const {data,error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,p_idempotency_key:quickAddIdem,
         p_phone:notFoundPhone||phone,p_full_name:name,p_marketing_consent:$('tConsent').checked,
+        p_birth_date:($('tDob')&&$('tDob').value)||null,p_gender:($('tGender')&&$('tGender').value)||null,
         p_source:'till quick add'});
       if(!isTillCurrent())return;
       if(error){busy=false;$('tAdd').disabled=false;$('tErr2').innerHTML=`<div class="err">${esc(humanErrorV295(error))}</div>`;return}
@@ -58642,12 +58650,14 @@ function wireCustomerCsvImportV368(){
     if(rows.length<2) return toast('CSV needs a header row + data');
     const hdr=rows[0].map(h=>h.trim().toLowerCase());
     const col=n=>hdr.findIndex(h=>h.includes(n));
-    const iN=col('name'),iP=col('phone'),iE=col('email'),iB=col('birth');
+    const iN=col('name'),iP=col('phone'),iE=col('email'),iB=col('birth'),iG=col('gender');
     if(iN<0) return toast('No "name" column found');
     const recs=rows.slice(1).filter(r=>r[iN]&&r[iN].trim().length>1).map(r=>({
       idempotency_key:crypto.randomUUID(),full_name:r[iN].trim(),
       phone:iP>=0?(r[iP]||null):null,email:iE>=0?(r[iE]||null):null,
-      birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null}));
+      birth_date:iB>=0&&/^\d{4}-\d{2}-\d{2}$/.test(r[iB]||'')?r[iB]:null,
+      /* nestly_v781: a gender column is honoured when its value is one the record accepts. */
+      gender:iG>=0&&['female','male','other'].includes(String(r[iG]||'').trim().toLowerCase())?String(r[iG]).trim().toLowerCase():null}));
     const firstCustomers=[recs[0]?.full_name,recs[1]?.full_name].filter(Boolean).join(', ')||'—';
     $('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersReady',{ready:recs.length,rows:rows.length-1})}<br>
       ${workspaceTemplateHtmlV97('firstCustomers',{customers:firstCustomers})}</p>
@@ -58657,7 +58667,7 @@ function wireCustomerCsvImportV368(){
       for(const rec of recs){
         const {error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
           p_idempotency_key:rec.idempotency_key,p_full_name:rec.full_name,p_phone:rec.phone,
-          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:null,
+          p_email:rec.email,p_birth_date:rec.birth_date,p_gender:rec.gender,
           p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
         if(error){toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));return}
         done+=1;

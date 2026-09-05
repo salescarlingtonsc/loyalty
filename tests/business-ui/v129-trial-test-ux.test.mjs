@@ -39,10 +39,19 @@ assert.ok(generatedCopyStart>=0&&generatedCopyEnd>generatedCopyStart,'missing ge
 const executableApp=app.slice(0,generatedCopyStart)+app.slice(generatedCopyEnd);
 
 test('customer-facing staff profile removes empty gender noise and explains rewards plainly',()=>{
-  assert.doesNotMatch(customers,/<label for="cg">Gender|<th>Gender<\/th>|\$\{esc\(c\.gender/);
-  assert.doesNotMatch(profile,/gender not set|\.gender/);
+  /* nestly_v781 (owner ruling 2026-09-05: "proceed" on capturing birthday and gender for
+     till-created customers). V129's ban on gender across staff surfaces was a trial-test UX
+     call about empty-field noise; the owner now wants the field so the Owner brief's age and
+     gender breakdowns stop reading "unknown". The field is OPTIONAL on every form, and the
+     customer LIST still never prints it — that half of V129 stands. */
+  assert.match(customers,/<label for="cg">Gender <span class="muted small">\(optional/);
+  assert.doesNotMatch(customers,/<th>Gender<\/th>|\$\{esc\(c\.gender/);
+  assert.match(profile,/<select id="ecg">/);
+  assert.match(till,/<select id="tGender">/);
+  assert.match(till,/p_birth_date:\(\$\('tDob'\)&&\$\('tDob'\)\.value\)\|\|null,p_gender:\(\$\('tGender'\)&&\$\('tGender'\)\.value\)\|\|null/);
+  assert.match(executableApp,/iG=col\('gender'\)/);
+  assert.match(executableApp,/p_gender:rec\.gender/);
   assert.doesNotMatch(app,/<b>Customer gender<\/b>|labels:\['Female','Male','Other','Not set'\]/);
-  assert.doesNotMatch(executableApp,/Columns (?:we recognise|recognised):[^\n<]*gender|iG=col\('gender'\)|p_gender:rec\.gender/);
   /* V226 renamed this card "Rewards for customer" — the owner's own wording. */
   /* V254: owner confirmed the annotation on the Mumu screenshot — the card is named
      "Available Customer Programmes". Same card, same gates; the label matches what it lists. */
