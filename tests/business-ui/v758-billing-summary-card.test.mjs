@@ -268,6 +268,8 @@ test('the page reads get_business_billing_v786 and falls back to the reads it wr
   const fnEnd = app.indexOf('\n/* ---------- customer sign-up QR ---------- */');
   const fn = app.slice(fnStart, fnEnd);
   assert.match(fn, /fetchBusinessBillingV758\(S\.biz\.id\)/);
+  /* nestly_v787: the branch rows must carry billing_mode, or every own-billed branch reads as shared */
+  assert.match(fn, /select\('id,name,code,is_default,active,billing_state,billing_mode,billing_cancel_at,address,phone,email'\)/);
   // two tabs, the cards then the strip, the payments table in the other panel, one status line
   assert.match(fn, /tabButton\('branches','branch','Branches'\)/);
   assert.match(fn, /tabButton\('payments','wallet','Payment history'\)/);

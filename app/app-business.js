@@ -31889,7 +31889,8 @@ async function branchesPage(){
                for the branch's name to be typed back. The default branch is never deletable. -->
           ${b.is_default?'':`<button class="btn ghost sm" data-name="${esc(b.name)}" onclick="deleteBranchV285('${b.id}',this)">Delete</button>`}
           ${/* nestly_v764: a branch whose charge Razorpay has not confirmed can retry THAT charge. */''}
-          ${b.billing_state==='pending_payment'&&readBranchPaymentRetriesV764()[b.id]?`<button class="btn ghost sm" type="button" data-branch-retry-payment-v764="${b.id}">Retry payment</button>`:''}
+          ${b.billing_state==='pending_payment'&&readBranchPaymentRetriesV764()[b.id]?`<button class="btn ghost sm" type="button" data-branch-retry-payment-v764="${b.id}">Retry payment</button>`
+            :b.billing_state==='pending_payment'&&String(b.billing_mode||'shared')==='own'?`<a class="btn sm" href="#/settings">Pay now</a>`:''}
           ${/* nestly_v606: opening hours are a fact about THIS branch, so they open from its own
                card rather than from a business-wide screen that never named it. */''}
           <button class="btn ghost sm" type="button" data-branch-hours-open-v606="${b.id}" aria-expanded="${openHoursIdV606===b.id?'true':'false'}">${openHoursIdV606===b.id?'Close hours':'Opening hours'}</button>
@@ -38253,7 +38254,9 @@ async function loadBillingConfig(){
        active come back with it so each row can say which it is. */
     /* nestly_v665: billing_cancel_at travels with the row so a stopping branch can say WHEN, both
        in its status pill and in the pop-up that offers to keep it. */
-    sb.from('branches').select('id,name,code,is_default,active,billing_state,billing_cancel_at,address,phone,email')
+    /* nestly_v787: billing_mode travels with the row — without it every own-billed branch read as a
+       shared one and its card offered Manage instead of Pay now (owner, 2026-09-06). */
+    sb.from('branches').select('id,name,code,is_default,active,billing_state,billing_mode,billing_cancel_at,address,phone,email')
       .eq('business_id',S.biz.id)
       .order('is_default',{ascending:false}).order('active',{ascending:false}).order('name')
   ]);

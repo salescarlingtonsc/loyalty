@@ -64,6 +64,10 @@ test('the owner is told what the branch costs and where it is paid before it is 
   assert.doesNotMatch(app, /openBranchProrataConfirmV764/);
 });
 
+test('a branch waiting on its own checkout has a door to pay from the Branches page', () => {
+  assert.match(app, /String\(b\.billing_mode\|\|'shared'\)==='own'\?`<a class="btn sm" href="#\/settings">Pay now<\/a>`/);
+});
+
 test('the copy picker offers the branches, and says what copies', () => {
   assert.match(app, /id="brCopyFrom"/);
   assert.match(app, /p_copy_from:copyFrom/);
