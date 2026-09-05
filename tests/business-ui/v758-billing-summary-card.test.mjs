@@ -4,7 +4,7 @@
  * "SGD 99 / month" with "Billed annually" under it, the renewal date, one button), tabs Branches /
  * Payment history, no summary card ("dont need to show full amount etc."), no trials ("all are
  * paid plans OR Demo account"), and — the ruling that reversed "one card for all" — every new
- * branch on its OWN Razorpay subscription with its own card, cycle and renewal date.
+ * branch on its OWN Stripe subscription with its own card, cycle and renewal date.
  *
  * This EXECUTES the real line builders lifted out of app/app.js — no regex over markup, because
  * the thing under test is what the card SAYS (docs: "Source-regex tests are vacuous").
@@ -283,7 +283,7 @@ test('the page reads get_business_billing_v786 and falls back to the reads it wr
   // the money paths are the existing ones: business commands through v124, branch commands through v786
   assert.match(fn, /sb\.rpc\('request_billing_command_v124'/);
   assert.match(fn, /sb\.rpc\('request_branch_billing_command_v786'/);
-  assert.match(fn, /sb\.functions\.invoke\('razorpay-billing-command'/);
+  assert.match(fn, /sb\.functions\.invoke\('stripe-billing-command'/);
   // a demo account is named as one, and nothing else about it differs
   assert.match(fn, /S\.biz\?\.is_demo\?'<span class="pill new">Demo account<\/span>':''/);
 });

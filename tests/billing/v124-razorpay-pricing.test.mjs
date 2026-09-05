@@ -56,7 +56,7 @@ test('v124 first-paid money-back request window is immutable and exact', async (
 });
 
 test('Razorpay executor resolves one tier plan and prices it by quantity, not by a second line item', async () => {
-  // v755: Razorpay subscriptions carry exactly ONE plan. The old Stripe model (a base price plus
+  // v755: Razorpay subscriptions carry exactly ONE plan. The old Razorpay model (a base price plus
   // a separate "capacity block" price, proration on upgrade) has no Razorpay analogue — a tier is
   // now one plan_id, and everything that used to be extra line items is folded into `quantity`.
   const edge = await read('supabase/functions/razorpay-billing-command/index.ts');
@@ -111,7 +111,7 @@ test('Razorpay reconciliation detects plan and customer-capacity quantity drift'
   assert.match(worker, /itemsBySubscription\.get\(local\.provider_subscription_id\)/);
 });
 
-test('processed Stripe subscription snapshots remove provider items absent from the latest event', async () => {
+test('processed Razorpay subscription snapshots remove provider items absent from the latest event', async () => {
   const sql = await read('supabase/migrations/20260731164709_nestly_v124_stripe_launch_pricing.sql');
   assert.match(sql, /prune_billing_provider_items_v124/);
   assert.match(sql, /processing_status='processed'/);
@@ -155,7 +155,7 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   assert.match(app, /sessionStorage\.setItem\(billingAttemptSlot/);
   assert.match(app, /attempt\.command_id/);
   assert.match(app, /\['failed','canceled'\]\.includes\(result\.status\)/);
-  assert.match(app, /Razorpay did not complete this billing request/);
+  assert.match(app, /Stripe did not complete this billing request/);
   assert.doesNotMatch(app, /Your current subscription is unchanged; try again\./);
 });
 
@@ -194,7 +194,7 @@ test('V144/V162 publish the exact current Peekaa legal digests without rewriting
   }
 });
 
-test('Stripe catalogue bootstrap is idempotent, exact and live guarded', async () => {
+test('Razorpay catalogue bootstrap is idempotent, exact and live guarded', async () => {
   const setup = await read('scripts/stripe/setup-v124-catalog.mjs');
   assert.match(setup, /--apply/);
   assert.match(setup, /--allow-live/);

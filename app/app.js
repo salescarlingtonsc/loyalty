@@ -17621,10 +17621,10 @@ function renderNativeBusinessCompanion(){
    screen that told them to wait for a webhook that would never come, because they never paid.
    Both surfaces now run this one executor, so the two copies cannot drift again. */
 const SELF_SERVE_CHECKOUT_STATUS_V281=Object.freeze({
-  opening:'Opening secure Razorpay Checkout…',
+  opening:'Opening secure Stripe Checkout…',
   request_failed:'We could not confirm the saved checkout request. Retry; the same request will be reused.',
-  unreachable:'Razorpay could not be reached. Retry to recover the same secure checkout.',
-  pending:'Razorpay has not returned a checkout page yet. Retry — the same secure checkout is reused, and nothing is charged twice.'
+  unreachable:'Stripe could not be reached. Retry to recover the same secure checkout.',
+  pending:'Stripe has not returned a checkout page yet. Retry — the same secure checkout is reused, and nothing is charged twice.'
 });
 function selfServeCheckoutKeyV281(businessId){
   return `nestly-self-serve-checkout-${businessId}`;
@@ -17640,7 +17640,7 @@ async function runSelfServeCheckoutV281(onboarding){
   if(requested.error||!requested.data?.command_id)
     return {outcome:'request_failed',message:SELF_SERVE_CHECKOUT_STATUS_V281.request_failed};
   const commandId=requested.data.command_id;
-  const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+  const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
   if(executed.error)
     return {outcome:'unreachable',message:SELF_SERVE_CHECKOUT_STATUS_V281.unreachable};
   let result=executed.data||requested.data;
@@ -17648,7 +17648,7 @@ async function runSelfServeCheckoutV281(onboarding){
      idempotency key for it, so this retrieves or replays the identical session and can never
      create a second one or a second charge. */
   if(!result?.redirect_url&&['uncertain','pending','processing'].includes(String(result?.status||''))){
-    const recovered=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+    const recovered=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
     if(!recovered.error&&recovered.data)result=recovered.data;
   }
   if(result?.redirect_url){
@@ -17749,7 +17749,7 @@ function renderSelfServePaymentPendingV286(onboarding){
   const setupEpoch=++businessSetupRenderEpoch;
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
   const {canceled,processing}=selfServePaymentReturnStateV286();
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Razorpay Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Razorpay. Peekaa is waiting for the verified Razorpay webhook before opening access.':'Peekaa has saved your business, but it remains locked until Razorpay confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Razorpay Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${selfServeManualSwitchCardV542(onboarding)}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${selfServeManualSwitchCardV542(onboarding)}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   wireBusinessSetupAccount();wireAccountDeletionButton();wireSelfServeManualSwitchV542(onboarding);
   $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
   $('onboardRetry').onclick=route;
@@ -17767,7 +17767,7 @@ function renderSelfServePaymentPendingV286(onboarding){
        stuck). Drop them so the workspace route reads the opened state. */
     if(next?.status==='active'){invalidateWorkspaceBootstrapCachesV370();nav(selfServeActivatedRouteV286(next.business_slug));return}
     const status=$('selfServePayStatus');
-    if(status)status.textContent=attempts<90?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(status)status.textContent=attempts<90?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
     if(attempts<90)setTimeout(poll,2000);
   };
   setTimeout(poll,1200);
@@ -17846,10 +17846,10 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
       return;
     }
     attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
-    const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:attempt.command_id}});
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}});
     if(executed.error){
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Peekaa could not confirm Razorpay’s result. Try again to recover the exact provider request.</div>';
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm Stripe’s result. Try again to recover the exact provider request.</div>';
       return;
     }
     const result=executed.data||requested;
@@ -17857,14 +17857,14 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
     if(['failed','canceled'].includes(result.status)){
       clearBillingAttempt(attempt.key);
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Razorpay did not complete this request. Try again.</div>';
+      errorHost.innerHTML='<div class="err">Stripe did not complete this request. Try again.</div>';
     }else if(result.status==='uncertain'){
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Razorpay still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
+      errorHost.innerHTML='<div class="err">Stripe still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
     }else{
       clearBillingAttempt(attempt.key);
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Razorpay did not return a checkout link. Try again.</div>';
+      errorHost.innerHTML='<div class="err">Stripe did not return a checkout link. Try again.</div>';
     }
   };
 }
@@ -18049,7 +18049,7 @@ function renderBusinessSignupChoice(){
     <p class="muted" style="margin-top:7px;line-height:1.55">Choose the path that matches what you are doing now.</p>
     <div class="entry-choice-grid">
       <button type="button" class="entry-choice" id="requestDemoChoice"><span class="entry-choice-icon">${CUI.icon('info',{size:24})}</span><div><h2>Request a demo</h2><p class="muted">Ask Peekaa consultants to contact you. No account or workspace is created.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Request demo ${CUI.icon('forward',{size:16})}</span></button>
-      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:24})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Razorpay Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:16})}</span></button>
+      <button type="button" class="entry-choice" id="startBusinessChoice"><span class="entry-choice-icon">${CUI.icon('branch',{size:24})}</span><div><h2>Set up business</h2><p class="muted">Create a new Peekaa workspace, then choose Stripe Checkout or manual payment approval.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Continue ${CUI.icon('forward',{size:16})}</span></button>
       <button type="button" class="entry-choice" id="joinBusinessChoice"><span class="entry-choice-icon">${CUI.icon('staff',{size:24})}</span><div><h2>Join an existing business</h2><p class="muted">Use an invitation from your business owner or manager.</p></div><span class="inline-status" style="font-weight:700;color:var(--coral)">Enter invite ${CUI.icon('forward',{size:16})}</span></button>
     </div>
     <button class="btn ghost" id="businessSignupBack" style="width:100%;margin-top:18px">Back to sign in</button>
@@ -18066,7 +18066,7 @@ function renderBusinessDemoRequest(){
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="businessDemoRequestTitle">
     <div class="logo" style="margin-bottom:6px">${brandWordmark()}</div>
     <h1 id="businessDemoRequestTitle" style="margin:14px 0 2px">Request a Peekaa demo</h1>
-    <p class="muted small" style="margin-top:6px">Demo request only. Peekaa consultants will contact you. No owner account, workspace, login, Razorpay Checkout, or Super Admin approval is created from this demo request.</p>
+    <p class="muted small" style="margin-top:6px">Demo request only. Peekaa consultants will contact you. No owner account, workspace, login, Stripe Checkout, or Super Admin approval is created from this demo request.</p>
     <div class="grid2" style="margin-top:14px">
       <div><label for="demoContactName">Your full name</label><input id="demoContactName" autocomplete="name"></div>
       <div><label for="demoBusinessName">Business name</label><input id="demoBusinessName" autocomplete="organization"></div>
@@ -18103,7 +18103,7 @@ function renderBusinessDemoRequest(){
         p_contact_phone:phone,p_sector:sector||null,p_note:notes||null
       });
       if(error)throw error;
-      $('businessDemoRequestStatus').textContent='Sent. A Peekaa consultant will contact you. No account, workspace, login, Razorpay Checkout or charge was created.';
+      $('businessDemoRequestStatus').textContent='Sent. A Peekaa consultant will contact you. No account, workspace, login, Stripe Checkout or charge was created.';
     }catch(_error){
       button.disabled=false;
       $('businessDemoRequestStatus').textContent='';
@@ -18460,9 +18460,9 @@ function renderBusinessApplication(){
   let locale=businessApplicationLanguage();
   globalThis.document?.documentElement?.setAttribute('lang',locale);
   const accountCopy={
-    en:{heading:'Create your Peekaa owner account',intro:'Create a secure owner login. After email confirmation, enter business details and choose Razorpay Checkout or manual payment approval. Razorpay opens access only after verified payment; manual payment waits for Super Admin approve/reject.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I agree to the Terms of Service and acknowledge the Privacy Policy',consentLead:'I agree to the',terms:'Terms of Service',and:'and acknowledge the',privacy:'Privacy Policy',create:'Create owner account',back:'Back',accept:'Please agree to the Terms of Service and acknowledge the Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to continue business setup. Razorpay payment auto-activates after verified payment; manual payment goes to Super Admin for approve/reject.'},
-    'zh-CN':{heading:'创建 Peekaa 店主账户',intro:'请先创建安全登录。登录后，如方案已配置，Peekaa 会打开 Razorpay Checkout；如 Razorpay 暂不可用，则收集商家资料以便人工付款协助。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我同意服务条款，并知悉隐私政策',consentLead:'我同意',terms:'服务条款',and:'并知悉',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请同意服务条款并确认知悉隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录继续商家设置。如 Razorpay 暂不可用，请提交资料以便人工付款协助。'},
-    ms:{heading:'Cipta akaun pemilik Peekaa',intro:'Cipta log masuk selamat dahulu. Selepas log masuk, Peekaa akan membuka Razorpay Checkout apabila pelan telah dikonfigurasi, atau mengumpul butiran perniagaan untuk bantuan bayaran manual.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya bersetuju dengan Terma Perkhidmatan dan mengakui Dasar Privasi',consentLead:'Saya bersetuju dengan',terms:'Terma Perkhidmatan',and:'dan mengakui',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila bersetuju dengan Terma Perkhidmatan dan akui Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk meneruskan tetapan perniagaan. Jika Razorpay tidak tersedia, hantar butiran untuk bantuan bayaran manual.'}
+    en:{heading:'Create your Peekaa owner account',intro:'Create a secure owner login. After email confirmation, enter business details and choose Stripe Checkout or manual payment approval. Stripe opens access only after verified payment; manual payment waits for Super Admin approve/reject.',email:'Business email',password:'Password',confirm:'Confirm password',consent:'I agree to the Terms of Service and acknowledge the Privacy Policy',consentLead:'I agree to the',terms:'Terms of Service',and:'and acknowledge the',privacy:'Privacy Policy',create:'Create owner account',back:'Back',accept:'Please agree to the Terms of Service and acknowledge the Privacy Policy.',passwordRule:'Use 12+ characters with upper/lowercase, a number and symbol; both passwords must match.',error:'We could not create this account. Check the email and password, then try again.',check:'Check your email and confirm your account. Then sign in to continue business setup. Stripe payment auto-activates after verified payment; manual payment goes to Super Admin for approve/reject.'},
+    'zh-CN':{heading:'创建 Peekaa 店主账户',intro:'请先创建安全登录。登录后，如方案已配置，Peekaa 会打开 Stripe Checkout；如 Stripe 暂不可用，则收集商家资料以便人工付款协助。',email:'商家邮箱',password:'密码',confirm:'确认密码',consent:'我同意服务条款，并知悉隐私政策',consentLead:'我同意',terms:'服务条款',and:'并知悉',privacy:'隐私政策',create:'创建店主账户',back:'返回登录',accept:'请同意服务条款并确认知悉隐私政策。',passwordRule:'请使用至少 12 个字符，并包含大小写字母、数字和符号；两次密码必须一致。',error:'无法创建此账户。请检查邮箱和密码后重试。',check:'请查看邮箱并确认账户，然后登录继续商家设置。如 Stripe 暂不可用，请提交资料以便人工付款协助。'},
+    ms:{heading:'Cipta akaun pemilik Peekaa',intro:'Cipta log masuk selamat dahulu. Selepas log masuk, Peekaa akan membuka Stripe Checkout apabila pelan telah dikonfigurasi, atau mengumpul butiran perniagaan untuk bantuan bayaran manual.',email:'E-mel perniagaan',password:'Kata laluan',confirm:'Sahkan kata laluan',consent:'Saya bersetuju dengan Terma Perkhidmatan dan mengakui Dasar Privasi',consentLead:'Saya bersetuju dengan',terms:'Terma Perkhidmatan',and:'dan mengakui',privacy:'Dasar Privasi',create:'Cipta akaun pemilik',back:'Kembali ke log masuk',accept:'Sila bersetuju dengan Terma Perkhidmatan dan akui Dasar Privasi.',passwordRule:'Gunakan sekurang-kurangnya 12 aksara dengan huruf besar/kecil, nombor dan simbol; kedua-dua kata laluan mesti sepadan.',error:'Akaun ini tidak dapat dicipta. Semak e-mel dan kata laluan, kemudian cuba lagi.',check:'Semak e-mel dan sahkan akaun, kemudian log masuk untuk meneruskan tetapan perniagaan. Jika Razorpay tidak tersedia, hantar butiran untuk bantuan bayaran manual.'}
   };
   const a=accountCopy[locale]||accountCopy.en;
   root.innerHTML=`<div class="center-wrap"><div class="auth-card card">
@@ -19001,7 +19001,7 @@ function manualBusinessApplicationFallbackHtml(sectors=[],{inline=false}={}){
   const locale=businessApplicationLanguage();
   return `<div class="card" style="margin-top:18px;text-align:left">
     <b>Pay manually instead</b>
-    <p class="muted small" style="margin-top:6px">Use this when you will pay by bank transfer, cash, or another manual arrangement instead of Razorpay. Super Admin reviews and approves or rejects this manual-payment application after payment evidence is checked. Approval does not mark a Razorpay invoice paid.</p>
+    <p class="muted small" style="margin-top:6px">Use this when you will pay by bank transfer, cash, or another manual arrangement instead of Stripe. Super Admin reviews and approves or rejects this manual-payment application after payment evidence is checked. Approval does not mark a Stripe invoice paid.</p>
     <div class="grid2" style="margin-top:14px">
       ${inline?'':`<div><label for="manualOwnerFullName">Your full name</label><input id="manualOwnerFullName" autocomplete="name"></div>`}
       <div${inline?' class="wide"':''}><label for="manualContactPhone">Billing mobile</label><input id="manualContactPhone" autocomplete="tel" inputmode="tel" placeholder="+65 8123 4567">${inline?'<p class="muted small" style="margin-top:5px">Your name, business name, sector and UEN are taken from the form above.</p>':''}</div>
@@ -19011,7 +19011,7 @@ function manualBusinessApplicationFallbackHtml(sectors=[],{inline=false}={}){
       <div class="wide"><label for="manualBusinessRegistration">UEN / registration number (optional)</label><input id="manualBusinessRegistration" autocomplete="off"></div>`}
     </div>
     <button class="btn" id="requestManualBusinessHelp" style="width:100%;margin-top:16px">Request manual payment approval</button>
-    <p class="muted small" id="manualBusinessHelpStatus" role="status" aria-live="polite" style="margin-top:8px">This creates a manual-payment application for Super Admin review. It does not activate a workspace, open Razorpay Checkout, or record payment.</p>
+    <p class="muted small" id="manualBusinessHelpStatus" role="status" aria-live="polite" style="margin-top:8px">This creates a manual-payment application for Super Admin review. It does not activate a workspace, open Stripe Checkout, or record payment.</p>
   </div>`;
 }
 /* V169: the previous handler swallowed the server error entirely (`catch{}`) and always told
@@ -19125,7 +19125,7 @@ function renderOnboard(){
     const state=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
     if(setupEpoch!==businessSetupRenderEpoch)return;
     if(state.error||!state.data){
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">Business setup unavailable</h1><p class="muted small" style="margin-top:8px">We could not safely load the current Razorpay plans. No workspace or charge was created.</p>${businessSetupAccountHtml()}<button class="btn" id="onboardRetry" style="margin-top:4px">Retry</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:620px;max-width:100%;text-align:center"><h1 style="font-size:1.55rem">Business setup unavailable</h1><p class="muted small" style="margin-top:8px">We could not safely load the current Stripe prices. No workspace or charge was created.</p>${businessSetupAccountHtml()}<button class="btn" id="onboardRetry" style="margin-top:4px">Retry</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
       wireBusinessSetupAccount();wireAccountDeletionButton();$('onboardRetry').onclick=renderOnboard;return;
     }
     const onboarding=state.data.onboarding;
@@ -19142,9 +19142,9 @@ function renderOnboard(){
     const sectors=Array.isArray(state.data.sectors)?state.data.sectors:[];
     const annual=plans.find(plan=>plan.cadence==='annual'),monthly=plans.find(plan=>plan.cadence==='monthly');
     if(!annual||!monthly||!sectors.length){
-      const planGap=!annual&&!monthly?'Monthly and annual Razorpay plans are not active.':!annual?'Annual Razorpay plan is not active.':!monthly?'Monthly Razorpay plan is not active.':'Razorpay plans are available.';
+      const planGap=!annual&&!monthly?'Monthly and annual Stripe plans are not active.':!annual?'Annual Stripe price is not active.':!monthly?'Monthly Stripe price is not active.':'Stripe plans are available.';
       const sectorGap=sectors.length?'Eligible business sectors are published.':'No eligible business sector is published.';
-      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:left"><div class="logo" style="text-align:center">${brandWordmark()}</div><h1 style="font-size:1.6rem;margin-top:18px;text-align:center">Payment setup needs help</h1><p class="muted small" style="margin-top:8px;text-align:center">A Razorpay checkout window cannot open until Peekaa has active monthly and annual Razorpay plans plus at least one eligible business sector. No workspace, invoice, receipt, or charge was created.</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:16px;background:var(--sand)"><b>Why Razorpay did not open</b><ul class="small" style="margin:8px 0 0;padding-left:18px"><li>${esc(planGap)}</li><li>${esc(sectorGap)}</li></ul></div>${sectors.length?manualBusinessApplicationFallbackHtml(sectors):`<div class="err" style="margin-top:16px">Business sectors are not ready, so manual application capture is temporarily unavailable. Contact Peekaa support.</div>`}<div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost" id="onboardRetry">Check Razorpay setup again</button><a class="btn ghost" href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20subscription%20setup">Email Peekaa support</a></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireBusinessSetupAccount();wireAccountDeletionButton();wireManualBusinessApplicationFallback();$('onboardRetry').onclick=renderOnboard;return;
+      root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:760px;max-width:100%;text-align:left"><div class="logo" style="text-align:center">${brandWordmark()}</div><h1 style="font-size:1.6rem;margin-top:18px;text-align:center">Payment setup needs help</h1><p class="muted small" style="margin-top:8px;text-align:center">A Stripe Checkout page cannot open until Peekaa has active monthly and annual Stripe prices plus at least one eligible business sector. No workspace, invoice, receipt, or charge was created.</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:16px;background:var(--sand)"><b>Why Stripe did not open</b><ul class="small" style="margin:8px 0 0;padding-left:18px"><li>${esc(planGap)}</li><li>${esc(sectorGap)}</li></ul></div>${sectors.length?manualBusinessApplicationFallbackHtml(sectors):`<div class="err" style="margin-top:16px">Business sectors are not ready, so manual application capture is temporarily unavailable. Contact Peekaa support.</div>`}<div class="row" style="justify-content:center;margin-top:16px"><button class="btn ghost" id="onboardRetry">Check Stripe setup again</button><a class="btn ghost" href="mailto:admin.peekaa@gmail.com?subject=Peekaa%20subscription%20setup">Email Peekaa support</a></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;wireBusinessSetupAccount();wireAccountDeletionButton();wireManualBusinessApplicationFallback();$('onboardRetry').onclick=renderOnboard;return;
     }
     /* nestly_v664: signup prices from the same tier ladder the workspace and the server use, and
        offers only tiers Peekaa can actually charge for — an owner cannot pick a capacity that the
@@ -19164,7 +19164,7 @@ function renderOnboard(){
        stays in the DOM, hidden, holding that one value, because the start RPC still names a capacity. */
     const capacityOptions=signupTiersForV664('annual').map(tier=>Number(tier.capacity_ceiling)).slice(0,1);
     if(!capacityOptions.length)capacityOptions.push(10000);
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details, then choose how you want to pay. Paying by card opens your workspace automatically once Razorpay confirms payment; paying manually sends the details to Peekaa admin, who opens your workspace after checking payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset id="payMethodChoice" style="border:0;padding:0;margin:22px 0 0"><legend style="font-weight:700">How would you like to pay?</legend><p class="muted small" style="margin-top:4px">Choose one. Nothing is charged until you confirm.</p><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:10px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="stripe"> <strong>Pay by card now</strong><p class="muted small" style="margin-top:5px">Secure Razorpay Checkout. Your workspace opens automatically once payment is confirmed.</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="manual"> <strong>Pay manually</strong><p class="muted small" style="margin-top:5px">Bank transfer, cash or another arrangement. Peekaa admin opens your workspace after checking payment.</p></label></div></fieldset><div id="payStripeBlock" hidden><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · <span id="selfServeAnnualPrice">${money(annual.base_amount_cents)}</span>/year</strong><p class="muted small" style="margin-top:5px"><span id="selfServeAnnualEquivalent">${money(Math.round(annual.base_amount_cents/12))}</span>/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · <span id="selfServeMonthlyPrice">${money(monthly.base_amount_cents)}</span>/month</strong><p class="muted small" style="margin-top:5px" id="selfServeMonthlyNote">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity" hidden>Customer capacity</label><select id="customerCapacity" hidden>${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Razorpay Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p></div><div id="payManualBlock" hidden>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}</div><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details, then choose how you want to pay. Paying by card opens your workspace automatically once Stripe confirms payment; paying manually sends the details to Peekaa admin, who opens your workspace after checking payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset id="payMethodChoice" style="border:0;padding:0;margin:22px 0 0"><legend style="font-weight:700">How would you like to pay?</legend><p class="muted small" style="margin-top:4px">Choose one. Nothing is charged until you confirm.</p><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:10px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="stripe"> <strong>Pay by card now</strong><p class="muted small" style="margin-top:5px">Secure Stripe Checkout. Your workspace opens automatically once payment is confirmed.</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="manual"> <strong>Pay manually</strong><p class="muted small" style="margin-top:5px">Bank transfer, cash or another arrangement. Peekaa admin opens your workspace after checking payment.</p></label></div></fieldset><div id="payStripeBlock" hidden><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · <span id="selfServeAnnualPrice">${money(annual.base_amount_cents)}</span>/year</strong><p class="muted small" style="margin-top:5px"><span id="selfServeAnnualEquivalent">${money(Math.round(annual.base_amount_cents/12))}</span>/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · <span id="selfServeMonthlyPrice">${money(monthly.base_amount_cents)}</span>/month</strong><p class="muted small" style="margin-top:5px" id="selfServeMonthlyNote">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity" hidden>Customer capacity</label><select id="customerCapacity" hidden>${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p></div><div id="payManualBlock" hidden>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}</div><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
     const setupIntroduction=root.querySelector('main section.card>p');
     if(setupIntroduction)setupIntroduction.insertAdjacentHTML('afterend',businessSetupAccountHtml('businessSetupSignOut'));
     wireBusinessSetupAccount('businessSetupSignOut');wireAccountDeletionButton();
@@ -50432,10 +50432,10 @@ async function branchesPage(){
       const chargeTickV778=setInterval(()=>{
         const btn=$('brSave');if(!btn||!btn.isConnected){clearInterval(chargeTickV778);return}
         const secs=Math.round((Date.now()-chargeStartedV778)/1000);
-        CUI.setButtonBusy(btn,{busy:true,label:secs<10?'Opening the payment page…':`Waiting for Razorpay… ${secs}s`});
+        CUI.setButtonBusy(btn,{busy:true,label:secs<10?'Opening the payment page…':`Waiting for Stripe… ${secs}s`});
       },1000);
       let executed;
-      try{executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}})}
+      try{executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}})}
       finally{clearInterval(chargeTickV778)}
       if(executed.error){
         CUI.setButtonBusy($('brSave'),{busy:false});
@@ -50522,7 +50522,7 @@ async function branchesPage(){
       const commandId=readBranchPaymentRetriesV764()[branchId];
       if(!commandId)return;
       CUI.setButtonBusy(button,{busy:true,label:'Charging…'});
-      const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+      const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
       if(executed.error||executed.data?.status==='uncertain'){
         if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
         toast('The payment is still confirming. Try again in a moment.');
@@ -56472,7 +56472,7 @@ function billingManageSheetHtmlV784(model){
     ${m.now_line?`<p style="margin:14px 0 0;font-weight:700;font-variant-numeric:tabular-nums">${esc(m.now_line)}</p>`:''}
     ${primary||unchanged?`<div class="row" style="margin-top:12px">${primary||unchanged}</div>`:''}
     ${cardRow}${renewalRow}${branchRow}
-    <p class="muted small" style="margin-top:16px">${esc(m.footnote||'GST not charged. Razorpay Checkout collects payment details securely. Access changes only after Razorpay confirms payment.')}</p>
+    <p class="muted small" style="margin-top:16px">${esc(m.footnote||'GST not charged. Stripe Checkout collects payment details securely. Access changes only after Stripe confirms payment.')}</p>
   </section>`;
 }
 /* nestly_v786: the promises the Details expander used to carry, as one line under the page —
@@ -56759,10 +56759,10 @@ async function runBranchBillingActionV758(record,button,kind){
      renewal date, or (Keep) the withdrawal of that schedule. Neither charges the card. Until this
      ran, Razorpay was never told and the command sat pending forever. */
   if(data?.command_id){
-    const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:data.command_id}});
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:data.command_id}});
     if(executed.error){
       if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
-      toast(kind==='stop'?'Saved here, but Razorpay could not be updated yet. Try again in a moment.':'Saved here, but Razorpay could not be updated yet. Try Keep again in a moment.');
+      toast(kind==='stop'?'Saved here, but Stripe could not be updated yet. Try again in a moment.':'Saved here, but Stripe could not be updated yet. Try Keep again in a moment.');
       loadBillingConfig();return;
     }
   }
@@ -57017,7 +57017,7 @@ async function loadBillingConfig(){
       </div>
       <div id="billingPanelBranchesV784" role="tabpanel"${tabV784==='branches'?'':' hidden'}>${subscriptionBranchCardsV784(cardsV784)}${billingAddBranchStepsV784()}</div>
       <div id="billingPanelPaymentsV784" role="tabpanel"${tabV784==='payments'?'':' hidden'}><div class="card" style="padding:18px">${billingInvoiceTableV758(b,summaryV758)}</div></div>
-      <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:12px">Razorpay Checkout collects payment details securely. Access changes only after Razorpay confirms payment.</p>
+      <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:12px">Stripe Checkout collects payment details securely. Access changes only after Stripe confirms payment.</p>
       <p class="muted small" style="margin-top:8px">${esc(billingFootnoteV786(b.money_back_window))}</p>
       <p class="muted small" style="margin-top:6px">Template-assisted promotion wording helps reword factual offer content; the owner reviews and publishes it. It does not use generative AI or invent prices, dates or claims.</p>`;
     /* nestly_v786: a fourth argument names a branch whose OWN subscription the command acts on;
@@ -57030,7 +57030,7 @@ async function loadBillingConfig(){
         :type==='resume'?'Resuming the renewal…'
         :type==='update_card'?'Opening the secure card page…'
         :type==='refresh_payment_method'?'Refreshing your card details…'
-        :'Submitting the exact plan to Razorpay…';
+        :'Submitting the exact plan to Stripe…';
       const fingerprint=JSON.stringify({type,cadence:cadence||null,capacity:capacity||null,branch:branchId||null});
       let attempt=readBillingAttempt();
       if(!attempt||attempt.fingerprint!==fingerprint){attempt={fingerprint,key:crypto.randomUUID(),command_id:null};writeBillingAttempt(attempt)}
@@ -57056,10 +57056,10 @@ async function loadBillingConfig(){
         if(!status.isConnected){clearInterval(submitTickV778);return}
         const secs=Math.round((Date.now()-submitStartedV778)/1000);
         /* v786: concatenation, not an interpolated template — the v97 localization gate forbids the latter in textContent. */
-        if(secs>=10)status.textContent=submittedLabelV778+' Waiting for Razorpay to confirm the charge… '+secs+'s';
+        if(secs>=10)status.textContent=submittedLabelV778+' Waiting for Stripe to confirm the charge… '+secs+'s';
       },1000);
       let executed;
-      try{executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:attempt.command_id}})}
+      try{executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}})}
       finally{clearInterval(submitTickV778)}
       if(executed.error){
         buttons.forEach(button=>button.disabled=false);
@@ -57070,10 +57070,10 @@ async function loadBillingConfig(){
         try{body=await executed.error?.context?.json?.()}catch{body=null}
         if(body?.status==='failed'){
           clearBillingAttempt(attempt.key);
-          status.textContent='Razorpay did not accept this change, so nothing was changed. Try again; if it repeats, contact Peekaa support.';
+          status.textContent='Stripe did not accept this change, so nothing was changed. Try again; if it repeats, contact Peekaa support.';
           return;
         }
-        status.textContent='Peekaa could not confirm Razorpay’s result. Retry this same selection to recover the exact provider request; do not start a different request yet.';
+        status.textContent='Peekaa could not confirm Stripe’s result. Retry this same selection to recover the exact provider request; do not start a different request yet.';
         return;
       }
       const result=executed.data||requested;
@@ -57081,9 +57081,9 @@ async function loadBillingConfig(){
       let message='';
       if(['failed','canceled'].includes(result.status)){
         clearBillingAttempt(attempt.key);
-        message='Razorpay did not complete this billing request. Review the selection and try again with a new request.';
+        message='Stripe did not complete this billing request. Review the selection and try again with a new request.';
       }else if(result.status==='uncertain'){
-        message='Razorpay still needs payment confirmation. Retry this same selection after completing payment; Peekaa will recover the exact request.';
+        message='Stripe still needs payment confirmation. Retry this same selection after completing payment; Peekaa will recover the exact request.';
       }else{
         clearBillingAttempt(attempt.key);
         message=type==='cancel_at_period_end'?'Renewal cancelled. Everything keeps working until your billing date.'
@@ -57092,7 +57092,7 @@ async function loadBillingConfig(){
           /* v769: a cycle change is scheduled, never paid for now — the line under the price
              says the date; "confirms payment" was the wrong promise for it. */
           :type==='change_cadence'?'Saved. The line under your price says when it takes effect.'
-          :'Request submitted. The current plan remains shown until Razorpay confirms payment and the subscription webhook is received.';
+          :'Request submitted. The current plan remains shown until Stripe confirms payment and the subscription webhook is received.';
       }
       /* nestly_v764: a command that does not hand the browser to Razorpay changes the page's own
          facts (a cancelled renewal, a scheduled cycle, a new card). The card is re-read and
@@ -57152,7 +57152,7 @@ async function loadBillingConfig(){
       const commandId=retriesV784[branch.id];
       if(branch.billing_state==='pending_payment'&&commandId){
         CUI.setButtonBusy(button,{busy:true,label:'Charging…'});
-        const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+        const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
         if(executed.error||executed.data?.status==='uncertain'){
           if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
           toast('The payment is still confirming. Try again in a moment.');return;
@@ -57380,7 +57380,7 @@ async function loadBillingConfig(){
         p_business:S.biz.id,p_command_type:'refresh_payment_method',p_cadence:null,
         p_customer_capacity:null,p_idempotency_key:crypto.randomUUID()});
       const commandId=requested.data?.command_id||null;
-      if(commandId)await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+      if(commandId)await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
       settingsBillingCardRefreshActiveV764=false;
       if(!wrap.isConnected)return;
       const {data:refreshed}=await fetchBusinessBillingV758(S.biz.id);

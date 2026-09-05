@@ -29,21 +29,21 @@ test('V125 records one fail-closed no-GST platform policy and catalogue contract
 test('Stripe catalogue bootstrap still pins exclusive prices (Stripe history is untouched)', async () => {
   // scripts/stripe/setup-v124-catalog.mjs is the ORIGINAL Stripe catalogue bootstrap: it created
   // the historical price rows this platform once billed from, and it is not rewritten by the
-  // Razorpay swap. The invariant it protects (no-GST => exclusive pricing) is unchanged.
+  // Stripe swap. The invariant it protects (no-GST => exclusive pricing) is unchanged.
   const setup = await read('scripts/stripe/setup-v124-catalog.mjs');
   assert.match(setup, /tax_behavior:\s*'exclusive'/i);
   assert.match(setup, /price\.tax_behavior\s*===\s*'exclusive'/i);
 });
 
-test('Razorpay catalogue and executor pin exclusive prices; Razorpay has no automatic tax to disable', async () => {
-  // Razorpay has no tax engine to turn off, so the v125 guard now lives entirely in the catalogue
+test('Stripe catalogue and executor pin exclusive prices; Stripe has no automatic tax to disable', async () => {
+  // Stripe has no tax engine to turn off, so the v125 guard now lives entirely in the catalogue
   // check: the platform is not GST-registered, so the catalogue row must still declare exclusive
   // pricing before a plan is ever created or matched at the provider.
   const edge = await read('supabase/functions/razorpay-billing-command/index.ts');
   assert.match(edge, /data\.tax_behavior !== 'exclusive'/);
   assert.match(edge, /Peekaa is not GST-registered; catalogue tax behavior must be exclusive/);
-  // The plan is fetched from Razorpay and checked against the reviewed catalogue (cadence,
-  // amount, currency) before any subscription is created or changed — the Razorpay analogue of
+  // The plan is fetched from Stripe and checked against the reviewed catalogue (cadence,
+  // amount, currency) before any subscription is created or changed — the Stripe analogue of
   // Stripe's subscription-shape verification.
   assert.match(edge, /const plan = await razorpay\.getPlan\(planId\)/);
   assert.match(edge, /razorpayPlanMatchesCatalogue\(plan, \{/);
@@ -153,7 +153,7 @@ test('owner and platform billing say GST is not charged and preserve the provide
   /* nestly_v758 stated the zero-tax rule on the arithmetic line; nestly_v786 states it in the
      footnote under the page and on the Manage sheet, now that the arithmetic line is gone. */
   assert.match(owner, /GST not charged\. Staff access included/i);
-  assert.match(owner, /GST not charged\. Razorpay Checkout collects payment details securely/i);
+  assert.match(owner, /GST not charged\. Stripe Checkout collects payment details securely/i);
   assert.match(owner, /Billing cycle[\s\S]+align-items:stretch;flex-wrap:wrap/i);
   assert.doesNotMatch(owner, /Recurring total\$\{plan\.tax_behavior===\s*'exclusive'\?' before GST'/i);
   assert.match(platform, /GST not charged/i);

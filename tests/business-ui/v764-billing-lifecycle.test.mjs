@@ -5,7 +5,7 @@
  * when; (2) removing a branch is "Switch off", with the date it switches off; (3) a billing-cycle
  * change starts on the renewal date and the page SAYS the date; (4) a cancelled renewal keeps
  * working to the end and can be resumed, with a confirmation naming money, date and card, until
- * the cancel has actually been sent to Razorpay; (5) the card can be changed.
+ * the cancel has actually been sent to Stripe; (5) the card can be changed.
  *
  * Every assertion below EXECUTES the real renderer from app/app.js against a fixture — the
  * sentences are the thing under test, and a regex over markup cannot see a sentence
@@ -203,7 +203,7 @@ test('a charge the provider has not confirmed offers to retry THAT charge, never
   assert.match(app, /if\(!commandId\)return;/);
   assert.match(app, /forgetBranchPaymentRetryV764\(branchId\)/);
   // the retry re-invokes the SAME command id
-  assert.match(app, /data-branch-retry-payment-v764[\s\S]{0,700}invoke\('razorpay-billing-command',\{body:\{command_id:commandId\}\}\)/);
+  assert.match(app, /data-branch-retry-payment-v764[\s\S]{0,700}invoke\('stripe-billing-command',\{body:\{command_id:commandId\}\}\)/);
 });
 
 /* ----------------------------------------------- ruling 2: switch off, with the date it happens */
@@ -261,7 +261,7 @@ test('the payments table carries the What column on both the desk and the phone 
 
 /* ------------------------------------------------------------------------------- ruling 5: card */
 
-test('the card is changed through Razorpay and the digits are refreshed on the way back', () => {
+test('the card is changed through Stripe and the digits are refreshed on the way back', () => {
   // the button asks for the provider's card-change sheet
   /* nestly_v784/v786: the button lives on the Manage sheet and names the branch scope it acts on. */
   assert.match(app, /updateCard\.onclick=after\(\(\)=>execute\('update_card',null,null,scope\)\)/);

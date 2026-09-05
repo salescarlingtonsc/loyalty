@@ -52,7 +52,7 @@ test('V151 signup entry separates new business from invited staff', () => {
   assert.match(signup, /Request a demo/);
   assert.match(signup, /No account or workspace is created/);
   assert.match(signup, /Set up business/);
-  assert.match(signup, /Razorpay Checkout or manual payment approval/);
+  assert.match(signup, /Stripe Checkout or manual payment approval/);
   assert.match(signup, /Join an existing business/);
   assert.match(signup, /Company invite code/);
   /* nestly_v588 (owner: staff signup "in a mess"): the reassuring-but-irrelevant "Stripe is not
@@ -103,18 +103,18 @@ test('V151 staff invite migration enforces email restriction and one-time server
   assert.match(v151Migration, /raise exception 'company invite has expired'/);
 });
 
-test('V151/v755 Razorpay return polls provider-confirmed self-service status and never trusts success URL alone', () => {
+test('V151/v755 Stripe return polls provider-confirmed self-service status and never trusts success URL alone', () => {
   /* V286: the poll and the ?status= reading moved out of renderOnboard into the single
      payment-pending renderer, because renderOnboard was not the screen the provider return
      actually reached. The contract this test is about is unchanged; only its address is.
-     nestly_v755: the provider is now Razorpay, not Stripe — see RAZORPAY_SWAP_SPEC.md. */
+     nestly_v755: the provider is now Stripe, not Stripe — see RAZORPAY_SWAP_SPEC.md. */
   const pending = section('function renderSelfServePaymentPendingV286(', 'function renderBusinessWorkspaceControl(');
   assert.match(pending, /Setting up your Peekaa workspace/);
   assert.match(pending, /selfServePaymentReturnStateV286\(\)/);
   assert.match(pending, /get_self_serve_checkout_v130/);
   assert.match(pending, /if\(next\?\.status==='active'\)/);
   assert.match(pending, /Checkout success pages do not unlock access; provider-confirmed payment does/);
-  assert.match(pending, /Razorpay confirmation is still processing/);
+  assert.match(pending, /Stripe confirmation is still processing/);
   /* V281: the checkout request moved into the shared runSelfServeCheckoutV281 executor. The
      poll this test is about is unchanged and still lives in renderOnboard. */
   assert.match(onboard, /driveSelfServeCheckoutV281\(onboarding,statusNode,button\)/);

@@ -13,6 +13,16 @@ verify_jwt = false
 [functions.public-support-ticket]
 verify_jwt = false
 
+# nestly_v791: Stripe is the platform billing provider again (owner, 2026-09-06).
+[functions.stripe-billing-webhook]
+verify_jwt = false
+
+[functions.stripe-billing-command]
+verify_jwt = true
+
+[functions.stripe-billing-reconcile]
+verify_jwt = false
+
 [functions.razorpay-billing-webhook]
 verify_jwt = false
 

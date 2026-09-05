@@ -234,13 +234,15 @@ test('the checkout page loads Razorpay under its own CSP and carries no secret',
   assert.doesNotMatch(app, /razorpay/i);
 });
 
-test('the config declares the four Razorpay functions and no Stripe function survives', async () => {
+test('the config declares the Stripe billing functions (v791) beside the Razorpay ones it keeps for history', async () => {
   const config = await read('supabase/config.toml');
+  /* nestly_v791: Stripe is the platform provider again; the Razorpay functions stay declared so
+     their history (and a demo sandbox, if it is ever wanted) remains reachable. */
+  assert.match(config, /\[functions\.stripe-billing-webhook\]\nverify_jwt = false/);
+  assert.match(config, /\[functions\.stripe-billing-command\]\nverify_jwt = true/);
+  assert.match(config, /\[functions\.stripe-billing-reconcile\]\nverify_jwt = false/);
   assert.match(config, /\[functions\.razorpay-billing-webhook\]\nverify_jwt = false/);
   assert.match(config, /\[functions\.razorpay-billing-command\]\nverify_jwt = true/);
-  assert.match(config, /\[functions\.razorpay-billing-reconcile\]\nverify_jwt = false/);
-  assert.match(config, /\[functions\.razorpay-billing-return\]\nverify_jwt = false/);
-  assert.doesNotMatch(config, /\[functions\.stripe-/);
 });
 
 test('reconciliation keeps the run/finish contract and is scoped by real columns', async () => {

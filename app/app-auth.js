@@ -41,10 +41,10 @@ function renderWorkspaceAccessUnavailable(){
    screen that told them to wait for a webhook that would never come, because they never paid.
    Both surfaces now run this one executor, so the two copies cannot drift again. */
 const SELF_SERVE_CHECKOUT_STATUS_V281=Object.freeze({
-  opening:'Opening secure Razorpay Checkout…',
+  opening:'Opening secure Stripe Checkout…',
   request_failed:'We could not confirm the saved checkout request. Retry; the same request will be reused.',
-  unreachable:'Razorpay could not be reached. Retry to recover the same secure checkout.',
-  pending:'Razorpay has not returned a checkout page yet. Retry — the same secure checkout is reused, and nothing is charged twice.'
+  unreachable:'Stripe could not be reached. Retry to recover the same secure checkout.',
+  pending:'Stripe has not returned a checkout page yet. Retry — the same secure checkout is reused, and nothing is charged twice.'
 });
 function selfServeCheckoutKeyV281(businessId){
   return `nestly-self-serve-checkout-${businessId}`;
@@ -60,7 +60,7 @@ async function runSelfServeCheckoutV281(onboarding){
   if(requested.error||!requested.data?.command_id)
     return {outcome:'request_failed',message:SELF_SERVE_CHECKOUT_STATUS_V281.request_failed};
   const commandId=requested.data.command_id;
-  const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+  const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
   if(executed.error)
     return {outcome:'unreachable',message:SELF_SERVE_CHECKOUT_STATUS_V281.unreachable};
   let result=executed.data||requested.data;
@@ -68,7 +68,7 @@ async function runSelfServeCheckoutV281(onboarding){
      idempotency key for it, so this retrieves or replays the identical session and can never
      create a second one or a second charge. */
   if(!result?.redirect_url&&['uncertain','pending','processing'].includes(String(result?.status||''))){
-    const recovered=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+    const recovered=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}});
     if(!recovered.error&&recovered.data)result=recovered.data;
   }
   if(result?.redirect_url){
@@ -169,7 +169,7 @@ function renderSelfServePaymentPendingV286(onboarding){
   const setupEpoch=++businessSetupRenderEpoch;
   if(NestlyNativeBridge.isNative){renderNativeBusinessCompanion();return}
   const {canceled,processing}=selfServePaymentReturnStateV286();
-  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Razorpay Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Razorpay. Peekaa is waiting for the verified Razorpay webhook before opening access.':'Peekaa has saved your business, but it remains locked until Razorpay confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Razorpay Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${selfServeManualSwitchCardV542(onboarding)}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+  root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:680px;max-width:100%" aria-labelledby="selfServePendingTitle"><div class="logo">${brandWordmark()}</div><h1 id="selfServePendingTitle" style="font-size:1.65rem;margin-top:18px">${canceled?'Complete secure payment':processing?'Setting up your Peekaa workspace…':'Payment confirmation pending'}</h1><p class="muted" style="margin-top:7px">${canceled?'Stripe Checkout was closed without payment. Your saved workspace remains locked and has not been charged.':processing?'Payment was returned from Stripe. Peekaa is waiting for the verified Stripe webhook before opening access.':'Peekaa has saved your business, but it remains locked until Stripe confirms the first paid invoice.'}</p>${businessSetupAccountHtml()}<div class="card" style="margin-top:18px"><b>${esc(onboarding.business_name)}</b><p class="muted small" style="margin-top:5px">${esc(onboarding.cadence==='annual'?'Annual':'Monthly')} · up to ${Number(onboarding.customer_capacity).toLocaleString('en-SG')} customers · ${money(Number(onboarding.total_cents||0))}</p><p class="muted small" style="margin-top:5px">GST not charged · Subscription fees are non-refundable after payment, except where required by law</p></div><button class="btn${processing?' ghost':''}" id="selfServePay" style="width:100%;margin-top:18px">${processing?'Open Stripe Checkout again':'Complete secure payment'}</button><p class="muted small" id="selfServePayStatus" role="status" aria-live="polite" style="margin-top:8px">${processing?'Checking verified activation status…':'Checkout success pages do not unlock access; provider-confirmed payment does.'}</p><button class="btn ghost" id="onboardRetry" style="width:100%;margin-top:10px">Check payment again</button>${selfServeManualSwitchCardV542(onboarding)}${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   wireBusinessSetupAccount();wireAccountDeletionButton();wireSelfServeManualSwitchV542(onboarding);
   $('selfServePay').onclick=()=>driveSelfServeCheckoutV281(onboarding,$('selfServePayStatus'),$('selfServePay'));
   $('onboardRetry').onclick=route;
@@ -187,7 +187,7 @@ function renderSelfServePaymentPendingV286(onboarding){
        stuck). Drop them so the workspace route reads the opened state. */
     if(next?.status==='active'){invalidateWorkspaceBootstrapCachesV370();nav(selfServeActivatedRouteV286(next.business_slug));return}
     const status=$('selfServePayStatus');
-    if(status)status.textContent=attempts<90?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(status)status.textContent=attempts<90?'Stripe confirmation is still processing. Checking again…':'Stripe has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
     if(attempts<90)setTimeout(poll,2000);
   };
   setTimeout(poll,1200);
@@ -266,10 +266,10 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
       return;
     }
     attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
-    const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:attempt.command_id}});
+    const executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:attempt.command_id}});
     if(executed.error){
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Peekaa could not confirm Razorpay’s result. Try again to recover the exact provider request.</div>';
+      errorHost.innerHTML='<div class="err">Peekaa could not confirm Stripe’s result. Try again to recover the exact provider request.</div>';
       return;
     }
     const result=executed.data||requested;
@@ -277,14 +277,14 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
     if(['failed','canceled'].includes(result.status)){
       clearBillingAttempt(attempt.key);
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Razorpay did not complete this request. Try again.</div>';
+      errorHost.innerHTML='<div class="err">Stripe did not complete this request. Try again.</div>';
     }else if(result.status==='uncertain'){
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Razorpay still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
+      errorHost.innerHTML='<div class="err">Stripe still needs payment confirmation. Try again; Peekaa will recover the exact request.</div>';
     }else{
       clearBillingAttempt(attempt.key);
       button.disabled=false;
-      errorHost.innerHTML='<div class="err">Razorpay did not return a checkout link. Try again.</div>';
+      errorHost.innerHTML='<div class="err">Stripe did not return a checkout link. Try again.</div>';
     }
   };
 }

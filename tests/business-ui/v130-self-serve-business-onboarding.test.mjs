@@ -12,7 +12,7 @@ const v132Migration=readFileSync(new URL(
   '../../supabase/migrations/20260801223000_nestly_v132_release_gap_closure.sql',
   import.meta.url
 ),'utf8');
-const edge=readFileSync(new URL('../../supabase/functions/razorpay-billing-command/index.ts',import.meta.url),'utf8');
+const edge=readFileSync(new URL('../../supabase/functions/stripe-billing-command/index.ts',import.meta.url),'utf8');
 const platform=readFileSync(new URL('../../app/platform-console.js',import.meta.url),'utf8');
 
 function section(start,end){
@@ -32,18 +32,18 @@ function platformSection(start,end){
 test('public business signup creates an owner account instead of requesting admin approval',()=>{
   const signup=section('function renderBusinessApplication(){','async function renderApprovedBusinessInviteSignup(');
   assert.match(signup,/Create your Peekaa owner account/);
-  assert.match(signup,/choose Razorpay Checkout or manual payment approval/);
-  assert.match(signup,/Razorpay opens access only after verified payment/);
+  assert.match(signup,/choose Stripe Checkout or manual payment approval/);
+  assert.match(signup,/Stripe opens access only after verified payment/);
   assert.match(signup,/manual payment waits for Super Admin approve\/reject/);
   assert.match(signup,/sb\.auth\.signUp/);
   assert.match(signup,/validNewPassword/);
   assert.match(signup,/I agree to the Terms of Service and acknowledge the Privacy Policy/);
-  assert.doesNotMatch(signup,/then pay through Razorpay/);
+  assert.doesNotMatch(signup,/then pay through Stripe/);
   assert.doesNotMatch(signup,/Request demo|demo requests|product demo/);
   assert.doesNotMatch(signup,/Submit for approval|super admin must approve|public-business-application/);
 });
 
-test('signed-in owner chooses business, sector, cadence and capacity before Razorpay',()=>{
+test('signed-in owner chooses business, sector, cadence and capacity before Stripe',()=>{
   const onboard=section('function renderOnboard(){','/* ============================================================================');
   assert.match(onboard,/Set up your business/);
   assert.match(onboard,/ownerFullName/);
@@ -53,11 +53,11 @@ test('signed-in owner chooses business, sector, cadence and capacity before Razo
   assert.match(onboard,/value="annual"[^>]*checked/);
   assert.match(onboard,/value="monthly"/);
   assert.match(onboard,/customerCapacity/);
-  assert.match(onboard,/Continue to secure Razorpay Checkout/);
-  // The Razorpay-vs-manual explanation moved into renderBusinessApplication when the application
+  assert.match(onboard,/Continue to secure Stripe Checkout/);
+  // The Stripe-vs-manual explanation moved into renderBusinessApplication when the application
   // flow was split out of onboarding; assert it where it now lives.
   const application=section('function renderBusinessApplication','function renderOnboard(){');
-  assert.match(application,/Razorpay payment auto-activates after verified payment; manual payment goes to Super Admin for approve\/reject\./);
+  assert.match(application,/Stripe payment auto-activates after verified payment; manual payment goes to Super Admin for approve\/reject\./);
   assert.match(application, /Super Admin reviews and approves or rejects this manual-payment application/);
   assert.match(onboard,/manualBusinessApplicationFallbackHtml\(sectors\)/);
   assert.match(onboard,/wireManualBusinessApplicationFallback\(\)/);
@@ -74,26 +74,26 @@ test('signed-in owner chooses business, sector, cadence and capacity before Razo
   assert.doesNotMatch(onboard,/An approved invitation is required|Apply for a business account/);
 });
 
-test('Razorpay-catalog outage offers authenticated manual application fallback without activating access',()=>{
+test('Stripe-catalog outage offers authenticated manual application fallback without activating access',()=>{
   const onboard=section('function renderOnboard(){','/* ============================================================================');
   const fallback=section('function manualBusinessApplicationFallbackHtml','function renderOnboard(){');
   const v159=readFileSync(new URL('../../supabase/migrations/20260804140000_nestly_v159_selfserve_manual_application_fallback.sql',import.meta.url),'utf8');
   assert.match(fallback,/Request manual payment approval/);
-  assert.match(fallback,/bank transfer, cash, or another manual arrangement instead of Razorpay/);
+  assert.match(fallback,/bank transfer, cash, or another manual arrangement instead of Stripe/);
   assert.match(fallback,/Super Admin reviews and approves or rejects this manual-payment application/);
-  assert.match(fallback,/Approval does not mark a Razorpay invoice paid/);
+  assert.match(fallback,/Approval does not mark a Stripe invoice paid/);
   assert.match(fallback,/manualOwnerFullName/);
   assert.match(fallback,/manualContactPhone/);
   assert.match(fallback,/manualBusinessName/);
   assert.match(fallback,/manualBusinessSector/);
   assert.match(fallback,/Email \(optional\)/);
   assert.match(fallback,/Request manual payment approval/);
-  assert.match(fallback,/does not activate a workspace, open Razorpay Checkout, or record payment/);
+  assert.match(fallback,/does not activate a workspace, open Stripe Checkout, or record payment/);
   assert.match(onboard,/Payment setup needs help/);
-  assert.match(onboard,/Why Razorpay did not open/);
+  assert.match(onboard,/Why Stripe did not open/);
   assert.match(onboard,/No workspace, invoice, receipt, or charge was created/);
-  assert.match(onboard,/Monthly and annual Razorpay plans are not active/);
-  assert.match(onboard,/Check Razorpay setup again/);
+  assert.match(onboard,/Monthly and annual Stripe plans are not active/);
+  assert.match(onboard,/Check Stripe setup again/);
   assert.match(fallback,/request_self_serve_manual_application_v159/);
   assert.doesNotMatch(fallback,/demo|manual-help request|within 48 hours/i);
   assert.match(fallback,/sessionStorage\.removeItem\('nestly-self-serve-manual-application'\)/);
@@ -113,7 +113,7 @@ test('Razorpay-catalog outage offers authenticated manual application fallback w
 test('payment-pending workspace is explicit and only provider-paid evidence activates it',()=>{
   /* V286: renderOnboard and renderBusinessWorkspaceControl each carried their own copy of the
      payment-pending screen, and only the workspace-control copy was reachable — so a paying
-     owner returning from Razorpay was asked to pay again. The duplicate is collapsed onto
+     owner returning from Stripe was asked to pay again. The duplicate is collapsed onto
      renderSelfServePaymentPendingV286; these assertions follow the copy to its one owner. */
   const control=section('function renderBusinessWorkspaceControl(','/* ---------- auth ---------- */');
   const pending=section('function renderSelfServePaymentPendingV286(','function renderBusinessWorkspaceControl(');
@@ -198,7 +198,7 @@ test('completed Checkout redirects rotate before provider default expiry',()=>{
   assert.doesNotMatch(migration,/interval '2[4-9] hours'/);
 });
 
-test('Razorpay returns self-service checkout to onboarding and retains ordinary owner Settings returns',()=>{
+test('Stripe returns self-service checkout to onboarding and retains ordinary owner Settings returns',()=>{
   assert.match(edge,/self_service_onboarding/);
   assert.match(edge,/\/business#\/onboarding\/payment\?status=processing/);
   assert.match(edge,/\/business#\/onboarding\/payment\?status=canceled/);

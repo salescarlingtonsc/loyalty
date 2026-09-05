@@ -163,6 +163,6 @@ test('new self-service firms remain locked until provider-confirmed payment',()=
     /request_self_serve_checkout_v130/);
   /* V286: the locked-until-payment copy moved to the single payment-pending renderer. */
   assert.match(section('function renderSelfServePaymentPendingV286(','function renderBusinessWorkspaceControl('),
-    /remains locked until Razorpay confirms the first paid invoice/);
+    /remains locked until Stripe confirms the first paid invoice/);
   assert.doesNotMatch(onboard,/create_business|p_modules|Workspace ready/);
 });

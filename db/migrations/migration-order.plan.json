@@ -3963,6 +3963,12 @@
       "path": "db/migrations/20261006_nestly_v790_sandbox_plan_ids.sql",
       "semanticVersion": "v790",
       "proposedDeployVersion": "20261006100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v791_stripe_returns.sql",
+      "semanticVersion": "v791",
+      "proposedDeployVersion": "20261006110000"
     }
   ]
 }
