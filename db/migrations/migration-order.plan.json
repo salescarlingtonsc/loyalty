@@ -3909,6 +3909,12 @@
       "path": "db/migrations/20261006_nestly_v777_referral_reward_visible.sql",
       "semanticVersion": "v777",
       "proposedDeployVersion": "20261006010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql",
+      "semanticVersion": "v777",
+      "proposedDeployVersion": "20261006020000"
     }
   ]
 }

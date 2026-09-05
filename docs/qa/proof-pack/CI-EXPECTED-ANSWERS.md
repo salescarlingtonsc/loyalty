@@ -11,7 +11,7 @@ a literal slice of the committed fixture file, so the expected answers a reviewe
 against live in exactly one place (the fixture itself) and this document, not two places
 that can drift apart.
 
-Fixtures with an extracted truth table: **47**. Flagged (no truth-table
+Fixtures with an extracted truth table: **48**. Flagged (no truth-table
 marker found): **40**.
 
 ## Flagged — no truth-table marker found
@@ -3428,6 +3428,81 @@ rollback;
 -- ACCESS: a second business's owner is refused (42501) by every one of the five readers, and
 -- the biz owner passing biz2's branch is refused too. Both refusals carry a precondition
 -- assertion that the refused caller genuinely holds the access the refusal is about.
+-- ===========================================================================================
+```
+
+### `db/tests/executed/v777_corpus_branch_code_and_comparison.sql`
+
+```
+-- ===========================================================================================
+-- brA 'B01' · brB 'B02' · brC 'B03' · brD 'MAIN' (supplied, untouched) · brE 'B04'.
+-- THE BACKFILL is driven, not observed. A third firm (biz3) holds p1 (created 01-05), p2 (the
+-- DEFAULT, created 01-10) and p3 (created 01-07); the codes of biz3's three branches AND of
+-- biz2's single branch are cleared and app.branch_code_backfill_v777() is run over all four at
+-- once, which is the only way to test the ordering at all from a fixture that runs after the
+-- migration. (is_default desc, created_at, id) gives p2 -> B01, p1 -> B02, p3 -> B03, while
+-- biz2's branch independently gets B01 in the same call; ordering by created_at alone would
+-- give p1, p3, p2, and an estate-wide counter would number all four 1..4 between them. A second
+-- call codes 0 rows, and clearing p1's B02 and re-running gives it B04, never the freed B02.
+-- `update brC set code='B02'` (brB's code) raises 23505 on branches_code_unique_v777.
+--
+-- ===========================================================================================
+-- TRUTH TABLE 2 — get_ci_branch_directory_v1(biz), as the owner
+-- ===========================================================================================
+-- business: the fixture firm, slug 'zz-v777-branches'.
+-- branches: FOUR rows ordered by code — B01 (default, active), B02, B03, MAIN (active FALSE,
+--   present: a retired outlet keeps its identity). branches_hidden 0.
+--
+-- ===========================================================================================
+-- TRUTH TABLE 3 — get_ci_branch_comparison_v1(biz, 03-02, 03-29, as_of 2026-04-01 00:00+08)
+-- ===========================================================================================
+-- business: visits 14, revenue_cents 153000, customers 10 (c1..c10).
+-- branches_compared 3 (MAIN is inactive) · branches_hidden 0 · unattributed_visits 0.
+--
+--   B01 'ZZ Bugis'   visits 8  revenue 85000  customers 8  new_customers 7 (c2..c8; c1 is not)
+--        share_of_visits 8/14 -> 57.1 · share_of_revenue 85000/153000 -> 55.6
+--        gender: known 7 -> female 6 (6/7 -> 85.7) · male 1 (1/7 -> 14.3); unknown_gender 1 (c8,
+--                OUTSIDE the share denominator)
+--        age: known 8 -> 25_30 7 (7/8 -> 87.5) · 41_50 1 (1/8 -> 12.5); unknown_age 0
+--        coverage gender_known 7/8 -> 87.5 · age_known 8/8 -> 100.0
+--        top_age_band {25_30, 7}  (7 >= the k=5 floor)
+--        weekdays: Mon 4/4 = 1.0 · Tue/Wed/Thu/Fri 1/4 = 0.3 · Sat 0.0 · Sun 0.0
+--          busiest Monday 1.0 · slowest Saturday 0.0 (the 0.0 tie breaks on dow, Sat before Sun)
+--        top_item Haircut 45000 / 5 buyers (Colour is 40000 / 3)
+--   B02 'ZZ Tampines' visits 4  revenue 60000  customers 3  new_customers 2 (c9, c10; c7's
+--        first-ever visit was at B01 on 03-05, so B02 does not get to call them new)
+--        share_of_visits 4/14 -> 28.6 · share_of_revenue 60000/153000 -> 39.2
+--        gender: known 3 -> BELOW the floor, so male 2 and female 1 keep their counts and their
+--                denominator 3 while both pcts are NULL; unknown_gender 0
+--        age: known 2 -> 41_50 2, pct NULL; unknown_age 1 (c9)
+--        coverage gender_known 3/3 -> 100.0 · age_known 2/3 -> 66.7
+--        top_age_band NULL (41_50 has 2 customers, below the floor — never printed as a finding)
+--        busiest Saturday 1.0 · slowest Monday 0.0 (six weekdays tie at 0.0; dow asc picks Mon)
+--        top_item Colour 40000 / 2 buyers
+--   B03 'ZZ Jurong'   visits 2  revenue 8000   customers 1  new_customers 0
+--        share_of_visits 2/14 -> 14.3
+--        top_item Haircut 5000 / 1 buyer — the anonymous 3000 line is neither revenue nor a
+--        buyer here, which is get_ci_demographic_totals_v1.by_item's own identified-only base
+-- sum(branches[].visits) = 8 + 4 + 2 = 14 = business.visits, and the same for revenue.
+--
+-- ===========================================================================================
+-- ACCESS
+-- ===========================================================================================
+-- * A second business's owner is refused 42501 by BOTH readers, after a precondition proving
+--   they can read their OWN firm.
+-- * BRANCH SCOPE. A bookkeeper (role_class 'employee', so branch-restricted; view_finance via
+--   app.role_perms; customerintel in staff.modules) assigned to B01 only is refused 42501 by
+--   both readers — because nestly_v721's own rule inside app.ci_access_gate_v667 refuses a
+--   branch-restricted employee a FIRM-WIDE (p_branch null) call outright. The precondition
+--   asserts the refusal is earned and is about branch scope and nothing else: the same caller
+--   clears app.ci_access_gate_v667 for their OWN branch, holds customerintel and view_finance,
+--   and app.can_see_branch(biz, B01) is true while app.can_see_branch(biz, null) is false.
+--   There is therefore NO principal this product can currently produce that reaches these
+--   readers and still has a branch hidden from it, so `branches_hidden` is asserted at 0 for
+--   every caller that gets an answer at all. The per-branch gate loop is not dead code — it is
+--   what keeps that true if the firm-wide rule is ever relaxed — but it is not reachable today
+--   and this fixture does not pretend otherwise.
+-- * An inverted window is refused 22023, not silently emptied.
 -- ===========================================================================================
 ```
 

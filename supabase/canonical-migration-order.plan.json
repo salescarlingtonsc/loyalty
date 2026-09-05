@@ -3904,6 +3904,12 @@
       "version": "20261006010000",
       "name": "nestly_v777_referral_reward_visible",
       "sourcePath": "db/migrations/20261006_nestly_v777_referral_reward_visible.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006020000",
+      "name": "nestly_v777_branch_code_and_comparison",
+      "sourcePath": "db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql"
     }
   ]
 }

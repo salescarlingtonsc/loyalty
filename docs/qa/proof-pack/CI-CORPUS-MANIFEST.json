@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 87,
+  "itemCount": 88,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -1066,6 +1066,17 @@
       "clients_seeded": 0,
       "sha256": "d8d594a87d42122de81dff3787a2aaeb9445a9d3642c11802dd8383410c0a990",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v775_corpus_capacity_increase_invoice_reason --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v777_corpus_branch_code_and_comparison.sql",
+      "migrations": [
+        "db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 4,
+      "sha256": "3a1d819d5f9c6fda2e88728eae36c6023148dbd6a6374b52c25f6b043e62797f",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_branch_code_and_comparison --migrated-only"
     },
     {
       "file": "db/tests/executed/v777_corpus_referral_reward_visible.sql",
