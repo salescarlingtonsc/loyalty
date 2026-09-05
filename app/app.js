@@ -19083,13 +19083,19 @@ function wireManualBusinessApplicationFallback(){
 /* v770 (owner: "when there's error you need to tell me which area is wrong"): each refusal
    start_self_serve_business_v130 can raise, said in the owner's words and pointing at the field
    to fix. The generic sentence stays only for a failure the server did not name. */
-/* v773: is this workspace address already someone's? get_business_public is the anon-callable
-   read the booking portal uses; a row means taken, no row means free, an error means unknown. */
+/* v773: is this workspace address already someone's? nestly_v782: v773 asked that with a direct
+   browser call to the get_business_public RPC, but a public frontend may not call a gateway RPC
+   directly (and naming it as a call here would itself trip the guard) — the
+   public business lookup is reachable only through the edge gateway (tests/public-gateway).
+   public-booking's GET answers the same question by HTTP status: 200 the address belongs to a
+   business, 404 no business answers to it, anything else unknown. Only the `false` answer is
+   acted on, so an unknown fails safe into the normal error path. */
 async function selfServeSlugTakenV773(slug){
   try{
-    const {data,error}=await sb.rpc('get_business_public',{p_slug:String(slug||'')});
-    if(error)return null;
-    return !!(data&&(Array.isArray(data)?data.length:data.id||data.slug||data.name));
+    const response=await fetch(publicFunctionUrl('public-booking',`?slug=${encodeURIComponent(String(slug||''))}`),{credentials:'omit'});
+    if(response.status===200)return true;
+    if(response.status===404)return false;
+    return null;
   }catch{return null}
 }
 function selfServeStartErrorTextV770(error){

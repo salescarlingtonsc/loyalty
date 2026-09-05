@@ -3513,10 +3513,6 @@
       "reason": "Post-sale, idempotent growth-entitlement workflow update. It validates an existing qualifying sale and changes only offer intent/entitlement/evidence state; it does not change the sale, payment, discount, points, stored value, package, gift-card, or other customer-value ledger."
     },
     {
-      "id": "browser.rpc:app/app.js:remove_loyalty_branch_override_draft",
-      "reason": "browser RPC 'remove_loyalty_branch_override_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
       "id": "browser.rpc:app/app.js:report_client_error_v177",
       "reason": "V177 client error-report writer. Appends diagnostic rows only; no value table, no tenant data mutation. Discovery confirms reaches_value_writer=false."
     },
@@ -3551,10 +3547,6 @@
     {
       "id": "browser.rpc:app/app.js:save_birthday_program_draft",
       "reason": "browser RPC 'save_birthday_program_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
-    },
-    {
-      "id": "browser.rpc:app/app.js:save_loyalty_branch_override_draft",
-      "reason": "browser RPC 'save_loyalty_branch_override_draft' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
       "id": "browser.rpc:app/app.js:save_loyalty_config_draft",
