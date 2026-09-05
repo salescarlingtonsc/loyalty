@@ -183,8 +183,8 @@ function renderSelfServePaymentPendingV286(onboarding){
     const next=current.data?.onboarding;
     if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
     const status=$('selfServePayStatus');
-    if(status)status.textContent=attempts<15?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
-    if(attempts<15)setTimeout(poll,2000);
+    if(status)status.textContent=attempts<90?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(attempts<90)setTimeout(poll,2000);
   };
   setTimeout(poll,1200);
 }

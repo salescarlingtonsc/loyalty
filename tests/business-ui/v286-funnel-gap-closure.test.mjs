@@ -83,7 +83,7 @@ test('the processing state polls for verified activation and never self-certifie
   const renderer = appJs.slice(
     appJs.indexOf('function renderSelfServePaymentPendingV286('),
     appJs.indexOf('function renderBusinessWorkspaceControl('));
-  assert.match(renderer, /attempts<15/, 'the activation poll must be bounded');
+  assert.match(renderer, /attempts<90/, 'the activation poll must be bounded');
   assert.match(renderer, /setTimeout\(poll,2000\)/, 'the poll interval must survive');
   assert.match(renderer, /get_self_serve_checkout_v130/,
     'activation is read back from the server, never assumed from the return url');

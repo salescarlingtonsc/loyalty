@@ -3855,6 +3855,12 @@
       "path": "db/migrations/20261001_nestly_v765_billing_lifecycle.sql",
       "semanticVersion": "v765",
       "proposedDeployVersion": "20261001000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261002_nestly_v766_self_serve_activation_tier_price.sql",
+      "semanticVersion": "v766",
+      "proposedDeployVersion": "20261002000000"
     }
   ]
 }

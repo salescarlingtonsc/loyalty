@@ -3850,6 +3850,12 @@
       "version": "20261001000000",
       "name": "nestly_v765_billing_lifecycle",
       "sourcePath": "db/migrations/20261001_nestly_v765_billing_lifecycle.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261002000000",
+      "name": "nestly_v766_self_serve_activation_tier_price",
+      "sourcePath": "db/migrations/20261002_nestly_v766_self_serve_activation_tier_price.sql"
     }
   ]
 }
