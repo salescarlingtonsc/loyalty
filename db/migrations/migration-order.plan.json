@@ -3876,6 +3876,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20261003_nestly_v772_owner_brief_readers.sql",
+      "semanticVersion": "v772",
+      "proposedDeployVersion": "20261003010000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql",
       "semanticVersion": "v772",
       "proposedDeployVersion": "20261004000000"

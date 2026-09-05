@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 81,
+  "itemCount": 85,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -1011,6 +1011,50 @@
       "clients_seeded": 3,
       "sha256": "0b76022da40e827685b6a8c4c1509364d5ed7a4f17ca106ff492cc10d59f6f27",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v767_corpus_referral_link_joins --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v768_corpus_keep_branch_stays_paid.sql",
+      "migrations": [
+        "db/migrations/20261003_nestly_v768_keep_branch_stays_paid.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 0,
+      "sha256": "f72b5d94dd24ec3eee0c743c16905cbfa000e485b94a999e21a99b31f3e7131a",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v768_corpus_keep_branch_stays_paid --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v772_corpus_branch_copy_without_staff.sql",
+      "migrations": [
+        "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 0,
+      "sha256": "b6464ef55f56f08a05845e18ec96def54948a22acd5be2a61ece897ae3f2d2e5",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_branch_copy_without_staff --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v772_corpus_owner_brief_readers.sql",
+      "migrations": [
+        "db/migrations/20261003_nestly_v772_owner_brief_readers.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 4,
+      "sha256": "4496a0c85601b07ff2b6e83e5d01fbc98aa27f13238dc77a064d0cc35f199ff3",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_owner_brief_readers --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v773_corpus_rewards_same_at_every_branch.sql",
+      "migrations": [
+        "db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 0,
+      "sha256": "11a2a0d86960d42b7e702359cc3aee62199b29d8da6650968dd641e05cfa83f6",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v773_corpus_rewards_same_at_every_branch --migrated-only"
     }
   ]
 }

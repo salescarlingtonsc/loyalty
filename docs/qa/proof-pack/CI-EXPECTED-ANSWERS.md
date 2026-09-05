@@ -11,8 +11,8 @@ a literal slice of the committed fixture file, so the expected answers a reviewe
 against live in exactly one place (the fixture itself) and this document, not two places
 that can drift apart.
 
-Fixtures with an extracted truth table: **46**. Flagged (no truth-table
-marker found): **35**.
+Fixtures with an extracted truth table: **47**. Flagged (no truth-table
+marker found): **38**.
 
 ## Flagged — no truth-table marker found
 
@@ -57,6 +57,9 @@ values.
 * `db/tests/executed/v765_corpus_billing_lifecycle.sql`
 * `db/tests/executed/v766_corpus_self_serve_activation_tier_price.sql`
 * `db/tests/executed/v767_corpus_referral_link_joins.sql`
+* `db/tests/executed/v768_corpus_keep_branch_stays_paid.sql`
+* `db/tests/executed/v772_corpus_branch_copy_without_staff.sql`
+* `db/tests/executed/v773_corpus_rewards_same_at_every_branch.sql`
 
 ## Truth tables, verbatim
 
@@ -3288,5 +3291,138 @@ rollback;
 --   unreversed transaction rows after synthetic exclusion (8 real + 2 anon) = 10 (fixed)
 --
 -- One transaction, rolled back. No production access.
+```
+
+### `db/tests/executed/v772_corpus_owner_brief_readers.sql`
+
+```
+-- ===========================================================================================
+-- In scope: the 14 revenue sales s1..s14. revenue_recorded_cents
+--   = 10000*5 + 20000*2 + 5000*4 + 7000 + 3000 + 4000 = 124000.
+-- Payments (refunds are stored NEGATIVE, so paid_cents is a plain signed sum):
+--   s1  cash   +10000                 -> paid 10000  FULLY   collected 10000 outstanding     0
+--   s2  card   + 4000                 -> paid  4000  PARTLY  collected  4000 outstanding  6000
+--   s3  (deposit cash +2000 only)     -> paid     0  UNPAID  collected     0 outstanding 10000
+--   s4  paynow +10000                 -> paid 10000  FULLY   collected 10000 outstanding     0
+--   s5  cash   +12000                 -> paid 12000  FULLY   collected 10000 overpaid    2000
+--   s6  card   +20000, refund -5000   -> paid 15000  PARTLY  collected 15000 outstanding  5000
+--   s7..s14 no payments               -> paid     0  UNPAID
+--   totals: sales_count 14, fully 3, partly 2, unpaid 9
+--           collected 10000+4000+0+10000+10000+15000 = 49000
+--           outstanding 6000+10000+5000+20000+5000+5000+5000+5000+7000+3000+4000 = 75000
+--           overpaid 2000
+--           collected_share = 49000/124000 -> 39.5
+--   by_method (kind='payment' only, cents desc): card 24000/2, cash 22000/2, paynow 10000/1
+--   refunds_cents 5000 (positive magnitude)
+--   unapplied_payment_kinds: [{deposit, 2000, 1}]  (reported, never counted as collected)
+--   unlinked_payments: 2 rows / 4500 cents — one with sale_id null (3500) and one attached to
+--     the SYNTHETIC client's sale (1000), which is a sale outside this reader's scope.
+--   outstanding_sales: 11 rows; [0] = s7, c7, amount 20000, paid 0, outstanding 20000,
+--     days_outstanding = 2026-04-01 - 2026-03-05 = 27.
+--   outstanding_by_customer: 8 rows (the anonymous ticket is not a customer);
+--     [0] c7 20000 / 1 sale, [1] c3 15000 / 2 sales.
+--   envelope exclusions: reversed_sales 2 (sR1 and sR2 both match), synthetic_clients 1,
+--     anonymous_sales 1.
+--   NAME GATING: the owner sees client_name 'ZZ Gil' and names_visible true; the manager whose
+--     staff.modules omits 'clients' sees the same 20000 with client_name NULL and
+--     names_visible false.
+--
+-- ===========================================================================================
+-- TRUTH TABLE 2 — get_ci_staff_rebooking_v1(biz, 03-02, 03-29, 60, null, as_of ...)
+-- ===========================================================================================
+-- Attribution: s1..s5, s8, s9, s10 -> A. s6, s7, s11 -> B. s14 -> B (single line staff).
+--              s12 -> NOBODY (two different line staff). s13 anonymous. sR1/sS1 excluded.
+-- Cohort pairs (customer, staff) with their first visit-day inside the window:
+--   A: (c1,03-02) (c2,03-02) (c3,03-03) (c4,03-03) (c5,03-04)          -> 5 pairs
+--   B: (c6,03-04) (c7,03-05) (c4,03-11) (c9,03-16)                     -> 4 pairs
+-- CALL D — p_as_of '2026-06-01 00:00+08' (everything matured):
+--   A: visits 8 (c1/02, c2/02, c3/03, c4/03, c5/04, c1/09, c2/09, c3/10), customers 5,
+--      revenue 50000+15000 = 65000, revenue_per_visit 8125,
+--      matured 5, immature 0, evidence n=5 ok,
+--      returned_any  4/5 -> 80.0  (c1 03-09, c2 03-09, c3 03-10, c4 03-11; c5 never — and sR1
+--                                  on 03-05 would have made it 5/5 if the reversal leaked)
+--      returned_same 3/5 -> 60.0  (c4's return was with B, not A)
+--   B: visits 4, customers 4, revenue 20000+20000+5000+4000 = 49000, revenue_per_visit 12250,
+--      matured 4, evidence n=4 INSUFFICIENT -> both pcts NULL, numerator 0 / denominator 4 kept,
+--      vs_firm_points NULL, active = false (an inactive staff member still appears).
+--   firm: matured 8 (c1..c7 + c9), returned_any 4/8 -> 50.0, evidence ok.
+--   A.vs_firm_points = 80.0 - 50.0 = 30.0.
+--   unattributed_visits 1 (c8 on 03-12), anonymous_visits 1 (s13).
+--   staff order: A (8 visits) then B (4).
+-- CALL E — p_as_of '2026-04-01 00:00+08' (nothing has matured yet: 03-02 + 60 = 05-01 > 04-01):
+--   A: matured 0, immature 5, returned_any.denominator 0 and pct NULL.
+--   firm: matured 0, immature 8.
+--
+-- ===========================================================================================
+-- TRUTH TABLE 3 — get_ci_reward_popularity_v1(biz, 03-02, 03-29, null, as_of 2026-04-01)
+-- ===========================================================================================
+-- Rewards: rw1 'ZZ Free Coffee' (active, live) · rw2 'ZZ Free Cake' (active, live)
+--          rw3 'ZZ Never Redeemed' (active, live, ZERO redemptions) · rw4 'ZZ Retired Treat'
+--          (active=false, still has history).
+-- Redemptions in window: red1..red5 c1..c5 on rw1 @30pts · red6 c6 on rw2 @50 ·
+--   red7 c7 on rw4 @20 · red8 c8 on rw1 @30 REVERSED (excluded) · red9 syn on rw1 (excluded) ·
+--   red10 c9 with reward_id NULL @10 (unattributed).
+--   totals: redemptions 8, customers 8 (c1..c7, c9), points_spent 150+50+20+10 = 230.
+--   eligible_customers 9 (c1..c9 each have a qualifying visit; anon and syn excluded).
+--   rw1: 5 redemptions / 5 customers / 150 pts, evidence n=5 ok,
+--        share_of_redemptions 5/8 -> 62.5, redeemers_share 5/9 -> 55.6,
+--        reward_name 'ZZ Free Coffee' — the LIVE customer_name, not the redemption rows'
+--        stale 'ZZ Coffee Snapshot'.
+--   rw2: 1/1/50, insufficient -> both pcts NULL (numerators 1, denominators 8 and 9).
+--   rw4: 1/1/20, active false.
+--   rw3: 0/0/0, active true, paused false — a live reward nobody redeemed, emitted at zero.
+--   order (redemptions desc, then name): rw1, rw2 'ZZ Free Cake', rw4 'ZZ Retired Treat',
+--        rw3 'ZZ Never Redeemed'.
+--   unattributed_redemptions: 1 redemption / 1 customer / 10 points.
+--
+-- ===========================================================================================
+-- TRUTH TABLE 4 — get_ci_visit_rhythm_v1(biz, 03-02, 03-29, null, as_of 2026-04-01)
+-- ===========================================================================================
+-- Visits are qualifying SALE ROWS (get_ci_daypart_v1's own grain). 14 in the window, 124000.
+--   days: 28 rows. 03-02 -> 2 visits / 20000 / 2 identified. 03-13 -> 1 visit / 3000 /
+--         0 identified (anonymous). Every other listed day above; the rest are zero-filled.
+--   weekdays (4 occurrences each):
+--     Mon 5 visits -> 5/4 = 1.3 (rev 34000) · Tue 3 -> 0.8 · Wed 3 -> 0.8 · Thu 2 -> 0.5
+--     Fri 1 -> 0.3 · Sat 0 -> 0.0 · Sun 0 -> 0.0    (all evidence ok: occurrences 4 >= floor 4)
+--     slowest_weekdays = [Sat 0.0, Sun 0.0]   busiest_weekdays = [Mon 1.3, Tue 0.8]
+--   hour blocks: 10 -> 10 visits / 75000 / 7 days · 14 -> 3 / 45000 / 3 days ·
+--                18 -> 1 / 4000 / 1 day. share(10) = 10/14 -> 71.4.
+--     open_blocks (days_with_visits >= 3) = [10, 14]; block 18 is NOT open.
+--     slowest_blocks = [14 (3 visits), 10 (10)]   busiest_blocks = [10, 14]
+--     labels: 10 -> '10am–12pm', 14 -> '2pm–4pm', 18 -> '6pm–8pm'
+--   previous window = 2026-02-02 .. 2026-03-01, one sale sP1 (1 visit, 10000):
+--     change.visits_pct  = 100*(14-1)/1      = 1300.0
+--     change.revenue_pct = 100*(124000-10000)/10000 = 1140.0
+--   age_by_block (identified visits only, k=5 floor, NEVER dropped, NEVER zero):
+--     (10, 25_30) 8 visits -> visits 8, suppressed false
+--     (14, 25_30) 1        -> visits NULL, suppressed true
+--     (14, 41_50) 2        -> visits NULL, suppressed true
+--     (18, 25_30) 1        -> visits NULL, suppressed true
+--     4 cells. coverage.age_known = 12/13 -> 92.3 (c8's visit has no birth date).
+--
+-- ===========================================================================================
+-- TRUTH TABLE 5 — get_ci_demographic_totals_v1(biz, 03-02, 03-29, null, as_of 2026-04-01)
+-- ===========================================================================================
+-- Population = 9 identified non-synthetic customers with a qualifying visit; revenue 121000
+--   (124000 less the 3000 anonymous ticket, which belongs to nobody).
+--   per client: c1 15000 · c2 15000 · c3 15000 · c4 15000 · c5 10000 (sR1 reversed) ·
+--               c6 20000 · c7 20000 · c8 7000 · c9 4000
+--   gender: known 8. female 6 customers / 90000 -> share 6/8 = 75.0
+--                    male   2 customers / 27000 -> share 2/8 = 25.0
+--           unknown_gender {customers 1, revenue 4000}  (c9, OUTSIDE the share denominator)
+--   age:    known 8. 25_30 6 customers / 74000 -> 75.0 · 41_50 2 / 40000 -> 25.0
+--           unknown_age {customers 1, revenue 7000}     (c8)
+--   coverage: gender_known 8/9 -> 88.9 · age_known 8/9 -> 88.9
+--   by_item (revenue desc): 'ZZ Haircut' 72000 / 6 buyers (c1..c5, c8 — the anonymous line is
+--       not a buyer) and 'ZZ Colour' 49000 / 4 buyers (c4, c6, c7, c9).
+--     Haircut buyers_known_gender 6: female 5 buyers / 65000 -> 5/6 = 83.3 (evidence ok);
+--       male 1 buyer / 7000 -> pct NULL below the floor, buyers count KEPT.
+--     Haircut buyers_known_age 5: 25_30 5 buyers / 65000 -> 5/5 = 100.0.
+--
+-- ===========================================================================================
+-- ACCESS: a second business's owner is refused (42501) by every one of the five readers, and
+-- the biz owner passing biz2's branch is refused too. Both refusals carry a precondition
+-- assertion that the refused caller genuinely holds the access the refusal is about.
+-- ===========================================================================================
 ```
 

@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **81**.
+Fixture count: **85**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -98,6 +98,10 @@ Fixture count: **81**.
 | `db/tests/executed/v765_corpus_billing_lifecycle.sql` | `db/migrations/20261001_nestly_v765_billing_lifecycle.sql` | _(none)_ | 3 | 0 | `40bf941b172d9b6e7911e2201a1342f010b668bb842a029fd37a2af3b78dfb8f` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v765_corpus_billing_lifecycle --migrated-only` |
 | `db/tests/executed/v766_corpus_self_serve_activation_tier_price.sql` | `db/migrations/20261002_nestly_v766_self_serve_activation_tier_price.sql` | _(none)_ | 1 | 0 | `386ae11fea681a8ecd564a776636138b66eff18acfcd20dcbf95883ebe838207` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v766_corpus_self_serve_activation_tier_price --migrated-only` |
 | `db/tests/executed/v767_corpus_referral_link_joins.sql` | `db/migrations/20261002_nestly_v767_referral_link_joins.sql` | _(none)_ | 1 | 3 | `0b76022da40e827685b6a8c4c1509364d5ed7a4f17ca106ff492cc10d59f6f27` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v767_corpus_referral_link_joins --migrated-only` |
+| `db/tests/executed/v768_corpus_keep_branch_stays_paid.sql` | `db/migrations/20261003_nestly_v768_keep_branch_stays_paid.sql` | _(none)_ | 1 | 0 | `f72b5d94dd24ec3eee0c743c16905cbfa000e485b94a999e21a99b31f3e7131a` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v768_corpus_keep_branch_stays_paid --migrated-only` |
+| `db/tests/executed/v772_corpus_branch_copy_without_staff.sql` | `db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql` | _(none)_ | 1 | 0 | `b6464ef55f56f08a05845e18ec96def54948a22acd5be2a61ece897ae3f2d2e5` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_branch_copy_without_staff --migrated-only` |
+| `db/tests/executed/v772_corpus_owner_brief_readers.sql` | `db/migrations/20261003_nestly_v772_owner_brief_readers.sql` | _(none)_ | 1 | 4 | `4496a0c85601b07ff2b6e83e5d01fbc98aa27f13238dc77a064d0cc35f199ff3` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_owner_brief_readers --migrated-only` |
+| `db/tests/executed/v773_corpus_rewards_same_at_every_branch.sql` | `db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql` | _(none)_ | 1 | 0 | `11a2a0d86960d42b7e702359cc3aee62199b29d8da6650968dd641e05cfa83f6` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v773_corpus_rewards_same_at_every_branch --migrated-only` |
 
 ## Notes
 

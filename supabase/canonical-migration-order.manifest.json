@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 601,
-  "itemCount": 646,
+  "pendingCount": 602,
+  "itemCount": 647,
   "items": [
     {
       "order": 1,
@@ -6452,6 +6452,16 @@
     {
       "order": 645,
       "kind": "pending",
+      "version": "20261003010000",
+      "name": "nestly_v772_owner_brief_readers",
+      "path": "supabase/migrations/20261003010000_nestly_v772_owner_brief_readers.sql",
+      "octetLength": 68328,
+      "sha256": "50ea8bfae7497f5a2b84d14a13797f89a61b5352e68f5671186cb0d2d56f5a61",
+      "provenance": "local-source"
+    },
+    {
+      "order": 646,
+      "kind": "pending",
       "version": "20261004000000",
       "name": "nestly_v772_branch_copy_without_staff",
       "path": "supabase/migrations/20261004000000_nestly_v772_branch_copy_without_staff.sql",
@@ -6460,13 +6470,13 @@
       "provenance": "local-source"
     },
     {
-      "order": 646,
+      "order": 647,
       "kind": "pending",
       "version": "20261005000000",
       "name": "nestly_v773_rewards_same_at_every_branch",
       "path": "supabase/migrations/20261005000000_nestly_v773_rewards_same_at_every_branch.sql",
-      "octetLength": 8900,
-      "sha256": "ee7cc1e170bdad6ff83a1c0c63c32a46ea07b37015f8fa25f2dcb155ef7cbca8",
+      "octetLength": 9183,
+      "sha256": "adec08a3b84ddfe35d27d5e7c1c496475780d7f894e8e046e6db9898c7e0edf5",
       "provenance": "local-source"
     }
   ]
