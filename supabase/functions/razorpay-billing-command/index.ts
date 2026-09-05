@@ -666,6 +666,45 @@ Deno.serve(async (req) => {
       throw new Error('billing command is not executable');
     }
 
+    /* v767 — a RETRIED branch add. The first attempt PATCHed Razorpay (which charged the card)
+       and then died before the capture; the retry re-finds the subscription by its command note
+       and lands here with providerResolved=true, having executed nothing. The capture is the
+       part that was missed, so it runs again here: it mirrors only invoices not already held, and
+       an already-active branch means the reconcile heal got there first. Observed 2026-09-05:
+       East Wing's retry returned "completed" with nothing mirrored. */
+    if (providerResolved && commandType === 'change_branches' && subscriptionId) {
+      const branch = await branchIdentityForCommand({
+        admin,
+        businessId,
+        requestedBranchId: commandRowData?.requested_branch_id as string | null,
+      });
+      providerCallStarted = true;
+      const capture = await captureUpdateCharge({
+        admin,
+        razorpay,
+        subscriptionId,
+        businessId,
+        livemode,
+        extraNotes: {
+          reason: 'branch_added',
+          ...(branch ? { branch_id: branch.branch_id, branch_name: branch.branch_name } : {}),
+        },
+      });
+      providerCallStarted = false;
+      if (capture.invoices.length === 0) {
+        let branchStillPending = true;
+        if (branch) {
+          const { data: row } = await admin
+            .from('branches')
+            .select('billing_state')
+            .eq('id', branch.branch_id)
+            .maybeSingle();
+          branchStillPending = String(row?.billing_state || 'pending_payment') === 'pending_payment';
+        }
+        updateChargePending = branchStillPending;
+      }
+    }
+
     if (updateChargePending) {
       const { data: chargePending, error: chargePendingError } = await admin.rpc(
         'complete_billing_command_v77',

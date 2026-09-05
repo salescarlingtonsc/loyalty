@@ -443,13 +443,24 @@ export async function healMissingUpdateCharges({
   for (const row of rows.slice(0, limit)) {
     counts.attempted += 1;
     try {
+      /* v767: when the business has a branch awaiting payment, the update charge the heal finds
+         IS that branch's charge, and the payments history should say so ("Branch East Wing …")
+         rather than "Subscription". The same resolver the command uses; identity is a label,
+         never a precondition. */
+      const branch = await branchIdentityForCommand({
+        admin,
+        businessId: String(row.business_id),
+        requestedBranchId: null,
+      });
       const capture = await captureUpdateCharge({
         admin,
         razorpay,
         subscriptionId: String(row.provider_subscription_id),
         businessId: String(row.business_id),
         livemode: scope.livemode,
-        extraNotes: { reason: 'other' },
+        extraNotes: branch
+          ? { reason: 'branch_added', branch_id: branch.branch_id, branch_name: branch.branch_name }
+          : { reason: 'other' },
         delays: [0],
       });
       if (capture.invoices.length) counts.recovered += capture.invoices.length;
