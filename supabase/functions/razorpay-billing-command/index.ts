@@ -260,6 +260,14 @@ Deno.serve(async (req) => {
   let nonExecutionProvenByProvider = false;
   let providerObjectId = '';
   let redirectUrl: string | null = '';
+  /* nestly_v778: where the seconds go. A branch add / capacity increase held the owner's screen
+     for ~26s on 2026-09-05 with no way to tell Razorpay's charge (which we cannot shorten) from
+     our own follow-up round trips (which we can). Each step's cumulative ms is logged once. */
+  const startedAt = Date.now();
+  const laps: Record<string, number> = {};
+  const lap = (name: string) => {
+    laps[name] = Date.now() - startedAt;
+  };
   try {
     admin = billingAdminClient();
     // V130 decorates the V124 dispatcher with the locked self-service return
@@ -371,7 +379,14 @@ Deno.serve(async (req) => {
     let providerResolved = false;
     let providerConfirmationPending = false;
     let updateChargePending = false;
+    const isChangeCommand = ['change_cadence', 'change_capacity', 'change_branches'].includes(
+      commandType,
+    );
 
+    /* nestly_v778: for a change_* command the plan check (a GET) overlaps the subscription read
+       below instead of preceding it — same two reads, one round trip of waiting instead of two.
+       The promise is still awaited (in the Promise.all) before anything is PATCHed. */
+    let deferredPlanValidation: Promise<void> | null = null;
     if (
       capacityModel &&
       ['create_checkout', 'change_cadence', 'change_capacity', 'change_branches'].includes(
@@ -380,12 +395,24 @@ Deno.serve(async (req) => {
     ) {
       if (!planId) throw new Error('Razorpay plan is not configured for this catalogue row');
       providerCallStarted = true;
-      await validateV755Plan(razorpay, data, planId);
-      providerCallStarted = false;
+      if (isChangeCommand) {
+        deferredPlanValidation = validateV755Plan(razorpay, data, planId);
+        deferredPlanValidation.catch(() => {/* surfaced where it is awaited */});
+      } else {
+        await validateV755Plan(razorpay, data, planId);
+        providerCallStarted = false;
+      }
+      lap('plan_validation_started');
     }
 
     const portalRecoveryReplay = data.recovery_required && commandType === 'create_portal';
     if (data.recovery_required && data.prior_provider_object_id && !portalRecoveryReplay) {
+      /* A recovery replay may resolve without reaching the change_* block, so the deferred plan
+         check is settled here first — it must not be left unawaited. */
+      if (deferredPlanValidation) {
+        await deferredPlanValidation;
+        deferredPlanValidation = null;
+      }
       providerCallStarted = true;
       try {
         const recovered = await retrieveRecoveredProviderResult(
@@ -471,12 +498,19 @@ Deno.serve(async (req) => {
       if (!subscriptionId) throw new Error('Razorpay subscription is not linked');
       if (!planId) throw new Error('Razorpay plan is not configured for this catalogue row');
       providerCallStarted = true;
-      const current = await razorpay.getSubscription(subscriptionId);
-      /* v775: the capacity the firm is coming FROM, for the payments-history label. */
-      const priorTerms = commandType === 'change_capacity'
-        ? await admin.from('billing_subscription_terms_v124').select('customer_capacity')
-          .eq('business_id', businessId).maybeSingle()
-        : null;
+      /* v775: the capacity the firm is coming FROM, for the payments-history label.
+         nestly_v778: read alongside the live subscription and the plan check — three independent
+         reads, one wait. */
+      const [current, priorTerms] = await Promise.all([
+        razorpay.getSubscription(subscriptionId),
+        commandType === 'change_capacity'
+          ? admin.from('billing_subscription_terms_v124').select('customer_capacity')
+            .eq('business_id', businessId).maybeSingle()
+          : Promise.resolve(null),
+        deferredPlanValidation ?? Promise.resolve(),
+      ]);
+      deferredPlanValidation = null;
+      lap('subscription_read');
       const priorCapacityForNotes = priorTerms?.data?.customer_capacity ?? null;
       /* nestly_v665 proration rule, carried over: DIRECTION decides when the change takes
          effect. More units (or a higher tier) start now and are charged; fewer units take effect
@@ -556,7 +590,16 @@ Deno.serve(async (req) => {
           remaining_count: cap,
         });
       }
-      const verified = await razorpay.getSubscription(updated.id || subscriptionId);
+      lap('provider_update');
+      /* nestly_v778: Razorpay's PATCH answers with the updated subscription entity itself. When
+         that answer is complete (id, plan, quantity, status) it IS the verification; the extra GET
+         only repeated it and cost the owner another provider round trip. A partial answer still
+         falls back to the read. */
+      const patchAnswerComplete = Boolean(updated?.id) && Boolean(updated?.plan_id) &&
+        updated?.quantity !== undefined && Boolean(updated?.status);
+      const verified = patchAnswerComplete
+        ? updated
+        : await razorpay.getSubscription(updated.id || subscriptionId);
       providerObjectId = verified.id || subscriptionId;
       /* Only the capacity model waits: a scheduled (not yet applied) change means Razorpay has
          not confirmed the new price, and completing 'completed' here would grant capacity the
@@ -637,6 +680,7 @@ Deno.serve(async (req) => {
            step). That is genuinely UNKNOWN, not failed: the branch stays pending_payment, the
            owner is told it is still processing, and the nightly heal closes it either way. */
         updateChargePending = capture.invoices.length === 0;
+        lap(`update_charge_capture_polls_${capture.polls}`);
       }
       }
     } else if (!providerResolved && commandType === 'cancel_at_period_end') {
@@ -821,6 +865,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    lap('completed');
+    console.info(JSON.stringify({
+      scope: 'razorpay-billing-command',
+      reason: 'timings_v778',
+      command_id: commandId,
+      command_type: commandType,
+      laps,
+    }));
     const { data: completed, error: completionError } = await admin.rpc(
       'complete_billing_command_v77',
       {

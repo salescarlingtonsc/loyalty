@@ -50394,7 +50394,17 @@ async function branchesPage(){
         return fail(new Error('The branch was created but no payment could be started. Retry with the same details.'));
       }
       CUI.setButtonBusy($('brSave'),{busy:true,label:'Charging your card…'});
-      const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}});
+      /* nestly_v778: Razorpay charges the card inside this one call and takes 15–30 seconds to
+         answer. A label that never changes reads as frozen; the elapsed seconds say it is not. */
+      const chargeStartedV778=Date.now();
+      const chargeTickV778=setInterval(()=>{
+        const btn=$('brSave');if(!btn||!btn.isConnected){clearInterval(chargeTickV778);return}
+        const secs=Math.round((Date.now()-chargeStartedV778)/1000);
+        CUI.setButtonBusy(btn,{busy:true,label:secs<10?'Charging your card…':`Waiting for Razorpay… ${secs}s`});
+      },1000);
+      let executed;
+      try{executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:commandId}})}
+      finally{clearInterval(chargeTickV778)}
       if(executed.error){
         CUI.setButtonBusy($('brSave'),{busy:false});
         /* The branch row survives on purpose. The attempt key is kept too, so "Create branch"
@@ -57050,7 +57060,17 @@ async function loadBillingConfig(){
       }
       if(requestError||!requested?.command_id){buttons.forEach(button=>button.disabled=false);status.textContent='Peekaa could not confirm whether the billing request was saved. Retry this same selection; the exact request key will be reused.';return}
       attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
-      const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:attempt.command_id}});
+      /* nestly_v778: a capacity increase is charged inside this call (15–30s at Razorpay). The
+         status line counts the seconds so the owner can see the page is waiting, not stuck. */
+      const submittedLabelV778=status.textContent,submitStartedV778=Date.now();
+      const submitTickV778=setInterval(()=>{
+        if(!status.isConnected){clearInterval(submitTickV778);return}
+        const secs=Math.round((Date.now()-submitStartedV778)/1000);
+        if(secs>=10)status.textContent=`${submittedLabelV778} Waiting for Razorpay to confirm the charge… ${secs}s`;
+      },1000);
+      let executed;
+      try{executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:attempt.command_id}})}
+      finally{clearInterval(submitTickV778)}
       if(executed.error){
         buttons.forEach(button=>button.disabled=false);
         /* v769: a 4xx from Razorpay is a PROVEN non-execution (the function answers 500 with
