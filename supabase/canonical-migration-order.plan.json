@@ -3874,6 +3874,12 @@
       "version": "20261004000000",
       "name": "nestly_v772_branch_copy_without_staff",
       "sourcePath": "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261005000000",
+      "name": "nestly_v773_rewards_same_at_every_branch",
+      "sourcePath": "db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql"
     }
   ]
 }

@@ -3879,6 +3879,12 @@
       "path": "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql",
       "semanticVersion": "v772",
       "proposedDeployVersion": "20261004000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql",
+      "semanticVersion": "v773",
+      "proposedDeployVersion": "20261005000000"
     }
   ]
 }

@@ -371,7 +371,7 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
     'the program header must delegate authority copy to the tested permission/draft state helper');
   assert.match(app, /function loyaltyAuthorityActionV140[\s\S]{0,400}?if\(!canManage\)[\s\S]{0,120}?Read only/i,
     'loyalty:r and non-owner users need an explicit read-only program cue');
-  for (const control of ['lsave', 'rwAdd', 'rwEdit', 'trAdd', 'trEdit', 'trDel', 'boSave', 'boInherit']) {
+  for (const control of ['lsave', 'rwAdd', 'rwEdit', 'trAdd', 'trEdit', 'trDel' /* v773: boSave/boInherit retired */]) {
     assert.match(loyaltyPage, new RegExp(`canManageLoyalty\\?[\\s\\S]*?${control}`, 'i'),
       `${control} must be visible only to an owner with loyalty:rw`);
   }
@@ -386,8 +386,7 @@ test('v41 app uses the atomic RPCs and preserves one issuance key across retries
   assert.ok(readOnlyReturnAt > loyaltyPage.indexOf('M().innerHTML='),
     'read-only loyalty state must render before mutation wiring stops');
   for (const rpc of [
-    'generate_retention_recommendation', 'save_loyalty_branch_override_draft',
-    'remove_loyalty_branch_override_draft', 'create_loyalty_config_draft',
+    'generate_retention_recommendation', /* v773: branch override RPCs retired */ 'create_loyalty_config_draft',
     'save_loyalty_config_draft'
   ]) {
     assert.ok(loyaltyPage.indexOf(`sb.rpc('${rpc}'`, readOnlyReturnAt) > readOnlyReturnAt,

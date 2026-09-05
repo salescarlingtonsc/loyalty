@@ -19049,6 +19049,15 @@ function wireManualBusinessApplicationFallback(){
 /* v770 (owner: "when there's error you need to tell me which area is wrong"): each refusal
    start_self_serve_business_v130 can raise, said in the owner's words and pointing at the field
    to fix. The generic sentence stays only for a failure the server did not name. */
+/* v773: is this workspace address already someone's? get_business_public is the anon-callable
+   read the booking portal uses; a row means taken, no row means free, an error means unknown. */
+async function selfServeSlugTakenV773(slug){
+  try{
+    const {data,error}=await sb.rpc('get_business_public',{p_slug:String(slug||'')});
+    if(error)return null;
+    return !!(data&&(Array.isArray(data)?data.length:data.id||data.slug||data.name));
+  }catch{return null}
+}
 function selfServeStartErrorTextV770(error){
   const code=String(error?.code||'');
   const text=String(error?.message||'').toLowerCase();
@@ -19152,17 +19161,32 @@ function renderOnboard(){
     });
     $('startSelfServe').onclick=async()=>{
       const cadence=root.querySelector('[name="selfServeCadence"]:checked')?.value||'annual';
-      const setupKey=sessionStorage.getItem('nestly-self-serve-setup')||crypto.randomUUID();sessionStorage.setItem('nestly-self-serve-setup',setupKey);
+      /* v773: the setup key is per LOGIN. It used to be one sessionStorage slot for the tab, so
+         a second account signing up in the same tab replayed the first account's key and hit the
+         unique(setup_idempotency_key) — reported to the owner as "address already taken" for an
+         address nobody had (2026-09-05, qwer@gmail.com / adaa-pte-ltd). */
+      const setupSlot=`nestly-self-serve-setup:${String(S.user?.id||'')}`;
+      let setupKey=sessionStorage.getItem(setupSlot)||crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
       if(!$('onboardLegalConsent').checked){$('onboardError').innerHTML='<div class="err">Please agree to the Terms of Service and acknowledge the Privacy Policy.</div>';return}
       $('startSelfServe').disabled=true;$('onboardStatus').textContent='Saving the locked workspace and server-priced plan…';
       invalidatePersonaCacheV370(); // V370: self-serve signup creates an owner persona
-      const started=await sb.rpc('start_self_serve_business_v130',{
+      const startArgs=()=>({
         p_owner_name:$('ownerFullName').value.trim(),p_business_name:$('businessName').value.trim(),
         p_business_slug:$('businessSlug').value.trim(),p_sector_key:$('businessSector').value,
         p_registration_number:$('businessRegistration').value.trim()||null,p_locale:businessApplicationLanguage(),
         p_cadence:cadence,p_customer_capacity:Number($('customerCapacity').value),
         p_legal_accepted:true,p_idempotency_key:setupKey
       });
+      let started=await sb.rpc('start_self_serve_business_v130',startArgs());
+      /* v773: a 23505 is either the address or a stale setup key. The address is checked by
+         name; if it is free, the key was the clash — take a fresh one and try once more. */
+      if(started.error&&String(started.error.code||'')==='23505'){
+        const slugTaken=await selfServeSlugTakenV773($('businessSlug').value.trim());
+        if(slugTaken===false){
+          setupKey=crypto.randomUUID();sessionStorage.setItem(setupSlot,setupKey);
+          started=await sb.rpc('start_self_serve_business_v130',startArgs());
+        }
+      }
       if(started.error||!started.data?.business_id){$('startSelfServe').disabled=false;$('onboardStatus').textContent=selfServeStartErrorTextV770(started.error);return}
       const saved={business_id:started.data.business_id,cadence,customer_capacity:Number($('customerCapacity').value)};
       await finishCheckout(saved,$('onboardStatus'),$('startSelfServe'));
@@ -29776,9 +29800,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        production — a bare assignment fires 0 requests, the same call with .then() fires
        immediately. Without it these three would still run one after another. */
     const loyaltyDraftRequestV379=sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId}).then(r=>r);
-    const branchOverridesRequest=sb.from('loyalty_branch_overrides')
-      .select('branch_id,active,earn_points_per_dollar,stamp_per_cents,expiry_mode,expiry_days')
-      .eq('business_id',S.biz.id).eq('config_version_id',draftVersionId).then(r=>r);
+    /* nestly_v773: per-branch loyalty overrides are retired — rewards are the same at every
+       branch (owner ruling 2026-09-05). Nothing is read; the shape below is kept. */
+    const branchOverridesRequest=Promise.resolve({data:[],error:null});
     const birthdayDraftRequest=sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId}).then(r=>r);
     const {data:draft,error:draftError}=await loyaltyDraftRequestV379;
     if(!isLoyaltyCurrent())return;
@@ -29936,35 +29960,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <b>${label}</b><p class="muted small help">Leave blank for all ${label.toLowerCase()}.</p>
     ${(items.length?items.map(x=>`<label><input type="checkbox" data-reward-elig="${key}" value="${x.id}" ${selected.has(x.id)?'checked':''}>${esc(x.name)}</label>`).join(''):'<p class="muted small" style="margin-top:8px">None added yet.</p>')}
   </div>`;
-  const branchOverrideRows=()=>draftVersionId?`
-    <details id="loyaltyAudienceSettings" tabindex="-1" style="margin-top:18px"><summary>Branch settings</summary>
-      <p class="muted small help">Leave blank to inherit the firm setting. Save only changes this draft.</p>
-      ${activeItems(br||[]).length?activeItems(br||[]).map((branch,idx)=>{
-        const o=branchOverrideById[branch.id]||{};
-        const branchExpiryMode=o.expiry_mode||'',branchExpiryNeedsDays=expiryModeRequiresDays(branchExpiryMode);
-        const branchExpiryShowsDays=branchExpiryMode!=='none';
-        const branchExpiryFallback=positiveExpiryDays(o.expiry_days)||positiveExpiryDays(p?.expiry_days)||365;
-        return `<div class="branch-override" style="padding:12px 0;border-bottom:1px solid var(--line)">
-          <b>${esc(branch.name)}</b>
-          <div class="field-grid">
-            <div><label for="bo-active-${idx}">Loyalty status</label><select id="bo-active-${idx}" data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
-              <option value="" ${o.active==null?'selected':''}>Inherit firm setting</option>
-              <option value="true" ${o.active===true?'selected':''}>Active here</option>
-              <option value="false" ${o.active===false?'selected':''}>Paused here</option>
-            </select></div>
-            <div><label for="bo-earn-${idx}">Points per $1</label><input id="bo-earn-${idx}" data-merchant-content data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
-            <div><label for="bo-stamp-${idx}">Spend per stamp</label><input id="bo-stamp-${idx}" data-merchant-content data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
-            <div><label for="bo-expiry-${idx}">Expiry</label><select id="bo-expiry-${idx}" data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
-              <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
-              <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
-              <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
-            </select></div>
-            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label for="bo-days-${idx}">Expiry days</label><input id="bo-days-${idx}" data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
-          </div>
-          ${canManageLoyalty?`<div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>`:''}
-        </div>`;
-      }).join(''):'<p class="muted small" style="margin-top:8px">Add branches first.</p>'}
-    </details>`:'';
+  /* nestly_v773: the "Branch settings" editor is gone — rewards are the same at every branch. */
+  const branchOverrideRows=()=>'';
   /* Names the tier a reward is gated behind, for the owner's own list. Falls back to the stored
      threshold when the tier has since been deleted, so a gate never renders as "no gate". */
   const rewardTierGateLabelV176=(r)=>{
@@ -30601,39 +30598,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const idx=modeInput.dataset.boExpiry;
     bindExpiryModeUi(modeInput,document.querySelector(`[data-bo-days="${idx}"]`),document.querySelector(`[data-bo-days-field="${idx}"]`));
   });
-  document.querySelectorAll('.boSave').forEach(button=>button.onclick=async()=>{
-    const idx=button.dataset.idx,branchId=button.dataset.branch;
-    const active=document.querySelector(`[data-bo-active="${idx}"]`).value;
-    const earn=document.querySelector(`[data-bo-earn="${idx}"]`).value;
-    const stamp=document.querySelector(`[data-bo-stamp="${idx}"]`).value;
-    const expiry=document.querySelector(`[data-bo-expiry="${idx}"]`).value;
-    const daysInput=document.querySelector(`[data-bo-days="${idx}"]`);
-    const expiryDays=expiryDaysForMode(expiry,daysInput);
-    if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');daysInput.focus();return}
-    const override={};
-    if(active)override.active=active==='true';
-    if(earn!=='')override.earn_points_per_dollar=parseFloat(earn);
-    if(stamp!=='')override.stamp_per_cents=Math.round(parseFloat(stamp)*100);
-    if(expiry)override.expiry_mode=expiry;
-    if(expiryDays!==undefined)override.expiry_days=expiryDays;
-    if(!Object.keys(override).length)return toast('Use Inherit firm setting to clear this branch');
-    button.disabled=true;button.textContent='Saving…';
-    const args={p_config_version:draftVersionId,p_branch:branchId,p_override:override,
-      p_expected_snapshot_hash:draftSnapshotHash||null};
-    const {error}=await sb.rpc('save_loyalty_branch_override_draft',args);
-    if(!isLoyaltyCurrent())return;
-    if(error){button.disabled=false;button.textContent='Save branch';return fail(error)}
-    toast('Branch setting saved');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch settings saved.',true,editorIntent);
-  });
-  document.querySelectorAll('.boInherit').forEach(button=>button.onclick=async()=>{
-    button.disabled=true;button.textContent='Clearing…';
-    const args={p_config_version:draftVersionId,p_branch:button.dataset.branch,
-      p_expected_snapshot_hash:draftSnapshotHash||null};
-    const {error}=await sb.rpc('remove_loyalty_branch_override_draft',args);
-    if(!isLoyaltyCurrent())return;
-    if(error){button.disabled=false;button.textContent='Inherit firm setting';return fail(error)}
-    toast('Branch now inherits firm setting');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch now inherits the firm setting.',true,editorIntent);
-  });
+  /* nestly_v773: no per-branch override handlers — see branchOverrideRows above. */
   const loyaltySave=$('lsave');
   if(loyaltySave)loyaltySave.onclick=async()=>{
     /* nestly_v435: the stamps model no longer renders the points-expiry control here. */

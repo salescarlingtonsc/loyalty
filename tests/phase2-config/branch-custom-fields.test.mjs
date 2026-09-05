@@ -121,10 +121,12 @@ test('v37 replaces raw branch override writes with owner-only draft RPCs', async
   assert.match(sql, /using errcode = '40001'/i);
   assert.match(sql, /grant execute on function public\.save_loyalty_branch_override_draft\(uuid,uuid,jsonb,text\)\s+to authenticated/i);
   assert.match(sql, /grant execute on function public\.remove_loyalty_branch_override_draft\(uuid,uuid,text\)\s+to authenticated/i);
-  assert.match(app, /Branch settings/);
-  assert.match(app, /sb\.rpc\('save_loyalty_branch_override_draft'/i);
-  assert.match(app, /sb\.rpc\('remove_loyalty_branch_override_draft'/i);
-  assert.match(app, /p_expected_snapshot_hash:draftSnapshotHash\|\|null/i);
+  /* nestly_v773: the per-branch editor is retired — rewards are the same at every branch
+     (owner ruling 2026-09-05). The RPCs still exist (the writer refuses); the page no longer
+     calls them. */
+  assert.doesNotMatch(app, /sb\.rpc\('save_loyalty_branch_override_draft'/i);
+  assert.doesNotMatch(app, /sb\.rpc\('remove_loyalty_branch_override_draft'/i);
+  assert.doesNotMatch(app, /querySelectorAll\('\.boSave'\)/);
   assert.match(securityMigration, /'save_loyalty_branch_override_draft'/);
   assert.match(securityMigration, /'remove_loyalty_branch_override_draft'/);
   assert.match(securityTest, /'save_loyalty_branch_override_draft'/);
