@@ -526,3 +526,21 @@ test('auth and public surfaces link to all policy pages', async () => {
     assert.ok(joinPage.includes(`href="${page}"`));
   }
 });
+
+test('v783: the self-serve address probe records no booking-funnel step and returns no page data', async () => {
+  const fn = await read('supabase/functions/public-booking/index.ts');
+  const probeStart = fn.indexOf("params.get('probe') === '1'");
+  assert.ok(probeStart > 0, 'the probe branch exists');
+  const probeEnd = fn.indexOf('return new Response(null, { status: 204', probeStart);
+  assert.ok(probeEnd > probeStart, 'the probe answers 204 with no body when the address is taken');
+  const probe = fn.slice(probeStart, probeEnd);
+  assert.doesNotMatch(probe, /internal_public_funnel_hit/, 'a probe must never count as a funnel step');
+  assert.match(probe, /internal_public_booking_page/, 'the probe resolves through the service-only page resolver, never a customer-callable RPC');
+  assert.doesNotMatch(probe, /get_business_public/, 'the gateway call graph stays service-only (v21)');
+  assert.match(probe, /publicError\(req, 404\)/, 'a free address answers 404');
+  const pageHit = fn.indexOf("p_surface: 'booking', p_step: 'page_view'");
+  assert.ok(pageHit > probeEnd, 'the probe branch returns before the page_view funnel hit');
+  const app = await read('app/app.js');
+  assert.match(app, /publicFunctionUrl\('public-booking',`\?slug=\$\{encodeURIComponent\(String\(slug\|\|''\)\)\}&probe=1`\)/);
+  assert.match(app, /if\(response\.status===204\|\|response\.status===200\)return true;/);
+});

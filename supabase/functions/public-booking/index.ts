@@ -1,4 +1,4 @@
-import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex } from '../_shared/gateway.ts';
+import { adminClient, bookingRequestFingerprint, conflictError, deriveBookingManagementToken, enforceRateLimit, json, optionalAuthenticatedUserId, preflight, publicError, readJson, recordAccountOpen, requireOrigin, sha256Hex, corsFor } from '../_shared/gateway.ts';
 import { SLUG_PATTERN, UUID_PATTERN, validBookingPayload } from '../_shared/validation.ts';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -13,6 +13,22 @@ Deno.serve(async (req) => {
       const params = new URL(req.url).searchParams;
       const slug = params.get('slug') || '';
       if (!SLUG_PATTERN.test(slug)) return publicError(req, 404);
+
+      /* nestly_v783: existence probe for the self-serve address check. The workspace signup
+         asks "does a business already answer to this address?" and nothing else. Reading the
+         booking page for that answer counted a booking-funnel page_view against the OTHER
+         business every time a taken address was tried, so the probe answers by status alone
+         (204 taken / 404 free), returns no page data, and records no funnel step. */
+      if (params.get('probe') === '1') {
+        const limit = await enforceRateLimit(req, 'booking-page', 120, 60);
+        if (!limit.allowed) return json(req, 429, { error: 'Please wait before trying again.', retry_after: limit.retry_after });
+        /* The same service-only page resolver the GET below uses (the v21 call-graph test keeps
+           the gateway to service-only RPCs); only its null-or-not is read, and no step is counted. */
+        const { data, error } = await adminClient().rpc('internal_public_booking_page', { p_slug: slug });
+        if (error || !data) return publicError(req, 404);
+        const cors = corsFor(req) || {};
+        return new Response(null, { status: 204, headers: cors });
+      }
 
       // v183: live availability for the customer-facing team + time steps. It is a read of the
       // same rows the business calendar uses, never a hold, and it is rate limited separately

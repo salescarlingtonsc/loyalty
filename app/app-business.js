@@ -1967,8 +1967,10 @@ function wireManualBusinessApplicationFallback(){
    acted on, so an unknown fails safe into the normal error path. */
 async function selfServeSlugTakenV773(slug){
   try{
-    const response=await fetch(publicFunctionUrl('public-booking',`?slug=${encodeURIComponent(String(slug||''))}`),{credentials:'omit'});
-    if(response.status===200)return true;
+    /* nestly_v783: probe mode — the gateway answers 204 taken / 404 free with no page data and
+       no booking-funnel page_view against the other business (see public-booking's GET). */
+    const response=await fetch(publicFunctionUrl('public-booking',`?slug=${encodeURIComponent(String(slug||''))}&probe=1`),{credentials:'omit'});
+    if(response.status===204||response.status===200)return true;
     if(response.status===404)return false;
     return null;
   }catch{return null}
