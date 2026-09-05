@@ -1042,7 +1042,7 @@
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 4,
-      "sha256": "d1e95199255821b93cf697fc5caafdf07deaefe132c216932fd43c0849f08028",
+      "sha256": "cfc41943ad4bd954bf89016e7944b92884eae8b6e5fcc9ed7a5bf5e532128e42",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_owner_brief_readers --migrated-only"
     },
     {
@@ -1075,7 +1075,7 @@
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 4,
-      "sha256": "3a1d819d5f9c6fda2e88728eae36c6023148dbd6a6374b52c25f6b043e62797f",
+      "sha256": "122c391e0126e340f9d093214dc209e124cb6eab76c6a543a93fced771d37de8",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_branch_code_and_comparison --migrated-only"
     },
     {

@@ -3910,6 +3910,12 @@
       "version": "20261006020000",
       "name": "nestly_v777_branch_code_and_comparison",
       "sourcePath": "db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006030000",
+      "name": "nestly_v779_no_weekday_without_visits",
+      "sourcePath": "db/migrations/20261006_nestly_v779_no_weekday_without_visits.sql"
     }
   ]
 }

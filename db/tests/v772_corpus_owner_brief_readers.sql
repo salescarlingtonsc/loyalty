@@ -159,6 +159,18 @@
 --     (18, 25_30) 1        -> visits NULL, suppressed true
 --     4 cells. coverage.age_known = 12/13 -> 92.3 (c8's visit has no birth date).
 --
+-- TRUTH TABLE 4b (nestly_v779) — get_ci_visit_rhythm_v1(biz, 2026-05-04, 2026-05-31, null,
+--   as_of 2026-06-01). 28 days, four occurrences of every weekday, ZERO sales.
+--   weekdays: still seven rows, occurrences 4 each, evidence ok, per_occurrence 0.0 — nothing
+--     is hidden and nothing is suppressed.
+--   busiest_weekdays [] · slowest_weekdays [] · busiest_blocks [] · slowest_blocks []
+--     Before v779 the two weekday arrays each named Monday and Tuesday at 0.0: the k=4 floor is
+--     an OCCURRENCE floor and says nothing about visits, so every weekday qualified and the
+--     tie-break picked the two lowest dows at both ends. A superlative over an all-zero set is
+--     a fabrication, and the reader now declines to make one.
+--   hour_blocks still 12 rows · open_blocks [] (days_with_visits >= 3 was never met)
+--   current {0, 0}. The March call above is unchanged in every respect.
+--
 -- ===========================================================================================
 -- TRUTH TABLE 5 — get_ci_demographic_totals_v1(biz, 03-02, 03-29, null, as_of 2026-04-01)
 -- ===========================================================================================
@@ -280,7 +292,7 @@ declare
 
   g_cash jsonb; g_cash_owner jsonb; g_cash_mgr jsonb;
   g_staff jsonb; g_staff_imm jsonb;
-  g_rew jsonb; g_rhy jsonb; g_dem jsonb;
+  g_rew jsonb; g_rhy jsonb; g_rhy_empty jsonb; g_dem jsonb;
   v_row jsonb; v_row2 jsonb; v_a jsonb; v_b jsonb; v_firm jsonb;
   v_err text;
   v_ok boolean;
@@ -1156,6 +1168,75 @@ begin
        or (g_rhy->'coverage'->'age_known'->>'denominator')::bigint <> 13
        or (g_rhy->'coverage'->'age_known'->>'pct')::numeric <> 92.3 then
       insert into _fail values ('V-age-coverage', (g_rhy->'coverage'->'age_known')::text);
+    end if;
+  end if;
+
+  -- ============================================ 4b. AN EMPTY WINDOW NAMES NO DAY (nestly_v779)
+  -- 2026-05-04 (Monday) .. 2026-05-31 (Sunday): 28 days, four occurrences of every weekday, and
+  -- not one sale — every weekday clears the k=4 OCCURRENCE floor and every one of them sits at
+  -- 0.0 visits per occurrence. The occurrence floor has nothing to say about visits, so before
+  -- v779 this window named Monday and Tuesday as the busiest days at 0.0 apiece and Monday and
+  -- Tuesday again as the slowest: four fabricated findings from a month that did not happen.
+  begin
+    g_rhy_empty := public.get_ci_visit_rhythm_v1(
+      biz, date '2026-05-04', date '2026-05-31', null, as_of_jun);
+  exception when others then
+    get stacked diagnostics v_err = returned_sqlstate;
+    insert into _fail values ('E-call', format('the empty-window rhythm call raised %s', v_err));
+    g_rhy_empty := null;
+  end;
+  if g_rhy_empty is not null then
+    -- precondition: the window really is empty, and really did clear the occurrence floor on
+    -- all seven weekdays — otherwise the empty arrays below would be proving the wrong thing
+    if (g_rhy_empty->'current'->>'visits')::bigint <> 0
+       or (g_rhy_empty->'current'->>'revenue_cents')::bigint <> 0 then
+      insert into _fail values ('E-pre-empty', (g_rhy_empty->'current')::text);
+    end if;
+    if jsonb_array_length(coalesce(g_rhy_empty->'weekdays', '[]'::jsonb)) <> 7 then
+      insert into _fail values ('E-pre-weekdays',
+        jsonb_array_length(coalesce(g_rhy_empty->'weekdays', '[]'::jsonb))::text);
+    end if;
+    if (g_rhy_empty->'weekdays'->0->>'occurrences')::bigint <> 4
+       or g_rhy_empty->'weekdays'->0->'evidence'->>'status' <> 'ok'
+       or (g_rhy_empty->'weekdays'->0->>'per_occurrence')::numeric <> 0.0 then
+      insert into _fail values ('E-pre-floor', (g_rhy_empty->'weekdays'->0)::text);
+    end if;
+    -- THE v779 RULE: nothing is hidden, but no day is named
+    if g_rhy_empty->'busiest_weekdays' <> '[]'::jsonb then
+      insert into _fail values ('E-busiest-weekdays', (g_rhy_empty->'busiest_weekdays')::text);
+    end if;
+    if g_rhy_empty->'slowest_weekdays' <> '[]'::jsonb then
+      insert into _fail values ('E-slowest-weekdays', (g_rhy_empty->'slowest_weekdays')::text);
+    end if;
+    if g_rhy_empty->'busiest_blocks' <> '[]'::jsonb then
+      insert into _fail values ('E-busiest-blocks', (g_rhy_empty->'busiest_blocks')::text);
+    end if;
+    if g_rhy_empty->'slowest_blocks' <> '[]'::jsonb then
+      insert into _fail values ('E-slowest-blocks', (g_rhy_empty->'slowest_blocks')::text);
+    end if;
+    -- the listings are untouched: twelve hour blocks are still described, none is open
+    if jsonb_array_length(coalesce(g_rhy_empty->'hour_blocks', '[]'::jsonb)) <> 12
+       or g_rhy_empty->'open_blocks' <> '[]'::jsonb then
+      insert into _fail values ('E-listings',
+        format('hour_blocks=%s open_blocks=%s',
+               jsonb_array_length(coalesce(g_rhy_empty->'hour_blocks', '[]'::jsonb)),
+               (g_rhy_empty->'open_blocks')::text));
+    end if;
+    -- And the March call is untouched, BY LABEL and not merely by length: its slowest days are
+    -- still Saturday and Sunday at 0.0, weekdays that saw no visit at all. The guard is a
+    -- whole-set existence test precisely so those keep ranking — a per-candidate `visits > 0`
+    -- filter would pass an array-length check and quietly answer Friday instead, which is why
+    -- this asserts the days themselves.
+    if jsonb_array_length(coalesce(g_rhy->'slowest_weekdays', '[]'::jsonb)) <> 2
+       or g_rhy->'slowest_weekdays'->0->>'label' <> 'Saturday'
+       or (g_rhy->'slowest_weekdays'->0->>'per_occurrence')::numeric <> 0.0
+       or g_rhy->'slowest_weekdays'->1->>'label' <> 'Sunday' then
+      insert into _fail values ('E-march-slowest', (g_rhy->'slowest_weekdays')::text);
+    end if;
+    if jsonb_array_length(coalesce(g_rhy->'busiest_weekdays', '[]'::jsonb)) <> 2
+       or g_rhy->'busiest_weekdays'->0->>'label' <> 'Monday'
+       or (g_rhy->'busiest_weekdays'->0->>'per_occurrence')::numeric <> 1.3 then
+      insert into _fail values ('E-march-busiest', (g_rhy->'busiest_weekdays')::text);
     end if;
   end if;
 

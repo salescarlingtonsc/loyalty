@@ -25,11 +25,13 @@
 --   brB  'ZZ Tampines' active,                code omitted  -> B02
 --   brC  'ZZ Jurong'   active,                code omitted  -> B03
 --   brD  'ZZ Depot'    INACTIVE,              code 'MAIN'   -> MAIN (supplied: untouched)
+--   brF  'ZZ Novena'   active,                code omitted  -> B04   (v779: paid, open, and it
+--        never took a sale — the branch that must NOT be given a busiest or slowest weekday)
 --   (brB, brC and brD are inserted with billing_state 'active': nestly_v665 switches an unpaid
 --    extra branch OFF at insert time, so without it B02 and B03 would not be trading at all)
---   brE  'ZZ Yishun'   INACTIVE,              code omitted  -> B04  (inserted LAST, after the
+--   brE  'ZZ Yishun'   INACTIVE,              code omitted  -> B05  (inserted LAST, after the
 --        reader assertions: proves next-free reads max(Bnn)+1 and IGNORES 'MAIN', which a
---        count-based generator would have collided with at B04 only by luck and at B03 by rule)
+--        count-based generator would have collided with)
 --
 -- Clients: c1..c6 female 27y (25_30) · c7 male 45y (41_50) · c8 NO gender, 27y (25_30)
 --          c9 male, NO birth date (age unknown) · c10 female 45y (41_50)
@@ -77,14 +79,14 @@
 -- TRUTH TABLE 2 — get_ci_branch_directory_v1(biz), as the owner
 -- ===========================================================================================
 -- business: the fixture firm, slug 'zz-v777-branches'.
--- branches: FOUR rows ordered by code — B01 (default, active), B02, B03, MAIN (active FALSE,
---   present: a retired outlet keeps its identity). branches_hidden 0.
+-- branches: FIVE rows ordered by code — B01 (default, active), B02, B03, B04, MAIN (active
+--   FALSE, present: a retired outlet keeps its identity). branches_hidden 0.
 --
 -- ===========================================================================================
 -- TRUTH TABLE 3 — get_ci_branch_comparison_v1(biz, 03-02, 03-29, as_of 2026-04-01 00:00+08)
 -- ===========================================================================================
 -- business: visits 14, revenue_cents 153000, customers 10 (c1..c10).
--- branches_compared 3 (MAIN is inactive) · branches_hidden 0 · unattributed_visits 0.
+-- branches_compared 4 (MAIN is inactive) · branches_hidden 0 · unattributed_visits 0.
 --
 --   B01 'ZZ Bugis'   visits 8  revenue 85000  customers 8  new_customers 7 (c2..c8; c1 is not)
 --        share_of_visits 8/14 -> 57.1 · share_of_revenue 85000/153000 -> 55.6
@@ -110,7 +112,15 @@
 --        share_of_visits 2/14 -> 14.3
 --        top_item Haircut 5000 / 1 buyer — the anonymous 3000 line is neither revenue nor a
 --        buyer here, which is get_ci_demographic_totals_v1.by_item's own identified-only base
--- sum(branches[].visits) = 8 + 4 + 2 = 14 = business.visits, and the same for revenue.
+--   B04 'ZZ Novena'   visits 0  revenue 0      customers 0  new_customers 0  (nestly_v779)
+--        share_of_visits 0/14 -> 0.0 · top_item null
+--        busiest_weekday NULL and slowest_weekday NULL — every weekday ties at zero, so there
+--        is no busiest and no slowest one. Before v779 BOTH read {Monday, 0.0}: the dow
+--        tie-break landing on the same day at either end of an all-zero ordering, which is a
+--        trading pattern reported by a branch that did not trade. B01 meanwhile keeps its
+--        zero-visit Saturday as its slowest day, because B01 has weekdays that did have visits
+--        — the guard is a whole-set test, never a `visits > 0` filter on the candidates.
+-- sum(branches[].visits) = 8 + 4 + 2 + 0 = 14 = business.visits, and the same for revenue.
 --
 -- ===========================================================================================
 -- ACCESS
@@ -149,6 +159,7 @@ declare
   brB uuid := '00000000-0000-4000-8000-000000777012';
   brC uuid := '00000000-0000-4000-8000-000000777013';
   brD uuid := '00000000-0000-4000-8000-000000777014';
+  brF uuid := '00000000-0000-4000-8000-000000777020';
   brE uuid := '00000000-0000-4000-8000-000000777015';
   br2 uuid := '00000000-0000-4000-8000-000000777016';
 
@@ -276,6 +287,9 @@ begin
   insert into public.branches
     (id, business_id, name, is_default, active, created_at, billing_state, code) values
     (brD, biz, 'ZZ Depot',    false, false, timestamptz '2026-01-04 09:00:00+08', 'active', 'MAIN');
+  insert into public.branches
+    (id, business_id, name, is_default, active, created_at, billing_state) values
+    (brF, biz, 'ZZ Novena',  false, true,  timestamptz '2026-01-05 09:00:00+08', 'active');
   insert into public.branches (id, business_id, name, is_default, active) values
     (br2, biz2, 'ZZ other main', true, true);
 
@@ -441,6 +455,11 @@ begin
   if v_txt is distinct from 'MAIN' then
     insert into _fail values ('C-brD', coalesce(v_txt, '<null>'));
   end if;
+  -- inserted after MAIN, so the generator has to ignore MAIN to reach B04
+  select br.code into v_txt from public.branches br where br.id = brF;
+  if v_txt is distinct from 'B04' then
+    insert into _fail values ('C-brF', coalesce(v_txt, '<null>'));
+  end if;
 
   -- ======================================================================== THE BACKFILL
   -- An acceptance fixture runs AFTER the migration, so by the time it looks, every branch
@@ -517,9 +536,9 @@ begin
   select count(*) into v_n
     from public.branches br
    where br.business_id = biz and br.active;
-  if v_n <> 3 then
+  if v_n <> 4 then
     insert into _fail values ('C-active-pre',
-      format('%s active branches, expected 3 (B01, B02, B03)', v_n));
+      format('%s active branches, expected 4 (B01, B02, B03, B04)', v_n));
   end if;
 
   -- a duplicate code inside the firm is refused by the unique index
@@ -550,7 +569,7 @@ begin
     if g_dir->'business'->>'slug' is distinct from 'zz-v777-branches' then
       insert into _fail values ('D-slug', coalesce(g_dir->'business'->>'slug', '<null>'));
     end if;
-    if jsonb_array_length(coalesce(g_dir->'branches', '[]'::jsonb)) <> 4 then
+    if jsonb_array_length(coalesce(g_dir->'branches', '[]'::jsonb)) <> 5 then
       insert into _fail values ('D-count',
         jsonb_array_length(coalesce(g_dir->'branches', '[]'::jsonb))::text);
     else
@@ -561,12 +580,14 @@ begin
         insert into _fail values ('D-row0', v_row::text);
       end if;
       if g_dir->'branches'->1->>'code' <> 'B02'
-         or g_dir->'branches'->2->>'code' <> 'B03' then
+         or g_dir->'branches'->2->>'code' <> 'B03'
+         or g_dir->'branches'->3->>'code' <> 'B04' then
         insert into _fail values ('D-order',
-          format('%s,%s', g_dir->'branches'->1->>'code', g_dir->'branches'->2->>'code'));
+          format('%s,%s,%s', g_dir->'branches'->1->>'code',
+                 g_dir->'branches'->2->>'code', g_dir->'branches'->3->>'code'));
       end if;
       -- the retired outlet keeps its identity and says it is retired
-      v_row := g_dir->'branches'->3;
+      v_row := g_dir->'branches'->4;
       if v_row->>'code' <> 'MAIN' or (v_row->>'active')::boolean is distinct from false then
         insert into _fail values ('D-inactive', v_row::text);
       end if;
@@ -591,7 +612,7 @@ begin
        or (g_cmp->'business'->>'customers')::bigint <> 10 then
       insert into _fail values ('P-business', (g_cmp->'business')::text);
     end if;
-    if (g_cmp->>'branches_compared')::bigint <> 3
+    if (g_cmp->>'branches_compared')::bigint <> 4
        or (g_cmp->>'branches_hidden')::bigint <> 0
        or (g_cmp->>'unattributed_visits')::bigint <> 0 then
       insert into _fail values ('P-counts',
@@ -607,7 +628,7 @@ begin
       insert into _fail values ('P-evidence-class', coalesce(g_cmp->>'evidence_class', '<null>'));
     end if;
 
-    if jsonb_array_length(coalesce(g_cmp->'branches', '[]'::jsonb)) <> 3 then
+    if jsonb_array_length(coalesce(g_cmp->'branches', '[]'::jsonb)) <> 4 then
       insert into _fail values ('P-branch-count',
         jsonb_array_length(coalesce(g_cmp->'branches', '[]'::jsonb))::text);
     else
@@ -768,6 +789,43 @@ begin
         insert into _fail values ('P-b03-top-item',
           coalesce((v_row->'top_item')::text, '<null>'));
       end if;
+
+      ------------------------------------------------- B04 — v779, the outlet that never traded
+      v_row := g_cmp->'branches'->3;
+      if v_row->'branch'->>'code' <> 'B04' then
+        insert into _fail values ('P-b04-identity', (v_row->'branch')::text);
+      end if;
+      -- precondition: this branch is genuinely present and genuinely empty, so the two nulls
+      -- below are the reader declining to name a day rather than the branch being absent
+      if (v_row->>'visits')::bigint <> 0 or (v_row->>'revenue_cents')::bigint <> 0
+         or (v_row->>'customers')::bigint <> 0 or (v_row->>'new_customers')::bigint <> 0 then
+        insert into _fail values ('P-b04-empty',
+          format('visits=%s revenue=%s customers=%s new=%s', v_row->>'visits',
+                 v_row->>'revenue_cents', v_row->>'customers', v_row->>'new_customers'));
+      end if;
+      if (v_row->'share_of_visits'->>'pct')::numeric <> 0.0
+         or (v_row->'share_of_visits'->>'denominator')::bigint <> 14 then
+        insert into _fail values ('P-b04-share', (v_row->'share_of_visits')::text);
+      end if;
+      -- THE v779 RULE. Every weekday ties at zero, so there is no busiest and no slowest one.
+      -- Before v779 both read {Monday, 0} — the same fabricated answer at both ends of an
+      -- all-zero ordering, produced by the dow tie-break and by nothing in the data.
+      if v_row->'busiest_weekday' <> 'null'::jsonb then
+        insert into _fail values ('P-b04-busiest', (v_row->'busiest_weekday')::text);
+      end if;
+      if v_row->'slowest_weekday' <> 'null'::jsonb then
+        insert into _fail values ('P-b04-slowest', (v_row->'slowest_weekday')::text);
+      end if;
+      if v_row->'top_item' <> 'null'::jsonb then
+        insert into _fail values ('P-b04-top-item', (v_row->'top_item')::text);
+      end if;
+      -- and the rule takes nothing away from a branch that DID trade: B01's slowest weekday is
+      -- still a zero-visit Saturday, because some other weekday of B01's had a visit
+      if g_cmp->'branches'->0->'slowest_weekday'->>'label' <> 'Saturday'
+         or (g_cmp->'branches'->0->'slowest_weekday'->>'per_occurrence')::numeric <> 0.0 then
+        insert into _fail values ('P-b04-zero-still-ranks',
+          coalesce((g_cmp->'branches'->0->'slowest_weekday')::text, '<null>'));
+      end if;
     end if;
   end if;
 
@@ -849,11 +907,11 @@ begin
 
   -- ======================================================================== 7. NEXT FREE
   -- Inserted LAST so it cannot disturb the directory or the comparison. The firm now holds
-  -- B01, B02, B03 and MAIN; next-free is max(Bnn)+1 = B04, and 'MAIN' contributes nothing.
+  -- B01, B02, B03, MAIN and B04; next-free is max(Bnn)+1 = B05, and 'MAIN' contributes nothing.
   insert into public.branches (id, business_id, name, is_default, active)
   values (brE, biz, 'ZZ Yishun', false, false);
   select br.code into v_txt from public.branches br where br.id = brE;
-  if v_txt is distinct from 'B04' then
+  if v_txt is distinct from 'B05' then
     insert into _fail values ('N-next-free', coalesce(v_txt, '<null>'));
   end if;
 

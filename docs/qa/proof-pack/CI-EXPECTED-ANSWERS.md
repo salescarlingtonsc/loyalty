@@ -3405,6 +3405,18 @@ rollback;
 --     (18, 25_30) 1        -> visits NULL, suppressed true
 --     4 cells. coverage.age_known = 12/13 -> 92.3 (c8's visit has no birth date).
 --
+-- TRUTH TABLE 4b (nestly_v779) — get_ci_visit_rhythm_v1(biz, 2026-05-04, 2026-05-31, null,
+--   as_of 2026-06-01). 28 days, four occurrences of every weekday, ZERO sales.
+--   weekdays: still seven rows, occurrences 4 each, evidence ok, per_occurrence 0.0 — nothing
+--     is hidden and nothing is suppressed.
+--   busiest_weekdays [] · slowest_weekdays [] · busiest_blocks [] · slowest_blocks []
+--     Before v779 the two weekday arrays each named Monday and Tuesday at 0.0: the k=4 floor is
+--     an OCCURRENCE floor and says nothing about visits, so every weekday qualified and the
+--     tie-break picked the two lowest dows at both ends. A superlative over an all-zero set is
+--     a fabrication, and the reader now declines to make one.
+--   hour_blocks still 12 rows · open_blocks [] (days_with_visits >= 3 was never met)
+--   current {0, 0}. The March call above is unchanged in every respect.
+--
 -- ===========================================================================================
 -- TRUTH TABLE 5 — get_ci_demographic_totals_v1(biz, 03-02, 03-29, null, as_of 2026-04-01)
 -- ===========================================================================================
@@ -3450,14 +3462,14 @@ rollback;
 -- TRUTH TABLE 2 — get_ci_branch_directory_v1(biz), as the owner
 -- ===========================================================================================
 -- business: the fixture firm, slug 'zz-v777-branches'.
--- branches: FOUR rows ordered by code — B01 (default, active), B02, B03, MAIN (active FALSE,
---   present: a retired outlet keeps its identity). branches_hidden 0.
+-- branches: FIVE rows ordered by code — B01 (default, active), B02, B03, B04, MAIN (active
+--   FALSE, present: a retired outlet keeps its identity). branches_hidden 0.
 --
 -- ===========================================================================================
 -- TRUTH TABLE 3 — get_ci_branch_comparison_v1(biz, 03-02, 03-29, as_of 2026-04-01 00:00+08)
 -- ===========================================================================================
 -- business: visits 14, revenue_cents 153000, customers 10 (c1..c10).
--- branches_compared 3 (MAIN is inactive) · branches_hidden 0 · unattributed_visits 0.
+-- branches_compared 4 (MAIN is inactive) · branches_hidden 0 · unattributed_visits 0.
 --
 --   B01 'ZZ Bugis'   visits 8  revenue 85000  customers 8  new_customers 7 (c2..c8; c1 is not)
 --        share_of_visits 8/14 -> 57.1 · share_of_revenue 85000/153000 -> 55.6
@@ -3483,7 +3495,15 @@ rollback;
 --        share_of_visits 2/14 -> 14.3
 --        top_item Haircut 5000 / 1 buyer — the anonymous 3000 line is neither revenue nor a
 --        buyer here, which is get_ci_demographic_totals_v1.by_item's own identified-only base
--- sum(branches[].visits) = 8 + 4 + 2 = 14 = business.visits, and the same for revenue.
+--   B04 'ZZ Novena'   visits 0  revenue 0      customers 0  new_customers 0  (nestly_v779)
+--        share_of_visits 0/14 -> 0.0 · top_item null
+--        busiest_weekday NULL and slowest_weekday NULL — every weekday ties at zero, so there
+--        is no busiest and no slowest one. Before v779 BOTH read {Monday, 0.0}: the dow
+--        tie-break landing on the same day at either end of an all-zero ordering, which is a
+--        trading pattern reported by a branch that did not trade. B01 meanwhile keeps its
+--        zero-visit Saturday as its slowest day, because B01 has weekdays that did have visits
+--        — the guard is a whole-set test, never a `visits > 0` filter on the candidates.
+-- sum(branches[].visits) = 8 + 4 + 2 + 0 = 14 = business.visits, and the same for revenue.
 --
 -- ===========================================================================================
 -- ACCESS
