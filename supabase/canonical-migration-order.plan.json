@@ -3862,6 +3862,12 @@
       "version": "20261002010000",
       "name": "nestly_v767_referral_link_joins",
       "sourcePath": "db/migrations/20261002_nestly_v767_referral_link_joins.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261003000000",
+      "name": "nestly_v768_keep_branch_stays_paid",
+      "sourcePath": "db/migrations/20261003_nestly_v768_keep_branch_stays_paid.sql"
     }
   ]
 }

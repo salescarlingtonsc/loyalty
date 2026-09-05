@@ -36970,10 +36970,22 @@ async function runBranchBillingActionV758(record,button,kind){
     if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     toast(ownerErrorText(error));return;
   }
+  /* v768: the RPC records the intent; the command tells Razorpay — a decrease scheduled for the
+     renewal date, or (Keep) the withdrawal of that schedule. Neither charges the card. Until this
+     ran, Razorpay was never told and the command sat pending forever. */
+  if(data?.command_id){
+    const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:data.command_id}});
+    if(executed.error){
+      if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
+      toast(kind==='stop'?'Saved here, but Razorpay could not be updated yet. Try again in a moment.':'Saved here, but Razorpay could not be updated yet. Try Keep again in a moment.');
+      loadBillingConfig();return;
+    }
+  }
   toast(kind==='stop'
     ?(data?.status==='replayed'?'That branch is already switching off'
       :`${record.branch} switches off on ${billingDateV758(data?.effective_at)||'your next billing date'}`)
     :(data?.billing_state==='included'?`${record.branch} stays on your plan`
+      :data?.billing_state==='active'?`${record.branch} stays on and renews with your plan`
       :`${record.branch} is back — pay for it from Branches to switch it on`));
   loadBillingConfig();
 }

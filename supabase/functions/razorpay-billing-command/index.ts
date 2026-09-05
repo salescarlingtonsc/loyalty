@@ -499,6 +499,20 @@ Deno.serve(async (req) => {
         });
         if (clearError) throw new Error('billing schedule clear failed');
         providerObjectId = subscriptionId;
+      } else if (
+        commandType === 'change_branches' &&
+        String(current.plan_id) === planId &&
+        Number(current.quantity || 0) === planUnits
+      ) {
+        /* v768 — "Keep" on a stopping branch. The units already match because the earlier
+           decrease was only SCHEDULED for cycle end (Razorpay never took the unit off), so the
+           right call is to withdraw that schedule, not to PATCH the same quantity — which would
+           be a no-op at best and a fresh pro-rata charge at worst. Observed 2026-09-05: Keep
+           sent the owner to pay again for a branch whose year was already paid. */
+        if (current.has_scheduled_changes === true) {
+          await razorpay.cancelScheduledChanges(subscriptionId);
+        }
+        providerObjectId = subscriptionId;
       } else {
       const updated = await razorpay.updateSubscription(subscriptionId, {
         plan_id: planId,
@@ -517,7 +531,11 @@ Deno.serve(async (req) => {
       /* Only the capacity model waits: a scheduled (not yet applied) change means Razorpay has
          not confirmed the new price, and completing 'completed' here would grant capacity the
          firm has not paid for. Same rule the Stripe pending_update check enforced. */
-      providerConfirmationPending = capacityModel && verified.has_scheduled_changes === true;
+      /* v768: a branch DECREASE is scheduled for cycle end by design (ruling 2: it keeps working
+         until renewal, nothing refunded). has_scheduled_changes is then the confirmation, not a
+         pending state — the owner's page already says the date. */
+      providerConfirmationPending = capacityModel && verified.has_scheduled_changes === true &&
+        !(commandType === 'change_branches' && scheduleChangeAt === 'cycle_end');
       if (
         !providerConfirmationPending &&
         !subscriptionMatchesCommandV755(verified, commandType, planId, planUnits)

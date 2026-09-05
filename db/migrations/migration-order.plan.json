@@ -3867,6 +3867,12 @@
       "path": "db/migrations/20261002_nestly_v767_referral_link_joins.sql",
       "semanticVersion": "v767",
       "proposedDeployVersion": "20261002010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261003_nestly_v768_keep_branch_stays_paid.sql",
+      "semanticVersion": "v768",
+      "proposedDeployVersion": "20261003000000"
     }
   ]
 }
