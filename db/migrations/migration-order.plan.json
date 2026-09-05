@@ -3969,6 +3969,12 @@
       "path": "db/migrations/20261006_nestly_v791_stripe_returns.sql",
       "semanticVersion": "v791",
       "proposedDeployVersion": "20261006110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v792_provider_ids_belong_to_one_provider.sql",
+      "semanticVersion": "v792",
+      "proposedDeployVersion": "20261006120000"
     }
   ]
 }

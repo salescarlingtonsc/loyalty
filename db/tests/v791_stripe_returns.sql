@@ -83,7 +83,14 @@ begin
   values (v_business,'Own branch',false,false,'pending_payment','own') returning id into v_branch;
   insert into public.subscriptions(business_id,status,payment_status,current_period_start,current_period_end,billing_provider,billing_cadence)
   values (v_business,'active','paid',now()-interval '10 days',now()+interval '355 days','manual','annual');
-  select to_jsonb(s) - 'updated_at' into v_company_before from public.subscriptions s where s.business_id=v_business;
+  /* Only the PROVIDER IDENTITY is compared. The whole row is not a stable fixture: the v79/v510
+     payment-truth guards normalise status and payment_status on write, and the lifecycle triggers
+     touch the row for their own reasons. What D3 claims is narrower and is the thing that matters —
+     a branch event must never move the company's subscription onto the branch's provider object. */
+  select jsonb_build_object('provider',s.billing_provider,'customer',s.provider_customer_id,
+           'subscription',s.provider_subscription_id,'base_item',s.provider_base_item_id,
+           'price',s.provider_base_price_id)
+    into v_company_before from public.subscriptions s where s.business_id=v_business;
 
   -- D3
   v_subobj := jsonb_build_object('id',v_sub,'object','subscription','customer',v_cust,'status','active','currency','sgd',
@@ -114,9 +121,12 @@ begin
   if not exists (select 1 from public.billing_provider_invoices i where i.provider_invoice_id=v_inv and (i.detail->>'branch_id')::uuid=v_branch and i.status='paid') then
     raise exception 'v791 D3: invoice was not mirrored with the branch';
   end if;
-  select to_jsonb(s) - 'updated_at' into v_company_after from public.subscriptions s where s.business_id=v_business;
+  select jsonb_build_object('provider',s.billing_provider,'customer',s.provider_customer_id,
+           'subscription',s.provider_subscription_id,'base_item',s.provider_base_item_id,
+           'price',s.provider_base_price_id)
+    into v_company_after from public.subscriptions s where s.business_id=v_business;
   if v_company_after <> v_company_before then
-    raise exception 'v791 D3: a branch event rewrote the company subscription: %', v_company_after;
+    raise exception 'v791 D3: a branch event moved the company subscription onto the branch provider object: % (was %)', v_company_after, v_company_before;
   end if;
 
   -- D4

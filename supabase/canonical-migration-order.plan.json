@@ -3964,6 +3964,12 @@
       "version": "20261006110000",
       "name": "nestly_v791_stripe_returns",
       "sourcePath": "db/migrations/20261006_nestly_v791_stripe_returns.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006120000",
+      "name": "nestly_v792_provider_ids_belong_to_one_provider",
+      "sourcePath": "db/migrations/20261006_nestly_v792_provider_ids_belong_to_one_provider.sql"
     }
   ]
 }

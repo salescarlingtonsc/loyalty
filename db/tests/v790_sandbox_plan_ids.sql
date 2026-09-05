@@ -3,7 +3,9 @@
 -- Runs inside ONE transaction ending in ROLLBACK, so it is safe against production.
 --
 -- WHAT IT PROVES
---   C1  every active tier that has a base plan id also has a sandbox plan id after the data step.
+--   C1  while the platform bills through Razorpay, every active priced tier carries a sandbox plan
+--       id. (v791 moved the platform to Stripe, whose test mode is a separate key pair, so the
+--       column is legitimately empty then — the check follows the platform provider.)
 --   C2  app.razorpay_plan_cadence_v755 resolves a SANDBOX id to the same cadence as the base id,
 --       and an unknown id to nothing.
 --   C3  the branch applier's unit-amount lookup body matches either column.
@@ -19,10 +21,17 @@ declare
 begin
   reset role;
 
-  select count(*) into v_missing from public.billing_capacity_tier_catalog_v664
-   where active and provider_base_price_id is not null and provider_test_price_id is null;
-  if v_missing > 0 then
-    raise exception 'v790 C1: % active tier(s) have no sandbox plan id', v_missing;
+  /* v791 retired Razorpay as the platform provider and cleared this column: Stripe's test mode is a
+     separate KEY PAIR, not a second plan id, so a Stripe-billed catalogue carries no sandbox id.
+     The requirement therefore applies only while the platform bills through Razorpay, where a demo
+     firm's checkout does need the sandbox plan. The column and the resolver are proved either way
+     by C2 and C3 below. */
+  if app.platform_billing_provider_v792() = 'razorpay' then
+    select count(*) into v_missing from public.billing_capacity_tier_catalog_v664
+     where active and provider_base_price_id is not null and provider_test_price_id is null;
+    if v_missing > 0 then
+      raise exception 'v790 C1: % active tier(s) have no sandbox plan id', v_missing;
+    end if;
   end if;
 
   select * into v_tier from public.billing_capacity_tier_catalog_v664

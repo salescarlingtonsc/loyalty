@@ -209,12 +209,17 @@ Deno.serve(async (req) => {
     const idempotencyKey = String(data.provider_idempotency_key);
     const cadence = data.requested_cadence ? String(data.requested_cadence) : '';
     const requestedCustomerCapacity = Number(data.requested_customer_capacity || 0);
-    const customerId = data.provider_customer_id
-      ? String(data.provider_customer_id)
-      : undefined;
-    const subscriptionId = data.provider_subscription_id
-      ? String(data.provider_subscription_id)
-      : undefined;
+    /* nestly_v792 — belt to the claim's braces. The mirror columns are shared by every provider,
+       and a Razorpay customer id reached Stripe Checkout once (resource_missing, live). The claim
+       now withholds ids from a retired provider; this refuses to send anything that is not shaped
+       like a Stripe object even if one slips through. Subscription ids are NOT prefix-checkable
+       (Razorpay uses `sub_` too), which is exactly why the claim, not this, is the real guard. */
+    const stripeIdOrNone = (value: unknown, prefix: string): string | undefined => {
+      const id = typeof value === 'string' ? value.trim() : '';
+      return id.startsWith(prefix) ? id : undefined;
+    };
+    const customerId = stripeIdOrNone(data.provider_customer_id, 'cus_');
+    const subscriptionId = stripeIdOrNone(data.provider_subscription_id, 'sub_');
     redirectUrl = `${origin}/#/settings`;
 
     /* V202 — an extra branch costs exactly what a firm costs (owner ruling 2026-08-07:
