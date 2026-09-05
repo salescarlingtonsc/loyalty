@@ -51642,15 +51642,36 @@ function ownerBriefHtmlV771(brief){
   };
   const attentionV771=objectV771(briefV771.attention);
   const attentionErrorV771=String(briefV771.attentionError||'').trim();
+  const attentionRowsV771=Array.isArray(attentionV771?.rows)?attentionV771.rows.filter(row=>row&&typeof row==='object'):[];
+  const bringBackPillV771=statusKey=>{
+    const status=BRING_BACK_STATUS_V771[String(statusKey||'')];
+    if(!status)return '';
+    return `<span class="pill" style="background:${status.tone}1A;color:${status.tone};font-weight:700;white-space:nowrap">${esc(status.label)}</span>`;
+  };
+  /* nestly_v771 (owner acceptance): ONE cadence authority, and it is the server's. This block
+     used to derive its own "quiet lately" verdict in the browser, comparing
+     days_since_last_purchase against average_days_between_purchases — a second opinion on the
+     question get_attention_list_v548 already answers, and a worse one: it called a customer with
+     a 1.3-day rhythm quiet three days after a visit. Block D's Note column now repeats the status
+     the bring-back reader gave that exact client, or says nothing at all. */
+  const bringBackStatusByClientV771=new Map();
+  attentionRowsV771.forEach(row=>{
+    if(row.client_id==null)return;
+    const key=String(row.status||'');
+    if(BRING_BACK_STATUS_V771[key])bringBackStatusByClientV771.set(String(row.client_id),key);
+  });
   let bringBackV771='';
   if(attentionV771||attentionErrorV771){
-    const attentionRowsV771=Array.isArray(attentionV771?.rows)?attentionV771.rows.filter(row=>row&&typeof row==='object'):[];
     const attentionSummaryV771=objectV771(attentionV771?.summary)||{};
     const fadingV771=countV771(attentionSummaryV771.overdue)+countV771(attentionSummaryV771.slipping);
     const atRiskV771=countV771(attentionSummaryV771.monthly_at_risk_cents);
     const oneTimeV771=countV771(attentionSummaryV771.one_time_count);
+    /* nestly_v771 (375px check): the responsive table turns every td into a two-column grid with
+       right-aligned content, so two sibling links in one cell become two grid items and "Open"
+       drops onto its own row on the left — which reads as a second customer. One inline-flex
+       wrapper makes the pair a single grid item. Two .btn.sm links are about 120px together
+       against roughly 187px of second column at 375px, so nothing overflows. */
     const bringBackRowV771=row=>{
-      const status=BRING_BACK_STATUS_V771[String(row.status||'')]||BRING_BACK_STATUS_V771.due;
       const cadence=finiteV771(row.cadence_days);
       const digits=String(row.phone==null?'':row.phone).replace(/\D/g,'');
       const call=digits?`<a class="btn ghost sm" href="tel:${digits}">Call</a>`:'';
@@ -51658,8 +51679,8 @@ function ownerBriefHtmlV771(brief){
       return `<tr><td data-label="Customer"><b>${esc(nameV771(row.full_name))}</b></td>
         <td data-label="Usually comes every">${cadence===null?'—':esc(Math.round(cadence)+' days')}</td>
         <td data-label="Last visit">${esc(daysAgoV771(row.last_visit_days)||'—')}</td>
-        <td data-label="Status"><span class="pill" style="background:${status.tone}1A;color:${status.tone};font-weight:700;white-space:nowrap">${esc(status.label)}</span></td>
-        <td data-label="Action">${call}${call&&open?' ':''}${open}</td></tr>`;
+        <td data-label="Status">${bringBackPillV771(row.status)||bringBackPillV771('due')}</td>
+        <td data-label="Action"><span class="ci-brief-actions-v771" style="display:inline-flex;gap:6px;white-space:nowrap;justify-content:flex-end">${call}${open}</span></td></tr>`;
     };
     bringBackV771=`<section class="ci-brief-bringback-v771" aria-labelledby="ciBriefBringBackTitleV771" style="margin-top:18px">
       ${headV771('phone','ciBriefBringBackTitleV771','Customers to bring back','Each person judged against their own visit rhythm, not a fixed rule.')}
@@ -51731,11 +51752,11 @@ function ownerBriefHtmlV771(brief){
     .filter(record=>{const earned=finiteV771(record.net_revenue_cents);return earned!==null&&earned>0;})
     .sort((first,second)=>Number(second.net_revenue_cents)-Number(first.net_revenue_cents))
     .slice(0,10);
-  const shareTextV771=amount=>shareBaseV771===null?'—':`${Math.round(amount/shareBaseV771*100)}% of identified revenue`;
+  const shareTextV771=amount=>shareBaseV771===null?'—':`${Math.round(amount/shareBaseV771*100)}% of revenue`;
   const leadCountV771=Math.min(3,earnersV771.length);
   const leadShareV771=earnersV771.slice(0,leadCountV771).reduce((total,record)=>total+Number(record.net_revenue_cents||0),0);
   const topLineV771=(leadCountV771>0&&shareBaseV771!==null)
-    ?`<p style="margin:8px 0 2px">Your top ${leadCountV771} customer${leadCountV771===1?'':'s'} are ${Math.round(leadShareV771/shareBaseV771*100)}% of identified revenue.</p>`
+    ?`<p style="margin:8px 0 2px">Your top ${leadCountV771} customer${leadCountV771===1?'':'s'} are ${Math.round(leadShareV771/shareBaseV771*100)}% of revenue.</p>`
     :'';
   /* V522's ruling holds here: `visit_count` on this page counts only visits that charged an
      amount, so the column says "Paid visits". A bare "Visits" would mean the Dashboard's number,
@@ -51745,16 +51766,15 @@ function ownerBriefHtmlV771(brief){
     ${topLineV771}
     ${earnersV771.length?`<div class="cui-table-wrap" role="region" aria-label="Your top customers"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Revenue</th><th>Share</th><th>Paid visits</th><th>Last visit</th><th>Note</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${earnersV771.map(record=>{
       const since=finiteV771(record.days_since_last_purchase);
-      const usual=finiteV771(record.average_days_between_purchases);
-      const quiet=since!==null&&usual!==null&&usual>0&&since>usual*2;
       return `<tr><td data-label="Customer"><b>${esc(nameV771(record.full_name))}</b></td>
         <td data-label="Revenue"><b>${esc(money(record.net_revenue_cents))}</b></td>
         <td data-label="Share">${esc(shareTextV771(Number(record.net_revenue_cents)))}</td>
         <td data-label="Paid visits">${countV771(record.visit_count)}</td>
         <td data-label="Last visit">${esc(daysAgoV771(since)||'—')}</td>
-        <td data-label="Note">${quiet?'<span class="pill">Quiet lately</span>':''}</td>
+        <td data-label="Note">${bringBackPillV771(bringBackStatusByClientV771.get(String(record.client_id)))}</td>
         ${canOpenV771?`<td data-label="Action">${openCellV771(record.client_id)}</td>`:''}</tr>`;
-    }).join('')}</tbody></table></div>`
+    }).join('')}</tbody></table></div>
+    <p class="muted small" style="margin-top:10px">Shares are of revenue from known customers. Walk-in sales with no name attached are not included.</p>`
       :'<div class="empty">No identified customer revenue in this period yet.</div>'}
   </section>`;
 
@@ -51785,15 +51805,23 @@ function ownerBriefHtmlV771(brief){
   /* ---- F. What Peekaa cannot tell you yet -------------------------------------------------- */
   /* The server abstains in its own vocabulary ("below the sample floor of 5", "mix-adjusted
      index"). An owner should not have to learn it, so each generator gets one plain sentence
-     naming the finding that is missing and what would make it appear. */
+     naming the finding that is missing and what would make it appear.
+
+     nestly_v771 (owner acceptance): two of those abstentions are not missing findings at all.
+     The loyalty-cannibalisation and staff-mix generators abstain BECAUSE they looked and found
+     nothing over the bar — that is a clean bill of health, and filing it under "cannot tell you
+     yet" reads as a gap in the product rather than a result. They get their own list and their
+     own wording; everything else keeps the "here is what would make this appear" shape. */
+  const CLEARED_SENTENCES_V771={
+    loyalty_cannibalisation_gap:'Your loyalty rewards are not paying customers who would have come anyway.',
+    staff_mix_underperformance:'No staff member’s customers return noticeably less than the others’.'
+  };
   const LIMIT_SENTENCES_V771={
     funnel_bottleneck:'Whether more customers are lost after the first visit or after the second — needs more customers to have reached a second and third visit.',
     lapsed_regulars:'Which regulars are overdue against their own rhythm — needs customers with at least three visits so a rhythm exists.',
     package_leakage:'Which package plans are being left unused — needs at least five sales of the same plan.',
     gateway_followthrough:'Which first service best turns a walk-in into a regular — needs more customers to have reached a second visit.',
     no_discount_reminder:'Whether a plain reminder works as well as a discount — needs more contacted customers.',
-    loyalty_cannibalisation_gap:'Whether your loyalty rewards are paying customers who would have come anyway — nothing suspicious found.',
-    staff_mix_underperformance:'Whether any staff member’s customers return less than others’ — nothing below the line found.',
     campaigns:'Whether a campaign brought people back — needs a campaign old enough to measure.'
   };
   const limitsOrderV771=[],limitsSeenV771=new Map();
@@ -51803,7 +51831,7 @@ function ownerBriefHtmlV771(brief){
     const key=generator.split(':')[0].trim();
     if(!key)return;
     if(!limitsSeenV771.has(key)){
-      let sentence=LIMIT_SENTENCES_V771[key];
+      let sentence=CLEARED_SENTENCES_V771[key]||LIMIT_SENTENCES_V771[key];
       if(!sentence){
         const plain=String(item.reason==null?'':item.reason).replace(/_/g,' ').replace(/:\s*$/,'').trim()
           ||key.replace(/_/g,' ');
@@ -51814,14 +51842,20 @@ function ownerBriefHtmlV771(brief){
     }
     limitsSeenV771.get(key).count+=1;
   });
-  const limitsV771=limitsOrderV771.length
-    ?`<section class="ci-brief-limits-v771" aria-labelledby="ciBriefLimitsTitleV771" style="margin-top:18px">
-      ${headV771('info','ciBriefLimitsTitleV771','What Peekaa cannot tell you yet','Findings held back because the evidence is not there yet.')}
-      <ul style="margin:8px 0 0;padding-left:20px">${limitsOrderV771.map(key=>{
+  const isClearedV771=key=>Object.prototype.hasOwnProperty.call(CLEARED_SENTENCES_V771,key);
+  const limitsListV771=(label,keys)=>keys.length
+    ?`<p class="small" style="margin:12px 0 2px"><b>${esc(label)}</b></p>
+      <ul style="margin:0;padding-left:20px">${keys.map(key=>{
         const entry=limitsSeenV771.get(key);
         const plans=(key==='package_leakage'&&entry.count>1)?` (${entry.count} plans)`:'';
         return `<li style="margin:4px 0">${esc(entry.sentence+plans)}</li>`;
-      }).join('')}</ul>
+      }).join('')}</ul>`
+    :'';
+  const limitsV771=limitsOrderV771.length
+    ?`<section class="ci-brief-limits-v771" aria-labelledby="ciBriefLimitsTitleV771" style="margin-top:18px">
+      ${headV771('info','ciBriefLimitsTitleV771','What Peekaa cannot tell you yet','What is still waiting on evidence, and what has already been checked and come back clean.')}
+      ${limitsListV771('Not enough evidence yet',limitsOrderV771.filter(key=>!isClearedV771(key)))}
+      ${limitsListV771('Checked — nothing to flag',limitsOrderV771.filter(isClearedV771))}
       <p class="muted small" style="margin-top:10px">Peekaa withholds a finding rather than guess. These appear automatically once there is enough evidence.</p>
     </section>`
     :'';

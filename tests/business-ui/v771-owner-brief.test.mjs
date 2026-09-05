@@ -52,6 +52,14 @@ function render(brief) {
 
 /* Visible text only: tag names, class names and attribute values are machinery, not copy. */
 const textOf = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+/* Block F renders two labelled lists in one section; this returns the <li>s under one label. */
+const listUnder = (html, label) => {
+  const at = html.indexOf(label);
+  if (at < 0) return [];
+  const from = html.indexOf('<ul', at);
+  if (from < 0) return [];
+  return html.slice(from, html.indexOf('</ul>', from)).match(/<li[^>]*>[\s\S]*?<\/li>/g) || [];
+};
 const sectionOf = (html, className) => {
   const at = html.indexOf(`class="${className}"`);
   if (at < 0) return '';
@@ -234,6 +242,24 @@ test('V771 block B offers a call only to a row that has a number, and an Open on
   assert.ok(withoutAccess.includes('href="tel:81863833"'), 'the call survives without Customers access');
 });
 
+test('V771 block B keeps Call and Open side by side in one action cell', () => {
+  /* The responsive table makes each td a two-column grid with right-aligned content, so two bare
+     sibling links become two grid items and the second drops to its own row on the left — on a
+     375px phone that reads as a second customer. Both links must sit inside one inline-flex span. */
+  const section = sectionOf(render(FULL), 'ci-brief-bringback-v771');
+  const cells = section.match(/<td data-label="Action">[\s\S]*?<\/td>/g) || [];
+  assert.equal(cells.length, 2, 'both bring-back rows carry an action cell');
+  const overdue = cells.find((cell) => cell.includes('tel:81863833'));
+  assert.ok(overdue, 'the overdue row is the one with a phone number');
+  const wrapper = overdue.match(/<span class="ci-brief-actions-v771" style="([^"]*)">([\s\S]*?)<\/span>/);
+  assert.ok(wrapper, 'the two links are wrapped in a single ci-brief-actions-v771 span');
+  assert.ok(wrapper[1].includes('display:inline-flex'), 'the wrapper is an inline flex row');
+  assert.ok(wrapper[1].includes('white-space:nowrap'), 'so the pair cannot break across lines');
+  assert.ok(wrapper[2].includes('href="tel:81863833"') && wrapper[2].includes('href="#/client/'),
+    'and BOTH links are inside it, not one inside and one after');
+  assert.ok(!/<\/span>\s*<a /.test(overdue), 'no action link escapes the wrapper');
+});
+
 test('V771 block B counts overdue customers in the singular and the plural', () => {
   const one = sectionOf(render(FULL), 'ci-brief-bringback-v771');
   assert.ok(one.includes('<b>1 customer overdue</b>'), 'one is a customer, not customers');
@@ -316,38 +342,50 @@ test('V771 block D ranks only customers who actually spent, and shares them agai
   const second = section.indexOf('P0 Test Customer');
   assert.ok(first > -1 && second > first, 'the biggest spender is ranked first');
   assert.ok(section.includes('SGD 3570.30'));
-  assert.ok(section.includes('54% of identified revenue'), '357030 of 656330 is 54%');
-  assert.ok(section.includes('Your top 2 customers are 55% of identified revenue.'));
+  assert.ok(section.includes('54% of revenue'), '357030 of 656330 is 54%');
+  assert.ok(section.includes('Your top 2 customers are 55% of revenue.'));
+  /* "of revenue" is short enough to be misread as all revenue, so the caption states the
+     denominator once, under the table, rather than lengthening every cell. */
+  assert.ok(section.includes('Shares are of revenue from known customers. Walk-in sales with no name attached are not included.'));
 
   const noTotal = sectionOf(render({ ...FULL, summary: { net_revenue_cents: 0 } }), 'ci-brief-top-v771');
-  assert.ok(!/% of identified revenue/.test(noTotal),
+  assert.ok(!/% of revenue/.test(noTotal),
     'with no identified-revenue total there is no share to state');
 });
 
-test('V771 block D flags a customer as quiet only against their own average gap', () => {
-  const section = sectionOf(render(FULL), 'ci-brief-top-v771');
-  /* "P0 Test Customer" is 47 days absent but has never had a second purchase, so there is no
-     average to be late against — the brief must not call that customer quiet. */
-  assert.equal((section.match(/Quiet lately/g) || []).length, 1,
-    'only the customer with a real rhythm and a gap beyond twice it is flagged');
+test('V771 block D borrows the bring-back status instead of judging cadence itself', () => {
+  /* There is ONE cadence authority and it is get_attention_list_v548. The Note column repeats the
+     status that reader gave the same client, or stays empty — it never re-derives a verdict from
+     days_since_last_purchase and average_days_between_purchases, which is what it used to do and
+     which called a customer with a 1.3-day rhythm "quiet" three days after a visit. */
+  const html = render(FULL);
+  assert.ok(!/Quiet lately/.test(html), 'the browser-side cadence verdict is gone entirely');
 
-  const noRhythm = sectionOf(render({
-    ...FULL,
-    customers: [{ ...CUSTOMERS[1], net_revenue_cents: 4500 }]
-  }), 'ci-brief-top-v771');
-  assert.ok(!/Quiet lately/.test(noRhythm), 'a null average never produces a flag');
+  const section = sectionOf(html, 'ci-brief-top-v771');
+  const notes = section.match(/<td data-label="Note">[\s\S]*?<\/td>/g) || [];
+  assert.equal(notes.length, 2, 'one Note cell per ranked customer');
 
-  const quiet = sectionOf(render({
-    ...FULL,
-    customers: [{ ...CUSTOMERS[1], days_since_last_purchase: 10, average_days_between_purchases: 3 }]
-  }), 'ci-brief-top-v771');
-  assert.ok(quiet.includes('Quiet lately'), '10 days against a 3-day rhythm is late');
+  /* CUSTOMERS[0] is in the attention rows as 'overdue'; CUSTOMERS[1] is not in them at all. */
+  const rows = section.split('<tr>');
+  const erased = rows.find((row) => row.includes('Erased customer'));
+  const other = rows.find((row) => row.includes('P0 Test Customer'));
+  assert.match(erased, /<td data-label="Note">.*?>Overdue<.*?<\/td>/,
+    'a customer the bring-back reader called overdue carries that exact pill');
+  assert.match(other, /<td data-label="Note"><\/td>/,
+    'a customer the bring-back reader never named carries an empty Note cell');
 
-  const punctual = sectionOf(render({
+  /* Flip the same client to 'slipping' and the Note follows the server, not a local rule. */
+  const slipping = sectionOf(render({
     ...FULL,
-    customers: [{ ...CUSTOMERS[1], days_since_last_purchase: 5, average_days_between_purchases: 3 }]
+    attention: { ...ATTENTION_TWO, rows: [{ ...ATTENTION_TWO.rows[0], status: 'slipping' }] }
   }), 'ci-brief-top-v771');
-  assert.ok(!/Quiet lately/.test(punctual), '5 days against a 3-day rhythm is not yet late');
+  assert.ok(slipping.includes('Slipping away'), 'the pill is whatever the reader said');
+  assert.ok(!/Overdue/.test(slipping));
+
+  /* With no attention bundle at all — no permission, or a failed read — every Note is empty. */
+  const noReader = sectionOf(render({ ...FULL, attention: null, attentionError: '' }), 'ci-brief-top-v771');
+  assert.equal((noReader.match(/<td data-label="Note"><\/td>/g) || []).length, 2,
+    'no bring-back reader means no notes, never a locally invented one');
 });
 
 test('V771 block D empty-states rather than showing a table of nobody', () => {
@@ -398,6 +436,42 @@ test('V771 block F says each withheld finding once, in plain English, with no ma
 
   assert.equal(sectionOf(render({ ...FULL, abstentions: [] }), 'ci-brief-limits-v771'), '',
     'nothing withheld means no block');
+});
+
+test('V771 block F separates a clean result from a missing one', () => {
+  /* The loyalty-cannibalisation and staff-mix generators abstain BECAUSE they looked and found
+     nothing over the bar. Filing that under "cannot tell you yet" reads as a hole in the product
+     rather than the reassurance it is, so it gets its own list and its own wording. */
+  const section = sectionOf(render(FULL), 'ci-brief-limits-v771');
+
+  const cleared = listUnder(section, 'Checked — nothing to flag');
+  assert.equal(cleared.length, 2, 'exactly the two generators that report a clean check');
+  assert.ok(cleared.some((item) => item.includes('Your loyalty rewards are not paying customers who would have come anyway.')));
+  assert.ok(cleared.some((item) => item.includes('No staff member’s customers return noticeably less than the others’.')));
+  for (const item of cleared) {
+    assert.ok(!/needs /.test(item), 'a clean check never asks for more evidence');
+  }
+
+  const pending = listUnder(section, 'Not enough evidence yet');
+  assert.equal(pending.length, 6, 'the remaining six are genuinely waiting on evidence');
+  const packageItem = pending.filter((item) => /package plans/.test(item));
+  assert.equal(packageItem.length, 1);
+  assert.ok(packageItem[0].includes('(3 plans)'),
+    'the collapsed package sentence belongs under the evidence list, not the cleared one');
+  assert.ok(!cleared.some((item) => /package plans/.test(item)));
+
+  /* A fixture with only cleared abstentions must not print an empty evidence label, or vice versa. */
+  const onlyCleared = sectionOf(render({
+    ...FULL, abstentions: [{ generator: 'staff_mix_underperformance', reason: 'x' }]
+  }), 'ci-brief-limits-v771');
+  assert.ok(onlyCleared.includes('Checked — nothing to flag'));
+  assert.ok(!onlyCleared.includes('Not enough evidence yet'), 'an empty list prints no label');
+
+  const onlyPending = sectionOf(render({
+    ...FULL, abstentions: [{ generator: 'campaigns', reason: 'x' }]
+  }), 'ci-brief-limits-v771');
+  assert.ok(onlyPending.includes('Not enough evidence yet'));
+  assert.ok(!onlyPending.includes('Checked — nothing to flag'));
 });
 
 test('V771 block F falls back to the server reason, tidied, for a generator it does not know', () => {
