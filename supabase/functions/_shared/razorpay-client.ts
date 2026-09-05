@@ -212,7 +212,9 @@ export function razorpayClient(credentials: RazorpayCredentials) {
       throw new RazorpayApiError(
         response.status,
         String(detail?.code || `http_${response.status}`),
-        String(detail?.description || 'razorpay request rejected'),
+        /* v767: name the call. A 404 that only says "rejected" cost an hour on 2026-09-05 —
+           the endpoint, not the id, was wrong. Path and method carry no secret. */
+        `${String(detail?.description || 'razorpay request rejected')} (${method} ${path})`,
       );
     }
     return parsed as T;
@@ -270,10 +272,14 @@ export function razorpayClient(credentials: RazorpayCredentials) {
       subscriptionId: string,
       query?: Record<string, string | number | undefined>,
     ) =>
+      /* v767: Razorpay has NO /subscriptions/:id/invoices route — every call to it is a 404, and
+         that 404 is what left every added branch at "Awaiting payment" and every reconcile heal
+         at failed=attempted on 2026-09-05. The documented call is the Invoices API filtered by
+         subscription: GET /v1/invoices?subscription_id=sub_… (razorpay-php: invoice->all). */
       request<RazorpayList<RazorpayInvoice>>({
         method: 'GET',
-        path: `/subscriptions/${subscriptionId}/invoices`,
-        query,
+        path: '/invoices',
+        query: { ...(query || {}), subscription_id: subscriptionId },
       }),
   };
 }
