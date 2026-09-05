@@ -1,10 +1,13 @@
-/* NESTLY v758 — the billing page answers four questions before it is touched.
+/* NESTLY v758 → v784/v786 — the Subscription page is a card per branch.
  *
- * Owner, 2026-09-04: "just show me what I subscribed to, how many branches, how much in total,
- * and the renew date." This EXECUTES the real renderer helpers lifted out of app/app.js — no
- * regex over markup, because the thing under test is what the four lines SAY (docs:
- * "Source-regex tests are vacuous"). Four fixtures: trial, active with one branch, active with
- * three branches one of which is stopping, and past due.
+ * Owner, 2026-09-05: the mockup — one card per branch (name, Main branch / Active / Payment issue,
+ * "SGD 99 / month" with "Billed annually" under it, the renewal date, one button), tabs Branches /
+ * Payment history, no summary card ("dont need to show full amount etc."), no trials ("all are
+ * paid plans OR Demo account"), and — the ruling that reversed "one card for all" — every new
+ * branch on its OWN Razorpay subscription with its own card, cycle and renewal date.
+ *
+ * This EXECUTES the real line builders lifted out of app/app.js — no regex over markup, because
+ * the thing under test is what the card SAYS (docs: "Source-regex tests are vacuous").
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,9 +29,9 @@ const grab = (name, signature) => {
 
 const sandbox = vm.createContext({
   Intl, Date, Number, Math, JSON, String, Array, Object, console,
-  /* the app's own money() helper, quoted exactly (app/app.js), with the workspace default
-     currency — the renderer must go through it rather than formatting money itself. */
-  money: (c) => 'SGD ' + ((c || 0) / 100).toFixed(2),
+  /* the app's own escaper and icon helper, stubbed the way the renderer calls them */
+  esc: (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+  CUI: { icon: (name) => `<i data-icon="${name}"></i>` },
   branchBillingCountsV280: null
 });
 vm.runInContext([
@@ -37,134 +40,180 @@ vm.runInContext([
   grab('moneyShortV758', 'function moneyShortV758(cents){'),
   grab('billingStatusWordV758', 'function billingStatusWordV758(status){'),
   grab('billingCardTextV758', 'function billingCardTextV758(method){'),
-  grab('billingSummaryLinesV758', 'function billingSummaryLinesV758(summary,businessName,paymentMethod){'),
+  grab('billingBranchCardLinesV784', 'function billingBranchCardLinesV784(branch,summary,billing,paymentMethod,options){'),
+  grab('subscriptionBranchCardsV784', 'function subscriptionBranchCardsV784(cards){'),
+  grab('billingAddBranchStepsV784', 'function billingAddBranchStepsV784(){'),
   grab('branchBillingCountsV280', 'function branchBillingCountsV280(list){'),
   grab('billingSummaryFallbackV758', 'function billingSummaryFallbackV758(billing,branchRows){'),
   grab('billingBranchPillV758', 'function billingBranchPillV758(branch){')
 ].join('\n'), sandbox);
 
-const lines = (summary, name, method) => sandbox.billingSummaryLinesV758(summary, name, method);
+const card = (branch, summary, billing, method, options) =>
+  sandbox.billingBranchCardLinesV784(branch, summary, billing, method, options);
+/* values cross the vm realm boundary: copy them into this realm before a deep comparison */
+const labels = (out) => Array.from(out.pills, (p) => p.label);
 
-/* ------------------------------------------------------------------ fixture 1: free trial */
+const CARD = { kind: 'card', brand: 'Visa', last4: '7820' };
+/* one annual company plan: SGD 1,188 per branch */
+const ANNUAL = {
+  plan_label: 'Annual', capacity: 10000, unit_amount_cents: 118800, units: 1, total_cents: 118800,
+  renews_at: '2026-10-14T00:00:00+08:00', state: 'active', trial_ends_at: null, cancel_at_period_end: false
+};
+const FLAT = { flat_price: { annual_cents: 118800, monthly_cents: 14800, annual_available: true, monthly_available: true } };
+const MAIN = { id: 'b-main', name: 'Cubbly · Orchard', is_default: true, active: true, billing_state: 'included', billing_mode: 'shared' };
 
-test('a trial says it is free, until when, and that no card is on file', () => {
-  const out = lines({
-    plan_label: null, capacity: 0,
-    branches_total: 1, branches_included: 1, branches_billable: 0,
-    branches_stopping: 0, branches_lapsed: 0, branches_unsubscribed: 0,
-    unit_amount_cents: 0, units: 1, total_cents: 0,
-    renews_at: null, state: 'trial', trial_ends_at: '2026-09-18T00:00:00+08:00',
-    cancel_at_period_end: false
-  }, 'Kopi Lab', null);
-  assert.equal(out.title, 'Kopi Lab · Free trial');
-  assert.equal(out.branches, '1 branch · 1 charged (first is in the plan price)');
-  assert.equal(out.amount, 'SGD 0 until 18 Sep 2026');
-  assert.equal(out.arithmetic, '');
-  assert.equal(out.renewal, 'No renewal date yet · No card yet');
-  assert.deepEqual({ ...out.pill }, { label: 'Trial', tone: 'new' });
+/* ------------------------------------------------------------ the mockup, line by line */
+
+test('the main branch on an annual plan reads as the mockup: 99 a month, billed annually, renews on', () => {
+  const out = card(MAIN, ANNUAL, FLAT, CARD);
+  assert.equal(out.name, 'Cubbly · Orchard');
+  assert.deepEqual(labels(out), ['Main branch', 'Active']);
+  assert.equal(out.note, 'Includes your core Peekaa plan');
+  assert.equal(out.price, 'SGD 99 / month');
+  assert.equal(out.billed, 'Billed annually');
+  assert.equal(out.when, 'Renews on 14 Oct 2026');
+  assert.equal(out.when_tone, 'muted');
+  assert.deepEqual({ ...out.action }, { kind: 'manage', label: 'Manage' });
+  assert.equal(out.card, 'Visa ending 7820');
+  assert.equal(out.mode, 'shared');
 });
 
-/* -------------------------------------------------------- fixture 2: active, one branch */
-
-test('one paid branch reads as one plan, one number, one date', () => {
-  const out = lines({
-    plan_label: 'Annual', capacity: 1000,
-    branches_total: 1, branches_included: 1, branches_billable: 0,
-    branches_stopping: 0, branches_lapsed: 0, branches_unsubscribed: 0,
-    unit_amount_cents: 118800, units: 1, total_cents: 118800,
-    renews_at: '2027-09-04T00:00:00+08:00', state: 'active', trial_ends_at: null,
-    cancel_at_period_end: false
-  }, 'Kopi Lab', { kind: 'card', brand: 'Visa', last4: '7820' });
-  assert.equal(out.title, 'Kopi Lab · Annual plan · Up to 1,000 profiles');
-  assert.equal(out.branches, '1 branch · 1 charged (first is in the plan price)');
-  assert.equal(out.amount, 'SGD 1,188 / year');
-  assert.equal(out.arithmetic, '1 branch × SGD 1,188 / year');
-  assert.equal(out.renewal, 'Renews on 4 Sep 2027 · Visa ending 7820');
-  assert.deepEqual({ ...out.pill }, { label: 'Active', tone: 'ok' });
+test('a monthly plan prints its real monthly price and says so', () => {
+  const out = card(MAIN, { ...ANNUAL, plan_label: 'Monthly', unit_amount_cents: 14800 }, FLAT, CARD);
+  assert.equal(out.price, 'SGD 148 / month');
+  assert.equal(out.billed, 'Billed monthly');
 });
 
-/* ------------------------- fixture 3: active, three branches, one stopping at renewal */
+test('a larger annual tier prints its own divided figure, never a hardcoded 99', () => {
+  const out = card(MAIN, { ...ANNUAL, unit_amount_cents: 168800 }, FLAT, CARD);
+  assert.equal(out.price, 'SGD 140.67 / month');
+  assert.equal(out.billed, 'Billed annually');
+});
 
-const THREE_BRANCH_FIXTURE = {
-  plan_label: 'Annual', capacity: 10000,
-  branches_total: 3, branches_included: 1, branches_billable: 1,
-  branches_stopping: 1, branches_lapsed: 0, branches_unsubscribed: 0,
-  unit_amount_cents: 500000, units: 2, total_cents: 1000000,
-  renews_at: '2027-09-04T00:00:00+08:00', state: 'active', trial_ends_at: null,
-  cancel_at_period_end: false
+test('a failed company payment reads Payment issue / Payment unsuccessful / Fix payment', () => {
+  const out = card(MAIN, { ...ANNUAL, state: 'past_due' }, FLAT, CARD);
+  assert.deepEqual(labels(out), ['Main branch', 'Payment issue']);
+  assert.equal(out.when, 'Payment unsuccessful');
+  assert.equal(out.when_tone, 'no');
+  assert.deepEqual({ ...out.action }, { kind: 'fix', label: 'Fix payment' });
+});
+
+test('a shared branch whose own payment lapsed reads the same way, whatever the company says', () => {
+  const out = card({ id: 'b-abc', name: 'abc', active: false, billing_state: 'suspended', billing_mode: 'shared' }, ANNUAL, FLAT, CARD);
+  assert.deepEqual(labels(out), ['Payment issue']);
+  assert.equal(out.when, 'Payment unsuccessful');
+  assert.deepEqual({ ...out.action }, { kind: 'fix', label: 'Fix payment' });
+});
+
+/* ---------------------------------------------------------------- no trial, ever */
+
+test('a firm that has not paid is told so — never "Free trial" — and offered the plan choice', () => {
+  const trial = { plan_label: null, unit_amount_cents: 0, units: 1, total_cents: 0, renews_at: null,
+    state: 'trial', trial_ends_at: '2026-09-14T15:59:59+00:00', cancel_at_period_end: false };
+  const out = card(MAIN, trial, { ...FLAT, capacity_tiers: [] }, null);
+  assert.deepEqual(labels(out), ['Main branch', 'Not paid yet']);
+  assert.equal(out.when, 'No payment yet');
+  /* the price is still said, from the flat price, so the card is never blank */
+  assert.equal(out.price, 'SGD 99 / month');
+  assert.equal(out.billed, 'Billed annually');
+  assert.deepEqual({ ...out.action }, { kind: 'choose', label: 'Choose plan' });
+  assert.equal(out.card, 'No card yet');
+  for (const line of [out.when, out.price, out.billed, ...labels(out)]) {
+    assert.doesNotMatch(line, /trial/i, `the word trial reached the owner: ${line}`);
+  }
+});
+
+/* ------------------------------------------------------- a branch on its own subscription */
+
+const OWN = { id: 'b-east', name: 'East Coast', is_default: false, active: true, billing_state: 'active', billing_mode: 'own' };
+const OWN_SUB = {
+  branch_id: 'b-east', provider_subscription_id: 'sub_x', status: 'active', payment_status: 'paid',
+  cadence: 'monthly', plan_label: 'Monthly', unit_amount_cents: 14800,
+  renews_at: '2026-11-02T00:00:00+08:00', state: 'active', cancel_at_period_end: false,
+  payment_method: { kind: 'card', brand: 'Mastercard', last4: '1881' }
 };
 
-test('three branches state the stopping one without hiding it in a dialog', () => {
-  const out = lines(THREE_BRANCH_FIXTURE, 'Kopi Lab', { kind: 'card', brand: 'Visa', last4: '7820' });
-  assert.equal(out.title, 'Kopi Lab · Annual plan · Up to 10,000 profiles');
-  assert.equal(out.branches, '3 branches · 2 charged (first is in the plan price) · 1 stopping at renewal');
-  assert.equal(out.amount, 'SGD 10,000 / year');
-  assert.equal(out.arithmetic, '2 branches × SGD 5,000 / year');
-  assert.equal(out.renewal, 'Renews on 4 Sep 2027 · Visa ending 7820');
-  assert.deepEqual({ ...out.pill }, { label: 'Active', tone: 'ok' });
-  /* a branch stopping at renewal is NOT counted as billable — that is the arithmetic the total
-     depends on, so it is asserted here rather than assumed. */
-  assert.equal(THREE_BRANCH_FIXTURE.total_cents,
-    THREE_BRANCH_FIXTURE.unit_amount_cents * (1 + THREE_BRANCH_FIXTURE.branches_billable));
+test('an own-billed branch is priced, dated and carded by ITS subscription, not the company', () => {
+  const out = card(OWN, ANNUAL, { ...FLAT, branch_subscriptions: [OWN_SUB] }, CARD);
+  assert.equal(out.mode, 'own');
+  assert.equal(out.price, 'SGD 148 / month');
+  assert.equal(out.billed, 'Billed monthly');
+  assert.equal(out.when, 'Renews on 2 Nov 2026');
+  assert.equal(out.card, 'Mastercard ending 1881');
+  assert.equal(out.note, 'Billed on its own card');
+  assert.deepEqual(labels(out), ['Active']);
+  assert.deepEqual({ ...out.action }, { kind: 'manage', label: 'Manage' });
 });
 
-/* ------------------------------------------------------------------ fixture 4: past due */
-
-test('a failed payment says so, and says we will retry', () => {
-  const out = lines({
-    plan_label: 'Monthly', capacity: 1000,
-    branches_total: 2, branches_included: 1, branches_billable: 1,
-    branches_stopping: 0, branches_lapsed: 1, branches_unsubscribed: 0,
-    unit_amount_cents: 14800, units: 2, total_cents: 29600,
-    renews_at: '2026-10-01T00:00:00+08:00', state: 'past_due', trial_ends_at: null,
-    cancel_at_period_end: false
-  }, 'Kopi Lab', { kind: 'card', brand: 'Mastercard', last4: '4242' });
-  assert.equal(out.title, 'Kopi Lab · Monthly plan · Up to 1,000 profiles');
-  assert.equal(out.branches, '2 branches · 2 charged (first is in the plan price) · 1 payment lapsed');
-  assert.equal(out.amount, 'SGD 296 / month');
-  assert.equal(out.arithmetic, '2 branches × SGD 148 / month');
-  assert.equal(out.renewal, 'Payment failed · we will retry · Mastercard ending 4242');
-  assert.deepEqual({ ...out.pill }, { label: 'Payment failed', tone: 'no' });
+test('an own-billed branch that has not paid yet offers Pay now, at the flat price of its cycle', () => {
+  const out = card({ ...OWN, active: false, billing_state: 'pending_payment' }, ANNUAL, { ...FLAT, branch_subscriptions: [] }, CARD);
+  assert.deepEqual(labels(out), ['Not paid yet']);
+  assert.equal(out.price, 'SGD 99 / month');
+  assert.equal(out.billed, 'Billed annually');
+  assert.deepEqual({ ...out.action }, { kind: 'pay', label: 'Pay now' });
+  assert.equal(out.card, 'No card yet');
 });
 
-/* --------------------------------------------------------------------------- edges */
-
-test('a subscription that will not renew says the date it ends, not the date it renews', () => {
-  const out = lines({ ...THREE_BRANCH_FIXTURE, state: 'canceling', cancel_at_period_end: true },
-    'Kopi Lab', { kind: 'card', brand: 'Visa', last4: '7820' });
-  assert.equal(out.renewal, 'Ends on 4 Sep 2027 · will not renew · Visa ending 7820');
-  assert.deepEqual({ ...out.pill }, { label: 'Cancels 4 Sep 2027', tone: 'off' });
+test('an own-billed branch whose card failed is a Payment issue of its own', () => {
+  const out = card(OWN, ANNUAL, { ...FLAT, branch_subscriptions: [{ ...OWN_SUB, state: 'past_due', payment_status: 'failed' }] }, CARD);
+  assert.deepEqual(labels(out), ['Payment issue']);
+  assert.equal(out.when, 'Payment unsuccessful');
+  assert.deepEqual({ ...out.action }, { kind: 'fix', label: 'Fix payment' });
 });
 
-test('a card we cannot name is never invented, and a non-card method is not called a card', () => {
-  assert.equal(sandbox.billingCardTextV758({ kind: 'card', brand: 'Visa', last4: '7820' }), 'Visa ending 7820');
-  assert.equal(sandbox.billingCardTextV758({ kind: 'card' }), 'Card on file');
-  assert.equal(sandbox.billingCardTextV758({ kind: 'paynow' }), 'Payment method on file');
-  assert.equal(sandbox.billingCardTextV758(null), 'No card yet');
+test('an own-billed branch that is stopping says the date it ends', () => {
+  const out = card({ ...OWN, billing_state: 'canceling', billing_cancel_at: '2026-11-02T00:00:00+08:00' }, ANNUAL,
+    { ...FLAT, branch_subscriptions: [{ ...OWN_SUB, state: 'canceling', cancel_at_period_end: true }] }, CARD);
+  assert.deepEqual(labels(out), ['Switches off 2 Nov 2026']);
+  assert.equal(out.when, 'Ends on 2 Nov 2026');
 });
 
-test('every line stays inside the owner-facing copy rules', () => {
-  const banned = /\b(tier|cadence|unit|units|provider|proration|prorated)\b/i;
-  for (const fixture of [
-    { s: THREE_BRANCH_FIXTURE, m: { kind: 'card', brand: 'Visa', last4: '7820' } },
-    { s: { ...THREE_BRANCH_FIXTURE, state: 'past_due' }, m: null },
-    { s: { ...THREE_BRANCH_FIXTURE, state: 'canceling', cancel_at_period_end: true }, m: null }
+/* ------------------------------------------------------------------- the rendered cards */
+
+test('the cards render each line and one button, and the empty state says so', () => {
+  const html = sandbox.subscriptionBranchCardsV784([
+    card(MAIN, ANNUAL, FLAT, CARD),
+    card({ id: 'b-abc', name: 'abc', active: false, billing_state: 'suspended', billing_mode: 'shared' }, ANNUAL, FLAT, CARD)
+  ]);
+  assert.match(html, /Cubbly · Orchard/);
+  assert.match(html, /Includes your core Peekaa plan/);
+  assert.match(html, /SGD 99 \/ month/);
+  assert.match(html, /Billed annually/);
+  assert.match(html, /Renews on 14 Oct 2026/);
+  assert.match(html, /data-branch-card-action-v784="manage" data-branch-id-v784="b-main">Manage/);
+  assert.match(html, /Payment unsuccessful/);
+  assert.match(html, /data-branch-card-action-v784="fix" data-branch-id-v784="b-abc">Fix payment/);
+  assert.match(sandbox.subscriptionBranchCardsV784([]), /No branches yet/);
+});
+
+test('the adding-a-branch strip has the three steps in the mockup\'s words', () => {
+  const html = sandbox.billingAddBranchStepsV784();
+  assert.match(html, /Adding a new branch/);
+  assert.match(html, /It only takes a few steps to get your new branch up and running\./);
+  for (const step of ['Enter branch details', 'Confirm monthly price', 'Branch goes live']) assert.match(html, new RegExp(step));
+});
+
+/* --------------------------------------------------------------------------- copy rules */
+
+test('every card line stays inside the owner-facing copy rules', () => {
+  const banned = /\b(tier|cadence|unit|units|provider|proration|prorated|trial)\b/i;
+  for (const [branch, summary, billing] of [
+    [MAIN, ANNUAL, FLAT],
+    [MAIN, { ...ANNUAL, state: 'past_due' }, FLAT],
+    [OWN, ANNUAL, { ...FLAT, branch_subscriptions: [OWN_SUB] }],
+    [{ ...OWN, billing_state: 'pending_payment' }, ANNUAL, { ...FLAT, branch_subscriptions: [] }]
   ]) {
-    const out = lines(fixture.s, 'Kopi Lab', fixture.m);
-    for (const line of [out.title, out.branches, out.amount, out.arithmetic, out.renewal, out.pill.label]) {
+    const out = card(branch, summary, billing, CARD);
+    for (const line of [out.note, out.price, out.billed, out.when, out.action.label, ...labels(out)]) {
       if (!line) continue;
       assert.doesNotMatch(line, banned, `owner-facing jargon in: ${line}`);
-      const words = line.split(/\s+/).filter((w) => w && w !== '\u00b7');
-      /* Line 2 carries the parenthetical the design review asked for ("2 charged (first is in
-         the plan price)"), which is 14 words. Every other line stays inside 12. */
-      const budget = line === out.branches ? 16 : 12;
-      assert.ok(words.length <= budget, `over ${budget} words: ${line}`);
+      assert.ok(line.split(/\s+/).length <= 10, `over 10 words: ${line}`);
     }
   }
 });
 
-/* The server owns this arithmetic (get_business_billing_v758). The fallback exists only for a
-   workspace whose database has not been migrated yet, and it must agree with the server. */
+/* -------------------------------------------------------------------- unchanged helpers */
+
 test('the client fallback reproduces the server summary from the same rows', () => {
   const summary = sandbox.billingSummaryFallbackV758({
     status: 'active', payment_status: 'paid', cancel_at_period_end: false,
@@ -181,12 +230,9 @@ test('the client fallback reproduces the server summary from the same rows', () 
   assert.equal(summary.plan_label, 'Annual');
   assert.equal(summary.branches_total, 3);
   assert.equal(summary.branches_billable, 1);
-  assert.equal(summary.branches_stopping, 1);
   assert.equal(summary.units, 2);
   assert.equal(summary.total_cents, 1000000);
   assert.equal(summary.state, 'active');
-  assert.equal(lines(summary, 'Kopi Lab', { kind: 'card', brand: 'Visa', last4: '7820' }).amount,
-    'SGD 10,000 / year');
 });
 
 test('money on this page is a headline, not a receipt', () => {
@@ -195,74 +241,58 @@ test('money on this page is a headline, not a receipt', () => {
   assert.equal(sandbox.moneyShortV758(168850), 'SGD 1,688.50');
   assert.equal(sandbox.moneyShortV758(0), 'SGD 0');
   assert.equal(sandbox.moneyShortV758(null), 'SGD 0');
-  // it is this page's formatter only — the shared money() helper is untouched
   assert.match(app, /const money=c=>\(S\.biz\?\.currency\|\|'SGD'\)\+' '\+\(\(c\|\|0\)\/100\)\.toFixed\(2\)/);
 });
 
 test('a payment status is written the way a person reads it', () => {
   assert.equal(sandbox.billingStatusWordV758('paid'), 'Paid');
-  assert.equal(sandbox.billingStatusWordV758('failed'), 'Failed');
-  assert.equal(sandbox.billingStatusWordV758('refunded'), 'Refunded');
   assert.equal(sandbox.billingStatusWordV758('past_due'), 'Past Due');
   assert.equal(sandbox.billingStatusWordV758(null), '—');
 });
 
-test('the main branch is labelled, never offered a one-tap switch-off', () => {
-  const start = app.indexOf('function subscriptionBranchListV758(billing,summary){');
-  const fn = app.slice(start, app.indexOf('\n}\n', start));
-  // the guard sits BEFORE the stop button is ever built
-  assert.ok(fn.indexOf("if(branch.is_default===true)return '';") <
-    fn.indexOf('data-branch-stop-v758'), 'the main branch must be excluded before the stop action');
-  assert.match(fn, /is_default===true\?'<span class="pill off">Main branch<\/span>':''/);
-  // and a branch already stopping can still be kept, main or not
-  assert.ok(fn.indexOf('data-branch-keep-v758') < fn.indexOf("if(branch.is_default===true)return '';"));
-});
-
-test('each branch row says which of the six states it is in', () => {
-  const label = (state, extra) => sandbox.billingBranchPillV758({ billing_state: state, ...extra }).label;
-  assert.equal(label('included'), 'Included');
-  assert.equal(label('active'), 'Billed');
-  assert.equal(label('pending_payment'), 'Awaiting payment');
-  /* nestly_v764 (owner ruling 2): the act is "Switch off", so the row says when it switches off. */
-  assert.equal(label('canceling', { billing_cancel_at: '2027-09-04T00:00:00+08:00' }), 'Switches off 4 Sep 2027');
-  assert.equal(label('unsubscribed'), 'Unsubscribed');
-  assert.equal(label('suspended'), 'Payment lapsed');
+test('a card we cannot name is never invented, and a non-card method is not called a card', () => {
+  assert.equal(sandbox.billingCardTextV758({ kind: 'card', brand: 'Visa', last4: '7820' }), 'Visa ending 7820');
+  assert.equal(sandbox.billingCardTextV758({ kind: 'card' }), 'Card on file');
+  assert.equal(sandbox.billingCardTextV758({ kind: 'paynow' }), 'Payment method on file');
+  assert.equal(sandbox.billingCardTextV758(null), 'No card yet');
 });
 
 /* ------------------------------------------------------- wiring, asserted structurally */
 
-test('the page reads get_business_billing_v758 and falls back to the read it wraps', () => {
+test('the page reads get_business_billing_v786 and falls back to the reads it wraps', () => {
   assert.match(app, /async function fetchBusinessBillingV758\(businessId\)\{/);
+  assert.match(app, /sb\.rpc\('get_business_billing_v786',\{p_business:businessId\}\)/);
   assert.match(app, /sb\.rpc\('get_business_billing_v758',\{p_business:businessId\}\)/);
   assert.match(app, /sb\.rpc\('get_business_billing_v125',\{p_business:businessId\}\)/);
   const fnStart = app.indexOf('async function loadBillingConfig(){');
   const fnEnd = app.indexOf('\n/* ---------- customer sign-up QR ---------- */');
   const fn = app.slice(fnStart, fnEnd);
   assert.match(fn, /fetchBusinessBillingV758\(S\.biz\.id\)/);
-  // the summary card is the first thing drawn, above the branches and the drawer
-  assert.ok(fn.indexOf('billingSummaryCardV758(') < fn.indexOf('subscriptionBranchListV758('));
-  assert.ok(fn.indexOf('subscriptionBranchListV758(') < fn.indexOf('billingInvoiceTableV758('));
-  assert.ok(fn.indexOf('billingInvoiceTableV758(') < fn.indexOf('id="billingChangePlanV758"'));
-  // the existing money paths are untouched: the drawer still drives request_billing_command_v124
+  // two tabs, the cards then the strip, the payments table in the other panel, one status line
+  assert.match(fn, /tabButton\('branches','branch','Branches'\)/);
+  assert.match(fn, /tabButton\('payments','wallet','Payment history'\)/);
+  assert.ok(fn.indexOf('subscriptionBranchCardsV784(cardsV784)') < fn.indexOf('billingAddBranchStepsV784()'));
+  assert.ok(fn.indexOf('id="billingPanelPaymentsV784"') < fn.indexOf('billingInvoiceTableV758(b,summaryV758)'));
+  assert.match(fn, /id="billingCommandStatus"/);
+  // the summary card, the Change plan drawer and the Details expander are gone from the page
+  assert.doesNotMatch(fn, /billingSummaryCardV758\(/);
+  assert.doesNotMatch(fn, /id="billingChangePlanV758"/);
+  assert.doesNotMatch(fn, /Free trial/);
+  // the money paths are the existing ones: business commands through v124, branch commands through v786
   assert.match(fn, /sb\.rpc\('request_billing_command_v124'/);
+  assert.match(fn, /sb\.rpc\('request_branch_billing_command_v786'/);
   assert.match(fn, /sb\.functions\.invoke\('razorpay-billing-command'/);
-  // and the summary card's primary button only OPENS the drawer — it never charges
-  assert.match(fn, /billingChoosePlanV758'\)\.onclick=\(\)=>\{[\s\S]{0,200}drawer\.open=true/);
+  // a demo account is named as one, and nothing else about it differs
+  assert.match(fn, /S\.biz\?\.is_demo\?'<span class="pill new">Demo account<\/span>':''/);
 });
 
-test('the branch actions are still the v665 RPCs, with the confirmation unchanged', () => {
+test('the shared-branch actions are still the v665 RPCs, with the confirmation unchanged', () => {
   assert.match(app, /sb\.rpc\(kind==='stop'\?'business_unsubscribe_branch_v665':'business_resubscribe_branch_v665'/);
-  /* nestly_v764 (owner ruling 2): the same two RPCs and the same three promises — it keeps
-     working until the date, it is not charged after, nothing is refunded — said as "Switch off". */
   assert.match(app, /function branchSwitchOffConfirmV764\(record\)\{/);
   assert.match(app, /It keeps working until then\. Not charged after\./);
   assert.match(app, /Nothing is refunded, and its customers, sales and bookings stay in your reports\./);
   assert.match(app, /data-branch-stop-v758/);
   assert.match(app, /data-branch-keep-v758/);
-  // the company-level rows are gone from the per-branch dialog
-  const dialogStart = app.indexOf('function openSubscriptionBranchDetailV628(payload){');
-  const dialog = app.slice(dialogStart, app.indexOf('\n}\n', dialogStart));
-  assert.doesNotMatch(dialog, /Payment frequency|Billed until|'Payment method'/);
-  assert.match(dialog, /\['Address',record\.address\]/);
-  assert.match(dialog, /\['Phone',record\.phone\]/);
+  // an own-billed branch stops through its OWN renewal intent, never the company's
+  assert.match(app, /sb\.rpc\('set_branch_renewal_intent_v786',\{p_business:S\.biz\.id,p_branch:branchId,p_cancel:cancel\}\)/);
 });

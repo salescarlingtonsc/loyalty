@@ -2829,10 +2829,6 @@
       "reason": "browser RPC 'book_appointment_smart_v47' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },
     {
-      "id": "browser.rpc:app/app.js:business_add_branch_v202",
-      "reason": "V202 add-branch. Creates a branch UNPAID (active=false, billing_state=pending_payment) and mints the billing command that charges for it; the branch is not operational until the command completes. It writes branches plus the copied configuration the owner selected, and billing_commands. It reaches no ledger and mints no points, credit or stored value — the CHARGE is made by Stripe from the command, not by this function, and the amount comes from billing_plan_catalog_v124."
-    },
-    {
       "id": "browser.rpc:app/app.js:business_create_promotion_draft_v155",
       "reason": "V155 promotion DRAFT writer. Writes promotion configuration versions only; it mints no points, credit or stored value, and a draft carries no customer promise until it is published. Discovery confirms reaches_value_writer=false."
     },
@@ -4141,6 +4137,22 @@
     {
       "id": "browser.rpc:app/app.js:customer_get_referral_pending_v777",
       "reason": "browser RPC 'customer_get_referral_pending_v777' (nestly_v777) is a read-only projection of the signed-in customer's own public.referrals row at one business (pending floor + friend points, or settled) behind app.v32_customer_wallet_context — no DML, no ledger, no value row; app.on_sale_recorded REGION B remains the only writer of that row's status."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_business_billing_v786",
+      "reason": "browser RPC 'get_business_billing_v786' is a finite owner billing reader; it delegates to get_business_billing_v758 for the tenant guard and every existing key, and adds only each own-billed branch's subscription projection (status, cycle, renewal date, display-only card digits, renewal intent) and the flat per-branch price - it writes nothing"
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_add_branch_v786",
+      "reason": "V786 add-branch. Creates a branch UNPAID and switched off with billing_mode=own and mints the branch-scoped create_checkout command for ITS OWN Razorpay subscription; the branch is not operational until that subscription is paid (applier). It writes branches plus the copied configuration the owner selected, and billing_commands. It reaches no ledger and mints no points, credit or stored value - the CHARGE is made by Razorpay from the command, and the amount is the flat tier from billing_capacity_tier_catalog_v664."
+    },
+    {
+      "id": "browser.rpc:app/app.js:request_branch_billing_command_v786",
+      "reason": "browser RPC 'request_branch_billing_command_v786' mints a branch-scoped billing command row (checkout, cycle change, renewal cancel/resume, card update, card refresh) for the owner's own branch; it writes billing_commands only, never touches payment truth, customer value or stored value, and the provider is only ever told by the edge executor"
+    },
+    {
+      "id": "browser.rpc:app/app.js:set_branch_renewal_intent_v786",
+      "reason": "browser RPC 'set_branch_renewal_intent_v786' writes only the local, reversible renewal-cancel intent on a branch's own subscription row; it never calls the payment provider, never alters payment truth, customer value or stored value, and refuses once the cancel has been transmitted"
     }
   ]
 }

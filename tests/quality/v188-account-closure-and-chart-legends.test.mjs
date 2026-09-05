@@ -64,14 +64,21 @@ test('closing an account is a real action, not a sentence with an address in it'
   /* The row is gone for an OWNER, who now has the button at the foot of Settings. It is kept for
      everyone else: settingsPage() is owner-only, so deleting it outright would leave a
      receptionist with no in-app route at all — the ⚖️ 5.1.1(v) exposure v131 records. */
-  assert.match(app, /\$\{S\.myRole==='owner'\?'':`<a href="\/data-request\.html" id="pmDeleteAccount">/,
-    'the account menu row must be owner-suppressed, not deleted');
+  /* nestly_v784 (owner: "Drop both" — the summary card and the Account & privacy foot on the
+     Subscription page). With the foot gone, the account-menu row is the door again for EVERYONE,
+     owner included; suppressing it for the owner would strand the route the way v593 warned. */
+  assert.match(app, /<a href="\/data-request\.html" id="pmDeleteAccount">/,
+    'the account menu row must be present for every role');
+  assert.doesNotMatch(app, /\$\{S\.myRole==='owner'\?'':`<a href="\/data-request\.html" id="pmDeleteAccount">/,
+    'the account menu row must no longer be owner-suppressed');
   assert.match(app, /function accountPrivacyFooterHtmlV593/,
     'Settings must carry the small button that reveals the card');
   assert.match(app, /accountPrivacyPanelV593.*innerHTML=accountDeletionCardHtml\(\)/s,
     'the footer must reveal the SAME card, not a second copy of the copy');
-  assert.match(app, /\$\{accountPrivacyFooterHtmlV593\(\)\}<\/div>`;/,
-    'the button belongs at the foot of the Settings page, outside the tab panels');
+  /* nestly_v784: the foot is gone from the Settings (Subscription) page by owner ruling; the
+     function survives for the customer-side page that still renders it. */
+  assert.doesNotMatch(app, /\$\{accountPrivacyFooterHtmlV593\(\)\}<\/div>`;/,
+    'the Subscription page no longer carries the foot');
   /* The card still stands on its own on the pre-workspace and locked screens, where there is no
      Settings page to reach it from — the persona chooser is the one place it was REMOVED. */
   assert.match(app, /\$\{accountDeletionCardHtml\(\)\}\$\{legalLinks\(\)\}/,

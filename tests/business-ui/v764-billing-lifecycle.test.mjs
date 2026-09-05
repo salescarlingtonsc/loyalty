@@ -46,13 +46,12 @@ vm.runInContext([
   grab('moneyShortV758', 'function moneyShortV758(cents){'),
   grab('billingStatusWordV758', 'function billingStatusWordV758(status){'),
   grab('billingCardTextV758', 'function billingCardTextV758(method){'),
-  grab('billingSummaryLinesV758', 'function billingSummaryLinesV758(summary,businessName,paymentMethod){'),
-  grab('billingSummaryCardV758', 'function billingSummaryCardV758(lines,options){'),
+  grab('billingBranchCardLinesV784', 'function billingBranchCardLinesV784(branch,summary,billing,paymentMethod,options){'),
+  grab('billingManageSheetHtmlV784', 'function billingManageSheetHtmlV784(model){'),
   grab('billingInvoiceTableV758', 'function billingInvoiceTableV758(billing,summary){'),
   grab('billingCadenceWordV764', 'function billingCadenceWordV764(cadence){'),
   grab('billingCadenceEffectiveAtV764', 'function billingCadenceEffectiveAtV764(currentCadence,nextCadence,renewsAt,now){'),
   grab('billingLifecycleLinesV764', 'function billingLifecycleLinesV764(billing,summary,paymentMethod){'),
-  grab('branchProrataConfirmLinesV764', 'function branchProrataConfirmLinesV764(preview,branchName){'),
   grab('branchSwitchOffConfirmV764', 'function branchSwitchOffConfirmV764(record){'),
   grab('billingInvoiceReasonTextV764', 'function billingInvoiceReasonTextV764(row,planLabel,mainBranchName){')
 ].join('\n'), sandbox);
@@ -154,87 +153,49 @@ test('once the cancel has been sent to the provider there is no Resume button, o
   assert.equal(out.resume_label, '');
 });
 
-/* ------------------------------------------------------- the card these lines are rendered onto */
+/* ------------------------------------------------ the Manage sheet these lines are rendered onto */
+/* nestly_v784: the summary card is gone (owner: "dont need to show full amount etc."). The lifecycle
+   lines now sit in the Manage sheet behind each branch card, on the same button ids the v764
+   handlers bind to, so the commands behind them are unchanged. */
 
-const card = (billing, summary = SUMMARY) => sandbox.billingSummaryCardV758(
-  sandbox.billingSummaryLinesV758(summary, 'Kopi Lab', CARD),
-  {
-    primaryLabel: 'Change plan', hasSubscription: true,
-    lifecycle: life(billing, summary)
-  });
+const sheet = (billing, summary = SUMMARY, extra = {}) => sandbox.billingManageSheetHtmlV784({
+  title: 'Kopi Lab · Orchard', has_subscription: true, card: 'MC ending 9037',
+  renewal: 'Renews on 5 Sep 2027',
+  primary: { label: 'Change billing cycle' },
+  lifecycle: life(billing, summary), ...extra
+});
 
-test('the canceling card shows the cancelled line, Resume and Update card — and no Cancel', () => {
-  const html = card({ renewal_cancel_requested_at: '2026-09-05T09:00:00+08:00' },
+test('the canceling sheet shows the cancelled line, Resume and Update card — and no Stop', () => {
+  const html = sheet({ renewal_cancel_requested_at: '2026-09-05T09:00:00+08:00' },
     { ...SUMMARY, state: 'canceling', cancel_at_period_end: true });
   assert.match(html, /Renewal cancelled · access until 5 Sep 2027/);
   assert.match(html, /id="billingResume">Resume renewal</);
   assert.doesNotMatch(html, /id="billingCancel"/);
   assert.match(html, /id="billingUpdateCardV764">Update card</);
-  assert.match(html, /Cancels 5 Sep 2027/);
 });
 
-test('the scheduled-monthly card shows the start date and the way back', () => {
-  const html = card({}, {
+test('the scheduled-monthly sheet shows the start date and the way back', () => {
+  const html = sheet({}, {
     ...SUMMARY,
     scheduled_change: { cadence: 'monthly', effective_at: '2027-09-05T00:00:00+08:00', amount_cents: 29600 }
   });
   assert.match(html, /Monthly billing starts on 5 Sep 2027 · SGD 296 \/ month/);
   assert.match(html, /id="billingKeepCadenceV764" data-cadence="annual"[^>]*>Keep annual</);
-  assert.match(html, /id="billingCancel">Cancel renewal</);
+  assert.match(html, /id="billingCancel">Stop</);
 });
 
-test('a card that has been sent to the provider offers a new plan instead of a resume', () => {
-  const html = sandbox.billingSummaryCardV758(
-    sandbox.billingSummaryLinesV758({ ...SUMMARY, state: 'canceling' }, 'Kopi Lab', CARD),
-    {
-      primaryLabel: 'Start a new plan', hasSubscription: true,
-      lifecycle: life({
-        renewal_cancel_requested_at: '2026-09-05T09:00:00+08:00',
-        renewal_cancel_sent_at: '2027-09-03T19:00:00+08:00'
-      }, { ...SUMMARY, state: 'canceling' })
-    });
+test('a sheet whose cancel has been sent to the provider offers a new plan instead of a resume', () => {
+  const html = sheet({
+    renewal_cancel_requested_at: '2026-09-05T09:00:00+08:00',
+    renewal_cancel_sent_at: '2027-09-03T19:00:00+08:00'
+  }, { ...SUMMARY, state: 'canceling' }, { primary: { label: 'Start a new plan' } });
   assert.match(html, /Renewal cancel is final · ends 5 Sep 2027 · Start a new plan/);
   assert.doesNotMatch(html, /id="billingResume"/);
   assert.doesNotMatch(html, /id="billingCancel"/);
-  assert.match(html, /id="billingChoosePlanV758">Start a new plan</);
+  assert.match(html, /id="billingPrimary">Start a new plan</);
 });
 
 /* -------------------------------------------- ruling 1: the money is shown before it is charged */
-
-test('the add-branch confirmation names the branch, the amount, the card and the cover date', () => {
-  const copy = sandbox.branchProrataConfirmLinesV764({
-    unit_amount_cents: 118800, period_end: '2027-09-05T00:00:00+08:00',
-    days_remaining: 184, period_days: 365, prorata_cents: 59400,
-    currency: 'SGD', card: CARD
-  }, 'East Coast');
-  assert.equal(copy.title, 'Set up East Coast today?');
-  assert.equal(copy.body, 'About SGD 594 charged now to MC ending 9037. Covers until 5 Sep 2027.');
-  assert.equal(copy.confirm, 'Set up today and pay SGD 594');
-  assert.equal(copy.cancel, 'Cancel');
-});
-
-test('a preview with no card on file never invents digits', () => {
-  const copy = sandbox.branchProrataConfirmLinesV764(
-    { prorata_cents: 59400, period_end: '2027-09-05T00:00:00+08:00', card: null }, '');
-  assert.equal(copy.title, 'Set up this branch today?');
-  assert.match(copy.body, /charged now to No card yet\./);
-});
-
-test('nothing is created until the owner has confirmed the amount', () => {
-  const start = app.indexOf("$('brSave').onclick=async()=>{");
-  const fn = app.slice(start, app.indexOf("\n  }\n", start));
-  assert.ok(fn.indexOf('branchProrataPreviewV764(payload.name)') > -1, 'the preview must be read');
-  assert.ok(fn.indexOf('openBranchProrataConfirmV764(previewV764,payload.name)')
-    < fn.indexOf("sb.rpc('business_add_branch_v202'"),
-    'the confirmation must be answered before the branch is created');
-  assert.match(app, /sb\.rpc\('preview_branch_addition_v764',\s*\{p_business:S\.biz\.id,p_branch_name:branchName\}\)/);
-  /* a workspace whose database predates the RPC keeps the flow it had rather than being blocked */
-  assert.match(app, /if\(error\|\|!data\)return null;/);
-  /* and the command's own answer is what decides what the owner is told next */
-  assert.match(fn, /executed\.data\?\.status==='uncertain'/);
-  assert.match(fn, /rememberBranchPaymentRetryV764\(/);
-  assert.match(fn, /is set up and paid for\./);
-});
 
 test('a charge the provider has not confirmed offers to retry THAT charge, never a second branch', () => {
   assert.match(app, /data-branch-retry-payment-v764/);
@@ -302,7 +263,8 @@ test('the payments table carries the What column on both the desk and the phone 
 
 test('the card is changed through Razorpay and the digits are refreshed on the way back', () => {
   // the button asks for the provider's card-change sheet
-  assert.match(app, /\$\('billingUpdateCardV764'\)\.onclick=\(\)=>execute\('update_card',null,null\)/);
+  /* nestly_v784/v786: the button lives on the Manage sheet and names the branch scope it acts on. */
+  assert.match(app, /updateCard\.onclick=after\(\(\)=>execute\('update_card',null,null,scope\)\)/);
   // the return route is recognised and never left in the address bar
   assert.match(app, /cardUpdated:value==='card_updated'/);
   assert.match(app, /billingReturnStateV756\.cardUpdated&&!settingsBillingCardRefreshActiveV764/);
@@ -331,7 +293,7 @@ test('the checkout page opens the card-change sheet without an amount', () => {
 /* ---------------------------------------------------------------- a command never navigates away */
 
 test('a command that is not a checkout re-reads and re-draws this page instead of navigating', () => {
-  const start = app.indexOf('const execute=async(type,cadence,capacity)=>{');
+  const start = app.indexOf('const execute=async(type,cadence,capacity,branchId)=>{');
   const fn = app.slice(start, app.indexOf('\n    };', start));
   // a redirect is still followed when the provider gives one (checkout)
   assert.ok(fn.indexOf('if(result.redirect_url){') < fn.indexOf('await loadBillingConfig();'));
@@ -353,9 +315,6 @@ test('every lifecycle sentence stays inside the owner-facing copy rules', () => 
     sentences.push(fixture.scheduled_line, fixture.scheduled_undo_label, fixture.cancel_line,
       fixture.cancel_confirm, fixture.resume_confirm, fixture.final_line);
   }
-  const copy = sandbox.branchProrataConfirmLinesV764(
-    { prorata_cents: 59400, period_end: '2027-09-05T00:00:00+08:00', card: CARD }, 'East Coast');
-  sentences.push(copy.title, copy.body, copy.confirm);
   sentences.push(sandbox.billingInvoiceReasonTextV764({
     reason: 'branch_added',
     detail: { branch_name: 'East Coast', covers_from: '2027-03-05T00:00:00+08:00', covers_until: '2027-09-04T00:00:00+08:00' }

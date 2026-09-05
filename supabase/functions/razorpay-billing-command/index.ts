@@ -110,6 +110,12 @@ function subscriptionNotes(
 ): Record<string, string> {
   return {
     business_id: businessId,
+    /* nestly_v786: which branch this subscription belongs to. app.razorpay_branch_v786 reads it
+       back from every event, the same way business_id is read, so a branch subscription never
+       needs a lookup table to find its branch. Absent (empty) for the company subscription. */
+    ...(typeof data.branch_id === 'string' && String(data.scope || '') === 'branch'
+      ? { branch_id: String(data.branch_id) }
+      : {}),
     cadence: String(data.requested_cadence || ''),
     pricing_model: String(data.pricing_model || 'legacy_seat'),
     customer_capacity: String(Number(data.requested_customer_capacity || 0) || ''),
@@ -272,7 +278,10 @@ Deno.serve(async (req) => {
     admin = billingAdminClient();
     // V130 decorates the V124 dispatcher with the locked self-service return
     // route; V124 still delegates historical commands to V77.
-    const { data, error } = await admin.rpc('claim_billing_command_v130', {
+    /* nestly_v786: claim_billing_command_v786 answers a BRANCH-scoped command (scope:'branch',
+       branch_id, the branch's own provider subscription) and delegates every business-scoped
+       command to claim_billing_command_v130 unchanged — the V124/V77 chain is still under it. */
+    const { data, error } = await admin.rpc('claim_billing_command_v786', {
       p_command: commandId,
       p_actor: actor,
     });
@@ -297,6 +306,11 @@ Deno.serve(async (req) => {
       ? String(data.provider_subscription_id)
       : undefined;
     const selfServiceOnboarding = data.self_service_onboarding === true;
+    /* nestly_v786: a branch-scoped command acts on the branch's OWN Razorpay subscription. Its
+       quantity is always 1, its notes name the branch, and its lifecycle records (schedule,
+       renewal-cancel mark, card digits) go to the branch row, never the company's. */
+    const branchScope = String(data.scope || '') === 'branch';
+    const branchId = branchScope && typeof data.branch_id === 'string' ? data.branch_id : null;
     const successUrl = selfServiceOnboarding
       ? `${origin}/business#/onboarding/payment?status=processing`
       : `${origin}/#/settings?billing=processing`;
@@ -322,7 +336,9 @@ Deno.serve(async (req) => {
           .from('branches')
           .select('id', { count: 'exact', head: true })
           .eq('business_id', businessId)
-          .in('billing_state', ['pending_payment', 'active']),
+          .in('billing_state', ['pending_payment', 'active'])
+          /* nestly_v786: only SHARED branches are units of the company subscription. */
+          .eq('billing_mode', 'shared'),
         admin
           .from('billing_commands')
           .select('*')
@@ -353,6 +369,8 @@ Deno.serve(async (req) => {
         ? count
         : (isBranchCommand ? 1 : 0);
       planUnits = Math.max(1, baseUnits + branchUnits);
+      /* nestly_v786: an own-branch subscription is exactly one unit of the flat plan. */
+      if (branchScope) planUnits = 1;
     }
 
     const capacityModel = data.pricing_model === 'v124_customer_capacity';
@@ -464,7 +482,9 @@ Deno.serve(async (req) => {
         subscriptionId: subscription.id,
         keyId,
         commandId,
-        description: `Peekaa ${cadence || 'subscription'}`,
+        description: branchScope
+          ? `Peekaa branch ${cadence || 'subscription'}`
+          : `Peekaa ${cadence || 'subscription'}`,
         cancelUrl,
       });
     } else if (!providerResolved && commandType === 'create_portal') {
@@ -497,6 +517,9 @@ Deno.serve(async (req) => {
     ) {
       if (!subscriptionId) throw new Error('Razorpay subscription is not linked');
       if (!planId) throw new Error('Razorpay plan is not configured for this catalogue row');
+      if (branchScope && commandType !== 'change_cadence') {
+        throw new Error('a branch subscription only changes its billing cycle');
+      }
       providerCallStarted = true;
       /* v775: the capacity the firm is coming FROM, for the payments-history label.
          nestly_v778: read alongside the live subscription and the plan check — three independent
@@ -535,9 +558,9 @@ Deno.serve(async (req) => {
         if (current.has_scheduled_changes === true) {
           await razorpay.cancelScheduledChanges(subscriptionId);
         }
-        const { error: clearError } = await admin.rpc('clear_billing_schedule_v764', {
-          p_business: businessId,
-        });
+        const { error: clearError } = branchScope
+          ? await admin.rpc('clear_branch_billing_schedule_v786', { p_branch: branchId })
+          : await admin.rpc('clear_billing_schedule_v764', { p_business: businessId });
         if (clearError) throw new Error('billing schedule clear failed');
         providerObjectId = subscriptionId;
       } else if (
@@ -624,16 +647,23 @@ Deno.serve(async (req) => {
          and the plan; nothing else does until the change lands, so it is recorded now. */
       if (commandType === 'change_cadence') {
         const effectiveAt = Number(verified.change_scheduled_at || verified.current_end || 0);
-        const { error: scheduleError } = await admin.rpc('record_billing_schedule_v764', {
-          p_business: businessId,
-          p_kind: 'cadence',
-          p_target_cadence: cadence,
-          p_target_plan_id: planId,
-          p_effective_at: effectiveAt > 0
-            ? new Date(effectiveAt * 1000).toISOString()
-            : null,
-          p_amount_cents: Number(data.base_amount_cents || 0) * planUnits,
-        });
+        const scheduleAt = effectiveAt > 0 ? new Date(effectiveAt * 1000).toISOString() : null;
+        const { error: scheduleError } = branchScope
+          ? await admin.rpc('record_branch_billing_schedule_v786', {
+            p_branch: branchId,
+            p_target_cadence: cadence,
+            p_target_plan_id: planId,
+            p_effective_at: scheduleAt,
+            p_amount_cents: Number(data.base_amount_cents || 0),
+          })
+          : await admin.rpc('record_billing_schedule_v764', {
+            p_business: businessId,
+            p_kind: 'cadence',
+            p_target_cadence: cadence,
+            p_target_plan_id: planId,
+            p_effective_at: scheduleAt,
+            p_amount_cents: Number(data.base_amount_cents || 0) * planUnits,
+          });
         if (scheduleError) throw new Error('billing schedule record failed');
       }
 
@@ -696,7 +726,9 @@ Deno.serve(async (req) => {
       if (!systemOriginated) {
         try {
           const due = await listDueRenewalCancels(admin);
-          systemOriginated = due.some((row) => row.business_id === businessId);
+          /* nestly_v786: matched on the subscription itself — a company and one of its branches
+             can both be due, and only the one this command names may be sent. */
+          systemOriginated = due.some((row) => row.provider_subscription_id === subscriptionId);
         } catch {
           /* Unreadable due list: treat as owner-originated. The sweep runs again tomorrow; a
              cancellation sent early cannot be taken back. */
@@ -709,9 +741,9 @@ Deno.serve(async (req) => {
         const cancelled = await razorpay.cancelSubscription(subscriptionId, 1);
         providerObjectId = cancelled.id || subscriptionId;
         providerCallStarted = false;
-        const { error: markError } = await admin.rpc('mark_renewal_cancel_sent_v764', {
-          p_business: businessId,
-        });
+        const { error: markError } = branchScope
+          ? await admin.rpc('mark_branch_renewal_cancel_sent_v786', { p_branch: branchId })
+          : await admin.rpc('mark_renewal_cancel_sent_v764', { p_business: businessId });
         if (markError) throw new Error('renewal cancel mark failed');
       }
     } else if (!providerResolved && commandType === 'update_card') {
@@ -737,6 +769,7 @@ Deno.serve(async (req) => {
         razorpay,
         businessId,
         subscriptionId,
+        branchId,
       });
       providerCallStarted = false;
       providerObjectId = subscriptionId;

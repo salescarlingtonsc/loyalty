@@ -124,13 +124,14 @@ test('v755 the billing settings screen offers Cancel/Resume instead of the retir
   assert.doesNotMatch(app, /Open Stripe billing portal/);
   /* nestly_v758 renamed both buttons to the words an owner uses ("Cancel renewal" / "Resume
      renewal") and moved them onto the summary card. Same two commands, same two ids. */
-  assert.match(app, /id="billingCancel">Cancel renewal</);
-  assert.match(app, /id="billingResume">\$\{esc\(life\.resume_label\|\|'Resume renewal'\)\}</);
+  /* nestly_v784/v786: the owner's words are Stop / Resume, on the Manage sheet, same two ids. */
+  assert.match(app, /id="billingCancel">Stop</);
+  assert.match(app, /id="billingResume">\$\{esc\(life\.resume_label\|\|'Resume'\)\}</);
   /* nestly_v764 (owner ruling 4): a Razorpay cancel_at_cycle_end cannot be undone, so cancelling
      a renewal is a LOCAL intent (set_renewal_intent_v764) until the cron sends it shortly before
      the date. Both buttons still exist, with the same ids and the same two words; what changed is
      that they no longer reach the provider on the spot. */
-  assert.match(app, /setRenewalIntentV764\(true\)/);
-  assert.match(app, /setRenewalIntentV764\(false\)/);
+  assert.match(app, /setRenewalIntentV764\(true,scope\)/);
+  assert.match(app, /setRenewalIntentV764\(false,scope\)/);
   assert.match(app, /sb\.rpc\('set_renewal_intent_v764',\{p_business:S\.biz\.id,p_cancel:cancel\}\)/);
 });

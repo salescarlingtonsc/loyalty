@@ -25,7 +25,8 @@ test('the owner reaches branches from Operations setup, not the account menu', (
 });
 
 test('creating a branch goes through the paid RPC, never a table insert', () => {
-  assert.match(app, /sb\.rpc\('business_add_branch_v202',\{/);
+  /* nestly_v786: every new branch is its own subscription; the RPC changed number, the rule did not. */
+  assert.match(app, /sb\.rpc\('business_add_branch_v786',\{/);
   // the free path is gone from the create branch of the save handler
   assert.doesNotMatch(app, /sb\.from\('branches'\)\.insert\(/);
   // …and RLS makes that structural, not a convention
@@ -48,21 +49,19 @@ test('a branch is not usable until the payment confirms', () => {
   assert.match(app, /switched off until payment confirms/);
 });
 
-test('the owner is told a charge is coming before it happens', () => {
-  /* nestly_v666 (owner: "the wordings too chunky - just indicate this new branch is the second
-     branch ... = $1,188 / year and total = $xx / year"). The warning is the same warning, said in
-     figures instead of paragraphs: which branch this is, what it costs, what the total becomes,
-     and that the payment page charges it. Assert those, not the retired sentences. */
+test('the owner is told what the branch costs and where it is paid before it is created', () => {
+  /* nestly_v666 kept the ordinal; nestly_v786 (owner ruling: a branch may pay on its own card,
+     with its own renewal date) replaced the pro-rata charge on the card on file with the branch's
+     OWN checkout: the form names the cycle and its flat price, and says the payment happens on
+     Razorpay's page with any card. Nothing is charged by our code. */
   assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
-  /* nestly_v764 (owner ruling 1): the charge now happens on the card already on file, and the
-     owner confirms the pro-rated amount in a dialog BEFORE the branch is created — so the promise
-     is stated twice, and neither statement is weaker than the sentence it replaces. */
-  assert.match(app, /Charged today on the card you already pay with; the branch switches on when that payment confirms\./);
-  assert.match(app, /branchProrataPreviewV764\(payload\.name\)/);
-  assert.match(app, /openBranchProrataConfirmV764\(previewV764,payload\.name\)/);
-  assert.match(app, /confirm:`Set up today and pay \$\{amount\}`/);
-  assert.match(app, /branchAddPriceNoteV666/);
-  assert.match(app, /Total for \$\{quote\.branches\}/);
+  assert.match(app, /name="brCadenceV786" value="annual"/);
+  assert.match(app, /name="brCadenceV786" value="monthly"/);
+  assert.match(app, /Pay with any card on the next page\. This branch renews on its own date and switches on when the payment confirms\./);
+  assert.match(app, /branchAddPriceNoteV786\(\)/);
+  assert.match(app, /p_cadence:cadenceV786,p_idempotency_key:branchAddAttemptKey/);
+  assert.doesNotMatch(app, /branchProrataPreviewV764/);
+  assert.doesNotMatch(app, /openBranchProrataConfirmV764/);
 });
 
 test('the copy picker offers the branches, and says what copies', () => {

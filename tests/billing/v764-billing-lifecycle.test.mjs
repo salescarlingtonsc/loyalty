@@ -461,7 +461,7 @@ test('the reconcile sweep cancels every due intent and marks only what it sent',
       list_due_renewal_cancels_v764: {
         data: [
           { business_id: BUSINESS, provider_subscription_id: SUB },
-          { business_id: 'b2', provider_subscription_id: 'sub_two' },
+          { business_id: 'b2', provider_subscription_id: 'sub_two', branch_id: null },
           { business_id: 'b3', subscription_id: '' },
         ],
         error: null,
@@ -484,7 +484,7 @@ test('a provider failure is counted and left unmarked, so tomorrow retries it', 
   const admin = adminStub({
     rpcAnswers: {
       list_due_renewal_cancels_v764: {
-        data: [{ business_id: BUSINESS, provider_subscription_id: SUB }],
+        data: [{ business_id: BUSINESS, provider_subscription_id: SUB, branch_id: null }],
         error: null,
       },
     },
@@ -505,7 +505,7 @@ test('the due list is read defensively', () => {
   assert.deepEqual(normalizeDueRenewalCancels(null), []);
   assert.deepEqual(
     normalizeDueRenewalCancels({ business_id: BUSINESS, subscription_id: SUB }),
-    [{ business_id: BUSINESS, provider_subscription_id: SUB }],
+    [{ business_id: BUSINESS, provider_subscription_id: SUB, branch_id: null }],
   );
 });
 
@@ -681,9 +681,9 @@ test('the due renewal-cancel list unwraps the {status, due:[...]} envelope the v
     { business_id: 'b1', provider_subscription_id: 'sub_1' },
     { business_id: '', provider_subscription_id: 'sub_2' },
   ] });
-  assert.deepEqual(rows, [{ business_id: 'b1', provider_subscription_id: 'sub_1' }]);
+  assert.deepEqual(rows, [{ business_id: 'b1', provider_subscription_id: 'sub_1', branch_id: null }]);
   assert.deepEqual(normalizeDueRenewalCancels([{ business_id: 'b2', subscription_id: 'sub_3' }]),
-    [{ business_id: 'b2', provider_subscription_id: 'sub_3' }]);
+    [{ business_id: 'b2', provider_subscription_id: 'sub_3', branch_id: null }]);
 });
 
 /* ------------------------------------------------------- v769 remaining_count cap */

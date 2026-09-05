@@ -75,20 +75,22 @@ test('the numbers are stated where branches are listed, bought, and paid for', (
      nestly_v758 moved those two sentences into the Change plan drawer and the branch list, and
      dropped the word "tier" from owner-facing copy. The arithmetic and the two promises are
      unchanged, so they are pinned in their new wording rather than weakened. */
-  assert.match(app, /Every branch is charged the same amount once\./);
-  assert.match(app, /A branch added part-way through a paid period is charged only for the time left in it\./);
-  assert.match(app, /First branch is included\./);
+  /* nestly_v786: the company plan's arithmetic sentences left the page with the Change plan drawer;
+     the main branch card says the plan covers it, and the Manage sheet prices every cycle per branch. */
+  assert.match(app, /Includes your core Peekaa plan/);
+  assert.match(app, /Billed annually · \$\{moneyShortV758\(annualCents\)\} \/ year per branch/);
   /* nestly_v764 (owner ruling 1 & 2): the same two promises, in the owner's words — "Added
      today" and "Switched off". Neither is weakened: the pro-rata rule and the "keeps working
      until renewal, not charged after" rule are both still stated. */
-  assert.match(app, /Added today: charged only for the days left\./);
-  assert.match(app, /Switched off: keeps working until renewal, not charged after\./);
-  assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
+  assert.match(app, /Keeps working until renewal, not charged after\./);
+  assert.match(app, /const total=unit\*units;/);
   // V202's promise is still made, in the shorter v666 wording
   /* nestly_v764: adding a branch is now charged on the card already on file (Razorpay charges the
      pro-rated difference immediately), so there is no payment page to send the owner to. The
      promise that the branch is off until the payment confirms is unchanged. */
-  assert.match(app, /Charged today on the card you already pay with; the branch switches on when that payment confirms\./);
+  /* nestly_v786: a new branch pays for itself on Razorpay's page; the promise that it is off until
+     that payment confirms is unchanged. */
+  assert.match(app, /switches on when the payment confirms\./);
 });
 
 test('the branch checkout stops charging for the base plan a second time', () => {

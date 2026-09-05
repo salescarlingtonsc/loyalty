@@ -3933,6 +3933,18 @@
       "path": "db/migrations/20261006_nestly_v785_pipeline_schedule.sql",
       "semanticVersion": "v785",
       "proposedDeployVersion": "20261006050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v784_demo_accounts_replace_trials.sql",
+      "semanticVersion": "v784",
+      "proposedDeployVersion": "20261006060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v786_branch_subscriptions.sql",
+      "semanticVersion": "v786",
+      "proposedDeployVersion": "20261006070000"
     }
   ]
 }

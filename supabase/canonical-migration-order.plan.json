@@ -3928,6 +3928,18 @@
       "version": "20261006050000",
       "name": "nestly_v785_pipeline_schedule",
       "sourcePath": "db/migrations/20261006_nestly_v785_pipeline_schedule.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006060000",
+      "name": "nestly_v784_demo_accounts_replace_trials",
+      "sourcePath": "db/migrations/20261006_nestly_v784_demo_accounts_replace_trials.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006070000",
+      "name": "nestly_v786_branch_subscriptions",
+      "sourcePath": "db/migrations/20261006_nestly_v786_branch_subscriptions.sql"
     }
   ]
 }

@@ -139,15 +139,15 @@ test('owner checkout defaults annual and explains price, capacity, modules, staf
   /* nestly_v664: capacity is a tier ladder priced by the server, so the card renders the TIER
      amount for the capacity chosen and multiplies it by the billable branch count — the same
      quantity the Stripe line item carries. The per-1,000 block wording it replaced is gone. */
-  assert.match(app, /annualTierV664\?esc\(money\(annualTierV664\.amount_cents\)\)/);
-  assert.match(app, /monthlyTierV664\?esc\(money\(monthlyTierV664\.amount_cents\)\)/);
-  assert.match(app, /const total=unitAmountV664\*branchUnitsV664/);
-  /* nestly_v758: the change-plan drawer states the arithmetic as "<unit> per branch × <units>". */
-  assert.match(app, /per branch × \$\{branchUnitsV664\}/);
+  /* nestly_v784/v786: the Manage sheet prices both cycles from the server's figures — the company
+     tier for a shared branch, the flat price for a branch on its own subscription — and states the
+     total for the units it covers. */
+  assert.match(app, /Annual · \$\{annualCents\?`\$\{moneyShortV758\(annualCents\/12\)\} \/ month`:'—'\}/);
+  assert.match(app, /Monthly · \$\{monthlyCents\?`\$\{moneyShortV758\(monthlyCents\)\} \/ month`:'—'\}/);
+  assert.match(app, /const total=unit\*units;/);
+  assert.match(app, /for \$\{units\} \$\{units===1\?'branch':'branches'\}/);
   assert.doesNotMatch(app, /customer profiles included\. Each additional/);
-  assert.match(app, /Staff access included/);
-  assert.match(app, /Template-assisted promotion wording/);
-  assert.match(app, /does not use generative AI/);
+  assert.match(app, /Staff access included — staff count never changes this price\./);
   assert.doesNotMatch(app, /AI-assisted promotion copy/);
   assert.match(app, /Subscription fees are non-refundable after payment, except where required by law/);
   assert.match(app, /request_billing_command_v124/);

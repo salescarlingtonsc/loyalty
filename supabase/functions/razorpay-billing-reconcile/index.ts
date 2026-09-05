@@ -302,6 +302,18 @@ async function razorpayTenantScope(
     if (rows.length < TENANT_SCOPE_PAGE) break;
     after = String(rows[rows.length - 1].business_id);
   }
+  /* nestly_v786: a business whose only Razorpay objects are its branches' own subscriptions
+     (its company row may still say 'manual') is in scope too — its mirror rows are keyed by the
+     same business_id and must be judged against the same account. */
+  const { data: branchRows, error: branchError } = await admin
+    .from('branch_subscriptions_v786')
+    .select('business_id')
+    .eq('livemode', livemode)
+    .limit(TENANT_SCOPE_PAGE * TENANT_SCOPE_MAX_PAGES);
+  if (branchError) throw new Error('razorpay tenant scope unavailable');
+  for (const row of (branchRows || []) as Array<{ business_id: string }>) {
+    businessIds.push(String(row.business_id));
+  }
   return { livemode, businessIds: [...new Set(businessIds)] };
 }
 

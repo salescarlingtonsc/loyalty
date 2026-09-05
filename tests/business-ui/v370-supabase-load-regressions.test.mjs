@@ -102,7 +102,7 @@ test('V370 the branch roster is cached, hands out copies, and drops on every ros
      caller mutate another caller's answer. */
   assert.match(branches, /branches:cached\.branches\.map\(branch=>\(\{\.\.\.branch\}\)\)/);
   assert.match(branches, /return \{isAdmin,branches:branches\.map\(branch=>\(\{\.\.\.branch\}\)\)\}/);
-  for (const site of ["sb.rpc('business_add_branch_v202'", "from('staff_branches').insert({business_id:S.biz.id,staff_id:staffId",
+  for (const site of ["sb.rpc('business_add_branch_v786'", "from('staff_branches').insert({business_id:S.biz.id,staff_id:staffId",
     "from('staff_branches').delete().eq('business_id',S.biz.id).eq('staff_id',staffId)"]) {
     const at = appJs.indexOf(site);
     assert.ok(at > 0, `${site} call site must exist`);

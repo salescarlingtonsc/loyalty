@@ -282,6 +282,9 @@ export function commandLooksSystemOriginated(row: Record<string, unknown> | null
 export type DueRenewalCancel = {
   business_id: string;
   provider_subscription_id: string;
+  /* nestly_v786: set when the intent is a BRANCH's own subscription (list_due_renewal_cancels_v764
+     unions branch_subscriptions_v786 rows); null for the company subscription. */
+  branch_id: string | null;
 };
 
 export function normalizeDueRenewalCancels(data: unknown): DueRenewalCancel[] {
@@ -300,6 +303,7 @@ export function normalizeDueRenewalCancels(data: unknown): DueRenewalCancel[] {
         provider_subscription_id: String(
           record.provider_subscription_id || record.subscription_id || '',
         ),
+        branch_id: typeof record.branch_id === 'string' && record.branch_id ? record.branch_id : null,
       };
     })
     .filter((row) => row.business_id && row.provider_subscription_id);
@@ -342,9 +346,11 @@ export async function runDueRenewalCancels({
     try {
       if (!razorpay.cancelSubscription) throw new Error('cancel unsupported');
       await razorpay.cancelSubscription(row.provider_subscription_id, 1);
-      const { error } = await admin.rpc('mark_renewal_cancel_sent_v764', {
-        p_business: row.business_id,
-      });
+      /* nestly_v786: a branch intent is marked on the branch row, a company intent on the
+         company's — the same "mark after the provider call, only on success" either way. */
+      const { error } = row.branch_id
+        ? await admin.rpc('mark_branch_renewal_cancel_sent_v786', { p_branch: row.branch_id })
+        : await admin.rpc('mark_renewal_cancel_sent_v764', { p_business: row.business_id });
       if (error) throw new Error('renewal cancel mark failed');
       counts.sent += 1;
     } catch {
@@ -370,11 +376,14 @@ export async function refreshPaymentMethodFromProvider({
   razorpay,
   businessId,
   subscriptionId,
+  branchId = null,
 }: {
   admin: LifecycleAdmin;
   razorpay: LifecycleRazorpay;
   businessId: string;
   subscriptionId: string;
+  /* nestly_v786: the digits of a branch's own card are written to its branch row. */
+  branchId?: string | null;
 }): Promise<PaymentMethodRefresh> {
   const empty: PaymentMethodRefresh = {
     refreshed: false,
@@ -395,13 +404,21 @@ export async function refreshPaymentMethodFromProvider({
   const payment = await razorpay.getPayment(paymentId, { expandCard: true });
   const mapped = mapPaymentMethod(payment);
   if (!mapped) return { ...empty, payment_id: paymentId };
-  const { error } = await admin.rpc('set_billing_payment_method_v758', {
-    p_business: businessId,
-    p_payment_id: paymentId,
-    p_kind: mapped.kind,
-    p_brand: mapped.brand,
-    p_last4: mapped.last4,
-  });
+  const { error } = branchId
+    ? await admin.rpc('set_branch_payment_method_v786', {
+      p_branch: branchId,
+      p_payment_id: paymentId,
+      p_kind: mapped.kind,
+      p_brand: mapped.brand,
+      p_last4: mapped.last4,
+    })
+    : await admin.rpc('set_billing_payment_method_v758', {
+      p_business: businessId,
+      p_payment_id: paymentId,
+      p_kind: mapped.kind,
+      p_brand: mapped.brand,
+      p_last4: mapped.last4,
+    });
   if (error) throw new Error('payment method write rejected');
   return {
     refreshed: true,

@@ -297,12 +297,14 @@ test('the advertised prices are the ones the product actually charges', async ()
     'the landing page must quote the real annual equivalent');
 
   // The app must read those amounts, never restate them.
-  assert.match(app, /annualTierV664\?esc\(money\(annualTierV664\.amount_cents\)\)/,
-    'the annual label must render from the capacity tier the server priced');
-  assert.match(app, /monthlyTierV664\?esc\(money\(monthlyTierV664\.amount_cents\)\)/,
-    'the monthly label must render from the capacity tier the server priced');
-  assert.match(app, /Number\(monthlyTierV664\.amount_cents\)\*12-Number\(annualTierV664\.amount_cents\)/,
-    'the annual saving must be computed, not asserted');
+  /* nestly_v784/v786: the Manage sheet prices both cycles from the server's figures (the company
+     tier, or the flat per-branch price), and the page no longer states a saving at all. */
+  assert.match(app, /Annual · \$\{annualCents\?`\$\{moneyShortV758\(annualCents\/12\)\} \/ month`:'—'\}/,
+    'the annual label must render from the amount the server priced');
+  assert.match(app, /Monthly · \$\{monthlyCents\?`\$\{moneyShortV758\(monthlyCents\)\} \/ month`:'—'\}/,
+    'the monthly label must render from the amount the server priced');
+  assert.match(app, /const annualCents=own\?flatCentsV786\('annual'\):Number\(tierForCapacityV664\('annual',selectedCapacity\)\?\.amount_cents\|\|0\)/,
+    'the amounts must come from the billing read, never a literal');
   assert.doesNotMatch(app, /Annual saves SGD \d/,
     'the saving must never be re-hardcoded');
   assert.doesNotMatch(app, /<strong>Annual · SGD [\d,]+\/year<\/strong>/,
@@ -316,7 +318,9 @@ test('the landing page does not contradict the in-app per-branch pricing caveat'
   /* nestly_v666: the app states the per-branch rule on the Subscription card ("Every branch is
      charged this tier once") and prices it on the add-branch form; the landing page keeps its own
      sentence. What must not happen is the landing page promising free branches. */
-  assert.match(app, /Every branch is charged the same amount once\./);
+  /* nestly_v786: every branch is priced the same, on the sheet and on the add-branch form. */
+  assert.match(app, /Billed annually · \$\{moneyShortV758\(annualCents\)\} \/ year per branch/);
+  assert.match(app, /Billing cycle for this branch/);
   assert.match(landing, /extra branch is charged like another shop/i,
     'the branch caveat must be repeated, not silently dropped');
   assert.doesNotMatch(landing, /unlimited branches|branches? (?:are |is )?free|no extra cost/i);

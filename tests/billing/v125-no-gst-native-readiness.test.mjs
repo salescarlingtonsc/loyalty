@@ -150,8 +150,10 @@ test('owner and platform billing say GST is not charged and preserve the provide
     Promise.all([read('app/index.html'),read('app/app.js')]).then(f=>f.join('\n')),
     read('app/platform-console.js'),
   ]);
-  /* nestly_v758: the owner card states the zero-tax rule on the arithmetic line itself. */
-  assert.match(owner, /profile capacity · GST not charged/i);
+  /* nestly_v758 stated the zero-tax rule on the arithmetic line; nestly_v786 states it in the
+     footnote under the page and on the Manage sheet, now that the arithmetic line is gone. */
+  assert.match(owner, /GST not charged\. Staff access included/i);
+  assert.match(owner, /GST not charged\. Razorpay Checkout collects payment details securely/i);
   assert.match(owner, /Billing cycle[\s\S]+align-items:stretch;flex-wrap:wrap/i);
   assert.doesNotMatch(owner, /Recurring total\$\{plan\.tax_behavior===\s*'exclusive'\?' before GST'/i);
   assert.match(platform, /GST not charged/i);
