@@ -116,7 +116,7 @@ test('a cancelled renewal says the access date and offers Resume, with money, da
   assert.equal(out.show_resume, true);
   assert.equal(out.show_cancel, false);
   assert.equal(out.resume_label, 'Resume renewal');
-  assert.equal(out.resume_confirm, 'Resume renewals? Next payment SGD 2,376 on 5 Sep 2027 to MC ending 9037.');
+  assert.equal(out.resume_confirm, 'Resume renewal? Next payment SGD 2,376 on 5 Sep 2027 to MC ending 9037.');
   assert.equal(out.final_line, '');
 });
 
