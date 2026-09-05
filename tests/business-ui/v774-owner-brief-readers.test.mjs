@@ -745,10 +745,13 @@ test('V774 the brief still renders from an empty object with all five readers un
 
 test('V774 the brief reads in the order an owner asks the questions in', () => {
   const at = (needle) => block.indexOf(needle);
-  const line = app.slice(app.indexOf('    ${glanceV771}${whenV774}'));
+  /* nestly_v778 inserted block L ("Your branches side by side") directly after block A: which
+     branches this brief covers is the question an owner asks before any of the ones below it, and
+     the answer has to sit next to the totals it splits. The rest of the order is untouched. */
+  const line = app.slice(app.indexOf('    ${glanceV771}${branchesV778}${whenV774}'));
   const order = line.slice(0, line.indexOf('\n'));
   assert.equal(order.trim(),
-    '${glanceV771}${whenV774}${bringBackV771}${cashGapV774}${unusedV771}${topCustomersV771}${servicesV771}${staffBlockV774}${rewardsBlockV774}${whoV774}${limitsV771}');
+    '${glanceV771}${branchesV778}${whenV774}${bringBackV771}${cashGapV774}${unusedV771}${topCustomersV771}${servicesV771}${staffBlockV774}${rewardsBlockV774}${whoV774}${limitsV771}');
   assert.ok(at('const glanceV771=') > -1 && at('let whenV774=') > -1,
     'every block still assembles its own markup before the section is concatenated');
 });

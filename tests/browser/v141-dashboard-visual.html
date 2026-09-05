@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ccd66f96a68747e95741df819ad82a5e4facde96a859adbff37964ce7bcb0f6b"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="d2ef637b405a6ed373b74fdbf28d5b2919f77171659f03744349f8b1b2dd568a"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -6300,14 +6300,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
-    const {data,error}=await sb.from('branches').select('id,name,active,billing_state').eq('business_id',S.biz.id).order('name');
+    const {data,error}=await sb.from('branches').select('id,name,code,active,billing_state').eq('business_id',S.biz.id).order('name');
     if(error)throw error;
     branches=data||[];
   }else{
     const {data:me,error:staffError}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
     if(staffError)throw staffError;
     if(me&&me.length){
-      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+      const {data,error}=await sb.from('staff_branches').select('branches(id,name,code,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
       if(error)throw error;
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
@@ -6365,7 +6365,7 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     wrap.innerHTML=(branches.length||isAdmin)
       ? `<select class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
-        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+        ${branches.map(b=>`<option value="${b.id}">${esc(branchOptionLabelV778(b))}</option>`).join('')}
       </select>${withheldBranchesV217.length?`<p class="muted small" style="margin:6px 0 0">${esc(withheldBranchesV217.map(branchScopeUnavailableReasonV217).join(' '))}</p>`:''}`
       : `<span class="muted small">No branch assigned — ask the owner</span>`;
     const sel=wrap.querySelector('select');
@@ -6930,6 +6930,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'ccd66f96a68747e95741df819ad82a5e4facde96a859adbff37964ce7bcb0f6b',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'d2ef637b405a6ed373b74fdbf28d5b2919f77171659f03744349f8b1b2dd568a',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

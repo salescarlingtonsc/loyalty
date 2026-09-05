@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="01510543faf28ce954f6cc7fffae3a19818cd54f89837d5c9ca784f6896da0fc"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5762,7 +5762,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 01510543faf28ce954f6cc7fffae3a19818cd54f89837d5c9ca784f6896da0fc</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6978,7 +6978,7 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
     :Promise.resolve(none);
   const eligibilityNamesRequest=canRewards
     ?Promise.all([
-      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('branches').select('id,name,code').eq('business_id',S.biz.id),
       sb.from('services').select('id,name').eq('business_id',S.biz.id),
       sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id)])
     :Promise.resolve([none,none,none]);
@@ -8588,7 +8588,7 @@ async function growSetupComparisonV301(draftVersionId){
       sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
-      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('branches').select('id,name,code').eq('business_id',S.biz.id),
       sb.from('services').select('id,name').eq('business_id',S.biz.id),
       sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id),
       sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single()
@@ -16261,7 +16261,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'e4dc6c7c367aff6f2ab6716e67be406ba0416970e00f15a4244bece0bde03675',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'01510543faf28ce954f6cc7fffae3a19818cd54f89837d5c9ca784f6896da0fc',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

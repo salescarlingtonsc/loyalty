@@ -19784,6 +19784,18 @@ function userDisplayNameV158(){
   const meta=S.user?.user_metadata||{};
   return String(meta.full_name||meta.name||meta.given_name||'').trim();
 }
+/* nestly_v778: one branch reads the same in every picker. branches.code is the short human name
+   the firm actually uses for a shop ("B01"), assigned per business by the server; the option text
+   leads with it so the two Orchard branches a chain opens on the same street are told apart at a
+   glance. The code is nullable — a firm whose rows predate it, or any row the reader could not
+   supply one for, still shows the plain name — so this must never print an empty prefix or the
+   word for a missing one. profileBranchScopeLabelV158 below reads the rendered option text, so it
+   inherits the code for free and no second implementation of this decision exists. */
+function branchOptionLabelV778(branch){
+  const name=String(branch&&branch.name!=null?branch.name:'').trim()||'Branch';
+  const code=String(branch&&branch.code!=null?branch.code:'').trim();
+  return code?`${code} · ${name}`:name;
+}
 function profileBranchScopeLabelV158(){
   if(!selectedBranchId)return 'All branches';
   const option=[...document.querySelectorAll('#profileBranchScopeSelectV158 option')].find(candidate=>candidate.value===selectedBranchId);
@@ -19808,7 +19820,7 @@ async function hydrateProfileBranchSelectorV158(page){
       ?`<span class="topbar-branch-label-v210" aria-hidden="true">Viewing</span>
         <select id="profileBranchScopeSelectV158" aria-label="View data for branch" title="This changes the workspace view. Operational actions still use one selected branch.">
           ${isAdmin?'<option value="">All branches</option>':''}
-          ${allowed.map(branch=>`<option value="${branch.id}">${esc(branch.name)}</option>`).join('')}
+          ${allowed.map(branch=>`<option value="${branch.id}">${esc(branchOptionLabelV778(branch))}</option>`).join('')}
         </select>
         `
       :'<span class="muted small">No branch assigned</span>';
@@ -22012,14 +22024,14 @@ async function visibleBranchesForCurrentUser({refresh=false}={}){
   const isAdmin=S.myRole==='owner'||S.myRole==='manager';
   let branches=[];
   if(isAdmin){
-    const {data,error}=await sb.from('branches').select('id,name,active,billing_state').eq('business_id',S.biz.id).order('name');
+    const {data,error}=await sb.from('branches').select('id,name,code,active,billing_state').eq('business_id',S.biz.id).order('name');
     if(error)throw error;
     branches=data||[];
   }else{
     const {data:me,error:staffError}=await sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).limit(1);
     if(staffError)throw staffError;
     if(me&&me.length){
-      const {data,error}=await sb.from('staff_branches').select('branches(id,name,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
+      const {data,error}=await sb.from('staff_branches').select('branches(id,name,code,active,billing_state)').eq('business_id',S.biz.id).eq('staff_id',me[0].id);
       if(error)throw error;
       branches=(data||[]).map(r=>r.branches).filter(Boolean).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     }
@@ -22077,7 +22089,7 @@ async function refreshBranchFilter(onChange,isCurrent=()=>true,targetId='branchW
     wrap.innerHTML=(branches.length||isAdmin)
       ? `<select class="qbtn" aria-label="Business branch" style="padding-right:22px">
         ${isAdmin?`<option value="">All branches (consolidated)</option>`:''}
-        ${branches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}
+        ${branches.map(b=>`<option value="${b.id}">${esc(branchOptionLabelV778(b))}</option>`).join('')}
       </select>${withheldBranchesV217.length?`<p class="muted small" style="margin:6px 0 0">${esc(withheldBranchesV217.map(branchScopeUnavailableReasonV217).join(' '))}</p>`:''}`
       : `<span class="muted small">No branch assigned — ask the owner</span>`;
     const sel=wrap.querySelector('select');
@@ -25821,7 +25833,7 @@ async function tillPage(){
     {data:tillStaffBranches,error:tillStaffBranchError}
   ]=await Promise.all([
     sb.from('staff').select('id,full_name,user_id').eq('business_id',S.biz.id).eq('active',true).order('full_name'),
-    sb.from('branches').select('id,name,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
+    sb.from('branches').select('id,name,code,is_default').eq('business_id',S.biz.id).eq('active',true).order('name'),
     sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)
   ]);
   if(!isTillCurrent())return;
@@ -29030,7 +29042,7 @@ async function servicesPage(){
     const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613]=await Promise.all([
       sb.from('services').select('*').eq('business_id',S.biz.id).order('name'),
       canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map()),
-      sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+      sb.from('branches').select('id,name,code').eq('business_id',S.biz.id).eq('active',true).order('name'),
       sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
     ]);
     /* nestly_v613: a failed branch read must not be drawn as "this service is offered everywhere"
@@ -29862,7 +29874,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const loyaltyControlDisabled=canManageLoyalty?'':' disabled';
   let lp=[],rw=[],tr=[],rb=[],rs=[],rp=[],bo=[],birthdayPrograms=[],publishedBirthdayPrograms=[],draftSnapshotHash=null;
   const [{data:br,error:brError},{data:sv,error:svError},productResult]=await Promise.all([
-    sb.from('branches').select('id,name,active').eq('business_id',S.biz.id).order('name'),
+    sb.from('branches').select('id,name,code,active').eq('business_id',S.biz.id).order('name'),
     sb.from('services').select('id,name,active,price_cents').eq('business_id',S.biz.id).order('name'),
     canManageLoyalty
       ?sb.rpc('owner_list_reward_profitability_products_v122',{p_business:S.biz.id})
@@ -31910,7 +31922,7 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     :Promise.resolve(none);
   const eligibilityNamesRequest=canRewards
     ?Promise.all([
-      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('branches').select('id,name,code').eq('business_id',S.biz.id),
       sb.from('services').select('id,name').eq('business_id',S.biz.id),
       sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id)])
     :Promise.resolve([none,none,none]);
@@ -40370,7 +40382,7 @@ async function growSetupComparisonV301(draftVersionId){
       sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
       sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
-      sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+      sb.from('branches').select('id,name,code').eq('business_id',S.biz.id),
       sb.from('services').select('id,name').eq('business_id',S.biz.id),
       sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id),
       sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single()
@@ -42782,7 +42794,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
         sb.from('loyalty_rewards').select('id,active,customer_name,name,cost_points,credit_cents,entitlement_expiry_days,usage_limit,min_tier_id,min_tier_threshold').eq('business_id',S.biz.id),
         sb.from('loyalty_reward_branches').select('reward_id,branch_id').eq('business_id',S.biz.id),
         sb.from('loyalty_reward_services').select('reward_id,service_id').eq('business_id',S.biz.id),
-        sb.from('branches').select('id,name').eq('business_id',S.biz.id),
+        sb.from('branches').select('id,name,code').eq('business_id',S.biz.id),
         sb.from('services').select('id,name').eq('business_id',S.biz.id),
         sb.from('loyalty_tiers').select('id,name').eq('business_id',S.biz.id),
         sb.from('businesses').select('active_config_version_id').eq('id',S.biz.id).single()
@@ -43777,7 +43789,7 @@ async function storedValuePage(){
     sb.rpc('get_sv_authority_overview',{p_business:S.biz.id}),
     sb.rpc('get_sv_reconciliation',{p_business:S.biz.id}),
     sb.rpc('preview_sv_cutover',{p_business:S.biz.id}),
-    sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name')
+    sb.from('branches').select('id,name,code').eq('business_id',S.biz.id).eq('active',true).order('name')
   ]);
   if(!isCurrent())return;
   /* FAIL CLOSED: if the authority OR reconciliation read fails, show an error and render NO
@@ -44506,7 +44518,7 @@ async function giftcardsPage(){
   const [clientsResult,preferencesResult,branchesResult,staffResult,staffBranchesResult]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
-    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
+    fetchAllRowsResult(()=>sb.from('branches').select('id,name,code,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     sb.from('staff').select('id').eq('business_id',S.biz.id).eq('user_id',S.user.id).eq('active',true).limit(1),
     fetchAllRowsResult(()=>sb.from('staff_branches').select('staff_id,branch_id',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('branch_id'))
   ]);
@@ -44794,7 +44806,7 @@ async function appointmentsPage(){
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone,phone_norm,email',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,price_cents,duration_min,buffer_before_min,buffer_after_min',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff').select('id,full_name,user_id,calendar_color,phone,email',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('full_name').order('id')),
-    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default,timezone,address',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
+    fetchAllRowsResult(()=>sb.from('branches').select('id,name,code,is_default,timezone,address',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     fetchAllRowsResult(()=>sb.from('staff_branches').select('staff_id,branch_id',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('branch_id')),
     fetchAllRowsResult(()=>sb.from('service_branches').select('service_id,branch_id',{count:'exact'}).eq('business_id',S.biz.id).order('service_id').order('branch_id')),
     fetchAllRowsResult(()=>sb.from('staff_hours').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday')),
@@ -49244,7 +49256,7 @@ async function inventoryPage(){
     const [productsResult,mediaMap,branchesResultV627,productBranchesResultV627]=await Promise.all([
       sb.from('products').select('*').eq('business_id',S.biz.id).order('name'),
       canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map()),
-      sb.from('branches').select('id,name').eq('business_id',S.biz.id).eq('active',true).order('name'),
+      sb.from('branches').select('id,name,code').eq('business_id',S.biz.id).eq('active',true).order('name'),
       sb.from('product_branches').select('product_id,branch_id').eq('business_id',S.biz.id)]);
     /* A failed branch read must not be drawn as "sold everywhere" — that is a real setting, and
        inventing it would be the class of lie v584 took off the staff roster. */
@@ -49400,7 +49412,7 @@ async function packagesPage(options){
        single customer it exists for has bought it. */
     fetchAllRowsResult(()=>sb.from('package_plans').select('*',{count:'exact'}).eq('business_id',S.biz.id).is('bespoke_for_client',null).order('created_at',{ascending:false}).order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,duration_min,price_cents,active',{count:'exact'}).eq('business_id',S.biz.id).order('name').order('id')),
-    fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
+    fetchAllRowsResult(()=>sb.from('branches').select('id,name,code,is_default',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
     sb.rpc('business_get_checkout_preferences_v102',{p_business:S.biz.id}),
     /* V193: a package version may only be edited or deleted while NOBODY has bought it.
        client_packages.plan_id gives that answer exactly, rather than guessing from snapshots. */
@@ -50450,7 +50462,9 @@ async function branchesPage(){
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
-          <div><b data-merchant-content>${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${statusOnOff(b.active)}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':b.billing_state==='canceling'?` <span class="pill off">Stops ${esc(b.billing_cancel_at?sgt(b.billing_cancel_at):'at the billing date')}</span>`:b.billing_state==='unsubscribed'?' <span class="pill no">Unsubscribed</span>':''}
+          ${/* nestly_v778: the branch's own code leads its card, so the row an owner reads here is
+                 headed by the same short name the pickers, the reports and the Owner brief use. */''}
+          <div><b data-merchant-content>${b.code?esc(String(b.code))+' · ':''}${esc(b.name)}</b> ${b.is_default?'<span class="pill new">Default</span>':''} <span class="pill ${b.active?'ok':'no'}">${statusOnOff(b.active)}</span>${b.billing_state==='pending_payment'?' <span class="pill new">Awaiting payment</span>':b.billing_state==='suspended'?' <span class="pill no">Payment lapsed</span>':b.billing_state==='canceling'?` <span class="pill off">Stops ${esc(b.billing_cancel_at?sgt(b.billing_cancel_at):'at the billing date')}</span>`:b.billing_state==='unsubscribed'?' <span class="pill no">Unsubscribed</span>':''}
           <div data-merchant-content class="muted small" style="margin-top:4px">${esc(b.address||'No address set')}${b.phone?' · '+esc(b.phone):''}${b.email?' · '+esc(b.email):''}</div></div>
           <span class="spacer"></span>
           <button class="btn ghost sm" onclick="editBranch('${b.id}')">Edit</button>
@@ -50594,6 +50608,14 @@ async function customerIntelligencePage(){
     lastRewardPopularityBundleV774=null,lastRewardPopularityErrorV774='',
     lastVisitRhythmBundleV774=null,lastVisitRhythmErrorV774='',
     lastDemographicTotalsBundleV774=null,lastDemographicTotalsErrorV774='';
+  /* nestly_v778: the two branch readers. The directory answers "what is this branch called and
+     what is its code" for the scope line — it is asked on every run, branch-selected or not,
+     because the line has to name the branch the report is scoped TO. The comparison is asked only
+     when no branch is selected: with one selected there is nothing to compare, and calling it
+     anyway would spend a round trip on a payload the brief would then throw away. Both are
+     captured independently, same discipline as the v771/v774 bundles above. */
+  let lastBranchDirectoryBundleV778=null,lastBranchDirectoryErrorV778='',
+    lastBranchComparisonBundleV778=null,lastBranchComparisonErrorV778='';
   /* V285: the heading now says what the rail says. Every other route in the workspace answers to
      the name it was opened by; this one was reached under "Customer intelligence" and then titled
      itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
@@ -50820,9 +50842,26 @@ async function customerIntelligencePage(){
      pure top-level renderer takes, so every judgement stays testable outside the page. It sits
      below ciOpportunitiesMarkupV685 deliberately: the v685 harness extracts the slice that runs
      from scopeMoney to ciCategoryMixWrapV650, and this must not land inside it. */
+  /* nestly_v778: what the brief is a report ON, resolved once. The branch's own code and name are
+     the directory reader's, so the brief names a branch the way the rest of the workspace files
+     it; profileBranchScopeLabelV158 is the fallback for the window between the page painting and
+     that reader answering, and is also what an actor sees whose directory row was filtered out. */
+  function ownerBriefScopeV778(){
+    const rows=Array.isArray(lastBranchDirectoryBundleV778?.branches)?lastBranchDirectoryBundleV778.branches:[];
+    const row=selectedBranchId?rows.find(item=>item&&String(item.id||'')===String(selectedBranchId)):null;
+    return {
+      branchId:selectedBranchId||null,
+      branchCode:row?.code||null,
+      branchName:row?.name||(selectedBranchId?profileBranchScopeLabelV158():null),
+      companySlug:S.biz?.slug||lastBranchDirectoryBundleV778?.business?.slug||null,
+      companyName:S.biz?.name||lastBranchDirectoryBundleV778?.business?.name||null
+    };
+  }
   function ownerBriefMarkupV771(){
     return ownerBriefHtmlV771({
       currency:S.biz?.currency||'SGD',
+      scope:ownerBriefScopeV778(),
+      branches:lastBranchComparisonBundleV778,branchesError:lastBranchComparisonErrorV778,
       periodDays:lastBriefPeriodDaysV771,from:lastBriefFromV771,to:lastBriefToV771,
       truth:lastTruthBundle?.truth||null,truthPrev:lastTruthPrevBundleV771,
       lifecycle:lastTruthBundle?.lifecycle||null,lifecyclePrev:lastLifecyclePrevBundleV771,
@@ -51033,7 +51072,8 @@ async function customerIntelligencePage(){
       truthPrevResponseV771,lifecyclePrevResponseV771,attentionResponseV771,
       serviceIntelResponseV771,packagesResponseV771,
       cashGapResponseV774,staffRebookingResponseV774,rewardPopularityResponseV774,
-      visitRhythmResponseV774,demographicTotalsResponseV774
+      visitRhythmResponseV774,demographicTotalsResponseV774,
+      branchDirectoryResponseV778,branchComparisonResponseV778
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -51142,7 +51182,17 @@ async function customerIntelligencePage(){
       }),
       sb.rpc('get_ci_demographic_totals_v1',{
         p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
-      })
+      }),
+      /* nestly_v778: the branch pair. The directory takes no range and no branch — it is the
+         roster the scope line names the open branch from, and it is asked on every run. The
+         comparison is business-wide by definition (it IS the per-branch split), so it takes no
+         p_branch either, and it is asked only while the brief is showing every branch: a branch
+         is selected, there is nothing to compare, and the resolved null leaves the block absent
+         rather than rendering a table the scope line has already contradicted. */
+      sb.rpc('get_ci_branch_directory_v1',{p_business:S.biz.id}),
+      selectedBranchId
+        ?Promise.resolve({data:null,error:null})
+        :sb.rpc('get_ci_branch_comparison_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate})
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -51226,6 +51276,13 @@ async function customerIntelligencePage(){
     lastVisitRhythmBundleV774=visitRhythmResponseV774.data||null;
     lastDemographicTotalsErrorV774=demographicTotalsResponseV774.error?.message||'';
     lastDemographicTotalsBundleV774=demographicTotalsResponseV774.data||null;
+    /* nestly_v778: the directory failing costs the scope line its branch code and nothing else —
+       the closure falls back to the picker's label — so its error is captured but never rendered
+       as a row of its own. The comparison's error IS shown, in its own block, like every other. */
+    lastBranchDirectoryErrorV778=branchDirectoryResponseV778.error?.message||'';
+    lastBranchDirectoryBundleV778=branchDirectoryResponseV778.data||null;
+    lastBranchComparisonErrorV778=branchComparisonResponseV778.error?.message||'';
+    lastBranchComparisonBundleV778=branchComparisonResponseV778.data||null;
     if(!lastCustomerError)await loadRemainingCustomerPagesV771();
     if(!isCurrent())return;
     paint(lastPayload);
@@ -51787,6 +51844,31 @@ function ownerBriefHtmlV771(brief){
     return line?`<p class="muted small" style="margin-top:10px">${esc(line)}</p>`:'';
   };
 
+  /* nestly_v778: the one line that says what everything below it is a report ON. Every figure in
+     this brief is either the whole firm's or one branch's, and until now the page said which only
+     in a caption halfway down it. The branch's code and name come from the directory reader rather
+     than from the picker, so the branch is named here exactly as it is filed everywhere else; when
+     that reader has not answered, the closure hands over the picker's own label instead. A brief
+     assembled without a scope at all prints no line rather than an invented one. */
+  const scopeV778=objectV771(briefV771.scope);
+  const scopeTextV778=(()=>{
+    if(!scopeV778)return '';
+    const branchIdV778=String(scopeV778.branchId==null?'':scopeV778.branchId).trim();
+    if(branchIdV778){
+      const codeV778=String(scopeV778.branchCode==null?'':scopeV778.branchCode).trim();
+      const nameV778=String(scopeV778.branchName==null?'':scopeV778.branchName).trim();
+      if(!codeV778&&!nameV778)return 'Showing one branch only';
+      if(!codeV778)return `Showing ${nameV778} only`;
+      return `Showing ${codeV778} · ${nameV778||'this branch'} only`;
+    }
+    const companyV778=String(scopeV778.companySlug==null?'':scopeV778.companySlug).trim()
+      ||String(scopeV778.companyName==null?'':scopeV778.companyName).trim();
+    return companyV778?`Showing all branches · company code ${companyV778}`:'Showing all branches';
+  })();
+  const scopeLineV778=scopeTextV778
+    ?`<p class="muted small ci-brief-scope-v778" style="margin-top:4px">${esc(scopeTextV778)}</p>`
+    :'';
+
   /* ---- A. This period at a glance ------------------------------------------------------- */
   const truthNowV771=objectV771(briefV771.truth),truthPrevV771=objectV771(briefV771.truthPrev);
   const lifeNowV771=objectV771(briefV771.lifecycle),lifePrevV771=objectV771(briefV771.lifecyclePrev);
@@ -51814,6 +51896,75 @@ function ownerBriefHtmlV771(brief){
       ${tileV771('New customers',joinersNowV771===null?'—':String(joinersNowV771),compareV771(joinersNowV771,joinersPrevV771))}
     </div>
   </section>`;
+
+  /* ---- L. Your branches side by side (nestly_v778, get_ci_branch_comparison_v1) ---------- */
+  /* Firm-wide only, and only with somebody to compare against. With one branch selected the
+     question has already been answered by the scope line above; with a single branch in the firm a
+     one-row table reads like a ranking of one. In both cases the block is absent rather than
+     empty. Every share carries the base it was measured against and a share the reader withheld
+     stays withheld — a comparison BETWEEN branches is exactly where a rounded zero would be read
+     as a verdict about the branch that scored it. */
+  const comparisonV778=objectV771(briefV771.branches);
+  const comparisonErrorV778=String(briefV771.branchesError||'').trim();
+  const comparisonRowsV778=listV774(comparisonV778?.branches);
+  const firmWideV778=!String(scopeV778?.branchId==null?'':scopeV778.branchId).trim();
+  let branchesV778='';
+  if(firmWideV778&&(comparisonErrorV778||comparisonRowsV778.length>=2)){
+    const branchNameV778=row=>{
+      const branch=objectV771(row.branch)||{};
+      const name=orTextV774(branch.name,'Branch');
+      const code=String(branch.code==null?'':branch.code).trim();
+      return code?`${code} · ${name}`:name;
+    };
+    const visitsCellV778=row=>{
+      const pct=wholePctV774(objectV771(row.share_of_visits)?.pct);
+      const visits=countV771(row.visits);
+      return pct===null?String(visits):`${visits} · ${pct}% of all`;
+    };
+    const revenueCellV778=row=>{
+      const pct=wholePctV774(objectV771(row.share_of_revenue)?.pct);
+      const takings=money(countV771(row.revenue_cents));
+      return pct===null?takings:`${takings} · ${pct}%`;
+    };
+    const genderCellV778=(row,gender)=>{
+      const found=listV774(row.gender).find(entry=>String(entry.gender==null?'':entry.gender)===gender);
+      return found?shareTextV774(found.share):'—';
+    };
+    const topBandV778=row=>{
+      const key=String(row.top_age_band==null?'':row.top_age_band).trim();
+      return key?ageLabelV774(key):'—';
+    };
+    const dayCellV778=day=>{
+      const block=objectV771(day);
+      const label=block?labelOfV774(block):'';
+      return label?`${label} · ${oneDecimalV774(block.per_occurrence)}/day`:'—';
+    };
+    const topItemV778=item=>{
+      const block=objectV771(item);
+      return block?`${orTextV774(block.item_name,'Item')} · ${money(countV771(block.revenue_cents))}`:'—';
+    };
+    const firmV778=objectV771(comparisonV778?.business);
+    const hiddenV778=countV771(comparisonV778?.branches_hidden);
+    branchesV778=`<section class="ci-brief-branches-v778" aria-labelledby="ciBriefBranchesTitleV778" style="margin-top:18px">
+      ${headV771('branch','ciBriefBranchesTitleV778','Your branches side by side','The same '+periodDaysV771+' days, one row for each branch.')}
+      ${comparisonErrorV778?errorRowV771('Your branches side by side could not load.',comparisonErrorV778):`
+      ${firmV778?`<p class="small" style="margin:10px 0 2px">${esc(`Across all branches: ${countV771(firmV778.visits)} valid visits · ${money(countV771(firmV778.revenue_cents))} · ${countV771(firmV778.customers)} customers.`)}</p>`:''}
+      <div class="cui-table-wrap" role="region" aria-label="Your branches side by side"><table class="cui-table" data-responsive="true"><thead><tr><th>Branch</th><th>Valid visits</th><th>Revenue</th><th>Customers</th><th>New customers</th><th>Women</th><th>Men</th><th>Top age band</th><th>Busiest day</th><th>Slowest day</th><th>Top item</th></tr></thead><tbody>${comparisonRowsV778.map(row=>
+        `<tr><td data-label="Branch"><b>${esc(branchNameV778(row))}</b></td>
+        <td data-label="Valid visits">${esc(visitsCellV778(row))}</td>
+        <td data-label="Revenue">${esc(revenueCellV778(row))}</td>
+        <td data-label="Customers">${countV771(row.customers)}</td>
+        <td data-label="New customers">${countV771(row.new_customers)}</td>
+        <td data-label="Women">${esc(genderCellV778(row,'female'))}</td>
+        <td data-label="Men">${esc(genderCellV778(row,'male'))}</td>
+        <td data-label="Top age band">${esc(topBandV778(row))}</td>
+        <td data-label="Busiest day">${esc(dayCellV778(row.busiest_weekday))}</td>
+        <td data-label="Slowest day">${esc(dayCellV778(row.slowest_weekday))}</td>
+        <td data-label="Top item">${esc(topItemV778(row.top_item))}</td></tr>`).join('')}</tbody></table></div>
+      ${hiddenV778>0?`<p class="muted small" style="margin-top:8px">${esc(`${hiddenV778} ${hiddenV778===1?'branch is':'branches are'} outside what your role can see.`)}</p>`:''}
+      ${noteLineV774('Branches are compared on where the sale was rung up. A customer who visits two branches is counted at each.')}`}
+    </section>`;
+  }
 
   /* ---- B. Customers to bring back -------------------------------------------------------- */
   /* Local copy of the bring-back vocabulary, for the self-containment reason in the header
@@ -52334,8 +52485,8 @@ function ownerBriefHtmlV771(brief){
      this line changed. A block whose reader returned nothing and raised nothing is an empty
      string here, so an absent permission removes it rather than showing an empty shell. */
   return `<section class="card ci-owner-brief-v771" aria-labelledby="ciOwnerBriefTitleV771">
-    <div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start">${CUI.icon('customers',{size:24})}<div><h2 id="ciOwnerBriefTitleV771">Owner brief</h2><p>The short version: what happened, who to call, and what is already paid for.</p></div></div>
-    ${glanceV771}${whenV774}${bringBackV771}${cashGapV774}${unusedV771}${topCustomersV771}${servicesV771}${staffBlockV774}${rewardsBlockV774}${whoV774}${limitsV771}
+    <div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start">${CUI.icon('customers',{size:24})}<div><h2 id="ciOwnerBriefTitleV771">Owner brief</h2><p>The short version: what happened, who to call, and what is already paid for.</p>${scopeLineV778}</div></div>
+    ${glanceV771}${branchesV778}${whenV774}${bringBackV771}${cashGapV774}${unusedV771}${topCustomersV771}${servicesV771}${staffBlockV774}${rewardsBlockV774}${whoV774}${limitsV771}
   </section>`;
 }
 
@@ -54248,7 +54399,7 @@ async function expensesPage(){
   if(scopeResult?.error){
     $('expGate').innerHTML=CUI.emptyState({iconName:'info',title:'Expenses unavailable',body:'Finance or Expenses access is not complete across every active branch.'});return;
   }
-  const branchResult=await fetchAllRowsResult(()=>sb.from('branches').select('id,name,is_default',{count:'exact'})
+  const branchResult=await fetchAllRowsResult(()=>sb.from('branches').select('id,name,code,is_default',{count:'exact'})
     .eq('business_id',S.biz.id).eq('active',true).order('name').order('id'));
   if(!isCurrent())return;
   if(branchResult.error){
@@ -55462,7 +55613,7 @@ async function settingsPage(){
            {data:brs,error:branchError},{data:sbr,error:assignError}]=await Promise.all([
       sb.from('staff').select('*').eq('business_id',S.biz.id).order('created_at'),
       sb.from('staff_invites').select('*').eq('business_id',S.biz.id).eq('status','pending').order('created_at',{ascending:false}),
-      sb.from('branches').select('id,name,active,is_default').eq('business_id',S.biz.id).order('name'),
+      sb.from('branches').select('id,name,code,active,is_default').eq('business_id',S.biz.id).order('name'),
       sb.from('staff_branches').select('staff_id,branch_id').eq('business_id',S.biz.id)]);
     if(staffError||inviteError)return fail(staffError||inviteError);
     /* A branch read that fails must not take the whole team list down with it — the roster is the
@@ -56692,7 +56843,7 @@ async function loadBillingConfig(){
        active come back with it so each row can say which it is. */
     /* nestly_v665: billing_cancel_at travels with the row so a stopping branch can say WHEN, both
        in its status pill and in the pop-up that offers to keep it. */
-    sb.from('branches').select('id,name,is_default,active,billing_state,billing_cancel_at,address,phone,email')
+    sb.from('branches').select('id,name,code,is_default,active,billing_state,billing_cancel_at,address,phone,email')
       .eq('business_id',S.biz.id)
       .order('is_default',{ascending:false}).order('active',{ascending:false}).order('name')
   ]);
@@ -57572,7 +57723,7 @@ function businessProfileBranchCardHtmlV325(){
 async function loadBranchContactCardV325(){
   const host=$('ciBranchContactV325');
   if(!host)return;
-  const {data:branches,error}=await sb.from('branches').select('id,name,address,phone,is_default,active')
+  const {data:branches,error}=await sb.from('branches').select('id,name,code,address,phone,is_default,active')
     .eq('business_id',S.biz.id).eq('active',true).order('is_default',{ascending:false}).order('name');
   if(!host.isConnected)return;
   if(error){host.innerHTML=`<p class="err small">${esc(error.message||'Branches could not be loaded.')}</p>`;return}

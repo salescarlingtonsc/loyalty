@@ -4105,6 +4105,16 @@
       "reason": "nestly_v774 wires the FIRST merchant-UI call site for this reader (function nestly_v772), feeding the Owner brief’s ‘Who your customers are’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns the customer population split by gender and age band (through app.customer_demographics_core_v674), the unknown remainder outside every share denominator, coverage rate blocks, and a per-item buyer split by group, all evidence-gated by the v672 statistical-authority contract. Takes p_branch and respects the top bar’s branch scope. Writes nothing."
     },
     {
+      "id": "browser.rpc:app/app.js:get_ci_branch_directory_v1",
+      "reason": "nestly_v778 wires the FIRST merchant-UI call site for this reader (function nestly_v777), feeding the Owner brief’s scope line on Customer Intelligence — the line that names which branch, by code, the whole brief is a report on. SECURITY DEFINER, business-membership gated, read-only — returns the business’s id/name/slug and its branch roster (id, code, name, active, is_default), filtered to the branches the calling actor may see. Writes nothing.",
+      "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_branch_comparison_v1",
+      "reason": "nestly_v778 wires the FIRST merchant-UI call site for this reader (function nestly_v777), feeding the Owner brief’s ‘Your branches side by side’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns per-branch valid visits, revenue, customers, new customers, share of visits and revenue, the gender and age-band split with its coverage, the busiest and quietest weekday, and the top item, every share behind the v672 statistical-authority contract with its own base and evidence block. Branches the actor may not see are counted in branches_hidden rather than shown. Called only when no branch is selected, since the payload IS the per-branch split. Writes nothing.",
+      "kernel_migratability": "portable — read-only, business-scoped, touches no stored-value surface."
+    },
+    {
       "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",
       "reason": "Service mapping board (#/servicemapping, nestly_v650), reached from Customer Intelligence's category-mix withhold state and from Services. SECURITY DEFINER, business-membership + services-module-READ gated, read-only — returns the service list joined to v647/v648 canonical nodes plus each service's suggested_node_key. Writes nothing; the page renders only when this call succeeds, which is the whole client-side gate."
     },
