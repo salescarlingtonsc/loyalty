@@ -54,7 +54,7 @@ vm.runInContext([
   grab('billingLifecycleLinesV764', 'function billingLifecycleLinesV764(billing,summary,paymentMethod){'),
   grab('branchProrataConfirmLinesV764', 'function branchProrataConfirmLinesV764(preview,branchName){'),
   grab('branchSwitchOffConfirmV764', 'function branchSwitchOffConfirmV764(record){'),
-  grab('billingInvoiceReasonTextV764', 'function billingInvoiceReasonTextV764(row,planLabel){')
+  grab('billingInvoiceReasonTextV764', 'function billingInvoiceReasonTextV764(row,planLabel,mainBranchName){')
 ].join('\n'), sandbox);
 
 const CARD = { kind: 'card', brand: 'MC', last4: '9037' };

@@ -3897,6 +3897,12 @@
       "path": "db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql",
       "semanticVersion": "v773",
       "proposedDeployVersion": "20261005000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v775_capacity_increase_invoice_reason.sql",
+      "semanticVersion": "v775",
+      "proposedDeployVersion": "20261006000000"
     }
   ]
 }

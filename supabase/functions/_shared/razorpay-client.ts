@@ -229,11 +229,16 @@ export function razorpayClient(credentials: RazorpayCredentials) {
       request<RazorpayList<RazorpaySubscription>>({ method: 'GET', path: '/subscriptions', query }),
     createSubscription: (body: Record<string, unknown>) =>
       request<RazorpaySubscription>({ method: 'POST', path: '/subscriptions', body }),
+    /* v775: a PATCH with schedule_change_at 'now' CHARGES the card before it answers, and that
+       took Razorpay 15–20s in test mode — past the 15s default, so the client aborted while the
+       provider went on to apply the change (observed 2026-09-05: two "AbortError" commands whose
+       PATCHes had both landed). The update gets its own budget; the edge runtime allows it. */
     updateSubscription: (subscriptionId: string, body: Record<string, unknown>) =>
       request<RazorpaySubscription>({
         method: 'PATCH',
         path: `/subscriptions/${subscriptionId}`,
         body,
+        timeoutMs: 60_000,
       }),
     cancelSubscription: (subscriptionId: string, cancelAtCycleEnd: 0 | 1) =>
       request<RazorpaySubscription>({

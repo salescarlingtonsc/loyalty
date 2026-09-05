@@ -406,14 +406,19 @@ test('the branch a charge pays for is named from the command, else the pending b
   assert.equal(missing, null);
 });
 
-test('the branch-add capture is wired into the change_branches "now" path only', () => {
+test('the update-charge capture is wired into the "now" path for branch adds and capacity increases', () => {
+  /* v775: a capacity increase is charged today too, so the same capture runs for it with its
+     own reason and the from/to sizes. */
   const wiring = commandSource.slice(
-    commandSource.indexOf("if (commandType === 'change_branches' && scheduleChangeAt === 'now')"),
+    commandSource.indexOf("(commandType === 'change_branches' || commandType === 'change_capacity') &&"),
     commandSource.indexOf("} else if (!providerResolved && commandType === 'cancel_at_period_end')"),
   );
-  assert.ok(wiring.length > 0, 'branch-add capture not wired');
+  assert.ok(wiring.length > 0, 'update-charge capture not wired');
   assert.match(wiring, /captureUpdateCharge\(\{/);
   assert.match(wiring, /reason: 'branch_added'/);
+  assert.match(wiring, /reason: 'capacity_increase'/);
+  assert.match(wiring, /capacity_from: String\(priorCapacityForNotes/);
+  assert.match(wiring, /capacity_to: String\(data\.requested_customer_capacity/);
   assert.match(wiring, /updateChargePending = capture\.invoices\.length === 0/);
   // The command function must never write billing truth itself.
   assert.doesNotMatch(commandSource, /apply_razorpay_billing_event_v755|ingest_billing_event_v755/);

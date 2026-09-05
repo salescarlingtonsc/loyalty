@@ -3892,6 +3892,12 @@
       "version": "20261005000000",
       "name": "nestly_v773_rewards_same_at_every_branch",
       "sourcePath": "db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006000000",
+      "name": "nestly_v775_capacity_increase_invoice_reason",
+      "sourcePath": "db/migrations/20261006_nestly_v775_capacity_increase_invoice_reason.sql"
     }
   ]
 }

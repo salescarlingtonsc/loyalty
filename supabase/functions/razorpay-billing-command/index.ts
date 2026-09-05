@@ -472,6 +472,12 @@ Deno.serve(async (req) => {
       if (!planId) throw new Error('Razorpay plan is not configured for this catalogue row');
       providerCallStarted = true;
       const current = await razorpay.getSubscription(subscriptionId);
+      /* v775: the capacity the firm is coming FROM, for the payments-history label. */
+      const priorTerms = commandType === 'change_capacity'
+        ? await admin.from('billing_subscription_terms_v124').select('customer_capacity')
+          .eq('business_id', businessId).maybeSingle()
+        : null;
+      const priorCapacityForNotes = priorTerms?.data?.customer_capacity ?? null;
       /* nestly_v665 proration rule, carried over: DIRECTION decides when the change takes
          effect. More units (or a higher tier) start now and are charged; fewer units take effect
          at cycle end so nothing is refunded and the owner keeps what they paid for until the
@@ -592,12 +598,21 @@ Deno.serve(async (req) => {
          and the only event it emits carries no payment. Read the update invoice back and mirror
          it through the same synthesis the recovery path uses, so the branch activator fires and
          the payments history can say which branch, how much, and until when. */
-      if (commandType === 'change_branches' && scheduleChangeAt === 'now') {
-        const branch = await branchIdentityForCommand({
-          admin,
-          businessId,
-          requestedBranchId: commandRowData?.requested_branch_id as string | null,
-        });
+      /* v775 — the same is true of a CAPACITY increase (owner ruling: "the difference must be paid
+         today, pro-rated, same concept as a new branch"): Razorpay charges the pro-rata difference
+         on the PATCH and emits nothing that carries the payment. Mirrored here with its own
+         reason so the payments history can say "Capacity increase · 10,000 → 40,000 profiles". */
+      if (
+        (commandType === 'change_branches' || commandType === 'change_capacity') &&
+        scheduleChangeAt === 'now'
+      ) {
+        const branch = commandType === 'change_branches'
+          ? await branchIdentityForCommand({
+            admin,
+            businessId,
+            requestedBranchId: commandRowData?.requested_branch_id as string | null,
+          })
+          : null;
         const capture = await captureUpdateCharge({
           admin,
           razorpay,
@@ -605,12 +620,18 @@ Deno.serve(async (req) => {
           businessId,
           livemode,
           subscription: verified,
-          extraNotes: {
-            reason: 'branch_added',
-            ...(branch
-              ? { branch_id: branch.branch_id, branch_name: branch.branch_name }
-              : {}),
-          },
+          extraNotes: commandType === 'change_capacity'
+            ? {
+              reason: 'capacity_increase',
+              capacity_from: String(priorCapacityForNotes ?? ''),
+              capacity_to: String(data.requested_customer_capacity ?? ''),
+            }
+            : {
+              reason: 'branch_added',
+              ...(branch
+                ? { branch_id: branch.branch_id, branch_name: branch.branch_name }
+                : {}),
+            },
         });
         /* No paid invoice after both looks means the card has not settled (a decline, a 3DS
            step). That is genuinely UNKNOWN, not failed: the branch stays pending_payment, the
@@ -717,12 +738,14 @@ Deno.serve(async (req) => {
        part that was missed, so it runs again here: it mirrors only invoices not already held, and
        an already-active branch means the reconcile heal got there first. Observed 2026-09-05:
        East Wing's retry returned "completed" with nothing mirrored. */
-    if (providerResolved && commandType === 'change_branches' && subscriptionId) {
-      const branch = await branchIdentityForCommand({
-        admin,
-        businessId,
-        requestedBranchId: commandRowData?.requested_branch_id as string | null,
-      });
+    if (providerResolved && (commandType === 'change_branches' || commandType === 'change_capacity') && subscriptionId) {
+      const branch = commandType === 'change_branches'
+        ? await branchIdentityForCommand({
+          admin,
+          businessId,
+          requestedBranchId: commandRowData?.requested_branch_id as string | null,
+        })
+        : null;
       providerCallStarted = true;
       const capture = await captureUpdateCharge({
         admin,
@@ -730,13 +753,15 @@ Deno.serve(async (req) => {
         subscriptionId,
         businessId,
         livemode,
-        extraNotes: {
-          reason: 'branch_added',
-          ...(branch ? { branch_id: branch.branch_id, branch_name: branch.branch_name } : {}),
-        },
+        extraNotes: commandType === 'change_capacity'
+          ? { reason: 'capacity_increase', capacity_to: String(data.requested_customer_capacity ?? '') }
+          : {
+            reason: 'branch_added',
+            ...(branch ? { branch_id: branch.branch_id, branch_name: branch.branch_name } : {}),
+          },
       });
       providerCallStarted = false;
-      if (capture.invoices.length === 0) {
+      if (commandType === 'change_branches' && capture.invoices.length === 0) {
         let branchStillPending = true;
         if (branch) {
           const { data: row } = await admin

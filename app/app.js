@@ -56258,7 +56258,33 @@ function branchSwitchOffConfirmV764(record){
     +`Nothing is refunded, and its customers, sales and bookings stay in your reports.`;
 }
 /* Owner ruling 1, second half: the payments list must say WHICH branch and until WHEN. */
-function billingInvoiceReasonTextV764(row,planLabel){
+/* v775: the pro-rata estimate for a capacity increase, from the same period arithmetic the
+   branch preview uses (days remaining / period days), applied to the per-branch price difference
+   times every charged branch. Said as "About", exactly like the branch confirmation. */
+async function capacityIncreaseConfirmTextV775(billing,summary,cadence,capacity){
+  const tiers=Array.isArray(billing?.capacity_tiers)?billing.capacity_tiers:[];
+  const tierFor=cap=>tiers.find(t=>t.cadence===cadence&&Number(t.capacity_ceiling)===Number(cap));
+  const target=tierFor(capacity);
+  const fromCapacity=Number(summary?.capacity||billing?.terms?.customer_capacity||0);
+  const current=tierFor(fromCapacity);
+  const units=Math.max(1,Number(summary?.units||1));
+  const diff=Math.max(0,Number(target?.amount_cents||0)-Number(current?.amount_cents||summary?.unit_amount_cents||0));
+  const pm=billing?.payment_method&&typeof billing.payment_method==='object'?billing.payment_method:null;
+  let fraction=1,until='';
+  const card=pm&&pm.last4?`${pm.brand||'card'} ending ${pm.last4}`:'';
+  try{
+    const {data}=await sb.rpc('preview_branch_addition_v764',{p_business:S.biz.id,p_branch_name:null});
+    if(data&&data.status==='ok'){
+      const days=Number(data.period_days||0),left=Number(data.days_remaining||0);
+      if(days>0&&left>=0)fraction=Math.min(1,left/days);
+      until=billingDateV758(data.covers_until)||'';
+    }
+  }catch{}
+  const amount=Math.round(diff*units*fraction);
+  const toCap=Number(capacity).toLocaleString('en-SG');
+  return `Increase to ${toCap} customer profiles?\n\nAbout ${moneyShortV758(amount)} charged now${card?` to ${card}`:''} — the difference for ${units} branch${units===1?'':'es'} for the time left${until?` until ${until}`:''}. From your renewal, ${moneyShortV758(Number(target?.amount_cents||0)*units)} / ${cadence==='annual'?'year':'month'}.`;
+}
+function billingInvoiceReasonTextV764(row,planLabel,mainBranchName){
   const reason=String(row?.reason||'').trim();
   const detail=row&&typeof row.detail==='object'&&row.detail?row.detail:{};
   const from=billingDateV758(detail.covers_from||row?.period_start);
@@ -56271,10 +56297,19 @@ function billingInvoiceReasonTextV764(row,planLabel){
     return [`Branch${name?` ${name}`:''}`,span].filter(Boolean).join(' · ');
   }
   if(reason==='plan_changed')return 'Plan change';
+  /* v775 (owner): a capacity increase must say so, with the sizes. */
+  if(reason==='capacity_increase'){
+    const from=Number(detail.capacity_from||0),to=Number(detail.capacity_to||0);
+    const sizes=to?`${from?from.toLocaleString('en-SG')+' → ':''}${to.toLocaleString('en-SG')} profiles`:'';
+    return ['Capacity increase',sizes,span].filter(Boolean).join(' · ');
+  }
   if(reason==='initial'||reason==='renewal'){
     const plan=billingCadenceWordV764(row?.cadence||detail.cadence)
       ||(planLabel==='Annual'||planLabel==='Monthly'?planLabel:'');
-    return [`${plan?plan+' plan':'Plan'}`,span].filter(Boolean).join(' · ');
+    /* v775 (owner): the plan payment names the branch it covers — the main branch is inside the
+       plan price; every other branch has its own "Branch …" line. */
+    const main=String(mainBranchName||'').trim();
+    return [`${plan?plan+' plan':'Plan'}`,main?`${main} (main branch)`:'',span].filter(Boolean).join(' · ');
   }
   return 'Subscription';
 }
@@ -56466,10 +56501,11 @@ function billingInvoiceTableV758(billing,summary){
      four payments, so a phone gets the same four facts on ONE line instead. Same data, rendered
      twice, one of the two hidden by the style block above — never two different sets of numbers. */
   const planLabel=summary&&(summary.plan_label==='Annual'||summary.plan_label==='Monthly')?summary.plan_label:null;
+  const mainBranchNameV775=String((Array.isArray(billing?.__branchesV612)?billing.__branchesV612:[]).find(x=>x.is_default||x.billing_state==='included')?.name||'');
   const cell=row=>({
     when:billingDateV758(row.paid_at||row.period_start)||'—',
     /* nestly_v764 (owner ruling 1): "which branch, how much, and until when". */
-    what:billingInvoiceReasonTextV764(row,planLabel)||'Subscription',
+    what:billingInvoiceReasonTextV764(row,planLabel,mainBranchNameV775)||'Subscription',
     amount:moneyShortV758(Number(row.total_cents||0)),
     status:billingStatusWordV758(row.status),
     url:String(row.provider_receipt_url||row.hosted_invoice_url||'').trim()
@@ -56719,6 +56755,8 @@ async function loadBillingConfig(){
     /* nestly_v764: what happens next to this subscription — a cycle change already booked for the
        renewal date, or a renewal the owner has cancelled and can still resume. */
     const lifecycleV764=billingLifecycleLinesV764(b,summaryV758,b.payment_method);
+    /* v775: re-rendering closed the Change plan drawer the moment a capacity was picked. */
+    const drawerWasOpenV775=!!wrap.querySelector('#billingChangePlanV758')?.open;
     wrap.innerHTML=`${billingSummaryCardV758(summaryLinesV758,{
         primaryLabel:lifecycleV764.show_final?'Start a new plan'
           :providerSubscription?'Change plan':'Choose plan',
@@ -56728,7 +56766,7 @@ async function loadBillingConfig(){
       })}
       ${subscriptionBranchListV758(b,summaryV758)}
       ${billingInvoiceTableV758(b,summaryV758)}
-      <details id="billingChangePlanV758" style="margin-top:4px"><summary style="cursor:pointer;font-weight:700">Change plan</summary>
+      <details id="billingChangePlanV758" style="margin-top:4px"${drawerWasOpenV775?' open':''}><summary style="cursor:pointer;font-weight:700">Change plan</summary>
       <fieldset style="border:0;padding:0;margin:14px 0 0"><legend class="small" style="font-weight:700;margin-bottom:8px">How often you pay</legend>
         <div class="row" style="align-items:stretch;flex-wrap:wrap">
           <label class="card" style="flex:1;min-width:180px;padding:14px;cursor:pointer"><input type="radio" name="billingCadence" value="annual" ${selectedCadence==='annual'?'checked':''}> <strong>Annual · ${annualTierV664?esc(money(annualTierV664.amount_cents)):'—'}/year</strong><br><span class="muted small">${annualTierV664?esc(money(Number(annualTierV664.amount_cents)/12))+' / month equivalent per branch':'Annual pricing is arranged with Peekaa support at this capacity'}</span></label>
@@ -56849,8 +56887,14 @@ async function loadBillingConfig(){
       const focusTarget=drawer.querySelector('input,select,button');
       if(focusTarget)focusTarget.focus();
     };
-    if($('billingPrimary'))$('billingPrimary').onclick=()=>{
+    if($('billingPrimary'))$('billingPrimary').onclick=async()=>{
       const type=!providerSubscription?'create_checkout':!sameCadence?'change_cadence':'change_capacity';
+      /* v775 (owner ruling): a capacity increase is charged today, pro-rated, like a new branch —
+         so it is confirmed the same way, with the amount, the card and the date it covers. */
+      if(type==='change_capacity'){
+        const text=await capacityIncreaseConfirmTextV775(b,summaryV758,selectedCadence,selectedCapacity);
+        if(!await confirmActionV386(text,{confirmLabel:'Increase and pay now',cancelLabel:'Not now'}))return;
+      }
       return execute(type,selectedCadence,selectedCapacity);
     };
     /* nestly_v764 (owner ruling 4): both directions are confirmed in the owner's own words, and
