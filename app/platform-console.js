@@ -3417,7 +3417,9 @@
       'No files yet. Attach one to a note below.':'尚无文件。可在下方备注中附加。','Open':'打开','Add a note…':'添加备注…','Attach documents':'附加文件','Send note':'发送备注',
       'Uploading {name}…':'正在上传 {name}…','Saving note…':'正在保存备注…','Note saved.':'备注已保存。','Note saved with {count} attachment(s).':'备注已保存，附件 {count} 个。',
       'The note could not be saved.':'无法保存备注。','Follow-up marked as done.':'跟进已标记完成。','Could not update the follow-up.':'无法更新跟进。',
-      'Attachment':'附件','Unnamed prospect':'未命名潜在商户'
+      'Attachment':'附件','Unnamed prospect':'未命名潜在商户',
+      'Paid to {date}':'已付至 {date}','Auto deduction · On':'自动扣款 · 开','Auto deduction · Off':'自动扣款 · 关',
+      'Auto deduction · Off at renewal':'自动扣款 · 续费时关闭','No subscription':'无订阅'
     }),
     ms:Object.freeze({
       'Pipeline':'Saluran jualan','Manage your business leads and grow with Peekaa.':'Urus petunjuk perniagaan anda dan berkembang bersama Peekaa.',
@@ -3451,7 +3453,9 @@
       'No files yet. Attach one to a note below.':'Belum ada fail. Lampirkan pada nota di bawah.','Open':'Buka','Add a note…':'Tambah nota…','Attach documents':'Lampirkan dokumen','Send note':'Hantar nota',
       'Uploading {name}…':'Memuat naik {name}…','Saving note…':'Menyimpan nota…','Note saved.':'Nota disimpan.','Note saved with {count} attachment(s).':'Nota disimpan dengan {count} lampiran.',
       'The note could not be saved.':'Nota tidak dapat disimpan.','Follow-up marked as done.':'Susulan ditandakan selesai.','Could not update the follow-up.':'Susulan tidak dapat dikemas kini.',
-      'Attachment':'Lampiran','Unnamed prospect':'Prospek tanpa nama'
+      'Attachment':'Lampiran','Unnamed prospect':'Prospek tanpa nama',
+      'Paid to {date}':'Dibayar hingga {date}','Auto deduction · On':'Potongan automatik · Hidup','Auto deduction · Off':'Potongan automatik · Mati',
+      'Auto deduction · Off at renewal':'Potongan automatik · Mati pada pembaharuan','No subscription':'Tiada langganan'
     })
   });
   // nestly_v779: a firm's payments, branch by branch — the kanban company popup and the
@@ -15490,7 +15494,41 @@
       ?`<p class="muted small">${escapeHtml(pt('Documents are visible to the assigned consultant and super admins.'))}</p>`
       :documents.length?`<ul class="platform-pipeline-branches">${documents.map(doc=>`<li><b>${escapeHtml(doc.original_filename||'—')}</b><span class="muted small">${escapeHtml(platformStatus(doc.document_type||''))} · ${escapeHtml(pipelineSgDateV785(doc.created_at,{time:true}))}</span><button type="button" class="btn ghost sm" data-pipeline-attachment="${escapeHtml(doc.id)}">${escapeHtml(pt('Open'))}</button></li>`).join('')}</ul>`
       :`<p class="muted small">${escapeHtml(pt('No files yet. Attach one to a note below.'))}</p>`;
-    const tabs=[['activity','Activity'],['contacts','Contacts'],['deal','Deal'],['files','Files']];
+    /* Owner 2026-09-06: a Branches tab — every branch, what it is paid to, and whether the card
+       keeps being charged. Read from the same v779 payment payload the Deal tab shows, so the two
+       never disagree; a firm not yet converted has no branches to bill. */
+    const paymentData=asObject(payments?.value),paidInvoices=asArray(paymentData.invoices).filter(row=>row.paid_normalized===true||String(row.status||'')==='paid');
+    const subscription=asObject(paymentData.subscription);
+    const billingBranches=asArray(paymentData.branches).length?asArray(paymentData.branches):branches.map(branch=>({...branch,branch_id:branch.id}));
+    const autoDeductionFor=branch=>{
+      const state=String(branch.billing_state||'');
+      if(state==='pending_payment')return {text:pt('Awaiting payment'),tone:'soon'};
+      if(['canceling','unsubscribed','suspended'].includes(state))return {text:pt('Auto deduction · Off'),tone:'overdue'};
+      if(subscription.cancel_at_period_end===true)return {text:pt('Auto deduction · Off at renewal'),tone:'soon'};
+      if(!subscription.status)return {text:pt('No subscription'),tone:''};
+      return {text:pt('Auto deduction · On'),tone:'won'};
+    };
+    const paidToFor=branch=>{
+      const key=String(branch.branch_id||branch.id||'');
+      const own=paidInvoices.filter(row=>v779InvoiceGroupKey(row,billingBranches)===key)
+        .sort((a,b)=>new Date(b.paid_at||b.created_at||0)-new Date(a.paid_at||a.created_at||0));
+      const latest=own[0];
+      const until=latest?v779InvoiceCoversUntil(latest):(branch.billing_state==='included'?subscription.current_period_end:null);
+      return {until,latest};
+    };
+    const branchesHtml=!converted
+      ?`<p class="muted small">${escapeHtml(pt('Not yet a Peekaa merchant. Payments appear here once the workspace is created and paid.'))}</p>`
+      :!billingBranches.length?`<p class="muted small">${escapeHtml(pt('No branches yet.'))}</p>`
+      :`<ul class="platform-pipeline-branches platform-pipeline-branch-billing-v785">${billingBranches.map(branch=>{
+          const paid=paidToFor(branch),auto=autoDeductionFor(branch);
+          return `<li style="display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:start">
+            <b>${escapeHtml(branch.name||'—')}${branch.is_default?` <span class="pill">${escapeHtml(pt('Main branch'))}</span>`:''}</b>
+            <span class="pill">${escapeHtml(v779BranchStateLabel(branch))}</span>
+            <span class="muted small">${escapeHtml(paid.until?pt('Paid to {date}',{date:pipelineSgDateV785(paid.until)}):pt('No payment yet'))}${paid.latest?` · ${escapeHtml(currency(paid.latest.total_cents,paid.latest.currency||'SGD'))}`:''}</span>
+            <span class="platform-pipeline-due" data-tone="${escapeHtml(auto.tone)}">${escapeHtml(auto.text)}</span>
+          </li>`;}).join('')}</ul>
+        ${subscription.current_period_end?`<p class="muted small" style="margin-top:8px">${escapeHtml(pt('Renews on {date}',{date:pipelineSgDateV785(subscription.current_period_end)}))}${subscription.cadence?` · ${escapeHtml(platformStatus(subscription.cadence))}`:''}</p>`:''}`;
+    const tabs=[['activity','Activity'],['contacts','Contacts'],['branches','Branches'],['deal','Deal'],['files','Files']];
     return `<div class="platform-pipeline-head">
       <span class="platform-pipeline-kpi-icon">${CUI.icon('branch',{size:20})}</span>
       <div style="min-width:0;flex:1 1 auto">
@@ -15522,12 +15560,8 @@
       <div class="platform-pipeline-section-head"><h2 id="pipelineInfoTitleV785">${escapeHtml(pt('Company Info'))}</h2></div>
       <dl class="platform-pipeline-info">${info.map(([label,value])=>`<dt>${escapeHtml(pt(label))}</dt><dd>${escapeHtml(String(value??'—'))}</dd>`).join('')}</dl>
     </section>
-    ${converted?`<section class="platform-pipeline-section" aria-labelledby="pipelineBranchesTitleV785">
-      <div class="platform-pipeline-section-head"><h2 id="pipelineBranchesTitleV785">${escapeHtml(pt('Branches'))}</h2></div>
-      ${branches.length?`<ul class="platform-pipeline-branches">${branches.map(branch=>`<li><b>${escapeHtml(branch.name||'—')}${branch.is_default?` (${escapeHtml(pt('Main'))})`:''}</b><span class="pill">${escapeHtml(v779BranchStateLabel(branch))}</span></li>`).join('')}</ul>`:`<p class="muted small">${escapeHtml(pt('No branches yet.'))}</p>`}
-    </section>`:''}
     <div class="platform-pipeline-tabs" role="tablist">${tabs.map(([key,label])=>`<button type="button" role="tab" data-pipeline-tab="${key}" aria-selected="${tab===key?'true':'false'}">${escapeHtml(pt(label))}</button>`).join('')}</div>
-    <section class="platform-pipeline-section" data-pipeline-tab-panel="${escapeHtml(tab)}">${tab==='contacts'?contactsHtml:tab==='deal'?dealHtml:tab==='files'?filesHtml:timeline}</section>
+    <section class="platform-pipeline-section" data-pipeline-tab-panel="${escapeHtml(tab)}">${tab==='contacts'?contactsHtml:tab==='branches'?branchesHtml:tab==='deal'?dealHtml:tab==='files'?filesHtml:timeline}</section>
     ${canWrite?`<div class="platform-pipeline-composer"><form data-pipeline-note-form>
       <textarea name="body" rows="1" placeholder="${escapeHtml(pt('Add a note…'))}" aria-label="${escapeHtml(pt('Add a note…'))}" maxlength="4000"></textarea>
       <label class="btn ghost" title="${escapeHtml(pt('Attach documents'))}" aria-label="${escapeHtml(pt('Attach documents'))}">${CUI.icon('import',{size:18})}<input type="file" name="files" multiple accept="${escapeHtml(prospectDocumentMimes.join(','))}"></label>

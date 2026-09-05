@@ -363,7 +363,7 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // no subscription exists / no lifecycle row exists).
   // Merged 2026-09-03: main's F130 (+17) and the CI-100 wave's v727/check-98/v734 strings (+14, itemised
   // below) are both live, so the inventory is the sum of the two sides' additions.
-  assert.equal(explicit.length,1238,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch + v785 Pipeline
+  assert.equal(explicit.length,1241,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch + v785 Pipeline
   // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
   // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
   // submitLabel are a ternary expression, not a literal, so they are not metadata matches).

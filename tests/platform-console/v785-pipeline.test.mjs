@@ -176,9 +176,21 @@ test('v785 the drawer shows next action, company info with last edited, branches
   assert.match(html,/data-pipeline-mark-done/);
   assert.match(html,/Last edited<\/dt><dd>5 Sept? 2026/);
   assert.doesNotMatch(html,/Last contacted/,'the owner asked for last edited, not last contacted');
-  assert.match(html,/Tampines \(Main\) \(Main\)|Tampines \(Main\)/);
-  assert.match(html,/Orchard/);
+  assert.match(html,/data-pipeline-tab="branches"/,'owner 2026-09-06: a Branches tab');
   assert.match(html,/data-pipeline-tab="activity" aria-selected="true"/);
+  // The Branches tab: every branch, what it is paid to, and whether auto deduction is on.
+  const branchesTab=api.pipelineDrawerHtmlV785(items[3],detail,stubCUI,{tab:'branches',canWrite:true,payments:{value:{
+    subscription:{status:'active',cadence:'annual',cancel_at_period_end:false,current_period_end:'2027-09-04T16:00:00+00:00'},
+    branches:[{branch_id:'br1',name:'Tampines (Main)',is_default:true,billing_state:'included'},{branch_id:'br2',name:'Orchard',billing_state:'active'},{branch_id:'br3',name:'Bedok',billing_state:'canceling'}],
+    invoices:[{provider_invoice_id:'i1',status:'paid',paid_normalized:true,total_cents:118800,currency:'SGD',paid_at:'2026-09-05T09:59:01+00:00',reason:'initial',detail:{covers_until:'2027-09-05'}},
+      {provider_invoice_id:'i2',status:'paid',paid_normalized:true,total_cents:118800,currency:'SGD',paid_at:'2026-09-05T10:15:40+00:00',reason:'branch_added',detail:{branch_id:'br2',branch_name:'Orchard',covers_until:'2027-09-05'}}]
+  },error:null}});
+  assert.match(branchesTab,/Tampines \(Main\)/);
+  assert.match(branchesTab,/Orchard/);
+  assert.equal((branchesTab.match(/Paid to 5 Sept? 2027/g)||[]).length,2,'the plan payment covers the main branch, the branch charge covers Orchard');
+  assert.equal((branchesTab.match(/Auto deduction · On/g)||[]).length,2);
+  assert.match(branchesTab,/Bedok[\s\S]*?No payment yet[\s\S]*?Auto deduction · Off/,'a stopping branch says so');
+  assert.match(branchesTab,/Renews on 5 Sept? 2027/);
   assert.match(html,/data-pipeline-tab="deal"/);
   assert.match(html,/5 Sept? 2026, 2:15 pm|5 Sept? 2026, 14:15|2:15 PM/i,'note timestamps are shown in Singapore time');
   assert.match(html,/data-pipeline-attachment="d1"/);
@@ -248,7 +260,7 @@ test('v785 the migration adds the two schedule columns and four scoped functions
 
 test('v785 every new console string has a zh-CN and an ms translation', async()=>{
   const api=await loadConsole();
-  const keys=['Pipeline','New Lead','Contact & Meeting','NPU / Proposal','Pending Decision','Closed','Follow-up Due','Won This Month','Payment Due',
+  const keys=['Paid to {date}','Auto deduction · On','Auto deduction · Off','Pipeline','New Lead','Contact & Meeting','NPU / Proposal','Pending Decision','Closed','Follow-up Due','Won This Month','Payment Due',
     'All Pipeline','My Pipeline','Overdue {count}D','Due today','Due tomorrow','Due in {count}D','Next appt (firm)','Next follow up (task)','Last edited',
     'Add to calendar','Mark as Done','Reschedule','Company Info','Add a note…','Attach documents','Note saved.'];
   for(const locale of ['zh-CN','ms']){
