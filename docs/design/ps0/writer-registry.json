@@ -4135,6 +4135,10 @@
     {
       "id": "browser.rpc:app/app.js:customer_get_birthday_benefit",
       "reason": "browser RPC 'customer_get_birthday_benefit' (pre-existing since nestly_v45; nestly_v752 is its first browser call site) resolves to a read-only projection of the customer's own birthday entitlement/programme state (app.c45_customer_birthday_benefit_for_context) -- no DML, no ledger, no value table."
+    },
+    {
+      "id": "browser.rpc:app/app.js:customer_get_referral_pending_v777",
+      "reason": "browser RPC 'customer_get_referral_pending_v777' (nestly_v777) is a read-only projection of the signed-in customer's own public.referrals row at one business (pending floor + friend points, or settled) behind app.v32_customer_wallet_context — no DML, no ledger, no value row; app.on_sale_recorded REGION B remains the only writer of that row's status."
     }
   ]
 }

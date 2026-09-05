@@ -3898,6 +3898,12 @@
       "version": "20261006000000",
       "name": "nestly_v775_capacity_increase_invoice_reason",
       "sourcePath": "db/migrations/20261006_nestly_v775_capacity_increase_invoice_reason.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006010000",
+      "name": "nestly_v777_referral_reward_visible",
+      "sourcePath": "db/migrations/20261006_nestly_v777_referral_reward_visible.sql"
     }
   ]
 }

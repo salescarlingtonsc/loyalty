@@ -135,14 +135,17 @@ async function applyShareReferralV576(slug){
      code is retired rather than retried on every wallet render for the next 30 days. Any other
      error (offline, 42501 "not a member yet") stays retryable, exactly as before. */
   if(error){
-    if(String(error?.code||'')==='22023')clearShareReferralV576();
+    /* nestly_v777: the refusal used to be silent. A person who followed a friend's link and got
+       nothing deserves the one sentence that explains it. */
+    if(String(error?.code||'')==='22023'){clearShareReferralV576();toast(ct('joinReferralNotNewV683'));}
     else attemptedShareReferralV576.delete(key);
     return;
   }
   const reason=String(data?.reason||'');
   if(data?.applied===true||['self_referral','already_referred','unknown_code','referrals_off'].includes(reason)){
     clearShareReferralV576();
-    if(data?.applied===true&&reason==='ok')toast(customerReferralAppliedTextV612(data));
+    if(data?.applied===true&&reason==='ok')openCustomerReferralAppliedSheetV777(data);
+    else if(data?.applied===false&&reason!=='already_referred')toast(customerReferralReasonTextV571(reason));
   }
 }
 function takePendingCustomerDestination(fallback=''){
@@ -3312,6 +3315,43 @@ async function renderCustomerProfile(requestedView){
 /* The customer-facing wording for every refusal the server can return. Kept beside the dialog
    so a new server reason is obvious here as an untranslated fallback rather than a blank line. */
 /* nestly_v612: what an APPLIED code means, in the customer's terms. */
+/* nestly_v777 (owner photos 1-3, 2026-09-05: "once joined the referral code > join the business >
+   i need a pop up to tell user the rewards… it can stay inside Points & gifts until the rewards
+   is given then remove it away"). The sheet says what the toast used to say, but it waits for a
+   tap; the card is drawn from public.referrals through customer_get_referral_pending_v777, the
+   row app.on_sale_recorded REGION B pays from, so it disappears exactly when the points land. */
+function customerReferralPendingCardHtmlV777(data){
+  if(!data||data.pending!==true)return '';
+  const points=Math.max(0,Number(data.friend_reward_points)||0);
+  const floor=Math.max(0,Number(data.min_spend_cents)||0);
+  const currency=String(data.currency||'SGD');
+  const body=floor>0
+    ?ct('referralPendingBodyV777',{floor:`${esc(currency)} ${(floor/100).toFixed(2)}`,points})
+    :ct('referralPendingBodyNoFloorV777',{points});
+  const from=data.referrer_first_name?` ${esc(ct('referralPendingFromV777',{name:data.referrer_first_name}))}`:'';
+  const blocked=data.blocked_reason?`<p class="muted small" style="margin-top:6px">${esc(ct('referralPendingBlockedV777'))}</p>`:'';
+  if(points<=0&&data.friend_enabled===false)return '';
+  return `<div class="card customer-referral-pending-v777" data-referral-pending-v777 style="margin:0 0 12px;border:1.5px dashed var(--coral);background:var(--tint)">
+    <div class="row" style="gap:10px;align-items:flex-start"><span aria-hidden="true">${CUI.icon('share',{size:22})}</span><div>
+      <b>${esc(ct('referralPendingTitleV777'))}</b>
+      <p class="small" style="margin-top:4px">${body}${from}</p>${blocked}
+    </div></div></div>`;
+}
+function openCustomerReferralAppliedSheetV777(result,businessName=''){
+  const text=customerReferralAppliedTextV612(result);
+  const modal=document.createElement('div');modal.className='modal customer-surface';modal.tabIndex=-1;
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','customerReferralAppliedTitleV777');
+  modal.innerHTML=`<div class="modal-card"><h2 id="customerReferralAppliedTitleV777">${esc(ct('referralAppliedSheetTitleV777'))}</h2>
+    <p style="margin-top:10px;line-height:1.55">${esc(text)}</p>
+    <p class="muted small" style="margin-top:8px">${esc(ct('referralAppliedSheetNoteV777'))}</p>
+    <button class="btn" id="customerReferralAppliedGotItV777" type="button" style="width:100%;margin-top:16px">${esc(ct('referralAppliedGotItV777'))}</button></div>`;
+  document.body.appendChild(modal);
+  let deactivate;
+  const close=()=>deactivate?deactivate():modal.remove();
+  deactivate=CUI.activateDialog(modal,{onClose:close,initialFocus:'#customerReferralAppliedGotItV777'});
+  document.getElementById('customerReferralAppliedGotItV777').onclick=close;
+}
 function customerReferralAppliedTextV612(result){
   const settled=String(result?.settled||'');
   if(settled==='immediate')return ct('joinReferralPaidNowV612');
@@ -3466,7 +3506,7 @@ async function renderCustomerQrJoin(){
     if(referralResult&&referralResult.applied===false)
       toast(customerReferralReasonTextV571(referralResult.reason));
     else if(referralResult&&referralResult.applied===true)
-      toast(customerReferralAppliedTextV612(referralResult));
+      openCustomerReferralAppliedSheetV777(referralResult);
   }
   status.textContent='Programme joined. Opening your wallet…';
   /* nestly_v767: remembered BEFORE the passkey prompt and the token is released only now — a
@@ -8164,6 +8204,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        and most customers open this screen to claim, not to reminisce, so it loads the first time
        the tab is opened and is cached for the rest of the render. That is also why the tab carries
        no count — a number we have not read yet would have to be guessed. */
+    const loadReferralPendingV777=async()=>{
+      const {data,error}=await customerRpc('customer_get_referral_pending_v777',{p_business_slug:businessSlug});
+      const slot=$('walletReferralPendingV777');
+      if(!isWalletSectionCurrent(host)||!slot||!slot.isConnected)return;
+      const html=error?'':customerReferralPendingCardHtmlV777(data);
+      if(!html){slot.remove();return}
+      slot.outerHTML=html;
+    };
+    void loadReferralPendingV777();
     host.innerHTML=`${redemptionUncheckedV286
       ?`<div class="wallet-section-head" data-rewards-redemption-unchecked><div><h2>Redemption can’t be checked right now</h2><p class="muted small">These rewards are shown for reference only — we could not reach this business’s redemption settings, so no QR can be issued yet.</p></div><span class="spacer"></span><button class="btn ghost sm" type="button" id="walletRewardsRedemptionRetry">Retry</button></div>`
       :`<div class="customer-rewards-carousel-head-v337"><h2>Your rewards</h2></div>`}
@@ -8175,6 +8224,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         <button type="button" role="tab" aria-selected="false" data-rewards-tab-v422="history">History</button>
       </div>
       <div data-rewards-panel-v422="available" role="tabpanel">
+        ${/* nestly_v777: the referred friend's own pending reward sits first in the list they open
+             to claim things, and leaves the moment REGION B pays it. Filled by loadReferralPendingV777. */''}
+        <div id="walletReferralPendingV777" hidden></div>
         ${/* nestly_v428 (item 6, corrected by F109 audit): "Available (2)" is true, and on one
              stamp slot it used to also be misleading — the old copy said "Choose 1", claiming the
              two gifts were mutually exclusive. db/migrations/20260824_nestly_v478_...sql dropped

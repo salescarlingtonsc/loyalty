@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **85**.
+Fixture count: **87**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -102,6 +102,8 @@ Fixture count: **85**.
 | `db/tests/executed/v772_corpus_branch_copy_without_staff.sql` | `db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql` | _(none)_ | 1 | 0 | `b6464ef55f56f08a05845e18ec96def54948a22acd5be2a61ece897ae3f2d2e5` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_branch_copy_without_staff --migrated-only` |
 | `db/tests/executed/v772_corpus_owner_brief_readers.sql` | `db/migrations/20261003_nestly_v772_owner_brief_readers.sql` | _(none)_ | 1 | 4 | `d1e95199255821b93cf697fc5caafdf07deaefe132c216932fd43c0849f08028` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_owner_brief_readers --migrated-only` |
 | `db/tests/executed/v773_corpus_rewards_same_at_every_branch.sql` | `db/migrations/20261005_nestly_v773_rewards_same_at_every_branch.sql` | _(none)_ | 1 | 0 | `11a2a0d86960d42b7e702359cc3aee62199b29d8da6650968dd641e05cfa83f6` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v773_corpus_rewards_same_at_every_branch --migrated-only` |
+| `db/tests/executed/v775_corpus_capacity_increase_invoice_reason.sql` | `db/migrations/20261006_nestly_v775_capacity_increase_invoice_reason.sql` | _(none)_ | 1 | 0 | `d8d594a87d42122de81dff3787a2aaeb9445a9d3642c11802dd8383410c0a990` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v775_corpus_capacity_increase_invoice_reason --migrated-only` |
+| `db/tests/executed/v777_corpus_referral_reward_visible.sql` | `db/migrations/20261006_nestly_v777_referral_reward_visible.sql` | _(none)_ | 1 | 3 | `6cab0fe8b386937266af515402ea25a02a251d1e028de846f3277c66c6f778f2` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_referral_reward_visible --migrated-only` |
 
 ## Notes
 

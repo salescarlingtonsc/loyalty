@@ -57,3 +57,16 @@ test('Home paints the first-run scan card only when the customer has no business
   const home=section('const homeEmpty=isHome&&!homeGuidance','if(!paint(');
   assert.match(home,/&&!cards\.length/);
 });
+
+/* nestly_v777 — the referred friend sees the reward they are working towards. */
+test('the pending referral reward is drawn from customer_get_referral_pending_v777 inside Points & gifts and announced once',()=>{
+  const wallet=section('async function renderCustomerWallet(businessSlug=null','async function renderCustomerInAppInbox(');
+  assert.match(wallet,/customerRpc\('customer_get_referral_pending_v777',\{p_business_slug:businessSlug\}\)/);
+  assert.match(wallet,/<div id="walletReferralPendingV777" hidden><\/div>/,'the slot sits inside the Available panel');
+  const card=section('function customerReferralPendingCardHtmlV777(','function openCustomerReferralAppliedSheetV777(');
+  assert.match(card,/if\(!data\|\|data\.pending!==true\)return '';/,'nothing is drawn unless the server says pending');
+  assert.match(card,/referralPendingBodyV777/);
+  const apply=section('async function applyShareReferralV576(','function rememberPendingCustomerDestination(');
+  assert.match(apply,/openCustomerReferralAppliedSheetV777\(data\)/,'a successful application opens the sheet');
+  assert.match(apply,/toast\(ct\('joinReferralNotNewV683'\)\)/,'a 22023 refusal is no longer silent');
+});
