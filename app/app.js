@@ -55567,7 +55567,10 @@ function openSubscriptionBranchDetailV628(payload){
 async function runBranchBillingActionV758(record,button,kind){
   /* nestly_v764 (owner ruling 2): the act is "Switch off", and the confirmation says the date it
      switches off, that it keeps working until then, and that nothing is refunded. */
-  if(kind==='stop'&&!confirm(branchSwitchOffConfirmV764(record)))return;
+  /* v767: the same dialog primitive the rest of Settings uses (confirmActionV386), not the
+     browser's native confirm — one look for every confirmation, and a native dialog freezes the
+     page for anything driving it. */
+  if(kind==='stop'&&!await confirmActionV386(branchSwitchOffConfirmV764(record),{confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
   CUI.setButtonBusy(button,{busy:true,label:kind==='stop'?'Switching off…':'Keeping…'});
   const {data,error}=await sb.rpc(kind==='stop'?'business_unsubscribe_branch_v665':'business_resubscribe_branch_v665',
     {p_business:S.biz.id,p_branch:record.branch_id,p_idempotency_key:crypto.randomUUID()});
