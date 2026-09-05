@@ -3856,6 +3856,12 @@
       "version": "20261002000000",
       "name": "nestly_v766_self_serve_activation_tier_price",
       "sourcePath": "db/migrations/20261002_nestly_v766_self_serve_activation_tier_price.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261002010000",
+      "name": "nestly_v767_referral_link_joins",
+      "sourcePath": "db/migrations/20261002_nestly_v767_referral_link_joins.sql"
     }
   ]
 }

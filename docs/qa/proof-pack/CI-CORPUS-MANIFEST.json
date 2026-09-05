@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "scripts/quality/ci-proof-pack.mjs corpus-manifest",
-  "itemCount": 79,
+  "itemCount": 81,
   "items": [
     {
       "file": "db/tests/executed/v106_corpus_revenue_truth.sql",
@@ -989,6 +989,28 @@
       "clients_seeded": 0,
       "sha256": "40bf941b172d9b6e7911e2201a1342f010b668bb842a029fd37a2af3b78dfb8f",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v765_corpus_billing_lifecycle --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v766_corpus_self_serve_activation_tier_price.sql",
+      "migrations": [
+        "db/migrations/20261002_nestly_v766_self_serve_activation_tier_price.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 0,
+      "sha256": "386ae11fea681a8ecd564a776636138b66eff18acfcd20dcbf95883ebe838207",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v766_corpus_self_serve_activation_tier_price --migrated-only"
+    },
+    {
+      "file": "db/tests/executed/v767_corpus_referral_link_joins.sql",
+      "migrations": [
+        "db/migrations/20261002_nestly_v767_referral_link_joins.sql"
+      ],
+      "checks": [],
+      "businesses_seeded": 1,
+      "clients_seeded": 3,
+      "sha256": "0b76022da40e827685b6a8c4c1509364d5ed7a4f17ca106ff492cc10d59f6f27",
+      "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v767_corpus_referral_link_joins --migrated-only"
     }
   ]
 }

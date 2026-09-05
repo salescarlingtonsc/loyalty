@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1c9fd30657614c4f6c81da4c15093e171f16bd49a3c81a37801ee2e23e957949"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="4d793801d8fad0c1db7eb249ebb97891f96d831e25108f5aed36b215252efb2a"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6486,8 +6486,8 @@ function renderSelfServePaymentPendingV286(onboarding){
     const next=current.data?.onboarding;
     if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
     const status=$('selfServePayStatus');
-    if(status)status.textContent=attempts<15?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
-    if(attempts<15)setTimeout(poll,2000);
+    if(status)status.textContent=attempts<90?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
+    if(attempts<90)setTimeout(poll,2000);
   };
   setTimeout(poll,1200);
 }

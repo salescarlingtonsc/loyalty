@@ -77,8 +77,12 @@ test('G2: 42501 on a wallet deep link renders the not-joined state, never Retry'
   /* v333: `silent?undefined:` — a background poll keeps the page the customer is reading. A
      denial on a poll is not new information about a wallet that is already on screen, and the
      not-joined card is still the only answer a real render gives. */
-  assert.match(wallet, /if\(walletRpcDenied\(error\)\)return silent\?undefined:renderCustomerNotJoinedV289\(businessSlug\)/);
-  assert.match(wallet, /if\(walletRpcDenied\(summaryError\)\|\|walletRpcDenied\(capabilitiesError\)\)return silent\?undefined:renderCustomerNotJoinedV289\(businessSlug\)/);
+  /* nestly_v767: the denial branches grew one step — a stored referral link for this business
+     joins first — but the two rules G2 pins are unchanged: a silent poll never repaints, and a
+     real render's only other answer to 42501 is the not-joined card, never Retry. */
+  assert.match(wallet, /if\(walletRpcDenied\(error\)\)\{\s*if\(silent\)return;[\s\S]*?await joinBusinessByShareReferralV767\(businessSlug\)[\s\S]*?return renderCustomerNotJoinedV289\(businessSlug\);\s*\}/);
+  assert.match(wallet, /if\(walletRpcDenied\(summaryError\)\|\|walletRpcDenied\(capabilitiesError\)\)\{\s*if\(silent\)return;[\s\S]*?await joinBusinessByShareReferralV767\(businessSlug\)[\s\S]*?return renderCustomerNotJoinedV289\(businessSlug\);\s*\}/);
+  assert.doesNotMatch(wallet, /walletRpcDenied\([^)]*\)[^\n]*renderCustomerWalletRetry/);
   assert.match(wallet, /if\(!actionableCard\)return silent\?undefined:renderCustomerNotJoinedV289\(businessSlug\)/);
   assert.match(app, /function walletRpcDenied\(error\)\{return error\?\.code==='42501'\}/,
     'the denial code this rests on must stay 42501');

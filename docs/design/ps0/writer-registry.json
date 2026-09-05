@@ -3189,6 +3189,10 @@
       "reason": "browser RPC 'customer_join_business_from_qr_v89' consumes a merchant-issued opaque join token after verified mobile authentication and idempotently creates or reuses the business client/customer_link relationship plus non-economic claim/audit evidence. It writes no sale, payment, points, reward, credit, stored-value, or other customer-value table."
     },
     {
+      "id": "browser.rpc:app/app.js:customer_join_business_by_referral_v767",
+      "reason": "browser RPC 'customer_join_business_by_referral_v767' (nestly_v767) creates or reuses the same verified customer_links row the QR join creates, keyed on a referral code that belongs to a customer of that business while the business accepts joins and runs referrals; idempotent on (identity, key) through customer_link_claim_attempts, audited in customer_link_audit_events, and it writes no value row — the referral itself is applied by customer_apply_referral_code_v612 afterwards."
+    },
+    {
       "id": "browser.rpc:app/app.js:customer_list_programmes_v89",
       "reason": "browser RPC 'customer_list_programmes_v89' is a stable, verified-customer reader that returns one canonical programme card per linked business with effective merchant capabilities, derived loyalty balance, and upcoming appointment count. It performs no DML and resolves to no value writer."
     },

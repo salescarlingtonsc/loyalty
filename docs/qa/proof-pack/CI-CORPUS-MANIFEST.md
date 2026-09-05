@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **79**.
+Fixture count: **81**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -96,6 +96,8 @@ Fixture count: **79**.
 | `db/tests/executed/v763_corpus_self_serve_activation.sql` | `db/migrations/20260930_nestly_v763_self_serve_activation_by_tier.sql` | _(none)_ | 1 | 0 | `ff021dfeaf9700d7d768b690b4947fe04c5eebb2e3d4ff15efdc02f1e8877fda` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v763_corpus_self_serve_activation --migrated-only` |
 | `db/tests/executed/v764_corpus_birthday_rejoin_guard.sql` | `db/migrations/20260930_nestly_v764_birthday_rejoin_guard_and_tombstone_ban.sql` | _(none)_ | 1 | 4 | `a48bd6f634722d214f528a3fc8ffa6ccb41bdb61c4e3002a8077bda5277f6df8` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v764_corpus_birthday_rejoin_guard --migrated-only` |
 | `db/tests/executed/v765_corpus_billing_lifecycle.sql` | `db/migrations/20261001_nestly_v765_billing_lifecycle.sql` | _(none)_ | 3 | 0 | `40bf941b172d9b6e7911e2201a1342f010b668bb842a029fd37a2af3b78dfb8f` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v765_corpus_billing_lifecycle --migrated-only` |
+| `db/tests/executed/v766_corpus_self_serve_activation_tier_price.sql` | `db/migrations/20261002_nestly_v766_self_serve_activation_tier_price.sql` | _(none)_ | 1 | 0 | `386ae11fea681a8ecd564a776636138b66eff18acfcd20dcbf95883ebe838207` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v766_corpus_self_serve_activation_tier_price --migrated-only` |
+| `db/tests/executed/v767_corpus_referral_link_joins.sql` | `db/migrations/20261002_nestly_v767_referral_link_joins.sql` | _(none)_ | 1 | 3 | `0b76022da40e827685b6a8c4c1509364d5ed7a4f17ca106ff492cc10d59f6f27` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v767_corpus_referral_link_joins --migrated-only` |
 
 ## Notes
 

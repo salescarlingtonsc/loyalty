@@ -2066,6 +2066,51 @@ function rememberShareReferralV576(slug,code){
   if(!cleanSlug||!cleanCode)return;
   try{localStorage.setItem(SHARE_REFERRAL_STORE_KEY_V576,JSON.stringify({slug:cleanSlug,code:cleanCode,at:Date.now()}))}catch{}
 }
+/* nestly_v767: the business joined most recently in this tab, so a token-less #/join that follows
+   a successful join (see renderCustomerQrJoin) opens that wallet instead of an error. */
+const CUSTOMER_LAST_JOINED_SLUG_KEY_V767='nestly.customer.lastJoinedSlugV767';
+function rememberCustomerLastJoinedSlugV767(slug){
+  const clean=normalizeCustomerBusinessIntent(slug);
+  try{if(clean)sessionStorage.setItem(CUSTOMER_LAST_JOINED_SLUG_KEY_V767,JSON.stringify({slug:clean,at:Date.now()}));}catch{}
+}
+function customerLastJoinedSlugV767(){
+  try{
+    const stored=JSON.parse(sessionStorage.getItem(CUSTOMER_LAST_JOINED_SLUG_KEY_V767)||'null');
+    if(!stored||Date.now()-Number(stored.at||0)>10*60000)return '';
+    return normalizeCustomerBusinessIntent(stored.slug)||'';
+  }catch{return ''}
+}
+/* nestly_v767 (owner ruling 2026-09-05, "Yes, auto-join"): a customer who arrived on a friend's
+   referral link is joined to that business by the link itself — no counter QR. The stored share
+   referral names the business and the code; the server (customer_join_business_by_referral_v767)
+   accepts only a code that belongs to one of that business's own customers while the business
+   runs referrals and accepts joins. Returns the joined slug, or '' when nothing was joined; the
+   code is applied afterwards by applyShareReferralV576 on the wallet render, as before. */
+const attemptedReferralJoinV767=new Set();
+async function joinBusinessByShareReferralV767(slug){
+  const cleanSlug=normalizeCustomerBusinessIntent(slug);
+  const code=cleanSlug?peekShareReferralV576(cleanSlug):'';
+  if(!cleanSlug||!code||!S.user)return '';
+  const key=`${cleanSlug}:${code}`;
+  if(attemptedReferralJoinV767.has(key))return '';
+  attemptedReferralJoinV767.add(key);
+  invalidatePersonaCacheV370();
+  const {data,error}=await sb.rpc('customer_join_business_by_referral_v767',{
+    p_business_slug:cleanSlug,p_code:code,
+    p_idempotency_key:writeAttemptKey('nestly.customer.referralJoin',key)
+  }).then(result=>result,thrown=>({data:null,error:thrown}));
+  if(error){
+    /* 22023: the server refused this link for good (business not joinable, referrals off, code
+       not theirs) — retrying cannot change that, so the stored code is retired. Anything else
+       (offline, unverified phone) stays retryable. */
+    if(String(error?.code||'')==='22023'){clearShareReferralV576();return '';}
+    attemptedReferralJoinV767.delete(key);return '';
+  }
+  if(String(data?.outcome||'')!=='linked')return '';
+  invalidatePersonaCacheV370();
+  rememberCustomerLastJoinedSlugV767(data?.business_slug||cleanSlug);
+  return normalizeCustomerBusinessIntent(data?.business_slug||cleanSlug);
+}
 function peekShareReferralV576(slug){
   try{
     const stored=JSON.parse(localStorage.getItem(SHARE_REFERRAL_STORE_KEY_V576)||'null');
@@ -5461,6 +5506,15 @@ async function resolveCustomerRegistrationDestination(isRouteCurrent=()=>true,or
   }
   if(!isCurrent())return 'stale';
   if(intent){
+    /* nestly_v767: a referral link joins by itself; the claim screen is only for a destination
+       that carried no referral, or a link the server refused. */
+    const joinedV767=await joinBusinessByShareReferralV767(intent);
+    if(!isCurrent())return 'stale';
+    if(joinedV767){
+      pendingCustomerBusinessSlug='';
+      nav(takePendingCustomerDestination('#/wallet/'+encodeURIComponent(joinedV767)));
+      return 'navigated';
+    }
     nav('#/claim?business='+encodeURIComponent(intent));
   }else{
     nav(takePendingCustomerDestination('#/wallet'));
@@ -5703,6 +5757,14 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
         nav(destination);return;
       }
       if(!isRouteCurrent())return;
+      /* nestly_v767: same rule as resolveCustomerRegistrationDestination — a referral link joins
+         by itself before the claim screen is offered. */
+      const joinedV767=await joinBusinessByShareReferralV767(intent);
+      if(!isRouteCurrent())return;
+      if(joinedV767){
+        pendingCustomerBusinessSlug='';
+        nav(takePendingCustomerDestination('#/wallet/'+encodeURIComponent(joinedV767)));return;
+      }
       nav('#/claim?business='+encodeURIComponent(intent));return;
     }
     if(!isRouteCurrent())return;
@@ -9320,6 +9382,16 @@ async function renderCustomerQrJoin(){
   const token=pendingCustomerJoinToken;
   joinFunnelEmitV610('join_app_loaded',{signedIn:true,build:joinFunnelBuildV610()});
   if(token){joinFunnelEmitV610('join_pending_scan_found',{signedIn:true});joinFunnelEmitV610('join_auth_completed');}
+  /* nestly_v767 (owner, 2026-09-05: "new sign ups > scan first business > This join link is
+     missing or invalid… but the scan works, it successfully joined"). Two renders of this route
+     can overlap right after sign-up — the registration flow re-routes to #/join while the first
+     render is already joining — and the second one arrived after the first had cleared the token,
+     so it printed the missing-link sentence over a join that had just succeeded. The business we
+     just joined is remembered for the session; a token-less entry that follows a join goes to
+     that wallet instead of accusing the customer of a bad scan. */
+  if(!token&&customerLastJoinedSlugV767()){
+    nav('#/wallet/'+encodeURIComponent(customerLastJoinedSlugV767()));return;
+  }
   if(!token){
     renderCustomerShell({active:'programmes',body:`<section class="card"><h1>Scan the business QR</h1><p class="muted small" style="margin-top:7px">This join link is missing or invalid. Return to the participating business and scan its Peekaa QR again.</p><a class="btn ghost" href="#/customer/programmes" style="margin-top:16px">Back to programmes</a></section>`});
     focusCustomerRoute();return;
@@ -9409,7 +9481,7 @@ async function renderCustomerQrJoin(){
     status.innerHTML='This programme could not be joined. Ask the business to check its sign-up settings.<br><a class="btn ghost sm" href="#/customer/programmes" style="margin-top:12px">Back to programmes</a>';
     status.closest('.card')?.setAttribute('aria-busy','false');return;
   }
-  clearWriteAttempt('nestly.customer.joinQr');rememberPendingCustomerJoinToken('');
+  clearWriteAttempt('nestly.customer.joinQr');
   joinFunnelEmitV610('join_rpc_succeeded',{outcome:String(data?.outcome||data?.status||'').slice(0,60)});
   /* nestly_v587 (owner: "once pressing yes will land inside the exact same business"). This read
      was always empty: customer_join_business_from_qr_v89 returned outcome + business_id and no
@@ -9443,8 +9515,13 @@ async function renderCustomerQrJoin(){
       toast(customerReferralAppliedTextV612(referralResult));
   }
   status.textContent='Programme joined. Opening your wallet…';
+  /* nestly_v767: remembered BEFORE the passkey prompt and the token is released only now — a
+     re-entrant render during that prompt replays an idempotent join instead of finding nothing. */
+  rememberCustomerLastJoinedSlugV767(slug);
+  invalidatePersonaCacheV370();
   await maybeOfferCustomerPasskeySetup({isCurrent});
-  if(!isCurrent())return;
+  rememberPendingCustomerJoinToken('');
+  if(!isCurrent()){nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');return;}
   nav(slug?'#/wallet/'+encodeURIComponent(slug):'#/customer/programmes');
   /* The journey's last stage: the wallet route is live and has had two frames to paint.
      setTimeout backstop for the same reason as the /join probe: rAF sleeps on hidden pages. */
@@ -14478,7 +14555,12 @@ function renderActionableWalletHome(payload,{offersState={status:'loading',items
   const homeGuidance=isHome?customerHomeGuidanceV167({pendingRedemption,actionableCards:cards,legacyCards,offers:offersState.items}):'';
   /* v286: "everything resolved and there is nothing" is a real state, not a loading state — only
      claim it once offers have actually come back ready, never while loading or on an error. */
-  const homeEmpty=isHome&&!homeGuidance&&offersState.status==='ready'
+  /* nestly_v765 (owner photo, 2026-09-05: Home listed Cubbly SPA and, right under it, "Scan a
+     loyalty QR… becomes your first reward account"). That card is first-run copy — "your first"
+     — and it was being painted for the quiet state of a customer who already has a business,
+     because the condition never looked at the business rail. It is now only for a customer with
+     no business at all; a member with nothing happening simply sees their businesses. */
+  const homeEmpty=isHome&&!homeGuidance&&offersState.status==='ready'&&!cards.length
     &&!(Array.isArray(offersState.items)&&offersState.items.length)&&!customerExpiringRowsV286(cards).length;
   /* v178/v195 source-shape sentinel for older tests:
      ${isHome?`${customerExpiringRewardsMarkupV195(cards)}
@@ -15025,7 +15107,17 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
          of replacing it — a customer reading their wallet must not lose it to one failed
          background read, and "not joined" is not a state a poll can newly discover for a page
          that is already rendered. */
-      if(walletRpcDenied(error))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
+      if(walletRpcDenied(error)){
+        if(silent)return;
+        /* nestly_v767: an unlinked customer holding this business's referral link is joined by it
+           and the wallet is drawn again, instead of being told they have not joined. */
+        if(await joinBusinessByShareReferralV767(businessSlug)){
+          if(!isWalletCurrent())return;
+          return renderCustomerWallet(businessSlug,{forceV498:true});
+        }
+        if(!isWalletCurrent())return;
+        return renderCustomerNotJoinedV289(businessSlug);
+      }
       if(error)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,error);
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
@@ -15094,7 +15186,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
   if(!isWalletCurrent())return;
   /* V289: same denial, same honest answer — the summary and capability reads refuse an unlinked
      business with 42501 before they refuse anything else. */
-  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError))return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
+  if(walletRpcDenied(summaryError)||walletRpcDenied(capabilitiesError)){
+    if(silent)return;
+    if(await joinBusinessByShareReferralV767(businessSlug)){
+      if(!isWalletCurrent())return;
+      return renderCustomerWallet(businessSlug,{forceV498:true});
+    }
+    if(!isWalletCurrent())return;
+    return renderCustomerNotJoinedV289(businessSlug);
+  }
   if(summaryError||capabilitiesError)return silent?undefined:renderCustomerWalletRetry('This business could not be loaded.',businessSlug,undefined,summaryError||capabilitiesError);
   /* nestly_v597: an empty reply with NO error was the one shape this guard never covered, and the
      renderer below reads summary.business / summary.loyalty / summary.packages straight off it.
