@@ -389,8 +389,11 @@ test('V771 block D borrows the bring-back status instead of judging cadence itse
 });
 
 test('V771 block D empty-states rather than showing a table of nobody', () => {
+  /* nestly_v776: the copy used to say "No identified customer revenue", borrowing the reader's
+     word for a customer a sale can be attributed to. An owner does not have that vocabulary, and
+     the whole-brief scan below now enforces its absence. What the state means is unchanged. */
   assert.ok(sectionOf(render({ ...FULL, customers: [] }), 'ci-brief-top-v771')
-    .includes('No identified customer revenue in this period yet.'));
+    .includes('No customer revenue on record for this period yet.'));
 });
 
 /* ==================================================================================================
@@ -501,7 +504,7 @@ test('V771 the brief never names WhatsApp and never leaks machine vocabulary', (
     const html = render(fixture);
     assert.ok(!/whatsapp/i.test(html), `fixture ${index}: analytics must not display anything with WhatsApp`);
     const text = textOf(html);
-    for (const banned of ['NaN', 'undefined', 'null', 'bps', 'cents']) {
+    for (const banned of ['NaN', 'undefined', 'null', 'bps', 'cents', 'identified']) {
       assert.ok(!text.includes(banned), `fixture ${index}: "${banned}" must never reach an owner (${text.slice(0, 400)})`);
     }
   }

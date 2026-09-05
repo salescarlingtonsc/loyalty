@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ef0508098493244aa60c65cabe6e248072c0ff7e357c282243cf1a0a2766b837"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="39477e7642f67e17edbb66f55e9eea5b84f25377bb2e960dbc1ea6609da39676"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5763,7 +5763,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ef0508098493244aa60c65cabe6e248072c0ff7e357c282243cf1a0a2766b837</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 39477e7642f67e17edbb66f55e9eea5b84f25377bb2e960dbc1ea6609da39676</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -12984,9 +12984,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        production — a bare assignment fires 0 requests, the same call with .then() fires
        immediately. Without it these three would still run one after another. */
     const loyaltyDraftRequestV379=sb.rpc('get_loyalty_reward_draft',{p_config_version:draftVersionId}).then(r=>r);
-    const branchOverridesRequest=sb.from('loyalty_branch_overrides')
-      .select('branch_id,active,earn_points_per_dollar,stamp_per_cents,expiry_mode,expiry_days')
-      .eq('business_id',S.biz.id).eq('config_version_id',draftVersionId).then(r=>r);
+    /* nestly_v773: per-branch loyalty overrides are retired — rewards are the same at every
+       branch (owner ruling 2026-09-05). Nothing is read; the shape below is kept. */
+    const branchOverridesRequest=Promise.resolve({data:[],error:null});
     const birthdayDraftRequest=sb.rpc('get_birthday_program_draft',{p_config_version:draftVersionId}).then(r=>r);
     const {data:draft,error:draftError}=await loyaltyDraftRequestV379;
     if(!isLoyaltyCurrent())return;
@@ -13144,35 +13144,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     <b>${label}</b><p class="muted small help">Leave blank for all ${label.toLowerCase()}.</p>
     ${(items.length?items.map(x=>`<label><input type="checkbox" data-reward-elig="${key}" value="${x.id}" ${selected.has(x.id)?'checked':''}>${esc(x.name)}</label>`).join(''):'<p class="muted small" style="margin-top:8px">None added yet.</p>')}
   </div>`;
-  const branchOverrideRows=()=>draftVersionId?`
-    <details id="loyaltyAudienceSettings" tabindex="-1" style="margin-top:18px"><summary>Branch settings</summary>
-      <p class="muted small help">Leave blank to inherit the firm setting. Save only changes this draft.</p>
-      ${activeItems(br||[]).length?activeItems(br||[]).map((branch,idx)=>{
-        const o=branchOverrideById[branch.id]||{};
-        const branchExpiryMode=o.expiry_mode||'',branchExpiryNeedsDays=expiryModeRequiresDays(branchExpiryMode);
-        const branchExpiryShowsDays=branchExpiryMode!=='none';
-        const branchExpiryFallback=positiveExpiryDays(o.expiry_days)||positiveExpiryDays(p?.expiry_days)||365;
-        return `<div class="branch-override" style="padding:12px 0;border-bottom:1px solid var(--line)">
-          <b>${esc(branch.name)}</b>
-          <div class="field-grid">
-            <div><label for="bo-active-${idx}">Loyalty status</label><select id="bo-active-${idx}" data-bo-active="${idx}" data-branch="${branch.id}"${loyaltyControlDisabled}>
-              <option value="" ${o.active==null?'selected':''}>Inherit firm setting</option>
-              <option value="true" ${o.active===true?'selected':''}>Active here</option>
-              <option value="false" ${o.active===false?'selected':''}>Paused here</option>
-            </select></div>
-            <div><label for="bo-earn-${idx}">Points per $1</label><input id="bo-earn-${idx}" data-merchant-content data-bo-earn="${idx}" data-branch="${branch.id}" type="number" min="0" step="0.1" value="${o.earn_points_per_dollar??''}" placeholder="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}></div>
-            <div><label for="bo-stamp-${idx}">Spend per stamp</label><input id="bo-stamp-${idx}" data-merchant-content data-bo-stamp="${idx}" data-branch="${branch.id}" type="number" min="0.5" step="0.5" value="${o.stamp_per_cents!=null?(o.stamp_per_cents/100).toFixed(2):''}" placeholder="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}></div>
-            <div><label for="bo-expiry-${idx}">Expiry</label><select id="bo-expiry-${idx}" data-bo-expiry="${idx}" data-branch="${branch.id}" aria-controls="bo-days-field-${idx}"${loyaltyControlDisabled}>
-              <option value="" ${!o.expiry_mode?'selected':''}>Inherit firm setting</option>
-              <option value="none" ${o.expiry_mode==='none'?'selected':''}>Never expire</option>
-              <option value="fixed" ${o.expiry_mode==='fixed'?'selected':''}>Fixed shelf life</option>
-            </select></div>
-            <div class="expiry-days-field" id="bo-days-field-${idx}" data-bo-days-field="${idx}" ${branchExpiryShowsDays?'':'hidden'}><label for="bo-days-${idx}">Expiry days</label><input id="bo-days-${idx}" data-merchant-content data-bo-days="${idx}" data-branch="${branch.id}" data-expiry-fallback="${branchExpiryFallback}" data-expiry-allow-inherit="true" type="number" min="1" step="1" value="${o.expiry_days??''}" placeholder="${branchExpiryFallback}" ${branchExpiryNeedsDays?'required':branchExpiryShowsDays?'':'disabled'}${loyaltyControlDisabled}></div>
-          </div>
-          ${canManageLoyalty?`<div class="row" style="margin-top:10px"><button class="btn ghost sm boInherit" data-idx="${idx}" data-branch="${branch.id}">Inherit firm setting</button><span class="spacer"></span><button class="btn sm boSave" data-idx="${idx}" data-branch="${branch.id}">Save branch</button></div>`:''}
-        </div>`;
-      }).join(''):'<p class="muted small" style="margin-top:8px">Add branches first.</p>'}
-    </details>`:'';
+  /* nestly_v773: the "Branch settings" editor is gone — rewards are the same at every branch. */
+  const branchOverrideRows=()=>'';
   /* Names the tier a reward is gated behind, for the owner's own list. Falls back to the stored
      threshold when the tier has since been deleted, so a gate never renders as "no gate". */
   const rewardTierGateLabelV176=(r)=>{
@@ -13809,39 +13782,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const idx=modeInput.dataset.boExpiry;
     bindExpiryModeUi(modeInput,document.querySelector(`[data-bo-days="${idx}"]`),document.querySelector(`[data-bo-days-field="${idx}"]`));
   });
-  document.querySelectorAll('.boSave').forEach(button=>button.onclick=async()=>{
-    const idx=button.dataset.idx,branchId=button.dataset.branch;
-    const active=document.querySelector(`[data-bo-active="${idx}"]`).value;
-    const earn=document.querySelector(`[data-bo-earn="${idx}"]`).value;
-    const stamp=document.querySelector(`[data-bo-stamp="${idx}"]`).value;
-    const expiry=document.querySelector(`[data-bo-expiry="${idx}"]`).value;
-    const daysInput=document.querySelector(`[data-bo-days="${idx}"]`);
-    const expiryDays=expiryDaysForMode(expiry,daysInput);
-    if(Number.isNaN(expiryDays)){toast('Enter a positive whole-number expiry window');daysInput.focus();return}
-    const override={};
-    if(active)override.active=active==='true';
-    if(earn!=='')override.earn_points_per_dollar=parseFloat(earn);
-    if(stamp!=='')override.stamp_per_cents=Math.round(parseFloat(stamp)*100);
-    if(expiry)override.expiry_mode=expiry;
-    if(expiryDays!==undefined)override.expiry_days=expiryDays;
-    if(!Object.keys(override).length)return toast('Use Inherit firm setting to clear this branch');
-    button.disabled=true;button.textContent='Saving…';
-    const args={p_config_version:draftVersionId,p_branch:branchId,p_override:override,
-      p_expected_snapshot_hash:draftSnapshotHash||null};
-    const {error}=await sb.rpc('save_loyalty_branch_override_draft',args);
-    if(!isLoyaltyCurrent())return;
-    if(error){button.disabled=false;button.textContent='Save branch';return fail(error)}
-    toast('Branch setting saved');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch settings saved.',true,editorIntent);
-  });
-  document.querySelectorAll('.boInherit').forEach(button=>button.onclick=async()=>{
-    button.disabled=true;button.textContent='Clearing…';
-    const args={p_config_version:draftVersionId,p_branch:button.dataset.branch,
-      p_expected_snapshot_hash:draftSnapshotHash||null};
-    const {error}=await sb.rpc('remove_loyalty_branch_override_draft',args);
-    if(!isLoyaltyCurrent())return;
-    if(error){button.disabled=false;button.textContent='Inherit firm setting';return fail(error)}
-    toast('Branch now inherits firm setting');refreshLoyaltyPanel(model,draftVersionId,recommendation,'Branch now inherits the firm setting.',true,editorIntent);
-  });
+  /* nestly_v773: no per-branch override handlers — see branchOverrideRows above. */
   const loyaltySave=$('lsave');
   if(loyaltySave)loyaltySave.onclick=async()=>{
     /* nestly_v435: the stamps model no longer renders the points-expiry control here. */
@@ -30567,6 +30508,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ef0508098493244aa60c65cabe6e248072c0ff7e357c282243cf1a0a2766b837',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'39477e7642f67e17edbb66f55e9eea5b84f25377bb2e960dbc1ea6609da39676',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

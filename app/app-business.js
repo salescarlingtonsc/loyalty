@@ -31935,6 +31935,16 @@ async function customerIntelligencePage(){
     lastPackagesBundleV771=null,lastPackagesErrorV771='',
     lastServiceIntelBundleV771=null,lastServiceIntelErrorV771='',
     lastBriefPeriodDaysV771=0,lastBriefFromV771='',lastBriefToV771='';
+  /* nestly_v774: the five v772 readers the brief's new blocks are built on — cash gap, staff
+     rebooking, reward popularity, visit rhythm, demographic totals. Declared below the v771
+     state and still below CUSTOMER_INTELLIGENCE_PAGE_SIZE, for the reason given above. Each is
+     captured independently: one reader refusing (a role without the module, a branch outside the
+     firm) blanks its own block of the brief and nothing else. */
+  let lastCashGapBundleV774=null,lastCashGapErrorV774='',
+    lastStaffRebookingBundleV774=null,lastStaffRebookingErrorV774='',
+    lastRewardPopularityBundleV774=null,lastRewardPopularityErrorV774='',
+    lastVisitRhythmBundleV774=null,lastVisitRhythmErrorV774='',
+    lastDemographicTotalsBundleV774=null,lastDemographicTotalsErrorV774='';
   /* V285: the heading now says what the rail says. Every other route in the workspace answers to
      the name it was opened by; this one was reached under "Customer intelligence" and then titled
      itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
@@ -32173,6 +32183,11 @@ async function customerIntelligencePage(){
       summary:lastPayload?.summary||null,
       services:lastServiceIntelBundleV771,servicesError:lastServiceIntelErrorV771,
       abstentions:Array.isArray(lastOpportunitiesBundle?.abstentions)?lastOpportunitiesBundle.abstentions:null,
+      cashGap:lastCashGapBundleV774,cashGapError:lastCashGapErrorV774,
+      staff:lastStaffRebookingBundleV774,staffError:lastStaffRebookingErrorV774,
+      rewards:lastRewardPopularityBundleV774,rewardsError:lastRewardPopularityErrorV774,
+      rhythm:lastVisitRhythmBundleV774,rhythmError:lastVisitRhythmErrorV774,
+      demographics:lastDemographicTotalsBundleV774,demographicsError:lastDemographicTotalsErrorV774,
       canOpenCustomers:S.myRole==='owner'||canReadModule('clients')
     });
   }
@@ -32367,7 +32382,9 @@ async function customerIntelligencePage(){
       acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse,
       funnelConversionResponse,demographicsResponse,behaviourResponse,opportunitiesResponse,
       truthPrevResponseV771,lifecyclePrevResponseV771,attentionResponseV771,
-      serviceIntelResponseV771,packagesResponseV771
+      serviceIntelResponseV771,packagesResponseV771,
+      cashGapResponseV774,staffRebookingResponseV774,rewardPopularityResponseV774,
+      visitRhythmResponseV774,demographicTotalsResponseV774
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -32452,7 +32469,31 @@ async function customerIntelligencePage(){
         ?sb.from('client_packages')
           .select('id,client_id,remaining,sessions_snapshot,status,purchased_at,expires_at,plan_name_snapshot,list_unit_cents_snapshot,price_cents_snapshot')
           .eq('business_id',S.biz.id).eq('status','active').gt('remaining',0).limit(500)
-        :Promise.resolve({data:null,error:null})
+        :Promise.resolve({data:null,error:null}),
+      /* nestly_v774: the five v772 Owner-brief readers. All five are SECURITY DEFINER, gated by
+         app.ci_access_gate_v667(p_business,p_branch) and read-only, so they take the top bar's
+         branch scope exactly as the v679 trio above does. p_as_of is deliberately omitted — the
+         SQL default is clock_timestamp(), which is what a live report wants; passing the page's
+         own reportAsOf would only re-state it. p_window_days is passed explicitly on the staff
+         reader for the v679 reason: a future UI control has somewhere to plug in.
+         get_ci_reward_popularity_v1 still takes p_branch even though redemptions are business-
+         wide, because the gate must refuse a branch belonging to another firm rather than
+         quietly ignore it; the payload's scope_note says so and the block prints it. */
+      sb.rpc('get_ci_cash_gap_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_staff_rebooking_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_window_days:60,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_reward_popularity_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_visit_rhythm_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      sb.rpc('get_ci_demographic_totals_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      })
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -32523,6 +32564,19 @@ async function customerIntelligencePage(){
     lastServiceIntelBundleV771=serviceIntelResponseV771.data||null;
     lastPackagesErrorV771=packagesResponseV771.error?.message||'';
     lastPackagesBundleV771=Array.isArray(packagesResponseV771.data)?packagesResponseV771.data:null;
+    /* nestly_v774: same independent capture. A null bundle with an empty error is the
+       permission-absent case and the block is omitted entirely; an error string renders the
+       block with one quiet error row, never a blank or a fabricated zero. */
+    lastCashGapErrorV774=cashGapResponseV774.error?.message||'';
+    lastCashGapBundleV774=cashGapResponseV774.data||null;
+    lastStaffRebookingErrorV774=staffRebookingResponseV774.error?.message||'';
+    lastStaffRebookingBundleV774=staffRebookingResponseV774.data||null;
+    lastRewardPopularityErrorV774=rewardPopularityResponseV774.error?.message||'';
+    lastRewardPopularityBundleV774=rewardPopularityResponseV774.data||null;
+    lastVisitRhythmErrorV774=visitRhythmResponseV774.error?.message||'';
+    lastVisitRhythmBundleV774=visitRhythmResponseV774.data||null;
+    lastDemographicTotalsErrorV774=demographicTotalsResponseV774.error?.message||'';
+    lastDemographicTotalsBundleV774=demographicTotalsResponseV774.data||null;
     if(!lastCustomerError)await loadRemainingCustomerPagesV771();
     if(!isCurrent())return;
     paint(lastPayload);
@@ -33029,6 +33083,61 @@ function ownerBriefHtmlV771(brief){
   const headV771=(iconName,titleId,title,line)=>`<div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start;margin-top:4px">${CUI.icon(iconName,{size:22})}<div><h3 id="${titleId}" style="font-size:15px;margin:0">${esc(title)}</h3><p class="muted small" style="margin-top:2px">${esc(line)}</p></div></div>`;
   const errorRowV771=(label,message)=>`<div class="err" role="status">${esc(label)} ${esc(message||'Try running the report again.')}</div>`;
 
+  /* nestly_v774: the five v772 readers all speak the same two shapes, so the brief learns them
+     once here rather than five times below. A rate block is {numerator, denominator, pct}, and
+     its pct is NULL — never 0.0 — when the denominator is zero or the subgroup sits under the
+     shared evidence floor. That null is the only thing separating "nobody did" from "too few of
+     them to say", so it is never rounded into a number: the counts still print, and the sentence
+     says which of the two it is. Shares always carry their own base for the same reason. */
+  const listV774=value=>Array.isArray(value)?value.filter(row=>row&&typeof row==='object'):[];
+  const wholePctV774=value=>{const parsed=finiteV771(value);return parsed===null?null:Math.round(parsed);};
+  const oneDecimalV774=value=>{const parsed=finiteV771(value);return parsed===null?'—':parsed.toFixed(1);};
+  const pluralV774=(count,one,many)=>`${count} ${count===1?one:many}`;
+  const shareTextV774=(rateBlock,numeratorOnly)=>{
+    const block=objectV771(rateBlock);
+    if(!block)return '—';
+    const base=numeratorOnly===true?String(countV771(block.numerator))
+      :`${countV771(block.numerator)} of ${countV771(block.denominator)}`;
+    const pct=wholePctV774(block.pct);
+    return pct===null?`${base} — too few to say`:`${base} (${pct}%)`;
+  };
+  /* nestly_v776: counts first, percent only if the server gave one. The two differ in what a
+     missing pct means. For a share of a KNOWN total (a reward's share of all redemptions) the
+     counts alone are the whole fact, so the row simply omits the percent. For a RATE over people
+     (how many of them came back, how many of an item's buyers were women) a missing pct means the
+     subgroup is under the evidence floor, and the row has to say so or the bare counts read as a
+     finding they are not. */
+  const countsWithPctV774=rateBlock=>{
+    const block=objectV771(rateBlock);
+    if(!block)return '—';
+    const base=`${countV771(block.numerator)} of ${countV771(block.denominator)}`;
+    const pct=wholePctV774(block.pct);
+    return pct===null?base:`${base} (${pct}%)`;
+  };
+  /* Block A's own comparison sentence, in the words it already uses, for a reader that hands over
+     a ready-made percentage change rather than the two totals to compare. */
+  const changeCaptionV774=value=>{
+    const pct=wholePctV774(value);
+    if(pct===null)return 'no earlier data to compare';
+    if(pct===0)return `vs the previous ${periodDaysV771} days: no change`;
+    return `vs the previous ${periodDaysV771} days: ${pct>0?'+':'−'}${Math.abs(pct)}%`;
+  };
+  const labelOfV774=row=>String(row&&row.label==null?'':row.label).trim();
+  const labelsOfV774=rows=>rows.map(labelOfV774).filter(Boolean).join(', ');
+  const AGE_BAND_LABELS_V774={under_20:'Under 20','20_24':'20–24','25_30':'25–30','31_40':'31–40','41_50':'41–50','51_plus':'51+'};
+  const ageLabelV774=key=>AGE_BAND_LABELS_V774[String(key==null?'':key)]||'Age not recorded';
+  const GENDER_LABELS_V774={female:'Female',male:'Male',other:'Other',prefer_not_to_say:'Prefer not to say'};
+  const genderLabelV774=key=>GENDER_LABELS_V774[String(key==null?'':key)]||'Other';
+  const orTextV774=(value,fallback)=>{const text=String(value==null?'':value).trim();return text||fallback;};
+  const staffNameV774=value=>orTextV774(value,'Staff member');
+  /* The server's own closing sentences (basis_note, limitation, scope_note, open_block_rule) are
+     printed verbatim wherever a block has one. They are the reader's statement of what it can and
+     cannot see, and paraphrasing them here would put a second, quieter opinion on the page. */
+  const noteLineV774=text=>{
+    const line=String(text==null?'':text).trim();
+    return line?`<p class="muted small" style="margin-top:10px">${esc(line)}</p>`:'';
+  };
+
   /* ---- A. This period at a glance ------------------------------------------------------- */
   const truthNowV771=objectV771(briefV771.truth),truthPrevV771=objectV771(briefV771.truthPrev);
   const lifeNowV771=objectV771(briefV771.lifecycle),lifePrevV771=objectV771(briefV771.lifecyclePrev);
@@ -33201,7 +33310,7 @@ function ownerBriefHtmlV771(brief){
         ${canOpenV771?`<td data-label="Action">${openCellV771(record.client_id)}</td>`:''}</tr>`;
     }).join('')}</tbody></table></div>
     <p class="muted small" style="margin-top:10px">Shares are of revenue from known customers. Walk-in sales with no name attached are not included.</p>`
-      :'<div class="empty">No identified customer revenue in this period yet.</div>'}
+      :'<div class="empty">No customer revenue on record for this period yet.</div>'}
   </section>`;
 
   /* ---- E. Which service brings people back ------------------------------------------------ */
@@ -33286,9 +33395,298 @@ function ownerBriefHtmlV771(brief){
     </section>`
     :'';
 
+  /* ---- G. Money recorded vs collected (nestly_v774, get_ci_cash_gap_v1) ------------------- */
+  /* The reader cannot tell an unpaid sale from one paid without a payment row being recorded,
+     and says so in basis_note. That sentence is printed under the table rather than softened,
+     because the whole block is only useful to an owner who knows which of the two it is. */
+  const cashV774=objectV771(briefV771.cashGap);
+  const cashErrorV774=String(briefV771.cashGapError||'').trim();
+  let cashGapV774='';
+  if(cashV774||cashErrorV774){
+    const cashTotalsV774=objectV771(cashV774?.totals)||{};
+    const recordedV774=finiteV771(cashTotalsV774.revenue_recorded_cents);
+    const collectedV774=finiteV771(cashTotalsV774.collected_cents);
+    const outstandingV774=finiteV771(cashTotalsV774.outstanding_cents);
+    const collectedPctV774=wholePctV774(objectV771(cashTotalsV774.collected_share)?.pct);
+    const unpaidV774=countV771(cashTotalsV774.sales_unpaid);
+    const partlyV774=countV771(cashTotalsV774.sales_partly_paid);
+    const methodsV774=listV774(cashV774?.by_method)
+      .map(row=>`${String(row.method==null?'':row.method).trim()||'other'} ${money(countV771(row.cents))}`);
+    const unlinkedV774=objectV771(cashV774?.unlinked_payments)||{};
+    const unlinkedCountV774=countV771(unlinkedV774.count);
+    const refundsV774=countV771(cashV774?.refunds_cents);
+    const debtorsV774=listV774(cashV774?.outstanding_by_customer).slice(0,10);
+    const namesHiddenV774=cashV774?.names_visible===false;
+    cashGapV774=`<section class="ci-brief-cash-v774" aria-labelledby="ciBriefCashTitleV774" style="margin-top:18px">
+      ${headV771('cash','ciBriefCashTitleV774','Money recorded vs collected','What the till says you earned, against what has actually been paid.')}
+      ${cashErrorV774?errorRowV771('Money recorded vs collected could not load.',cashErrorV774):`
+      <div class="revenue-truth-metrics">
+        ${tileV771('Revenue recorded',recordedV774===null?'—':money(recordedV774),`across ${pluralV774(countV771(cashTotalsV774.sales_count),'sale','sales')}`)}
+        ${tileV771('Collected',collectedV774===null?'—':money(collectedV774),collectedPctV774===null?'not enough data yet':`${collectedPctV774}% of revenue recorded`)}
+        ${tileV771('Not recorded as paid',outstandingV774===null?'—':money(outstandingV774),`${pluralV774(unpaidV774,'sale','sales')} unpaid · ${partlyV774} partly paid`)}
+      </div>
+      ${methodsV774.length?`<p style="margin:10px 0 2px">By method: ${esc(methodsV774.join(' · '))}</p>`:''}
+      ${unlinkedCountV774>0?`<p class="small" style="margin:6px 0 2px">${esc(`${pluralV774(unlinkedCountV774,'payment','payments')} worth ${money(countV771(unlinkedV774.cents))} ${unlinkedCountV774===1?'is':'are'} not linked to any sale in this period.`)}</p>`:''}
+      ${refundsV774>0?`<p class="small" style="margin:6px 0 2px">Refunds: ${esc(money(refundsV774))}</p>`:''}
+      ${debtorsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Who still has an open bill"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Open sales</th><th>Outstanding</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${debtorsV774.map(row=>
+        `<tr><td data-label="Customer"><b>${esc(nameV771(row.client_name))}</b></td>
+        <td data-label="Open sales">${countV771(row.sales)}</td>
+        <td data-label="Outstanding"><b>${esc(money(countV771(row.outstanding_cents)))}</b></td>
+        ${canOpenV771?`<td data-label="Action">${openCellV771(row.client_id)}</td>`:''}</tr>`).join('')}</tbody></table></div>
+      ${namesHiddenV774?'<p class="muted small" style="margin-top:10px">Names are hidden for your role.</p>':''}`
+        :'<div class="empty">Every recorded sale in this period has a payment recorded against it.</div>'}
+      <p class="muted small" style="margin-top:10px">${esc(`${countV771(cashTotalsV774.sales_fully_paid)} of ${countV771(cashTotalsV774.sales_count)} sales are fully paid.`)}</p>
+      ${noteLineV774('A sale with no payment row is either unpaid or was paid without being recorded. Peekaa cannot tell the two apart.')}`}
+    </section>`;
+  }
+
+  /* ---- H. Staff: who brings customers back (nestly_v774, get_ci_staff_rebooking_v1) ------- */
+  /* An inactive staff member still gets a row. Their period happened, and dropping them would
+     quietly rewrite the firm figure the remaining rows are compared against. */
+  const staffBundleV774=objectV771(briefV771.staff);
+  const staffErrorV774=String(briefV771.staffError||'').trim();
+  let staffBlockV774='';
+  if(staffBundleV774||staffErrorV774){
+    const windowDaysV774=countV771(staffBundleV774?.window_days);
+    const cameBackPhraseV774=windowDaysV774>0?`came back within ${windowDaysV774} days`:'came back again';
+    const cameBackHeadV774=windowDaysV774>0?`Came back within ${windowDaysV774} days`:'Came back again';
+    /* nestly_v776: a cohort that has not MATURED is a different answer from one that is too
+       small. Until a customer's first visit is window_days old they cannot yet have failed to
+       come back, so the reader reports them as `immature` and returns a 0-of-0 rate. Printing
+       that as "0 of 0 — too few to say" reads as a verdict on the staff member; it is a verdict
+       on the calendar. The two are now separate sentences, and a cohort that HAS matured but
+       sits under the evidence floor keeps the "too few to say" wording it had. */
+    const tooRecentV774=(matured,immature)=>{
+      const waiting=countV771(immature);
+      return (countV771(matured)===0&&waiting>0)
+        ?`${pluralV774(waiting,'customer','customers')} too recent to judge`:'';
+    };
+    const firmV774=objectV771(staffBundleV774?.firm);
+    const firmReturnedV774=objectV771(firmV774?.returned_any);
+    const firmPctV774=wholePctV774(firmReturnedV774?.pct);
+    const firmRecentV774=firmV774?tooRecentV774(firmV774.matured,firmV774.immature):'';
+    const firmLineV774=firmRecentV774
+      ?`Across everyone: ${firmRecentV774} — a customer counts after ${windowDaysV774>0?`${windowDaysV774} days`:'the rebooking window'}.`
+      :firmReturnedV774
+      ?`Across everyone: ${countV771(firmReturnedV774.numerator)} of ${countV771(firmReturnedV774.denominator)} ${cameBackPhraseV774}${firmPctV774===null?' — too few to say':` (${firmPctV774}%)`}`
+      :'';
+    const staffRowsV774=listV774(staffBundleV774?.staff);
+    const unattributedV774=countV771(staffBundleV774?.unattributed_visits);
+    const vsFirmV774=value=>{
+      const parsed=finiteV771(value);
+      if(parsed===null)return '—';
+      const whole=Math.round(parsed);
+      if(whole===0)return '0 pts';
+      return `${whole>0?'+':'−'}${Math.abs(whole)} pts`;
+    };
+    staffBlockV774=`<section class="ci-brief-staff-v774" aria-labelledby="ciBriefStaffTitleV774" style="margin-top:18px">
+      ${headV771('staff','ciBriefStaffTitleV774','Staff: who brings customers back','Of the customers each person served, how many came back at all — and how many came back to them.')}
+      ${staffErrorV774?errorRowV771('Staff: who brings customers back could not load.',staffErrorV774):`
+      ${firmLineV774?`<p style="margin:8px 0 2px"><b>${esc(firmLineV774)}</b></p>`:''}
+      ${staffRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Staff: who brings customers back"><table class="cui-table" data-responsive="true"><thead><tr><th>Staff</th><th>Valid visits</th><th>Customers</th><th>Revenue per visit</th><th>${esc(cameBackHeadV774)}</th><th>To the same person</th><th>vs firm</th></tr></thead><tbody>${staffRowsV774.map(row=>{
+        const perVisit=finiteV771(row.revenue_per_visit_cents);
+        const rowRecent=tooRecentV774(row.matured,row.immature);
+        return `<tr><td data-label="Staff"><b>${esc(staffNameV774(row.full_name))}</b>${row.active===false?' <span class="muted small">(no longer active)</span>':''}</td>
+        <td data-label="Valid visits">${countV771(row.visits)}</td>
+        <td data-label="Customers">${countV771(row.customers)}</td>
+        <td data-label="Revenue per visit">${perVisit===null?'—':esc(money(perVisit))}</td>
+        <td data-label="${esc(cameBackHeadV774)}">${esc(rowRecent||shareTextV774(row.returned_any))}</td>
+        <td data-label="To the same person">${esc(rowRecent||shareTextV774(row.returned_same_staff))}</td>
+        <td data-label="vs firm">${esc(vsFirmV774(row.vs_firm_points))}</td></tr>`;
+      }).join('')}</tbody></table></div>`
+        :'<div class="empty">No staff-attributed visits in this period yet.</div>'}
+      ${unattributedV774>0?`<p class="small" style="margin-top:10px">${esc(`${pluralV774(unattributedV774,'visit','visits')} had no staff recorded.`)}</p>`:''}
+      ${noteLineV774(staffBundleV774?.limitation)}`}
+    </section>`;
+  }
+
+  /* ---- I. Most popular rewards (nestly_v774, get_ci_reward_popularity_v1) ----------------- */
+  /* A live reward nobody redeemed is the most useful row on this table, so a zero row is
+     rendered rather than filtered: the block answers "which of my rewards is not working", not
+     only "what happened". The pill is drawn from `paused` and `active` alone — a reward whose
+     row no longer exists carries neither as a real value and gets no pill at all, rather than a
+     confident "Off" the payload never said. */
+  const rewardsBundleV774=objectV771(briefV771.rewards);
+  const rewardsErrorV774=String(briefV771.rewardsError||'').trim();
+  let rewardsBlockV774='';
+  if(rewardsBundleV774||rewardsErrorV774){
+    const rewardTotalsV774=objectV771(rewardsBundleV774?.totals)||{};
+    const rewardRowsV774=listV774(rewardsBundleV774?.rewards);
+    const rewardHeadlineV774=`${pluralV774(countV771(rewardTotalsV774.redemptions),'redemption','redemptions')} by ${pluralV774(countV771(rewardTotalsV774.customers),'customer','customers')}, out of ${countV771(rewardTotalsV774.eligible_customers)} who visited.`;
+    const rewardPillV774=row=>{
+      if(row.paused===true)return '<span class="pill" style="background:#F0A35B1A;color:#F0A35B;font-weight:700">Paused</span>';
+      if(row.active===false)return '<span class="pill off">Off</span>';
+      return '';
+    };
+    rewardsBlockV774=`<section class="ci-brief-rewards-v774" aria-labelledby="ciBriefRewardsTitleV774" style="margin-top:18px">
+      ${headV771('redeem','ciBriefRewardsTitleV774','Most popular rewards','Which rewards customers actually take, and which ones nobody uses.')}
+      ${rewardsErrorV774?errorRowV771('Most popular rewards could not load.',rewardsErrorV774):`
+      <p style="margin:8px 0 2px"><b>${esc(rewardHeadlineV774)}</b></p>
+      ${rewardRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Most popular rewards"><table class="cui-table" data-responsive="true"><thead><tr><th>Reward</th><th>Times redeemed</th><th>Customers</th><th>Share of all redemptions</th><th>Redeemed by</th><th>Status</th></tr></thead><tbody>${rewardRowsV774.map(row=>{
+        return `<tr><td data-label="Reward"><b>${esc(orTextV774(row.reward_name,'Reward'))}</b></td>
+        <td data-label="Times redeemed">${countV771(row.redemptions)}</td>
+        <td data-label="Customers">${countV771(row.customers)}</td>
+        <td data-label="Share of all redemptions">${esc(countsWithPctV774(row.share_of_redemptions))}</td>
+        <td data-label="Redeemed by">${esc(shareTextV774(row.redeemers_share))}</td>
+        <td data-label="Status">${rewardPillV774(row)}</td></tr>`;
+      }).join('')}</tbody></table></div>`
+        :'<div class="empty">No reward redemptions in this period.</div>'}
+      ${noteLineV774('Counted across all branches.')}
+      ${noteLineV774('Counts points and stamp rewards only. Welcome, birthday, bring-back and referral gifts are given rather than redeemed, so they are not listed here.')}`}
+    </section>`;
+  }
+
+  /* ---- J. When customers come in (nestly_v774, get_ci_visit_rhythm_v1) -------------------- */
+  /* There is no visits TOTAL tile because the payload carries no total: summing days[].visits
+     here would be the brief computing its own headline figure, which is the one thing this
+     renderer is not allowed to do. The reader does emit the previous window's total and the
+     period-over-period change, so the tile states the change against a base the payload gave. */
+  const rhythmV774=objectV771(briefV771.rhythm);
+  const rhythmErrorV774=String(briefV771.rhythmError||'').trim();
+  let whenV774='';
+  if(rhythmV774||rhythmErrorV774){
+    const dayRowsV774=listV774(rhythmV774?.days);
+    const weekdayRowsV774=listV774(rhythmV774?.weekdays);
+    const busiestDaysV774=listV774(rhythmV774?.busiest_weekdays);
+    const slowestDaysV774=listV774(rhythmV774?.slowest_weekdays);
+    const leadDayV774=busiestDaysV774[0]||null;
+    const openBlocksV774=listV774(rhythmV774?.open_blocks);
+    const openStartsV774=new Set(openBlocksV774.map(row=>String(row.block_start)));
+    const shownBlocksV774=listV774(rhythmV774?.hour_blocks)
+      .filter(row=>countV771(row.visits)>0||openStartsV774.has(String(row.block_start)));
+    /* nestly_v776: v775 made the reader emit `current` — the same cur_tot every `share`
+       denominator and `change` were already computed from. The tile reads that, so the headline
+       and the percentages under it are the same count; summing days[] here would be a second,
+       possibly different total arrived at in the browser. */
+    const currentVisitsV774=finiteV771(objectV771(rhythmV774?.current)?.visits);
+    const ageCoverV774=objectV771(objectV771(rhythmV774?.coverage)?.age_known);
+    /* age_by_block keeps a below-floor cell in place with visits null and suppressed true, so it
+       is printed as "fewer than 5" — never as the 0 a bare Number() would have made of it. */
+    const ageByBlockV774=new Map();
+    listV774(rhythmV774?.age_by_block).forEach(cell=>{
+      const key=String(cell.block_start==null?'':cell.block_start);
+      if(!key)return;
+      let entry=ageByBlockV774.get(key);
+      if(!entry){entry={label:labelOfV774(cell)||'—',parts:[]};ageByBlockV774.set(key,entry);}
+      const visits=finiteV771(cell.visits);
+      entry.parts.push(`${ageLabelV774(cell.age_band)}: ${(cell.suppressed===true||visits===null)?'fewer than 5':String(Math.round(visits))}`);
+    });
+    const ageBlockRowsV774=[...ageByBlockV774.values()];
+    const recentDaysV774=dayRowsV774.slice(-14);
+    const rangeFromV774=String(briefV771.from==null?'':briefV771.from).trim();
+    const rangeToV774=String(briefV771.to==null?'':briefV771.to).trim();
+    const rangeCaptionV774=(rangeFromV774&&rangeToV774)?`${rangeFromV774} to ${rangeToV774}`:'the selected report range';
+    whenV774=`<section class="ci-brief-when-v774" aria-labelledby="ciBriefWhenTitleV774" style="margin-top:18px">
+      ${headV771('daily','ciBriefWhenTitleV774','When customers come in','Which days and which hours are busy, and which ones you are open for nobody.')}
+      ${rhythmErrorV774?errorRowV771('When customers come in could not load.',rhythmErrorV774):`
+      <div class="revenue-truth-metrics">
+        ${tileV771('Valid visits',currentVisitsV774===null?'—':String(Math.round(currentVisitsV774)),changeCaptionV774(objectV771(rhythmV774?.change)?.visits_pct))}
+        ${tileV771('Busiest day',leadDayV774?(labelOfV774(leadDayV774)||'—'):'not enough days yet',leadDayV774?`${pluralV774(countV771(leadDayV774.visits),'visit','visits')} across ${countV771(leadDayV774.occurrences)} of them`:'A weekday is only ranked once it has enough occurrences in the period.')}
+        ${tileV771('Days covered',dayRowsV774.length?String(dayRowsV774.length):'—',rangeCaptionV774)}
+      </div>
+      <p style="margin:10px 0 2px">Busiest days: ${esc(labelsOfV774(busiestDaysV774)||'not enough days yet')} · Slowest days: ${esc(labelsOfV774(slowestDaysV774)||'not enough days yet')}</p>
+      ${weekdayRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Visits by day of the week"><table class="cui-table" data-responsive="true"><thead><tr><th>Day</th><th>Valid visits</th><th>Visits per day</th><th>Revenue</th></tr></thead><tbody>${weekdayRowsV774.map(row=>
+        `<tr><td data-label="Day"><b>${esc(labelOfV774(row)||'—')}</b></td>
+        <td data-label="Valid visits">${countV771(row.visits)}</td>
+        <td data-label="Visits per day">${esc(oneDecimalV774(row.per_occurrence))}</td>
+        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>`
+        :'<div class="empty">Not enough days in this period to rank the week yet.</div>'}
+      <p style="margin:12px 0 2px">Busiest open times: ${esc(labelsOfV774(listV774(rhythmV774?.busiest_blocks))||'not enough data yet')} · Quietest open times: ${esc(labelsOfV774(listV774(rhythmV774?.slowest_blocks))||'not enough data yet')}</p>
+      ${shownBlocksV774.length?`<div class="cui-table-wrap" role="region" aria-label="Visits by time of day"><table class="cui-table" data-responsive="true"><thead><tr><th>Time</th><th>Valid visits</th><th>Share of visits</th></tr></thead><tbody>${shownBlocksV774.map(row=>
+        `<tr><td data-label="Time"><b>${esc(labelOfV774(row)||'—')}</b></td>
+        <td data-label="Valid visits">${countV771(row.visits)}</td>
+        <td data-label="Share of visits">${esc(shareTextV774(row.share))}</td></tr>`).join('')}</tbody></table></div>`
+        :'<div class="empty">No visits recorded at any time of day in this period.</div>'}
+      ${noteLineV774('Valid visits count every completed sale your settings count as a visit, including the zero-price ones such as package sessions. That is the Dashboard\'s counter, not the Paid visits column above.')}
+      ${noteLineV774(rhythmV774?.open_block_rule)}
+      ${ageBlockRowsV774.length?`<p class="small" style="margin:12px 0 2px"><b>Who comes when</b></p>
+      <div class="cui-table-wrap" role="region" aria-label="Who comes when"><table class="cui-table" data-responsive="true"><thead><tr><th>Time</th><th>Who came</th></tr></thead><tbody>${ageBlockRowsV774.map(entry=>
+        `<tr><td data-label="Time"><b>${esc(entry.label)}</b></td>
+        <td data-label="Who came">${esc(entry.parts.join(' · '))}</td></tr>`).join('')}</tbody></table></div>
+      ${ageCoverV774?`<p class="muted small" style="margin-top:10px">${esc(`Age known for ${countV771(ageCoverV774.numerator)} of ${countV771(ageCoverV774.denominator)} visits.`)}</p>`:''}`:''}
+      ${recentDaysV774.length?`<p class="small" style="margin:12px 0 2px"><b>Last 14 days</b></p>
+      <div class="cui-table-wrap" role="region" aria-label="Last 14 days"><table class="cui-table" data-responsive="true"><thead><tr><th>Date</th><th>Day</th><th>Valid visits</th><th>Revenue</th></tr></thead><tbody>${recentDaysV774.map(row=>
+        `<tr><td data-label="Date"><b>${esc(String(row.date==null?'':row.date))}</b></td>
+        <td data-label="Day">${esc(labelOfV774(row)||'—')}</td>
+        <td data-label="Valid visits">${countV771(row.visits)}</td>
+        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>`:''}`}
+    </section>`;
+  }
+
+  /* ---- K. Who your customers are (nestly_v774, get_ci_demographic_totals_v1) -------------- */
+  /* Every share here is against the KNOWN population, not the whole one, and the customers whose
+     gender or birth date nobody recorded are printed on their own line outside that denominator
+     — the same separation the reader itself makes. A share against a base that silently included
+     them would drift down as the business grows rather than as its customers change. */
+  const demoV774=objectV771(briefV771.demographics);
+  const demoErrorV774=String(briefV771.demographicsError||'').trim();
+  let whoV774='';
+  if(demoV774||demoErrorV774){
+    const genderRowsV774=listV774(demoV774?.gender);
+    const ageRowsV774=listV774(demoV774?.age_bands);
+    const coverageV774=objectV771(demoV774?.coverage)||{};
+    const genderKnownV774=objectV771(coverageV774.gender_known);
+    const ageKnownV774=objectV771(coverageV774.age_known);
+    const unknownGenderV774=countV771(objectV771(demoV774?.unknown_gender)?.customers);
+    const unknownAgeV774=countV771(objectV771(demoV774?.unknown_age)?.customers);
+    const itemsV774=listV774(demoV774?.by_item).slice(0,10);
+    const knownLineV774=(rateBlock,what)=>{
+      const block=objectV771(rateBlock);
+      if(!block)return '';
+      return `${what} known for ${countV771(block.numerator)} of ${countV771(block.denominator)} customers.`;
+    };
+    /* The base travels even when the percent is withheld: "1 of 6 — too few to say" says both
+       how many and against what, where a bare "1" left an owner to guess the denominator. */
+    const itemGenderV774=(row,gender)=>{
+      const found=listV774(row.by_gender).find(entry=>String(entry.gender==null?'':entry.gender)===gender);
+      return found?shareTextV774(found.share_of_item_buyers):'—';
+    };
+    const topAgeBandV774=row=>{
+      const ranked=listV774(row.by_age_band)
+        .filter(entry=>wholePctV774(objectV771(entry.share_of_item_buyers)?.pct)!==null);
+      if(!ranked.length)return '—';
+      const best=ranked.reduce((first,second)=>countV771(second.buyers)>countV771(first.buyers)?second:first);
+      return `${ageLabelV774(best.age_band)} (${wholePctV774(objectV771(best.share_of_item_buyers).pct)}%)`;
+    };
+    whoV774=`<section class="ci-brief-who-v774" aria-labelledby="ciBriefWhoTitleV774" style="margin-top:18px">
+      ${headV771('customers','ciBriefWhoTitleV774','Who your customers are','Only the customers who told you, counted against the ones who did.')}
+      ${demoErrorV774?errorRowV771('Who your customers are could not load.',demoErrorV774):`
+      ${(genderRowsV774.length||ageRowsV774.length)?`
+      ${genderRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Customers by gender"><table class="cui-table" data-responsive="true"><thead><tr><th>Gender</th><th>Customers</th><th>Share</th><th>Revenue</th></tr></thead><tbody>${genderRowsV774.map(row=>
+        `<tr><td data-label="Gender"><b>${esc(genderLabelV774(row.gender))}</b></td>
+        <td data-label="Customers">${countV771(row.customers)}</td>
+        <td data-label="Share">${esc(shareTextV774(row.share))}</td>
+        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>
+      ${unknownGenderV774>0?`<p class="muted small" style="margin-top:8px">${esc(`Unknown: ${pluralV774(unknownGenderV774,'customer','customers')}`)}</p>`:''}
+      ${genderKnownV774?`<p class="muted small" style="margin-top:4px">${esc(knownLineV774(genderKnownV774,'Gender'))}</p>`:''}`:''}
+      ${ageRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Customers by age" style="margin-top:12px"><table class="cui-table" data-responsive="true"><thead><tr><th>Age</th><th>Customers</th><th>Share</th><th>Revenue</th></tr></thead><tbody>${ageRowsV774.map(row=>
+        `<tr><td data-label="Age"><b>${esc(ageLabelV774(row.age_band))}</b></td>
+        <td data-label="Customers">${countV771(row.customers)}</td>
+        <td data-label="Share">${esc(shareTextV774(row.share))}</td>
+        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>
+      ${unknownAgeV774>0?`<p class="muted small" style="margin-top:8px">${esc(`Unknown: ${pluralV774(unknownAgeV774,'customer','customers')}`)}</p>`:''}
+      ${ageKnownV774?`<p class="muted small" style="margin-top:4px">${esc(knownLineV774(ageKnownV774,'Age'))}</p>`:''}`:''}`
+        :'<div class="empty">No customer has a gender or date of birth on record yet. Customers who create a Peekaa account are asked for both.</div>'}
+      ${itemsV774.length?`<p class="small" style="margin:12px 0 2px"><b>What each group buys</b></p>
+      <div class="cui-table-wrap" role="region" aria-label="What each group buys"><table class="cui-table" data-responsive="true"><thead><tr><th>Item</th><th>Buyers</th><th>Women</th><th>Men</th><th>Top age band</th></tr></thead><tbody>${itemsV774.map(row=>
+        `<tr><td data-label="Item"><b>${esc(orTextV774(row.item_name,'Item'))}</b></td>
+        <td data-label="Buyers">${countV771(row.buyers)}</td>
+        <td data-label="Women">${esc(itemGenderV774(row,'female'))}</td>
+        <td data-label="Men">${esc(itemGenderV774(row,'male'))}</td>
+        <td data-label="Top age band">${esc(topAgeBandV774(row))}</td></tr>`).join('')}</tbody></table></div>`:''}
+      ${noteLineV774('Gender and date of birth are known only for customers who created a Peekaa account or whose profile a staff member completed. Walk-ins added at the till have neither until someone records it.')}`}
+    </section>`;
+  }
+
+  /* nestly_v774: the reading order an owner would ask the questions in — how the period went,
+     when people came, who to call, what has not been paid, what is paid for and unused, who
+     matters, what sells, who serves them well, which rewards work, who they are, and last what
+     Peekaa still refuses to guess at. Every block above keeps the markup it already had; only
+     this line changed. A block whose reader returned nothing and raised nothing is an empty
+     string here, so an absent permission removes it rather than showing an empty shell. */
   return `<section class="card ci-owner-brief-v771" aria-labelledby="ciOwnerBriefTitleV771">
     <div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start">${CUI.icon('customers',{size:24})}<div><h2 id="ciOwnerBriefTitleV771">Owner brief</h2><p>The short version: what happened, who to call, and what is already paid for.</p></div></div>
-    ${glanceV771}${bringBackV771}${unusedV771}${topCustomersV771}${servicesV771}${limitsV771}
+    ${glanceV771}${whenV774}${bringBackV771}${cashGapV774}${unusedV771}${topCustomersV771}${servicesV771}${staffBlockV774}${rewardsBlockV774}${whoV774}${limitsV771}
   </section>`;
 }
 

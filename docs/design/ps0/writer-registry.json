@@ -4085,6 +4085,26 @@
       "reason": "nestly_v771 wires the FIRST merchant-UI call site for this reader, feeding the Owner brief’s ‘Which service brings people back’ block on Customer Intelligence (function nestly_v675, re-emitted by nestly_v691’s outlier/confounder wave). SECURITY DEFINER, gated by app.ci_access_gate_v667 (business-membership + reports-module for a merchant, or the platform firm-report authority for an assigned consultant), read-only — returns per-service buyers, orders, evidence-gated repeat_rate, gateway_count and revenue, all in SELECTs behind the v672 statistical-authority contract. Takes p_branch and respects the top bar’s branch scope. Writes nothing."
     },
     {
+      "id": "browser.rpc:app/app.js:get_ci_cash_gap_v1",
+      "reason": "nestly_v774 wires the FIRST merchant-UI call site for this reader (function nestly_v772), feeding the Owner brief’s ‘Money recorded vs collected’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667 (business-membership + reports-module for a merchant, or the platform firm-report authority for an assigned consultant), read-only — returns revenue recorded against payments actually recorded, per-method collection, refunds, unlinked payments and the outstanding-by-customer list, all in SELECTs behind the v672 statistical-authority contract. Customer names are additionally gated on app.can_module(business,'clients') and travel as null with names_visible false when the caller lacks it. Takes p_branch and respects the top bar’s branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_staff_rebooking_v1",
+      "reason": "nestly_v774 wires the FIRST merchant-UI call site for this reader (function nestly_v772), feeding the Owner brief’s ‘Staff: who brings customers back’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns per-staff visits, customers, revenue per visit and evidence-gated return rates (any staff member, and the same one) against a firm baseline, on the v699 customer-day visit grain. Takes p_window_days and p_branch and respects the top bar’s branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_reward_popularity_v1",
+      "reason": "nestly_v774 wires the FIRST merchant-UI call site for this reader (function nestly_v772), feeding the Owner brief’s ‘Most popular rewards’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns per-reward redemption counts, redeeming customers, points spent and evidence-gated shares, including live rewards with zero redemptions. public.loyalty_redemptions carries no branch, so the reader still RUNS the gate on p_branch (a branch belonging to another firm is refused, never ignored) and then reports business-wide, saying so in scope_note. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_visit_rhythm_v1",
+      "reason": "nestly_v774 wires the FIRST merchant-UI call site for this reader (function nestly_v772), feeding the Owner brief’s ‘When customers come in’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns per-day, per-weekday and per-two-hour-block visit counts and revenue, the busiest and quietest of each, the age split per block under the shared k=5 suppression floor, and the change against the immediately preceding window. Bucketed on app.ci_visit_day_v699 (Asia/Singapore). Takes p_branch and respects the top bar’s branch scope. Writes nothing."
+    },
+    {
+      "id": "browser.rpc:app/app.js:get_ci_demographic_totals_v1",
+      "reason": "nestly_v774 wires the FIRST merchant-UI call site for this reader (function nestly_v772), feeding the Owner brief’s ‘Who your customers are’ block on Customer Intelligence. SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns the customer population split by gender and age band (through app.customer_demographics_core_v674), the unknown remainder outside every share denominator, coverage rate blocks, and a per-item buyer split by group, all evidence-gated by the v672 statistical-authority contract. Takes p_branch and respects the top bar’s branch scope. Writes nothing."
+    },
+    {
       "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",
       "reason": "Service mapping board (#/servicemapping, nestly_v650), reached from Customer Intelligence's category-mix withhold state and from Services. SECURITY DEFINER, business-membership + services-module-READ gated, read-only — returns the service list joined to v647/v648 canonical nodes plus each service's suggested_node_key. Writes nothing; the page renders only when this call succeeds, which is the whole client-side gate."
     },
