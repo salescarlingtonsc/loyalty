@@ -179,7 +179,7 @@ test('the scheduled-monthly card shows the start date and the way back', () => {
     scheduled_change: { cadence: 'monthly', effective_at: '2027-09-05T00:00:00+08:00', amount_cents: 29600 }
   });
   assert.match(html, /Monthly billing starts on 5 Sep 2027 · SGD 296 \/ month/);
-  assert.match(html, /id="billingKeepCadenceV764" data-cadence="annual">Keep annual</);
+  assert.match(html, /id="billingKeepCadenceV764" data-cadence="annual"[^>]*>Keep annual</);
   assert.match(html, /id="billingCancel">Cancel renewal</);
 });
 
