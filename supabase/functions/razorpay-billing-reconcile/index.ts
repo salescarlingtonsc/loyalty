@@ -27,6 +27,7 @@ import {
   type PaymentMethodBackfillCounts,
 } from '../_shared/billing-payment-method-backfill.ts';
 import { classifyProviderSubscriptionAbsence } from '../_shared/razorpay-subscription-absence.ts';
+import { isoInstant } from '../_shared/billing-instant.ts';
 import {
   isRecoverableProviderSubscription,
   PROVIDER_RECOVERY_MAX_PER_RUN,
@@ -139,7 +140,7 @@ function razorpaySubscriptionSnapshot(
 ): Record<string, unknown> {
   return {
     status: razorpayStatusToLocalV755(String(subscription.status)),
-    current_period_end: epoch(subscription.current_end),
+    current_period_end: isoInstant(epoch(subscription.current_end)),
     has_scheduled_changes: subscription.has_scheduled_changes === true,
     items: [
       {
@@ -157,7 +158,7 @@ function localSubscriptionSnapshot(
 ): Record<string, unknown> {
   return {
     status: subscription.status,
-    current_period_end: subscription.current_period_end,
+    current_period_end: isoInstant(subscription.current_period_end),
     has_scheduled_changes: hasScheduledChanges,
     items: [...items].sort(
       (left, right) =>
@@ -174,7 +175,7 @@ function razorpayPaymentSnapshot(payment: RazorpayPayment): Record<string, unkno
     status: payment.status === 'captured' ? 'paid' : String(payment.status),
     total_cents: Number(payment.amount || 0),
     amount_paid_cents: payment.status === 'captured' ? Number(payment.amount || 0) : 0,
-    paid_at: payment.status === 'captured' ? epoch(payment.created_at) : null,
+    paid_at: payment.status === 'captured' ? isoInstant(epoch(payment.created_at)) : null,
   };
 }
 
@@ -183,7 +184,7 @@ function localInvoiceSnapshot(invoice: LocalInvoice): Record<string, unknown> {
     status: invoice.status,
     total_cents: invoice.total_cents,
     amount_paid_cents: invoice.amount_paid_cents,
-    paid_at: invoice.paid_at,
+    paid_at: isoInstant(invoice.paid_at),
   };
 }
 

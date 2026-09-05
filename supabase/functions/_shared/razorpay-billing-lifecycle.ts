@@ -426,7 +426,10 @@ export async function healMissingUpdateCharges({
     const { data, error } = await admin
       .from('billing_provider_subscriptions')
       .select('business_id,provider_subscription_id')
-      .eq('provider', provider)
+      /* v767: the mirror tables carry NO provider column (the d485dc15 lesson, again) — the
+         provider is implied by scope.businessIds, which the reconciler already limited to
+         tenants on this provider. Filtering on the column made PostgREST reject the read and the
+         heal silently counted itself as failed on every run. */
       .eq('livemode', scope.livemode)
       .in('business_id', scope.businessIds)
       .order('business_id', { ascending: true })

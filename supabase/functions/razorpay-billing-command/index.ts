@@ -255,6 +255,7 @@ Deno.serve(async (req) => {
   let claimed: Record<string, unknown> | null = null;
   let admin: ReturnType<typeof billingAdminClient> | null = null;
   let providerCallStarted = false;
+  let commandType = '';
   let nonExecutionProvenByProvider = false;
   let providerObjectId = '';
   let redirectUrl: string | null = '';
@@ -280,7 +281,7 @@ Deno.serve(async (req) => {
       keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
     });
     const origin = returnOrigin();
-    const commandType = String(data.command_type);
+    commandType = String(data.command_type);
     const businessId = String(data.business_id);
     const cadence = data.requested_cadence ? String(data.requested_cadence) : '';
     const subscriptionId = data.provider_subscription_id
@@ -732,7 +733,20 @@ Deno.serve(async (req) => {
       livemode: livemodeFromKey(requiredEnv('RAZORPAY_KEY_ID')),
     });
   } catch (error) {
-    const providerError = error as { code?: string; message?: string };
+    const providerError = error as { code?: string; message?: string; stack?: string };
+    /* v767: the disposition below deliberately hides the cause from the caller (a browser must
+       not learn provider internals), but it was ALSO hidden from the operator — an add-branch
+       that Razorpay charged and we failed to mirror left "provider_result_uncertain" and nothing
+       else. Name the cause in the function log; the message carries no secret. */
+    console.error(JSON.stringify({
+      scope: 'razorpay-billing-command',
+      reason: 'command_exception',
+      command_id: commandId || null,
+      command_type: commandType || null,
+      provider_call_started: providerCallStarted,
+      error_code: providerError.code || null,
+      message: String(providerError.message || error),
+    }));
     const priorExecutionWasUncertain = claimed?.recovery_required === true;
     /* Disposition rules unchanged from V77. 'failed' requires PROOF that nothing happened at the
        provider: either the call never started, or Razorpay rejected it with a 4xx (not a 429).

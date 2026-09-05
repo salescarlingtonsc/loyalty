@@ -599,6 +599,14 @@ test('reconcile heals a known subscription whose paid invoice was never mirrored
   assert.deepEqual(counts, { attempted: 1, recovered: 1, failed: 0 });
   const ingest = admin.calls.find((call) => call.name === 'ingest_billing_event_v755');
   assert.equal(ingest.args.p_event_id, `update_${SUB}_pay_update_1_charged`);
+  /* v767: the mirror tables have no `provider` column. A filter on it made PostgREST reject the
+     read and the heal counted itself failed on every real run (observed 2026-09-05: East Wing
+     charged at Razorpay, never mirrored, reconcile "attempted 0"). */
+  const lookup = admin.queries.find((query) => query.table === 'billing_provider_subscriptions');
+  assert.ok(lookup, 'the heal reads billing_provider_subscriptions');
+  const columns = lookup.state.filters.map(([, column]) => column);
+  assert.ok(!columns.includes('provider'), `heal must not filter on a provider column: ${columns}`);
+  assert.deepEqual(columns.sort(), ['business_id', 'livemode']);
 });
 
 test('the heal is a no-op with no tenants in scope and never throws on a bad row', async () => {
