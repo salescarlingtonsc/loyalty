@@ -14,6 +14,7 @@ import {
   listDueRenewalCancels,
   refreshPaymentMethodFromProvider,
   remainingCountForCadence,
+  remainingCountFromCapError,
 } from '../_shared/razorpay-billing-lifecycle.ts';
 import {
   livemodeFromKey,
@@ -514,7 +515,7 @@ Deno.serve(async (req) => {
         }
         providerObjectId = subscriptionId;
       } else {
-      const updated = await razorpay.updateSubscription(subscriptionId, {
+      const patchBody = {
         plan_id: planId,
         quantity: planUnits,
         schedule_change_at: scheduleChangeAt,
@@ -525,7 +526,30 @@ Deno.serve(async (req) => {
         ...(commandType === 'change_cadence'
           ? { remaining_count: remainingCountForCadence(cadence) }
           : {}),
-      });
+      };
+      let updated: RazorpaySubscription;
+      try {
+        updated = await razorpay.updateSubscription(subscriptionId, patchBody);
+      } catch (error) {
+        /* v769: Razorpay's cap on remaining_count depends on the cycles already used and is only
+           learned from its rejection. Take the number it names and send exactly that. A 4xx here
+           proves nothing was changed, so the retry is safe. */
+        const cap = commandType === 'change_cadence' && error instanceof RazorpayApiError
+          ? remainingCountFromCapError(error.message)
+          : null;
+        if (cap === null) throw error;
+        console.warn(JSON.stringify({
+          scope: 'razorpay-billing-command',
+          reason: 'remaining_count_capped',
+          command_id: commandId,
+          requested: patchBody.remaining_count,
+          cap,
+        }));
+        updated = await razorpay.updateSubscription(subscriptionId, {
+          ...patchBody,
+          remaining_count: cap,
+        });
+      }
       const verified = await razorpay.getSubscription(updated.id || subscriptionId);
       providerObjectId = verified.id || subscriptionId;
       /* Only the capacity model waits: a scheduled (not yet applied) change means Razorpay has

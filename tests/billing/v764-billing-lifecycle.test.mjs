@@ -24,6 +24,7 @@ import {
   remainingCountForCadence,
   REMAINING_COUNT_ANNUAL,
   REMAINING_COUNT_MONTHLY,
+  remainingCountFromCapError,
   runDueRenewalCancels,
   unmirroredPaidInvoices,
   UPDATE_CHARGE_POLL_DELAYS_MS,
@@ -188,18 +189,22 @@ const noSleep = () => Promise.resolve();
 test('remaining_count is the TARGET cadence forever, and Razorpay is given one', () => {
   assert.equal(remainingCountForCadence('monthly'), REMAINING_COUNT_MONTHLY);
   assert.equal(remainingCountForCadence('annual'), REMAINING_COUNT_ANNUAL);
-  assert.equal(REMAINING_COUNT_MONTHLY, 1200);
-  assert.equal(REMAINING_COUNT_ANNUAL, 100);
+  /* v769: 99 years, not 100 — Razorpay's cap sits below the plain forever once a cycle has
+     been used (observed cap 1198 on a change to monthly). */
+  assert.equal(REMAINING_COUNT_MONTHLY, 1188);
+  assert.equal(REMAINING_COUNT_ANNUAL, 99);
   // Anything unrecognised bills monthly-shaped, which is the safe (larger) cycle count.
   assert.equal(remainingCountForCadence(''), REMAINING_COUNT_MONTHLY);
 });
 
 test('change_cadence PATCHes remaining_count for the target and schedules at cycle end', () => {
+  /* v769: the PATCH body is built once (patchBody) so the capped retry sends the same request. */
   const block = commandSource.slice(
-    commandSource.indexOf('const updated = await razorpay.updateSubscription('),
+    commandSource.indexOf('const patchBody = {'),
     commandSource.indexOf('const verified = await razorpay.getSubscription('),
   );
   assert.match(block, /schedule_change_at: scheduleChangeAt/);
+  assert.match(block, /updated = await razorpay\.updateSubscription\(subscriptionId, patchBody\)/);
   assert.match(
     block,
     /commandType === 'change_cadence'\s*\n?\s*\? \{ remaining_count: remainingCountForCadence\(cadence\) \}/,
@@ -224,7 +229,7 @@ test('change_cadence PATCHes remaining_count for the target and schedules at cyc
 test('asking for the plan already in force withdraws the schedule instead of PATCHing again', () => {
   const block = commandSource.slice(
     commandSource.indexOf("if (commandType === 'change_cadence' && String(current.plan_id) === planId)"),
-    commandSource.indexOf('const updated = await razorpay.updateSubscription('),
+    commandSource.indexOf('const patchBody = {'),
   );
   assert.ok(block.length > 0, 'undo branch missing');
   assert.match(block, /cancelScheduledChanges\(subscriptionId\)/);
@@ -674,4 +679,24 @@ test('the due renewal-cancel list unwraps the {status, due:[...]} envelope the v
   assert.deepEqual(rows, [{ business_id: 'b1', provider_subscription_id: 'sub_1' }]);
   assert.deepEqual(normalizeDueRenewalCancels([{ business_id: 'b2', subscription_id: 'sub_3' }]),
     [{ business_id: 'b2', provider_subscription_id: 'sub_3' }]);
+});
+
+/* ------------------------------------------------------- v769 remaining_count cap */
+
+test('the remaining_count cap Razorpay names in its rejection is read back exactly', () => {
+  assert.equal(
+    remainingCountFromCapError(
+      'Exceeds the maximum remaining_count (1198) allowed for the given period and interval (PATCH /subscriptions/sub_x)',
+    ),
+    1198,
+  );
+  assert.equal(remainingCountFromCapError('remaining_count should be present to update to new plan'), null);
+  assert.equal(remainingCountFromCapError('maximum remaining_count (0) allowed'), null);
+  assert.equal(remainingCountFromCapError(null), null);
+});
+
+test('the command retries the PATCH with the capped remaining_count and does not retry anything else', () => {
+  assert.match(commandSource, /remainingCountFromCapError\(error\.message\)/);
+  assert.match(commandSource, /remaining_count: cap,/);
+  assert.match(commandSource, /if \(cap === null\) throw error;/);
 });

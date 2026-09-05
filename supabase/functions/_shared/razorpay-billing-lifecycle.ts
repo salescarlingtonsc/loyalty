@@ -37,11 +37,23 @@ import {
 /* Razorpay refuses a plan change across periods without remaining_count ("remaining_count should
    be present to update to new plan which has different period"). It is the number of cycles yet
    to be CHARGED, and mirrors the total_count the checkout used: the practical forevers. */
-export const REMAINING_COUNT_MONTHLY = 1200;
-export const REMAINING_COUNT_ANNUAL = 100;
+export const REMAINING_COUNT_MONTHLY = 1188;
+export const REMAINING_COUNT_ANNUAL = 99;
 
 export function remainingCountForCadence(cadence: string): number {
   return String(cadence) === 'annual' ? REMAINING_COUNT_ANNUAL : REMAINING_COUNT_MONTHLY;
+}
+
+/* v769 — Razorpay caps remaining_count BELOW the plain forever, and says by how much:
+   "Exceeds the maximum remaining_count (1198) allowed for the given period and interval"
+   (observed 2026-09-05 on a change to monthly after one annual cycle). The cap depends on the
+   cycles already consumed, so it cannot be known up front; the constants above are 99 years,
+   and when Razorpay still objects the number it names is the number it gets. */
+export function remainingCountFromCapError(message: unknown): number | null {
+  const match = /maximum remaining_count \((\d+)\)/i.exec(String(message || ''));
+  if (!match) return null;
+  const count = Number(match[1]);
+  return Number.isFinite(count) && count >= 1 ? count : null;
 }
 
 /* Two quick looks, not a retry loop. Razorpay raises the update invoice synchronously in the

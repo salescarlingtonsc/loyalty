@@ -37374,7 +37374,21 @@ async function loadBillingConfig(){
       if(requestError||!requested?.command_id){buttons.forEach(button=>button.disabled=false);status.textContent='Peekaa could not confirm whether the billing request was saved. Retry this same selection; the exact request key will be reused.';return}
       attempt.command_id=requested.command_id;writeBillingAttempt(attempt);
       const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:attempt.command_id}});
-      if(executed.error){buttons.forEach(button=>button.disabled=false);status.textContent='Peekaa could not confirm Razorpay’s result. Retry this same selection to recover the exact provider request; do not start a different request yet.';return}
+      if(executed.error){
+        buttons.forEach(button=>button.disabled=false);
+        /* v769: a 4xx from Razorpay is a PROVEN non-execution (the function answers 500 with
+           status 'failed'); a timeout or 5xx is 'uncertain'. They read differently to an owner:
+           one says "nothing changed, try again", the other says "wait, then retry the same". */
+        let body=null;
+        try{body=await executed.error?.context?.json?.()}catch{body=null}
+        if(body?.status==='failed'){
+          clearBillingAttempt(attempt.key);
+          status.textContent='Razorpay did not accept this change, so nothing was changed. Try again; if it repeats, contact Peekaa support.';
+          return;
+        }
+        status.textContent='Peekaa could not confirm Razorpay’s result. Retry this same selection to recover the exact provider request; do not start a different request yet.';
+        return;
+      }
       const result=executed.data||requested;
       if(result.redirect_url){clearBillingAttempt(attempt.key);location.assign(result.redirect_url);return}
       let message='';
