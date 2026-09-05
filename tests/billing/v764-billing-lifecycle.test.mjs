@@ -527,8 +527,8 @@ test('the card-change return routes to card_updated and still checks the signatu
   assert.match(returnSource, /if \(!verified\) \{\s*\n\s*return seeOther\(`\$\{target\.cancel\}&reason=signature`\);/);
   // A card change runs under a NEW command id, so the notes comparison must not reject it.
   assert.match(returnSource, /!cardChange && commandId && UUID\.test\(commandId\)/);
-  // Still writes nothing.
-  assert.doesNotMatch(returnSource, /billingAdminClient|\.rpc\(|\.from\(|\.insert\(|\.update\(/);
+  // v774: no DIRECT writes; the paid-invoice synthesis goes through the shared recovery pipeline.
+  assert.doesNotMatch(returnSource, /\.rpc\(|\.from\(|\.insert\(|\.update\(/ /* v774: the admin client may be handed to the recovery synthesis, never used directly */);
 });
 
 test('refresh_payment_method takes the latest settled payment and writes only the label', async () => {
@@ -699,4 +699,18 @@ test('the command retries the PATCH with the capped remaining_count and does not
   assert.match(commandSource, /remainingCountFromCapError\(error\.message\)/);
   assert.match(commandSource, /remaining_count: cap,/);
   assert.match(commandSource, /if \(cap === null\) throw error;/);
+});
+
+/* ------------------------------------------------------- v774 immediate activation */
+
+test('the return hop mirrors the paid invoice itself, after the signature check and never for a card change', () => {
+  const verifiedAt = returnSource.indexOf('if (!verified) {');
+  const synthesisAt = returnSource.indexOf('recoverProviderSubscription({');
+  assert.ok(verifiedAt > 0 && synthesisAt > verifiedAt, 'synthesis must follow the signature check');
+  assert.match(returnSource, /if \(subscriptionId && !cardChange\) \{/);
+  assert.match(returnSource, /admin: billingAdminClient\(\)/);
+  assert.match(returnSource, /livemode: livemodeFromKey\(keyId\) === true/);
+  /* Best effort: a synthesis failure must not change the route. */
+  assert.match(returnSource, /return_hop_synthesis_failed/);
+  assert.ok(returnSource.indexOf('return seeOther(target.success);') > synthesisAt);
 });

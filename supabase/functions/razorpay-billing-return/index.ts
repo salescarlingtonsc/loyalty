@@ -1,10 +1,13 @@
-import { billingJson, requiredEnv } from '../_shared/billing-service.ts';
-import { razorpayClient, verifyCheckoutSignature } from '../_shared/razorpay-client.ts';
+import { billingAdminClient, billingJson, requiredEnv } from '../_shared/billing-service.ts';
+import { livemodeFromKey, razorpayClient, verifyCheckoutSignature } from '../_shared/razorpay-client.ts';
+import { recoverProviderSubscription } from '../_shared/razorpay-provider-recovery.ts';
 
 /* nestly_v755 — Razorpay Checkout's callback_url target.
 
-   This function exists ONLY to turn a provider redirect back into one of our own routes. It
-   writes nothing. A redirect is not a payment: the browser can be closed before it fires, it can
+   This function turns a provider redirect back into one of our own routes. Since nestly_v774 it
+   also reads the named subscription back from Razorpay and mirrors any PAID invoice through the
+   same pipeline the webhook feeds (see the synthesis block below) — the redirect itself is still
+   never believed. A redirect is not a payment: the browser can be closed before it fires, it can
    be replayed, and its signature proves only that Razorpay produced it — never that money moved.
    subscription.charged on the webhook is the sole source of payment truth, exactly as
    invoice.paid was under Stripe. The signature check here is about not honouring a FORGED
@@ -145,8 +148,43 @@ Deno.serve(async (req) => {
     if (!verified) {
       return seeOther(`${target.cancel}&reason=signature`);
     }
-    /* 'processing', not 'paid': the app polls its own billing state, which only the webhook
-       moves. */
+    /* nestly_v774 — "it loads super long, I need it to be immediate" (owner, 2026-09-05).
+       Razorpay's webhook arrives 60–90 seconds after the card is charged (measured: paid
+       09:24:28, webhook 09:25:51), and until it does the owner sits on "Setting up your
+       workspace…". The redirect is still not payment truth — but the SIGNED redirect names a
+       subscription we can read back from Razorpay right now, and a paid invoice read from the
+       provider is the same truth the webhook would carry. So the return hop runs the v759
+       recovery synthesis for this one subscription: it mirrors any paid invoice through the
+       identical ingest → apply pipeline (the webhook, when it lands, is a duplicate), which
+       fires the first-paid trigger and opens the workspace before the browser has even loaded
+       the next page. Best effort: any failure here leaves the webhook path exactly as it was. */
+    if (subscriptionId && !cardChange) {
+      try {
+        const keyId = requiredEnv('RAZORPAY_KEY_ID');
+        const outcome = await recoverProviderSubscription({
+          admin: billingAdminClient(),
+          razorpay: razorpayClient({ keyId, keySecret: requiredEnv('RAZORPAY_KEY_SECRET') }),
+          subscriptionId,
+          livemode: livemodeFromKey(keyId) === true,
+        });
+        console.log(JSON.stringify({
+          scope: 'razorpay-billing-return',
+          reason: 'return_hop_synthesis',
+          subscription_id: subscriptionId,
+          invoices: outcome.invoices.length,
+          events: outcome.events.map((event) => `${event.event_type}:${event.status}`),
+        }));
+      } catch (error) {
+        console.warn(JSON.stringify({
+          scope: 'razorpay-billing-return',
+          reason: 'return_hop_synthesis_failed',
+          subscription_id: subscriptionId,
+          message: String((error as Error)?.message || error),
+        }));
+      }
+    }
+    /* 'processing', not 'paid': the app polls its own billing state, which the synthesis above
+       has usually already moved; the webhook remains the fallback. */
     return seeOther(target.success);
   } catch {
     return seeOther(`${target.cancel}&reason=signature`);

@@ -117,7 +117,7 @@ test('the return function verifies the redirect signature and writes nothing', a
   // A verified redirect means "Razorpay sent this browser here", not "money moved": the success
   // route is the app's own processing screen, and the function performs no database write.
   assert.match(source, /status=processing/);
-  assert.doesNotMatch(source, /billingAdminClient|\.rpc\(|\.from\(|\.insert\(|\.update\(/);
+  assert.doesNotMatch(source, /\.rpc\(|\.from\(|\.insert\(|\.update\(/ /* v774: the admin client is handed to the recovery synthesis, never used directly */);
   // Which route the browser lands on comes from Razorpay's own notes, not the query string.
   assert.match(source, /subscription\.notes\?\.self_serve/);
 });
