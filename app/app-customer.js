@@ -7180,7 +7180,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
   const showPackageMetric=capabilities.packages===true&&Number(packages.sessions_remaining||0)>0;
   const showMembershipMetric=capabilities.membership===true&&membership.active===true;
   const showSecondaryMetrics=!actionableCard&&(showPackageMetric||showMembershipMetric);
-  const showGiftCardSectionV347=capabilities.gift_cards===true||capabilities.giftcards===true;
+  /* nestly_v768 (owner: "there is no gift card (remove it from my app)"): the customer app stops
+     rendering the Gift cards section too. customer_get_gift_cards and every card's balance row are
+     untouched; loadGiftCards() already returns when its host is absent. */
+  const showGiftCardSectionV347=false;
   const showPackageGroupV347=showGiftCardSectionV347||capabilities.packages===true||capabilities.membership===true
     ||(customerFeatures.customer_birthday_benefits&&actionableCard?.birthday_benefit&&actionableCard.birthday_benefit.status!=='unavailable');
   const hasWalletSection=true;

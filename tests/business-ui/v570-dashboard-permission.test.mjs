@@ -50,6 +50,8 @@ function makeRail(S,resolvedModules){
     ${section('const CUSTOMER_INTERFACE_VIEWS_V296','const CUSTOMER_INTERFACE_TABS_V368')}
     ${section('const NAVGROUPS=[','\nlet navOpen')}
     const HIDDEN_BUSINESS_SURFACES=new Set([]);
+    /* nestly_v768: the retired-module set navModuleVisible and the route guard now read. */
+    const RETIRED_BUSINESS_MODULES_V768=new Set(['giftcards','support']);
     const sectorShowsBottlesV275=false;
     const sectorHidesAppointmentsV246=false;
     const enabled=filterResolvedModulesForRole(resolved,S.myRole)

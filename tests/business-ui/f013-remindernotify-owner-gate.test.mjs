@@ -51,6 +51,8 @@ function runRouteGuard(S,pageKeyArg){
   const src=`
     ${section('const ROLE_CAPABILITIES={','const hasRoleCapability=')}
     const HIDDEN_BUSINESS_SURFACES=new Set([]);
+    /* nestly_v768: the retired-module set navModuleVisible and the route guard now read. */
+    const RETIRED_BUSINESS_MODULES_V768=new Set(['giftcards','support']);
     ${section('const FINANCE_MODULES=new Set(','\n/* Sidebar grouping')}
     ${section('const MODULES={','const ROLE_LABELS=')}
     ${section('const canReadModule=module=>','const SAFE_LANDING_PAGES_V570=')}
@@ -78,6 +80,8 @@ function operationsSetupRow(S,resolvedModules){
   const src=`
     ${section('const ROLE_CAPABILITIES={','const hasRoleCapability=')}
     const HIDDEN_BUSINESS_SURFACES=new Set([]);
+    /* nestly_v768: the retired-module set navModuleVisible and the route guard now read. */
+    const RETIRED_BUSINESS_MODULES_V768=new Set(['giftcards','support']);
     ${section('const FINANCE_MODULES=new Set(','\n/* Sidebar grouping')}
     ${section('const MODULES={','const ROLE_LABELS=')}
     ${section('const CUSTOMER_INTERFACE_VIEWS_V296','const CUSTOMER_INTERFACE_TABS_V368')}

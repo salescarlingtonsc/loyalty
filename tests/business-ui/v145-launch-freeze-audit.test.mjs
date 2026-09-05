@@ -232,7 +232,8 @@ test('P&L charts use complete server aggregates and Singapore dates, never cappe
   assert.match(pnl, /Cash-basis revenue less/);
   assert.match(pnl, /Selected-branch expenses/);
   assert.match(pnl, /excludes business-wide overhead/);
-  assert.match(pnl, /Gift card issuance is deferred revenue/);
+  /* nestly_v768: the gift-card sentence left the P&L note with the rest of the gift-card surface. */
+  assert.doesNotMatch(pnl, /Gift card issuance is deferred revenue/);
   assert.match(pnl, /Only recorded eligible payments count toward cash-basis revenue/);
   assert.match(pnl, /No expenses recorded in this scope/,
     'an empty category aggregate must explain the absence instead of leaving a blank chart canvas');

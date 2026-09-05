@@ -82,8 +82,11 @@ test('V266 A4 Clear filters restores the dates too, and the four other filters s
   assert.match(block, /The From date is after the To date\./);
 });
 
-test('V266 A5 Sale type offers gift card, a kind that really exists in the sales ledger', () => {
-  assert.match(sales(), /<option value="gift_card">Gift card<\/option>/);
+test('V266 A5 → v768: Sale type no longer offers gift card (owner: "there is no gift card")', () => {
+  /* The kind still exists in the ledger and the server still accepts it as a filter; the
+     business UI simply stops advertising a kind the owner has retired. */
+  assert.doesNotMatch(sales(), /<option value="gift_card">/);
+  assert.match(sales(), /<option value="package">Package<\/option><option value="membership">Membership<\/option>/);
 });
 
 test('V266 B1 the Performance KPIs still come from the applied dashboard range, unchanged', () => {

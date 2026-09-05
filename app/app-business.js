@@ -2148,7 +2148,8 @@ function navHtml(page,idPrefix='nav'){
      opened. It participates in the same `enabled.includes(m)` test as every other module now,
      which is all it ever needed: 'dashboard' is a real key in ALLMODS, in every sector bundle
      and in staff_module_perms, so an inheriting staff member and every owner keep the row. */
-  const navModuleVisible=m=>(m==='dashboard'&&enabled.includes('dashboard'))
+  /* nestly_v768: a retired module is never a rail row, whatever the entitlement says. */
+  const navModuleVisible=m=>!RETIRED_BUSINESS_MODULES_V768.has(m)&&((m==='dashboard'&&enabled.includes('dashboard'))
     ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
@@ -2157,7 +2158,7 @@ function navHtml(page,idPrefix='nav'){
     ||(m==='custpackages'&&enabled.includes('packages'))
     ||(m==='waitlist'&&enabled.includes('waitlist')&&enabled.includes('bookings'))
     ||(m!=='waitlist'&&m!=='appointments'&&enabled.includes(m))
-    ||(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled.includes(m));
+    ||(m==='appointments'&&!sectorHidesAppointmentsV246&&enabled.includes(m)));
   const visGroups=NAVGROUPS.map(g=>({...g,items:g.items.filter(navModuleVisible)})).filter(g=>g.items.length);
   return visGroups.map(g=>{
     if(g.flat){
@@ -10281,7 +10282,7 @@ async function salesPage(){
         </div>
         <div class="sales-filter-row secondary">
           <div><label for="salesStaff">Team member</label><select id="salesStaff"><option value="">All staff</option>${saleTeam.map(person=>`<option value="${person.id}">${esc(person.full_name||'Team member')}</option>`).join('')}</select></div>
-          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="gift_card">Gift card</option><option value="membership">Membership</option></select></div>
+          <div><label for="salesType">Sale type</label><select id="salesType"><option value="">All types</option><option value="quick_sale">Quick sale</option><option value="service">Service</option><option value="package">Package</option><option value="membership">Membership</option></select></div>
           <div><label for="salesPayment">Payment state</label><select id="salesPayment"><option value="">All states</option><option value="true">Paid</option><option value="false">Unpaid</option></select></div>
           ${/* nestly_v584 (owner photo 10: an arrow from Clear filters to the right-hand end of the
                field row, marked "clear"). Apply and Clear are one pair of decisions about the same
@@ -32003,11 +32004,13 @@ async function customerIntelligencePage(){
   function ciContactabilityGroupMarkupV650(label,group){
     if(!group)return '';
     const channels=group.allowed_by_channel||{};
-    const prominent=['whatsapp','sms','email'],rest=['push','in_app','call'];
+    /* nestly_v768 (owner: "analytics should not display anything with whatsapp"): the WhatsApp
+       column is gone from this panel. The server still counts it; this page no longer prints it. */
+    const prominent=['sms','email'],rest=['push','in_app','call'];
     const channelCard=(key,label2)=>`<article class="revenue-truth-metric"><span>${esc(label2)}</span><strong>${Number(channels[key]||0)} / ${Number(group.customers||0)}</strong></article>`;
     return `<div style="margin-top:12px"><h3 class="small" style="font-weight:700">${esc(label)}${group.category?` · ${esc(group.category)}`:''}</h3>
       <div class="revenue-truth-metrics" style="margin-top:8px">
-        ${channelCard('whatsapp','WhatsApp')}${channelCard('sms','SMS')}${channelCard('email','Email')}
+        ${channelCard('sms','SMS')}${channelCard('email','Email')}
       </div>
       <p class="muted small" style="margin-top:8px">Also allowed: push ${Number(channels.push||0)}, in-app ${Number(channels.in_app||0)}, call ${Number(channels.call||0)} (out of ${Number(group.customers||0)} customers)</p>
     </div>`;
@@ -33309,7 +33312,6 @@ function recoveryReportHtmlV550(data){
     <div class="card"><b>The funnel</b><table style="margin-top:8px">
       <tr><td data-workspace-i18n>Customers contacted while lapsed</td><td class="num"><b>${treated}</b></td></tr>
       <tr><td class="muted small" style="padding-left:14px">by bring-back voucher</td><td class="num">${Number(iv.vouchers)||0}</td></tr>
-      <tr><td class="muted small" style="padding-left:14px">by WhatsApp message</td><td class="num">${Number(iv.messages)||0}</td></tr>
       <tr><td data-workspace-i18n>Came back within ${attrDays} days</td><td class="num"><b>${Number(ret.count)||0}</b> (${pct(ret.rate_pct)})</td></tr>
       <tr><td data-workspace-i18n>Vouchers actually redeemed</td><td class="num">${Number(rec.redeemed_vouchers)||0} · ${esc(money(rec.redeemed_voucher_cents))}</td></tr></table>
       ${excluded?`<p class="muted small" style="margin-top:8px">${excluded} contact${excluded===1?' was':'s were'} excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.</p>`:''}</div>
@@ -33554,10 +33556,9 @@ async function reportsPage(){
         <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
-        <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
-        <tr><td>Gift cards unredeemed</td><td class="num"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
+        <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr></table>
         ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
-        <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
+        <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
 `;
   }
@@ -34195,7 +34196,7 @@ async function staffPerfPage(drillId){
       ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
         <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td class="num">${money(agg[k].revenue)}</td><td class="num">${money(agg[k].commission)}</td></tr>`).join('')}
       <tr class="total-row"><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td class="num"><b>${money(totals.revenue)}</b></td><td class="num"><b>${money(totals.commission)}</b></td></tr></table></div>
-      <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue, such as gift-card issuance. Ledger records and frozen commission remain visible for traceability.</p>`;
+      <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue. Ledger records and frozen commission remain visible for traceability.</p>`;
   }
   load();
 }
@@ -34988,7 +34989,7 @@ async function pnlPage(){
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
       </div>
-      <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Gift card issuance is deferred revenue. Only recorded eligible payments count toward cash-basis revenue; the gift-card value becomes accrual revenue when it is redeemed and spent.</p>
+      <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Only recorded eligible payments count toward cash-basis revenue.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
         <div class="card"><div class="v150-soft-head"><b>Accrual revenue vs expenses by month</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'Add a wider range to see month-by-month',body:'Pick a range covering two or more months and run again.'})}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
@@ -35701,6 +35702,7 @@ async function settingsPage(){
     const sectorModules=sectorAssignableModulesV291();
     return Object.keys(MODULES)
       .filter(module=>(S.biz.enabled_modules||[]).includes(module)&&!OWNER_ONLY_MODULES.has(module)
+        &&!RETIRED_BUSINESS_MODULES_V768.has(module)
         &&(!sectorModules||sectorModules.includes(module)));
   };
   const defaultInheritedPerms=role=>Object.fromEntries(

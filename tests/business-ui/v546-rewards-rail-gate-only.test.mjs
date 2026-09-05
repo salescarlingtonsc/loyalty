@@ -82,8 +82,12 @@ test('V546 v538 still does what it was written for',()=>{
   const g=group('customerui');
   assert.ok(g,'the Customer Interface group is gone');
   assert.ok(!g.gateOnly,'Customer Interface must NOT be gateOnly');
+  /* nestly_v768: 'support' is retired (owner: business owners must not see the inbox). It stays
+     DECLARED here — the group is not gateOnly and the key is the un-retire switch — while
+     navModuleVisible drops it before it can become a row. tests/whatsapp/v538-inbox-navigation
+     executes the real navHtml and asserts the row is absent for an entitled tenant. */
   assert.ok(moduleRowKeys(g).includes('support'),
-    'the WhatsApp Inbox row must still render — this is what nestly_v538 fixed');
+    "'support' must stay declared on the group; RETIRED_BUSINESS_MODULES_V768 is the only switch");
 });
 
 test('V546 gateOnly is opt-in, so no other group changed',()=>{

@@ -441,6 +441,14 @@ const CUSTOMER_FEATURES_EMERGENCY_DISABLED=false;
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
 const ALLMODS=['dashboard','till','clients','appointments','sales','services','bookings','waitlist','inventory','packages','loyalty','retention','referrals','memberships','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses'];
+/* nestly_v768 (owner, 2026-09-05): "there is no gift card (remove it from my app)" and "i am not
+   using whatsapp inbox for now (i do not want business owner to see this at all)". ONE switch for
+   both: a module in this set never renders a rail row (navModuleVisible), never resolves as a route
+   (the router refuses it with a toast, the V303 giftcards shape), and never appears in the per-staff
+   permission grid. The keys stay in ALLMODS / MODULES / the sector bundles for the V303 reason —
+   they are server-side entitlements other tenants' rows and RLS policies are written against, and
+   deleting an entitlement key is a data change. Un-retiring a module is deleting it from this set. */
+const RETIRED_BUSINESS_MODULES_V768=new Set(['giftcards','support']);
 const INDUSTRIES={
   fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
@@ -2280,6 +2288,14 @@ async function route(){
        balances or their ledger rows changes. */
     if(pageKey==='giftcards'){
       toast('Gift cards are no longer part of this workspace.');
+      return nav(firstPermittedPageV570());
+    }
+    /* nestly_v768 (owner: "i do not want business owner to see this at all"). Same shape as the
+       giftcards refusal above — the rail row is gone via RETIRED_BUSINESS_MODULES_V768, and a typed
+       or bookmarked #/support is answered here with a toast rather than rendering the inbox.
+       supportInboxPageV531 and its RPCs are left in place; this is a surface decision. */
+    if(RETIRED_BUSINESS_MODULES_V768.has(pageKey)){
+      toast('That page is not available for now.');
       return nav(firstPermittedPageV570());
     }
     /* V466 (owner ruling 2026-08-23, R4: "hide memberships and gift cards until verified").

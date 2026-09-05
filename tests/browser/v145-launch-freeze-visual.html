@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="922e9ea7b818ad06c740203275d3e5fa3555a4c99373b7ba71655c9507d52c1c"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="2b238a5baf652136afc1d298693a99f3dc1e2324603f155d5f8538066fab42a0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5763,7 +5763,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 922e9ea7b818ad06c740203275d3e5fa3555a4c99373b7ba71655c9507d52c1c</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2b238a5baf652136afc1d298693a99f3dc1e2324603f155d5f8538066fab42a0</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8695,10 +8695,9 @@ function renderHistPage(history,n,offsetV468=0){
         <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
-        <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr>
-        <tr><td>Gift cards unredeemed</td><td class="num"><b>${giftCardsAvailable?money(gcOut):'Unavailable'}</b></td></tr></table>
+        <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr></table>
         ${/* V297: "Liabilities" is the one card an owner is most likely to misread as takings. */''}
-        <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet, and gift cards they have not redeemed yet. It is not an expense today, but it is a claim on future takings.</p>
+        <p class="muted small" style="margin-top:8px">In plain words: this is money you still owe customers — store credit they have not spent yet. It is not an expense today, but it is a claim on future takings.</p>
         <p class="muted small" style="margin-top:8px">Available balances are current business-wide obligations and do not change when a historical period or branch is selected. Unavailable means complete business-wide authority could not be confirmed; no zero is inferred.</p></div>
 `;
   }
@@ -9493,7 +9492,7 @@ function renderHistPage(history,n,offsetV468=0){
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
       </div>
-      <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Gift card issuance is deferred revenue. Only recorded eligible payments count toward cash-basis revenue; the gift-card value becomes accrual revenue when it is redeemed and spent.</p>
+      <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Only recorded eligible payments count toward cash-basis revenue.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
         <div class="card"><div class="v150-soft-head"><b>Accrual revenue vs expenses by month</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'Add a wider range to see month-by-month',body:'Pick a range covering two or more months and run again.'})}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
@@ -9954,7 +9953,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'922e9ea7b818ad06c740203275d3e5fa3555a4c99373b7ba71655c9507d52c1c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'2b238a5baf652136afc1d298693a99f3dc1e2324603f155d5f8538066fab42a0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

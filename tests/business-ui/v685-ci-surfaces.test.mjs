@@ -233,8 +233,12 @@ test('V685 contactabilityMarkupV650: renders both groups\' channel counts', () =
     note: 'A customer counts only with an affirmative recorded consent for the channel; nobody is grandfathered.'
   }, '');
   const html = page.contactability();
-  assert.ok(html.includes('10 / 42'), 'business_offers WhatsApp count/denominator');
-  assert.ok(html.includes('30 / 42'), 'rewards_and_points WhatsApp count/denominator');
+  /* nestly_v768 (owner: analytics must not display anything with WhatsApp): the WhatsApp column
+     is gone from this panel, so the counts that prove both groups render are now SMS and Email. */
+  assert.ok(!/WhatsApp/.test(html), 'the panel must not print a WhatsApp column');
+  assert.ok(html.includes('2 / 42'), 'business_offers Email count/denominator');
+  assert.ok(html.includes('1 / 42'), 'rewards_and_points SMS count/denominator');
+  assert.ok(html.includes('5 / 42'), 'rewards_and_points Email count/denominator');
   assert.ok(html.includes('nobody is grandfathered'));
 });
 
