@@ -3383,6 +3383,38 @@
       ,'Complete operational timeline':'Garis masa operasi lengkap'
     })
   });
+  // nestly_v779: a firm's payments, branch by branch — the kanban company popup and the
+  // Payments card inside the firm record. New copy only.
+  const PLATFORM_COPY_V779=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Payments by branch':'按分店查看付款','Open firm record':'打开商户档案',
+      'Payments':'付款','Billed':'已计费','Awaiting payment':'等待付款','Payment lapsed':'付款已失效','Stops at renewal':'续费时停止',
+      'Unsubscribed':'已退订','Included':'已包含','Main branch':'主分店',
+      'Whole account':'整个账户','No payment yet':'尚无付款',
+      'Paid on {paid} · renews on {renews}':'{paid} 已付 · {renews} 续费',
+      'Paid on {paid}':'{paid} 已付','Payments unavailable':'无法读取付款',
+      'Loading payments…':'正在加载付款…','Plan':'方案','Renews on {date}':'{date} 续费',
+      'Branch':'分店','Capacity increase':'容量提升','Plan change':'方案变更',
+      'Annual plan':'年度方案','Monthly plan':'月度方案','Subscription':'订阅','Renewal':'续订',
+      'What':'项目','Covers':'涵盖期间','Receipt':'收据','Amount':'金额','Date':'日期','Status':'状态',
+      'Read-only · the same charges the business sees on its Subscription page':'只读 · 与商户在订阅页面看到的收费一致',
+      '{count} profiles':'{count} 个客户档案'
+    }),
+    ms:Object.freeze({
+      'Payments by branch':'Pembayaran mengikut cawangan','Open firm record':'Buka rekod firma',
+      'Payments':'Pembayaran','Billed':'Dibilkan','Awaiting payment':'Menunggu pembayaran','Payment lapsed':'Pembayaran luput','Stops at renewal':'Berhenti pada pembaharuan',
+      'Unsubscribed':'Langganan dihentikan','Included':'Termasuk','Main branch':'Cawangan utama',
+      'Whole account':'Seluruh akaun','No payment yet':'Belum ada pembayaran',
+      'Paid on {paid} · renews on {renews}':'Dibayar pada {paid} · diperbaharui pada {renews}',
+      'Paid on {paid}':'Dibayar pada {paid}','Payments unavailable':'Pembayaran tidak tersedia',
+      'Loading payments…':'Memuatkan pembayaran…','Plan':'Pelan','Renews on {date}':'Diperbaharui pada {date}',
+      'Branch':'Cawangan','Capacity increase':'Peningkatan kapasiti','Plan change':'Perubahan pelan',
+      'Annual plan':'Pelan tahunan','Monthly plan':'Pelan bulanan','Subscription':'Langganan','Renewal':'Pembaharuan',
+      'What':'Perkara','Covers':'Meliputi','Receipt':'Resit','Amount':'Jumlah','Date':'Tarikh','Status':'Status',
+      'Read-only · the same charges the business sees on its Subscription page':'Baca sahaja · caj yang sama dilihat perniagaan pada halaman Langganan',
+      '{count} profiles':'{count} profil'
+    })
+  });
   // V511: the work operating system and Business 360. New copy only — every
   // string below is either introduced by the command center, the work queue,
   // or the Business 360 panel; nothing here replaces an earlier translation.
@@ -3773,6 +3805,7 @@
       ??PLATFORM_COPY_V297[platformLocale]?.[key]
       ??PLATFORM_COPY_V312[platformLocale]?.[key]
       ??PLATFORM_COPY_V511[platformLocale]?.[key]
+      ??PLATFORM_COPY_V779[platformLocale]?.[key]
       ??PLATFORM_COPY_V513[platformLocale]?.[key]
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
@@ -7614,7 +7647,10 @@
     main.querySelectorAll('[data-prospect]').forEach(card=>{
       const item=items.find(row=>String(row.id||row.prospect_id)===card.dataset.prospect);
       const open=()=>{
-        if(item?._has_prospect_detail===false)globalObject.location.hash='#/platform/firms';
+        /* nestly_v779 (owner photo 1): a Case-won card that is a live firm opens the company —
+           its payments, branch by branch — with a button into the firm record. It used to jump
+           to the Firms list, which was not a popup and named no transaction. */
+        if(item?._has_prospect_detail===false)openCompanyPaymentsV779(item,context);
         else{
           const detailContext=replaceOnboardingState(context,filters,{
             prospect:item.id||item.prospect_id
@@ -13929,7 +13965,9 @@
     deactivate=CUI.activateDialog(overlay,{onClose:close});
     const host=overlay.querySelector('[data-detail]');
     try{
-      const [report,affinity,recommendations]=await Promise.all([
+      /* nestly_v779: the payments read is captured, never thrown — a missing migration degrades
+         the Payments card, not the whole firm record. */
+      const [report,affinity,recommendations,paymentsV779]=await Promise.all([
         rpc(sb,'platform_get_assigned_firm_report_v94',{
           p_business:businessId,p_branch:null,p_from:period.from,p_to:period.to
         }),
@@ -13938,7 +13976,10 @@
         }),
         rpc(sb,'platform_get_consultative_recommendations_v94',{
           p_business:businessId,p_branch:null,p_from:period.from,p_to:period.to
-        })
+        }),
+        rpc(sb,'platform_get_business_payments_v779',{p_business:businessId}).then(
+          value=>({value:asObject(value),error:null}),error=>({value:null,error})
+        )
       ]);
       if(!host.isConnected)return;
       const firmReport=asObject(report),scope=asObject(firmReport.scope);
@@ -13967,6 +14008,7 @@
         },[['name','Name'],['phone','Phone'],['email','Email']])+
           platformContactActions(item.boss_phone||item.primary_contact_phone,CUI)})}
       </div>
+      ${v779PaymentsCardHtml(paymentsV779,CUI)}
       ${consultativeIntelligenceHtml(firmReport,asObject(affinity),asObject(recommendations),CUI)}`;
     }catch(error){
       const denied=String(error?.code||error?.status||'')==='42501';
@@ -14946,6 +14988,191 @@
         ${entry.subject?`<p class="small">${escapeHtml(entry.subject)}</p>`:''}
       </div></div>`).join(''):localizedEmptyHtml('No timeline activity recorded')})}`;
   }
+  // ===========================================================================
+  // nestly_v779 (owner, 2026-09-05): a firm's payments, branch by branch.
+  //
+  // The business's Subscription page lists each charge with the branch it paid for and the
+  // period it covers (v764/v775). The console had no equivalent: a Case-won card in the
+  // onboarding kanban jumped to the Firms list, and the firm record (photo 3) said nothing about
+  // money. platform_get_business_payments_v779 hands over the branches, the subscription and every
+  // mirrored invoice with its reason; this renderer groups them the way the owner asked —
+  // "Cubbly SPA paid on 5 Sep 2026 · renews on 5 Sep 2027" — one block per branch, plus a
+  // "Whole account" block for charges that belong to no single branch (a capacity increase).
+  function v779PaymentDate(value){
+    if(!value)return '';
+    const text=String(value);
+    const date=new Date(/^\d{4}-\d{2}-\d{2}$/.test(text)?`${text}T00:00:00+08:00`:text);
+    return Number.isNaN(date.getTime())?text:date.toLocaleDateString(platformIntlLocale(),{
+      day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'
+    });
+  }
+  function v779InvoiceDetail(invoice){
+    const detail=invoice?.detail;
+    if(detail&&typeof detail==='object')return detail;
+    if(typeof detail==='string'){try{return asObject(JSON.parse(detail))}catch{return {}}}
+    return {};
+  }
+  function v779InvoiceCoversUntil(invoice){
+    const detail=v779InvoiceDetail(invoice);
+    return detail.covers_until||invoice?.period_end||null;
+  }
+  function v779InvoiceCoversFrom(invoice){
+    const detail=v779InvoiceDetail(invoice);
+    return detail.covers_from||invoice?.period_start||null;
+  }
+  // What one charge was for, in the owner's words — mirrors the business page's wording.
+  function v779InvoiceWhat(invoice,subscription){
+    const reason=String(invoice?.reason||'').trim(),detail=v779InvoiceDetail(invoice);
+    if(reason==='branch_added'){
+      const name=String(detail.branch_name||'').trim();
+      return name?`${pt('Branch')} ${name}`:pt('Branch');
+    }
+    if(reason==='capacity_increase'){
+      const from=Number(detail.capacity_from||0),to=Number(detail.capacity_to||0);
+      const sizes=to?`${from?from.toLocaleString('en-SG')+' → ':''}${pt('{count} profiles',{count:to.toLocaleString('en-SG')})}`:'';
+      return [pt('Capacity increase'),sizes].filter(Boolean).join(' · ');
+    }
+    if(reason==='plan_changed')return pt('Plan change');
+    if(reason==='renewal')return pt('Renewal');
+    const cadence=String(detail.cadence||invoice?.cadence||subscription?.cadence||'').toLowerCase();
+    if(cadence==='annual'||cadence==='yearly')return pt('Annual plan');
+    if(cadence==='monthly')return pt('Monthly plan');
+    return pt('Subscription');
+  }
+  // Which block a charge belongs in: the branch it names, the main branch for the plan itself,
+  // or the whole account for a change that no single branch owns.
+  function v779InvoiceGroupKey(invoice,branches){
+    const reason=String(invoice?.reason||'').trim(),detail=v779InvoiceDetail(invoice);
+    const main=branches.find(branch=>branch.is_default===true)
+      ||branches.find(branch=>String(branch.billing_state||'')==='included')||branches[0]||null;
+    if(reason==='branch_added'){
+      const byId=branches.find(branch=>String(branch.branch_id||branch.id||'')===String(detail.branch_id||''));
+      if(byId)return String(byId.branch_id||byId.id);
+      const byName=branches.find(branch=>String(branch.name||'').trim().toLowerCase()===String(detail.branch_name||'').trim().toLowerCase());
+      if(byName)return String(byName.branch_id||byName.id);
+      return 'account';
+    }
+    if(reason==='capacity_increase'||reason==='plan_changed')return 'account';
+    return main?String(main.branch_id||main.id):'account';
+  }
+  function v779BranchStateLabel(branch){
+    const state=String(branch?.billing_state||'');
+    if(state==='included')return pt('Included');
+    if(state==='active')return pt('Billed');
+    if(state==='pending_payment')return pt('Awaiting payment');
+    if(state==='suspended')return pt('Payment lapsed');
+    if(state==='canceling')return pt('Stops at renewal');
+    if(state==='unsubscribed')return pt('Unsubscribed');
+    return platformStatus(state||'—');
+  }
+  function platformBusinessPaymentsHtmlV779(payload,CUI){
+    const data=asObject(payload),subscription=asObject(data.subscription);
+    const branches=asArray(data.branches),invoices=asArray(data.invoices);
+    const groups=new Map();
+    branches.forEach(branch=>{
+      groups.set(String(branch.branch_id||branch.id),{
+        title:String(branch.name||'—'),state:v779BranchStateLabel(branch),
+        isDefault:branch.is_default===true,rows:[]
+      });
+    });
+    groups.set('account',{title:pt('Whole account'),state:'',isDefault:false,rows:[]});
+    invoices.forEach(invoice=>{
+      const key=v779InvoiceGroupKey(invoice,branches);
+      (groups.get(key)||groups.get('account')).rows.push(invoice);
+    });
+    const money=invoice=>currency(invoice.total_cents,invoice.currency||'SGD');
+    const blocks=[...groups.entries()].filter(([key,group])=>key!=='account'||group.rows.length).map(([key,group])=>{
+      const paid=group.rows.filter(invoice=>invoice.paid_normalized===true||String(invoice.status||'')==='paid')
+        .sort((left,right)=>new Date(right.paid_at||right.created_at||0)-new Date(left.paid_at||left.created_at||0));
+      const latest=paid[0]||null;
+      const renews=latest?v779InvoiceCoversUntil(latest):(subscription.current_period_end||null);
+      const summary=latest
+        ?(renews&&key!=='account'
+          ?pt('Paid on {paid} · renews on {renews}',{paid:v779PaymentDate(latest.paid_at||latest.created_at),renews:v779PaymentDate(renews)})
+          :pt('Paid on {paid}',{paid:v779PaymentDate(latest.paid_at||latest.created_at)}))
+        :pt('No payment yet');
+      const table=group.rows.length?`<div class="cui-table-wrap" role="region" tabindex="0"><table class="cui-table platform-payments-table-v779" data-responsive="true">
+        <thead><tr><th scope="col">${escapeHtml(pt('Date'))}</th><th scope="col">${escapeHtml(pt('What'))}</th><th scope="col">${escapeHtml(pt('Covers'))}</th><th scope="col">${escapeHtml(pt('Amount'))}</th><th scope="col">${escapeHtml(pt('Status'))}</th><th scope="col">${escapeHtml(pt('Receipt'))}</th></tr></thead>
+        <tbody>${group.rows.map(invoice=>{
+          const from=v779PaymentDate(v779InvoiceCoversFrom(invoice)),until=v779PaymentDate(v779InvoiceCoversUntil(invoice));
+          const url=String(invoice.provider_receipt_url||invoice.hosted_invoice_url||'').trim();
+          return `<tr>
+            <td>${escapeHtml(v779PaymentDate(invoice.paid_at||invoice.created_at)||'—')}</td>
+            <td>${escapeHtml(v779InvoiceWhat(invoice,subscription))}</td>
+            <td>${escapeHtml(from&&until?`${from} – ${until}`:until||'—')}</td>
+            <td>${escapeHtml(money(invoice))}</td>
+            <td>${escapeHtml(platformStatus(invoice.status||'—'))}</td>
+            <td>${/^https:\/\//.test(url)?`<a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(pt('Receipt'))}</a>`:'—'}</td>
+          </tr>`;}).join('')}</tbody></table></div>`:'';
+      return `<section class="platform-payments-branch-v779" data-payments-group-v779="${escapeHtml(key)}" style="padding:10px 0;border-top:1px solid var(--line)">
+        <div class="platform-actions" style="align-items:center;flex-wrap:wrap;gap:8px">
+          <b>${escapeHtml(group.title)}</b>
+          ${group.state?`<span class="pill">${escapeHtml(group.state)}</span>`:''}
+          ${group.isDefault?`<span class="pill">${escapeHtml(pt('Main branch'))}</span>`:''}
+        </div>
+        <p class="muted small" style="margin:4px 0 8px" data-payments-summary-v779>${escapeHtml(summary)}</p>
+        ${table}
+      </section>`;
+    });
+    if(!blocks.length)return localizedEmptyHtml('No payment yet');
+    return `<div class="platform-payments-v779">${blocks.join('')}</div>`;
+  }
+  function v779SubscriptionLine(payload){
+    const subscription=asObject(asObject(payload).subscription);
+    if(!subscription.status)return '';
+    const cadence=String(subscription.cadence||'').toLowerCase();
+    const plan=cadence==='annual'||cadence==='yearly'?pt('Annual plan'):cadence==='monthly'?pt('Monthly plan'):pt('Subscription');
+    const capacity=Number(subscription.customer_capacity||0);
+    return [
+      `${plan} · ${platformStatus(subscription.status)}`,
+      capacity?pt('{count} profiles',{count:capacity.toLocaleString('en-SG')}):'',
+      subscription.current_period_end?pt('Renews on {date}',{date:v779PaymentDate(subscription.current_period_end)}):''
+    ].filter(Boolean).join(' · ');
+  }
+  function v779PaymentsCardHtml(result,CUI){
+    const failed=result&&result.error;
+    return CUI.card({
+      title:'Payments',
+      description:failed?undefined:pt('Read-only · the same charges the business sees on its Subscription page'),
+      body:failed
+        ?`<p class="muted small">${escapeHtml(pt('Payments unavailable'))} · ${escapeHtml(platformErrorMessage(result.error,'Payments unavailable'))}</p>`
+        :`${v779SubscriptionLine(result?.value)?`<p class="small" style="margin:0 0 6px">${escapeHtml(v779SubscriptionLine(result.value))}</p>`:''}${platformBusinessPaymentsHtmlV779(result?.value,CUI)}`
+    });
+  }
+  // The kanban's company popup: what the card could not fit, and the one door into the firm
+  // record (openScopedFirm — photo 3). It reads; it never writes.
+  async function openCompanyPaymentsV779(item,context){
+    const {CUI,sb}=context,businessId=firmId(item);
+    if(!businessId)return;
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer';overlay.tabIndex=-1;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','companyPaymentsTitleV779');
+    overlay.innerHTML=`<section class="platform-drawer-panel" aria-labelledby="companyPaymentsTitleV779"><div class="platform-drawer-head">
+      <div><h1 id="companyPaymentsTitleV779" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1>
+      <p class="muted small" data-company-subtitle-v779>${escapeHtml(pt('Payments by branch'))}</p></div>
+      <div class="platform-actions"><button type="button" class="btn" data-open-firm-record-v779>${CUI.icon('branch',{size:16})}<span>${escapeHtml(pt('Open firm record'))}</span></button><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div>
+    </div><div data-detail>${CUI.loadingState({title:'Payments by branch',body:'Loading payments…',iconName:'branch'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate;
+    const close=()=>closeOverlay(overlay,deactivate);
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    overlay.querySelector('[data-open-firm-record-v779]').onclick=()=>{close();openScopedFirm(item,context)};
+    deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    const host=overlay.querySelector('[data-detail]');
+    try{
+      const payload=asObject(await rpc(sb,'platform_get_business_payments_v779',{p_business:businessId}));
+      if(!host.isConnected)return;
+      const name=asObject(payload.business).name;
+      if(name)overlay.querySelector('#companyPaymentsTitleV779').textContent=name;
+      const line=v779SubscriptionLine(payload);
+      if(line)overlay.querySelector('[data-company-subtitle-v779]').textContent=line;
+      host.innerHTML=`<p class="muted small">${escapeHtml(pt('Read-only · the same charges the business sees on its Subscription page'))}</p>${platformBusinessPaymentsHtmlV779(payload,CUI)}`;
+    }catch(error){
+      if(!host.isConnected)return;
+      host.innerHTML=CUI.errorState({title:'Payments unavailable',message:platformErrorMessage(error,'Payments unavailable')});
+    }
+  }
   async function openBusiness360V511(businessId,context){
     const {CUI,sb}=context;
     if(!businessId)return;
@@ -15179,6 +15406,7 @@
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
     receiptRows,receiptArchiveRows,openStoredReceipt,receiptReaderMadeProgress,receiptUnreadableReason,
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
+    platformBusinessPaymentsHtmlV779,v779InvoiceWhat,v779InvoiceGroupKey,v779PaymentsCardHtml,openCompanyPaymentsV779,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
     v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,
@@ -15220,6 +15448,7 @@
     prospectingListHtml,prospectingMapHtml,prospectingDetailHtml,prospectingSummaryHtml,
     receiptRows,receiptArchiveRows,openStoredReceipt,receiptReaderMadeProgress,receiptUnreadableReason,
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
+    platformBusinessPaymentsHtmlV779,v779InvoiceWhat,v779InvoiceGroupKey,v779PaymentsCardHtml,openCompanyPaymentsV779,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
     v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,

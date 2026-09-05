@@ -3916,6 +3916,12 @@
       "version": "20261006030000",
       "name": "nestly_v779_no_weekday_without_visits",
       "sourcePath": "db/migrations/20261006_nestly_v779_no_weekday_without_visits.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006040000",
+      "name": "nestly_v779_platform_business_payments",
+      "sourcePath": "db/migrations/20261006_nestly_v779_platform_business_payments.sql"
     }
   ]
 }

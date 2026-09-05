@@ -3921,6 +3921,12 @@
       "path": "db/migrations/20261006_nestly_v779_no_weekday_without_visits.sql",
       "semanticVersion": "v779",
       "proposedDeployVersion": "20261006030000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v779_platform_business_payments.sql",
+      "semanticVersion": "v779",
+      "proposedDeployVersion": "20261006040000"
     }
   ]
 }
