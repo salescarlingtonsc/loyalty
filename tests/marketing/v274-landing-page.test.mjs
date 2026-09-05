@@ -303,7 +303,7 @@ test('the advertised prices are the ones the product actually charges', async ()
     'the annual label must render from the amount the server priced');
   assert.match(app, /Monthly · \$\{monthlyCents\?`\$\{moneyShortV758\(monthlyCents\)\} \/ month`:'—'\}/,
     'the monthly label must render from the amount the server priced');
-  assert.match(app, /const annualCents=own\?flatCentsV786\('annual'\):Number\(tierForCapacityV664\('annual',selectedCapacity\)\?\.amount_cents\|\|0\)/,
+  assert.match(app, /const annualCents=own\|\|flatShared\?flatCentsV786\('annual'\):Number\(tierForCapacityV664\('annual',selectedCapacity\)\?\.amount_cents\|\|0\)/,
     'the amounts must come from the billing read, never a literal');
   assert.doesNotMatch(app, /Annual saves SGD \d/,
     'the saving must never be re-hardcoded');
