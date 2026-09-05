@@ -33279,20 +33279,40 @@ function ownerBriefHtmlV771(brief){
     };
     const genderCellV778=(row,gender)=>{
       const found=listV774(row.gender).find(entry=>String(entry.gender==null?'':entry.gender)===gender);
-      return found?shareTextV774(found.share):'—';
+      return found?shareTextV774(found.share):'';
     };
     const topBandV778=row=>{
       const key=String(row.top_age_band==null?'':row.top_age_band).trim();
-      return key?ageLabelV774(key):'—';
+      return key?ageLabelV774(key):'';
     };
     const dayCellV778=day=>{
       const block=objectV771(day);
       const label=block?labelOfV774(block):'';
-      return label?`${label} · ${oneDecimalV774(block.per_occurrence)}/day`:'—';
+      return label?`${label} (${oneDecimalV774(block.per_occurrence)}/day)`:'';
     };
     const topItemV778=item=>{
       const block=objectV771(item);
-      return block?`${orTextV774(block.item_name,'Item')} · ${money(countV771(block.revenue_cents))}`:'—';
+      return block?`${orTextV774(block.item_name,'Item')}, ${money(countV771(block.revenue_cents))}`:'';
+    };
+    /* nestly_v778 (owner acceptance, 1100px): eleven columns on one line broke words mid-syllable
+       — "Signatur e facial", "Tampine s", "Wednesda y". Five columns carry the comparison an owner
+       scans down (who is busiest, who takes the most, who is growing); everything else is one
+       prose line underneath, where a long service name has the whole table width to sit on. The
+       detail line OMITS a fact rather than printing a dash for it: six em dashes in a row read as
+       a broken cell, where a shorter sentence reads as a smaller business. A branch with nothing
+       above the evidence floors and no recorded weekday therefore has no second row at all. */
+    const detailLineV778=row=>{
+      const women=genderCellV778(row,'female'),men=genderCellV778(row,'male');
+      const band=topBandV778(row),busiest=dayCellV778(row.busiest_weekday);
+      const slowest=dayCellV778(row.slowest_weekday),item=topItemV778(row.top_item);
+      return [
+        women?`Women ${women}`:'',
+        men?`Men ${men}`:'',
+        band?`Top age band ${band}`:'',
+        busiest?`Busiest ${busiest}`:'',
+        slowest?`Slowest ${slowest}`:'',
+        item?`Top item ${item}`:''
+      ].filter(Boolean).join(' · ');
     };
     const firmV778=objectV771(comparisonV778?.business);
     const hiddenV778=countV771(comparisonV778?.branches_hidden);
@@ -33300,18 +33320,16 @@ function ownerBriefHtmlV771(brief){
       ${headV771('branch','ciBriefBranchesTitleV778','Your branches side by side','The same '+periodDaysV771+' days, one row for each branch.')}
       ${comparisonErrorV778?errorRowV771('Your branches side by side could not load.',comparisonErrorV778):`
       ${firmV778?`<p class="small" style="margin:10px 0 2px">${esc(`Across all branches: ${countV771(firmV778.visits)} valid visits · ${money(countV771(firmV778.revenue_cents))} · ${countV771(firmV778.customers)} customers.`)}</p>`:''}
-      <div class="cui-table-wrap" role="region" aria-label="Your branches side by side"><table class="cui-table" data-responsive="true"><thead><tr><th>Branch</th><th>Valid visits</th><th>Revenue</th><th>Customers</th><th>New customers</th><th>Women</th><th>Men</th><th>Top age band</th><th>Busiest day</th><th>Slowest day</th><th>Top item</th></tr></thead><tbody>${comparisonRowsV778.map(row=>
-        `<tr><td data-label="Branch"><b>${esc(branchNameV778(row))}</b></td>
+      <div class="cui-table-wrap" role="region" aria-label="Your branches side by side"><table class="cui-table" data-responsive="true"><thead><tr><th>Branch</th><th>Valid visits</th><th>Revenue</th><th>Customers</th><th>New customers</th></tr></thead><tbody>${comparisonRowsV778.map(row=>{
+        const detail=detailLineV778(row);
+        return `<tr><td data-label="Branch"><b>${esc(branchNameV778(row))}</b></td>
         <td data-label="Valid visits">${esc(visitsCellV778(row))}</td>
         <td data-label="Revenue">${esc(revenueCellV778(row))}</td>
         <td data-label="Customers">${countV771(row.customers)}</td>
-        <td data-label="New customers">${countV771(row.new_customers)}</td>
-        <td data-label="Women">${esc(genderCellV778(row,'female'))}</td>
-        <td data-label="Men">${esc(genderCellV778(row,'male'))}</td>
-        <td data-label="Top age band">${esc(topBandV778(row))}</td>
-        <td data-label="Busiest day">${esc(dayCellV778(row.busiest_weekday))}</td>
-        <td data-label="Slowest day">${esc(dayCellV778(row.slowest_weekday))}</td>
-        <td data-label="Top item">${esc(topItemV778(row.top_item))}</td></tr>`).join('')}</tbody></table></div>
+        <td data-label="New customers">${countV771(row.new_customers)}</td></tr>${detail
+          ?`<tr><td data-label="Details" class="muted small ci-branch-detail-v778" colspan="5">${esc(detail)}</td></tr>`
+          :''}`;
+      }).join('')}</tbody></table></div>
       ${hiddenV778>0?`<p class="muted small" style="margin-top:8px">${esc(`${hiddenV778} ${hiddenV778===1?'branch is':'branches are'} outside what your role can see.`)}</p>`:''}
       ${noteLineV774('Branches are compared on where the sale was rung up. A customer who visits two branches is counted at each.')}`}
     </section>`;

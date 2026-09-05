@@ -58,6 +58,10 @@ const sectionOf = (html, className) => {
 };
 const rowsOf = (section, label) =>
   (section.match(new RegExp(`<td data-label="${label}">[\\s\\S]*?</td>`, 'g')) || []).map(textOf);
+/* The second row of each branch is one cell spanning the five columns above it, so it carries
+   more attributes than rowsOf's exact-match label and needs its own reader. */
+const detailsOf = (section) =>
+  (section.match(/<td data-label="Details"[^>]*>[\s\S]*?<\/td>/g) || []).map(textOf);
 
 const OK = { n: 8, floor: 5, status: 'ok' };
 const LOW = { n: 2, floor: 5, status: 'insufficient' };
@@ -128,6 +132,20 @@ const BRANCH_THREE = {
   busiest_weekday: null,
   slowest_weekday: null,
   top_item: { item_name: 'trim', item_type: 'service', revenue_cents: 12000, buyers: 3 }
+};
+
+/* Nothing above either evidence floor, no weekday on record, nothing bought twice: the branch
+   that would otherwise print a detail line made entirely of em dashes. */
+const BRANCH_BARE = {
+  branch: { id: 'br-4', code: 'B04', name: 'Bugis', is_default: false },
+  visits: 3, revenue_cents: 4000, customers: 2, new_customers: 2,
+  share_of_visits: rate(3, 50, null),
+  share_of_revenue: rate(4000, 164000, null),
+  gender: [], unknown_gender: { customers: 2 },
+  age_bands: [], unknown_age: { customers: 2 },
+  coverage: { gender_known: rate(0, 2, null), age_known: rate(0, 2, null) },
+  evidence: { gender: LOW, age_band: LOW },
+  top_age_band: null, busiest_weekday: null, slowest_weekday: null, top_item: null
 };
 
 const COMPARISON = {
@@ -206,8 +224,12 @@ test('V778 block L names each branch by its code and states the firm total above
     'a branch with no code reads as its plain name, never as a dangling separator');
 });
 
-test('V778 block L prints each branch against the firm, counts first', () => {
+test('V778 block L compares five columns and nothing else', () => {
   const section = sectionOf(render(FULL), L);
+  const heads = section.match(/<th>[^<]*<\/th>/g) || [];
+  assert.deepEqual(heads, ['<th>Branch</th>', '<th>Valid visits</th>', '<th>Revenue</th>',
+    '<th>Customers</th>', '<th>New customers</th>'],
+    'eleven columns broke words mid-syllable at 1100px; the rest reads as prose underneath');
   assert.deepEqual(rowsOf(section, 'Valid visits'), ['20 · 40% of all', '18 · 36% of all', '12 · 24% of all']);
   assert.deepEqual(rowsOf(section, 'Revenue'), ['SGD 740.00 · 45%', 'SGD 560.00 · 34%', 'SGD 340.00'],
     'a share the reader withheld is omitted, and the money is still stated');
@@ -215,24 +237,47 @@ test('V778 block L prints each branch against the firm, counts first', () => {
   assert.deepEqual(rowsOf(section, 'New customers'), ['4', '2', '1']);
 });
 
-test('V778 block L keeps a withheld share withheld, with the base it was measured against', () => {
+test('V778 block L puts the rest on one line per branch, spanning the five columns', () => {
   const section = sectionOf(render(FULL), L);
-  assert.deepEqual(rowsOf(section, 'Women'), ['6 of 8 (75%)', '3 of 4 — too few to say', '—']);
-  assert.deepEqual(rowsOf(section, 'Men'), ['2 of 8 — too few to say', '—', '—'],
-    'a subgroup under the floor never rounds to a percent, and never to a zero');
-});
-
-test('V778 block L names the top age band as a range, or says nothing', () => {
-  const section = sectionOf(render(FULL), L);
-  assert.deepEqual(rowsOf(section, 'Top age band'), ['25–30', '—', '—']);
+  assert.deepEqual(detailsOf(section), [
+    'Women 6 of 8 (75%) · Men 2 of 8 — too few to say · Top age band 25–30 · Busiest Monday (5.0/day) · Slowest Wednesday (1.5/day) · Top item facial, SGD 1530.00',
+    'Women 3 of 4 — too few to say · Busiest Saturday (4.0/day)',
+    'Top item trim, SGD 120.00'
+  ]);
+  assert.ok(section.includes('<td data-label="Details" class="muted small ci-branch-detail-v778" colspan="5">'),
+    'the detail cell spans the row above it and keeps a label for the phone layout');
   assert.ok(!textOf(section).includes('25_30'), 'the stored key never reaches an owner');
 });
 
-test('V778 block L states the busiest and quietest day per occurrence, or an em dash', () => {
-  const section = sectionOf(render(FULL), L);
-  assert.deepEqual(rowsOf(section, 'Busiest day'), ['Monday · 5.0/day', 'Saturday · 4.0/day', '—']);
-  assert.deepEqual(rowsOf(section, 'Slowest day'), ['Wednesday · 1.5/day', '—', '—']);
-  assert.deepEqual(rowsOf(section, 'Top item'), ['facial · SGD 1530.00', '—', 'trim · SGD 120.00']);
+test('V778 block L keeps a withheld share withheld, with the base it was measured against', () => {
+  const detail = detailsOf(sectionOf(render(FULL), L))[0];
+  assert.ok(detail.includes('Women 6 of 8 (75%)'));
+  assert.ok(detail.includes('Men 2 of 8 — too few to say'),
+    'a subgroup under the floor never rounds to a percent, and never to a zero');
+});
+
+test('V778 block L omits a fact it does not have rather than printing a dash for it', () => {
+  const section = sectionOf(render({
+    ...FULL, branches: { ...COMPARISON, branches: [BRANCH_ONE, BRANCH_TWO] }
+  }), L);
+  const second = detailsOf(section)[1];
+  assert.equal(second, 'Women 3 of 4 — too few to say · Busiest Saturday (4.0/day)',
+    'no Men, no age band, no quietest day and no top item — and no placeholders for them either');
+  assert.ok(!second.includes('Men'));
+  assert.ok(!second.includes('Top item'));
+});
+
+test('V778 a branch with nothing above the floors gets no detail line at all', () => {
+  const section = sectionOf(render({
+    ...FULL, branches: { ...COMPARISON, branches: [BRANCH_ONE, BRANCH_BARE] }
+  }), L);
+  assert.deepEqual(rowsOf(section, 'Branch'), ['B01 · Orchard', 'B04 · Bugis'],
+    'the branch still has its comparison row');
+  assert.equal(detailsOf(section).length, 1,
+    'a chain of em dashes reads as a broken cell; an absent line reads as a smaller business');
+  const bare = detailsOf(section).join(' ');
+  assert.ok(!bare.includes('Bugis'));
+  assert.ok(!/—\s*·\s*—/.test(textOf(section)), 'no run of dashes anywhere in the block');
 });
 
 test('V778 block L says how many branches the caller is not being shown', () => {
