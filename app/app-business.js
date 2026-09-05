@@ -1971,6 +1971,8 @@ function renderOnboard(){
     }
     const onboarding=state.data.onboarding;
     if(onboarding?.status==='active'){
+      /* v770: same reason as the poll above — never hand off on caches older than the activation. */
+      invalidateWorkspaceBootstrapCachesV370();
       nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
     }
     if(onboarding?.status==='payment_pending'){

@@ -17727,7 +17727,11 @@ function renderSelfServePaymentPendingV286(onboarding){
     const current=await sb.rpc('get_self_serve_checkout_v130',{p_business:null});
     if(setupEpoch!==businessSetupRenderEpoch)return;
     const next=current.data?.onboarding;
-    if(next?.status==='active'){nav(selfServeActivatedRouteV286(next.business_slug));return}
+    /* v770: the persona (45s) and control (120s) caches were taken at sign-in, BEFORE the webhook
+       opened this workspace. Navigating on them lands the owner back on this very screen with no
+       poll running (observed 2026-09-05, "cs cafe on": activated server-side at 07:40:49, page
+       stuck). Drop them so the workspace route reads the opened state. */
+    if(next?.status==='active'){invalidateWorkspaceBootstrapCachesV370();nav(selfServeActivatedRouteV286(next.business_slug));return}
     const status=$('selfServePayStatus');
     if(status)status.textContent=attempts<90?'Razorpay confirmation is still processing. Checking again…':'Razorpay has not confirmed activation yet. Use Check payment again or contact Peekaa support if this continues.';
     if(attempts<90)setTimeout(poll,2000);
@@ -19058,6 +19062,8 @@ function renderOnboard(){
     }
     const onboarding=state.data.onboarding;
     if(onboarding?.status==='active'){
+      /* v770: same reason as the poll above — never hand off on caches older than the activation. */
+      invalidateWorkspaceBootstrapCachesV370();
       nav(`#/workspace/${encodeURIComponent(onboarding.business_slug)}/dashboard`);return;
     }
     if(onboarding?.status==='payment_pending'){
