@@ -39,9 +39,11 @@ test('CRM is a named entry in the rail, not the unlabelled group home',async()=>
   // The rail renders routes[0] as the group home using the GROUP's label, so
   // whichever route sits first never shows its own name. CRM must not be that
   // route or the word "CRM" appears nowhere in the navigation.
-  assert.notEqual(keys[0],'crm','CRM must not be the unlabelled group home');
-  assert.equal(keys[0],'onboarding','Onboarding stays the Sales home it has always been');
-  assert.ok(keys.slice(1).includes('crm'),'CRM must appear as a named child item');
+  /* nestly_v785 (owner ruling 2026-09-05): Pipeline replaced CRM and became the Sales home; the
+     word 'Pipeline' is the GROUP's home so it is fine for it to sit first. CRM is a redirect now. */
+  assert.ok(!keys.includes('crm'),'CRM is a redirect to Pipeline, not a rail entry');
+  assert.equal(keys[0],'pipeline','Pipeline is the Sales home');
+  assert.ok(keys.includes('onboarding'),'Onboarding keeps its applications, signups and demo tabs');
 });
 
 test('the tab strip marks the active section and carries its counts',async()=>{

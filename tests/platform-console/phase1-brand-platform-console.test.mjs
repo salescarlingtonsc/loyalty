@@ -109,7 +109,7 @@ test('platform console exposes the required namespaced routes', async () => {
   assert.equal(consoleApi.routeKey('#/platform/companies'),'firms');
   assert.deepEqual(
     Array.from(consoleApi.routes,route=>route.label),
-    ['Today','Onboarding','CRM','Prospecting','Firms','Reports','Marketing usage','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Support requests','Platform access'] // operating-system IA pass: -4 merged routes
+    ['Today','Pipeline','Onboarding','Prospecting','Firms','Reports','Marketing usage','Subscription operations','Cash P&L','Commission payable','Sector modules','System health','Partner obligations','Support requests','Platform access'] // operating-system IA pass: -4 merged routes
   );
 });
 

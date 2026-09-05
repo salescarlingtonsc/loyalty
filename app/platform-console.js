@@ -3383,6 +3383,77 @@
       ,'Complete operational timeline':'Garis masa operasi lengkap'
     })
   });
+  // nestly_v785: the Pipeline. New copy only.
+  const PLATFORM_COPY_V785=Object.freeze({
+    'zh-CN':Object.freeze({
+      'Pipeline':'销售管道','Manage your business leads and grow with Peekaa.':'管理您的商户线索，与 Peekaa 一起成长。',
+      'Loading your pipeline…':'正在加载销售管道…','Pipeline unavailable':'销售管道不可用','Pipeline summary':'管道概览','Pipeline scope':'管道范围',
+      'New Lead':'新线索','Contact & Meeting':'联系与会面','NPU / Proposal':'NPU / 提案','Pending Decision':'待决定','Closed':'已成交',
+      'New Leads':'新线索','Follow-up Due':'待跟进','Won This Month':'本月成交','Payment Due':'待付款','awaiting payment':'等待付款',
+      'All Pipeline':'全部管道','My Pipeline':'我的管道','Advisor:':'顾问：','Advisor':'顾问','All Advisors':'所有顾问',
+      'Search company, contact or keyword…':'搜索公司、联系人或关键词…','Search':'搜索','Sort':'排序',
+      'Sort: Due date':'排序：到期日','Sort: Last edited':'排序：最后编辑','Sort: Name':'排序：名称','Calendar':'日历','Clear filter':'清除筛选',
+      'Add Lead':'添加线索','+ Add Lead':'+ 添加线索','No firms':'没有商户','Open {name}':'打开 {name}',
+      'Drag a card into another lane to move it, or focus a card and press Ctrl with the left or right arrow. Every move still asks for its evidence.':'将卡片拖到另一列即可移动，或选中卡片后按 Ctrl 加左右方向键。每次移动仍会要求提供证据。',
+      'Overdue {count}D':'逾期 {count} 天','Due today':'今天到期','Due tomorrow':'明天到期','Due in {count}D':'{count} 天后到期',
+      'No follow-up set':'未设跟进','Won · {date}':'成交 · {date}','Payment due':'待付款','No next action':'没有下一步',
+      'Appointment {when}':'预约 {when}','Set next appointment or follow-up':'设置下次预约或跟进','{count} due today':'{count} 个今天到期',
+      '{count} overdue':'{count} 个逾期','{count} due this week':'{count} 个本周到期','{count} this month':'本月 {count} 个',
+      'Upcoming appointments':'即将到来的预约','Every appointment set on a firm, soonest first · Asia/Singapore':'每个商户已设置的预约，按时间先后 · 新加坡时间',
+      'No appointments booked yet. Set one from a firm’s card.':'尚无预约。请从商户卡片设置。','Add to calendar':'加入日历','Google Calendar':'Google 日历',
+      'Peekaa appointment':'Peekaa 预约','Contact':'联系人','Prospect':'潜在商户',
+      'Next appointment & follow-up · {name}':'下次预约与跟进 · {name}','Next appt (firm)':'下次预约（商户）','Next follow up (task)':'下次跟进（任务）',
+      'Singapore time · synced to the calendar list and exportable as .ics':'新加坡时间 · 同步到日历列表，可导出 .ics',
+      'Shown on the card as Due in N D / Due today / Overdue':'卡片上显示为 N 天后到期 / 今天到期 / 逾期','Last edited':'最后编辑',
+      'moves on any change to this business':'此商户的任何更改都会更新','Note (optional)':'备注（可选）','Save':'保存','Schedule saved.':'日程已保存。',
+      'Back to pipeline':'返回管道','Loading the firm, its activity and its schedule…':'正在加载商户、活动与日程…','Firm unavailable':'商户不可用',
+      'Sector not recorded':'未记录行业','{count} branches':'{count} 家分店','Call':'致电','More':'更多','Next Action':'下一步行动','Edit':'编辑',
+      'Follow up':'跟进','Appointment':'预约','Mark as Done':'标记完成','Reschedule':'重新安排','No next appointment or follow-up set.':'未设置下次预约或跟进。',
+      'Company Info':'公司信息','Primary contact':'主要联系人','Mobile':'手机','Assigned to':'负责人','Created':'创建时间','Next appointment':'下次预约',
+      'Next follow up':'下次跟进','Branches':'分店','Main':'主店','No branches yet.':'尚无分店。','Activity':'活动','Contacts':'联系人','Deal':'交易','Files':'文件',
+      'No activity recorded yet.':'尚无活动记录。','No contacts recorded yet.':'尚无联系人。','Primary':'主要',
+      'Not yet a Peekaa merchant. Payments appear here once the workspace is created and paid.':'尚未成为 Peekaa 商户。工作区创建并付款后，付款会显示在这里。',
+      'Stage history':'阶段历史','Documents are visible to the assigned consultant and super admins.':'文件仅对负责顾问和超级管理员可见。',
+      'No files yet. Attach one to a note below.':'尚无文件。可在下方备注中附加。','Open':'打开','Add a note…':'添加备注…','Attach documents':'附加文件','Send note':'发送备注',
+      'Uploading {name}…':'正在上传 {name}…','Saving note…':'正在保存备注…','Note saved.':'备注已保存。','Note saved with {count} attachment(s).':'备注已保存，附件 {count} 个。',
+      'The note could not be saved.':'无法保存备注。','Follow-up marked as done.':'跟进已标记完成。','Could not update the follow-up.':'无法更新跟进。',
+      'Attachment':'附件','Unnamed prospect':'未命名潜在商户'
+    }),
+    ms:Object.freeze({
+      'Pipeline':'Saluran jualan','Manage your business leads and grow with Peekaa.':'Urus petunjuk perniagaan anda dan berkembang bersama Peekaa.',
+      'Loading your pipeline…':'Memuatkan saluran jualan…','Pipeline unavailable':'Saluran jualan tidak tersedia','Pipeline summary':'Ringkasan saluran','Pipeline scope':'Skop saluran',
+      'New Lead':'Petunjuk baharu','Contact & Meeting':'Hubungan & pertemuan','NPU / Proposal':'NPU / Cadangan','Pending Decision':'Menunggu keputusan','Closed':'Ditutup',
+      'New Leads':'Petunjuk baharu','Follow-up Due':'Susulan perlu','Won This Month':'Dimenangi bulan ini','Payment Due':'Bayaran perlu','awaiting payment':'menunggu bayaran',
+      'All Pipeline':'Semua saluran','My Pipeline':'Saluran saya','Advisor:':'Penasihat:','Advisor':'Penasihat','All Advisors':'Semua penasihat',
+      'Search company, contact or keyword…':'Cari syarikat, kenalan atau kata kunci…','Search':'Cari','Sort':'Susun',
+      'Sort: Due date':'Susun: Tarikh perlu','Sort: Last edited':'Susun: Kali terakhir disunting','Sort: Name':'Susun: Nama','Calendar':'Kalendar','Clear filter':'Kosongkan penapis',
+      'Add Lead':'Tambah petunjuk','+ Add Lead':'+ Tambah petunjuk','No firms':'Tiada firma','Open {name}':'Buka {name}',
+      'Drag a card into another lane to move it, or focus a card and press Ctrl with the left or right arrow. Every move still asks for its evidence.':'Seret kad ke lorong lain untuk memindahkannya, atau fokus pada kad dan tekan Ctrl bersama anak panah kiri atau kanan. Setiap pemindahan tetap meminta buktinya.',
+      'Overdue {count}D':'Lewat {count}H','Due today':'Perlu hari ini','Due tomorrow':'Perlu esok','Due in {count}D':'Perlu dalam {count}H',
+      'No follow-up set':'Tiada susulan ditetapkan','Won · {date}':'Dimenangi · {date}','Payment due':'Bayaran perlu','No next action':'Tiada tindakan seterusnya',
+      'Appointment {when}':'Temu janji {when}','Set next appointment or follow-up':'Tetapkan temu janji atau susulan seterusnya','{count} due today':'{count} perlu hari ini',
+      '{count} overdue':'{count} lewat','{count} due this week':'{count} perlu minggu ini','{count} this month':'{count} bulan ini',
+      'Upcoming appointments':'Temu janji akan datang','Every appointment set on a firm, soonest first · Asia/Singapore':'Setiap temu janji yang ditetapkan pada firma, terawal dahulu · Asia/Singapore',
+      'No appointments booked yet. Set one from a firm’s card.':'Belum ada temu janji. Tetapkan daripada kad firma.','Add to calendar':'Tambah ke kalendar','Google Calendar':'Kalendar Google',
+      'Peekaa appointment':'Temu janji Peekaa','Contact':'Kenalan','Prospect':'Prospek',
+      'Next appointment & follow-up · {name}':'Temu janji & susulan seterusnya · {name}','Next appt (firm)':'Temu janji seterusnya (firma)','Next follow up (task)':'Susulan seterusnya (tugasan)',
+      'Singapore time · synced to the calendar list and exportable as .ics':'Waktu Singapura · disegerakkan ke senarai kalendar dan boleh dieksport sebagai .ics',
+      'Shown on the card as Due in N D / Due today / Overdue':'Dipaparkan pada kad sebagai Perlu dalam N H / Perlu hari ini / Lewat','Last edited':'Kali terakhir disunting',
+      'moves on any change to this business':'berubah pada sebarang perubahan kepada perniagaan ini','Note (optional)':'Nota (pilihan)','Save':'Simpan','Schedule saved.':'Jadual disimpan.',
+      'Back to pipeline':'Kembali ke saluran','Loading the firm, its activity and its schedule…':'Memuatkan firma, aktiviti dan jadualnya…','Firm unavailable':'Firma tidak tersedia',
+      'Sector not recorded':'Sektor tidak direkodkan','{count} branches':'{count} cawangan','Call':'Panggil','More':'Lagi','Next Action':'Tindakan seterusnya','Edit':'Sunting',
+      'Follow up':'Susulan','Appointment':'Temu janji','Mark as Done':'Tandakan selesai','Reschedule':'Jadualkan semula','No next appointment or follow-up set.':'Tiada temu janji atau susulan seterusnya ditetapkan.',
+      'Company Info':'Maklumat syarikat','Primary contact':'Kenalan utama','Mobile':'Telefon bimbit','Assigned to':'Ditugaskan kepada','Created':'Dicipta','Next appointment':'Temu janji seterusnya',
+      'Next follow up':'Susulan seterusnya','Branches':'Cawangan','Main':'Utama','No branches yet.':'Belum ada cawangan.','Activity':'Aktiviti','Contacts':'Kenalan','Deal':'Urus niaga','Files':'Fail',
+      'No activity recorded yet.':'Belum ada aktiviti direkodkan.','No contacts recorded yet.':'Belum ada kenalan direkodkan.','Primary':'Utama',
+      'Not yet a Peekaa merchant. Payments appear here once the workspace is created and paid.':'Belum menjadi peniaga Peekaa. Pembayaran akan dipaparkan di sini selepas ruang kerja dicipta dan dibayar.',
+      'Stage history':'Sejarah peringkat','Documents are visible to the assigned consultant and super admins.':'Dokumen hanya dilihat oleh perunding yang ditugaskan dan pentadbir super.',
+      'No files yet. Attach one to a note below.':'Belum ada fail. Lampirkan pada nota di bawah.','Open':'Buka','Add a note…':'Tambah nota…','Attach documents':'Lampirkan dokumen','Send note':'Hantar nota',
+      'Uploading {name}…':'Memuat naik {name}…','Saving note…':'Menyimpan nota…','Note saved.':'Nota disimpan.','Note saved with {count} attachment(s).':'Nota disimpan dengan {count} lampiran.',
+      'The note could not be saved.':'Nota tidak dapat disimpan.','Follow-up marked as done.':'Susulan ditandakan selesai.','Could not update the follow-up.':'Susulan tidak dapat dikemas kini.',
+      'Attachment':'Lampiran','Unnamed prospect':'Prospek tanpa nama'
+    })
+  });
   // nestly_v779: a firm's payments, branch by branch — the kanban company popup and the
   // Payments card inside the firm record. New copy only.
   const PLATFORM_COPY_V779=Object.freeze({
@@ -3806,6 +3877,7 @@
       ??PLATFORM_COPY_V312[platformLocale]?.[key]
       ??PLATFORM_COPY_V511[platformLocale]?.[key]
       ??PLATFORM_COPY_V779[platformLocale]?.[key]
+      ??PLATFORM_COPY_V785[platformLocale]?.[key]
       ??PLATFORM_COPY_V513[platformLocale]?.[key]
       ??PLATFORM_COPY_C7[platformLocale]?.[key]
       ??PLATFORM_COPY_V574[platformLocale]?.[key]
@@ -3911,13 +3983,13 @@
 
   const routes = Object.freeze([
     {key:'overview',label:'Today',shortLabel:'Today',hash:'#/platform',icon:'home'},
-    {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding',icon:'setup'},
-    /* CRM is its own module rather than a tab inside Onboarding: a consultant
-       works a book of firms, which is a different job from processing signups
-       and applications. It reuses the 'onboarding' module key deliberately —
-       the DB gate (app.v89_platform_can('onboarding','r')) is the same one, so
-       a new key here would let the two drift apart. */
-    {key:'crm',moduleKey:'onboarding',label:'CRM',shortLabel:'CRM',hash:'#/platform/crm',icon:'customers'},
+    /* nestly_v785 (owner ruling 2026-09-05): Pipeline is the CRM home — five lanes, a business
+       drawer, next appointment / follow-up / notes. It reuses the 'onboarding' module key for
+       the same reason CRM did: the DB gate (app.v89_platform_can('onboarding','r')) is the same
+       one, so a new key here would let the two drift apart. The old CRM route redirects here
+       (legacyRouteRedirects), and Onboarding keeps its applications / signups / demo tabs. */
+    {key:'pipeline',moduleKey:'onboarding',label:'Pipeline',shortLabel:'Pipeline',hash:'#/platform/pipeline',icon:'customers'},
+    {key:'onboarding',label:'Onboarding',shortLabel:'Onboard',hash:'#/platform/onboarding?tab=applications',icon:'setup'},
     /* V297: Prospecting is the top of the same funnel CRM works, so it shares the
        'onboarding' module gate for exactly the reason CRM does — one grant, one
        decision. The reader itself decides what a consultant may write or assign. */
@@ -3954,6 +4026,18 @@
      preserving whichever query parameters that destination understands
      (business=, view=, or the Companies filter set). */
   const legacyRouteRedirects=Object.freeze({
+    /* nestly_v785: CRM became Pipeline. Search and consultant filters carry over. */
+    'crm':Object.freeze({
+      toKey:'pipeline',
+      hash:originalHash=>{
+        const params=new URLSearchParams(String(originalHash||'').split('?')[1]||'');
+        const next=new URLSearchParams();
+        if(params.get('q'))next.set('q',params.get('q'));
+        if(params.get('consultant'))next.set('consultant',params.get('consultant'));
+        const query=next.toString();
+        return `#/platform/pipeline${query?`?${query}`:''}`;
+      }
+    }),
     'demo-requests':Object.freeze({
       toKey:'onboarding',
       hash:()=>onboardingHash({...defaultOnboardingFilters(),tab:'demo-requests'})
@@ -4196,7 +4280,7 @@
        rail. Putting CRM first made the Sales header point at CRM while the word
        "CRM" appeared nowhere. Onboarding stays the home it has always been, and
        CRM appears as a named child. */
-    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['onboarding','crm','prospecting'])}),
+    Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['pipeline','onboarding','prospecting'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['firms'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
     Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','pnl','commissions'])}),
@@ -4403,6 +4487,8 @@
     const path=String(hash || '').split('?')[0].replace(/\/+$/,'');
     if(path==='#/platform')return true;
     if(!path.startsWith('#/platform/'))return false;
+    /* nestly_v785: a registered route may carry a default query (Onboarding opens on its
+       applications tab); the comparison is on the path alone. */
     /* V511: Command center and Work are reachable for every active platform
        role (the server itself never module-gates them — see
        app.v511_assert_work_reader(), which only requires SOME platform
@@ -4431,7 +4517,7 @@
     const className = mobile ? 'platform-mobile-nav' : 'platform-nav';
     const label = pt(mobile ? 'Mobile navigation' : 'Main navigation');
     if(mobile){
-      const primary=allowedRoutes.filter(route=>['overview','onboarding','firms','reports'].includes(route.key)).slice(0,4);
+      const primary=allowedRoutes.filter(route=>['overview','pipeline','firms','reports'].includes(route.key)).slice(0,4);
       const secondary=allowedRoutes.filter(route=>!primary.includes(route));
       const moreActive=secondary.some(route=>route.key===activeKey);
       return `<nav class="${className}" aria-label="${label}" style="--platform-mobile-count:${Math.min(primary.length+(secondary.length?1:0),5)}">
@@ -7779,7 +7865,7 @@
           p_expected_updated_at:review.updated_at,p_operation_key:idempotencyKey()
         }));
         controls.close();
-        await renderOnboarding(context);
+        if(context.refresh)await context.refresh();else await renderOnboarding(context);
         CUI.announce(pt('Duplicate review resolved: {outcome}.',{outcome:platformStatus(result.disposition)}));
       }});
   }
@@ -7814,7 +7900,7 @@
         :data?.disposition==='reused'?'Existing prospect {name} updated with this source.'
         :data?.disposition==='existing_merchant'?'{name} is already a Peekaa merchant. Open the firm record.'
         :'Possible duplicate for {name} was added to Duplicate review.',{name:prospectName}));
-      try{await renderOnboarding(context);}
+      try{if(context.refresh)await context.refresh();else await renderOnboarding(context);}
       catch(error){
         console.error(error);
         CUI.announce(pt('Prospect {name} was saved. Refresh the onboarding list to display it.',{name:prospectName}));
@@ -7920,7 +8006,7 @@
         try{
           const committed=await commitProspectImport(sb,batch);
           renderCommittedImport(controls,committed,batch,context);
-          await renderOnboarding(context);
+          if(context.refresh)await context.refresh();else await renderOnboarding(context);
         }catch(error){controls.errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'Import could not be completed.'))}</div>`;controls.submit.disabled=false}
       };
     }
@@ -8932,7 +9018,7 @@
           p_idempotency_key:idempotencyKey()
         }));
         controls.close();context.close?.();
-        await renderOnboarding(context);
+        if(context.refresh)await context.refresh();else await renderOnboarding(context);
         if(result.outcome==='duplicate_workspace'){
           showResultModal({
             title:'Existing firm matched',
@@ -14989,6 +15075,585 @@
       </div></div>`).join(''):localizedEmptyHtml('No timeline activity recorded')})}`;
   }
   // ===========================================================================
+  // nestly_v785 — the Pipeline (owner, 2026-09-05; photos 1–3, four rulings).
+  //
+  // The CRM home. A KPI strip, five lanes, cards that say whose firm it is and what is due in how
+  // many days, and a business drawer with the next action, the company, the branches, the activity
+  // and a note composer with attachments. Every date is Asia/Singapore. Rulings recorded in the
+  // v785 migration header: photo 2 is the look; proposal = the Pending Decision lane; Pipeline
+  // replaces the Onboarding board as the CRM home; "sync to calendar" = the console's own
+  // upcoming-appointments list plus an .ics / Google Calendar link (no OAuth yet).
+  //
+  // The lane a stage belongs to is decided ONCE, in app.v785_lane, and read back as item.lane.
+  // Moving a card still goes through requestStageMove — evidence, transition rules and the two
+  // special modals (lost / commercial terms) are unchanged.
+  // ===========================================================================
+  const PIPELINE_LANES_V785=Object.freeze([
+    Object.freeze({key:'new_lead',label:'New Lead',targetStage:'new_lead'}),
+    Object.freeze({key:'contact',label:'Contact & Meeting',targetStage:'contacted'}),
+    Object.freeze({key:'proposal',label:'NPU / Proposal',targetStage:'interested'}),
+    Object.freeze({key:'pending_decision',label:'Pending Decision',targetStage:'proposal'}),
+    Object.freeze({key:'closed',label:'Closed',targetStage:'closed_won'})
+  ]);
+  const PIPELINE_SORTS_V785=Object.freeze([['due','Sort: Due date'],['edited','Sort: Last edited'],['name','Sort: Name']]);
+  function pipelineLaneTargetStageV785(laneKey,item={}){
+    const lane=PIPELINE_LANES_V785.find(entry=>entry.key===laneKey);
+    if(!lane)return null;
+    /* A lead that already has an owner lands on 'assigned', not back on 'new_lead'. */
+    if(laneKey==='new_lead'&&item.assigned_consultant_id)return 'assigned';
+    return lane.targetStage;
+  }
+  // "Due in 7D / Due in 3D / Due tomorrow / Due today / Overdue 2D" — the owner's exact ladder.
+  function pipelineDueLabelV785(days){
+    if(days===null||days===undefined||days==='')return {text:'',tone:''};
+    const n=Number(days);
+    if(!Number.isFinite(n))return {text:'',tone:''};
+    if(n<0)return {text:pt('Overdue {count}D',{count:Math.abs(n)}),tone:'overdue'};
+    if(n===0)return {text:pt('Due today'),tone:'today'};
+    if(n===1)return {text:pt('Due tomorrow'),tone:'soon'};
+    return {text:pt('Due in {count}D',{count:n}),tone:n<=3?'soon':'later'};
+  }
+  function pipelineInitialsV785(name){
+    const parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+    if(!parts.length)return '?';
+    return (parts.length===1?parts[0].slice(0,2):parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+  }
+  function pipelineSgDateV785(value,{time=false}={}){
+    if(!value)return '';
+    const text=String(value);
+    const date=new Date(/^\d{4}-\d{2}-\d{2}$/.test(text)?`${text}T00:00:00+08:00`:text);
+    if(Number.isNaN(date.getTime()))return text;
+    return date.toLocaleString(platformIntlLocale(),{
+      timeZone:'Asia/Singapore',day:'numeric',month:'short',year:'numeric',
+      ...(time?{hour:'numeric',minute:'2-digit'}:{})
+    });
+  }
+  function pipelineSgMonthKeyV785(value){
+    if(!value)return '';
+    const date=new Date(value);
+    if(Number.isNaN(date.getTime()))return '';
+    return singaporeIsoDate(date).slice(0,7);
+  }
+  // KPIs are counted from the same rows the lanes show, so the strip and the board never disagree.
+  function pipelineKpisV785(items,today=singaporeIsoDate()){
+    const rows=asArray(items),month=today.slice(0,7);
+    const open=row=>!['closed','lost'].includes(String(row.lane||''));
+    const due=row=>row.follow_up_days!==null&&row.follow_up_days!==undefined&&Number(row.follow_up_days)<=0;
+    const newLeads=rows.filter(row=>row.lane==='new_lead');
+    const pending=rows.filter(row=>row.lane==='pending_decision');
+    const won=rows.filter(row=>row.lane==='closed'&&pipelineSgMonthKeyV785(row.stage_entered_at)===month);
+    return {
+      new_leads:newLeads.length,
+      new_leads_due_today:newLeads.filter(row=>Number(row.follow_up_days)===0).length,
+      follow_up_due:rows.filter(row=>open(row)&&due(row)).length,
+      follow_up_overdue:rows.filter(row=>open(row)&&Number(row.follow_up_days)<0).length,
+      pending_decision:pending.length,
+      pending_due_week:pending.filter(row=>row.follow_up_days!==null&&row.follow_up_days!==undefined&&Number(row.follow_up_days)>=0&&Number(row.follow_up_days)<=7).length,
+      won_this_month:won.length,
+      payment_due:rows.filter(row=>row.payment_due===true).length,
+      appointments_upcoming:rows.filter(row=>row.next_appointment_at&&new Date(row.next_appointment_at).getTime()>=Date.now()).length
+    };
+  }
+  function pipelineFiltersFromHashV785(hash=''){
+    const params=new URLSearchParams(String(hash||'').split('?')[1]||'');
+    const sort=params.get('sort')||'due';
+    return {
+      scope:params.get('scope')==='mine'?'mine':'all',
+      consultant:params.get('consultant')||'',
+      search:params.get('q')||'',
+      sort:PIPELINE_SORTS_V785.some(([key])=>key===sort)?sort:'due',
+      kpi:params.get('kpi')||'',
+      prospect:params.get('prospect')||'',
+      calendar:params.get('calendar')==='1'
+    };
+  }
+  function pipelineHashV785(filters={}){
+    const entries=[];
+    if(filters.scope==='mine')entries.push('scope=mine');
+    if(filters.consultant)entries.push(`consultant=${encodeURIComponent(filters.consultant)}`);
+    if(filters.search)entries.push(`q=${encodeURIComponent(filters.search)}`);
+    if(filters.sort&&filters.sort!=='due')entries.push(`sort=${encodeURIComponent(filters.sort)}`);
+    if(filters.kpi)entries.push(`kpi=${encodeURIComponent(filters.kpi)}`);
+    if(filters.calendar)entries.push('calendar=1');
+    if(filters.prospect)entries.push(`prospect=${encodeURIComponent(filters.prospect)}`);
+    return `#/platform/pipeline${entries.length?`?${entries.join('&')}`:''}`;
+  }
+  function pipelineKpiMatchesV785(kpi,row){
+    switch(kpi){
+      case 'new_leads':return row.lane==='new_lead';
+      case 'follow_up_due':return !['closed','lost'].includes(row.lane)&&row.follow_up_days!==null&&row.follow_up_days!==undefined&&Number(row.follow_up_days)<=0;
+      case 'pending_decision':return row.lane==='pending_decision';
+      case 'won_this_month':return row.lane==='closed'&&pipelineSgMonthKeyV785(row.stage_entered_at)===singaporeIsoDate().slice(0,7);
+      case 'payment_due':return row.payment_due===true;
+      default:return true;
+    }
+  }
+  function pipelineSortV785(rows,sort){
+    const list=[...rows];
+    const name=row=>String(row.company_name||'').toLowerCase();
+    if(sort==='name')return list.sort((a,b)=>name(a).localeCompare(name(b)));
+    if(sort==='edited')return list.sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
+    return list.sort((a,b)=>{
+      const da=a.follow_up_days===null||a.follow_up_days===undefined?Number.POSITIVE_INFINITY:Number(a.follow_up_days);
+      const db=b.follow_up_days===null||b.follow_up_days===undefined?Number.POSITIVE_INFINITY:Number(b.follow_up_days);
+      if(da!==db)return da-db;
+      return new Date(b.updated_at||0)-new Date(a.updated_at||0);
+    });
+  }
+  // The card's one line of "what next": the open task, else the last thing that happened.
+  function pipelineNextLineV785(item){
+    const task=asObject(item.next_task),last=asObject(item.last_activity);
+    if(task.title)return {icon:'appointments',text:task.title};
+    if(item.next_appointment_at)return {icon:'appointments',text:pt('Appointment {when}',{when:pipelineSgDateV785(item.next_appointment_at,{time:true})})};
+    if(last.summary)return {icon:last.activity_type==='call'?'phone':last.activity_type==='whatsapp'?'chat':last.activity_type==='note'?'edit':'info',text:last.summary};
+    return {icon:'info',text:pt('No next action')};
+  }
+  function pipelineOwnerHtmlV785(item,CUI){
+    const name=String(item.consultant_name||'').trim();
+    if(!name)return `<span class="platform-pipeline-owner"><span class="platform-pipeline-avatar is-unassigned" aria-hidden="true">${CUI.icon('staff',{size:12})}</span><span class="platform-pipeline-due" data-tone="soon">${escapeHtml(pt('Unassigned'))}</span></span>`;
+    return `<span class="platform-pipeline-owner"><span class="platform-pipeline-avatar" aria-hidden="true">${escapeHtml(pipelineInitialsV785(name))}</span><span>${escapeHtml(name)}</span></span>`;
+  }
+  function pipelineCardHtmlV785(item,CUI,{canWrite=true,selected=false}={}){
+    const due=pipelineDueLabelV785(item.follow_up_days);
+    const next=pipelineNextLineV785(item);
+    const closed=item.lane==='closed',lost=item.lane==='lost';
+    const converted=Boolean(item.converted_business_id);
+    const draggable=canWrite&&!converted&&!closed&&!lost;
+    const chip=closed
+      ?`<span class="platform-pipeline-due" data-tone="won">${escapeHtml(pt('Won · {date}',{date:pipelineSgDateV785(item.stage_entered_at)}))}</span>`
+      :lost?`<span class="platform-pipeline-due">${escapeHtml(platformStatus(item.current_stage_key||'lost'))}</span>`
+      :due.text?`<span class="platform-pipeline-due" data-tone="${escapeHtml(due.tone)}" data-follow-up-days="${escapeHtml(String(item.follow_up_days))}">${escapeHtml(due.text)}</span>`
+      :`<span class="platform-pipeline-due">${escapeHtml(pt('No follow-up set'))}</span>`;
+    return `<article class="platform-pipeline-card${selected?' is-selected':''}" draggable="${draggable?'true':'false'}" data-pipeline-card="${escapeHtml(item.id)}" data-lane="${escapeHtml(item.lane||'')}" data-stage="${escapeHtml(item.current_stage_key||'')}" data-version="${escapeHtml(String(item.version??''))}" tabindex="0" role="button" aria-label="${escapeHtml(pt('Open {name}',{name:item.company_name||''}))}">
+      <div class="platform-pipeline-card-top">
+        <div style="min-width:0"><div class="platform-pipeline-card-name">${escapeHtml(item.company_name||pt('Unnamed prospect'))}</div>
+        <div class="platform-pipeline-card-sector">${escapeHtml(sectorLabel(item.sector_key||item.industry)||'')}</div></div>
+        <button type="button" class="platform-pipeline-card-menu" data-pipeline-schedule="${escapeHtml(item.id)}" aria-label="${escapeHtml(pt('Set next appointment or follow-up'))}" title="${escapeHtml(pt('Set next appointment or follow-up'))}">⋮</button>
+      </div>
+      ${pipelineOwnerHtmlV785(item,CUI)}
+      <div class="platform-pipeline-line">${CUI.icon(next.icon,{size:14})}<span>${escapeHtml(next.text)}</span></div>
+      ${item.next_appointment_at&&!closed?`<div class="platform-pipeline-line">${CUI.icon('appointments',{size:14})}<span>${escapeHtml(pipelineSgDateV785(item.next_appointment_at,{time:true}))}</span></div>`:''}
+      <div class="platform-pipeline-line" style="justify-content:space-between">${chip}${item.payment_due?`<span class="platform-pipeline-due" data-tone="overdue">${escapeHtml(pt('Payment due'))}</span>`:''}</div>
+    </article>`;
+  }
+  function pipelineLaneSublineV785(lane,rows){
+    if(lane.key==='new_lead'){const n=rows.filter(row=>Number(row.follow_up_days)===0).length;return n?{text:pt('{count} due today',{count:n}),due:true}:null}
+    if(lane.key==='contact'){const n=rows.filter(row=>Number(row.follow_up_days)<0).length;return n?{text:pt('{count} overdue',{count:n}),due:true}:null}
+    if(lane.key==='pending_decision'){const n=rows.filter(row=>row.follow_up_days!==null&&row.follow_up_days!==undefined&&Number(row.follow_up_days)>=0&&Number(row.follow_up_days)<=7).length;return n?{text:pt('{count} due this week',{count:n}),due:false}:null}
+    if(lane.key==='closed'){const n=rows.filter(row=>row.lane==='closed'&&pipelineSgMonthKeyV785(row.stage_entered_at)===singaporeIsoDate().slice(0,7)).length;return {text:pt('{count} this month',{count:n}),due:false}}
+    return null;
+  }
+  function pipelineBoardHtmlV785(items,CUI,{canWrite=true,selectedId=''}={}){
+    return `<div class="platform-pipeline-board" aria-label="${escapeHtml(pt('Pipeline'))}">${PIPELINE_LANES_V785.map(lane=>{
+      const rows=items.filter(row=>lane.key==='closed'?['closed','lost'].includes(row.lane):row.lane===lane.key);
+      const sub=pipelineLaneSublineV785(lane,rows);
+      return `<section class="platform-pipeline-lane" data-lane="${lane.key}" data-lane-drop="${lane.key}" aria-labelledby="pipeline-lane-${lane.key}">
+        <header class="platform-pipeline-lane-head"><div><h2 id="pipeline-lane-${lane.key}">${escapeHtml(pt(lane.label))}</h2>${sub?`<p class="${sub.due?'is-due':''}">${escapeHtml(sub.text)}</p>`:''}</div><span class="platform-count">${rows.length}</span></header>
+        <div class="platform-card-list" role="list">${rows.length?rows.map(row=>pipelineCardHtmlV785(row,CUI,{canWrite,selected:row.id===selectedId})).join(''):`<p class="platform-pipeline-empty">${escapeHtml(pt('No firms'))}</p>`}</div>
+        ${canWrite&&lane.key!=='closed'?`<button type="button" class="platform-pipeline-add" data-pipeline-add-lead>${escapeHtml(pt('+ Add Lead'))}</button>`:''}
+      </section>`;
+    }).join('')}</div>`;
+  }
+  function pipelineKpiStripHtmlV785(kpis,CUI,activeKpi=''){
+    const tiles=[
+      ['new_leads','New Leads','customers',kpis.new_leads,kpis.new_leads_due_today?{text:pt('{count} due today',{count:kpis.new_leads_due_today}),due:true}:null],
+      ['follow_up_due','Follow-up Due','appointments',kpis.follow_up_due,kpis.follow_up_overdue?{text:pt('{count} overdue',{count:kpis.follow_up_overdue}),due:true}:null],
+      ['pending_decision','Pending Decision','reports',kpis.pending_decision,kpis.pending_due_week?{text:pt('{count} due this week',{count:kpis.pending_due_week}),due:false}:null],
+      ['won_this_month','Won This Month','star',kpis.won_this_month,null],
+      ['payment_due','Payment Due','card',kpis.payment_due,kpis.payment_due?{text:pt('awaiting payment'),due:true}:null]
+    ];
+    return `<div class="platform-pipeline-kpis" role="group" aria-label="${escapeHtml(pt('Pipeline summary'))}">${tiles.map(([key,label,icon,value,sub])=>`<button type="button" class="platform-pipeline-kpi" data-pipeline-kpi="${key}" aria-pressed="${activeKpi===key?'true':'false'}">
+      <span class="platform-pipeline-kpi-icon">${CUI.icon(icon,{size:18})}</span>
+      <span><span class="small muted">${escapeHtml(pt(label))}</span><b>${escapeHtml(String(value??0))}</b>${sub?`<small class="${sub.due?'is-due':''}">${escapeHtml(sub.text)}</small>`:''}</span>
+    </button>`).join('')}</div>`;
+  }
+  // The console's own calendar: what is booked, soonest first, each with a way into the owner's
+  // real calendar. .ics carries the appointment in UTC; Google's template link does the same.
+  function pipelineIcsV785(item){
+    /* new Date(null) is the epoch, not NaN — an unset appointment must return nothing. */
+    if(!item||!item.next_appointment_at)return '';
+    const start=new Date(item.next_appointment_at);
+    if(Number.isNaN(start.getTime()))return '';
+    const end=new Date(start.getTime()+60*60*1000);
+    const stamp=date=>date.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
+    const esc=value=>String(value||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/[,;]/g,match=>`\\${match}`);
+    const contact=asObject(item.primary_contact);
+    const description=[
+      pt('Peekaa appointment'),
+      contact.full_name?`${pt('Contact')}: ${contact.full_name}${contact.phone?` · ${contact.phone}`:''}`:'',
+      item.consultant_name?`${pt('Advisor')}: ${item.consultant_name}`:''
+    ].filter(Boolean).join('\n');
+    return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Peekaa//Pipeline//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+      `UID:peekaa-pipeline-${item.id}-${stamp(start)}@peekaa.asia`,`DTSTAMP:${stamp(new Date())}`,`DTSTART:${stamp(start)}`,`DTEND:${stamp(end)}`,
+      `SUMMARY:${esc(`${item.company_name||pt('Prospect')} — ${pt('Peekaa appointment')}`)}`,
+      `DESCRIPTION:${esc(description)}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  }
+  function pipelineGoogleCalendarUrlV785(item){
+    if(!item||!item.next_appointment_at)return '';
+    const start=new Date(item.next_appointment_at);
+    if(Number.isNaN(start.getTime()))return '';
+    const end=new Date(start.getTime()+60*60*1000);
+    const stamp=date=>date.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z');
+    const params=new URLSearchParams({action:'TEMPLATE',text:`${item.company_name||pt('Prospect')} — ${pt('Peekaa appointment')}`,dates:`${stamp(start)}/${stamp(end)}`,ctz:'Asia/Singapore'});
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+  function pipelineCalendarLinksHtmlV785(item,CUI){
+    if(!item.next_appointment_at)return '';
+    const ics=pipelineIcsV785(item);
+    const google=pipelineGoogleCalendarUrlV785(item);
+    const file=`peekaa-${String(item.company_name||'appointment').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.ics`;
+    return `<span class="platform-actions" style="gap:6px">
+      <a class="btn ghost sm" href="data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}" download="${escapeHtml(file)}">${CUI.icon('export',{size:14})}<span>${escapeHtml(pt('Add to calendar'))}</span></a>
+      ${google?`<a class="btn ghost sm" href="${escapeHtml(google)}" target="_blank" rel="noopener">${escapeHtml(pt('Google Calendar'))}</a>`:''}
+    </span>`;
+  }
+  function pipelineCalendarPanelHtmlV785(items,CUI){
+    const upcoming=asArray(items).filter(row=>row.next_appointment_at&&new Date(row.next_appointment_at).getTime()>=Date.now()-3600000)
+      .sort((a,b)=>new Date(a.next_appointment_at)-new Date(b.next_appointment_at)).slice(0,30);
+    return CUI.card({title:'Upcoming appointments',description:pt('Every appointment set on a firm, soonest first · Asia/Singapore'),body:upcoming.length?`<ul class="platform-pipeline-timeline">${upcoming.map(row=>`<li>
+        <span class="platform-pipeline-kpi-icon">${CUI.icon('appointments',{size:14})}</span>
+        <div><time datetime="${escapeHtml(row.next_appointment_at)}">${escapeHtml(pipelineSgDateV785(row.next_appointment_at,{time:true}))}</time>
+        <b><button type="button" class="platform-link-button" data-pipeline-open="${escapeHtml(row.id)}" style="background:none;padding:0;font:inherit;color:var(--brand-red);font-weight:750">${escapeHtml(row.company_name||'')}</button></b>
+        <p>${escapeHtml(row.consultant_name||pt('Unassigned'))}${asObject(row.primary_contact).full_name?` · ${escapeHtml(asObject(row.primary_contact).full_name)}`:''}</p>
+        ${pipelineCalendarLinksHtmlV785(row,CUI)}</div></li>`).join('')}</ul>`:`<p class="muted small">${escapeHtml(pt('No appointments booked yet. Set one from a firm’s card.'))}</p>`});
+  }
+
+  async function renderPipelineV785(context,filters=null){
+    const {main,CUI,sb,hash}=context;
+    const active=filters||pipelineFiltersFromHashV785(hash);
+    const canWrite=context.canWrite===true;
+    const salesStaff=context.access?.role==='sales_staff';
+    main.innerHTML=loading(CUI,'Pipeline','Loading your pipeline…','customers');
+    let payload;
+    try{
+      payload=asObject(await rpc(sb,'platform_pipeline_board_v785',{
+        p_scope:active.scope,p_consultant:active.consultant||null,p_search:active.search||null,p_limit:1000
+      }));
+    }catch(error){
+      main.innerHTML=`${CUI.pageHeader({title:'Pipeline',subtitle:'Manage your business leads and grow with Peekaa.',iconName:'customers'})}${error?.platformUpdateRequired?systemUpdateRequired(CUI,'Pipeline'):CUI.errorState({title:'Pipeline unavailable',message:platformErrorMessage(error,'Try again.')})}`;
+      CUI.focusRoute(main);
+      return;
+    }
+    if(!context.isCurrent?.()&&context.isCurrent)return;
+    const items=asArray(payload.items),today=payload.today||singaporeIsoDate();
+    const kpis=pipelineKpisV785(items,today);
+    const shown=pipelineSortV785(items.filter(row=>pipelineKpiMatchesV785(active.kpi,row)),active.sort);
+    const consultants=asArray(payload.consultants);
+    const setHash=next=>{if(globalObject.history?.replaceState)globalObject.history.replaceState(null,'',pipelineHashV785(next))};
+    const rerender=next=>{const merged={...active,...next};setHash(merged);return renderPipelineV785({...context,hash:pipelineHashV785(merged)},merged)};
+    const refresh=()=>renderPipelineV785({...context,hash:pipelineHashV785(active)},active);
+    const scopeNote=payload.consultant_unlinked
+      ?localizedRouteNoteHtml('No consultant record linked','Your login has CRM access but is not linked to a consultant, so no firms are assigned to you yet. Ask a super admin to link your login.')
+      :'';
+    main.innerHTML=`${CUI.pageHeader({title:'Pipeline',subtitle:'Manage your business leads and grow with Peekaa.',iconName:'customers',
+      actions:`${canWrite?`<button type="button" class="btn" id="pipelineAddLeadV785">${CUI.icon('add',{size:17})}<span>${escapeHtml(pt('Add Lead'))}</span></button>`:''}`})}
+      ${scopeNote}
+      ${pipelineKpiStripHtmlV785(kpis,CUI,active.kpi)}
+      <div class="platform-pipeline-toolbar">
+        ${salesStaff?'':`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Pipeline scope'))}">
+          <button type="button" class="btn ${active.scope==='all'?'':'ghost'} sm" data-pipeline-scope="all" aria-pressed="${active.scope==='all'}">${escapeHtml(pt('All Pipeline'))}</button>
+          <button type="button" class="btn ${active.scope==='mine'?'':'ghost'} sm" data-pipeline-scope="mine" aria-pressed="${active.scope==='mine'}">${escapeHtml(pt('My Pipeline'))}</button>
+        </div>
+        ${consultants.length?`<label class="small muted" style="display:flex;align-items:center;gap:6px">${escapeHtml(pt('Advisor:'))}<select id="pipelineAdvisorV785" aria-label="${escapeHtml(pt('Advisor'))}"><option value="">${escapeHtml(pt('All Advisors'))}</option>${consultants.map(entry=>`<option value="${escapeHtml(entry.id)}"${active.consultant===String(entry.id)?' selected':''}>${escapeHtml(entry.display_name)}${entry.n!==undefined?` (${escapeHtml(String(entry.n))})`:''}</option>`).join('')}</select></label>`:''}`}
+        <form id="pipelineSearchV785" role="search"><input type="search" name="q" value="${escapeHtml(active.search)}" placeholder="${escapeHtml(pt('Search company, contact or keyword…'))}" aria-label="${escapeHtml(pt('Search company, contact or keyword…'))}"><button type="submit" class="btn ghost sm">${CUI.icon('search',{size:16})}<span>${escapeHtml(pt('Search'))}</span></button></form>
+        <select id="pipelineSortV785" aria-label="${escapeHtml(pt('Sort'))}">${PIPELINE_SORTS_V785.map(([key,label])=>`<option value="${key}"${active.sort===key?' selected':''}>${escapeHtml(pt(label))}</option>`).join('')}</select>
+        <button type="button" class="btn ${active.calendar?'':'ghost'} sm" id="pipelineCalendarV785" aria-pressed="${active.calendar?'true':'false'}">${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt('Calendar'))}${kpis.appointments_upcoming?` (${kpis.appointments_upcoming})`:''}</span></button>
+        ${active.kpi?`<button type="button" class="btn ghost sm" data-pipeline-kpi="">${CUI.icon('close',{size:14})}<span>${escapeHtml(pt('Clear filter'))}</span></button>`:''}
+      </div>
+      ${active.calendar?pipelineCalendarPanelHtmlV785(items,CUI):''}
+      ${canWrite?`<p class="muted small platform-kanban-hint">${escapeHtml(pt('Drag a card into another lane to move it, or focus a card and press Ctrl with the left or right arrow. Every move still asks for its evidence.'))}</p>`:''}
+      ${pipelineBoardHtmlV785(shown,CUI,{canWrite,selectedId:active.prospect})}`;
+    CUI.focusRoute(main);
+    const pipelineContext={...context,refresh,hash:pipelineHashV785(active),markBoardDirty:()=>{}};
+    /* Toolbar */
+    main.querySelectorAll('[data-pipeline-scope]').forEach(button=>button.onclick=()=>rerender({scope:button.dataset.pipelineScope,consultant:''}));
+    const advisor=main.querySelector('#pipelineAdvisorV785');
+    if(advisor)advisor.onchange=()=>rerender({consultant:advisor.value,scope:'all'});
+    main.querySelector('#pipelineSearchV785').onsubmit=event=>{event.preventDefault();rerender({search:String(new FormData(event.currentTarget).get('q')||'').trim()})};
+    main.querySelector('#pipelineSortV785').onchange=event=>rerender({sort:event.currentTarget.value});
+    main.querySelector('#pipelineCalendarV785').onclick=()=>rerender({calendar:!active.calendar});
+    main.querySelectorAll('[data-pipeline-kpi]').forEach(button=>button.onclick=()=>rerender({kpi:button.dataset.pipelineKpi===active.kpi?'':button.dataset.pipelineKpi}));
+    const addLead=()=>newProspectModal(pipelineContext);
+    const addLeadButton=main.querySelector('#pipelineAddLeadV785');
+    if(addLeadButton)addLeadButton.onclick=addLead;
+    main.querySelectorAll('[data-pipeline-add-lead]').forEach(button=>button.onclick=addLead);
+    /* Cards */
+    const byId=new Map(items.map(row=>[String(row.id),row]));
+    const openItem=id=>{const item=byId.get(String(id));if(item)openPipelineDrawerV785(item,pipelineContext)};
+    main.querySelectorAll('[data-pipeline-open]').forEach(button=>button.onclick=()=>openItem(button.dataset.pipelineOpen));
+    main.querySelectorAll('[data-pipeline-schedule]').forEach(button=>button.onclick=event=>{
+      event.stopPropagation();
+      const item=byId.get(String(button.dataset.pipelineSchedule));
+      if(item)pipelineScheduleModalV785(item,pipelineContext);
+    });
+    let dragged=null;
+    main.querySelectorAll('[data-pipeline-card]').forEach(card=>{
+      const item=byId.get(String(card.dataset.pipelineCard));
+      if(!item)return;
+      card.onclick=event=>{if(event.target.closest('[data-pipeline-schedule]'))return;openItem(item.id)};
+      card.onkeydown=event=>{
+        if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openItem(item.id);return}
+        if(canWrite&&event.ctrlKey&&(event.key==='ArrowLeft'||event.key==='ArrowRight')){
+          event.preventDefault();
+          const index=PIPELINE_LANES_V785.findIndex(lane=>lane.key===item.lane);
+          const target=PIPELINE_LANES_V785[index+(event.key==='ArrowRight'?1:-1)];
+          if(target)pipelineMoveV785(item,target.key,pipelineContext);
+        }
+      };
+      if(card.draggable){
+        card.ondragstart=event=>{dragged=item;card.setAttribute('aria-grabbed','true');if(event.dataTransfer){event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',String(item.id))}};
+        card.ondragend=()=>{dragged=null;card.removeAttribute('aria-grabbed');main.querySelectorAll('.is-drop-target').forEach(node=>node.classList.remove('is-drop-target'))};
+      }
+    });
+    main.querySelectorAll('[data-lane-drop]').forEach(lane=>{
+      lane.ondragover=event=>{if(!dragged)return;event.preventDefault();lane.classList.add('is-drop-target')};
+      lane.ondragleave=()=>lane.classList.remove('is-drop-target');
+      lane.ondrop=event=>{
+        event.preventDefault();lane.classList.remove('is-drop-target');
+        const item=dragged||byId.get(String(event.dataTransfer?.getData('text/plain')||''));
+        dragged=null;
+        if(item)pipelineMoveV785(item,lane.dataset.laneDrop,pipelineContext);
+      };
+    });
+    if(active.prospect&&byId.has(active.prospect)){
+      const item=byId.get(active.prospect);
+      /* A deep link opens the drawer once; the hash is left as it is so a reload lands here again. */
+      openPipelineDrawerV785(item,{...pipelineContext,refresh:()=>renderPipelineV785({...context,hash:pipelineHashV785({...active,prospect:''})},{...active,prospect:''})});
+    }
+  }
+  function pipelineMoveV785(item,laneKey,context){
+    if(item.lane===laneKey)return;
+    const toStage=pipelineLaneTargetStageV785(laneKey,item);
+    if(!toStage)return;
+    requestStageMove({...item,prospect_id:item.id},toStage,context);
+  }
+
+  // Photo 3: the schedule fields, in one small form. Times are typed and shown in Singapore time.
+  function pipelineScheduleModalV785(item,context,{onSaved}={}){
+    const {CUI,sb}=context;
+    modal({title:pt('Next appointment & follow-up · {name}',{name:item.company_name||prospectCompany(item)}),submitLabel:'Save',CUI,body:`<div class="platform-pipeline-schedule">
+      ${CUI.field({id:'pipelineApptV785',label:'Next appt (firm)',type:'datetime-local',value:item.next_appointment_at?sgLocalInputValue(item.next_appointment_at):'',hint:'Singapore time · synced to the calendar list and exportable as .ics',attributes:'name="next_appointment_at" step="300"'})}
+      ${CUI.field({id:'pipelineFollowV785',label:'Next follow up (task)',type:'date',value:item.next_follow_up_on?String(item.next_follow_up_on).slice(0,10):'',hint:'Shown on the card as Due in N D / Due today / Overdue',attributes:'name="next_follow_up_on"'})}
+      <div class="wide"><p class="small" style="font-weight:700;margin:6px 0 2px">${escapeHtml(pt('Last edited'))}</p><p class="platform-pipeline-readonly">${escapeHtml(item.updated_at?pipelineSgDateV785(item.updated_at,{time:true}):'—')} · ${escapeHtml(pt('moves on any change to this business'))}</p></div>
+      <div class="wide">${CUI.field({id:'pipelineScheduleNoteV785',label:'Note (optional)',control:'textarea',attributes:'name="note" rows="2" maxlength="400"'})}</div>
+    </div>`,onSubmit:async(form,controls)=>{
+      const appointment=sgLocalToIso(form.get('next_appointment_at'));
+      const follow=String(form.get('next_follow_up_on')||'').trim()||null;
+      const result=asObject(await rpc(sb,'platform_pipeline_set_schedule_v785',{
+        p_prospect:item.id,p_expected_version:Number(item.version||0),
+        p_next_appointment_at:appointment,p_next_follow_up_on:follow,p_note:form.get('note')||null
+      }));
+      controls.close();
+      Object.assign(item,{version:result.version,next_appointment_at:result.next_appointment_at,next_follow_up_on:result.next_follow_up_on,follow_up_days:result.follow_up_days,updated_at:result.updated_at});
+      CUI.announce(pt('Schedule saved.'));
+      if(onSaved)await onSaved(result);else await context.refresh?.();
+    }});
+  }
+
+  // The business drawer (photo 2, right).
+  function pipelineActivityIconV785(type){
+    return type==='call'?'phone':type==='whatsapp'?'chat':type==='email'?'empty':type==='meeting'||type==='demo'?'appointments':type==='note'?'edit':type==='proposal_sent'||type==='document_sent'||type==='contract_sent'?'reports':type==='payment'?'card':'info';
+  }
+  function pipelineDrawerHtmlV785(item,detail,CUI,{tab='activity',canWrite=true,payments=null}={}){
+    const prospect=asObject(detail.prospect),company=asObject(detail.company),consultant=asObject(detail.consultant);
+    const contacts=asArray(detail.contacts),activities=asArray(detail.activities),documents=asArray(detail.documents);
+    const business=asObject(detail.business),branches=asArray(business.branches);
+    const primary=contacts.find(row=>row.is_primary)||contacts[0]||{};
+    const phone=normalizePlatformPhone(primary.phone||company.phone),whatsapp=normalizePlatformPhone(primary.whatsapp_number||primary.phone||company.phone);
+    const email=primary.email||company.email||'';
+    const due=pipelineDueLabelV785(prospect.next_follow_up_on?Math.round((new Date(`${String(prospect.next_follow_up_on).slice(0,10)}T00:00:00+08:00`)-new Date(`${detail.today||singaporeIsoDate()}T00:00:00+08:00`))/86400000):null);
+    const lane=String(prospect.lane||item.lane||'');
+    const converted=Boolean(prospect.converted_business_id);
+    const laneOptions=PIPELINE_LANES_V785.map(entry=>`<option value="${entry.key}"${entry.key===lane?' selected':''}>${escapeHtml(pt(entry.label))}</option>`).join('');
+    const info=[
+      ['Primary contact',primary.full_name||'—'],['Mobile',primary.phone||company.phone||'—'],['Email',email||'—'],
+      ['Assigned to',consultant.display_name||pt('Unassigned')],['Stage',platformStatus(prospect.current_stage_key||'new_lead')],
+      ['Created',pipelineSgDateV785(prospect.created_at,{time:true})],['Last edited',pipelineSgDateV785(prospect.updated_at,{time:true})],
+      ['Next appointment',prospect.next_appointment_at?pipelineSgDateV785(prospect.next_appointment_at,{time:true}):'—'],
+      ['Next follow up',prospect.next_follow_up_on?`${pipelineSgDateV785(prospect.next_follow_up_on)}${due.text?` · ${due.text}`:''}`:'—'],
+      ['Branches',converted?String(branches.length):String(item.branch_count??'—')]
+    ];
+    const timeline=activities.length?`<ul class="platform-pipeline-timeline">${activities.map(activity=>{
+      const attachments=asArray(activity.attachments);
+      return `<li><span class="platform-pipeline-kpi-icon">${CUI.icon(pipelineActivityIconV785(activity.activity_type),{size:14})}</span><div>
+        <time datetime="${escapeHtml(activity.occurred_at||'')}">${escapeHtml(pipelineSgDateV785(activity.occurred_at,{time:true}))} · ${escapeHtml(platformStatus(activity.activity_type||''))}</time>
+        <b>${escapeHtml(activity.summary||'')}</b>
+        ${activity.detail&&activity.detail!==activity.summary?`<p>${escapeHtml(activity.detail)}</p>`:''}
+        ${attachments.length?`<div class="platform-pipeline-attachments">${attachments.map(att=>`<button type="button" data-pipeline-attachment="${escapeHtml(att.document_version_id||'')}">${CUI.icon('import',{size:12})}<span>${escapeHtml(att.original_filename||pt('Attachment'))}</span></button>`).join('')}</div>`:''}
+      </div></li>`;}).join('')}</ul>`:`<p class="muted small">${escapeHtml(pt('No activity recorded yet.'))}</p>`;
+    const contactsHtml=contacts.length?`<ul class="platform-pipeline-branches">${contacts.map(contact=>`<li><b>${escapeHtml(contact.full_name||'—')}${contact.is_primary?` <span class="pill">${escapeHtml(pt('Primary'))}</span>`:''}</b><span class="muted small">${escapeHtml([contact.title,contact.phone,contact.email].filter(Boolean).join(' · '))}</span></li>`).join('')}</ul>`:`<p class="muted small">${escapeHtml(pt('No contacts recorded yet.'))}</p>`;
+    const dealHtml=`${converted
+      ?(payments?v779PaymentsCardHtml(payments,CUI):`<p class="muted small">${escapeHtml(pt('Loading payments…'))}</p>`)
+      :`<p class="muted small">${escapeHtml(pt('Not yet a Peekaa merchant. Payments appear here once the workspace is created and paid.'))}</p>`}
+      ${asArray(detail.stage_history).length?`<h3 class="small" style="margin-top:12px">${escapeHtml(pt('Stage history'))}</h3><ul class="platform-pipeline-timeline">${asArray(detail.stage_history).slice(0,10).map(row=>`<li><span class="platform-pipeline-kpi-icon">${CUI.icon('forward',{size:14})}</span><div><time>${escapeHtml(pipelineSgDateV785(row.occurred_at,{time:true}))}</time><b>${escapeHtml(platformStatus(row.from_stage_key||'new'))} → ${escapeHtml(platformStatus(row.to_stage_key||''))}</b>${row.reason_detail?`<p>${escapeHtml(row.reason_detail)}</p>`:''}</div></li>`).join('')}</ul>`:''}`;
+    const filesHtml=detail.documents_visible===false
+      ?`<p class="muted small">${escapeHtml(pt('Documents are visible to the assigned consultant and super admins.'))}</p>`
+      :documents.length?`<ul class="platform-pipeline-branches">${documents.map(doc=>`<li><b>${escapeHtml(doc.original_filename||'—')}</b><span class="muted small">${escapeHtml(platformStatus(doc.document_type||''))} · ${escapeHtml(pipelineSgDateV785(doc.created_at,{time:true}))}</span><button type="button" class="btn ghost sm" data-pipeline-attachment="${escapeHtml(doc.id)}">${escapeHtml(pt('Open'))}</button></li>`).join('')}</ul>`
+      :`<p class="muted small">${escapeHtml(pt('No files yet. Attach one to a note below.'))}</p>`;
+    const tabs=[['activity','Activity'],['contacts','Contacts'],['deal','Deal'],['files','Files']];
+    return `<div class="platform-pipeline-head">
+      <span class="platform-pipeline-kpi-icon">${CUI.icon('branch',{size:20})}</span>
+      <div style="min-width:0;flex:1 1 auto">
+        <div class="platform-actions" style="align-items:center;gap:8px;flex-wrap:wrap"><h1 id="pipelineDrawerTitleV785">${escapeHtml(item.company_name||prospectCompany({...item,...company}))}</h1>
+          ${canWrite&&!converted?`<select class="platform-pipeline-stage-select" data-pipeline-lane-select aria-label="${escapeHtml(pt('Stage'))}">${laneOptions}</select>`:`<span class="platform-pipeline-due" data-tone="${lane==='closed'?'won':''}">${escapeHtml(pt(PIPELINE_LANES_V785.find(entry=>entry.key===lane)?.label||platformStatus(lane)))}</span>`}</div>
+        <p class="platform-pipeline-sub">${escapeHtml([sectorLabel(company.sector_key||company.industry),prospect.region].filter(Boolean).join(' · ')||pt('Sector not recorded'))}</p>
+        <p class="platform-pipeline-sub">${escapeHtml(pt('{count} branches',{count:converted?branches.length:(item.branch_count??0)}))}${consultant.display_name?` · ${escapeHtml(consultant.display_name)}`:''}</p>
+      </div>
+    </div>
+    <div class="platform-pipeline-quick">
+      <a class="btn ghost" href="${phone?`tel:${escapeHtml(phone.tel)}`:'#'}"${phone?'':' aria-disabled="true"'}>${CUI.icon('phone',{size:18})}<span>${escapeHtml(pt('Call'))}</span></a>
+      <a class="btn ghost" href="${whatsapp?`https://wa.me/${escapeHtml(whatsapp.wa)}`:'#'}"${whatsapp?' target="_blank" rel="noopener"':' aria-disabled="true"'}>${CUI.icon('chat',{size:18})}<span>${escapeHtml(pt('WhatsApp'))}</span></a>
+      <a class="btn ghost" href="${email?`mailto:${escapeHtml(email)}`:'#'}"${email?'':' aria-disabled="true"'}>${CUI.icon('empty',{size:18})}<span>${escapeHtml(pt('Email'))}</span></a>
+      <button type="button" class="btn ghost" data-pipeline-full-record>${CUI.icon('menu',{size:18})}<span>${escapeHtml(pt('More'))}</span></button>
+    </div>
+    <section class="platform-pipeline-section platform-pipeline-next" aria-labelledby="pipelineNextTitleV785">
+      <div class="platform-pipeline-section-head"><h2 id="pipelineNextTitleV785">${escapeHtml(pt('Next Action'))}</h2>${canWrite?`<button type="button" class="btn ghost sm" data-pipeline-edit-schedule>${escapeHtml(pt('Edit'))}</button>`:''}</div>
+      ${prospect.next_follow_up_on||prospect.next_appointment_at||asObject(item.next_task).title?`
+        ${asObject(item.next_task).title?`<div class="platform-pipeline-line">${CUI.icon('check',{size:16})}<span>${escapeHtml(asObject(item.next_task).title)}</span></div>`:''}
+        ${prospect.next_follow_up_on?`<div class="platform-pipeline-line ${['overdue','today'].includes(due.tone)?'is-due':''}">${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt('Follow up'))} · ${escapeHtml(pipelineSgDateV785(prospect.next_follow_up_on))}${due.text?` · ${escapeHtml(due.text)}`:''}</span></div>`:''}
+        ${prospect.next_appointment_at?`<div class="platform-pipeline-line">${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt('Appointment'))} · ${escapeHtml(pipelineSgDateV785(prospect.next_appointment_at,{time:true}))}</span></div>${pipelineCalendarLinksHtmlV785({...item,...prospect},CUI)}`:''}
+        ${canWrite?`<div class="platform-actions">
+          ${prospect.next_follow_up_on?`<button type="button" class="btn sm" data-pipeline-mark-done>${CUI.icon('check',{size:15})}<span>${escapeHtml(pt('Mark as Done'))}</span></button>`:''}
+          <button type="button" class="btn ghost sm" data-pipeline-edit-schedule>${escapeHtml(pt('Reschedule'))}</button>
+        </div>`:''}`
+      :`<p class="muted small">${escapeHtml(pt('No next appointment or follow-up set.'))}</p>${canWrite?`<div class="platform-actions"><button type="button" class="btn sm" data-pipeline-edit-schedule>${CUI.icon('add',{size:15})}<span>${escapeHtml(pt('Set next appointment or follow-up'))}</span></button></div>`:''}`}
+    </section>
+    <section class="platform-pipeline-section" aria-labelledby="pipelineInfoTitleV785">
+      <div class="platform-pipeline-section-head"><h2 id="pipelineInfoTitleV785">${escapeHtml(pt('Company Info'))}</h2></div>
+      <dl class="platform-pipeline-info">${info.map(([label,value])=>`<dt>${escapeHtml(pt(label))}</dt><dd>${escapeHtml(String(value??'—'))}</dd>`).join('')}</dl>
+    </section>
+    ${converted?`<section class="platform-pipeline-section" aria-labelledby="pipelineBranchesTitleV785">
+      <div class="platform-pipeline-section-head"><h2 id="pipelineBranchesTitleV785">${escapeHtml(pt('Branches'))}</h2></div>
+      ${branches.length?`<ul class="platform-pipeline-branches">${branches.map(branch=>`<li><b>${escapeHtml(branch.name||'—')}${branch.is_default?` (${escapeHtml(pt('Main'))})`:''}</b><span class="pill">${escapeHtml(v779BranchStateLabel(branch))}</span></li>`).join('')}</ul>`:`<p class="muted small">${escapeHtml(pt('No branches yet.'))}</p>`}
+    </section>`:''}
+    <div class="platform-pipeline-tabs" role="tablist">${tabs.map(([key,label])=>`<button type="button" role="tab" data-pipeline-tab="${key}" aria-selected="${tab===key?'true':'false'}">${escapeHtml(pt(label))}</button>`).join('')}</div>
+    <section class="platform-pipeline-section" data-pipeline-tab-panel="${escapeHtml(tab)}">${tab==='contacts'?contactsHtml:tab==='deal'?dealHtml:tab==='files'?filesHtml:timeline}</section>
+    ${canWrite?`<div class="platform-pipeline-composer"><form data-pipeline-note-form>
+      <textarea name="body" rows="1" placeholder="${escapeHtml(pt('Add a note…'))}" aria-label="${escapeHtml(pt('Add a note…'))}" maxlength="4000"></textarea>
+      <label class="btn ghost" title="${escapeHtml(pt('Attach documents'))}" aria-label="${escapeHtml(pt('Attach documents'))}">${CUI.icon('import',{size:18})}<input type="file" name="files" multiple accept="${escapeHtml(prospectDocumentMimes.join(','))}"></label>
+      <button type="submit" class="btn" aria-label="${escapeHtml(pt('Send note'))}">${CUI.icon('forward',{size:18})}</button>
+      <div class="platform-pipeline-files" data-pipeline-files hidden></div>
+    </form></div>`:''}`;
+  }
+  // Attachments travel the v86 vault path: reserve → exchange → upload → finalize, one file at a time,
+  // then the note links each verified document version. Nothing is stored anywhere else.
+  async function pipelineUploadAttachmentV785(sb,prospectId,file,progress){
+    if(!(file instanceof File)||!file.size)throw new Error(pt('Choose a file to upload.'));
+    if(file.size>26214400)throw new Error(pt('The file exceeds the 25 MB limit.'));
+    if(!prospectDocumentMimes.includes(file.type))throw new Error(pt('This file type is not supported.'));
+    progress?.(pt('Uploading {name}…',{name:file.name}));
+    const reservation=asObject(await rpc(sb,'platform_request_prospect_document_upload_v86',{
+      p_prospect:prospectId,p_document_type:'other',p_original_filename:file.name,p_mime_type:file.type,
+      p_size_bytes:file.size,p_logical_document:null,p_notes:'Pipeline note attachment'
+    }));
+    const exchange=await invokeDocumentSigner(sb,{action:'exchange',request_id:reservation.request_id,exchange_token:reservation.exchange_token});
+    if(exchange.purpose!=='upload'||!exchange.signed_upload_token)throw new Error(pt('The signer did not return an upload token.'));
+    const storageResult=await sb.storage.from(exchange.bucket_id).uploadToSignedUrl(exchange.object_path,exchange.signed_upload_token,file,{contentType:file.type,cacheControl:'0'});
+    if(storageResult?.error)throw storageResult.error;
+    await invokeDocumentSigner(sb,{action:'finalize',request_id:reservation.request_id});
+    return {document_version_id:reservation.document_version_id,logical_document_id:reservation.logical_document_id,original_filename:file.name,mime_type:file.type,size_bytes:file.size};
+  }
+  async function openPipelineDrawerV785(item,context){
+    const {CUI,sb}=context;
+    const canWrite=context.canWrite===true;
+    const overlay=document.createElement('div');
+    overlay.className='platform-drawer platform-pipeline-drawer';overlay.tabIndex=-1;
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','pipelineDrawerTitleV785');
+    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head" style="margin-bottom:8px">
+      <button type="button" class="btn ghost sm" data-pipeline-back aria-label="${escapeHtml(pt('Back to pipeline'))}">${CUI.icon('back',{size:18})}</button>
+      <button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button>
+    </div><div data-detail>${CUI.loadingState({title:item.company_name||'Prospect',body:'Loading the firm, its activity and its schedule…',iconName:'branch'})}</div></section>`;
+    document.body.appendChild(overlay);
+    let deactivate,dirty=false,tab='activity',payments=null,detail=null;
+    const close=()=>{closeOverlay(overlay,deactivate);if(dirty)context.refresh?.()};
+    overlay.querySelector('.platform-drawer-close').onclick=close;
+    overlay.querySelector('[data-pipeline-back]').onclick=close;
+    deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
+    const host=overlay.querySelector('[data-detail]');
+    const drawerContext={...context,overlay,close,refresh:async()=>{dirty=true;await load()},markBoardDirty:()=>{dirty=true}};
+    async function load(){
+      try{
+        detail=asObject(await rpc(sb,'platform_pipeline_prospect_v785',{p_prospect:item.id}));
+      }catch(error){
+        if(!host.isConnected)return;
+        host.innerHTML=error?.platformUpdateRequired?systemUpdateRequired(CUI,'Pipeline'):CUI.errorState({title:'Firm unavailable',message:platformErrorMessage(error,'Try again.')});
+        return;
+      }
+      if(!host.isConnected)return;
+      const prospect=asObject(detail.prospect);
+      Object.assign(item,{version:prospect.version,next_appointment_at:prospect.next_appointment_at,next_follow_up_on:prospect.next_follow_up_on,updated_at:prospect.updated_at,current_stage_key:prospect.current_stage_key,lane:prospect.lane||item.lane,converted_business_id:prospect.converted_business_id});
+      if(prospect.next_follow_up_on){
+        item.follow_up_days=Math.round((new Date(`${String(prospect.next_follow_up_on).slice(0,10)}T00:00:00+08:00`)-new Date(`${detail.today||singaporeIsoDate()}T00:00:00+08:00`))/86400000);
+      }else item.follow_up_days=null;
+      if(prospect.converted_business_id&&!payments){
+        payments=await rpc(sb,'platform_get_business_payments_v779',{p_business:prospect.converted_business_id})
+          .then(value=>({value:asObject(value),error:null}),error=>({value:null,error}));
+        if(!host.isConnected)return;
+      }
+      paint();
+    }
+    function paint(){
+      host.innerHTML=pipelineDrawerHtmlV785(item,detail,CUI,{tab,canWrite,payments});
+      wire();
+    }
+    function wire(){
+      const on=(selector,handler)=>overlay.querySelectorAll(selector).forEach(node=>{node.onclick=handler});
+      overlay.querySelectorAll('[data-pipeline-tab]').forEach(button=>button.onclick=()=>{tab=button.dataset.pipelineTab;paint()});
+      on('[data-pipeline-edit-schedule]',()=>pipelineScheduleModalV785(item,drawerContext,{onSaved:async()=>{dirty=true;await load()}}));
+      on('[data-pipeline-mark-done]',async event=>{
+        const button=event.currentTarget;button.disabled=true;
+        try{
+          const result=asObject(await rpc(sb,'platform_pipeline_set_schedule_v785',{
+            p_prospect:item.id,p_expected_version:Number(item.version||0),
+            p_next_appointment_at:item.next_appointment_at||null,p_next_follow_up_on:null,p_note:'Follow-up marked as done'
+          }));
+          Object.assign(item,{version:result.version,next_follow_up_on:null,follow_up_days:null,updated_at:result.updated_at});
+          dirty=true;CUI.announce(pt('Follow-up marked as done.'));await load();
+        }catch(error){button.disabled=false;CUI.announce(platformErrorMessage(error,'Could not update the follow-up.'),{assertive:true})}
+      });
+      on('[data-pipeline-full-record]',()=>{
+        if(context.access?.role==='sales_staff')openScopedProspect({...item,prospect_id:item.id},drawerContext,[],{onClose:()=>{}});
+        else openProspectDetail({...item,prospect_id:item.id},{...drawerContext,prospectCloseHash:null});
+      });
+      const laneSelect=overlay.querySelector('[data-pipeline-lane-select]');
+      if(laneSelect)laneSelect.onchange=()=>{
+        const target=laneSelect.value;
+        if(target===item.lane)return;
+        pipelineMoveV785(item,target,{...drawerContext,refresh:async()=>{dirty=true;await load()}});
+        laneSelect.value=item.lane;
+      };
+      overlay.querySelectorAll('[data-pipeline-attachment]').forEach(button=>button.onclick=()=>openProspectDocument(button.dataset.pipelineAttachment,button,drawerContext));
+      const form=overlay.querySelector('[data-pipeline-note-form]');
+      if(form){
+        const textarea=form.querySelector('textarea'),fileInput=form.querySelector('input[type="file"]'),files=form.querySelector('[data-pipeline-files]');
+        const showFiles=()=>{const list=Array.from(fileInput.files||[]);files.hidden=!list.length;files.innerHTML=list.map(file=>`<span>${escapeHtml(file.name)}</span>`).join('')};
+        fileInput.onchange=showFiles;
+        textarea.onkeydown=event=>{if(event.key==='Enter'&&(event.metaKey||event.ctrlKey)){event.preventDefault();form.requestSubmit()}};
+        form.onsubmit=async event=>{
+          event.preventDefault();
+          const body=String(textarea.value||'').trim(),list=Array.from(fileInput.files||[]);
+          if(!body&&!list.length)return;
+          const submit=form.querySelector('button[type="submit"]');submit.disabled=true;textarea.disabled=true;
+          const progress=text=>{files.hidden=false;files.innerHTML=`<span>${escapeHtml(text)}</span>`};
+          try{
+            const attachments=[];
+            for(const file of list)attachments.push(await pipelineUploadAttachmentV785(sb,item.id,file,progress));
+            progress(pt('Saving note…'));
+            await rpc(sb,'platform_pipeline_add_note_v785',{p_prospect:item.id,p_body:body,p_attachments:attachments,p_idempotency_key:idempotencyKey()});
+            dirty=true;tab='activity';
+            CUI.announce(pt(attachments.length?'Note saved with {count} attachment(s).':'Note saved.',{count:attachments.length}));
+            await load();
+          }catch(error){
+            submit.disabled=false;textarea.disabled=false;
+            files.hidden=false;files.innerHTML=`<span class="err">${escapeHtml(platformErrorMessage(error,'The note could not be saved.'))}</span>`;
+          }
+        };
+      }
+    }
+    await load();
+  }
+  // ===========================================================================
   // nestly_v779 (owner, 2026-09-05): a firm's payments, branch by branch.
   //
   // The business's Subscription page lists each charge with the branch it paid for and the
@@ -15351,9 +16016,15 @@
     if(!task&&activeKey==='reports')task=renderPlatformReports(
       context,enterpriseReportFiltersFromHash(hash)
     );
-    if(!task&&activeKey==='onboarding')task=renderOnboarding(
-      context,onboardingStateFromHash(hash).filters
-    );
+    if(!task&&activeKey==='pipeline')task=renderPipelineV785(context);
+    /* nestly_v785: the Onboarding board (its 'pipeline' tab) is the Pipeline now; the other tabs
+       — applications, demo requests, signups, metrics — stay where they were. */
+    if(!task&&activeKey==='onboarding'){
+      const onboardingFilters=onboardingStateFromHash(hash).filters;
+      task=onboardingFilters.tab==='pipeline'
+        ?renderPipelineV785({...context,hash:pipelineHashV785({search:onboardingFilters.search||''})})
+        :renderOnboarding(context,onboardingFilters);
+    }
     if(!task&&activeKey==='command-center')task=renderCommandCenterV511(context);
     if(!task&&activeKey==='work')task=renderWorkV511(context,workStateFromHash(hash));
     /* Billing and Customer lifecycle (retired as their own routes) are now
@@ -15363,7 +16034,6 @@
        into a tab of Onboarding, handled inside renderOnboarding. */
     if(!task&&activeKey==='subscription-operations')task=renderSubscriptionOperations(context);
     if(!task&&activeKey==='marketing')task=renderMarketingUsage(context);
-    if(!task&&activeKey==='crm')task=renderCrm(context);
     if(!task&&activeKey==='prospecting')task=renderProspecting(context);
     if(!task&&activeKey==='pnl')task=renderPlatformFinance(context);
     if(!task&&activeKey==='commissions')task=renderCommission(context);
@@ -15407,6 +16077,9 @@
     receiptRows,receiptArchiveRows,openStoredReceipt,receiptReaderMadeProgress,receiptUnreadableReason,
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
     platformBusinessPaymentsHtmlV779,v779InvoiceWhat,v779InvoiceGroupKey,v779PaymentsCardHtml,openCompanyPaymentsV779,
+    renderPipelineV785,openPipelineDrawerV785,pipelineDueLabelV785,pipelineKpisV785,pipelineCardHtmlV785,pipelineBoardHtmlV785,
+    pipelineKpiStripHtmlV785,pipelineDrawerHtmlV785,pipelineIcsV785,pipelineGoogleCalendarUrlV785,pipelineFiltersFromHashV785,
+    pipelineHashV785,pipelineLaneTargetStageV785,pipelineSortV785,pipelineKpiMatchesV785,PIPELINE_LANES_V785,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
     v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,
@@ -15449,6 +16122,9 @@
     receiptRows,receiptArchiveRows,openStoredReceipt,receiptReaderMadeProgress,receiptUnreadableReason,
     renderCommandCenterV511,renderWorkV511,openBusiness360V511,
     platformBusinessPaymentsHtmlV779,v779InvoiceWhat,v779InvoiceGroupKey,v779PaymentsCardHtml,openCompanyPaymentsV779,
+    renderPipelineV785,openPipelineDrawerV785,pipelineDueLabelV785,pipelineKpisV785,pipelineCardHtmlV785,pipelineBoardHtmlV785,
+    pipelineKpiStripHtmlV785,pipelineDrawerHtmlV785,pipelineIcsV785,pipelineGoogleCalendarUrlV785,pipelineFiltersFromHashV785,
+    pipelineHashV785,pipelineLaneTargetStageV785,pipelineSortV785,pipelineKpiMatchesV785,PIPELINE_LANES_V785,
     v511WorkTabsFor,v511WorkHash,workStateFromHash,v511DeepLinkHash,v511OriginSourceLabel,
     v511WorkRowActionsHtml,v511CommandCenterHtml,v511WorkHtml,v511Business360Html,
     v511AttentionTone,v511StateTone,V511_WORK_TYPES,V511_CLOSE_OUTCOMES,V511_WORK_SCOPES,

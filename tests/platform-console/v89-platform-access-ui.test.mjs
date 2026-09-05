@@ -33,7 +33,7 @@ test('super admin sees every module plus grant management with write access',asy
     // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
     // companies merged into a sibling route as a tab/mode (see
     // legacyRouteRedirects), so they no longer appear as their own routes.
-    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access']
+    ['overview','pipeline','onboarding','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access']
   );
 });
 
@@ -49,7 +49,7 @@ test('read-only admin keeps permitted routes but cannot write and off modules di
   assert.equal(api.canAccessModule(access,'billing'),false);
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['overview','onboarding','crm','prospecting','firms','reports']
+    ['overview','pipeline','onboarding','prospecting','firms','reports']
   );
   assert.equal(api.isFullLegacyAdmin(access),false);
   const full=api.normalizePlatformAccess({role:'admin',scope:'all',module_perms:{'*':'rw'}});
@@ -65,7 +65,7 @@ test('Sales A navigation and scope copy expose only scoped CRM and reports',asyn
   });
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['onboarding','crm','prospecting','firms','reports']
+    ['pipeline','onboarding','prospecting','firms','reports']
   );
   assert.equal(api.canWriteModule(access,'onboarding'),true);
   assert.equal(api.canWriteModule(access,'firms'),false);
@@ -119,7 +119,7 @@ test('partially customized admins use server-scoped onboarding, firms and report
   });
   assert.deepEqual(
     Array.from(api.visibleRoutes(access),route=>route.key),
-    ['onboarding','crm','prospecting','firms','reports']
+    ['pipeline','onboarding','prospecting','firms','reports']
   );
   assert.equal(api.canWriteModule(access,'onboarding'),true);
   assert.equal(api.canWriteModule(access,'firms'),false);

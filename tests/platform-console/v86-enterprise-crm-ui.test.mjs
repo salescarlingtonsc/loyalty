@@ -143,7 +143,7 @@ test('mobile platform navigation exposes four primary routes and an accessible M
   const [source,styles]=await Promise.all([
     read('app/platform-console.js'),read('app/platform-console.css')
   ]);
-  assert.match(source,/\['overview','onboarding','firms','reports'\]/);
+  assert.match(source,/\['overview','pipeline','firms','reports'\]/);
   assert.match(source,/class="platform-mobile-more"/);
   assert.match(source,/role="list"/);
   assert.match(styles,/grid-template-columns:repeat\(var\(--platform-mobile-count,5\),minmax\(0,1fr\)\)/);

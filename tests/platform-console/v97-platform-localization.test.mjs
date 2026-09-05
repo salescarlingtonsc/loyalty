@@ -363,11 +363,11 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // no subscription exists / no lifecycle row exists).
   // Merged 2026-09-03: main's F130 (+17) and the CI-100 wave's v727/check-98/v734 strings (+14, itemised
   // below) are both live, so the inventory is the sum of the two sides' additions.
-  assert.equal(explicit.length,1174,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch
+  assert.equal(explicit.length,1238,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch + v785 Pipeline
   // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
   // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
   // submitLabel are a ternary expression, not a literal, so they are not metadata matches).
-  assert.equal(metadata.length,866,'update the audited CUI metadata inventory when adding UI metadata'); // v779 payments by branch (+4) + F130 (+1) + v727 (+2), merged 2026-09-03
+  assert.equal(metadata.length,880,'update the audited CUI metadata inventory when adding UI metadata'); // v785 Pipeline (+14) + v779 payments by branch (+4) + F130 (+1) + v727 (+2), merged 2026-09-03
   assert.equal(announcements.length,48,'update the audited static announcement inventory when adding announcements'); // V503
   // nestly_v727 (consultant brief evidence gating, check 93): +5 distinct explicit pt() strings
   // (Average order, the insufficient-evidence note template, Identified customers, With a
@@ -763,6 +763,9 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
     {kind:'data-only',pattern:/^(?:§ (?:KB|MB)|Platform import review: §|NPU: §)$/},
     {kind:'technical',pattern:/^(?:confirm:§|nestly:v133:privacy:§:§|platform-§-§|platformNavGroup-§|cursor:§|(?:stage|consultant)=§|#\/platform\/(?:firms|reports|onboarding|crm)§|#\/platform\/(?:billing\?business|commissions\?accrual|automation\?incident)=§|#\/platform\/firms\?firm=§|module_mode_§|\[data-module-row="§"\] select|data-platform-scope="§"|\[data-(?:prospect|business-application|accrual-id|incident-id)="§"\]|§-enterprise-(?:report|cross-domain)-§-§\.csv|peekaa-(?:platform-finance|accounting-books)-§-§\.csv|custom__§|§-import-§-errors\.csv|§-business-explorer-§\.csv|name="§"§+|name="amount" min="0\.01" max="§" step="0\.01"|§_cents|(?:business|prospect):§|permission_§|receipts\/§\/§-§|title=\"§\"|#\/platform\/work\?scope=§|\?search=§|#\/platform\/subscription-operations§|&view=§|#\/platform\/subscription-operations\?tab=lifecycle§|&business=§|#\/platform\/subscription-operations\?tab=billing§|#\/platform\/firms\?§)$/}
   ];
+  /* nestly_v785: the Pipeline's hash builder, its .ics / Google Calendar fragments and the drawer's
+     tel: / wa.me / mailto: quick actions are URL and protocol grammar, never UI copy. */
+  classifications.push({kind:'technical',pattern:/^(?:#\/platform\/pipeline§|(?:sort|kpi|prospect)=§|UID:peekaa-pipeline-§-§@peekaa\.asia|DT(?:STAMP|START|END):§|SUMMARY:§|DESCRIPTION:§|https:\/\/calendar\.google\.com\/calendar\/render\?§|peekaa-§\.ics|tel:§|https:\/\/wa\.me\/§|mailto:§)$/});
   const classified=inventory.map(entry=>({
     ...entry,kind:classifications.find(rule=>rule.pattern.test(entry.text))?.kind||'unclassified'
   }));
@@ -770,11 +773,11 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   // ?view= and Companies filter query strings from a retired route's old
   // hash onto its new home — five new technical URL-fragment segments (all
   // in the .hash() builders next to the routes[] registry).
-  assert.equal(classified.length,57,'review every interpolated template segment when the inventory changes');
+  assert.equal(classified.length,74,'review every interpolated template segment when the inventory changes'); // + v785 Pipeline (17: hash builders, .ics/Google Calendar fragments, drawer ids)
   assert.deepEqual(classified.filter(entry=>entry.kind==='unclassified'),[]);
   assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,6);
   assert.equal(classified.filter(entry=>entry.kind==='data-only').length,4);
-  assert.equal(classified.filter(entry=>entry.kind==='technical').length,47);
+  assert.equal(classified.filter(entry=>entry.kind==='technical').length,64); // + v785 Pipeline (17)
 });
 
 test('every mixed UI grammar template localizes arbitrary values in Chinese and Malay',async()=>{

@@ -30,7 +30,7 @@ test('desktop administration has six primary task areas plus secondary platform 
       {key:'overview',routes:['overview']},
       // Operating-system IA pass: demo-requests is now a tab of Onboarding
       // rather than a sibling route in this group (see onboardingTabs).
-      {key:'sales',routes:['onboarding','crm','prospecting']},
+      {key:'sales',routes:['pipeline','onboarding','prospecting']},
       // customer-lifecycle and companies are now a tab/mode of
       // subscription-operations and firms respectively, not their own routes.
       {key:'customers',routes:['firms']},
@@ -48,7 +48,7 @@ test('desktop administration has six primary task areas plus secondary platform 
     // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
     // companies merged into a sibling route as a tab/mode; their deep links
     // still resolve (see legacyRouteRedirects / phase1-brand-platform-console).
-    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access'],
+    ['overview','pipeline','onboarding','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access'],
     'streamlining must not delete a capability or deep link'
   );
 });
@@ -62,7 +62,7 @@ test('restricted platform roles only see task groups containing authorised route
   const groups=Console.platformNavigationGroups(Console.visibleRoutes(access));
   assert.deepEqual(
     Array.from(groups,group=>Array.from(group.routes,route=>route.key)),
-    [['overview'],['onboarding','crm','prospecting'],['firms'],['reports']]
+    [['overview'],['pipeline','onboarding','prospecting'],['firms'],['reports']]
   );
 });
 

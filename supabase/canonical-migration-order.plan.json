@@ -3922,6 +3922,12 @@
       "version": "20261006040000",
       "name": "nestly_v779_platform_business_payments",
       "sourcePath": "db/migrations/20261006_nestly_v779_platform_business_payments.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006050000",
+      "name": "nestly_v785_pipeline_schedule",
+      "sourcePath": "db/migrations/20261006_nestly_v785_pipeline_schedule.sql"
     }
   ]
 }

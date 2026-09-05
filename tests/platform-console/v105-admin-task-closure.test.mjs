@@ -108,7 +108,7 @@ test('Today is the first task destination while all authorised deep links remain
     // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
     // companies merged into a sibling route as a tab/mode; their deep links
     // still resolve (see legacyRouteRedirects / phase1-brand-platform-console).
-    ['overview','onboarding','crm','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access'],
+    ['overview','pipeline','onboarding','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access'],
     'task-first navigation must not delete an authorised route or its deep link'
   );
 });
@@ -202,7 +202,7 @@ test('sales staff permissions default to their own scoped Today surface',async()
   assert.equal(access.scope,'own_created_or_assigned');
   assert.deepEqual(
     Array.from(Console.visibleRoutes(access),route=>route.key),
-    ['overview','onboarding','crm','prospecting','firms','reports']
+    ['overview','pipeline','onboarding','prospecting','firms','reports']
   );
 
   const CUI={emptyState:({title,body})=>`<div><b>${title}</b><p>${body}</p></div>`};
@@ -289,7 +289,7 @@ test('task-first desktop groups remain permission-filtered for sales staff',asyn
     })),
     [
       {key:'overview',label:'Today',routes:['overview']},
-      {key:'sales',label:'Sales',routes:['onboarding','crm','prospecting']},
+      {key:'sales',label:'Sales',routes:['pipeline','onboarding','prospecting']},
       {key:'customers',label:'Customers',routes:['firms']},
       {key:'reports',label:'Reports',routes:['reports']}
     ]
@@ -502,7 +502,10 @@ test('onboarding filters, sort and the open firm survive refresh through one can
   assert.match(wiring,/replaceOnboardingState\(context,next\)/);
   assert.match(wiring,/prospect:item\.id\|\|item\.prospect_id/);
   assert.match(detail,/context\.prospectCloseHash/);
-  assert.match(router,/renderOnboarding\(\s*context,onboardingStateFromHash\(hash\)\.filters\s*\)/);
+  /* nestly_v785: the board tab of Onboarding is the Pipeline; the other tabs still render through renderOnboarding with the same canonical filters. */
+  assert.match(router,/const onboardingFilters=onboardingStateFromHash\(hash\)\.filters;/);
+  assert.match(router,/renderOnboarding\(context,onboardingFilters\)/);
+  assert.match(router,/activeKey==='pipeline'\)task=renderPipelineV785\(context\)/);
 });
 
 test('Firm 360 keeps only frequent actions visible and moves specialist actions behind one disclosure',async()=>{

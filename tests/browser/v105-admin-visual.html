@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="25b4bfff214b0f630c879a4a5ef19ad502215f3a7277d30e2a853035c52a1fc4">
+<meta name="v105-production-component-sha256" content="f15e4a34ccd2730b5c466386e0d5f0c9be5c564292014ebe8d6fca58e0ca51c6">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -6577,6 +6577,143 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .platform-prospecting-saved .btn{flex:1 1 auto;justify-content:center}
 }
 
+/* ===== nestly_v785 — Pipeline (owner photo 2, 2026-09-05) =====================================
+   The CRM home: a KPI strip, five lanes, cards that say what is due and in how many days, and a
+   business drawer with the next action, the company, the branches, the activity and a note
+   composer. Brand red stays the only accent (owner ruling 2026-08-18); the lane tints are the
+   same warm neutrals the rest of the console uses. */
+.platform-pipeline-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:0 0 14px}
+.platform-pipeline-kpi{
+  display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--hair);border-radius:14px;
+  background:#fff;box-shadow:var(--shadow);text-align:left;color:var(--ink);cursor:pointer
+}
+.platform-pipeline-kpi:hover{border-color:rgba(194,65,53,.32)}
+.platform-pipeline-kpi[aria-pressed="true"]{border-color:var(--brand-red);box-shadow:0 0 0 2px var(--brand-red-soft)}
+.platform-pipeline-kpi .platform-pipeline-kpi-icon{
+  display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--brand-red-faint);color:var(--brand-red);flex:0 0 auto
+}
+.platform-pipeline-kpi b{display:block;font-size:22px;line-height:1.1;letter-spacing:-.02em;margin-top:2px}
+.platform-pipeline-kpi small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.platform-pipeline-kpi small.is-due{color:var(--danger);font-weight:650}
+.platform-pipeline-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.platform-pipeline-toolbar form{display:flex;align-items:center;gap:8px;flex:1 1 260px;min-width:0}
+.platform-pipeline-toolbar form input[type="search"]{flex:1 1 auto;min-width:0}
+.platform-pipeline-toolbar .platform-actions{gap:6px}
+.platform-pipeline-toolbar select{min-width:160px;width:auto}
+.platform-pipeline-board{
+  display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:12px;align-items:stretch;
+  padding:2px 2px 18px;overflow-x:auto
+}
+@media (max-width:1100px){.platform-pipeline-board{grid-template-columns:repeat(5,minmax(230px,1fr))}}
+.platform-pipeline-lane{
+  min-width:0;padding:10px;border:1px solid var(--line);border-radius:15px;background:#EFEBE5;display:flex;flex-direction:column
+}
+.platform-pipeline-lane[data-lane="new_lead"]{background:#F7E8E5}
+.platform-pipeline-lane[data-lane="contact"]{background:#F6ECE0}
+.platform-pipeline-lane[data-lane="proposal"]{background:#E9EEF3}
+.platform-pipeline-lane[data-lane="pending_decision"]{background:#ECE8F3}
+.platform-pipeline-lane[data-lane="closed"]{background:#E6F1EA}
+.platform-pipeline-lane.is-drop-target{outline:2px dashed rgba(194,65,53,.55);outline-offset:3px;background:rgba(194,65,53,.05)}
+.platform-pipeline-lane-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 5px 10px}
+.platform-pipeline-lane-head h2{font-size:14px;letter-spacing:-.01em}
+.platform-pipeline-lane-head p{margin-top:3px;font-size:11px;color:var(--muted)}
+.platform-pipeline-lane-head p.is-due{color:var(--danger);font-weight:650}
+.platform-pipeline-lane .platform-card-list{flex:1 1 auto;min-height:72px;align-content:start}
+.platform-pipeline-card{
+  width:100%;padding:12px 12px 11px;border:1px solid var(--hair);border-radius:12px;background:#fff;box-shadow:var(--shadow);
+  text-align:left;color:var(--ink);cursor:pointer;display:grid;gap:6px
+}
+.platform-pipeline-card:hover{border-color:rgba(194,65,53,.32);box-shadow:var(--shadow-lg)}
+.platform-pipeline-card[aria-grabbed="true"]{opacity:.56}
+.platform-pipeline-card[draggable="true"]{cursor:grab}
+.platform-pipeline-card[draggable="true"]:active{cursor:grabbing}
+.platform-pipeline-card.is-selected{border-color:var(--brand-red);box-shadow:0 0 0 2px var(--brand-red-soft)}
+.platform-pipeline-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.platform-pipeline-card-name{font-size:13.5px;font-weight:750;line-height:1.3;overflow-wrap:anywhere}
+.platform-pipeline-card-sector{color:var(--muted);font-size:11.5px;margin-top:1px}
+.platform-pipeline-card-menu{min-width:32px;min-height:32px;padding:4px 6px;border-radius:8px;background:transparent;color:var(--muted);font-size:16px;line-height:1}
+.platform-pipeline-card-menu:hover{background:var(--neutral-bg);color:var(--ink)}
+.platform-pipeline-owner{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink2)}
+.platform-pipeline-avatar{
+  display:inline-grid;place-items:center;width:24px;height:24px;border-radius:999px;background:var(--brand-red-soft);color:var(--brand-red-on-soft);
+  font-size:10px;font-weight:750;letter-spacing:.02em;flex:0 0 auto
+}
+.platform-pipeline-avatar.is-unassigned{background:var(--warn-bg);color:var(--warn)}
+.platform-pipeline-line{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);min-width:0}
+.platform-pipeline-line span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.platform-pipeline-line .cui-icon,.platform-pipeline-line svg{flex:0 0 auto;color:var(--muted)}
+.platform-pipeline-due{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;
+  background:var(--neutral-bg);color:var(--ink2);white-space:nowrap
+}
+.platform-pipeline-due[data-tone="overdue"]{background:var(--danger-bg);color:var(--danger)}
+.platform-pipeline-due[data-tone="today"]{background:var(--danger-bg);color:var(--danger)}
+.platform-pipeline-due[data-tone="soon"]{background:var(--warn-bg);color:var(--warn)}
+.platform-pipeline-due[data-tone="won"]{background:var(--success-bg);color:var(--success)}
+.platform-pipeline-add{
+  margin-top:8px;width:100%;padding:10px;border:1px dashed rgba(23,22,26,.18);border-radius:10px;background:transparent;color:var(--muted);font-weight:650;font-size:12.5px
+}
+.platform-pipeline-add:hover{color:var(--brand-red);border-color:rgba(194,65,53,.45)}
+.platform-pipeline-empty{padding:12px 6px;color:var(--muted);font-size:12px}
+/* The business drawer (photo 2, right). */
+.platform-pipeline-drawer .platform-drawer-panel{width:min(560px,100%);padding:20px 22px}
+.platform-pipeline-head{display:flex;gap:12px;align-items:flex-start}
+.platform-pipeline-head .platform-pipeline-kpi-icon{width:44px;height:44px;border-radius:13px;font-size:20px}
+.platform-pipeline-head h1{font-size:1.25rem;line-height:1.25}
+.platform-pipeline-head .platform-pipeline-sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+.platform-pipeline-stage-select{
+  display:inline-block;width:auto;min-height:30px;padding:4px 28px 4px 10px;border-radius:999px;font-size:12px;font-weight:700;
+  background:#ECE8F3;border-color:transparent;color:var(--ink)
+}
+.platform-pipeline-quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}
+.platform-pipeline-quick .btn{flex-direction:column;gap:4px;min-height:60px;font-size:11.5px;padding:8px 4px}
+.platform-pipeline-quick .btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.platform-pipeline-section{border:1px solid var(--hair);border-radius:14px;background:#fff;padding:14px;margin-top:12px;box-shadow:var(--shadow)}
+.platform-pipeline-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.platform-pipeline-section-head h2{font-size:14px}
+.platform-pipeline-section-head .btn{min-height:32px;padding:4px 10px;font-size:12px}
+.platform-pipeline-next{background:var(--brand-red-faint);border-color:transparent}
+.platform-pipeline-next .platform-pipeline-line{font-size:13px}
+.platform-pipeline-next .platform-pipeline-line.is-due{color:var(--danger);font-weight:650}
+.platform-pipeline-next .platform-actions{margin-top:10px}
+.platform-pipeline-info{display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:6px 12px;font-size:12.5px;margin:0}
+.platform-pipeline-info dt{color:var(--muted)}
+.platform-pipeline-info dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.platform-pipeline-branches{list-style:none;margin:0;padding:0}
+.platform-pipeline-branches li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.platform-pipeline-branches li:first-child{border-top:0}
+.platform-pipeline-branches li b{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.platform-pipeline-tabs{display:flex;gap:4px;margin:14px 0 0;padding:4px;border-radius:12px;background:var(--neutral-bg)}
+.platform-pipeline-tabs button{flex:1 1 0;min-height:36px;border-radius:9px;background:transparent;color:var(--muted);font-weight:650;font-size:12.5px}
+.platform-pipeline-tabs button[aria-selected="true"]{background:#fff;color:var(--brand-red);box-shadow:var(--shadow)}
+.platform-pipeline-timeline{list-style:none;margin:6px 0 0;padding:0}
+.platform-pipeline-timeline li{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.platform-pipeline-timeline li:first-child{border-top:0}
+.platform-pipeline-timeline .platform-pipeline-kpi-icon{width:28px;height:28px;border-radius:9px;background:var(--neutral-bg);color:var(--muted)}
+.platform-pipeline-timeline time{display:block;color:var(--muted);font-size:11px}
+.platform-pipeline-timeline b{display:block;font-size:13px;margin-top:2px}
+.platform-pipeline-timeline p{margin:3px 0 0;font-size:12.5px;color:var(--ink2);white-space:pre-wrap;overflow-wrap:anywhere}
+.platform-pipeline-attachments{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.platform-pipeline-attachments button{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--neutral-bg);color:var(--ink2);font-size:11.5px;font-weight:650
+}
+.platform-pipeline-attachments button:hover{color:var(--brand-red)}
+.platform-pipeline-composer{position:sticky;bottom:-20px;margin:14px -22px -20px;padding:12px 22px 16px;background:var(--bg);border-top:1px solid var(--line)}
+.platform-pipeline-composer form{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}
+.platform-pipeline-composer textarea{min-height:44px;max-height:160px;resize:vertical;font-size:13px;padding:10px 12px}
+.platform-pipeline-composer .btn{min-height:44px;min-width:44px;padding-inline:12px}
+.platform-pipeline-composer input[type="file"]{display:none}
+.platform-pipeline-files{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--muted)}
+.platform-pipeline-files span{padding:3px 8px;border-radius:999px;background:var(--neutral-bg)}
+.platform-pipeline-schedule{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+.platform-pipeline-schedule .wide{grid-column:1/-1}
+.platform-pipeline-readonly{color:var(--muted);font-size:12.5px;margin:4px 0 0}
+@media (max-width:760px){
+  .platform-pipeline-quick{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .platform-pipeline-schedule{grid-template-columns:1fr}
+  .platform-pipeline-composer form{grid-template-columns:1fr auto}
+}
+
 .v105-provenance{position:fixed;right:8px;bottom:8px;z-index:99;padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#67616d;font:11px/1.2 system-ui}
 </style>
 </head>
@@ -6584,7 +6721,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 25b4bfff214b</span>
+<span class="v105-provenance">v105 production-component harness · f15e4a34ccd2</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6709,7 +6846,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'25b4bfff214b0f630c879a4a5ef19ad502215f3a7277d30e2a853035c52a1fc4',
+  sourceHash:'f15e4a34ccd2730b5c466386e0d5f0c9be5c564292014ebe8d6fca58e0ca51c6',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
