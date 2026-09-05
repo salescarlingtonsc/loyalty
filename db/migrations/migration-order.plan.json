@@ -3882,6 +3882,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20261003_nestly_v775_visit_rhythm_current_totals.sql",
+      "semanticVersion": "v775",
+      "proposedDeployVersion": "20261003020000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20261004_nestly_v772_branch_copy_without_staff.sql",
       "semanticVersion": "v772",
       "proposedDeployVersion": "20261004000000"

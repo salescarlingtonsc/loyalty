@@ -501,7 +501,16 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   // nestly_v753 (owner ruling 2026-09-04, the birthday-window batch): deliberately deployed
   // between v748 and v749 (canonical plan slot 20260923030000), so its file date (20260923)
   // sits one day before v749's (20260924) even though v753 is the higher semantic number.
-  '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v753_birthday_reaches_new_signups.sql'
+  '20260924_nestly_v749_customer_self_service_account_deletion.sql -> 20260923_nestly_v753_birthday_reaches_new_signups.sql',
+  // 2026-09-05 rebase onto main 1568b344: this session's Owner-brief wave (nestly_v772
+  // owner_brief_readers + nestly_v775) was written and applied to production on 20261003, at
+  // deploy slots 20261003010000/20261003020000, while a parallel session's nestly_v772
+  // branch_copy_without_staff (20261004) and nestly_v773 (20261005) landed on main first. Both
+  // sides are already applied to production, so neither file may be re-dated. Semantic order
+  // therefore steps from main's v773 (20261005) back to this session's v775 (20261003) — a
+  // parallel-session twin, not a real ordering regression. Deploy order is unambiguous and
+  // strictly monotonic in both plans: …003010000 and …003020000 precede …004000000/…005000000.
+  '20261005_nestly_v773_rewards_same_at_every_branch.sql -> 20261003_nestly_v775_visit_rhythm_current_totals.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

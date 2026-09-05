@@ -1042,7 +1042,7 @@
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 4,
-      "sha256": "4496a0c85601b07ff2b6e83e5d01fbc98aa27f13238dc77a064d0cc35f199ff3",
+      "sha256": "d1e95199255821b93cf697fc5caafdf07deaefe132c216932fd43c0849f08028",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v772_corpus_owner_brief_readers --migrated-only"
     },
     {

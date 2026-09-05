@@ -146,6 +146,9 @@
 --     open_blocks (days_with_visits >= 3) = [10, 14]; block 18 is NOT open.
 --     slowest_blocks = [14 (3 visits), 10 (10)]   busiest_blocks = [10, 14]
 --     labels: 10 -> '10am–12pm', 14 -> '2pm–4pm', 18 -> '6pm–8pm'
+--   current (nestly_v775): the window's OWN totals, straight off the same cur_tot CTE that
+--     feeds every `share` denominator and `change` — visits 14, revenue_cents 124000, which is
+--     also exactly sum(days[].visits) and sum(days[].revenue_cents) for this call.
 --   previous window = 2026-02-02 .. 2026-03-01, one sale sP1 (1 visit, 10000):
 --     change.visits_pct  = 100*(14-1)/1      = 1300.0
 --     change.revenue_pct = 100*(124000-10000)/10000 = 1140.0
@@ -1024,6 +1027,30 @@ begin
        or (v_row->>'revenue_cents')::bigint <> 3000
        or (v_row->>'identified_customers')::bigint <> 0 then
       insert into _fail values ('V-day-0313', coalesce(v_row::text, '<missing>'));
+    end if;
+
+    -- nestly_v775: the reader states its own window total instead of making the caller sum
+    -- days[]. Asserted BOTH against the hand-computed truth table and against that summation,
+    -- so the two can never silently disagree.
+    -- `is distinct from`, not `<>`: a MISSING 'current' key yields NULL, and `NULL <> 14` is
+    -- NULL, which an `if` treats as false — the assertion would pass on the very absence it
+    -- exists to catch. (Found by mutation-checking this fixture with v775 removed.)
+    if (g_rhy->'current'->>'visits')::bigint is distinct from 14
+       or (g_rhy->'current'->>'revenue_cents')::bigint is distinct from 124000 then
+      insert into _fail values ('V-current', coalesce((g_rhy->'current')::text, '<missing>'));
+    end if;
+    if (select coalesce(sum((rec->>'visits')::bigint), 0)
+          from jsonb_array_elements(g_rhy->'days') rec)
+       is distinct from (g_rhy->'current'->>'visits')::bigint
+       or (select coalesce(sum((rec->>'revenue_cents')::bigint), 0)
+             from jsonb_array_elements(g_rhy->'days') rec)
+          is distinct from (g_rhy->'current'->>'revenue_cents')::bigint then
+      insert into _fail values ('V-current-matches-days',
+        format('current=%s but days[] sums to visits=%s revenue=%s', g_rhy->'current',
+          (select coalesce(sum((rec->>'visits')::bigint), 0)
+             from jsonb_array_elements(g_rhy->'days') rec),
+          (select coalesce(sum((rec->>'revenue_cents')::bigint), 0)
+             from jsonb_array_elements(g_rhy->'days') rec)));
     end if;
 
     if (g_rhy->'previous'->>'visits')::bigint <> 1
