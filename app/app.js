@@ -50499,12 +50499,22 @@ async function customerIntelligencePage(){
   const categoryCustomersCacheV650=new Map();// node_key -> {loading,error,data}
   const expandedCategoryNodesV650=new Set();
   const CUSTOMER_INTELLIGENCE_PAGE_SIZE=100;
+  /* nestly_v771: the Owner brief's own bundles. Declared AFTER the page-size constant on
+     purpose — tests/business-ui/v685-ci-surfaces.test.mjs extracts the closure slice that ENDS
+     on that line and executes it standalone, so anything added above it would have to be
+     stubbed there too. Same independent-bundle-per-section discipline as the v650/v679/v685
+     blocks above: a failure in one of these never blanks the rest of the brief. */
+  let lastTruthPrevBundleV771=null,lastLifecyclePrevBundleV771=null,
+    lastAttentionBundleV771=null,lastAttentionErrorV771='',
+    lastPackagesBundleV771=null,lastPackagesErrorV771='',
+    lastServiceIntelBundleV771=null,lastServiceIntelErrorV771='',
+    lastBriefPeriodDaysV771=0,lastBriefFromV771='',lastBriefToV771='';
   /* V285: the heading now says what the rail says. Every other route in the workspace answers to
      the name it was opened by; this one was reached under "Customer intelligence" and then titled
      itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
      because it is an accurate description of what the page produces. The per-page branch picker is
      gone for the V260/V272 reason — the top bar owns branch scope. */
-  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customer intelligence</h1><p class="muted small">A defensible revenue picture, exact customer meanings, and one evidence-ranked next action.</p></div></div>
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customer intelligence</h1><p class="muted small">Who to call, what is unused, who matters most, and what Peekaa can prove.</p></div></div>
     <div class="range"><label class="small">From <input type="date" id="cif" value="${from}"></label>
       <span class="muted" aria-hidden="true">→</span><label class="small">To <input type="date" id="cit" value="${today}"></label>
       <button class="btn sm" id="ciRun">Run report</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
@@ -50721,6 +50731,25 @@ async function customerIntelligencePage(){
     if(lastOpportunitiesError)return ciQuietErrorV650('Ranked opportunities could not load.',lastOpportunitiesError);
     return opportunitiesPanelHtmlV685(lastOpportunitiesBundle);
   }
+  /* nestly_v771: the closure half of the Owner brief — it only assembles the plain object the
+     pure top-level renderer takes, so every judgement stays testable outside the page. It sits
+     below ciOpportunitiesMarkupV685 deliberately: the v685 harness extracts the slice that runs
+     from scopeMoney to ciCategoryMixWrapV650, and this must not land inside it. */
+  function ownerBriefMarkupV771(){
+    return ownerBriefHtmlV771({
+      currency:S.biz?.currency||'SGD',
+      periodDays:lastBriefPeriodDaysV771,from:lastBriefFromV771,to:lastBriefToV771,
+      truth:lastTruthBundle?.truth||null,truthPrev:lastTruthPrevBundleV771,
+      lifecycle:lastTruthBundle?.lifecycle||null,lifecyclePrev:lastLifecyclePrevBundleV771,
+      attention:lastAttentionBundleV771,attentionError:lastAttentionErrorV771,
+      packages:lastPackagesBundleV771,packagesError:lastPackagesErrorV771,
+      customers:Array.isArray(lastPayload?.customers)?lastPayload.customers:[],
+      summary:lastPayload?.summary||null,
+      services:lastServiceIntelBundleV771,servicesError:lastServiceIntelErrorV771,
+      abstentions:Array.isArray(lastOpportunitiesBundle?.abstentions)?lastOpportunitiesBundle.abstentions:null,
+      canOpenCustomers:S.myRole==='owner'||canReadModule('clients')
+    });
+  }
   const forecastMarkup=(forecast,currency)=>{
     if(forecast?.status!=='available'){
       const unmet=Array.isArray(forecast?.unmet_thresholds)?forecast.unmet_thresholds:[];
@@ -50788,7 +50817,13 @@ async function customerIntelligencePage(){
     const economicsMarkupV522=economicsGatedOffV522
       ?''
       :window.NestlySectorEconomics.render(economicsView);
-    body.innerHTML=`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}`;
+    /* nestly_v771 (owner ruling: this page must be straightforward for an SME owner). The brief
+       comes first and everything that used to BE the page — evidence, coverage, forecast, the
+       full ranked list — moves behind one closed disclosure. The concatenation inside the
+       disclosure is byte-identical to what it was: every mount those sections bind afterwards
+       (RevenueTruthUI.bind, the growth mounts, bindCategoryMixSectionV650, #ciMore) is still
+       queried from the same body node, and a closed <details> keeps its subtree in the document. */
+    body.innerHTML=`${ownerBriefMarkupV771()}<details class="card ci-detailed-analysis-v771" id="ciDetailedAnalysisV771"><summary><b>Detailed analysis</b> <span class="muted small">Evidence, coverage, forecast and the full ranked list</span></summary><div class="ci-detailed-analysis-body-v771">${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}</div></details>`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -50842,6 +50877,36 @@ async function customerIntelligencePage(){
     };
     paint(lastPayload);
   }
+  /* nestly_v771: the Owner brief NAMES people — its top-customer ranking and its unused-sessions
+     roll-up are both drawn from `lastPayload.customers`, so a first page of 100 would quietly
+     mis-rank an SME with more identified customers than that and under-count what is held. This
+     walks the SAME cursor loadMore() walks, with the same snapshot pin and the same de-duplication
+     by client_id, before the first paint. The 10-page ceiling is a guard, not a target: an SME has
+     tens to a few hundred identified customers, and stopping is always safer than looping. A page
+     that errors or arrives after the route has moved on simply stops the walk — the brief then
+     describes the pages it did get rather than nothing at all. */
+  async function loadRemainingCustomerPagesV771(){
+    for(let page=1;page<10;page++){
+      if(lastPayload?.pagination?.has_more!==true)return;
+      const cursor=lastPayload?.pagination?.next_cursor;
+      if(!lastRequest||!cursor?.customer_since||!cursor?.client_id||!lastPayload?.snapshot_at)return;
+      const {data,error}=await sb.rpc('get_customer_intelligence_v83',{
+        ...lastRequest,p_limit:CUSTOMER_INTELLIGENCE_PAGE_SIZE,
+        p_snapshot_at:lastPayload.snapshot_at,
+        p_after_created_at:cursor.customer_since,p_after_client:cursor.client_id
+      });
+      if(!isCurrent()||error)return;
+      const prior=Array.isArray(lastPayload?.customers)?lastPayload.customers:[];
+      const incoming=Array.isArray(data?.customers)?data.customers:[];
+      const seen=new Set(prior.map(customer=>customer.client_id));
+      lastPayload={
+        ...lastPayload,
+        ...data,
+        customers:[...prior,...incoming.filter(customer=>!seen.has(customer.client_id))],
+        pagination:data?.pagination||lastPayload?.pagination||{}
+      };
+    }
+  }
   const run=async()=>{
     if(!isCurrent())return;
     const fromDate=$('cif').value,toDate=$('cit').value;
@@ -50874,7 +50939,9 @@ async function customerIntelligencePage(){
       truthResponse,lifecycleResponse,briefingResponse,customerResponse,
       economicsResponse,driversResponse,policyResponse,
       acquisitionResponse,funnelResponse,contactabilityResponse,categoryMixResponse,
-      funnelConversionResponse,demographicsResponse,behaviourResponse,opportunitiesResponse
+      funnelConversionResponse,demographicsResponse,behaviourResponse,opportunitiesResponse,
+      truthPrevResponseV771,lifecyclePrevResponseV771,attentionResponseV771,
+      serviceIntelResponseV771,packagesResponseV771
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -50934,7 +51001,32 @@ async function customerIntelligencePage(){
          expected_value, and the payload gains report_sections + top_actions. */
       sb.rpc('get_ci_opportunities_v1',{
         p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null,p_extended:true
-      })
+      }),
+      /* nestly_v771: the Owner brief's own five reads, each captured independently below so one
+         failure never blanks the rest of the brief. The first two are the SAME two authorities the
+         page already asks for the current window, asked again for the window immediately before it
+         — periodDays back from `fromDate`, the identical shift get_revenue_driver_decomposition_v109
+         above is already given — so the brief's "vs the previous N days" line is a comparison of
+         like with like rather than an arithmetic of its own. */
+      sb.rpc('get_revenue_truth_v106',{...truthRequest,p_from:comparisonFromDate,p_to:fromDate}),
+      sb.rpc('get_customer_lifecycle_v107',{...truthRequest,p_from:comparisonFromDate,p_to:fromDate}),
+      /* Rows here carry names and phone numbers, so this reader stays behind the same predicate
+         the Bring-back module's own call uses; a staff member who cannot open Customers resolves a
+         null bundle and the block is simply absent, never an empty or a denied one. */
+      (S.myRole==='owner'||canReadModule('clients'))
+        ?sb.rpc('get_attention_list_v548',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_limit:10})
+        :Promise.resolve({data:null,error:null}),
+      sb.rpc('get_ci_service_intelligence_v1',{
+        p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
+      }),
+      /* Unused prepaid sessions are read straight from the table rather than through an RPC
+         because no reader owns that question yet; RLS is the tenant boundary and the module
+         predicate is the role boundary, same pair as every other direct read on this page. */
+      canReadModule('packages')
+        ?sb.from('client_packages')
+          .select('id,client_id,remaining,sessions_snapshot,status,purchased_at,expires_at,plan_name_snapshot,list_unit_cents_snapshot,price_cents_snapshot')
+          .eq('business_id',S.biz.id).eq('status','active').gt('remaining',0).limit(500)
+        :Promise.resolve({data:null,error:null})
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -50992,6 +51084,21 @@ async function customerIntelligencePage(){
     lastBehaviourBundle=behaviourResponse.data||null;
     lastOpportunitiesError=opportunitiesResponse.error?.message||'';
     lastOpportunitiesBundle=opportunitiesResponse.data||null;
+    /* nestly_v771: the Owner brief's bundles. A failed comparison window resolves to null rather
+       than to a zero, because the brief's tiles say "no earlier data to compare" for null and
+       would otherwise print a growth figure against a denominator that was never read. */
+    lastBriefPeriodDaysV771=periodDays;
+    lastBriefFromV771=fromDate;lastBriefToV771=toDate;
+    lastTruthPrevBundleV771=truthPrevResponseV771.error?null:(truthPrevResponseV771.data||null);
+    lastLifecyclePrevBundleV771=lifecyclePrevResponseV771.error?null:(lifecyclePrevResponseV771.data||null);
+    lastAttentionErrorV771=attentionResponseV771.error?.message||'';
+    lastAttentionBundleV771=attentionResponseV771.data||null;
+    lastServiceIntelErrorV771=serviceIntelResponseV771.error?.message||'';
+    lastServiceIntelBundleV771=serviceIntelResponseV771.data||null;
+    lastPackagesErrorV771=packagesResponseV771.error?.message||'';
+    lastPackagesBundleV771=Array.isArray(packagesResponseV771.data)?packagesResponseV771.data:null;
+    if(!lastCustomerError)await loadRemainingCustomerPagesV771();
+    if(!isCurrent())return;
     paint(lastPayload);
   };
   $('ciRun').onclick=run;
@@ -51452,6 +51559,276 @@ function behaviourPanelHtmlV679(payload){
     <p class="muted small">${esc(p.basis_note||'')}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
     ${ciFreshnessCaptionHtmlV734(p)}
+  </section>`;
+}
+
+/* nestly_v771 — the Owner brief, the first thing Customer intelligence now shows.
+   Owner ruling: this page must be straightforward for an SME owner, so the brief answers six
+   plain questions — how the period went, who to call, what has been paid for and not used, who
+   matters most, which service brings people back, and what Peekaa is refusing to guess at — in
+   names, dollars and days. No basis points, no evidence classes, no minor-unit vocabulary, and
+   (standing analytics ruling, v768) no channel named WhatsApp anywhere on it: the bring-back
+   action here is a phone call and a link to the customer's own record.
+
+   It is a PURE top-level function taking ONE plain object so a test can execute it against
+   fixtures shaped exactly like the RPCs' real payloads (tests/business-ui/v771-owner-brief.test.mjs),
+   the same posture as funnelConversionPanelHtmlV679 and its siblings above. It is deliberately
+   self-contained — it reaches for nothing but esc/money/CUI/S, which every harness already
+   stubs — because the closure slice that feeds it is extracted and executed by other test files.
+   The two status vocabularies it inlines (bring-back tones, limit sentences) are local copies for
+   that reason; ATTENTION_STATUS_V548 remains the authority the Bring-back module itself reads. */
+function ownerBriefHtmlV771(brief){
+  const briefV771=(brief&&typeof brief==='object')?brief:{};
+  /* Number(null) is 0 and Number('') is 0, so a bare Number.isFinite check would silently turn
+     "this business has never recorded that" into a confident zero — a null per-session price would
+     become a free session, a null last visit would become "0 days ago", and a withheld repeat rate
+     would become "(0%)". Absence has to stay absent all the way to the markup. */
+  const finiteV771=value=>{
+    if(value===null||value===undefined||typeof value==='boolean')return null;
+    if(typeof value==='string'&&!value.trim())return null;
+    const parsed=Number(value);
+    return Number.isFinite(parsed)?parsed:null;
+  };
+  const countV771=value=>{const parsed=finiteV771(value);return parsed===null?0:Math.round(parsed);};
+  const nameV771=value=>{const text=String(value==null?'':value).trim();return text||'Customer';};
+  const daysAgoV771=value=>{const parsed=finiteV771(value);return parsed===null?null:`${Math.round(parsed)} days ago`;};
+  const objectV771=value=>(value&&typeof value==='object'&&!Array.isArray(value))?value:null;
+  const periodDaysV771=Math.max(1,countV771(briefV771.periodDays)||1);
+  const canOpenV771=briefV771.canOpenCustomers===true;
+  const openCellV771=clientId=>{
+    const id=String(clientId==null?'':clientId);
+    if(!canOpenV771||!id)return '';
+    return `<a class="btn ghost sm" href="#/client/${encodeURIComponent(id)}">Open</a>`;
+  };
+  const headV771=(iconName,titleId,title,line)=>`<div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start;margin-top:4px">${CUI.icon(iconName,{size:22})}<div><h3 id="${titleId}" style="font-size:15px;margin:0">${esc(title)}</h3><p class="muted small" style="margin-top:2px">${esc(line)}</p></div></div>`;
+  const errorRowV771=(label,message)=>`<div class="err" role="status">${esc(label)} ${esc(message||'Try running the report again.')}</div>`;
+
+  /* ---- A. This period at a glance ------------------------------------------------------- */
+  const truthNowV771=objectV771(briefV771.truth),truthPrevV771=objectV771(briefV771.truthPrev);
+  const lifeNowV771=objectV771(briefV771.lifecycle),lifePrevV771=objectV771(briefV771.lifecyclePrev);
+  const revenueNowV771=finiteV771(objectV771(truthNowV771?.totals)?.known_revenue_minor);
+  const revenuePrevV771=finiteV771(objectV771(truthPrevV771?.totals)?.known_revenue_minor);
+  const buyersNowV771=finiteV771(objectV771(lifeNowV771?.metrics)?.transacting_identified_customers);
+  const buyersPrevV771=finiteV771(objectV771(lifePrevV771?.metrics)?.transacting_identified_customers);
+  const joinersNowV771=finiteV771(objectV771(lifeNowV771?.metrics)?.new_customers);
+  const joinersPrevV771=finiteV771(objectV771(lifePrevV771?.metrics)?.new_customers);
+  /* A share only means something against a denominator that exists and is above zero. When the
+     earlier window has none, the tile says so rather than printing a growth figure from nothing. */
+  const compareV771=(now,before)=>{
+    if(now===null||before===null||before<=0)return 'no earlier data to compare';
+    const change=Math.round((now-before)/before*100);
+    if(!Number.isFinite(change))return 'no earlier data to compare';
+    if(change===0)return `vs the previous ${periodDaysV771} days: no change`;
+    return `vs the previous ${periodDaysV771} days: ${change>0?'+':'−'}${Math.abs(change)}%`;
+  };
+  const tileV771=(label,value,caption)=>`<article class="revenue-truth-metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><span class="muted small" style="display:block;margin-top:4px">${esc(caption)}</span></article>`;
+  const glanceV771=`<section class="ci-brief-glance-v771" aria-labelledby="ciBriefGlanceTitleV771" style="margin-top:14px">
+    ${headV771('reports','ciBriefGlanceTitleV771','This period at a glance','How the last '+periodDaysV771+' days went, against the '+periodDaysV771+' days before them.')}
+    <div class="revenue-truth-metrics">
+      ${tileV771('Revenue recorded',revenueNowV771===null?'—':money(revenueNowV771),compareV771(revenueNowV771,revenuePrevV771))}
+      ${tileV771('Customers who bought',buyersNowV771===null?'—':String(buyersNowV771),compareV771(buyersNowV771,buyersPrevV771))}
+      ${tileV771('New customers',joinersNowV771===null?'—':String(joinersNowV771),compareV771(joinersNowV771,joinersPrevV771))}
+    </div>
+  </section>`;
+
+  /* ---- B. Customers to bring back -------------------------------------------------------- */
+  /* Local copy of the bring-back vocabulary, for the self-containment reason in the header
+     comment. Labels and tones must stay identical to ATTENTION_STATUS_V548 — a status coloured
+     one way here and another way in the Bring-back module would teach two habits. */
+  const BRING_BACK_STATUS_V771={
+    due:{label:'Due back',tone:'#F0A35B'},
+    overdue:{label:'Overdue',tone:'#C24135'},
+    slipping:{label:'Slipping away',tone:'#8E2F26'}
+  };
+  const attentionV771=objectV771(briefV771.attention);
+  const attentionErrorV771=String(briefV771.attentionError||'').trim();
+  let bringBackV771='';
+  if(attentionV771||attentionErrorV771){
+    const attentionRowsV771=Array.isArray(attentionV771?.rows)?attentionV771.rows.filter(row=>row&&typeof row==='object'):[];
+    const attentionSummaryV771=objectV771(attentionV771?.summary)||{};
+    const fadingV771=countV771(attentionSummaryV771.overdue)+countV771(attentionSummaryV771.slipping);
+    const atRiskV771=countV771(attentionSummaryV771.monthly_at_risk_cents);
+    const oneTimeV771=countV771(attentionSummaryV771.one_time_count);
+    const bringBackRowV771=row=>{
+      const status=BRING_BACK_STATUS_V771[String(row.status||'')]||BRING_BACK_STATUS_V771.due;
+      const cadence=finiteV771(row.cadence_days);
+      const digits=String(row.phone==null?'':row.phone).replace(/\D/g,'');
+      const call=digits?`<a class="btn ghost sm" href="tel:${digits}">Call</a>`:'';
+      const open=openCellV771(row.client_id);
+      return `<tr><td data-label="Customer"><b>${esc(nameV771(row.full_name))}</b></td>
+        <td data-label="Usually comes every">${cadence===null?'—':esc(Math.round(cadence)+' days')}</td>
+        <td data-label="Last visit">${esc(daysAgoV771(row.last_visit_days)||'—')}</td>
+        <td data-label="Status"><span class="pill" style="background:${status.tone}1A;color:${status.tone};font-weight:700;white-space:nowrap">${esc(status.label)}</span></td>
+        <td data-label="Action">${call}${call&&open?' ':''}${open}</td></tr>`;
+    };
+    bringBackV771=`<section class="ci-brief-bringback-v771" aria-labelledby="ciBriefBringBackTitleV771" style="margin-top:18px">
+      ${headV771('phone','ciBriefBringBackTitleV771','Customers to bring back','Each person judged against their own visit rhythm, not a fixed rule.')}
+      ${attentionErrorV771?errorRowV771('Customers to bring back could not load.',attentionErrorV771):`
+      ${fadingV771>0?`<p style="margin:8px 0 2px"><b>${fadingV771} customer${fadingV771===1?'':'s'} overdue</b> · about ${esc(money(atRiskV771))} a month of regular spend at risk</p>`:''}
+      ${attentionRowsV771.length?`<div class="cui-table-wrap" role="region" aria-label="Customers to bring back"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Usually comes every</th><th>Last visit</th><th>Status</th><th>Action</th></tr></thead><tbody>${attentionRowsV771.map(bringBackRowV771).join('')}</tbody></table></div>`
+        :'<div class="empty">Nobody is overdue against their own visit rhythm right now.</div>'}
+      ${oneTimeV771>0?`<p class="muted small" style="margin-top:10px">${oneTimeV771} customer${oneTimeV771===1?'':'s'} visited once in the last year and never came back.</p>`:''}`}
+    </section>`;
+  }
+
+  /* ---- C. Prepaid sessions still unused --------------------------------------------------- */
+  const peopleV771=Array.isArray(briefV771.customers)?briefV771.customers.filter(record=>record&&typeof record==='object'):[];
+  const peopleByIdV771=new Map();
+  peopleV771.forEach(record=>{if(record.client_id!=null)peopleByIdV771.set(String(record.client_id),record);});
+  const packagesV771=Array.isArray(briefV771.packages)?briefV771.packages:null;
+  const packagesErrorV771=String(briefV771.packagesError||'').trim();
+  let unusedV771='';
+  if(packagesV771||packagesErrorV771){
+    const heldV771=new Map();
+    (packagesV771||[]).forEach(row=>{
+      if(!row||typeof row!=='object')return;
+      const key=String(row.client_id==null?'':row.client_id);
+      const left=countV771(row.remaining);
+      if(!key||left<=0)return;
+      let held=heldV771.get(key);
+      if(!held){
+        const record=peopleByIdV771.get(key)||null;
+        held={key,name:nameV771(record?.full_name),lastVisit:finiteV771(record?.days_since_last_purchase),
+          sessions:0,plans:[],valueCents:0,valueKnown:true};
+        heldV771.set(key,held);
+      }
+      held.sessions+=left;
+      const planName=String(row.plan_name_snapshot==null?'':row.plan_name_snapshot).trim();
+      if(planName&&held.plans.indexOf(planName)<0)held.plans.push(planName);
+      /* A value is shown only when EVERY row behind it carries a per-session list price. One
+         missing snapshot makes the customer's total a guess, so that row prints a dash instead. */
+      const unit=finiteV771(row.list_unit_cents_snapshot);
+      if(unit===null)held.valueKnown=false;else held.valueCents+=left*unit;
+    });
+    /* Longest-unseen first; a customer with no visit on record is the most urgent of all. */
+    const unusedRowsV771=[...heldV771.values()].sort((first,second)=>
+      (second.lastVisit===null?Infinity:second.lastVisit)-(first.lastVisit===null?Infinity:first.lastVisit));
+    const holdersV771=unusedRowsV771.length;
+    const sessionsV771=unusedRowsV771.reduce((total,held)=>total+held.sessions,0);
+    const allValuedV771=holdersV771>0&&unusedRowsV771.every(held=>held.valueKnown);
+    const unusedValueV771=unusedRowsV771.reduce((total,held)=>total+held.valueCents,0);
+    const headlineV771=`${holdersV771} customer${holdersV771===1?'':'s'} hold${holdersV771===1?'s':''} ${sessionsV771} unused session${sessionsV771===1?'':'s'}`
+      +(allValuedV771?` worth about ${money(unusedValueV771)}`:'');
+    unusedV771=`<section class="ci-brief-unused-v771" aria-labelledby="ciBriefUnusedTitleV771" style="margin-top:18px">
+      ${headV771('packages','ciBriefUnusedTitleV771','Prepaid sessions still unused','Work these customers have already paid for and not yet taken.')}
+      ${packagesErrorV771?errorRowV771('Prepaid sessions still unused could not load.',packagesErrorV771):`
+      ${holdersV771?`<p style="margin:8px 0 2px"><b>${esc(headlineV771)}</b></p>
+      <div class="cui-table-wrap" role="region" aria-label="Prepaid sessions still unused"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Sessions left</th><th>Plan</th><th>Last visit</th><th>Value</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${unusedRowsV771.map(held=>
+        `<tr><td data-label="Customer"><b>${esc(held.name)}</b></td>
+        <td data-label="Sessions left">${held.sessions}</td>
+        <td data-label="Plan">${esc(held.plans.join(', ')||'—')}</td>
+        <td data-label="Last visit">${esc(daysAgoV771(held.lastVisit)||'no visit recorded')}</td>
+        <td data-label="Value">${held.valueKnown?esc(money(held.valueCents)):'—'}</td>
+        ${canOpenV771?`<td data-label="Action">${openCellV771(held.key)}</td>`:''}</tr>`).join('')}</tbody></table></div>`
+        :'<div class="empty">Every prepaid session has been used.</div>'}`}
+    </section>`;
+  }
+
+  /* ---- D. Your top customers -------------------------------------------------------------- */
+  const identifiedTotalV771=finiteV771(objectV771(briefV771.summary)?.net_revenue_cents);
+  const shareBaseV771=(identifiedTotalV771!==null&&identifiedTotalV771>0)?identifiedTotalV771:null;
+  const earnersV771=peopleV771
+    .filter(record=>{const earned=finiteV771(record.net_revenue_cents);return earned!==null&&earned>0;})
+    .sort((first,second)=>Number(second.net_revenue_cents)-Number(first.net_revenue_cents))
+    .slice(0,10);
+  const shareTextV771=amount=>shareBaseV771===null?'—':`${Math.round(amount/shareBaseV771*100)}% of identified revenue`;
+  const leadCountV771=Math.min(3,earnersV771.length);
+  const leadShareV771=earnersV771.slice(0,leadCountV771).reduce((total,record)=>total+Number(record.net_revenue_cents||0),0);
+  const topLineV771=(leadCountV771>0&&shareBaseV771!==null)
+    ?`<p style="margin:8px 0 2px">Your top ${leadCountV771} customer${leadCountV771===1?'':'s'} are ${Math.round(leadShareV771/shareBaseV771*100)}% of identified revenue.</p>`
+    :'';
+  /* V522's ruling holds here: `visit_count` on this page counts only visits that charged an
+     amount, so the column says "Paid visits". A bare "Visits" would mean the Dashboard's number,
+     which also counts zero-price visits such as package sessions, and the two would disagree. */
+  const topCustomersV771=`<section class="ci-brief-top-v771" aria-labelledby="ciBriefTopTitleV771" style="margin-top:18px">
+    ${headV771('star','ciBriefTopTitleV771','Your top customers','The people the period actually rested on.')}
+    ${topLineV771}
+    ${earnersV771.length?`<div class="cui-table-wrap" role="region" aria-label="Your top customers"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Revenue</th><th>Share</th><th>Paid visits</th><th>Last visit</th><th>Note</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${earnersV771.map(record=>{
+      const since=finiteV771(record.days_since_last_purchase);
+      const usual=finiteV771(record.average_days_between_purchases);
+      const quiet=since!==null&&usual!==null&&usual>0&&since>usual*2;
+      return `<tr><td data-label="Customer"><b>${esc(nameV771(record.full_name))}</b></td>
+        <td data-label="Revenue"><b>${esc(money(record.net_revenue_cents))}</b></td>
+        <td data-label="Share">${esc(shareTextV771(Number(record.net_revenue_cents)))}</td>
+        <td data-label="Paid visits">${countV771(record.visit_count)}</td>
+        <td data-label="Last visit">${esc(daysAgoV771(since)||'—')}</td>
+        <td data-label="Note">${quiet?'<span class="pill">Quiet lately</span>':''}</td>
+        ${canOpenV771?`<td data-label="Action">${openCellV771(record.client_id)}</td>`:''}</tr>`;
+    }).join('')}</tbody></table></div>`
+      :'<div class="empty">No identified customer revenue in this period yet.</div>'}
+  </section>`;
+
+  /* ---- E. Which service brings people back ------------------------------------------------ */
+  const serviceBundleV771=objectV771(briefV771.services);
+  const servicesErrorV771=String(briefV771.servicesError||'').trim();
+  const serviceRowsV771=Array.isArray(serviceBundleV771?.services)
+    ?serviceBundleV771.services.filter(row=>row&&typeof row==='object').slice()
+      .sort((first,second)=>countV771(second.buyers)-countV771(first.buyers))
+    :[];
+  const servicesV771=`<section class="ci-brief-services-v771" aria-labelledby="ciBriefServicesTitleV771" style="margin-top:18px">
+    ${headV771('services','ciBriefServicesTitleV771','Which service brings people back','What people buy first, and what they come back for.')}
+    ${servicesErrorV771?errorRowV771('Which service brings people back could not load.',servicesErrorV771):`
+    ${serviceRowsV771.length?`<div class="cui-table-wrap" role="region" aria-label="Which service brings people back"><table class="cui-table" data-responsive="true"><thead><tr><th>Service</th><th>Customers who bought it</th><th>Bought it again</th><th>First-time customers it brought in</th><th>Revenue</th></tr></thead><tbody>${serviceRowsV771.map(row=>{
+      const again=objectV771(row.repeat_rate)||{};
+      const share=finiteV771(again.pct);
+      const againText=`${countV771(again.numerator)} of ${countV771(again.denominator)}`
+        +(share===null?' — too few to say':` (${Math.round(share)}%)`);
+      return `<tr><td data-label="Service"><b>${esc(nameV771(row.service_name))}</b></td>
+        <td data-label="Customers who bought it">${countV771(row.buyers)}</td>
+        <td data-label="Bought it again">${esc(againText)}</td>
+        <td data-label="First-time customers it brought in">${countV771(row.gateway_count)}</td>
+        <td data-label="Revenue">${esc(money(row.revenue_cents))}</td></tr>`;
+    }).join('')}</tbody></table></div>`
+      :'<div class="empty">No service sales in this period yet.</div>'}`}
+  </section>`;
+
+  /* ---- F. What Peekaa cannot tell you yet -------------------------------------------------- */
+  /* The server abstains in its own vocabulary ("below the sample floor of 5", "mix-adjusted
+     index"). An owner should not have to learn it, so each generator gets one plain sentence
+     naming the finding that is missing and what would make it appear. */
+  const LIMIT_SENTENCES_V771={
+    funnel_bottleneck:'Whether more customers are lost after the first visit or after the second — needs more customers to have reached a second and third visit.',
+    lapsed_regulars:'Which regulars are overdue against their own rhythm — needs customers with at least three visits so a rhythm exists.',
+    package_leakage:'Which package plans are being left unused — needs at least five sales of the same plan.',
+    gateway_followthrough:'Which first service best turns a walk-in into a regular — needs more customers to have reached a second visit.',
+    no_discount_reminder:'Whether a plain reminder works as well as a discount — needs more contacted customers.',
+    loyalty_cannibalisation_gap:'Whether your loyalty rewards are paying customers who would have come anyway — nothing suspicious found.',
+    staff_mix_underperformance:'Whether any staff member’s customers return less than others’ — nothing below the line found.',
+    campaigns:'Whether a campaign brought people back — needs a campaign old enough to measure.'
+  };
+  const limitsOrderV771=[],limitsSeenV771=new Map();
+  (Array.isArray(briefV771.abstentions)?briefV771.abstentions:[]).forEach(item=>{
+    if(!item||typeof item!=='object')return;
+    const generator=String(item.generator==null?'':item.generator);
+    const key=generator.split(':')[0].trim();
+    if(!key)return;
+    if(!limitsSeenV771.has(key)){
+      let sentence=LIMIT_SENTENCES_V771[key];
+      if(!sentence){
+        const plain=String(item.reason==null?'':item.reason).replace(/_/g,' ').replace(/:\s*$/,'').trim()
+          ||key.replace(/_/g,' ');
+        sentence=plain.charAt(0).toUpperCase()+plain.slice(1);
+      }
+      limitsSeenV771.set(key,{key,sentence,count:0});
+      limitsOrderV771.push(key);
+    }
+    limitsSeenV771.get(key).count+=1;
+  });
+  const limitsV771=limitsOrderV771.length
+    ?`<section class="ci-brief-limits-v771" aria-labelledby="ciBriefLimitsTitleV771" style="margin-top:18px">
+      ${headV771('info','ciBriefLimitsTitleV771','What Peekaa cannot tell you yet','Findings held back because the evidence is not there yet.')}
+      <ul style="margin:8px 0 0;padding-left:20px">${limitsOrderV771.map(key=>{
+        const entry=limitsSeenV771.get(key);
+        const plans=(key==='package_leakage'&&entry.count>1)?` (${entry.count} plans)`:'';
+        return `<li style="margin:4px 0">${esc(entry.sentence+plans)}</li>`;
+      }).join('')}</ul>
+      <p class="muted small" style="margin-top:10px">Peekaa withholds a finding rather than guess. These appear automatically once there is enough evidence.</p>
+    </section>`
+    :'';
+
+  return `<section class="card ci-owner-brief-v771" aria-labelledby="ciOwnerBriefTitleV771">
+    <div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start">${CUI.icon('customers',{size:24})}<div><h2 id="ciOwnerBriefTitleV771">Owner brief</h2><p>The short version: what happened, who to call, and what is already paid for.</p></div></div>
+    ${glanceV771}${bringBackV771}${unusedV771}${topCustomersV771}${servicesV771}${limitsV771}
   </section>`;
 }
 

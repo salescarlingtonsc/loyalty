@@ -132,7 +132,14 @@ test('the customer intelligence heading matches the name the rail opened it by',
   assert.match(body, /<h1>Customer intelligence<\/h1>/);
   assert.match(app, /customerintel:\['customers','Customer intelligence'\]/,
     'the rail label this page is opened by must still be "Customer intelligence"');
-  assert.match(body, /A defensible revenue picture/, 'the old title survives as the subtitle');
+  /* nestly_v771 supersedes the second half of the V285 ruling, not the first. V285's point was
+     that the h1 must be the name the rail opened the page by, and that a one-line description must
+     survive underneath it — the description at the time being the page's own former title, "a
+     defensible revenue picture". The owner has since ruled that this page must read plainly for an
+     SME owner, so that line now names what the page answers. The invariant under test is unchanged:
+     the heading is the rail's name, and a subtitle still says what the page produces. */
+  assert.match(body, /Who to call, what is unused, who matters most, and what Peekaa can prove\./,
+    'a one-line description of what the page produces still sits under the heading');
 });
 
 test('the top bar is the only branch picker on P&L and customer intelligence', () => {

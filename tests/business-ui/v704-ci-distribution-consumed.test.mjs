@@ -31,10 +31,14 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
-// get_ci_service_intelligence_v1 has no call site in app.js at all (grep confirms), so per the
-// task's own instruction this file only covers get_ci_category_mix_v1's consumer.
-assert.ok(!app.includes("sb.rpc('get_ci_service_intelligence_v1'"),
-  'get_ci_service_intelligence_v1 must still have no merchant-UI call site — if one is added, this file needs a matching test');
+// When this file was written, get_ci_service_intelligence_v1 had no call site in app.js at all, so
+// it deliberately covered only get_ci_category_mix_v1's consumer and left a tripwire here for
+// whoever wired the first one. nestly_v771 is that wave: the Owner brief's "Which service brings
+// people back" block consumes it, and its renderer is executed against a production-shaped fixture
+// in tests/business-ui/v771-owner-brief.test.mjs. The tripwire is inverted rather than deleted, so
+// this file still fails loudly if that call site disappears without its consumer test going too.
+assert.ok(app.includes("sb.rpc('get_ci_service_intelligence_v1'"),
+  'get_ci_service_intelligence_v1 is consumed by the Owner brief (nestly_v771) — if the call site goes, so should its consumer test');
 
 // The renderer under test must never derive a percentage itself — only format the server's
 // own top1_share_bps. Guard the source once here so a future edit can't quietly reintroduce

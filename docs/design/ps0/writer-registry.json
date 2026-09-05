@@ -4081,6 +4081,10 @@
       "reason": "Pre-existing gap found while governing the v680-v690 wave (this call site and the function it names were already committed in the v672-v678 wave / nestly_v679, not introduced here). Customer Intelligence ranked-opportunities card (nestly_v678, wired to the page in nestly_v679, re-emitted verbatim by nestly_v680's envelope wrap). SECURITY DEFINER, gated by app.ci_access_gate_v667, read-only — returns ranked, evidence-citing opportunities (each verdict backed by the v672 statistical-authority evidence/rate-block contract). Writes nothing."
     },
     {
+      "id": "browser.rpc:app/app.js:get_ci_service_intelligence_v1",
+      "reason": "nestly_v771 wires the FIRST merchant-UI call site for this reader, feeding the Owner brief’s ‘Which service brings people back’ block on Customer Intelligence (function nestly_v675, re-emitted by nestly_v691’s outlier/confounder wave). SECURITY DEFINER, gated by app.ci_access_gate_v667 (business-membership + reports-module for a merchant, or the platform firm-report authority for an assigned consultant), read-only — returns per-service buyers, orders, evidence-gated repeat_rate, gateway_count and revenue, all in SELECTs behind the v672 statistical-authority contract. Takes p_branch and respects the top bar’s branch scope. Writes nothing."
+    },
+    {
       "id": "browser.rpc:app/app.js:get_service_mapping_board_v1",
       "reason": "Service mapping board (#/servicemapping, nestly_v650), reached from Customer Intelligence's category-mix withhold state and from Services. SECURITY DEFINER, business-membership + services-module-READ gated, read-only — returns the service list joined to v647/v648 canonical nodes plus each service's suggested_node_key. Writes nothing; the page renders only when this call succeeds, which is the whole client-side gate."
     },
