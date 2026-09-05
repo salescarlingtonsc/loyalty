@@ -4,11 +4,8 @@ import {
   requiredEnv,
   sha256Hex,
 } from '../_shared/billing-service.ts';
-import {
-  livemodeFromKey,
-  verifyWebhookSignatureRotating,
-  type WebhookSecretMatch,
-} from '../_shared/razorpay-client.ts';
+import { verifyWebhookSignature } from '../_shared/razorpay-client.ts';
+import { webhookSecretCandidates } from '../_shared/razorpay-mode.ts';
 
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void } | undefined;
@@ -99,14 +96,21 @@ Deno.serve(async (req) => {
        one it was configured with before. Razorpay signs a queued retry with the secret that was
        live when the delivery was CREATED, so during a rotation both are genuine. Unset (the
        steady state) accepts only the current secret. */
-    const matched: WebhookSecretMatch | null = await verifyWebhookSignatureRotating(
-      rawBody,
-      signature,
-      {
-        current: requiredEnv('RAZORPAY_WEBHOOK_SECRET'),
-        previous: Deno.env.get('RAZORPAY_WEBHOOK_SECRET_PREVIOUS') || '',
-      },
-    );
+    /* nestly_v790: three secrets can sign a genuine delivery — the platform's current one, its
+       previous one during a rotation (v759), and the SANDBOX's, which is where demo firms' events
+       come from once the platform keys are live. Which one matched decides the livemode the event
+       is recorded under: the sandbox is never live. */
+    const candidates = webhookSecretCandidates();
+    if (!candidates.length) requiredEnv('RAZORPAY_WEBHOOK_SECRET');
+    let matched: 'current' | 'previous' | 'test' | null = null;
+    let matchedLivemode = false;
+    for (const candidate of candidates) {
+      if (await verifyWebhookSignature(rawBody, signature, candidate.secret)) {
+        matched = candidate.label;
+        matchedLivemode = candidate.livemode;
+        break;
+      }
+    }
     /* Nothing is written before the signature verifies: an unverified body must never become
        production billing evidence, not even in the durable inbox. */
     if (!matched) {
@@ -166,7 +170,7 @@ Deno.serve(async (req) => {
        API key this deployment is configured with — the same two-secret hazard the Stripe V281
        check existed for (a live webhook secret against a test key sends real customers to a test
        checkout). Unknown prefix disables the check rather than the webhook. */
-    const livemode = livemodeFromKey(requiredEnv('RAZORPAY_KEY_ID'));
+    const livemode: boolean | null = matchedLivemode;
 
     const admin = billingAdminClient();
     const eventCreatedAt = new Date(

@@ -66,7 +66,7 @@ test('Razorpay executor resolves one tier plan and prices it by quantity, not by
   // Plan resolution: catalogue price id -> resolvePlanId (with the RAZORPAY_PLAN_MAP_JSON
   // override), validated against the catalogue's own cadence/amount/currency before use.
   assert.match(edge, /const cataloguePlanId = String\(data\.provider_base_price_id \|\| ''\)/);
-  assert.match(edge, /const planId = resolvePlanId\(cataloguePlanId\)/);
+  assert.match(edge, /const planId = credentials\.livemode\s*\n?\s*\? cataloguePlanId\s*\n?\s*: resolvePlanId\(await planIdForMode\(admin, cataloguePlanId, credentials\)\)/);
   assert.match(edge, /await validateV755Plan\(razorpay, data, planId\)/);
   // A catalogue row that still asks for a second priced item (the old capacity-block shape) is
   // refused outright rather than silently under- or over-charging.

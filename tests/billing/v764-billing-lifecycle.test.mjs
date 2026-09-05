@@ -712,9 +712,10 @@ test('the return hop mirrors the paid invoice itself, after the signature check 
   const verifiedAt = returnSource.indexOf('if (!verified) {');
   const synthesisAt = returnSource.indexOf('recoverProviderSubscription({');
   assert.ok(verifiedAt > 0 && synthesisAt > verifiedAt, 'synthesis must follow the signature check');
-  assert.match(returnSource, /if \(subscriptionId && !cardChange\) \{/);
+  /* nestly_v790: the hop also needs the account whose secret verified the redirect */
+  assert.match(returnSource, /if \(subscriptionId && !cardChange && account\) \{/);
   assert.match(returnSource, /admin: billingAdminClient\(\)/);
-  assert.match(returnSource, /livemode: livemodeFromKey\(keyId\) === true/);
+  assert.match(returnSource, /livemode: account\.livemode,/);
   /* Best effort: a synthesis failure must not change the route. */
   assert.match(returnSource, /return_hop_synthesis_failed/);
   assert.ok(returnSource.indexOf('return seeOther(target.success);') > synthesisAt);

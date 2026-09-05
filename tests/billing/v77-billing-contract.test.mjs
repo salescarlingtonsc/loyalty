@@ -238,7 +238,8 @@ test('v77 webhook verifies the raw signed body before durable dispatch', async (
   assert.match(webhook, /const rawBody = await req\.text\(\)/);
   // v759: the verification call is the rotating variant (current OR previous secret), still
   // taking the RAW body and the header signature, and still the gate before any write.
-  assert.match(webhook, /verifyWebhookSignatureRotating\(\s*\n?\s*rawBody,\s*\n?\s*signature/);
+  /* nestly_v790: the raw body is verified against each labelled secret (platform, previous, sandbox) */
+  assert.match(webhook, /verifyWebhookSignature\(rawBody, signature, candidate\.secret\)/);
   assert.match(webhook, /RAZORPAY_WEBHOOK_SECRET/);
   assert.match(webhook, /ingest_billing_event_v755[\s\S]+apply_razorpay_billing_event_v755/);
   assert.match(webhook, /durable: true/);

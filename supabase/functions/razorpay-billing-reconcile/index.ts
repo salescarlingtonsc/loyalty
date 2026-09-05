@@ -16,11 +16,11 @@ import {
 import {
   livemodeFromKey,
   RazorpayApiError,
-  razorpayClient,
   type RazorpayClient,
   type RazorpayPayment,
   type RazorpaySubscription,
 } from '../_shared/razorpay-client.ts';
+import { razorpayClientFor, razorpayCredentials } from '../_shared/razorpay-mode.ts';
 import {
   backfillPaymentMethods,
   PAYMENT_METHOD_BACKFILL_MAX_TENANTS,
@@ -865,14 +865,14 @@ Deno.serve(async (req) => {
     }
 
     const admin = billingAdminClient();
-    const razorpay = razorpayClient({
-      keyId: requiredEnv('RAZORPAY_KEY_ID'),
-      keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
-    });
+    /* nestly_v790: the nightly run reconciles the PLATFORM account. Demo firms live in the
+       sandbox and are deliberately outside it — nothing they hold is money. */
+    const credentials = razorpayCredentials('live');
+    const razorpay = razorpayClientFor(credentials);
     /* Fail closed on an unrecognised key prefix. Every local projection is scoped by livemode,
        so a run that cannot say which mode it is in would either compare test rows against the
        live account or silently reconcile nothing — both of which look like a clean run. */
-    const livemode = livemodeFromKey(requiredEnv('RAZORPAY_KEY_ID'));
+    const livemode = livemodeFromKey(credentials.keyId);
     if (livemode === null) {
       return billingJson(500, { error: 'razorpay_key_mode_unknown' });
     }

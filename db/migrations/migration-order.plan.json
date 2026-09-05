@@ -3957,6 +3957,12 @@
       "path": "db/migrations/20261006_nestly_v788_branch_receipt_identity_gst.sql",
       "semanticVersion": "v788",
       "proposedDeployVersion": "20261006090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v790_sandbox_plan_ids.sql",
+      "semanticVersion": "v790",
+      "proposedDeployVersion": "20261006100000"
     }
   ]
 }

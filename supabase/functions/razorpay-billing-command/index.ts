@@ -17,13 +17,17 @@ import {
   remainingCountFromCapError,
 } from '../_shared/razorpay-billing-lifecycle.ts';
 import {
-  livemodeFromKey,
-  razorpayClient,
   razorpayPlanMatchesCatalogue,
   RazorpayApiError,
   type RazorpayClient,
   type RazorpaySubscription,
 } from '../_shared/razorpay-client.ts';
+import {
+  planIdForMode,
+  razorpayClientFor,
+  razorpayCredentials,
+  razorpayModeForBusiness,
+} from '../_shared/razorpay-mode.ts';
 
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -293,14 +297,22 @@ Deno.serve(async (req) => {
       return billingCorsJson(req, 200, data);
     }
 
-    const keyId = requiredEnv('RAZORPAY_KEY_ID');
-    const razorpay = razorpayClient({
-      keyId,
-      keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
-    });
-    const origin = returnOrigin();
     commandType = String(data.command_type);
     const businessId = String(data.business_id);
+    /* nestly_v790: a demo firm's command talks to the SANDBOX account, so no money ever moves for
+       it once the platform keys are live. Everyone else talks to the platform keys. */
+    const credentials = razorpayCredentials(await razorpayModeForBusiness(admin, businessId));
+    if (credentials.mode === 'test' && !credentials.sandboxAvailable) {
+      console.warn(JSON.stringify({
+        scope: 'razorpay-billing-command',
+        reason: 'demo_without_sandbox_keys',
+        command_id: commandId,
+        business_id: businessId,
+      }));
+    }
+    const keyId = credentials.keyId;
+    const razorpay = razorpayClientFor(credentials);
+    const origin = returnOrigin();
     const cadence = data.requested_cadence ? String(data.requested_cadence) : '';
     const subscriptionId = data.provider_subscription_id
       ? String(data.provider_subscription_id)
@@ -329,7 +341,7 @@ Deno.serve(async (req) => {
        'included' and deliberately excluded — the owner already had them. */
     let planUnits = 1;
     let commandRowData: Record<string, unknown> | null = null;
-    const livemode = livemodeFromKey(keyId) === true;
+    const livemode = credentials.livemode;
     {
       const [branchCount, commandRow, subscriptionRow] = await Promise.all([
         admin
@@ -375,7 +387,11 @@ Deno.serve(async (req) => {
 
     const capacityModel = data.pricing_model === 'v124_customer_capacity';
     const cataloguePlanId = String(data.provider_base_price_id || '');
-    const planId = resolvePlanId(cataloguePlanId);
+    /* nestly_v790: the sandbox has its own plan ids (provider_test_price_id); the env override
+       still applies on top for a test-mode hotfix, never to the live account. */
+    const planId = credentials.livemode
+      ? cataloguePlanId
+      : resolvePlanId(await planIdForMode(admin, cataloguePlanId, credentials));
     /* Razorpay subscriptions carry exactly ONE plan; there is no second line item to hold extra
        capacity blocks or extra seats. Under the v664 tiered model the whole price is the base
        plan, which is the shape this executor supports. A catalogue row that still asks for a
@@ -924,7 +940,7 @@ Deno.serve(async (req) => {
       command_id: commandId,
       status: completed?.status || 'completed',
       redirect_url: completed?.redirect_url || redirectUrl,
-      livemode: livemodeFromKey(requiredEnv('RAZORPAY_KEY_ID')),
+      livemode: credentials.livemode,
     });
   } catch (error) {
     const providerError = error as { code?: string; message?: string; stack?: string };

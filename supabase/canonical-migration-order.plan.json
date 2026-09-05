@@ -3952,6 +3952,12 @@
       "version": "20261006090000",
       "name": "nestly_v788_branch_receipt_identity_gst",
       "sourcePath": "db/migrations/20261006_nestly_v788_branch_receipt_identity_gst.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006100000",
+      "name": "nestly_v790_sandbox_plan_ids",
+      "sourcePath": "db/migrations/20261006_nestly_v790_sandbox_plan_ids.sql"
     }
   ]
 }

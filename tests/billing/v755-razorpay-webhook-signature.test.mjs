@@ -167,14 +167,16 @@ test('only a 4xx that is not a 429 proves the provider did not execute', () => {
 test('the webhook verifies before writing, dedupes on the event id and derives livemode', async () => {
   const source = await read('supabase/functions/razorpay-billing-webhook/index.ts');
   // v759: the call is the rotating variant, which is still the ONLY verification gate.
-  const verifyAt = source.indexOf('verifyWebhookSignatureRotating(');
+  const verifyAt = source.indexOf('verifyWebhookSignature(rawBody, signature, candidate.secret)');
   const ingestAt = source.indexOf('ingest_billing_event_v755');
   assert.ok(verifyAt > 0 && ingestAt > verifyAt, 'signature must be verified before any write');
   assert.match(source, /req\.text\(\)/);
   assert.doesNotMatch(source.slice(0, verifyAt), /JSON\.parse/);
   assert.match(source, /x-razorpay-event-id/);
   assert.match(source, /p_provider: 'razorpay'/);
-  assert.match(source, /livemodeFromKey\(requiredEnv\('RAZORPAY_KEY_ID'\)\)/);
+  /* nestly_v790: livemode is the mode of the secret that verified — the sandbox is never live */
+  assert.match(source, /const livemode: boolean \| null = matchedLivemode;/);
+  assert.match(source, /matchedLivemode = candidate\.livemode;/);
   assert.match(source, /apply_razorpay_billing_event_v755/);
   assert.match(source, /eventType === 'subscription\.charged'/);
   assert.match(source, /x-v156-dispatch-secret/);
@@ -364,8 +366,11 @@ test('with PREVIOUS unset or empty, only the current secret is accepted', async 
 test('the webhook reads both rotation env vars and logs which one matched, never its value', async () => {
   const source = await read('supabase/functions/razorpay-billing-webhook/index.ts');
   assert.match(source, /requiredEnv\('RAZORPAY_WEBHOOK_SECRET'\)/);
-  assert.match(source, /Deno\.env\.get\('RAZORPAY_WEBHOOK_SECRET_PREVIOUS'\)/);
-  assert.match(source, /verifyWebhookSignatureRotating\(/);
+  /* nestly_v790: the rotation pair and the sandbox secret are read in one labelled list */
+  const mode = await readFile(new URL('../../supabase/functions/_shared/razorpay-mode.ts', import.meta.url), 'utf8');
+  assert.match(mode, /env\('RAZORPAY_WEBHOOK_SECRET_PREVIOUS'\)/);
+  assert.match(mode, /env\('TEST_WEBHOOK'\)/);
+  assert.match(source, /webhookSecretCandidates\(\)/);
   // The accepted line carries the LABEL variable, not either secret.
   assert.match(source, /reason: 'accepted'[\s\S]*?secret: matched,/);
   assert.doesNotMatch(source, /console\.[a-z]+\([^)]*WEBHOOK_SECRET/);

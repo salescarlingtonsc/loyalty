@@ -1,5 +1,6 @@
 import { billingAdminClient, billingJson, requiredEnv } from '../_shared/billing-service.ts';
-import { livemodeFromKey, razorpayClient, verifyCheckoutSignature } from '../_shared/razorpay-client.ts';
+import { verifyCheckoutSignature } from '../_shared/razorpay-client.ts';
+import { razorpayClientFor, razorpayCredentials, type RazorpayCredentialSet } from '../_shared/razorpay-mode.ts';
 import { recoverProviderSubscription } from '../_shared/razorpay-provider-recovery.ts';
 
 /* nestly_v755 — Razorpay Checkout's callback_url target.
@@ -112,12 +113,21 @@ Deno.serve(async (req) => {
     const subscriptionId = String(fields.razorpay_subscription_id || '');
     const signature = String(fields.razorpay_signature || '');
 
-    if (subscriptionId) {
+    /* nestly_v790: the redirect is signed with the key SECRET of whichever account created the
+       subscription — the platform's, or the sandbox's for a demo firm. The signature check below
+       tries both and the one that verifies is the account every later read uses. */
+    const live = razorpayCredentials('live');
+    const sandbox = razorpayCredentials('test');
+    let account: RazorpayCredentialSet | null = null;
+    for (const candidate of sandbox.mode === 'test' ? [live, sandbox] : [live]) {
+      if (await verifyCheckoutSignature(paymentId, subscriptionId, signature, candidate.keySecret)) {
+        account = candidate;
+        break;
+      }
+    }
+    if (subscriptionId && account) {
       try {
-        const razorpay = razorpayClient({
-          keyId: requiredEnv('RAZORPAY_KEY_ID'),
-          keySecret: requiredEnv('RAZORPAY_KEY_SECRET'),
-        });
+        const razorpay = razorpayClientFor(account);
         const subscription = await razorpay.getSubscription(subscriptionId);
         target = cardChange
           ? cardRoutes(origin)
@@ -139,12 +149,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const verified = await verifyCheckoutSignature(
-      paymentId,
-      subscriptionId,
-      signature,
-      requiredEnv('RAZORPAY_KEY_SECRET'),
-    );
+    const verified = account !== null;
     if (!verified) {
       return seeOther(`${target.cancel}&reason=signature`);
     }
@@ -158,14 +163,13 @@ Deno.serve(async (req) => {
        identical ingest → apply pipeline (the webhook, when it lands, is a duplicate), which
        fires the first-paid trigger and opens the workspace before the browser has even loaded
        the next page. Best effort: any failure here leaves the webhook path exactly as it was. */
-    if (subscriptionId && !cardChange) {
+    if (subscriptionId && !cardChange && account) {
       try {
-        const keyId = requiredEnv('RAZORPAY_KEY_ID');
         const outcome = await recoverProviderSubscription({
           admin: billingAdminClient(),
-          razorpay: razorpayClient({ keyId, keySecret: requiredEnv('RAZORPAY_KEY_SECRET') }),
+          razorpay: razorpayClientFor(account),
           subscriptionId,
-          livemode: livemodeFromKey(keyId) === true,
+          livemode: account.livemode,
         });
         console.log(JSON.stringify({
           scope: 'razorpay-billing-return',
