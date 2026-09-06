@@ -1384,6 +1384,15 @@ let dashboardRenderEpoch=0; // invalidates pending dashboard/filter work as soon
 let customerWalletRenderEpoch=0; // prevents an older customer-wallet RPC from repainting a new route
 let routeRenderEpoch=0; // prevents an older async route from redirecting over newer navigation
 let portalRenderEpoch=0; // prevents delayed persona/profile/session work repainting another portal/route
+/* F039: quiet growPage() re-renders write into the SAME outerMain node (a hard route change is
+   the only thing that ever replaces <main>), so isGrowCurrent()'s outerMain.isConnected/M()===
+   outerMain checks stay true across two overlapping quiet renders regardless of which one
+   started first — a pre-write quiet snapshot fetch that resolves after the post-write one can
+   paint stale data over a fresh "Saved" toast. This counter is bumped on every growPage() entry
+   (quiet or not) and folded into isGrowCurrent so a call whose epoch has been superseded by a
+   newer growPage() invocation always loses, independent of resolution order — the same pattern
+   dashboardRenderEpoch/routeRenderEpoch/portalRenderEpoch already use. */
+let growPageRenderEpoch=0;
 const beginRouteInvocation=()=>{
   const routeEpoch=++routeRenderEpoch;
   return ()=>routeRenderEpoch===routeEpoch;
@@ -2454,6 +2463,15 @@ const OWNER_ERROR_NOISE_RULES_V170=[
   [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
   [/empty_selected_branch_scope/i,'Choose at least one branch to report on.'],
   [/unsupported_reporting_branch_scope/i,'That reporting scope is not supported. Choose a branch at the top.'],
+  /* F029. business_create_promotion_draft_v155 and business_finalize_promotion_v282 raise these
+     bare codes for exactly the length/date rules the runSave client check now mirrors before any
+     photo upload — but a stale tab, a second device, or any check this file's client validation
+     does not yet cover can still reach the server and surface the raw token. Give the owner the
+     same plain-English direction either way, instead of the misleading generic "reopen it" text
+     the version-conflict branch shows for unrelated causes. */
+  [/valid_promotion_(draft|finalize)_fields_required/i,'Some details do not meet the limits: headline 2–70 characters, message 10–600, exact offer 2–500, customer action label 2–40, occasion 2–80 if used, and the end date/time after the start date (and still in the future to publish). Fix those and try again.'],
+  [/promotion_publishing_window_closed/i,'This business is past its free publishing window for new offers. Contact Peekaa to continue publishing.'],
+  [/owner_required/i,'Only the business owner can save this. Ask the owner to make this change.'],
 ];
 const ownerErrorText=error=>{
   const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
@@ -33388,6 +33406,12 @@ async function promotionsPage(selectedPromotionId=null){
   let promotionBranches=[];
   try{({branches:promotionBranches}=await visibleBranchesForCurrentUser())}
   catch(error){promotionBranches=[]}
+  /* F030: the server's branch scope check (foreign_or_inactive_branch_scope, v155 migration
+     lines 71-83) only ever authorises `coalesce(branch.active,true)` branches. Filtering here
+     with the same helper the reporting scope pages already use means an inactive/unpaid branch
+     never appears in the "Selected branches" checklist, so it can never be checked in the first
+     place — no separate submit-time validation needed. */
+  promotionBranches=activeBranchesForScopeV217(promotionBranches);
   const entitlement=data?.entitlement||{},max=Math.max(0,Number(entitlement.max_published_offers??10)),
     published=Math.max(0,Number(entitlement.published_count||0)),
     quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
@@ -33511,6 +33535,7 @@ async function promotionsPage(selectedPromotionId=null){
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
+    if(!isPromotionCurrent())return;
     if(error){
       if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
       toast(ownerErrorText(error));return;
@@ -33625,7 +33650,15 @@ async function promotionsPage(selectedPromotionId=null){
     pendingFinalize=readSessionValue(pendingStorageKey),
     interruptedPromotionId=pendingFinalize?.promotionId||pendingCreate?.promotionId||null,
     workingPromotion=selected,
-    workingPromotionId=selected?.id||interruptedPromotionId||(
+    /* F032: interruptedPromotionId is only a safe fallback when the owner explicitly navigated
+       to that id (selectedPromotionId truthy) — the redirect guard just below then takes over
+       and re-enters this page pinned to it. Pressing "+ Add" for a brand-new promotion passes
+       no selectedPromotionId at all, so it must never inherit a stale interrupted receipt: doing
+       so silently hijacked the new draft onto the old promotion (discarding the owner's new text,
+       or refusing with a raw "promotion_id_already_exists"). The old interrupted promotion still
+       resolves in the background via pendingFinalize/pendingCreate elsewhere; it just does not
+       steal a fresh draft's id. */
+    workingPromotionId=selected?.id||(selectedPromotionId?interruptedPromotionId:null)||(
       pendingCreate&&(!selectedPromotionId||pendingCreate.promotionId===selectedPromotionId)
         ?pendingCreate.promotionId:null
     )||selectedPromotionId||crypto.randomUUID(),
@@ -33920,6 +33953,22 @@ async function promotionsPage(selectedPromotionId=null){
     if(!draft.name||!draft.description)return toast('Polish or write the headline and customer message.');
     if(!draft.starts_at||!draft.ends_at||new Date(draft.ends_at)<=new Date(draft.starts_at))return toast('Choose a valid start and end date.');
     if(!PROMOTION_COPY_POLICY_V104.ctas[draft.ctaKind]||!draft.ctaLabel)return toast('Choose a clear customer action.');
+    /* F029: mirror the server's own min/max lengths (business_create_promotion_draft_v155 /
+       business_finalize_promotion_v282, both raise `valid_promotion_*_fields_required`) BEFORE
+       any photo upload runs — a refusal caught here never reaches uploadPromotionPhoto, so
+       cleanFailedUpload never has to delete a photo the owner just picked. Field lengths below
+       are counted the same way the server counts them: btrim(value).length. */
+    if(draft.name.length<2||draft.name.length>70)return toast('The headline needs to be 2–70 characters.');
+    if(draft.description.length<10||draft.description.length>600)return toast('The customer message needs to be 10–600 characters.');
+    if(draft.offerFacts.length<2||draft.offerFacts.length>500)return toast('The exact offer needs to be 2–500 characters.');
+    if(draft.ctaLabel.length<2||draft.ctaLabel.length>40)return toast('The customer action label needs to be 2–40 characters.');
+    if(draft.occasion&&(draft.occasion.length<2||draft.occasion.length>80))return toast('The occasion needs to be 2–80 characters, or left blank.');
+    if(draft.terms&&draft.terms.length>1000)return toast('Terms are limited to 1000 characters.');
+    /* Publishing (not saving a draft) additionally requires the end date to still be in the
+       future — business_finalize_promotion_v282 raises valid_promotion_finalize_fields_required
+       for `p_publish and p_ends_at<=now()`; every other date on this page is already Asia/
+       Singapore wall-clock via promotionBoundaryV104, so this comparison inherits that. */
+    if(publish&&!unpublish&&new Date(draft.ends_at)<=new Date())return toast('The end date/time has already passed — choose a later end date to publish.');
     const photoRefusalV280=promotionPhotoRefusalV280(file);
     if(photoRefusalV280){
       const refusedStatus=field('promotionImageStatus');
@@ -34198,7 +34247,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      context (ctx-tiers); both belong in the focus slot, not the draft-id slot. */
   const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
   if(!routedFocus&&(directFocusTokens.has(hashParamBaseV294)||/^ctx-(points|tiers)$/.test(String(hashParam||'')))){routedFocus=hashParam;hashParam=null}
-  const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
+  /* F039: this call's own epoch — see the growPageRenderEpoch declaration for why. */
+  const myGrowRenderEpochV039=++growPageRenderEpoch;
+  const outerMain=M(),isGrowCurrent=()=>growPageRenderEpoch===myGrowRenderEpochV039&&outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
   const modules=S.myModules||[];
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
   const isOwner=S.myRole==='owner';
@@ -34208,6 +34259,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
+  /* F086: route()'s gate (programmeSpineRowsV314()===null) only ever fetches the programme spine
+     ONCE per business per browser session — a second tab/device that switches a programme on/off
+     leaves every other open session's cache (and therefore the switch-confirm dialog's "this will
+     turn X off" text, drawn straight from that cache) silently wrong until a full reload. Refresh
+     it on every real navigation into Grow (fromRouteV288), the same way this page already
+     re-fetches tiers/bring-back/usage on every open — but not on the quiet in-page re-renders a
+     save triggers, so a Save keeps costing the one round trip it already did instead of two. */
+  if(fromRouteV288&&canRewards){
+    await refreshProgrammeSpineV314();
+    if(!isGrowCurrent())return;
+  }
   if(!quiet)outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
   /* PERF (2026-08-17). The reads below are independent: none of them consumes the snapshot or
      each other's result, they only need canRewards/canWinback and S.biz.id, all resolved above.
@@ -36004,7 +36066,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
       <b>Take this gift off stamp ${growStampsPickedV416}?</b>
-      <p class="muted small" style="margin-top:6px">The stamp stays on the card; it just stops paying out. Customers already part-way through keep the card they started.</p>
+      <p class="muted small" style="margin-top:6px">${
+        /* F038, closed by nestly_v693. business_delete_reward_v326 no longer flips the LIVE
+           loyalty_rewards row for a stamp gift: it withdraws the gift version-forward through the
+           same v433 begin/commit path the gift and card-length editors use, so it leaves the NEXT
+           published version while every open card keeps resolving the version it started under
+           (app.stamp_cycle_version_v416). All five readers — reward_availability_v432,
+           redeem_reward_core, customer_get_stamp_card_v323, customer_create_redemption_intent_v89
+           and stamp_reward_expire_due_v464 — ask app.reward_live_on_offer_v693 instead of the live
+           row alone, so a customer one stamp short still gets paid. Keep this text and that
+           migration saying the same thing. */''
+      }Cards already going keep this gift until they finish — even a customer one stamp short. It comes off the next card, so anyone starting a new one will not see it.</p>
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(growPointsEditingV326)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
     </div>`:''}
   </li>`:'';
@@ -37740,7 +37812,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;
       await retentionPage(draft,editProgramId);
     }
-    else await studioPage(draft);
+    /* F098: studioPage(draftVersionId) treats ANY truthy id as a publish-review request and
+       bounces to #/grow unless nestly:grow-publish-review:<id> is set. `draft` here is just
+       "whatever Grow config draft this business currently has open" (growDraftVersionId) —
+       true for a plain #/studio visit whenever the owner has an unrelated Rewards/Retention
+       edit in flight, which is routine, not a review. Only forward the id when this really is
+       the protected review flow computed above; otherwise pass null so the plain overview
+       renders instead of silently bouncing away. */
+    else await studioPage(protectedStudioReview?draft:null);
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
@@ -38140,8 +38219,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {error}=await sb.rpc('business_upsert_bringback_v361',{p_business:S.biz.id,
       p_campaign:growBbEditingV361,p_name:name,p_reward_label:reward,
       p_away_days:away,p_expiry_days:expiry});
-    if(!isGrowCurrent())return;
+    /* F034: reset the busy flag before the route-currency check — the flag is module-level and
+       is never cleared by ordinary navigation, so returning early here (as happens whenever the
+       owner leaves #/grow while this RPC is in flight) permanently deadened Save/Turn on/Delete
+       on this page until reload or sign-out. */
     growBbBusyV361=false;
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     const wasEditing=Boolean(growBbEditingV361);
     growBbEditingV361=null;growBbAddOpenV361=false;
@@ -38155,8 +38238,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growBbBusyV361=true;growBbErrorV361='';
     const {error}=await sb.rpc('business_set_bringback_paused_v361',{
       p_business:S.biz.id,p_campaign:id,p_paused:!want});
-    if(!isGrowCurrent())return;
+    /* F034: see the matching note on growBbSave above. */
     growBbBusyV361=false;
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Sending again':'Stopped sending');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
@@ -38174,8 +38258,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=el.dataset.growBbDeleteYesV361;
     growBbBusyV361=true;growBbErrorV361='';
     const {error}=await sb.rpc('business_delete_bringback_v361',{p_business:S.biz.id,p_campaign:id});
-    if(!isGrowCurrent())return;
+    /* F034: see the matching note on growBbSave above. */
     growBbBusyV361=false;growBbDeletePendingV361='';
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Campaign deleted — vouchers already sent stay valid');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
@@ -38300,8 +38385,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
     const {ok,error,cancelled,data}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(cancelled)return growRerenderV322({quiet:true});
     if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
     /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
@@ -38494,8 +38580,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_stamp_reward_expiry_days:rewardExpiryDaysV464});
     const earnSaveV435=earnSaveCallV435.data;
     const error=earnSaveCallV435.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growEarnBusyV359=false;
+    if(!isGrowCurrent())return;
     if(error){growEarnErrorV359=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the header line ("Current setting: ...") updates without a full refetch. */
     if(!snapshot.loyalty)snapshot.loyalty={};
@@ -38606,8 +38693,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       {p_business:S.biz.id,p_stamps:next});
     const lenResV433=lenCallV433.data;
     const error=lenCallV433.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the grid redraws at the new length without a second read — the same pattern
        the model switch uses. The snapshot is refetched on the next full load either way. */
@@ -38738,7 +38826,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         growPointsBusyV326=false;growPointsErrorV326=uploadError?.message||'The photo could not be uploaded.';
         return growRerenderV322({quiet:true});
       }
-      if(!isGrowCurrent())return;
+      if(!isGrowCurrent()){growPointsBusyV326=false;return;}
     }
     let error;
     let saveResV433;
@@ -38783,8 +38871,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_entitlement_expiry_days:null,
         p_claim_expires_after_days:expiryDaysV520}));
     }
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     /* V356: the old 'prompt' state ("Gift saved and live... / Add another gift / Done") is gone.
@@ -38831,8 +38920,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_image_ref:imageRef||null,p_clear_image:false});
     const rowResV433=rowCallV433.data;
     const error=rowCallV433.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growStampPublishToastV433(rowResV433,'Level updated — applies to new cards. Customers mid-card keep their current card.');
     growRerenderV322({quiet:true});
@@ -38869,8 +38959,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     button.disabled=true;
     const {error}=await sb.rpc('business_set_reward_paused_v326',{
       p_business:S.biz.id,p_reward:id,p_paused:!want});
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Turned on for customers':'Turned off for customers');
     growRerenderV322({quiet:true});
@@ -38888,10 +38979,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=button.dataset.growPointsGiftDeleteYesV326;
     growPointsBusyV326=true;growPointsErrorV326='';
     button.disabled=true;
-    const {error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
-    if(!isGrowCurrent())return;
+    const {data:deleteResultV693,error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;growPointsDeletePendingV326='';
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    /* nestly_v693 (F038): the stamp path publishes a new configuration version, so it runs the
+       same stamps validation a Go-live does. Taking the gift off the LAST stamp cannot publish
+       until another gift sits there, and the server reports that as publish_status 'pending' with
+       owner-language blockers rather than raising — the gift is still on the card, so say so and
+       leave the editor open instead of toasting a removal that did not happen. */
+    const deleteOutcomeV693=deleteResultV693&&typeof deleteResultV693==='object'?deleteResultV693:null;
+    if(deleteOutcomeV693&&deleteOutcomeV693.publish_status==='pending'){
+      growPointsErrorV326=(Array.isArray(deleteOutcomeV693.blockers)?deleteOutcomeV693.blockers:[])
+        .map(blocker=>blocker&&blocker.message).filter(Boolean).join(' ')
+        ||'Add another gift at the last stamp before taking this one off the card.';
+      return growRerenderV322({quiet:true});
+    }
     /* nestly_v416: deleting from inside the stamp dialog has to close the dialog too — it was
        opened ON the gift that no longer exists, and leaving it up would show a form editing
        nothing. The level row this used to hang off simply vanished from the list instead. */
@@ -38899,7 +39003,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       growPointsAddOpenV326='';growPointsEditingV326=null;growStampsPickedV416=null;
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     }
-    toast('Moved to History');
+    toast(deleteOutcomeV693&&deleteOutcomeV693.mode==='withdrawn'?'Off the next card':'Moved to History');
     growRerenderV322({quiet:true});
   });
   /* ============ V331 — TIERS PAGE WIRING ====================================================
@@ -43579,7 +43683,13 @@ async function studioOverview(routeMain,isCurrent){
         ${detail}
       </div></div>`;
   };
-  const rerender=()=>studioPage();
+  /* F100: studioSetRuleActive/openStudioEmergencyDialog call this unconditionally once their RPC
+     resolves, with no route-currency check of their own — studioPage()'s very first synchronous
+     act is `M().innerHTML=loadingState(...)`, which clobbers whatever page is on screen if the
+     owner navigated away while the pause/resume/emergency RPC was in flight. Guard the rerender
+     itself with the isCurrent() this page was already handed, matching the pattern every other
+     write path in this file already checks before touching the DOM. */
+  const rerender=()=>{if(isCurrent())studioPage()};
   const legacyRows=legacy.map(x=>rowFor(x,'legacy')).join('');
   const studioRows=studio.map(x=>rowFor(x,'studio')).join('');
   routeMain.innerHTML=`${CUI.pageHeader({title:'Advanced rule controls',subtitle:'Review and pause published advanced rules without changing everyday reward setup.',iconName:'loyalty',canWrite:true,moduleLabel:'Advanced rule controls'})}
@@ -44746,7 +44856,7 @@ async function referralsPage(){
       <p class="muted" style="margin-top:8px;line-height:1.7">1. Each customer's code is on their profile (Customers → open → copy).<br>
       2. When a new customer joins, type the friend's code into <b>"Referred by"</b> on the add-customer form.<br>
       3. ${referralEnabled
-        ?workspaceTemplateHtmlV97('referralEnabledOutcome',{amount:growPointsWordV322(p?.reward_points)})
+        ?workspaceTemplateHtmlV97('referralEnabledOutcome',{amount:referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'a free gift'):growReferralAmountWordV425(referralKindV429,p?.reward_points)})
         :'The programme is Off. A linked referral stays pending; no reward is paid unless the programme is Enabled when a qualifying sale is recorded.'}</p></div></div>
     <div class="card" style="margin-top:16px"><div class="cui-card-head"><h2>Referral activity</h2></div><div id="flist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>`;
   /* V173: one-shot prefill from the Programmes overview "Use suggestion" strip. */
@@ -48243,24 +48353,46 @@ async function bottleSetupPageV275(){
     capacity:Number(data?.storage_capacity)||500
   };
   let committingLocationsV488=false;
+  /* F106: a second commit while one is already in flight used to just `return` — silently, with
+     no queue, no retry, no toast — even though Add/rename/remove had already repainted the local
+     list as if it were saved. Two shelves added back-to-back (or two rapid removes) meant the
+     second edit was never sent, and it invisibly reverted itself the moment the first response
+     landed and overwrote `locations` with server truth. This is now a trailing-call queue: a
+     commit requested while one is running is remembered and re-run once, against whatever
+     `locations` looks like at that later point, instead of being dropped. */
+  let pendingCommitLocationsV488=false;
   async function commitLocationsV488(){
-    if(committingLocationsV488)return;
-    const named=locations.map(location=>({...location,name:String(location.name||'').trim()}))
-      .filter(location=>location.name);
+    if(committingLocationsV488){pendingCommitLocationsV488=true;return;}
     committingLocationsV488=true;
-    const {data:saved,error}=await sb.rpc('bar_save_setup_v279',{
-      p_business:S.biz.id,p_keep_days:savedKeepV488.days,
-      p_storage_capacity:savedKeepV488.capacity,
-      p_locations:named.map(location=>({id:location.id,name:location.name}))
-    });
-    committingLocationsV488=false;
-    if(!isCurrent()||!$('bkLocList'))return;
-    if(error){toast(ownerErrorText(error)||'The shelf could not be saved — try again.');return}
-    locations=(Array.isArray(saved?.locations)?saved.locations:[])
-      .filter(location=>location?.active!==false)
-      .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
-    paintLocations();
-    toast('Shelves saved');
+    try{
+      do{
+        pendingCommitLocationsV488=false;
+        const named=locations.map(location=>({...location,name:String(location.name||'').trim()}))
+          .filter(location=>location.name);
+        const {data:saved,error}=await sb.rpc('bar_save_setup_v279',{
+          p_business:S.biz.id,p_keep_days:savedKeepV488.days,
+          p_storage_capacity:savedKeepV488.capacity,
+          p_locations:named.map(location=>({id:location.id,name:location.name}))
+        });
+        if(!isCurrent()||!$('bkLocList'))return;
+        if(error){toast(ownerErrorText(error)||'The shelf could not be saved — try again.');return}
+        /* F106 (part 2): if a newer edit was queued WHILE this request was in flight, this
+           response's `saved.locations` no longer reflects the current shelf list — adopting it
+           now would overwrite the reference the newer edit was pushed onto and silently discard
+           it, defeating the trailing-call queue above. Skip painting server truth for a response
+           that is already stale; the next loop iteration sends the newer state and its own
+           response is what gets adopted. */
+        if(!pendingCommitLocationsV488){
+          locations=(Array.isArray(saved?.locations)?saved.locations:[])
+            .filter(location=>location?.active!==false)
+            .map(location=>({id:location.id||null,name:String(location.name||''),in_use:location.in_use===true}));
+          paintLocations();
+          toast('Shelves saved');
+        }
+      }while(pendingCommitLocationsV488);
+    }finally{
+      committingLocationsV488=false;
+    }
   }
 
   /* V278 tier windows. The list is declarative like the shelf list: whatever is on screen is what
@@ -48657,8 +48789,22 @@ async function bottlesPage(){
       button.classList.toggle('ghost',!on);
     });
   };
+  /* F107: the server ANDs p_expiring_days with `status in ('stored','called','at_table')`, a set
+     disjoint from 'retrieved'/'expired' — so "Expiring soon" checked on either of those tabs can
+     never match a row, and the empty list reads as "nothing here" rather than "this combination
+     is structurally impossible". Disable (and clear) the checkbox off the Storage tab instead of
+     letting it silently zero every other tab. */
+  const paintExpiringFilterV107=()=>{
+    const box=$('bottleExpiring');
+    if(!box)return;
+    const relevant=filters.status==='storage';
+    box.disabled=!relevant;
+    box.closest('label')?.style.setProperty('opacity',relevant?'1':'.55');
+    if(!relevant&&filters.expiring){filters.expiring=false;box.checked=false}
+  };
+  paintExpiringFilterV107();
   routeMain.querySelectorAll('[data-bottle-tab]').forEach(button=>button.onclick=()=>{
-    filters.status=button.dataset.bottleTab;paintTabsV279();reload();
+    filters.status=button.dataset.bottleTab;paintTabsV279();paintExpiringFilterV107();reload();
   });
   $('bottleExpiring').onchange=()=>{filters.expiring=$('bottleExpiring').checked;reload()};
   if($('bottlePark'))$('bottlePark').onclick=()=>openParkDialog();

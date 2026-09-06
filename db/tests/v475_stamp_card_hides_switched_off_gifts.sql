@@ -14,6 +14,13 @@
 --   05  naming and pricing still come from the PINNED version, not the live row. v416's promise
 --       (a customer mid-card keeps the deal they started under) is untouched; this only asks
 --       whether the gift is still offered at all.
+--
+-- nestly_v693 (audit F038) moved the boundary of "switched off": a stamp gift the owner DELETES is
+-- now withdrawn version-forward and carries loyalty_rewards.withdrawn_at, and every reader asks
+-- app.reward_live_on_offer_v693 rather than live.active alone, so a card pinned to a version that
+-- still carries it keeps it. This file's own predicate is restated to match, or check 01's
+-- card-equals-counter equality would report the fix as a divergence. `paused` is unchanged: a
+-- paused gift is off for everyone, mid-card or not.
 
 begin;
 
@@ -38,7 +45,7 @@ begin
         join public.loyalty_rewards live on live.id = rv.reward_id
        where rv.business_id = p.business_id and rv.active and rv.programme_id = p.programme_id
          and rv.config_version_id = app.stamp_cycle_version_v416(p.business_id, p.client_id, p.programme_id)
-         and (not live.active or coalesce(live.paused,false)))
+         and ((not live.active and live.withdrawn_at is null) or coalesce(live.paused,false)))
    limit 1;
   if v_client is null then
     insert into _v475(check_name, ok, detail)
@@ -57,7 +64,8 @@ begin
      and rv.config_version_id = v_version
      and exists (select 1 from public.loyalty_rewards live
                   where live.id = rv.reward_id and live.business_id = v_biz
-                    and live.active and not coalesce(live.paused,false));
+                    and app.reward_live_on_offer_v693(live.active, live.withdrawn_at, true)
+                    and not coalesce(live.paused,false));
   select count(*) into v_avail
     from app.reward_availability_v432(v_biz, v_client, now()) a
    where a.source = 'stamp_card';
@@ -71,7 +79,7 @@ begin
     from public.loyalty_reward_versions rv
     join public.loyalty_rewards live on live.id = rv.reward_id
    where rv.business_id = v_biz and rv.active and rv.programme_id = v_prog
-     and rv.config_version_id = v_version and not live.active;
+     and rv.config_version_id = v_version and not live.active and live.withdrawn_at is null;
   insert into _v475(check_name, ok, detail) values (
     '02 a switched-off gift is gone from the card', v_offcard > 0 and v_after < v_before,
     v_offcard::text || ' switched-off gift(s) removed');
@@ -94,7 +102,9 @@ begin
    where rv.business_id = v_biz and rv.active and rv.programme_id = v_prog
      and rv.config_version_id = v_version
      and exists (select 1 from public.loyalty_rewards live
-                  where live.id = rv.reward_id and live.active and not coalesce(live.paused,false))
+                  where live.id = rv.reward_id
+                    and app.reward_live_on_offer_v693(live.active, live.withdrawn_at, true)
+                    and not coalesce(live.paused,false))
    limit 1;
   insert into _v475(check_name, ok, detail) values (
     '05 naming and pricing still come from the PINNED version',
