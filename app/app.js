@@ -22019,6 +22019,17 @@ function reversalResultHtml(kind,result){
   if(!result)return '';
   if(kind==='sale'&&result.no_money_refund)return `<div class="imp-note"><b>Session use undone.</b> No payment refund was created. ${Number(result.restored_sessions||1)} package session added back.</div>`;
   if(kind==='sale')return `<div class="imp-note"><b>Reversal completed.</b> ${money(Number(result.reversed_cents||0))} reversed · ${money(Number(result.refunded_payment_cents||0))} refunded${result.replayed?' · exact replay verified':''}.</div>`;
+  /* nestly_v690 (F059): a stamp gift restores no points. What comes back is the CLAIM, and with
+     it the slot on the card — and the card itself when the gift sat on the final stamp and closed
+     it. Telling a cashier who just un-redeemed the tenth-stamp free coffee that "0 points" were
+     restored describes nothing that happened. The server names the stamp shape explicitly
+     (restored_stamp_claims / reopened_stamp_cards); the points arm never carries those keys, so
+     this branch cannot swallow a points reversal. */
+  if(result.restored_stamp_claims!==undefined){
+    const claims=Number(result.restored_stamp_claims||0),cards=Number(result.reopened_stamp_cards||0),
+      credit=Number(result.reversed_credit_cents||0);
+    return `<div class="imp-note"><b>Gift un-redeemed.</b> ${claims} stamp gift given back${cards>0?" · the customer's stamp card is open again":''}${credit>0?` · ${money(credit)} credit compensated`:''}${result.replayed?' · exact replay verified':''}.</div>`;
+  }
   return `<div class="imp-note"><b>Redemption reversed.</b> ${Number(result.restored_points||0)} points restored · ${money(Number(result.reversed_credit_cents||0))} credit compensated${result.replayed?' · exact replay verified':''}.</div>`;
 }
 function openReversalDialog(kind,item,onDone){
@@ -22027,8 +22038,14 @@ function openReversalDialog(kind,item,onDone){
   if(!reversalKeys.has(keyId))reversalKeys.set(keyId,crypto.randomUUID());
   const packageNote=kind==='sale'&&item.is_package_session
     ?'<div class="imp-note"><b>Package session use only.</b> This undoes one recorded package session use. No payment refund occurs.</div>':'';
-  const loyaltyNote=kind==='redemption'
-    ?`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original points entry, every FEFO batch drain, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`:'';
+  /* nestly_v690 (F059): the same dialog now opens over a stamp gift, which has no points entry
+     and no FEFO batch drains to check — the proof it needs is the claim row. Describing the
+     points machinery over a free coffee is a promise about work nobody does. points_spent is 0
+     for every stamp gift, and for a zero-point reward the generic copy is right too. */
+  const loyaltyNote=kind!=='redemption'?''
+    :Number(item.points_spent||0)>0
+    ?`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original points entry, every FEFO batch drain, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`
+    :`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original claim on the customer's card, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal. The claim is removed and the slot on the card comes back; nothing in the history is deleted.</div>`;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal" role="dialog" aria-modal="true" aria-labelledby="revTitle" tabindex="-1"><div class="modal-card" style="max-width:560px">
     <div class="row"><div><h2 id="revTitle">${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
     ${packageNote}${loyaltyNote}
