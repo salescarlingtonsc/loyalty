@@ -38233,6 +38233,11 @@ function settingsBillingReturnStopV756(){
 }
 let settingsBillingPollActiveV756=false;
 let settingsBillingCardRefreshActiveV764=false;
+/* nestly_v795: which workspaces have already had their card details asked for in this session.
+   The refresh below is idempotent on the provider but it is still a network round trip, and this
+   card re-renders after every billing command — without a "tried" mark a firm whose provider
+   genuinely holds no readable card would fire one refresh per render, forever. */
+const settingsBillingCardBackfillTriedV795=new Set();
 /* nestly_v784: which of the two tabs (Branches / Payment history) is open; survives the re-render a command causes. */
 let billingTabV784='branches';
 async function loadBillingConfig(){
@@ -38717,11 +38722,28 @@ async function loadBillingConfig(){
   /* nestly_v764 (owner ruling 5): back from Razorpay's card-change sheet. The webhook does not
      carry the new digits, so the page asks the provider for the latest payment method right now
      and re-draws — the owner sees the new card in seconds, not after the nightly backfill. */
-  if(billingReturnStateV756.cardUpdated&&!settingsBillingCardRefreshActiveV764){
+  /* nestly_v795 (owner, 2026-09-06: "why it shows no card? but i did save the card details"):
+     the block below only ever ran on the way back from the card-change portal. A firm that paid
+     by card at CHECKOUT — every new customer — never reached it, so its own Subscription page
+     said "No card yet" about a card Stripe was holding and would charge again next month. That is
+     the one line telling an owner their renewal collects itself, and it was wrong for exactly the
+     people who had just paid.
+     Stripe's webhooks carry no brand and no last4 (v794 checked all four events of a live
+     checkout), so the digits can only come from an API read — which is precisely what this
+     refresh already does. It now also runs when a subscription exists and the card is still
+     unknown, once per workspace per session. */
+  const cardUnknownV795=!!(b&&b.summary&&b.summary.state!=='none'&&!b.payment_method?.last4);
+  const backfillCardV795=cardUnknownV795
+    &&!!S.biz?.id
+    &&!settingsBillingCardBackfillTriedV795.has(S.biz.id);
+  if((billingReturnStateV756.cardUpdated||backfillCardV795)&&!settingsBillingCardRefreshActiveV764){
     settingsBillingCardRefreshActiveV764=true;
+    if(S.biz?.id)settingsBillingCardBackfillTriedV795.add(S.biz.id);
     settingsBillingReturnStripV756();
     const cardNode=$('billingCommandStatus');
-    if(cardNode)cardNode.textContent='Refreshing your card details…';
+    /* Only the card-change journey announces itself; the backfill is housekeeping the owner did
+       not ask for and should not have to read a status line about. */
+    if(cardNode&&billingReturnStateV756.cardUpdated)cardNode.textContent='Refreshing your card details…';
     (async()=>{
       /* The stored digits are marked stale FIRST — so a failed refresh leaves "Card on file"
          rather than the old card's four digits — and the command then fills them in. */
@@ -38736,7 +38758,7 @@ async function loadBillingConfig(){
       const {data:refreshed}=await fetchBusinessBillingV758(S.biz.id);
       await loadBillingConfig();
       const settled=$('billingCommandStatus');
-      if(settled)settled.textContent=workspaceTemplateTextV97('cardUpdatedV782',{card:billingCardTextV758(refreshed?.payment_method)});
+      if(settled&&billingReturnStateV756.cardUpdated)settled.textContent=workspaceTemplateTextV97('cardUpdatedV782',{card:billingCardTextV758(refreshed?.payment_method)});
     })();
   }
   if(billingReturnStateV756.processing&&!settingsBillingPollActiveV756){

@@ -267,9 +267,13 @@ test('the card is changed through Stripe and the digits are refreshed on the way
   assert.match(app, /updateCard\.onclick=after\(\(\)=>execute\('update_card',null,null,scope\)\)/);
   // the return route is recognised and never left in the address bar
   assert.match(app, /cardUpdated:value==='card_updated'/);
-  assert.match(app, /billingReturnStateV756\.cardUpdated&&!settingsBillingCardRefreshActiveV764/);
+  /* nestly_v795: the same refresh now has TWO triggers. Returning from the card-change sheet is
+     one; the other is a subscription whose card we simply do not know yet — which is every firm
+     that paid at checkout, since Stripe's webhooks carry no brand and no last4. Before v795 those
+     firms read "No card yet" about a card Stripe was holding and would charge again. */
+  assert.match(app, /\(billingReturnStateV756\.cardUpdated\|\|backfillCardV795\)&&!settingsBillingCardRefreshActiveV764/);
   // stale first, then the command that fills the digits in, then the page says which card
-  const start = app.indexOf('if(billingReturnStateV756.cardUpdated');
+  const start = app.indexOf('if((billingReturnStateV756.cardUpdated');
   const block = app.slice(start, app.indexOf('if(billingReturnStateV756.processing', start));
   assert.ok(block.indexOf("refresh_payment_method_request_v764") < block.indexOf("'refresh_payment_method'"),
     'the stored digits are marked stale before the refresh is asked for');
@@ -279,6 +283,24 @@ test('the card is changed through Stripe and the digits are refreshed on the way
      reached zh-CN and ms readers in English. It now goes through the reviewed v97 template
      'cardUpdatedV782', still carrying billingCardTextV758's card description. */
   assert.match(block, /workspaceTemplateTextV97\('cardUpdatedV782',\{card:billingCardTextV758\(refreshed\?\.payment_method\)\}\)/);
+  /* …and only the card-change journey narrates itself. The backfill is housekeeping the owner
+     never asked for, so it must not put a status line on their screen. */
+  assert.match(block, /if\(cardNode&&billingReturnStateV756\.cardUpdated\)cardNode\.textContent='Refreshing your card details…'/);
+  assert.match(block, /if\(settled&&billingReturnStateV756\.cardUpdated\)settled\.textContent=/);
+});
+
+test('a subscription whose card is unknown asks the provider once, not once per render', () => {
+  /* The backfill fires on a LIVE subscription with no digits — never on a firm with no plan (there
+     is nothing to read) and never again once asked, because this card re-renders after every
+     billing command and an un-marked failure would loop a network call forever. */
+  assert.match(app, /const cardUnknownV795=!!\(b&&b\.summary&&b\.summary\.state!=='none'&&!b\.payment_method\?\.last4\)/);
+  assert.match(app, /const backfillCardV795=cardUnknownV795\s*&&!!S\.biz\?\.id\s*&&!settingsBillingCardBackfillTriedV795\.has\(S\.biz\.id\)/);
+  assert.match(app, /const settingsBillingCardBackfillTriedV795=new Set\(\)/);
+  const start = app.indexOf('if((billingReturnStateV756.cardUpdated');
+  const block = app.slice(start, app.indexOf('if(billingReturnStateV756.processing', start));
+  assert.match(block, /if\(S\.biz\?\.id\)settingsBillingCardBackfillTriedV795\.add\(S\.biz\.id\)/);
+  assert.ok(block.indexOf('settingsBillingCardBackfillTriedV795.add') < block.indexOf("p_command_type:'refresh_payment_method'"),
+    'the workspace is marked as asked BEFORE the request, so a failure cannot re-fire on re-render');
 });
 
 test('the checkout page opens the card-change sheet without an amount', () => {
