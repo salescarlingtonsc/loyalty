@@ -185,10 +185,12 @@ test('F075 both reschedule forms build their select from the shared helper', () 
   assert.match(section('<select id="pendingRescheduleStaffV329-', '</select>'),
     /\$\{rescheduleStaffOptionsV329\(r\.staff_id\)\}/);
   assert.match(section('const staffOptions=', ';\n'), /rescheduleStaffOptionsV329\(row\.staff_id\)/);
-  /* An empty select value reaches the RPC as null, which
-     staff_reschedule_and_confirm_booking_request_v329 accepts (staff_id = coalesce(p_staff,
-     staff_id)) — verified against production. */
-  assert.equal(appJs.split("p_staff:staffSelect?.value||null").length - 1, 2);
+  /* Both forms hand the select to the one helper that decides what its value means. The RPC
+     argument shape itself is W4G/nestly_v695's business — see
+     tests/business-ui/w4g-reschedule-unassign.test.mjs, which executes the helper: an empty
+     select value alone could never un-assign a request, because p_staff:null has always meant
+     "unchanged" (staff_id = coalesce(p_staff, staff_id)). */
+  assert.equal(appJs.split("...rescheduleStaffChoiceV695(staffSelect)").length - 1, 2);
 });
 
 /* ---------------------------------------------------------------- F096 */

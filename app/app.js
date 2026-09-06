@@ -45476,12 +45476,22 @@ async function appointmentsPage(){
      from `staff`, so an unassigned request had no matching <option>, the browser fell back to the
      alphabetically-first team member, and "Move & confirm" silently pinned the request to whoever
      that happened to be. The unassigned choice is now a real option; its empty value reaches the
-     RPC as p_staff:null, which `staff_reschedule_and_confirm_booking_request_v329` accepts
-     (`staff_id = coalesce(p_staff, staff_id)` — verified against production), leaving an
-     unassigned request unassigned. */
+     RPC as p_staff:null. W4G/nestly_v695: that alone only kept an ALREADY-unassigned request
+     unassigned — `staff_id = coalesce(p_staff, staff_id)` reads null as "leave it alone", so a
+     request the customer filed with a named team member could not be un-assigned at all, and was
+     confirmed with the original person still on it (proven against production). Both reschedule
+     forms therefore send p_clear_staff, and rescheduleStaffChoiceV695 below is the single place
+     that decides what an empty select means. */
   const rescheduleStaffOptionsV329=currentStaffId=>
     `<option value="" ${currentStaffId?'':'selected'}>Anyone available</option>`
     +staff.map(s=>`<option value="${s.id}" ${currentStaffId===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
+  /* W4G/nestly_v695. The empty option means "leave it open", which the RPC can only be told
+     with p_clear_staff — a null p_staff has always meant "unchanged". Guarded on the select
+     actually existing: a missing element must never read as a request to un-assign. */
+  const rescheduleStaffChoiceV695=staffSelect=>{
+    const chosen=staffSelect?staffSelect.value||null:null;
+    return {p_staff:chosen,p_clear_staff:!!staffSelect&&!chosen};
+  };
   const staffColor=Object.fromEntries(staff.map(s=>[s.id,s.calendar_color||'#7C9CBF']));
   const myStaff=staff.find(s=>s.user_id===S.user.id);
   const canSeeAll=S.myRole==='owner'||S.myRole==='manager';
@@ -47193,7 +47203,7 @@ async function appointmentsPage(){
       const movedStaffName=staffSelect?.value?staffName[staffSelect.value]:contact?.staffName;
       button.disabled=true;
       const {data,error}=await sb.rpc('staff_reschedule_and_confirm_booking_request_v329',{
-        p_business:S.biz.id,p_request:id,p_preferred:preferred,p_staff:staffSelect?.value||null
+        p_business:S.biz.id,p_request:id,p_preferred:preferred,...rescheduleStaffChoiceV695(staffSelect)
       });
       if(!isCurrent())return;
       if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
@@ -47264,7 +47274,7 @@ async function appointmentsPage(){
       const preferred=sgIso(timeInput.value);
       button.disabled=true;
       const {data,error}=await sb.rpc('staff_reschedule_and_confirm_booking_request_v329',{
-        p_business:S.biz.id,p_request:row.id,p_preferred:preferred,p_staff:staffSelect?.value||null
+        p_business:S.biz.id,p_request:row.id,p_preferred:preferred,...rescheduleStaffChoiceV695(staffSelect)
       });
       if(!isCurrent())return;
       if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
