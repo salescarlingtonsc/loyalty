@@ -31,20 +31,31 @@ test('every money path uses the attributed teammate', () => {
 });
 
 test('re-attributing starts a new attempt instead of replaying the previous one', () => {
+  // F024 (audit wave w4b1) removed the LEGACY amount-only card's own copy of this handler (it
+  // reset saleIdem=null on change) because that card's RPC, record_sale_by_phone, rejects any
+  // teammate but the caller — so this is now the itemized cart flow's single onchange handler,
+  // which re-attributes by re-rendering rather than by resetting a key: the finalise/PayNow
+  // fingerprints already carry tillSaleStaffId (asserted below), so a change of attribution can
+  // never replay the previous teammate's sale without a separate reset.
+  // audit F024 (wave 4B1): the legacy amount-only card no longer offers a teammate picker at all
+  // (record_sale_by_phone always rejected it), so the only tillSaleStaff control left is the
+  // cart's, which re-draws; the cart-finalize key is derived from evalFingerprint() and the
+  // attributed teammate travels as p_staff on the finalise call, pinned below.
   const i = till.indexOf("$('tillSaleStaff').onchange");
-  const src = till.slice(i, i + 260);
-  assert.match(src, /saleIdem=null/);
-  // The cart-finalize idempotency key is derived from evalFingerprint() (branch/customer/lines),
-  // not from a string embedding the staff id — the attributed teammate instead travels as a
-  // direct p_staff argument on the record_cart_sale call, which is exactly what the previous
-  // assertion in this file already pins.
+  const src = till.slice(i, i + 120);
+  assert.match(src, /tillSaleStaffId=event\.target\.value\|\|tillActingStaffId;draw\(\)/);
   assert.match(till, /p_staff:tillSaleStaffId\|\|tillStaffId,p_method:tender,p_idempotency_key:finaliseKey/,
     'the attributed teammate must be passed on the same finalise call that carries the stable idempotency key');
 });
 
 test('the picker only appears when someone else could have done the work', () => {
   // A one-person shop and F&B never see it; it configures itself instead of needing a setting.
-  assert.match(till, /tillAttributableStaff\.length>1\?/);
+  // F024 (audit wave w4b1): the LEGACY amount-only card's own copy of this picker was removed —
+  // record_sale_by_phone (the RPC that card calls) rejects any p_staff other than the caller's
+  // own staff row with a 42501, so offering a choice there could only ever fail or lie. The
+  // itemized cart flow's picker (record_cart_sale, which DOES accept another teammate) is the
+  // one this test now anchors on; the regex tolerates the line break before its own `?`.
+  assert.match(till, /tillAttributableStaff\.length>1\s*\?/);
   assert.match(till, /const tillAttributableStaffFor=branchId=>tillRoster\.filter/);
   // Candidates are branch-scoped unless the actor legitimately covers several branches.
   const i = till.indexOf('const tillAttributableStaffFor');

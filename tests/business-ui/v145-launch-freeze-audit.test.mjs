@@ -557,8 +557,13 @@ test('existing referral, legacy sale and package paths never promise points whil
   assert.deepEqual(receipt({pointsEarned:0,pointsTotal:100,duplicate:false}),{
     heading:'Done',message:'No points earned for this purchase.',pointsEarned:0,pointsTotal:null,duplicate:false
   });
+  // F021 (audit wave w4b1): a replay's points_earned:0 is the server's §8.2 exact-replay answer,
+  // not proof that "no extra points were added" — a retry after a lost network response hits
+  // this same branch on the customer's FIRST-EVER visible receipt, and the old copy denied them
+  // points they had genuinely earned. The fix reports the honest, verifiable current balance
+  // instead of asserting a negative the client cannot know is true.
   assert.deepEqual(receipt({pointsEarned:0,pointsTotal:100,duplicate:true}),{
-    heading:'Already recorded',message:'This sale was already recorded — no extra points added.',pointsEarned:0,pointsTotal:null,duplicate:true
+    heading:'Recorded',message:'Recorded — current balance: 100 points.',pointsEarned:0,pointsTotal:100,duplicate:true
   });
   assert.match(till,/id="tConfirm"[\s\S]{0,180}Record sale<\/button>/);
   assert.match(till,/Sale recorded\. The screen is ready for the next customer\./);

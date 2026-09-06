@@ -2626,6 +2626,27 @@ function customerRedemptionIntentArgsV89({businessId,reward,idempotencyKey}){
    TILL opts into STAGING a scanned tier perk onto the open bill instead of settling it on sight.
    Only the till passes them, because only the till has a cart to put a perk on; every other
    caller of this scanner keeps the v515 settle-on-scan behaviour untouched. */
+/* F060: merchant_scan_redemption_qr_v117 (and the redeem_reward_core/redeem_points_v40_internal
+   it calls) raise specific, actionable refusals — insufficient points, usage limit, tier
+   required, paused, terms changed, branch not eligible, expired-on-date, redemption disabled,
+   permission — but the classic/catalogue arm collapsed every one of them into the same fixed
+   guess ("may be expired, already used, or for another business"), leaving staff unable to tell
+   the customer what actually happened. Map the known refusals to their own sentence and fall
+   back to the server's own message (via humanErrorV295) rather than a wrong fixed guess. */
+function merchantRedemptionRefusalTextV060(error){
+  const msg=String(error?.message||'');
+  if(error?.code==='42501'||/permission denied/i.test(msg))return "You don't have permission to confirm this redemption.";
+  if(/insufficient proven points/i.test(msg))return "This customer doesn't have enough points for this reward.";
+  if(/usage limit reached/i.test(msg))return 'This reward has reached its usage limit.';
+  if(/requires a higher membership tier/i.test(msg))return 'This reward requires a higher membership tier.';
+  if(/currently paused/i.test(msg))return 'This reward is paused right now — ask the owner to re-enable it.';
+  if(/terms changed/i.test(msg))return 'This reward’s terms changed since the QR was made. Ask the customer for a fresh QR.';
+  if(/not eligible at this branch/i.test(msg))return 'This reward is not available at this branch.';
+  const expiredMatch=msg.match(/this reward expired on (.+)$/i);
+  if(expiredMatch)return `This reward expired on ${expiredMatch[1]}.`;
+  if(/redemption is disabled/i.test(msg))return 'Customer redemption is turned off for this business.';
+  return humanErrorV295(error,'This redemption could not be confirmed. It may be expired, already used, or for another business.');
+}
 function openMerchantRedemptionScanner({
   businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{},onMemberResolved=null,
   stageClientId=null,onGiftStaged=null,onGiftIdentified=null
@@ -2736,6 +2757,14 @@ function openMerchantRedemptionScanner({
         onGiftIdentified(identified,token);
         return;
       }
+      // F058: a transport error (timeout, dropped connection, PGRST002) here is NOT the same as
+      // the read answering "not this one" — falling through would immediately re-submit the same
+      // QR to staff_scan_gift_qr_v515, which SETTLES the gift (consumes the perk/welcome/bring-
+      // back/referral grant) with no sale open. Stop and let staff retry instead.
+      if(identifyError){
+        status.textContent='Could not look this reward up. Try the scan again.';
+        return;
+      }
     }
     if(payload.kind==='gift'&&onGiftStaged){
       submitting=true;status.textContent='Checking this reward…';
@@ -2810,7 +2839,7 @@ function openMerchantRedemptionScanner({
           :String(error.message||'').includes('period rolled over')
           ?'This perk\u2019s period has rolled over. Ask the customer to show a fresh QR.'
           :'This gift could not be given. It may have expired, already been used, or belong to another business.')
-        :'This redemption could not be confirmed. It may be expired, already used, or for another business.';return}
+        :merchantRedemptionRefusalTextV060(error);return}
     if(payload.kind==='promotion'&&data?.status==='already_redeemed'){
       status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;
       return;
@@ -19700,7 +19729,13 @@ async function runImport(recs,entity,idempotencyKey,onProgress){
   const {data:staged,error:stageError}=await sb.rpc('stage_import_rows',{
     p_business:S.biz.id,p_entity:entity,p_rows:recs.map(r=>r.mapped),
     p_idempotency_key:idempotencyKey});
-  if(stageError) return {inserted:0,failed:recs.length,errs:[stageError.message],blocked:true};
+  if(stageError){
+    // F080: distinguish "you're not allowed to do this" (42501, app.is_salon_owner) from an
+    // ordinary data-quality refusal so a caller can show the real reason instead of a generic
+    // import failure to someone who was never going to be able to import in the first place.
+    const permissionDenied=stageError.code==='42501';
+    return {inserted:0,failed:recs.length,errs:[stageError.message],blocked:true,permissionDenied};
+  }
   const rowErrors=(staged.errors||[]).map(e=>`Row ${e.row_number}: ${(e.errors||[]).join(', ')}`);
   if(staged.invalid>0) return {inserted:0,failed:staged.invalid,errs:rowErrors,blocked:true};
   if(onProgress) onProgress(recs.length,recs.length,'Saving');
@@ -19766,8 +19801,8 @@ window.openImport=function(moduleKey,onDone){
     $('impGo').onclick=async()=>{
       $('impGo').disabled=true;$('impGo').textContent='Importing…';
       if(!importIdem) importIdem=crypto.randomUUID();
-      const {inserted,failed,errs,blocked}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
-      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:var(--success-bg);color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
+      const {inserted,failed,errs,blocked,permissionDenied}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
+      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:var(--success-bg);color:#1f7a4d'}">${blocked?(permissionDenied?'Only the business owner can run an import. Ask an owner to do this.':'Nothing imported. Correct the source data, then start the import again.'):`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
         ${errs.length?`<p class="small muted" style="margin-top:8px"><span data-workspace-i18n>First issues:</span> <span data-merchant-content>${errs.map(e=>esc(e)).join('; ')}</span></p>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="impDone">${blocked?'Close':'Done'}</button></div>`;
       $('impDone').onclick=()=>{close();if(onDone)onDone()};
@@ -20699,7 +20734,19 @@ function refreshPendingBookingRequestCountV329(){
   });
 }
 async function refreshPendingBookingRequestCountNowV370(){
-  if(!S.biz?.id||!canReadModule('bookings'))return;
+  // F076: mirror refreshWaitlistBadge — a business switch where the new business's user lacks
+  // 'bookings' read must ZERO the count and repaint, not early-return and leave the previous
+  // business's stale value sitting on screen.
+  if(!S.biz?.id)return;
+  if(!canReadModule('bookings')){
+    pendingBookingRequestCountV329=0;
+    const wrapUnreadable=$('bookingRequestsBadgeWrapV329');
+    if(wrapUnreadable){wrapUnreadable.outerHTML=bookingRequestsBadgeWrapHtml();wireBookingRequestsBadgeV329();}
+    document.querySelectorAll('[data-appointments-badge-slot]').forEach(slot=>{
+      slot.innerHTML=appointmentsNavBadgeHtml();
+    });
+    return;
+  }
   const {count,error}=await sb.from('booking_requests').select('id',{count:'exact',head:true})
     .eq('business_id',S.biz.id).in('status',[...STAFF_BOOKING_DECISION_STATUSES]);
   if(error)return; // a stale/missing badge is not worth surfacing an error for
@@ -21910,7 +21957,7 @@ function renderShell(page){
   wireWorkspaceLanguageV97();
   wireBell(page);
   wireBookingRequestsBadgeV329();
-  if(canReadModule('bookings'))refreshPendingBookingRequestCountV329();
+  refreshPendingBookingRequestCountV329();
   wireProfile(page);
   localizeWorkspaceSubtreeV97();
   observeWorkspaceLocalizationV97();
@@ -23854,8 +23901,12 @@ async function clientsPage(){
   const routeMain=M();
   const canWrite=canWriteModule('clients');
   const canWriteReferrals=canWriteModule('referrals');
+  // F080: stage_import_rows (the RPC behind the Import button/modal) requires app.is_salon_owner —
+  // a manager with plain write access gets a 42501 the moment they try, so gate the button on the
+  // same rule the server actually enforces instead of a broader client-side check that promises
+  // something the server refuses.
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
-    (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
+    (S.myRole==='owner'?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
       <div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customers</h1></div></div>
@@ -25832,13 +25883,17 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
   const duplicate=doneInfo.duplicate===true;
   const pointsEarned=Number.isFinite(Number(doneInfo.pointsEarned))?Number(doneInfo.pointsEarned):0;
   const pointsTotal=Number.isFinite(Number(doneInfo.pointsTotal))?Number(doneInfo.pointsTotal):null;
+  /* F021: a retry after a lost network response replays the server's §8.2 exact-replay branch,
+     which always answers points_earned:0 even on a sale the cashier never saw succeed — it does
+     NOT mean "no extra points were added". Report the honest, verifiable fact (the customer's
+     current balance) instead of asserting a negative about this attempt we cannot know is true. */
   return {
-    heading:duplicate?'Already recorded':'Done',
+    heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
-    message:duplicate?`This sale was already recorded — no extra ${unitNounV430} added.`
+    message:duplicate?`Recorded — current balance: ${pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'} ${unitNounV430}.`
       :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:`No ${unitNounV430} earned for this purchase.`,
     pointsEarned,
-    pointsTotal:pointsEarned>0?pointsTotal:null,
+    pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
     duplicate
   };
 }
@@ -26269,6 +26324,15 @@ function groupRedeemableRewardsV432(rewards){
     return (ai<0?order.length:ai)-(bi<0?order.length:bi);
   });
 }
+/* F019: mirror app.norm_phone's country-code fold so a pasted "+65 8186 3833" (or "065 8186
+   3833") lands on the customer's real 8-digit number instead of being truncated to its first 8
+   raw digits (which silently produces a different, still-plausible number). */
+function tillFoldPhoneDigitsV019(raw){
+  const digits=String(raw||'').replace(/\D/g,'');
+  if(digits.length===10&&digits.startsWith('65'))return digits.slice(2);
+  if(digits.length===11&&digits.startsWith('065'))return digits.slice(3);
+  return digits.slice(0,8);
+}
 async function tillPage(){
   const routeMain=M();
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -26540,7 +26604,7 @@ async function tillPage(){
       </div>`;
     const inp=$('tPhone');
     inp.focus();
-    inp.oninput=()=>{phone=inp.value.replace(/\D/g,'').slice(0,8);inp.value=phone};
+    inp.oninput=()=>{phone=tillFoldPhoneDigitsV019(inp.value);inp.value=phone};
     inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
     $('tFind').onclick=doFind;
     if(canScanRedemption())$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
@@ -26721,8 +26785,11 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
-    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
-    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    // F024: record_sale_by_phone rejects any p_staff other than the caller's own staff row
+    // (42501 "sale staff attribution must match the authenticated staff identity"), so a
+    // "Who made this sale?" picker on this legacy card can only ever fail or lie — remove it
+    // and always attribute to the person actually recording the sale.
+    tillSaleStaffId=tillActingStaffId;
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
@@ -26734,9 +26801,6 @@ async function tillPage(){
         ${canRecordSales?`${accessibleTillBranches.length>1
           ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
           :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`}
-        ${tillAttributableStaff.length>1?`<label for="tillSaleStaff">Who made this sale?</label>
-        <select id="tillSaleStaff" style="margin-bottom:12px">${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
-        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`:''}
         <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
@@ -26755,11 +26819,6 @@ async function tillPage(){
       document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.textContent.trim()}));
     });
-    /* Re-attributing is a different sale: drop the idempotency key so the next confirm is a
-       fresh attempt rather than a replay of the previous teammate's sale. */
-    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
-      tillSaleStaffId=event.target.value||tillActingStaffId;saleIdem=null;
-    };
     if($('tAmt')){$('tAmt').focus();$('tAmt').oninput=()=>{saleIdem=null}};
     if($('tAmt'))$('tAmt').onkeydown=e=>{if(e.key==='Enter')$('tConfirm')?.click()};
     if($('tConfirm'))$('tConfirm').onclick=async()=>{
@@ -28797,6 +28856,16 @@ async function tillPage(){
       draw();return;}
     if(code==='22023'&&/idempotency key conflicts|key conflict/i.test(msg)){ // same key, different request
       payError={kind:'conflict'};draw();return;}
+    if(code==='22023'&&/tier_benefit_/.test(msg)){
+      // F022: staff_issue_tier_benefit_v365 re-checks the perk's allowance under lock at finalise
+      // time and raises a TYPED 22023 (not a transport failure) when it has just been consumed
+      // elsewhere or the birthday window has closed. Treating this as the generic retry lock trapped
+      // the cart with no way out — drop the spent perk and re-price instead, same as a stale price.
+      payError=null;appliedTierBenefitV656=null;
+      toast('That perk has already been used this period — removed from the bill');
+      await runEvaluate();
+      if(!isTillCurrent())return;
+      draw();return;}
     if(code==='42501'||/create_sales/.test(msg)){ // permission denied
       payError=null;evalError={kind:'perm',message:"You don't have permission to record sales."};evalState='error';draw();return;}
     payError={kind:'retry'};draw(); // network / timeout / lost response / anything else — keep the key, offer Retry
@@ -28900,12 +28969,12 @@ async function tillPage(){
         ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
         ${receiptIdentityHtmlV788(d.branchIdentityV788,d.businessName||S.biz.name,d.branchName)}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
-        <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
+        <h2 style="margin:8px 0 4px">${d.duplicate?'Recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
           :d.pointsEarned>0
           ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
-          ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
+          ?`<p class="muted">Recorded — current balance: ${d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—'} ${tillUnitNounV430(catalog)}.</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
@@ -28983,7 +29052,7 @@ async function tillPage(){
   /* A phone handed in from the global app-bar search starts step 1 pre-filled and, when it is a
      complete number, runs the same lookup a keypad tap would (lookup_client_by_phone) — no new
      call, just a jump straight to the customer's card. */
-  if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
+  if(pendingTillPhone){phone=tillFoldPhoneDigitsV019(pendingTillPhone);pendingTillPhone='';}
   draw();
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
@@ -29440,6 +29509,7 @@ async function servicesPage(){
       buffer_before_min:bufferBefore,buffer_after_min:bufferAfter
     }).select().single();
     CUI.setButtonBusy(btn,{busy:false});
+    if(!isCurrent())return;
     if(error) return fail(error);
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
@@ -29501,6 +29571,7 @@ async function servicesPage(){
           buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,
           commission_bps:commissionBpsV584}).eq('id',id).select().limit(1);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
+      if(!isCurrent())return;
       if(error){if(status)status.textContent=ownerErrorText(error);return}
       const row=svCache.find(x=>x.id===id);
       if(row&&data&&data[0])Object.assign(row,data[0]);
@@ -29509,6 +29580,7 @@ async function servicesPage(){
          here is reported and does NOT roll back the fields above — those are already saved, and
          claiming otherwise would be the worse lie. */
       const branchError=await saveServiceBranchesV613(id,status);
+      if(!isCurrent())return;
       if(branchError)return;
       editingServiceId=null;
       if(closeServiceDialogV584){const close=closeServiceDialogV584;closeServiceDialogV584=null;close()}
@@ -29564,6 +29636,7 @@ async function servicesPage(){
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
     const {error}=await sb.from('services').update({active:to}).eq('id',id);
+    if(!isCurrent())return;
     if(error)return fail(error);
     const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
   };
@@ -46508,8 +46581,15 @@ async function appointmentsPage(){
     const stillCurrent=detailGate.begin();
     /* A4: client_id is added so a completed appointment can hand its client off to "Book next
        visit" without a second round trip — everything else on this row was already selected. */
-    const {data,error}=await sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents,buffer_before_min,buffer_after_min)')
-      .eq('business_id',S.biz.id).eq('branch_id',summary.branch_id).eq('id',summary.id).maybeSingle();
+    // F071: summary.branch_id is null for a deep link that does not know the appointment's real
+    // branch (e.g. the Home dashboard's unbranched "Today schedule" chips). business_id + id
+    // already scope this to the tenant's own row via RLS, so only filter on branch_id when the
+    // caller actually supplied one — an unconditional filter here silently returns no row for
+    // any appointment outside whichever branch happened to be resolved.
+    let appointmentQueryV071=sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents,buffer_before_min,buffer_after_min)')
+      .eq('business_id',S.biz.id);
+    if(summary.branch_id)appointmentQueryV071=appointmentQueryV071.eq('branch_id',summary.branch_id);
+    const {data,error}=await appointmentQueryV071.eq('id',summary.id).maybeSingle();
     if(!stillCurrent()||!loading.isConnected){removeLoading({restoreFocus:false});return}
     if(error||!data){
       loading.querySelector('.modal-card').innerHTML=`<div class="row"><div><h2 id="appointmentDetailLoadingTitle">Unable to load details</h2><p class="muted small" style="margin-top:4px">The appointment may no longer be available in your branch scope.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentLoadingClose" aria-label="Close appointment details">Close</button></div><div class="err" role="alert" style="margin-top:18px">Appointment details could not be loaded. Try again.</div><button type="button" class="btn" id="appointmentDetailRetry" style="margin-top:14px">Try again</button>`;
@@ -47584,7 +47664,7 @@ async function appointmentsPage(){
      it — so its Escape handler, which listens from within the dialog, never fired and a
      deep-linked appointment could not be dismissed by keyboard. Measured: activeElement was
      #route-title, Escape was inert, and refocusing the close button made Escape work again. */
-  if(routedAppointmentV375)requestAnimationFrame(()=>openAppointmentDetails({id:routedAppointmentV375,branch_id:branchId}));
+  if(routedAppointmentV375)requestAnimationFrame(()=>openAppointmentDetails({id:routedAppointmentV375,branch_id:null}));
 }
 
 /* ---------- waitlist (conversion queue) ----------
@@ -51243,7 +51323,20 @@ async function branchesPage(){
     const branch=branchList.find(item=>item.id===branchId);
     if(!branch)return;
     if(branch.is_default)return toast('Your main branch cannot be deleted.');
-    if(!await confirmActionV386(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. Past sales, bookings and expenses stay in your reports but stop naming a live branch. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
+    // F097: sales.branch_id and appointments.branch_id are wired ON DELETE NO ACTION deliberately
+    // — a branch with any transaction history can never be deleted, the DB refuses it outright.
+    // The old confirm text promised history would be "preserved" (an ON DELETE SET NULL outcome)
+    // and then the delete always failed with a generic FK-violation toast. Check for history up
+    // front and refuse with the real reason before even asking the owner to confirm+retype.
+    const [salesCount,apptCount]=await Promise.all([
+      sb.from('sales').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('branch_id',branchId),
+      sb.from('appointments').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('branch_id',branchId)
+    ]);
+    if((Number(salesCount.count)||0)>0||(Number(apptCount.count)||0)>0){
+      toast('This branch has recorded sales or appointments, so it can\'t be deleted. Untick Active in Edit to close it instead — that keeps everything and stops the billing.');
+      return;
+    }
+    if(!await confirmActionV386(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
     const typed=String(prompt(`Type the branch name to confirm deletion: ${branch.name}`)||'').trim();
     if(typed!==String(branch.name||'').trim())return toast('The name did not match — nothing was deleted');
     if(button)button.disabled=true;
@@ -54748,7 +54841,7 @@ function enhanceStaffMembersTabsV164(teamPanel){
       <label class="checkrow" for="staffAddHours" style="margin-top:10px">
         <input id="staffAddHours" type="checkbox" checked>
         <span><b>Give them the branch opening hours as their work week</b><br>
-        <span class="muted small">Untick if their days off differ — you can set their hours later, but they cannot be booked until you do.</span></span>
+        <span class="muted small">Untick if their days off differ — they'll be bookable on the shop's full opening hours either way; use Appointments &gt; Block time to mark off the days they don't work.</span></span>
       </label>
       <div class="row" style="margin-top:12px"><button class="btn sm" id="staffAddSave">Add teammate</button><button class="btn ghost sm" id="staffAddCancel">Cancel</button><span class="muted small" id="staffAddStatus" role="status" aria-live="polite"></span></div>
     </div>`;
@@ -54811,8 +54904,11 @@ function enhanceStaffMembersTabsV164(teamPanel){
     const role=val('#staffAddRole')||'staff';
     /* Blank is "not decided" and 0 is a real setting meaning no commission — so an empty field
        must stay NULL rather than collapsing to zero, which would quietly promise someone 0%. */
+    // F136: an out-of-range/malformed value must be REJECTED, not silently collapsed to null
+    // ("not set") — the sibling Edit-profile handler (saveStaffProfile) already gets this right
+    // by returning `undefined` for a bad value and refusing to save when it sees one.
     const bps=id=>{const raw=val(id);if(!raw)return null;const pct=Number(raw);
-      return Number.isFinite(pct)&&pct>=0&&pct<=100?Math.round(pct*100):null;};
+      return Number.isFinite(pct)&&pct>=0&&pct<=100?Math.round(pct*100):undefined;};
     const commission_service_bps=bps('#staffAddSvc');
     const commission_product_bps=bps('#staffAddProd');
     const wantsHours=listPanel.querySelector('#staffAddHours')?.checked!==false;
@@ -54820,6 +54916,10 @@ function enhanceStaffMembersTabsV164(teamPanel){
     if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
       if(status)status.textContent='That email does not look right.';
       listPanel.querySelector('#staffAddEmail')?.focus();return;
+    }
+    if(commission_service_bps===undefined||commission_product_bps===undefined){
+      if(status)status.textContent='Commission must be a percentage between 0 and 100';
+      return;
     }
     const button=listPanel.querySelector('#staffAddSave');
     CUI.setButtonBusy(button,{busy:true,label:'Adding…'});
@@ -54850,7 +54950,7 @@ function enhanceStaffMembersTabsV164(teamPanel){
           .eq('business_id',S.biz.id).eq('staff_id',newStaffId);
       }
     }
-    toast(wantsHours?'Teammate added':'Teammate added — set their work week before booking them');
+    toast(wantsHours?'Teammate added':'Teammate added — use Block time to mark off their days off');
     staffMembersPage();
   });
   setTab('list');
@@ -56690,9 +56790,16 @@ async function settingsPage(){
     </div>`;
   }
   window.chRole=async(id,role)=>{
+    // F095: the RPC's returned module_perms stays NULL for the common inherit-mode staff member
+    // (set_staff_role_v74 only strips keys when module_perms/modules were already overridden), so
+    // checking key-ABSENCE in the new state alone always says "removed" for any move into
+    // staff/frontdesk — including a lateral move from another role that never had finance access
+    // either. Only claim a removal when the PRIOR role actually held view_finance.
+    const priorRole=teamRowsById.get(id)?.role;
+    const priorHadFinance=['owner','manager','bookkeeper'].includes(priorRole);
     const {data,error}=await sb.rpc('set_staff_role_v74',{p_staff:id,p_role:role});
     if(error){fail(error);await loadTeam();return}
-    const removedFinance=['expenses','pnl'].filter(module=>!Object.hasOwn(data?.module_perms||{},module));
+    const removedFinance=priorHadFinance&&['expenses','pnl'].filter(module=>!Object.hasOwn(data?.module_perms||{},module));
     permissionStatusByStaff[id]=removedFinance.length&&['staff','frontdesk'].includes(role)
       ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff performance and Customer intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
       :'<div class="imp-note small">Role updated and effective module access refreshed.</div>';
@@ -58939,11 +59046,13 @@ function wireBusinessProfileExtrasV418(){
     if(next<0||next>=list.length)return;
     [list[index],list[next]]=[list[next],list[index]];
     renderBusinessProfileExtrasV418();
+    refreshCustomerInterfaceLivePreviewV326();
   });
   host.querySelectorAll('[data-gallery-remove-v418]').forEach(button=>button.onclick=()=>{
     capture();
     listForV472(button).splice(Number(button.dataset.galleryRemoveV418),1);
     renderBusinessProfileExtrasV418();
+    refreshCustomerInterfaceLivePreviewV326();
   });
   host.querySelectorAll('[data-gallery-add-v472]').forEach(input=>input.onchange=async()=>{
     const file=input.files?.[0];
@@ -58959,6 +59068,7 @@ function wireBusinessProfileExtrasV418(){
       businessProfileExtrasV418[kind].push({image_ref:imageRef,caption:''});
     }catch(error){businessProfileExtrasErrorV418=error?.message||'The photo could not be uploaded.';}
     businessProfileExtrasBusyV418=false;renderBusinessProfileExtrasV418();
+    refreshCustomerInterfaceLivePreviewV326();
   });
   const save=$('ciExtrasSaveV418');
   if(save)save.onclick=async()=>{
@@ -58993,7 +59103,8 @@ function wireBusinessProfileExtrasV418(){
     const failure=galleryResult.error||menuResult.error||linkResult.error;
     if(failure){businessProfileExtrasErrorV418=ownerErrorText(failure);return renderBusinessProfileExtrasV418();}
     toast('Photos and links saved');
-    loadBusinessProfileExtrasV418();
+    await loadBusinessProfileExtrasV418();
+    refreshCustomerInterfaceLivePreviewV326();
   };
 }
 /* V325 (owner-authorized exception #2, relocation). The auto-cancel/overflow/auto-confirm/
@@ -59676,18 +59787,32 @@ function wireCustomerCsvImportV368(){
     $('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersReady',{ready:recs.length,rows:rows.length-1})}<br>
       ${workspaceTemplateHtmlV97('firstCustomers',{customers:firstCustomers})}</p>
       <button class="btn sm" id="csvgo" style="margin-top:8px">${workspaceTemplateHtmlV97('importCustomers',{count:recs.length})}</button>`;
-    $('csvgo').onclick=async()=>{
+    // F081: a mid-batch row failure used to leave the button disabled forever with no way to
+    // resume — the owner's only recourse was to reload and re-select the file, which regenerated
+    // idempotency keys and re-attempted every already-succeeded row from scratch. Consume each
+    // row from `recs` only once it actually commits, so a retry resumes at the failing row
+    // instead of replaying rows that already landed, and always re-enable the button.
+    const runCsvImportBatchV081=async()=>{
       $('csvgo').disabled=true;let done=0;
-      for(const rec of recs){
+      while(recs.length){
+        const rec=recs[0];
         const {error}=await sb.rpc('staff_create_client',{p_business:S.biz.id,
           p_idempotency_key:rec.idempotency_key,p_full_name:rec.full_name,p_phone:rec.phone,
           p_email:rec.email,p_birth_date:rec.birth_date,p_gender:rec.gender,
           p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
-        if(error){toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));return}
-        done+=1;
+        if(error){
+          toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));
+          $('csvprev').innerHTML=`<p class="small">${done} imported so far, ${recs.length} left to try. Row failed: ${esc(rec.full_name)} — ${esc(error.message||'')}</p>
+            <button class="btn sm" id="csvgo" style="margin-top:8px">Retry from here</button>`;
+          $('csvgo').onclick=runCsvImportBatchV081;
+          $('csvgo').disabled=false;
+          return;
+        }
+        recs.shift();done+=1;
       }
       toast(workspaceTemplateTextV97('customersImported',{count:done}));$('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('customersImportPreview',{count:done})}</p>`;
     };
+    $('csvgo').onclick=runCsvImportBatchV081;
   };
 }
 /* V243's own wiring resumes here, minus the importer that moved to Customers with V368. */
