@@ -365,6 +365,17 @@ Deno.serve(async (req) => {
           customer: customerId,
           client_reference_id: businessId,
           line_items: lineItems,
+          /* nestly_v796 (owner, 2026-09-06: "just follow as per claude"). Without this, Stripe
+             uses the dashboard's automatic payment methods, which offered Link — and a customer
+             who paid through Link had a payment method of type 'link' saved, an object that
+             carries NO brand and NO last4. Peekaa could then never tell that owner which card
+             renews their subscription; the page could only say "Payment method on file", and no
+             amount of refreshing would improve it, because Stripe has nothing more to give.
+             Pinning card here (rather than switching Link off in the dashboard) keeps the
+             decision in version control, where it cannot drift back on silently. The trade-off
+             is deliberate: Link is one tap for a returning payer, and we are giving that up so
+             every subscription can name the card behind it. */
+          payment_method_types: ['card'],
           automatic_tax: { enabled: false },
           success_url: selfServiceOnboarding
             ? `${origin}/business#/onboarding/payment?status=processing`
