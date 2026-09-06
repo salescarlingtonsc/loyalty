@@ -14098,7 +14098,20 @@ function customerBusinessTaglineV385(business={}){
   const rawSector=String(business.industry||'').trim();
   const sector=/^other$/i.test(rawSector)?'':rawSector;
   const text=own||sector;
-  const emoji=own?'':customerSectorEmojiV417(sector);
+  /* nestly_v801 (owner, 2026-09-06, on a firm that had just picked "Massage" with the v800 picker:
+     "i need those emoji to be shown to customers as well - not just words"). SUPERSEDES v417's
+     "a firm's own wording is never decorated".
+     That rule was written when industry_label could only be words a firm typed, which Peekaa owns
+     no emoji for — so suppressing it was right. v800 changed the fact underneath it: the Industry
+     control now FILLS this field with a sector's exact label, so the commonest way to have "own
+     wording" is to have picked a sector, and dropping the emoji made choosing one look like a
+     downgrade.
+     Resolved from the wording FIRST, because that is what the customer is reading —
+     customerSectorEmojiV417 matches a sector by key or by label, so a picked "Massage" finds its
+     own emoji. Words Peekaa owns no emoji for fall back to the firm's real sector, which keeps a
+     true anchor beside a made-up name ("Colour bar" under a salon). A firm on 'other' still gets
+     nothing, because `sector` is already blanked for it above (v421, photo 3). */
+  const emoji=customerSectorEmojiV417(own)||customerSectorEmojiV417(sector);
   /* nestly_v417 (owner, photo 7: an arrow from the workspace's Company bio field to this exact
      spot, "show here as bio"). The bio is the firm's own sentence about itself, so it reads under
      the sector line rather than replacing it — a customer wants to know both what the business is

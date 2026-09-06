@@ -107,15 +107,32 @@ test('v417 the sector emoji follows the sector into the customer app', () => {
   assert.equal(resolve('something a firm typed'), '', 'no guess for wording we do not own');
 });
 
-test('v417 a firm\'s own wording is never decorated, and the bio reads under the name', () => {
+/* nestly_v801 SUPERSEDES this test's first claim. v417 ruled that a firm's own wording is never
+   decorated, which was right while industry_label could only hold words a firm typed and Peekaa
+   owns no emoji for. v800 changed the fact underneath it: the Industry control now FILLS that
+   field with a sector's exact label, so the commonest way to have "own wording" is to have picked
+   a sector — and dropping the emoji made picking one look like a downgrade. Owner, 2026-09-06:
+   "i need those emoji to be shown to customers as well - not just words".
+   What v417 was really protecting survives and is asserted below: Peekaa never INVENTS an emoji
+   for words it does not own. */
+test('v801 the emoji follows the words the customer reads, and is never invented', () => {
   const tagline = new Function('esc', 'INDUSTRIES', `
     ${statement('function customerSectorEmojiV417(', '\n}')}
     ${statement('function customerBusinessTaglineV385(', '\n}')}
-    return customerBusinessTaglineV385;`)(esc, { facial: { em: '✨', label: 'Facial / Spa' } });
+    return customerBusinessTaglineV385;`)(esc, {
+      facial: { em: '✨', label: 'Facial / Spa' },
+      massage: { em: '💆', label: 'Massage' }
+    });
 
   assert.match(tagline({ industry: 'Facial / Spa' }), /✨/);
-  assert.doesNotMatch(tagline({ industry: 'Facial / Spa', industry_label: 'Facial studio' }), /✨/,
-    'their own words, undecorated');
+  assert.match(tagline({ industry: 'Facial / Spa', industry_label: 'Massage' }), /💆/,
+    'a sector picked with the v800 picker brings ITS emoji, not the one it replaced');
+  assert.doesNotMatch(tagline({ industry: 'Facial / Spa', industry_label: 'Massage' }), /✨/,
+    'and not the old sector\'s — the emoji must match the words beside it');
+  assert.match(tagline({ industry: 'Facial / Spa', industry_label: 'Facial studio' }), /✨/,
+    'words Peekaa owns no emoji for keep the firm\'s real sector as a true anchor');
+  assert.doesNotMatch(tagline({ industry_label: 'Facial studio' }), /[✨💆]/,
+    'with no sector to fall back to, no emoji is invented');
   const withBio = tagline({ industry: 'Facial / Spa', bio: 'We love cubbbbb' });
   assert.match(withBio, /customer-business-bio-v417/);
   assert.match(withBio, /We love cubbbbb/);
