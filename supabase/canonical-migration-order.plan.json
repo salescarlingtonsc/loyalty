@@ -3993,49 +3993,49 @@
       "kind": "pending",
       "version": "20261006160000",
       "name": "nestly_v801_appointment_change_integrity",
-      "sourcePath": "db/migrations/20260902_nestly_v801_appointment_change_integrity.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v801_appointment_change_integrity.sql"
     },
     {
       "kind": "pending",
       "version": "20261006170000",
       "name": "nestly_v802_stamp_gift_reversal_and_pin",
-      "sourcePath": "db/migrations/20260902_nestly_v802_stamp_gift_reversal_and_pin.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v802_stamp_gift_reversal_and_pin.sql"
     },
     {
       "kind": "pending",
       "version": "20261006180000",
       "name": "nestly_v803_membership_pause_and_replay_markers",
-      "sourcePath": "db/migrations/20260902_nestly_v803_membership_pause_and_replay_markers.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v803_membership_pause_and_replay_markers.sql"
     },
     {
       "kind": "pending",
       "version": "20261006190000",
       "name": "nestly_v804_pot_scope_and_unpaged_totals",
-      "sourcePath": "db/migrations/20260902_nestly_v804_pot_scope_and_unpaged_totals.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v804_pot_scope_and_unpaged_totals.sql"
     },
     {
       "kind": "pending",
       "version": "20261006200000",
       "name": "nestly_v805_stamp_gift_delete_version_forward",
-      "sourcePath": "db/migrations/20260902_nestly_v805_stamp_gift_delete_version_forward.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v805_stamp_gift_delete_version_forward.sql"
     },
     {
       "kind": "pending",
       "version": "20261006210000",
       "name": "nestly_v806_guest_booking_autoapprove",
-      "sourcePath": "db/migrations/20260902_nestly_v806_guest_booking_autoapprove.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v806_guest_booking_autoapprove.sql"
     },
     {
       "kind": "pending",
       "version": "20261006220000",
       "name": "nestly_v807_reschedule_unassign_staff",
-      "sourcePath": "db/migrations/20260902_nestly_v807_reschedule_unassign_staff.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v807_reschedule_unassign_staff.sql"
     },
     {
       "kind": "pending",
       "version": "20261006230000",
       "name": "nestly_v808_marketing_preference_upsert",
-      "sourcePath": "db/migrations/20260903_nestly_v808_marketing_preference_upsert.sql"
+      "sourcePath": "db/migrations/20261006_nestly_v808_marketing_preference_upsert.sql"
     }
   ]
 }

@@ -52,14 +52,14 @@
 --       remaining has been decremented exactly ONCE.
 --
 -- Run against production inside this transaction; every fixture row is rolled back:
---   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v691_membership_pause_and_replay_markers.sql
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v803_membership_pause_and_replay_markers.sql
 -- Assertions are recorded as rows rather than raised, so one final SELECT reports the whole
 -- suite. Any row whose outcome starts with FAIL is a failure.
 
 begin;
 
-create temp table v691_out(seq integer, step text, outcome text) on commit drop;
-grant insert, select on v691_out to public;
+create temp table v803_out(seq integer, step text, outcome text) on commit drop;
+grant insert, select on v803_out to public;
 
 create or replace function pg_temp.as_v803_system() returns void language plpgsql as $$
 begin
@@ -87,7 +87,7 @@ grant execute on function pg_temp.as_v803_user(uuid,text) to public;
 -- A tenant that can sell: approved workspace, unpaused subscription, a paid subscriptions row
 -- (business_operational_v620), the memberships / packages / sales modules on, one owner and a
 -- default branch the owner is assigned to.
-create or replace function pg_temp.v691_tenant(
+create or replace function pg_temp.v803_tenant(
   p_business uuid, p_owner uuid, p_branch uuid, p_label text
 ) returns void language plpgsql as $$
 declare
@@ -128,9 +128,9 @@ begin
   values (p_business,v_owner_staff,p_branch);
 end
 $$;
-grant execute on function pg_temp.v691_tenant(uuid,uuid,uuid,text) to public;
+grant execute on function pg_temp.v803_tenant(uuid,uuid,uuid,text) to public;
 
-do $v691_test$
+do $v803_test$
 declare
   bA uuid := gen_random_uuid();
   oA uuid := gen_random_uuid();
@@ -165,8 +165,8 @@ declare
   v_pkg uuid;
 begin
   perform pg_temp.as_v803_system();
-  perform pg_temp.v691_tenant(bA,oA,brA,'Alpha');
-  perform pg_temp.v691_tenant(bB,oB,brB,'Beta');
+  perform pg_temp.v803_tenant(bA,oA,brA,'Alpha');
+  perform pg_temp.v803_tenant(bB,oB,brB,'Beta');
 
   insert into public.membership_plans(id,business_id,name,price_cents,cadence,credit_cents,
                                       discount_pct,active)
@@ -216,9 +216,9 @@ begin
   if v_err is null and v_row.status='paused' and v_row.paused_at = now()
      and v_row.current_period_end = v_period_end
      and v_row.current_period_start = v_period_end - interval '1 month' then
-    insert into v691_out values (1,'F088 the pause records when it began and moves no period','PASS');
+    insert into v803_out values (1,'F088 the pause records when it began and moves no period','PASS');
   else
-    insert into v691_out values (1,'F088 the pause records when it began and moves no period',
+    insert into v803_out values (1,'F088 the pause records when it began and moves no period',
       format('FAIL - sqlstate=%s message=%s status=%s paused_at=%s period=[%s,%s]',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),v_row.status,
              coalesce(v_row.paused_at::text,'<null>'),
@@ -242,9 +242,9 @@ begin
          = (v_period_end - interval '1 month') + (now() - v_pause_started)
      and (v_res->>'paused_days_returned')::numeric
          = round((extract(epoch from (now()-v_pause_started))/86400.0)::numeric,3) then
-    insert into v691_out values (2,'F088 the resume returns exactly the time that was held','PASS');
+    insert into v803_out values (2,'F088 the resume returns exactly the time that was held','PASS');
   else
-    insert into v691_out values (2,'F088 the resume returns exactly the time that was held',
+    insert into v803_out values (2,'F088 the resume returns exactly the time that was held',
       format('FAIL - sqlstate=%s message=%s result=%s period=[%s,%s] expected_end=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>'),
              v_row.current_period_start,v_row.current_period_end,
@@ -265,17 +265,17 @@ begin
    where business_id=bA and client_id=cRunning and entry_type='membership_credit';
 
   if v_sales = 0 and v_credits = 0 then
-    insert into v691_out values (3,'F088 the resumed membership is billed NOTHING by the cron','PASS');
+    insert into v803_out values (3,'F088 the resumed membership is billed NOTHING by the cron','PASS');
   else
-    insert into v691_out values (3,'F088 the resumed membership is billed NOTHING by the cron',
+    insert into v803_out values (3,'F088 the resumed membership is billed NOTHING by the cron',
       format('FAIL - %s membership sale(s) and %s credit row(s) appeared for a pause nobody owed',
              v_sales,v_credits));
   end if;
 
   if v_sales2 = 5 and v_credits2 = 5 then
-    insert into v691_out values (4,'F088 sensitivity: a genuinely overdue membership IS still caught up (5 periods)','PASS');
+    insert into v803_out values (4,'F088 sensitivity: a genuinely overdue membership IS still caught up (5 periods)','PASS');
   else
-    insert into v691_out values (4,'F088 sensitivity: a genuinely overdue membership IS still caught up (5 periods)',
+    insert into v803_out values (4,'F088 sensitivity: a genuinely overdue membership IS still caught up (5 periods)',
       format('FAIL - the cron billed %s sale(s) and %s credit row(s); assertion 3 may be passing on a cron that does nothing',
              v_sales2,v_credits2));
   end if;
@@ -297,9 +297,9 @@ begin
                     and m.current_period_start = v_row.current_period_start
                     and m.current_period_end = v_row.current_period_end
                     and m.paused_at is null) then
-    insert into v691_out values (5,'F088 negative: a status change that never touches pause shifts no period','PASS');
+    insert into v803_out values (5,'F088 negative: a status change that never touches pause shifts no period','PASS');
   else
-    insert into v691_out values (5,'F088 negative: a status change that never touches pause shifts no period',
+    insert into v803_out values (5,'F088 negative: a status change that never touches pause shifts no period',
       format('FAIL - sqlstate=%s message=%s result=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>')));
   end if;
@@ -317,9 +317,9 @@ begin
   if v_err is null and (v_res->>'paused_days_returned')::numeric = 0
      and v_row.current_period_end = v_period_end
      and v_row.current_period_start = v_period_end - interval '1 month' then
-    insert into v691_out values (6,'F088 negative: a pause with no paused_at resumes with a zero shift, not a guess','PASS');
+    insert into v803_out values (6,'F088 negative: a pause with no paused_at resumes with a zero shift, not a guess','PASS');
   else
-    insert into v691_out values (6,'F088 negative: a pause with no paused_at resumes with a zero shift, not a guess',
+    insert into v803_out values (6,'F088 negative: a pause with no paused_at resumes with a zero shift, not a guess',
       format('FAIL - sqlstate=%s message=%s result=%s period=[%s,%s]',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>'),
              v_row.current_period_start,v_row.current_period_end));
@@ -339,9 +339,9 @@ begin
   if v_err = '42501'
      and exists (select 1 from public.memberships m
                   where m.id=mLegacy and m.status=v_row.status and m.paused_at is null) then
-    insert into v691_out values (7,'F088 negative: another business''s owner is refused (42501) and the row stands','PASS');
+    insert into v803_out values (7,'F088 negative: another business''s owner is refused (42501) and the row stands','PASS');
   else
-    insert into v691_out values (7,'F088 negative: another business''s owner is refused (42501) and the row stands',
+    insert into v803_out values (7,'F088 negative: another business''s owner is refused (42501) and the row stands',
       format('FAIL - sqlstate=%s message=%s',coalesce(v_err,'<none>'),coalesce(v_msg,'')));
   end if;
 
@@ -361,9 +361,9 @@ begin
    where business_id=bA and client_id=cEnroll and kind='membership';
   if v_err is null and (v_res->>'replayed') = 'false' and (v_res2->>'replayed') = 'true'
      and v_n = 1 and v_sales = 1 then
-    insert into v691_out values (8,'F089 a membership enrolment marks fresh vs replay, and enrols once','PASS');
+    insert into v803_out values (8,'F089 a membership enrolment marks fresh vs replay, and enrols once','PASS');
   else
-    insert into v691_out values (8,'F089 a membership enrolment marks fresh vs replay, and enrols once',
+    insert into v803_out values (8,'F089 a membership enrolment marks fresh vs replay, and enrols once',
       format('FAIL - sqlstate=%s message=%s first=%s second=%s memberships=%s sales=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),
              coalesce(v_res->>'replayed','<absent>'),coalesce(v_res2->>'replayed','<absent>'),
@@ -387,9 +387,9 @@ begin
   if v_err is null and (v_res->>'replayed') = 'false' and (v_res2->>'replayed') = 'true'
      and v_n = 1 and v_sales = 1 then
     v_pkg := (v_res->>'client_package_id')::uuid;
-    insert into v691_out values (9,'F134 a package sale marks fresh vs replay, and sells once','PASS');
+    insert into v803_out values (9,'F134 a package sale marks fresh vs replay, and sells once','PASS');
   else
-    insert into v691_out values (9,'F134 a package sale marks fresh vs replay, and sells once',
+    insert into v803_out values (9,'F134 a package sale marks fresh vs replay, and sells once',
       format('FAIL - sqlstate=%s message=%s first=%s second=%s packages=%s sales=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),
              coalesce(v_res->>'replayed','<absent>'),coalesce(v_res2->>'replayed','<absent>'),
@@ -412,28 +412,28 @@ begin
    where business_id=bA and client_package_id=v_pkg;
   if v_err is null and (v_res->>'replayed') = 'false' and (v_res2->>'replayed') = 'true'
      and v_n = 9 and v_sales = 1 then
-    insert into v691_out values (10,'F134 a package session marks fresh vs replay, and decrements once','PASS');
+    insert into v803_out values (10,'F134 a package session marks fresh vs replay, and decrements once','PASS');
   else
-    insert into v691_out values (10,'F134 a package session marks fresh vs replay, and decrements once',
+    insert into v803_out values (10,'F134 a package session marks fresh vs replay, and decrements once',
       format('FAIL - sqlstate=%s message=%s first=%s second=%s remaining=%s consumptions=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),
              coalesce(v_res->>'replayed','<absent>'),coalesce(v_res2->>'replayed','<absent>'),
              v_n,v_sales));
   end if;
 end
-$v691_test$;
+$v803_test$;
 
-select seq, step, outcome from v691_out order by seq;
+select seq, step, outcome from v803_out order by seq;
 
 /* The report above is printed first so a human sees WHICH assertion failed; this block then
    makes the failure fatal. It matters because scripts/db-tests/run.mjs judges a file purely by
    psql's exit code — a suite that only records FAIL rows is reported green. */
-do $v691_gate$
+do $v803_gate$
 declare
   v_bad integer;
   v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v691_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v803_out;
   if v_all <> 10 then
     raise exception 'nestly_v803: % of 10 assertions ran — the suite aborted early', v_all;
   end if;
@@ -441,6 +441,6 @@ begin
     raise exception 'nestly_v803: % assertion(s) FAILED — see the report above', v_bad;
   end if;
 end
-$v691_gate$;
+$v803_gate$;
 
 rollback;

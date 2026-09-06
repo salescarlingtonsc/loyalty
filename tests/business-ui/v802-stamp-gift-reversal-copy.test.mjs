@@ -1,6 +1,6 @@
 /* nestly_v802 (F059) — the staff Reverse dialog stops describing a stamp gift as points.
  *
- * The server half is proved against production by db/tests/v690_stamp_gift_reversal_and_pin.sql:
+ * The server half is proved against production by db/tests/v802_stamp_gift_reversal_and_pin.sql:
  * a stamp gift can now be un-redeemed, and the reversal returns restored_points 0 with
  * restored_stamp_claims / reopened_stamp_cards instead. The client half is here, because the two
  * strings the cashier actually reads were both written for the points arm only:

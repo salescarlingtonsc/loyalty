@@ -49,20 +49,20 @@
 --   13. F059(b) fails closed. The whole fixture is deliberately in the state F059(b) is about:
 --       the card is pinned to cfg1 while the business's active version is cfg2, so
 --       loyalty_redemption_provenance.config_version_id and loyalty_redemptions.config_version_id
---       legitimately disagree and assertions 1 and 2 only pass because app.v690_config_provenance_ok
+--       legitimately disagree and assertions 1 and 2 only pass because app.v802_config_provenance_ok
 --       accepts that divergence ON EVIDENCE. This assertion shows the evidence is really required:
 --       once the reversal has removed the claim row, the authority stops vouching for that same
 --       redemption. It is not a blanket "stamps may differ" pass.
 --
 -- Run against production inside this transaction; every fixture row is rolled back:
---   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v690_stamp_gift_reversal_and_pin.sql
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v802_stamp_gift_reversal_and_pin.sql
 -- Assertions are recorded as rows rather than raised, so one final SELECT reports the whole
 -- suite. Any row whose outcome starts with FAIL is a failure.
 
 begin;
 
-create temp table v690_out(seq integer, step text, outcome text) on commit drop;
-grant insert, select on v690_out to public;
+create temp table v802_out(seq integer, step text, outcome text) on commit drop;
+grant insert, select on v802_out to public;
 
 create or replace function pg_temp.as_v802_system() returns void language plpgsql as $$
 begin
@@ -90,7 +90,7 @@ grant execute on function pg_temp.as_v802_user(uuid,text) to public;
 -- An operational tenant that can sell and refund: approved workspace, unpaused subscription,
 -- a paid subscriptions row (business_operational_v620), the loyalty and sales modules on, one
 -- owner and a default branch.
-create or replace function pg_temp.v690_tenant(
+create or replace function pg_temp.v802_tenant(
   p_business uuid, p_owner uuid, p_branch uuid, p_label text
 ) returns void language plpgsql as $$
 declare
@@ -131,12 +131,12 @@ begin
   values (p_business,v_owner_staff,p_branch);
 end
 $$;
-grant execute on function pg_temp.v690_tenant(uuid,uuid,uuid,text) to public;
+grant execute on function pg_temp.v802_tenant(uuid,uuid,uuid,text) to public;
 
 -- A published firm configuration carrying one loyalty programme version. published_at is passed
 -- in so a suite that needs TWO versions can place them on either side of the moment the
 -- customer's card was started — which is exactly what app.stamp_cycle_version_v416 reads.
-create or replace function pg_temp.v690_publish(
+create or replace function pg_temp.v802_publish(
   p_business uuid, p_config uuid, p_owner uuid, p_kind text, p_published timestamptz,
   p_stamp_target integer
 ) returns void language plpgsql as $$
@@ -165,9 +165,9 @@ begin
   perform set_config('app.v79_system_transition','',true);
 end
 $$;
-grant execute on function pg_temp.v690_publish(uuid,uuid,uuid,text,timestamptz,integer) to public;
+grant execute on function pg_temp.v802_publish(uuid,uuid,uuid,text,timestamptz,integer) to public;
 
-do $v690_test$
+do $v802_test$
 declare
   -- ---------------------------------------------------------------- the stamps tenant
   bS uuid := gen_random_uuid();
@@ -209,7 +209,7 @@ begin
   perform pg_temp.as_v802_system();
 
   -- ============================================================ FIXTURE: the stamps tenant
-  perform pg_temp.v690_tenant(bS,oS,brS,'Kopi');
+  perform pg_temp.v802_tenant(bS,oS,brS,'Kopi');
   insert into public.business_programmes(business_id,kind,active,sort)
   values (bS,'stamps',true,3)
   on conflict (business_id,kind) do update set active=true;
@@ -224,8 +224,8 @@ begin
         configuration_status='published', stamp_target=5, stamp_per_cents=500;
 
   -- Two published versions of the SAME final gift, two days apart, renamed in between.
-  perform pg_temp.v690_publish(bS,cfg1,oS,'stamps',now()-interval '2 days',5);
-  perform pg_temp.v690_publish(bS,cfg2,oS,'stamps',now()-interval '1 hour',5);
+  perform pg_temp.v802_publish(bS,cfg1,oS,'stamps',now()-interval '2 days',5);
+  perform pg_temp.v802_publish(bS,cfg2,oS,'stamps',now()-interval '1 hour',5);
   update public.loyalty_programs set current_config_version_id=cfg2 where business_id=bS;
 
   insert into public.loyalty_rewards(
@@ -261,7 +261,7 @@ begin
 
   -- ============================================================ FIXTURE: the points tenant
   perform pg_temp.as_v802_system();
-  perform pg_temp.v690_tenant(bP,oP,brP,'Points');
+  perform pg_temp.v802_tenant(bP,oP,brP,'Points');
   select id into spineP from public.business_programmes where business_id=bP and kind='points';
   update public.business_programmes set active=true where id=spineP;
   update public.business_programmes set active=false where business_id=bP and kind='stamps';
@@ -269,7 +269,7 @@ begin
   values (bP,true,'points_tiers','points','published')
   on conflict (business_id) do update
     set active=true, loyalty_model='points_tiers', kind='points', configuration_status='published';
-  perform pg_temp.v690_publish(bP,cfgP,oP,'points',now()-interval '2 days',null);
+  perform pg_temp.v802_publish(bP,cfgP,oP,'points',now()-interval '2 days',null);
   update public.loyalty_programs set current_config_version_id=cfgP where business_id=bP;
 
   insert into public.loyalty_rewards(
@@ -308,9 +308,9 @@ begin
     array['dashboard','clients','sales','services','till','loyalty','retention'],now());
   if v_pin = cfg1
      and (v_card #>> '{next_eligible_reward,name}') = 'Free Kopi (as promised)' then
-    insert into v690_out values (11,'F128 the wallet card names the gift from the PINNED version, not the newest','PASS');
+    insert into v802_out values (11,'F128 the wallet card names the gift from the PINNED version, not the newest','PASS');
   else
-    insert into v690_out values (11,'F128 the wallet card names the gift from the PINNED version, not the newest',
+    insert into v802_out values (11,'F128 the wallet card names the gift from the PINNED version, not the newest',
       format('FAIL - pin=%s (cfg1=%s cfg2=%s) wallet_name=%s',
              coalesce(v_pin::text,'<null>'),cfg1,cfg2,
              coalesce(v_card #>> '{next_eligible_reward,name}','<null>')));
@@ -321,9 +321,9 @@ begin
     bP,clientP,'v802-'||substr(bP::text,1,8),'V690 Points','fnb','SGD',
     array['dashboard','clients','sales','services','till','loyalty','retention'],now());
   if (v_card #>> '{next_eligible_reward,name}') = 'Points Gift' then
-    insert into v690_out values (12,'F128 control: a POINTS programme still reads the ACTIVE version','PASS');
+    insert into v802_out values (12,'F128 control: a POINTS programme still reads the ACTIVE version','PASS');
   else
-    insert into v690_out values (12,'F128 control: a POINTS programme still reads the ACTIVE version',
+    insert into v802_out values (12,'F128 control: a POINTS programme still reads the ACTIVE version',
       format('FAIL - wallet_name=%s card=%s',
              coalesce(v_card #>> '{next_eligible_reward,name}','<null>'),v_card));
   end if;
@@ -346,9 +346,9 @@ begin
    where (item->>'id')::uuid = v_redemption;
   if v_item is not null and (v_item->>'can_reverse') = 'true'
      and coalesce(v_item->>'refusal_reason','') = '' then
-    insert into v690_out values (1,'F059 the Reverse control offers the stamp gift (can_reverse, no refusal)','PASS');
+    insert into v802_out values (1,'F059 the Reverse control offers the stamp gift (can_reverse, no refusal)','PASS');
   else
-    insert into v690_out values (1,'F059 the Reverse control offers the stamp gift (can_reverse, no refusal)',
+    insert into v802_out values (1,'F059 the Reverse control offers the stamp gift (can_reverse, no refusal)',
       format('FAIL - item=%s',coalesce(v_item::text,'<not listed>')));
   end if;
 
@@ -375,9 +375,9 @@ begin
      and (v_res->>'restored_stamp_claims') = '1'
      and (v_res->>'reopened_stamp_cards') = '1'
      and (v_res->>'replayed') = 'false' then
-    insert into v690_out values (2,'F059 the stamp reversal succeeds and reports the stamp shape','PASS');
+    insert into v802_out values (2,'F059 the stamp reversal succeeds and reports the stamp shape','PASS');
   else
-    insert into v690_out values (2,'F059 the stamp reversal succeeds and reports the stamp shape',
+    insert into v802_out values (2,'F059 the stamp reversal succeeds and reports the stamp shape',
       format('FAIL - sqlstate=%s message=%s result=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>')));
   end if;
@@ -396,9 +396,9 @@ begin
      and exists (select 1 from public.loyalty_redemptions where id=v_redemption)
      and exists (select 1 from public.loyalty_redemption_reversals
                   where business_id=bS and redemption_id=v_redemption) then
-    insert into v690_out values (3,'F059 the claim and the closed cycle are gone; redemption, provenance and reversal survive with no restored points row','PASS');
+    insert into v802_out values (3,'F059 the claim and the closed cycle are gone; redemption, provenance and reversal survive with no restored points row','PASS');
   else
-    insert into v690_out values (3,'F059 the claim and the closed cycle are gone; redemption, provenance and reversal survive with no restored points row',
+    insert into v802_out values (3,'F059 the claim and the closed cycle are gone; redemption, provenance and reversal survive with no restored points row',
       format('FAIL - claims=%s cycles=%s provenance=%s restored_points_ledger_id=%s',
              v_claims,v_cycles,coalesce(v_prov::text,'<null>'),coalesce(v_restored::text,'<null>')));
   end if;
@@ -417,9 +417,9 @@ begin
      and (v_res->>'from_expired_card') = 'false'
      and (v_res->>'stamp_card_closed') = 'true' then
     v_redemption2 := (v_res->>'redemption_id')::uuid;
-    insert into v690_out values (4,'F059 the same gift can be claimed again on the reopened card','PASS');
+    insert into v802_out values (4,'F059 the same gift can be claimed again on the reopened card','PASS');
   else
-    insert into v690_out values (4,'F059 the same gift can be claimed again on the reopened card',
+    insert into v802_out values (4,'F059 the same gift can be claimed again on the reopened card',
       format('FAIL - sqlstate=%s message=%s result=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>')));
   end if;
@@ -436,15 +436,15 @@ begin
    where business_id=bS and redemption_id=v_redemption2;
   if v_err = '23001' and position('append-only' in coalesce(v_msg,'')) > 0
      and v_claims = 1 then
-    insert into v690_out values (5,'F059 negative: a plain DELETE of a claim is still refused append-only','PASS');
+    insert into v802_out values (5,'F059 negative: a plain DELETE of a claim is still refused append-only','PASS');
   else
-    insert into v690_out values (5,'F059 negative: a plain DELETE of a claim is still refused append-only',
+    insert into v802_out values (5,'F059 negative: a plain DELETE of a claim is still refused append-only',
       format('FAIL - sqlstate=%s message=%s surviving_claims=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),v_claims));
   end if;
 
   -- ------------------------------------------------------------------ 6. the GUC does not open UPDATE
-  perform set_config('app.v690_stamp_reversal_redemption_id',v_redemption2::text,true);
+  perform set_config('app.v802_stamp_reversal_redemption_id',v_redemption2::text,true);
   v_err := null; v_msg := null;
   begin
     update public.stamp_milestone_claims set slot_position = slot_position
@@ -452,11 +452,11 @@ begin
   exception when others then
     v_err := sqlstate; v_msg := sqlerrm;
   end;
-  perform set_config('app.v690_stamp_reversal_redemption_id','',true);
+  perform set_config('app.v802_stamp_reversal_redemption_id','',true);
   if v_err = '23001' then
-    insert into v690_out values (6,'F059 negative: an UPDATE of a claim is refused even with the reversal GUC set','PASS');
+    insert into v802_out values (6,'F059 negative: an UPDATE of a claim is refused even with the reversal GUC set','PASS');
   else
-    insert into v690_out values (6,'F059 negative: an UPDATE of a claim is refused even with the reversal GUC set',
+    insert into v802_out values (6,'F059 negative: an UPDATE of a claim is refused even with the reversal GUC set',
       format('FAIL - sqlstate=%s message=%s',coalesce(v_err,'<none>'),coalesce(v_msg,'')));
   end if;
 
@@ -465,26 +465,26 @@ begin
   insert into public.stamp_cycles(id,business_id,programme_id,client_id,cycle_index,slots,
                                   origin,redemption_id,config_version_id,actor)
   values (v_cycle,bS,spineS,clientS,99,5,'expired',null,cfg1,oS);
-  perform set_config('app.v690_stamp_reversal_redemption_id',v_redemption2::text,true);
+  perform set_config('app.v802_stamp_reversal_redemption_id',v_redemption2::text,true);
   v_err := null; v_msg := null;
   begin
     delete from public.stamp_cycles where id = v_cycle;
   exception when others then
     v_err := sqlstate; v_msg := sqlerrm;
   end;
-  perform set_config('app.v690_stamp_reversal_redemption_id','',true);
+  perform set_config('app.v802_stamp_reversal_redemption_id','',true);
   if v_err = '23001'
      and exists (select 1 from public.stamp_cycles where id = v_cycle) then
-    insert into v690_out values (7,'F059 negative: a cycle with a NULL redemption_id can never be deleted','PASS');
+    insert into v802_out values (7,'F059 negative: a cycle with a NULL redemption_id can never be deleted','PASS');
   else
-    insert into v690_out values (7,'F059 negative: a cycle with a NULL redemption_id can never be deleted',
+    insert into v802_out values (7,'F059 negative: a cycle with a NULL redemption_id can never be deleted',
       format('FAIL - sqlstate=%s message=%s still_there=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),
              exists (select 1 from public.stamp_cycles where id = v_cycle)));
   end if;
 
   -- ------------------------------------------------------------------ 8. the shared v34 guard stands
-  perform set_config('app.v690_stamp_reversal_redemption_id',v_redemption2::text,true);
+  perform set_config('app.v802_stamp_reversal_redemption_id',v_redemption2::text,true);
   v_err := null; v_msg := null;
   begin
     delete from public.loyalty_redemption_provenance
@@ -492,13 +492,13 @@ begin
   exception when others then
     v_err := sqlstate; v_msg := sqlerrm;
   end;
-  perform set_config('app.v690_stamp_reversal_redemption_id','',true);
+  perform set_config('app.v802_stamp_reversal_redemption_id','',true);
   if v_err = '23001'
      and exists (select 1 from public.loyalty_redemption_provenance
                   where business_id=bS and redemption_id=v_redemption2) then
-    insert into v690_out values (8,'F059 the shared v34 guard is untouched on the other evidence tables','PASS');
+    insert into v802_out values (8,'F059 the shared v34 guard is untouched on the other evidence tables','PASS');
   else
-    insert into v690_out values (8,'F059 the shared v34 guard is untouched on the other evidence tables',
+    insert into v802_out values (8,'F059 the shared v34 guard is untouched on the other evidence tables',
       format('FAIL - sqlstate=%s message=%s',coalesce(v_err,'<none>'),coalesce(v_msg,'')));
   end if;
 
@@ -533,9 +533,9 @@ begin
    where business_id=bP and redemption_id=v_redemption2;
   if v_err is null and (v_res->>'restored_points') = '50'
      and v_batch = 50 and v_ledger = 50 and v_restored is not null then
-    insert into v690_out values (9,'F059 control: the POINTS arm still restores points, batches and a named ledger row','PASS');
+    insert into v802_out values (9,'F059 control: the POINTS arm still restores points, batches and a named ledger row','PASS');
   else
-    insert into v690_out values (9,'F059 control: the POINTS arm still restores points, batches and a named ledger row',
+    insert into v802_out values (9,'F059 control: the POINTS arm still restores points, batches and a named ledger row',
       format('FAIL - sqlstate=%s message=%s result=%s batch=%s ledger=%s restored=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>'),
              v_batch,v_ledger,coalesce(v_restored::text,'<null>')));
@@ -555,9 +555,9 @@ begin
   perform pg_temp.as_v802_system();
   select count(*) into v_cycles from public.stamp_milestone_claims where business_id=bS;
   if v_err is null and (v_res->>'replayed') = 'true' and v_cycles = v_claims then
-    insert into v690_out values (10,'F059 a second reversal of the same redemption replays and removes nothing','PASS');
+    insert into v802_out values (10,'F059 a second reversal of the same redemption replays and removes nothing','PASS');
   else
-    insert into v690_out values (10,'F059 a second reversal of the same redemption replays and removes nothing',
+    insert into v802_out values (10,'F059 a second reversal of the same redemption replays and removes nothing',
       format('FAIL - sqlstate=%s message=%s result=%s claims_before=%s claims_after=%s',
              coalesce(v_err,'<none>'),coalesce(v_msg,''),coalesce(v_res::text,'<null>'),
              v_claims,v_cycles));
@@ -565,35 +565,35 @@ begin
 
   -- ------------------------------------------------------------------ 13. the authority is evidence-based
   perform pg_temp.as_v802_system();
-  if not app.v690_config_provenance_ok(bP,v_redemption2)
-     and not app.v690_config_provenance_ok(bS,v_redemption)
-     and not app.v690_config_provenance_ok(bS,gen_random_uuid()) then
-    insert into v690_out values (13,'F059(b) the config authority is evidence-based: no claim row, no pass','FAIL - the points redemption should still vouch');
-  elsif app.v690_config_provenance_ok(bP,v_redemption2)
-        and not app.v690_config_provenance_ok(bS,v_redemption)
-        and not app.v690_config_provenance_ok(bS,gen_random_uuid()) then
-    insert into v690_out values (13,'F059(b) the config authority is evidence-based: no claim row, no pass','PASS');
+  if not app.v802_config_provenance_ok(bP,v_redemption2)
+     and not app.v802_config_provenance_ok(bS,v_redemption)
+     and not app.v802_config_provenance_ok(bS,gen_random_uuid()) then
+    insert into v802_out values (13,'F059(b) the config authority is evidence-based: no claim row, no pass','FAIL - the points redemption should still vouch');
+  elsif app.v802_config_provenance_ok(bP,v_redemption2)
+        and not app.v802_config_provenance_ok(bS,v_redemption)
+        and not app.v802_config_provenance_ok(bS,gen_random_uuid()) then
+    insert into v802_out values (13,'F059(b) the config authority is evidence-based: no claim row, no pass','PASS');
   else
-    insert into v690_out values (13,'F059(b) the config authority is evidence-based: no claim row, no pass',
+    insert into v802_out values (13,'F059(b) the config authority is evidence-based: no claim row, no pass',
       format('FAIL - points=%s stamp_after_reversal=%s unknown_redemption=%s',
-             app.v690_config_provenance_ok(bP,v_redemption2),
-             app.v690_config_provenance_ok(bS,v_redemption),
-             app.v690_config_provenance_ok(bS,gen_random_uuid())));
+             app.v802_config_provenance_ok(bP,v_redemption2),
+             app.v802_config_provenance_ok(bS,v_redemption),
+             app.v802_config_provenance_ok(bS,gen_random_uuid())));
   end if;
 end
-$v690_test$;
+$v802_test$;
 
-select seq, step, outcome from v690_out order by seq;
+select seq, step, outcome from v802_out order by seq;
 
 /* The report above is printed first so a human sees WHICH assertion failed; this block then
    makes the failure fatal. It matters because scripts/db-tests/run.mjs judges a file purely by
    psql's exit code — a suite that only records FAIL rows is reported green. */
-do $v690_gate$
+do $v802_gate$
 declare
   v_bad integer;
   v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v690_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v802_out;
   if v_all <> 13 then
     raise exception 'nestly_v802: % of 13 assertions ran — the suite aborted early', v_all;
   end if;
@@ -601,6 +601,6 @@ begin
     raise exception 'nestly_v802: % assertion(s) FAILED — see the report above', v_bad;
   end if;
 end
-$v690_gate$;
+$v802_gate$;
 
 rollback;

@@ -81,14 +81,14 @@
    appointment_id and expires_at, none of which are in the OF list, and the helper refuses any
    row that is not still new/pending/waitlisted with a null appointment_id anyway.
 
-   Rollback suite: db/tests/v689_appointment_change_integrity.sql */
+   Rollback suite: db/tests/v801_appointment_change_integrity.sql */
 begin;
 
 -- =============================================================================================
 -- F064 — a reschedule at a business that has not opted into auto-approve is a REQUEST.
 --        Three comment-free splices into the live definition; the rest of v508 is untouched.
 -- =============================================================================================
-do $v689_f064$
+do $v801_f064$
 declare
   v_def text; v_new text;
   v_decl constant text :=
@@ -173,7 +173,7 @@ begin
     execute v_new;
   end if;
 end
-$v689_f064$;
+$v801_f064$;
 revoke all on function public.customer_reschedule_appointment_v508(text,uuid,timestamptz,text)
   from public, anon;
 grant execute on function public.customer_reschedule_appointment_v508(text,uuid,timestamptz,text)
@@ -182,7 +182,7 @@ grant execute on function public.customer_reschedule_appointment_v508(text,uuid,
 -- =============================================================================================
 -- F065 — the public slot lister now applies the same buffers and breaks the write guard does.
 -- =============================================================================================
-do $v689_f065$
+do $v801_f065$
 declare
   v_def text; v_new text;
   v_declare constant text :=
@@ -319,7 +319,7 @@ begin
     execute v_new;
   end if;
 end
-$v689_f065$;
+$v801_f065$;
 revoke all on function public.internal_public_booking_availability(text,uuid,uuid,date,integer,uuid)
   from public;
 grant execute on function public.internal_public_booking_availability(text,uuid,uuid,date,integer,uuid)
@@ -328,7 +328,7 @@ grant execute on function public.internal_public_booking_availability(text,uuid,
 -- =============================================================================================
 -- F066 — the staff guard applies only when the appointment has a staff member.
 -- =============================================================================================
-do $v689_f066$
+do $v801_f066$
 declare
   v_def text; v_new text;
   v_anchor constant text :=
@@ -360,7 +360,7 @@ begin
     execute v_new;
   end if;
 end
-$v689_f066$;
+$v801_f066$;
 revoke all on function public.decide_change(uuid,boolean) from public, anon;
 grant execute on function public.decide_change(uuid,boolean) to authenticated, service_role;
 

@@ -30,14 +30,14 @@
 --       empty list from a broken function (the lister swallows every exception and returns null).
 --
 -- Run against production inside this transaction; every fixture row is rolled back:
---   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v689_appointment_change_integrity.sql
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v801_appointment_change_integrity.sql
 -- Assertions are recorded as rows rather than raised, so one final SELECT reports the whole
 -- suite. Any row whose outcome starts with FAIL is a failure.
 
 begin;
 
-create temp table v689_out(seq integer, step text, outcome text) on commit drop;
-grant insert, select on v689_out to public;
+create temp table v801_out(seq integer, step text, outcome text) on commit drop;
+grant insert, select on v801_out to public;
 
 create or replace function pg_temp.as_v801_system() returns void language plpgsql as $$
 begin
@@ -65,7 +65,7 @@ grant execute on function pg_temp.as_v801_user(uuid,text) to public;
 -- A tenant that can actually take a booking: approved workspace, unpaused subscription, the
 -- appointments module on, one owner who is also the bookable team member, a default branch open
 -- 09:00-18:00 every day, and one verified customer holding a client record.
-create or replace function pg_temp.v689_tenant(
+create or replace function pg_temp.v801_tenant(
   p_business uuid, p_owner uuid, p_customer_user uuid, p_client uuid, p_label text,
   p_auto boolean
 ) returns void language plpgsql as $$
@@ -138,19 +138,19 @@ begin
   perform set_config('app.customer_link_insert_id', '', true);
 end
 $$;
-grant execute on function pg_temp.v689_tenant(uuid,uuid,uuid,uuid,text,boolean) to public;
+grant execute on function pg_temp.v801_tenant(uuid,uuid,uuid,uuid,text,boolean) to public;
 
 -- The staff member and branch a tenant built above, so the assertions can name them.
-create or replace function pg_temp.v689_staff(p_business uuid) returns uuid language sql stable as $$
+create or replace function pg_temp.v801_staff(p_business uuid) returns uuid language sql stable as $$
   select id from public.staff where business_id = p_business order by created_at, id limit 1;
 $$;
-grant execute on function pg_temp.v689_staff(uuid) to public;
-create or replace function pg_temp.v689_branch(p_business uuid) returns uuid language sql stable as $$
+grant execute on function pg_temp.v801_staff(uuid) to public;
+create or replace function pg_temp.v801_branch(p_business uuid) returns uuid language sql stable as $$
   select id from public.branches where business_id = p_business order by created_at, id limit 1;
 $$;
-grant execute on function pg_temp.v689_branch(uuid) to public;
+grant execute on function pg_temp.v801_branch(uuid) to public;
 
-do $v689_test$
+do $v801_test$
 declare
   bManual uuid := gen_random_uuid();  oManual uuid := gen_random_uuid();
   uManual uuid := gen_random_uuid();  cManual uuid := gen_random_uuid();
@@ -177,14 +177,14 @@ declare
   v_avail jsonb;
 begin
   perform pg_temp.as_v801_system();
-  perform pg_temp.v689_tenant(bManual,oManual,uManual,cManual,'Manual',false);
-  perform pg_temp.v689_tenant(bAuto,oAuto,uAuto,cAuto,'Auto',true);
+  perform pg_temp.v801_tenant(bManual,oManual,uManual,cManual,'Manual',false);
+  perform pg_temp.v801_tenant(bAuto,oAuto,uAuto,cAuto,'Auto',true);
 
   -- Tomorrow at 10:00 Singapore: comfortably inside 09:00-18:00 and past the lister's
   -- now()+15-minutes floor whatever time this suite runs.
   v_day := ((now() at time zone 'Asia/Singapore')::date + 1);
-  v_staff := pg_temp.v689_staff(bManual);
-  v_branch := pg_temp.v689_branch(bManual);
+  v_staff := pg_temp.v801_staff(bManual);
+  v_branch := pg_temp.v801_branch(bManual);
   select slug into v_slug from public.businesses where id = bManual;
 
   insert into public.services(business_id,name,price_cents,duration_min,active,
@@ -219,9 +219,9 @@ begin
    where business_id = bManual and appointment_id = v_appt and kind = 'reschedule';
   if v_err is null and (v_res->>'status') = 'pending' and (v_res->>'kept_booked') = 'true'
      and v_status = 'booked' and v_count = 0 and v_change is not null then
-    insert into v689_out values (1,'F064 reschedule without auto-approve files a change request and keeps the booking','PASS');
+    insert into v801_out values (1,'F064 reschedule without auto-approve files a change request and keeps the booking','PASS');
   else
-    insert into v689_out values (1,'F064 reschedule without auto-approve files a change request and keeps the booking',
+    insert into v801_out values (1,'F064 reschedule without auto-approve files a change request and keeps the booking',
       format('FAIL - err=%s result=%s appt_status=%s booking_requests=%s change_request=%s',
         coalesce(v_err,'<none>'),coalesce(v_res::text,'<null>'),v_status,v_count,coalesce(v_change::text,'<null>')));
   end if;
@@ -240,9 +240,9 @@ begin
    where business_id = bManual and appointment_id = v_appt and kind = 'reschedule';
   if v_err is null and (v_res->>'replayed') = 'true'
      and (v_res->>'request_id') = v_change::text and v_count = 1 then
-    insert into v689_out values (2,'F064 a second reschedule replays the pending request instead of stacking one','PASS');
+    insert into v801_out values (2,'F064 a second reschedule replays the pending request instead of stacking one','PASS');
   else
-    insert into v689_out values (2,'F064 a second reschedule replays the pending request instead of stacking one',
+    insert into v801_out values (2,'F064 a second reschedule replays the pending request instead of stacking one',
       format('FAIL - err=%s result=%s change_requests=%s',
         coalesce(v_err,'<none>'),coalesce(v_res::text,'<null>'),v_count));
   end if;
@@ -251,8 +251,8 @@ begin
   declare
     v_auto_slug text;
     v_auto_appt uuid;
-    v_auto_staff uuid := pg_temp.v689_staff(bAuto);
-    v_auto_branch uuid := pg_temp.v689_branch(bAuto);
+    v_auto_staff uuid := pg_temp.v801_staff(bAuto);
+    v_auto_branch uuid := pg_temp.v801_branch(bAuto);
     v_auto_service uuid;
   begin
     select slug into v_auto_slug from public.businesses where id = bAuto;
@@ -280,9 +280,9 @@ begin
      where business_id = bAuto and customer_client_id = cAuto;
     if v_err is null and v_status = 'cancelled' and v_count = 1
        and (v_res->>'kept_booked') is null then
-      insert into v689_out values (3,'F064 an auto-approving business keeps the cancel-and-refile behaviour','PASS');
+      insert into v801_out values (3,'F064 an auto-approving business keeps the cancel-and-refile behaviour','PASS');
     else
-      insert into v689_out values (3,'F064 an auto-approving business keeps the cancel-and-refile behaviour',
+      insert into v801_out values (3,'F064 an auto-approving business keeps the cancel-and-refile behaviour',
         format('FAIL - err=%s result=%s appt_status=%s booking_requests=%s',
           coalesce(v_err,'<none>'),coalesce(v_res::text,'<null>'),v_status,v_count));
     end if;
@@ -313,9 +313,9 @@ begin
   select starts_at into v_starts from public.appointments where id = v_table_appt;
   if v_err is null and (v_json::jsonb->>'status') = 'approved'
      and v_starts = timezone('Asia/Singapore',(v_day + time '16:30')::timestamp) then
-    insert into v689_out values (4,'F066 approving a table-pool reschedule succeeds and moves the appointment','PASS');
+    insert into v801_out values (4,'F066 approving a table-pool reschedule succeeds and moves the appointment','PASS');
   else
-    insert into v689_out values (4,'F066 approving a table-pool reschedule succeeds and moves the appointment',
+    insert into v801_out values (4,'F066 approving a table-pool reschedule succeeds and moves the appointment',
       format('FAIL - err=%s result=%s starts_at=%s',
         coalesce(v_err,'<none>'),coalesce(v_json::text,'<null>'),v_starts));
   end if;
@@ -348,9 +348,9 @@ begin
     perform pg_temp.as_v801_system();
     select starts_at into v_starts from public.appointments where id = v_appt;
     if v_err is null and (v_json::jsonb->>'status') = 'conflict' and v_starts = v_before then
-      insert into v689_out values (5,'F066 a STAFFED appointment with a real clash still answers conflict','PASS');
+      insert into v801_out values (5,'F066 a STAFFED appointment with a real clash still answers conflict','PASS');
     else
-      insert into v689_out values (5,'F066 a STAFFED appointment with a real clash still answers conflict',
+      insert into v801_out values (5,'F066 a STAFFED appointment with a real clash still answers conflict',
         format('FAIL - err=%s result=%s starts_at=%s expected=%s',
           coalesce(v_err,'<none>'),coalesce(v_json::text,'<null>'),v_starts,v_before));
     end if;
@@ -370,7 +370,7 @@ begin
       branch_id,staff_id,marketing_consent)
     values (bAuto,cAuto,'V689 Customer Auto','81000000',v_auto_service,1,
             timezone('Asia/Singapore',(v_day + time '09:30')::timestamp),'pending',
-            pg_temp.v689_branch(bAuto), pg_temp.v689_staff(bAuto), false)
+            pg_temp.v801_branch(bAuto), pg_temp.v801_staff(bAuto), false)
     returning id into v_auto_request;
     perform set_config('app.v678_autoapprove_deferred','',true);
 
@@ -380,9 +380,9 @@ begin
     select status, appointment_id into v_status, v_auto_appt
       from public.booking_requests where id = v_auto_request;
     if v_status = 'confirmed' and v_auto_appt is not null then
-      insert into v689_out values (6,'F067 moving a pending request to a free slot re-runs auto-approve','PASS');
+      insert into v801_out values (6,'F067 moving a pending request to a free slot re-runs auto-approve','PASS');
     else
-      insert into v689_out values (6,'F067 moving a pending request to a free slot re-runs auto-approve',
+      insert into v801_out values (6,'F067 moving a pending request to a free slot re-runs auto-approve',
         format('FAIL - status=%s appointment=%s',v_status,coalesce(v_auto_appt::text,'<null>')));
     end if;
   end;
@@ -401,10 +401,10 @@ begin
     v_has_1130 boolean;
     v_has_1300 boolean;
   begin
-    perform pg_temp.v689_tenant(bList,oList,uList,cList,'Lister',false);
+    perform pg_temp.v801_tenant(bList,oList,uList,cList,'Lister',false);
     select slug into v_list_slug from public.businesses where id = bList;
-    v_list_staff := pg_temp.v689_staff(bList);
-    v_list_branch := pg_temp.v689_branch(bList);
+    v_list_staff := pg_temp.v801_staff(bList);
+    v_list_branch := pg_temp.v801_branch(bList);
 
     -- The booked service: one hour, then fifteen minutes of cleanup nobody else may have.
     insert into public.services(business_id,name,price_cents,duration_min,active,
@@ -448,42 +448,42 @@ begin
       from pg_catalog.jsonb_array_elements(v_slots) as s(slot);
 
     if v_avail is not null and coalesce(v_has_11,false) = false then
-      insert into v689_out values (7,'F065 the slot inside the previous booking''s cleanup buffer is not offered','PASS');
+      insert into v801_out values (7,'F065 the slot inside the previous booking''s cleanup buffer is not offered','PASS');
     else
-      insert into v689_out values (7,'F065 the slot inside the previous booking''s cleanup buffer is not offered',
+      insert into v801_out values (7,'F065 the slot inside the previous booking''s cleanup buffer is not offered',
         format('FAIL - availability_null=%s has_1100=%s slots=%s',
           v_avail is null, coalesce(v_has_11,false), v_slots));
     end if;
 
     if v_avail is not null and coalesce(v_has_1300,false) = false then
-      insert into v689_out values (8,'F065 a slot inside a branch break is not offered','PASS');
+      insert into v801_out values (8,'F065 a slot inside a branch break is not offered','PASS');
     else
-      insert into v689_out values (8,'F065 a slot inside a branch break is not offered',
+      insert into v801_out values (8,'F065 a slot inside a branch break is not offered',
         format('FAIL - availability_null=%s has_1300=%s slots=%s',
           v_avail is null, coalesce(v_has_1300,false), v_slots));
     end if;
 
     if coalesce(v_has_1130,false) then
-      insert into v689_out values (9,'F065 positive control: a plainly free slot IS still offered','PASS');
+      insert into v801_out values (9,'F065 positive control: a plainly free slot IS still offered','PASS');
     else
-      insert into v689_out values (9,'F065 positive control: a plainly free slot IS still offered',
+      insert into v801_out values (9,'F065 positive control: a plainly free slot IS still offered',
         format('FAIL - availability=%s slots=%s',coalesce(v_avail::text,'<null>'),v_slots));
     end if;
   end;
 end
-$v689_test$;
+$v801_test$;
 
-select seq, step, outcome from v689_out order by seq;
+select seq, step, outcome from v801_out order by seq;
 
 /* The report above is printed first so a human sees WHICH assertion failed; this block then
    makes the failure fatal. It matters because scripts/db-tests/run.mjs judges a file purely by
    psql's exit code — a suite that only records FAIL rows is reported green. */
-do $v689_gate$
+do $v801_gate$
 declare
   v_bad integer;
   v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v689_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v801_out;
   if v_all <> 9 then
     raise exception 'nestly_v801: % of 9 assertions ran — the suite aborted early', v_all;
   end if;
@@ -491,6 +491,6 @@ begin
     raise exception 'nestly_v801: % assertion(s) FAILED — see the report above', v_bad;
   end if;
 end
-$v689_gate$;
+$v801_gate$;
 
 rollback;

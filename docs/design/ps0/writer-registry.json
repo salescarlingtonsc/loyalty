@@ -1326,7 +1326,7 @@
     {
       "id": "db.fn:public.set_membership_status/3",
       "surface": "db_function",
-      "latest_file": "20260721074441_frenly_v41_customer_module_hardening.sql",
+      "latest_file": "20261006180000_nestly_v803_membership_pause_and_replay_markers.sql",
       "rows_written": "memberships:UPDATE",
       "detected_signals": "for-update",
       "entry_point": "set_membership_status(p_business,p_membership,p_status)",

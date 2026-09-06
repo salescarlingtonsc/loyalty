@@ -29,7 +29,7 @@
 --   09  a POINTS gift still deletes outright: active=false, withdrawn_at NULL, no new version
 --
 -- Run against production inside this transaction; every fixture row is rolled back:
---   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v693_stamp_gift_delete_version_forward.sql
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v805_stamp_gift_delete_version_forward.sql
 -- Every check raises on failure, so the file either runs to its final notice or aborts.
 --
 -- TIME. now() is fixed for the whole transaction and app.stamp_cycle_version_v416 resolves the

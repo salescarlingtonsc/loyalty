@@ -6656,7 +6656,7 @@
       "name": "nestly_v801_appointment_change_integrity",
       "path": "supabase/migrations/20261006160000_nestly_v801_appointment_change_integrity.sql",
       "octetLength": 22382,
-      "sha256": "22ee0008c65cdca6db414dd578cb9f6897c8085034a98b9045bc56b1ae43d334",
+      "sha256": "1c251bb928a13ad83a0502f503e3a00f121f02e38c007e6b656eecc7300eef24",
       "provenance": "local-source"
     },
     {
@@ -6666,7 +6666,7 @@
       "name": "nestly_v802_stamp_gift_reversal_and_pin",
       "path": "supabase/migrations/20261006170000_nestly_v802_stamp_gift_reversal_and_pin.sql",
       "octetLength": 31674,
-      "sha256": "c75f763259ad2d20dd90b6a4a97348669428abceb3bb9883b09b0c12b1316f2e",
+      "sha256": "3737f09911b1e85795bb5497cba95871bec200a1a614ea2699f5732027c5ae2c",
       "provenance": "local-source"
     },
     {
@@ -6676,7 +6676,7 @@
       "name": "nestly_v803_membership_pause_and_replay_markers",
       "path": "supabase/migrations/20261006180000_nestly_v803_membership_pause_and_replay_markers.sql",
       "octetLength": 15071,
-      "sha256": "a4cfc165553dbacd42841227f245906b598ce21489fc312872f3736b851567bd",
+      "sha256": "9e5872a24c2d6b339eb92b7f0f319cea4095b93988dd637de5549ec5a4138250",
       "provenance": "local-source"
     },
     {
@@ -6686,7 +6686,7 @@
       "name": "nestly_v804_pot_scope_and_unpaged_totals",
       "path": "supabase/migrations/20261006190000_nestly_v804_pot_scope_and_unpaged_totals.sql",
       "octetLength": 14449,
-      "sha256": "864cdcd9887e633863d379ba6fb8846d5e763aaefd272fee9a6cd1e8e7e8745a",
+      "sha256": "93c035d9fa68cbe9e6bc5904fcfef64f3388db9659f171650053959b773b8c42",
       "provenance": "local-source"
     },
     {
@@ -6696,7 +6696,7 @@
       "name": "nestly_v805_stamp_gift_delete_version_forward",
       "path": "supabase/migrations/20261006200000_nestly_v805_stamp_gift_delete_version_forward.sql",
       "octetLength": 29112,
-      "sha256": "00f5de179f7ec6923ade02c8a4454bac2c1cb2b46a71f021135e235f0a0e1ec2",
+      "sha256": "feec416e8dce38a0e748dc7587b9037c0238a3ec08a94e0f5151acdefe3112a9",
       "provenance": "local-source"
     },
     {
@@ -6706,7 +6706,7 @@
       "name": "nestly_v806_guest_booking_autoapprove",
       "path": "supabase/migrations/20261006210000_nestly_v806_guest_booking_autoapprove.sql",
       "octetLength": 15611,
-      "sha256": "4775746b2a210d71348bf50f5783489a6017fe9cea610fcd0163105d1bd3bf78",
+      "sha256": "b5b010e9cc93cc0b9ed949ef03fe6fc0ffb6c7099514a5136100d414fd1ca73a",
       "provenance": "local-source"
     },
     {
@@ -6716,7 +6716,7 @@
       "name": "nestly_v807_reschedule_unassign_staff",
       "path": "supabase/migrations/20261006220000_nestly_v807_reschedule_unassign_staff.sql",
       "octetLength": 10284,
-      "sha256": "9e00e125840801cdc4003aab73bef55ea0551a1de7f7e77b4c3c96b025a166f9",
+      "sha256": "d92fc573ad06076bf84b859168dd99601ffbc09a5828e7ec07170f3f5db13190",
       "provenance": "local-source"
     },
     {
@@ -6726,7 +6726,7 @@
       "name": "nestly_v808_marketing_preference_upsert",
       "path": "supabase/migrations/20261006230000_nestly_v808_marketing_preference_upsert.sql",
       "octetLength": 12067,
-      "sha256": "03d0c8e123dcad4816aa83592ca75617eae5ac84dee0af2c6090228353ea107b",
+      "sha256": "f6d46e19b393043690cfb56ea1abc8d7bd8b37e1c56547a370086fbd3b84b3a7",
       "provenance": "local-source"
     }
   ]

@@ -31,7 +31,7 @@
 
 begin;
 
-create temp table v696_out(seq integer, step text, outcome text) on commit drop;
+create temp table v808_out(seq integer, step text, outcome text) on commit drop;
 
 create or replace function pg_temp.as_v808_system() returns void language plpgsql as $$
 begin
@@ -57,7 +57,7 @@ grant execute on function pg_temp.as_v808_user(uuid) to authenticated;
 
 -- A customer identity of the shape customer_create_identity produces: active, wallet_start, and
 -- deliberately WITHOUT a customer_registration_preferences row.
-create or replace function pg_temp.v696_identity(p_uid uuid) returns uuid
+create or replace function pg_temp.v808_identity(p_uid uuid) returns uuid
 language plpgsql as $$
 declare v_identity uuid;
 begin
@@ -70,7 +70,7 @@ begin
 end
 $$;
 
-do $v696_test$
+do $v808_test$
 declare
   uA uuid := gen_random_uuid();  iA uuid;
   uB uuid := gen_random_uuid();  iB uuid;
@@ -82,17 +82,17 @@ declare
   v_event public.customer_platform_marketing_consent_events%rowtype;
 begin
   perform pg_temp.as_v808_system();
-  iA := pg_temp.v696_identity(uA);
-  iB := pg_temp.v696_identity(uB);
-  iC := pg_temp.v696_identity(uC);
+  iA := pg_temp.v808_identity(uA);
+  iB := pg_temp.v808_identity(uB);
+  iC := pg_temp.v808_identity(uC);
 
   -- ------------------------------------------------------------------ 1. the precondition
   select count(*) into v_count
     from public.customer_registration_preferences p where p.identity_id = iA;
   if v_count = 0 then
-    insert into v696_out values (1,'a fresh QR-join style identity really has NO preferences row','PASS');
+    insert into v808_out values (1,'a fresh QR-join style identity really has NO preferences row','PASS');
   else
-    insert into v696_out values (1,'a fresh QR-join style identity really has NO preferences row',
+    insert into v808_out values (1,'a fresh QR-join style identity really has NO preferences row',
       format('FAIL - %s rows', v_count));
   end if;
 
@@ -105,9 +105,9 @@ begin
   end;
   perform pg_temp.as_v808_system();
   if v_err is null and coalesce((v_res->>'opted_in')::boolean, false) then
-    insert into v696_out values (2,'a customer with no preferences row CAN save the marketing choice','PASS');
+    insert into v808_out values (2,'a customer with no preferences row CAN save the marketing choice','PASS');
   else
-    insert into v696_out values (2,'a customer with no preferences row CAN save the marketing choice',
+    insert into v808_out values (2,'a customer with no preferences row CAN save the marketing choice',
       format('FAIL - sqlstate=%s result=%s', coalesce(v_err,'<none>'), coalesce(v_res::text,'<null>')));
   end if;
 
@@ -116,9 +116,9 @@ begin
   v_read := public.customer_get_platform_marketing_preference();
   perform pg_temp.as_v808_system();
   if coalesce((v_read->>'opted_in')::boolean, false) then
-    insert into v696_out values (3,'the created row is scope-stamped, so the reader reports the customer as opted in','PASS');
+    insert into v808_out values (3,'the created row is scope-stamped, so the reader reports the customer as opted in','PASS');
   else
-    insert into v696_out values (3,'the created row is scope-stamped, so the reader reports the customer as opted in',
+    insert into v808_out values (3,'the created row is scope-stamped, so the reader reports the customer as opted in',
       format('FAIL - reader says %s', coalesce(v_read::text,'<null>')));
   end if;
 
@@ -129,9 +129,9 @@ begin
      and v_event.source = 'customer_profile'
      and v_event.scope_version = '2026-08-10-partner-sharing-v3'
      and v_event.privacy_sha256 = '960434af7919e5401b3587111eb746fbba41f739edacd74cb5aeeca0402c224f' then
-    insert into v696_out values (4,'the INSERT recorded append-only consent evidence with the pinned scope and privacy sha','PASS');
+    insert into v808_out values (4,'the INSERT recorded append-only consent evidence with the pinned scope and privacy sha','PASS');
   else
-    insert into v696_out values (4,'the INSERT recorded append-only consent evidence with the pinned scope and privacy sha',
+    insert into v808_out values (4,'the INSERT recorded append-only consent evidence with the pinned scope and privacy sha',
       format('FAIL - event=%s', coalesce(v_event.id::text,'<none>')));
   end if;
 
@@ -150,9 +150,9 @@ begin
      and (v_res->>'opted_in')::boolean is false
      and (v_read->>'opted_in')::boolean is false
      and v_count = 0 then
-    insert into v696_out values (5,'a first-ever save of FALSE creates the row opted OUT — no consent is fabricated','PASS');
+    insert into v808_out values (5,'a first-ever save of FALSE creates the row opted OUT — no consent is fabricated','PASS');
   else
-    insert into v696_out values (5,'a first-ever save of FALSE creates the row opted OUT — no consent is fabricated',
+    insert into v808_out values (5,'a first-ever save of FALSE creates the row opted OUT — no consent is fabricated',
       format('FAIL - sqlstate=%s result=%s reader=%s opted_in_rows=%s',
              coalesce(v_err,'<none>'), coalesce(v_res::text,'<null>'), coalesce(v_read::text,'<null>'), v_count));
   end if;
@@ -172,9 +172,9 @@ begin
      and v_count = 1
      and not (select p.platform_marketing_opted_in
                 from public.customer_registration_preferences p where p.identity_id = iA) then
-    insert into v696_out values (6,'a customer who already has a row still updates it, and only one row exists','PASS');
+    insert into v808_out values (6,'a customer who already has a row still updates it, and only one row exists','PASS');
   else
-    insert into v696_out values (6,'a customer who already has a row still updates it, and only one row exists',
+    insert into v808_out values (6,'a customer who already has a row still updates it, and only one row exists',
       format('FAIL - sqlstate=%s result=%s rows=%s',
              coalesce(v_err,'<none>'), coalesce(v_res::text,'<null>'), v_count));
   end if;
@@ -198,9 +198,9 @@ begin
   end if;
   perform pg_temp.as_v808_system();
   if v_err = '23505' then
-    insert into v696_out values (7,'the same idempotency key replays its answer, and is refused (23505) for the opposite one','PASS');
+    insert into v808_out values (7,'the same idempotency key replays its answer, and is refused (23505) for the opposite one','PASS');
   else
-    insert into v696_out values (7,'the same idempotency key replays its answer, and is refused (23505) for the opposite one',
+    insert into v808_out values (7,'the same idempotency key replays its answer, and is refused (23505) for the opposite one',
       format('FAIL - sqlstate=%s', coalesce(v_err,'<none>')));
   end if;
 
@@ -214,29 +214,29 @@ begin
   select count(*) into v_count from public.customer_platform_marketing_consent_events e
    where e.idempotency_key = 'v808-anon-attempt';
   if v_err is not null and v_count = 0 then
-    insert into v696_out values (8,'a caller with no customer session is still refused, and writes nothing','PASS');
+    insert into v808_out values (8,'a caller with no customer session is still refused, and writes nothing','PASS');
   else
-    insert into v696_out values (8,'a caller with no customer session is still refused, and writes nothing',
+    insert into v808_out values (8,'a caller with no customer session is still refused, and writes nothing',
       format('FAIL - sqlstate=%s events=%s', coalesce(v_err,'<none>'), v_count));
   end if;
 end
-$v696_test$;
+$v808_test$;
 
-select seq, step, outcome from v696_out order by seq;
+select seq, step, outcome from v808_out order by seq;
 
-do $v696_gate$
+do $v808_gate$
 declare v_bad integer; v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v696_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v808_out;
   if v_all <> 8 then
     raise exception 'nestly_v808: % of 8 assertions ran — the suite aborted early', v_all;
   end if;
   if v_bad > 0 then
     raise exception 'nestly_v808: % assertion(s) FAILED: %', v_bad,
       (select string_agg(seq || ' ' || step || ' => ' || outcome, ' || ')
-         from v696_out where outcome not like 'PASS%');
+         from v808_out where outcome not like 'PASS%');
   end if;
 end
-$v696_gate$;
+$v808_gate$;
 
 rollback;

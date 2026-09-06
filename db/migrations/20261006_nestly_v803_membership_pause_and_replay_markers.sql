@@ -58,7 +58,7 @@
    In all three cases the LEDGER was already correct — no second charge, no second decrement.
    Only the answer was wrong.
 
-   Rollback suite: db/tests/v691_membership_pause_and_replay_markers.sql */
+   Rollback suite: db/tests/v803_membership_pause_and_replay_markers.sql */
 begin;
 
 -- =============================================================================================
@@ -132,7 +132,7 @@ grant execute on function public.set_membership_status(uuid,uuid,text) to authen
 -- =============================================================================================
 -- F089 — a membership enrollment replay says so.
 -- =============================================================================================
-do $v691_enroll$
+do $v803_enroll$
 declare
   v_def text; v_new text;
   v_hit constant text :=
@@ -167,14 +167,14 @@ begin
     execute v_new;
   end if;
 end
-$v691_enroll$;
+$v803_enroll$;
 revoke all privileges on function public.enroll_membership_v41(uuid,uuid,uuid,uuid) from public, anon;
 grant execute on function public.enroll_membership_v41(uuid,uuid,uuid,uuid) to authenticated, service_role;
 
 -- =============================================================================================
 -- F134 — a package sale and a package session replay say so.
 -- =============================================================================================
-do $v691_packages$
+do $v803_packages$
 declare
   v_def text; v_new text;
   v_sale constant text :=
@@ -225,7 +225,7 @@ begin
     execute v_new;
   end if;
 end
-$v691_packages$;
+$v803_packages$;
 revoke all privileges on function public.sell_package_v102(uuid,uuid,uuid,uuid,uuid) from public, anon;
 grant execute on function public.sell_package_v102(uuid,uuid,uuid,uuid,uuid) to authenticated, service_role;
 revoke all privileges on function public.use_package_session_v102(uuid,uuid,uuid,text) from public, anon;

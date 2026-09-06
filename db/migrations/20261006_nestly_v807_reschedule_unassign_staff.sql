@@ -56,7 +56,7 @@
    Client: both reschedule forms in app/app.js now send p_clear_staff, true only when the form
    actually offered the choice and the person using it chose the empty "Anyone available" option.
 
-   Rollback suite: db/tests/v695_reschedule_unassign_staff.sql */
+   Rollback suite: db/tests/v807_reschedule_unassign_staff.sql */
 begin;
 
 drop function if exists public.staff_reschedule_and_confirm_booking_request_v329(uuid, uuid, timestamptz, uuid);

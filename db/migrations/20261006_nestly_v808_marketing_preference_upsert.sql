@@ -74,7 +74,7 @@
        customer makes a choice. Fabricating a consent row for a customer who never expressed one
        is precisely what must not happen.
 
-   Rollback suite: db/tests/v696_marketing_preference_upsert.sql */
+   Rollback suite: db/tests/v808_marketing_preference_upsert.sql */
 begin;
 
 create or replace function public.customer_set_platform_marketing_preference(

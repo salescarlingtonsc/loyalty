@@ -131,7 +131,7 @@ begin
     return new;
   end if;
   if new.withdrawn_at is distinct from old.withdrawn_at
-     and nullif(current_setting('app.v693_withdraw', true), '') is distinct from new.id::text then
+     and nullif(current_setting('app.v805_withdraw', true), '') is distinct from new.id::text then
     raise exception 'loyalty_rewards.withdrawn_at is written only by business_delete_reward_v326'
       using errcode='restrict_violation';
   end if;
@@ -236,11 +236,11 @@ begin
   end if;
 
   if v_split then
-    perform set_config('app.v693_withdraw', p_reward::text, true);
+    perform set_config('app.v805_withdraw', p_reward::text, true);
     update public.loyalty_rewards
        set withdrawn_at = coalesce(withdrawn_at, now())
      where id=p_reward and business_id=p_business;
-    perform set_config('app.v693_withdraw', '', true);
+    perform set_config('app.v805_withdraw', '', true);
     v_commit := app.stamp_config_edit_commit_v433(p_business, v_target);
   else
     update public.loyalty_rewards set active=false, paused=false

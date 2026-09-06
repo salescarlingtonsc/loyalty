@@ -3996,49 +3996,49 @@
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v801_appointment_change_integrity.sql",
+      "path": "db/migrations/20261006_nestly_v801_appointment_change_integrity.sql",
       "semanticVersion": "v801",
       "proposedDeployVersion": "20261006160000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v802_stamp_gift_reversal_and_pin.sql",
+      "path": "db/migrations/20261006_nestly_v802_stamp_gift_reversal_and_pin.sql",
       "semanticVersion": "v802",
       "proposedDeployVersion": "20261006170000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v803_membership_pause_and_replay_markers.sql",
+      "path": "db/migrations/20261006_nestly_v803_membership_pause_and_replay_markers.sql",
       "semanticVersion": "v803",
       "proposedDeployVersion": "20261006180000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v804_pot_scope_and_unpaged_totals.sql",
+      "path": "db/migrations/20261006_nestly_v804_pot_scope_and_unpaged_totals.sql",
       "semanticVersion": "v804",
       "proposedDeployVersion": "20261006190000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v805_stamp_gift_delete_version_forward.sql",
+      "path": "db/migrations/20261006_nestly_v805_stamp_gift_delete_version_forward.sql",
       "semanticVersion": "v805",
       "proposedDeployVersion": "20261006200000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v806_guest_booking_autoapprove.sql",
+      "path": "db/migrations/20261006_nestly_v806_guest_booking_autoapprove.sql",
       "semanticVersion": "v806",
       "proposedDeployVersion": "20261006210000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260902_nestly_v807_reschedule_unassign_staff.sql",
+      "path": "db/migrations/20261006_nestly_v807_reschedule_unassign_staff.sql",
       "semanticVersion": "v807",
       "proposedDeployVersion": "20261006220000"
     },
     {
       "kind": "executable",
-      "path": "db/migrations/20260903_nestly_v808_marketing_preference_upsert.sql",
+      "path": "db/migrations/20261006_nestly_v808_marketing_preference_upsert.sql",
       "semanticVersion": "v808",
       "proposedDeployVersion": "20261006230000"
     }

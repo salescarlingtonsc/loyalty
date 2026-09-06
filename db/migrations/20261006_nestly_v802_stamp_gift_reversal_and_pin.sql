@@ -32,11 +32,11 @@
    points_batches. Both stamp tables are guarded append-only by app.v34_immutable_evidence_guard,
    which raises on every DELETE and UPDATE without exception.
 
-   So the two stamp tables get their own guard, app.v690_stamp_evidence_guard, and the shared
+   So the two stamp tables get their own guard, app.v802_stamp_evidence_guard, and the shared
    v34 guard is left exactly as it is for the six other evidence tables that use it. The new
    guard refuses everything the old one refused, with the same message and the same SQLSTATE,
    except one case: a DELETE of a row whose redemption_id is NOT NULL and equals the
-   transaction-local GUC app.v690_stamp_reversal_redemption_id. That GUC is set for the width of
+   transaction-local GUC app.v802_stamp_reversal_redemption_id. That GUC is set for the width of
    two DELETE statements inside reverse_loyalty_redemption_v34_base and cleared immediately, the
    same pattern app.credit_ledger_write_scope and app.points_ledger_insert_id already use for
    the two append-only ledgers.
@@ -85,7 +85,7 @@
    the redemption's own copy is the odd one out. So the comparison is not detecting corruption,
    it is misreading a pin.
 
-   app.v690_config_provenance_ok is the one place that now decides it, and all three callers ask
+   app.v802_config_provenance_ok is the one place that now decides it, and all three callers ask
    it. It still demands exact equality for a points redemption, and for a stamp redemption it
    accepts the divergence ONLY on evidence: consumes_balance false, and the provenance's config
    version is the one carried by BOTH the redemption's own reward_version row and the
@@ -112,13 +112,13 @@
    Touches loyalty configuration and redemption: run `npm run tenant-gate` and
    `npm run certify-tenant` after applying.
 
-   Rollback suite: db/tests/v690_stamp_gift_reversal_and_pin.sql */
+   Rollback suite: db/tests/v802_stamp_gift_reversal_and_pin.sql */
 begin;
 
 -- =============================================================================================
 -- 1. The two stamp evidence tables get their own guard. Same refusal, one named exception.
 -- =============================================================================================
-create or replace function app.v690_stamp_evidence_guard()
+create or replace function app.v802_stamp_evidence_guard()
 returns trigger
 language plpgsql
 security definer
@@ -129,24 +129,24 @@ begin
      transaction-local GUC that only a SECURITY DEFINER function in this schema can set. */
   if tg_op = 'DELETE'
      and old.redemption_id is not null
-     and nullif(current_setting('app.v690_stamp_reversal_redemption_id', true), '')
+     and nullif(current_setting('app.v802_stamp_reversal_redemption_id', true), '')
          = old.redemption_id::text then
     return old;
   end if;
   raise exception 'v34 financial provenance is append-only' using errcode = 'restrict_violation';
 end
 $function$;
-revoke all privileges on function app.v690_stamp_evidence_guard() from public, anon, authenticated;
+revoke all privileges on function app.v802_stamp_evidence_guard() from public, anon, authenticated;
 
 drop trigger if exists trg_stamp_milestone_claims_immutable on public.stamp_milestone_claims;
 create trigger trg_stamp_milestone_claims_immutable
   before delete or update on public.stamp_milestone_claims
-  for each row execute function app.v690_stamp_evidence_guard();
+  for each row execute function app.v802_stamp_evidence_guard();
 
 drop trigger if exists trg_stamp_cycles_immutable on public.stamp_cycles;
 create trigger trg_stamp_cycles_immutable
   before delete or update on public.stamp_cycles
-  for each row execute function app.v690_stamp_evidence_guard();
+  for each row execute function app.v802_stamp_evidence_guard();
 
 -- =============================================================================================
 -- 2. A reversal that restores no points may say so.
@@ -159,7 +159,7 @@ alter table public.loyalty_redemption_reversals
 --    Exact equality for points; for a stamp claim, the pin is accepted only when the claim row
 --    and the reward version both carry the provenance's version. No evidence, no pass.
 -- =============================================================================================
-create or replace function app.v690_config_provenance_ok(p_business uuid, p_redemption uuid)
+create or replace function app.v802_config_provenance_ok(p_business uuid, p_redemption uuid)
 returns boolean
 language sql
 stable
@@ -190,14 +190,14 @@ as $function$
     on prov.redemption_id = lr.id and prov.business_id = lr.business_id
  where lr.id = p_redemption and lr.business_id = p_business;
 $function$;
-revoke all privileges on function app.v690_config_provenance_ok(uuid,uuid)
+revoke all privileges on function app.v802_config_provenance_ok(uuid,uuid)
   from public, anon, authenticated;
 
 -- =============================================================================================
 -- 4. The reversal engine grows its stamp arm. One comment-free splice; the points arm below it
 --    is byte-identical to the live definition.
 -- =============================================================================================
-do $v690_reverse$
+do $v802_reverse$
 declare
   v_def text; v_new text;
   v_anchor constant text :=
@@ -243,14 +243,14 @@ declare
       perform set_config(''app.credit_ledger_insert_id'','''',true);
       perform set_config(''app.credit_ledger_write_scope'','''',true);
     end if;
-    perform set_config(''app.v690_stamp_reversal_redemption_id'',p_redemption::text,true);
+    perform set_config(''app.v802_stamp_reversal_redemption_id'',p_redemption::text,true);
     delete from public.stamp_cycles
      where business_id=p_business and redemption_id=p_redemption and origin=''claimed'';
     get diagnostics v_cycles_reopened = row_count;
     delete from public.stamp_milestone_claims
      where business_id=p_business and redemption_id=p_redemption;
     get diagnostics v_claims_removed = row_count;
-    perform set_config(''app.v690_stamp_reversal_redemption_id'','''',true);
+    perform set_config(''app.v802_stamp_reversal_redemption_id'','''',true);
     if v_claims_removed <> 1 then
       raise exception ''stamp claim reversal removed % claim rows'', v_claims_removed
         using errcode=''XX001'';
@@ -277,7 +277,7 @@ declare
 begin
   v_def := pg_get_functiondef(
     'public.reverse_loyalty_redemption_v34_base(uuid,uuid,text,text)'::regprocedure);
-  if position('v690_stamp_reversal_redemption_id' in v_def) > 0 then
+  if position('v802_stamp_reversal_redemption_id' in v_def) > 0 then
     raise notice 'nestly_v802: the reversal engine already has its stamp arm, skipping';
   else
     if (length(v_def) - length(replace(v_def, v_anchor, ''))) / nullif(length(v_anchor),0) <> 1
@@ -292,7 +292,7 @@ begin
     execute v_new;
   end if;
 end
-$v690_reverse$;
+$v802_reverse$;
 revoke all on function public.reverse_loyalty_redemption_v34_base(uuid,uuid,text,text) from public, anon;
 grant execute on function public.reverse_loyalty_redemption_v34_base(uuid,uuid,text,text)
   to authenticated, service_role;
@@ -300,7 +300,7 @@ grant execute on function public.reverse_loyalty_redemption_v34_base(uuid,uuid,t
 -- =============================================================================================
 -- 5. The two reversal entry points ask the new authority instead of comparing columns.
 -- =============================================================================================
-do $v690_config_gate$
+do $v802_config_gate$
 declare
   v_def text; v_new text;
   v_base constant text :=
@@ -308,7 +308,7 @@ declare
     raise exception ''redemption configuration provenance is inconsistent'';
   end if;';
   v_base_new constant text :=
-'  if not app.v690_config_provenance_ok(p_business, p_redemption) then
+'  if not app.v802_config_provenance_ok(p_business, p_redemption) then
     raise exception ''redemption configuration provenance is inconsistent'';
   end if;';
   v_wrap constant text :=
@@ -316,13 +316,13 @@ declare
     raise exception ''redemption exact provenance is missing or inconsistent'';
   end if;';
   v_wrap_new constant text :=
-'  if not found or not app.v690_config_provenance_ok(p_business, p_redemption) then
+'  if not found or not app.v802_config_provenance_ok(p_business, p_redemption) then
     raise exception ''redemption exact provenance is missing or inconsistent'';
   end if;';
 begin
   v_def := pg_get_functiondef(
     'public.reverse_loyalty_redemption_v34_base(uuid,uuid,text,text)'::regprocedure);
-  if position('v690_config_provenance_ok' in v_def) > 0 then
+  if position('v802_config_provenance_ok' in v_def) > 0 then
     raise notice 'nestly_v802: the reversal engine already asks the config authority, skipping';
   else
     if (length(v_def) - length(replace(v_def, v_base, ''))) / nullif(length(v_base),0) <> 1 then
@@ -338,7 +338,7 @@ begin
 
   v_def := pg_get_functiondef(
     'public.reverse_loyalty_redemption(uuid,uuid,text,text)'::regprocedure);
-  if position('v690_config_provenance_ok' in v_def) > 0 then
+  if position('v802_config_provenance_ok' in v_def) > 0 then
     raise notice 'nestly_v802: the reversal wrapper already asks the config authority, skipping';
   else
     if (length(v_def) - length(replace(v_def, v_wrap, ''))) / nullif(length(v_wrap),0) <> 1 then
@@ -352,7 +352,7 @@ begin
     execute v_new;
   end if;
 end
-$v690_config_gate$;
+$v802_config_gate$;
 revoke all on function public.reverse_loyalty_redemption(uuid,uuid,text,text) from public, anon;
 grant execute on function public.reverse_loyalty_redemption(uuid,uuid,text,text)
   to authenticated, service_role;
@@ -360,7 +360,7 @@ grant execute on function public.reverse_loyalty_redemption(uuid,uuid,text,text)
 -- =============================================================================================
 -- 6. The Reverse control tells the truth about a stamp gift.
 -- =============================================================================================
-do $v690_workflows$
+do $v802_workflows$
 declare
   v_def text; v_new text;
   v_lateral constant text :=
@@ -399,11 +399,11 @@ declare
   v_cfg_ok constant text :=
 'prov.config_version_id is not distinct from lr.config_version_id';
   v_cfg_ok_new constant text :=
-'app.v690_config_provenance_ok(lr.business_id, lr.id)';
+'app.v802_config_provenance_ok(lr.business_id, lr.id)';
   v_cfg_bad constant text :=
 'prov.config_version_id is distinct from lr.config_version_id';
   v_cfg_bad_new constant text :=
-'not app.v690_config_provenance_ok(lr.business_id, lr.id)';
+'not app.v802_config_provenance_ok(lr.business_id, lr.id)';
 begin
   v_def := pg_get_functiondef(
     'public.staff_get_reversal_workflows(uuid,uuid,integer,text)'::regprocedure);
@@ -431,7 +431,7 @@ begin
     execute v_new;
   end if;
 end
-$v690_workflows$;
+$v802_workflows$;
 revoke all on function public.staff_get_reversal_workflows(uuid,uuid,integer,text) from public, anon;
 grant execute on function public.staff_get_reversal_workflows(uuid,uuid,integer,text)
   to authenticated, service_role;
@@ -439,7 +439,7 @@ grant execute on function public.staff_get_reversal_workflows(uuid,uuid,integer,
 -- =============================================================================================
 -- 7. F128 — the wallet home card follows the customer's pinned stamp version.
 -- =============================================================================================
-do $v690_wallet$
+do $v802_wallet$
 declare
   v_def text; v_new text;
   v_anchor constant text :=
@@ -478,7 +478,7 @@ begin
     execute v_new;
   end if;
 end
-$v690_wallet$;
+$v802_wallet$;
 revoke all privileges on function
   app.c45_base_actionable_wallet_card(uuid,uuid,text,text,text,text,text[],timestamptz)
   from public, anon, authenticated;
@@ -488,7 +488,7 @@ revoke all privileges on function
 -- =============================================================================================
 do $verify$
 declare
-  v_guard text := pg_get_functiondef('app.v690_stamp_evidence_guard()'::regprocedure);
+  v_guard text := pg_get_functiondef('app.v802_stamp_evidence_guard()'::regprocedure);
   v_reverse text := pg_get_functiondef(
     'public.reverse_loyalty_redemption_v34_base(uuid,uuid,text,text)'::regprocedure);
   v_workflows text := pg_get_functiondef(
@@ -506,7 +506,7 @@ begin
   if 2 <> (select count(*) from pg_trigger t
             join pg_proc p on p.oid = t.tgfoid
            where not t.tgisinternal
-             and p.proname = 'v690_stamp_evidence_guard'
+             and p.proname = 'v802_stamp_evidence_guard'
              and t.tgrelid in ('public.stamp_milestone_claims'::regclass,
                                'public.stamp_cycles'::regclass)) then
     raise exception 'nestly_v802: the stamp tables are not both on the new guard'
@@ -537,7 +537,7 @@ begin
     raise exception 'nestly_v802: a stamp reversal still has to invent a points ledger row'
       using errcode = 'XX001';
   end if;
-  if position('v690_stamp_reversal_redemption_id' in v_reverse) = 0
+  if position('v802_stamp_reversal_redemption_id' in v_reverse) = 0
      or position('original stamp claim provenance is incomplete' in v_reverse) = 0 then
     raise exception 'nestly_v802 (F059): the reversal engine still has no stamp arm'
       using errcode = 'XX001';
@@ -547,9 +547,9 @@ begin
     raise exception 'nestly_v802 (F059): the Reverse control still refuses every stamp gift'
       using errcode = 'XX001';
   end if;
-  if position('v690_config_provenance_ok' in v_reverse) = 0
-     or position('v690_config_provenance_ok' in v_wrapper) = 0
-     or position('v690_config_provenance_ok' in v_workflows) = 0 then
+  if position('v802_config_provenance_ok' in v_reverse) = 0
+     or position('v802_config_provenance_ok' in v_wrapper) = 0
+     or position('v802_config_provenance_ok' in v_workflows) = 0 then
     raise exception 'nestly_v802 (F059b): a pinned stamp claim is still refused before either arm'
       using errcode = 'XX001';
   end if;
@@ -561,7 +561,7 @@ begin
     raise exception 'nestly_v802 (F059b): a raw config-column comparison survives somewhere'
       using errcode = 'XX001';
   end if;
-  if app.v690_config_provenance_ok(gen_random_uuid(), gen_random_uuid()) then
+  if app.v802_config_provenance_ok(gen_random_uuid(), gen_random_uuid()) then
     raise exception 'nestly_v802 (F059b): the config authority does not fail closed on no evidence'
       using errcode = 'XX001';
   end if;

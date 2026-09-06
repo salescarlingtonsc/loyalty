@@ -50,14 +50,14 @@
 --       42501.
 --
 -- Run against production inside this transaction; every fixture row is rolled back:
---   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v692_pot_scope_and_unpaged_totals.sql
+--   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/tests/v804_pot_scope_and_unpaged_totals.sql
 -- Assertions are recorded as rows rather than raised, so one final SELECT reports the whole
 -- suite. Any row whose outcome starts with FAIL is a failure.
 
 begin;
 
-create temp table v692_out(seq integer, step text, outcome text) on commit drop;
-grant insert, select on v692_out to public;
+create temp table v804_out(seq integer, step text, outcome text) on commit drop;
+grant insert, select on v804_out to public;
 
 create or replace function pg_temp.as_v804_system() returns void language plpgsql as $$
 begin
@@ -98,7 +98,7 @@ end
 $$;
 grant execute on function pg_temp.as_v804_platform(uuid) to public;
 
-create or replace function pg_temp.v692_tenant(
+create or replace function pg_temp.v804_tenant(
   p_business uuid, p_owner uuid, p_branch uuid, p_label text
 ) returns void language plpgsql as $$
 declare
@@ -139,11 +139,11 @@ begin
   values (p_business,v_owner_staff,p_branch);
 end
 $$;
-grant execute on function pg_temp.v692_tenant(uuid,uuid,uuid,text) to public;
+grant execute on function pg_temp.v804_tenant(uuid,uuid,uuid,text) to public;
 
 -- One append to points_ledger through the single route app.loyalty_ledger_write_guard admits
 -- from a system principal: entry_type 'adjust', a named programme, a NULL actor.
-create or replace function pg_temp.v692_seed_points(
+create or replace function pg_temp.v804_seed_points(
   p_business uuid, p_client uuid, p_programme uuid, p_points integer
 ) returns void language plpgsql as $$
 declare v_id uuid := gen_random_uuid();
@@ -159,9 +159,9 @@ begin
   values (p_business,p_client,p_programme,p_points,p_points);
 end
 $$;
-grant execute on function pg_temp.v692_seed_points(uuid,uuid,uuid,integer) to public;
+grant execute on function pg_temp.v804_seed_points(uuid,uuid,uuid,integer) to public;
 
-do $v692_test$
+do $v804_test$
 declare
   -- F079
   bA uuid := gen_random_uuid();
@@ -193,7 +193,7 @@ begin
   perform pg_temp.as_v804_system();
 
   -- ============================================================ FIXTURE: the two-pot tenant
-  perform pg_temp.v692_tenant(bA,oA,brA,'Pots');
+  perform pg_temp.v804_tenant(bA,oA,brA,'Pots');
   select id into spinePoints from public.business_programmes where business_id=bA and kind='points';
   select id into spineStamps from public.business_programmes where business_id=bA and kind='stamps';
   update public.business_programmes set active=true  where id=spinePoints;
@@ -214,8 +214,8 @@ begin
   -- A real two-pot history: 30 on the live points programme and 70 left on the retired stamps
   -- programme. points_ledger is append-only, so a firm that ever switched keeps both tags —
   -- which is exactly why the two scopes give different, both-legitimate answers.
-  perform pg_temp.v692_seed_points(bA,cSplit,spinePoints,30);
-  perform pg_temp.v692_seed_points(bA,cSplit,spineStamps,70);
+  perform pg_temp.v804_seed_points(bA,cSplit,spinePoints,30);
+  perform pg_temp.v804_seed_points(bA,cSplit,spineStamps,70);
 
   -- Put the firm in business_pot scope the way production does: a pot migration that is pending.
   insert into public.programme_pot_migrations(id,business_id,from_programme_id,to_programme_id,status)
@@ -232,9 +232,9 @@ begin
     from pg_catalog.jsonb_array_elements(coalesce(v_res->'items',v_res->'customers','[]'::jsonb)) as e(item)
    where (item->>'id')::uuid = cSplit;
   if v_list_points = 100 then
-    insert into v692_out values (1,'F079 in business_pot scope the directory reports the real balance (every pot), not 0','PASS');
+    insert into v804_out values (1,'F079 in business_pot scope the directory reports the real balance (every pot), not 0','PASS');
   else
-    insert into v692_out values (1,'F079 in business_pot scope the directory reports the real balance (every pot), not 0',
+    insert into v804_out values (1,'F079 in business_pot scope the directory reports the real balance (every pot), not 0',
       format('FAIL - the list says %s, the customer holds 100 (30 points pot + 70 stamps pot)',
              coalesce(v_list_points::text,'<not listed>')));
   end if;
@@ -253,9 +253,9 @@ begin
            coalesce(public.staff_list_customers_v129(bA,null,null,100,0)->'customers','[]'::jsonb)) as e(item)
    where (item->>'id')::uuid = cSplit;
   if v_list_points = 100 and v_profile = 100 and v_helper = 100 and v_legacy = 100 then
-    insert into v692_out values (2,'F079 the whole class is closed: all four readers say 100','PASS');
+    insert into v804_out values (2,'F079 the whole class is closed: all four readers say 100','PASS');
   else
-    insert into v692_out values (2,'F079 the whole class is closed: all four readers say 100',
+    insert into v804_out values (2,'F079 the whole class is closed: all four readers say 100',
       format('FAIL - v155=%s v145=%s client_points_balance_v409=%s v129=%s',
              coalesce(v_list_points::text,'<not listed>'),v_profile,v_helper,
              coalesce(v_legacy::text,'<not listed>')));
@@ -267,9 +267,9 @@ begin
    where (item->>'id')::uuid = cEmpty;
   if v_empty_points is not null and jsonb_typeof(v_empty_points->'points') = 'number'
      and (v_empty_points->>'points')::bigint = 0 then
-    insert into v692_out values (4,'F079 a customer with no ledger rows still reports 0, not null','PASS');
+    insert into v804_out values (4,'F079 a customer with no ledger rows still reports 0, not null','PASS');
   else
-    insert into v692_out values (4,'F079 a customer with no ledger rows still reports 0, not null',
+    insert into v804_out values (4,'F079 a customer with no ledger rows still reports 0, not null',
       format('FAIL - row=%s',coalesce(v_empty_points::text,'<not listed>')));
   end if;
 
@@ -294,9 +294,9 @@ begin
            coalesce(public.staff_list_customers_v129(bA,null,null,100,0)->'customers','[]'::jsonb)) as e(item)
    where (item->>'id')::uuid = cSplit;
   if v_list_points = 30 and v_profile = 30 and v_helper = 30 and v_legacy = 30 then
-    insert into v692_out values (3,'F079 sensitivity: programme_pot scope still reports the LIVE pot only (30, not 100)','PASS');
+    insert into v804_out values (3,'F079 sensitivity: programme_pot scope still reports the LIVE pot only (30, not 100)','PASS');
   else
-    insert into v692_out values (3,'F079 sensitivity: programme_pot scope still reports the LIVE pot only (30, not 100)',
+    insert into v804_out values (3,'F079 sensitivity: programme_pot scope still reports the LIVE pot only (30, not 100)',
       format('FAIL - v155=%s v145=%s helper=%s v129=%s; the scope rule may have been dropped rather than corrected',
              coalesce(v_list_points::text,'<not listed>'),v_profile,v_helper,
              coalesce(v_legacy::text,'<not listed>')));
@@ -304,7 +304,7 @@ begin
 
   -- ============================================================ FIXTURE: the reporting tenant
   perform pg_temp.as_v804_system();
-  perform pg_temp.v692_tenant(bRep,oRep,brRep,'Report');
+  perform pg_temp.v804_tenant(bRep,oRep,brRep,'Report');
   insert into public.clients(id,business_id,full_name,phone)
   values (cSend,bRep,'V692 Recipient','+65 9692 0003');
   insert into auth.users(instance_id,id,aud,role,email,encrypted_password,
@@ -338,9 +338,9 @@ begin
   if pg_catalog.jsonb_array_length(v_res->'businesses') = 2
      and (v_res->>'total_count') = '3'
      and (v_res->>'has_more') = 'true' then
-    insert into v692_out values (5,'F123 the per-firm list is still a page: 2 of 3, has_more true','PASS');
+    insert into v804_out values (5,'F123 the per-firm list is still a page: 2 of 3, has_more true','PASS');
   else
-    insert into v692_out values (5,'F123 the per-firm list is still a page: 2 of 3, has_more true',
+    insert into v804_out values (5,'F123 the per-firm list is still a page: 2 of 3, has_more true',
       format('FAIL - rows=%s total_count=%s has_more=%s',
              pg_catalog.jsonb_array_length(v_res->'businesses'),
              v_res->>'total_count',v_res->>'has_more'));
@@ -348,9 +348,9 @@ begin
 
   -- ------------------------------------------------------------------ 6. the trend covers the range
   if pg_catalog.jsonb_array_length(v_res->'monthly_trend') = 3 then
-    insert into v692_out values (6,'F123 the monthly trend covers all 3 months, including the one the page dropped','PASS');
+    insert into v804_out values (6,'F123 the monthly trend covers all 3 months, including the one the page dropped','PASS');
   else
-    insert into v692_out values (6,'F123 the monthly trend covers all 3 months, including the one the page dropped',
+    insert into v804_out values (6,'F123 the monthly trend covers all 3 months, including the one the page dropped',
       format('FAIL - the trend has %s month(s): %s',
              pg_catalog.jsonb_array_length(v_res->'monthly_trend'),v_res->'monthly_trend'));
   end if;
@@ -358,9 +358,9 @@ begin
   -- ------------------------------------------------------------------ 7. the tiles total the range
   if (v_res #>> '{summary,months}') = '3' and (v_res #>> '{summary,sends}') = '3'
      and (v_res #>> '{summary,campaigns}') = '3' then
-    insert into v692_out values (7,'F123 the KPI tiles total the whole range, not the page','PASS');
+    insert into v804_out values (7,'F123 the KPI tiles total the whole range, not the page','PASS');
   else
-    insert into v692_out values (7,'F123 the KPI tiles total the whole range, not the page',
+    insert into v804_out values (7,'F123 the KPI tiles total the whole range, not the page',
       format('FAIL - summary=%s',v_res->'summary'));
   end if;
 
@@ -373,9 +373,9 @@ begin
      and (v_res->'monthly_trend') = (v_res2->'monthly_trend')
      and (v_res2->>'has_more') = 'false'
      and pg_catalog.jsonb_array_length(v_res2->'businesses') = 3 then
-    insert into v692_out values (8,'F123 equivalence: a limit big enough to hold everything gives the IDENTICAL summary and trend','PASS');
+    insert into v804_out values (8,'F123 equivalence: a limit big enough to hold everything gives the IDENTICAL summary and trend','PASS');
   else
-    insert into v692_out values (8,'F123 equivalence: a limit big enough to hold everything gives the IDENTICAL summary and trend',
+    insert into v804_out values (8,'F123 equivalence: a limit big enough to hold everything gives the IDENTICAL summary and trend',
       format('FAIL - paged_summary=%s unpaged_summary=%s paged_trend=%s unpaged_trend=%s',
              v_res->'summary',v_res2->'summary',v_res->'monthly_trend',v_res2->'monthly_trend'));
   end if;
@@ -393,25 +393,25 @@ begin
   end;
   perform pg_temp.as_v804_system();
   if v_err = '42501' then
-    insert into v692_out values (9,'F123 the engagement report is still super-admin only (42501)','PASS');
+    insert into v804_out values (9,'F123 the engagement report is still super-admin only (42501)','PASS');
   else
-    insert into v692_out values (9,'F123 the engagement report is still super-admin only (42501)',
+    insert into v804_out values (9,'F123 the engagement report is still super-admin only (42501)',
       format('FAIL - sqlstate=%s message=%s',coalesce(v_err,'<none>'),coalesce(v_msg,'')));
   end if;
 end
-$v692_test$;
+$v804_test$;
 
-select seq, step, outcome from v692_out order by seq;
+select seq, step, outcome from v804_out order by seq;
 
 /* The report above is printed first so a human sees WHICH assertion failed; this block then
    makes the failure fatal. It matters because scripts/db-tests/run.mjs judges a file purely by
    psql's exit code — a suite that only records FAIL rows is reported green. */
-do $v692_gate$
+do $v804_gate$
 declare
   v_bad integer;
   v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v692_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v804_out;
   if v_all <> 9 then
     raise exception 'nestly_v804: % of 9 assertions ran — the suite aborted early', v_all;
   end if;
@@ -419,6 +419,6 @@ begin
     raise exception 'nestly_v804: % assertion(s) FAILED — see the report above', v_bad;
   end if;
 end
-$v692_gate$;
+$v804_gate$;
 
 rollback;

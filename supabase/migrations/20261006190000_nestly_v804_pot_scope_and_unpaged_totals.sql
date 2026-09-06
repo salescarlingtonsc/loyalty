@@ -70,13 +70,13 @@
    subquery) and so was already materialised; this adds a third reference to the same
    materialisation, not a third scan of the base tables.
 
-   Rollback suite: db/tests/v692_pot_scope_and_unpaged_totals.sql */
+   Rollback suite: db/tests/v804_pot_scope_and_unpaged_totals.sql */
 begin;
 
 -- =============================================================================================
 -- F079 — one operator and one keyword, in all five places the estate scan found.
 -- =============================================================================================
-do $v692_pots$
+do $v804_pots$
 declare
   v_site record;
   v_def text;
@@ -122,7 +122,7 @@ begin
   end loop;
   raise notice 'nestly_v804: % pot predicate site(s) corrected', v_fixed;
 end
-$v692_pots$;
+$v804_pots$;
 revoke all privileges on function app.client_points_balance_v409(uuid,uuid)
   from public, anon, authenticated;
 revoke all privileges on function
@@ -140,7 +140,7 @@ grant execute on function
 -- =============================================================================================
 -- F123 — the tiles and the trend read the whole range, the list keeps its page.
 -- =============================================================================================
-do $v692_engagement$
+do $v804_engagement$
 declare
   v_def text; v_new text;
   v_decl constant text :=
@@ -210,7 +210,7 @@ begin
     execute v_new;
   end if;
 end
-$v692_engagement$;
+$v804_engagement$;
 revoke all privileges on function
   public.platform_engagement_monthly_v255(date,date,uuid[],integer) from public, anon;
 grant execute on function

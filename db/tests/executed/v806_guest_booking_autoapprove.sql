@@ -29,9 +29,9 @@
 
 begin;
 
-create temp table v694_out(seq integer, step text, outcome text) on commit drop;
+create temp table v806_out(seq integer, step text, outcome text) on commit drop;
 
-do $v694_test$
+do $v806_test$
 declare
   v_business uuid := gen_random_uuid();
   v_slug text := 'v806-' || replace(gen_random_uuid()::text, '-', '');
@@ -117,9 +117,9 @@ begin
     v_bound_user, v_staff, v_branch);
   if coalesce(v_res->>'status','') = 'confirmed'
      and nullif(v_res->>'appointment_id','') is not null then
-    insert into v694_out values (1,'POSITIVE CONTROL: a signed-in customer''s request still auto-approves','PASS');
+    insert into v806_out values (1,'POSITIVE CONTROL: a signed-in customer''s request still auto-approves','PASS');
   else
-    insert into v694_out values (1,'POSITIVE CONTROL: a signed-in customer''s request still auto-approves',
+    insert into v806_out values (1,'POSITIVE CONTROL: a signed-in customer''s request still auto-approves',
       format('FAIL - the fixture cannot auto-approve at all: %s', coalesce(v_res::text,'<null>')));
   end if;
 
@@ -136,9 +136,9 @@ begin
     into v_status, v_appointment
     from public.booking_requests request_row where request_row.id = v_request;
   if v_status = 'confirmed' and v_appointment is not null then
-    insert into v694_out values (2,'a GUEST request on an auto-approve business is confirmed with an appointment','PASS');
+    insert into v806_out values (2,'a GUEST request on an auto-approve business is confirmed with an appointment','PASS');
   else
-    insert into v694_out values (2,'a GUEST request on an auto-approve business is confirmed with an appointment',
+    insert into v806_out values (2,'a GUEST request on an auto-approve business is confirmed with an appointment',
       format('FAIL - status=%s appointment=%s answer=%s',
              coalesce(v_status,'<null>'), coalesce(v_appointment::text,'<none>'), coalesce(v_res::text,'<null>')));
   end if;
@@ -150,9 +150,9 @@ begin
      and exists (select 1 from public.clients c
                   where c.id = v_client and c.business_id = v_business
                     and c.phone_norm = app.norm_phone('+6581000694')) then
-    insert into v694_out values (3,'the appointment carries a real customer row for the guest, matched on normalised phone','PASS');
+    insert into v806_out values (3,'the appointment carries a real customer row for the guest, matched on normalised phone','PASS');
   else
-    insert into v694_out values (3,'the appointment carries a real customer row for the guest, matched on normalised phone',
+    insert into v806_out values (3,'the appointment carries a real customer row for the guest, matched on normalised phone',
       format('FAIL - client=%s', coalesce(v_client::text,'<null>')));
   end if;
 
@@ -171,9 +171,9 @@ begin
   select count(*) into v_count from public.clients c
    where c.business_id = v_business and c.phone_norm = app.norm_phone('+6581000694');
   if v_client_again = v_client and v_count = 1 then
-    insert into v694_out values (4,'a second guest booking from the same phone reuses the SAME customer (no duplicate)','PASS');
+    insert into v806_out values (4,'a second guest booking from the same phone reuses the SAME customer (no duplicate)','PASS');
   else
-    insert into v694_out values (4,'a second guest booking from the same phone reuses the SAME customer (no duplicate)',
+    insert into v806_out values (4,'a second guest booking from the same phone reuses the SAME customer (no duplicate)',
       format('FAIL - first=%s second=%s rows_with_that_phone=%s',
              coalesce(v_client::text,'<null>'), coalesce(v_client_again::text,'<null>'), v_count));
   end if;
@@ -193,9 +193,9 @@ begin
   select count(*) into v_count from public.clients c
    where c.business_id = v_business and c.phone_norm = app.norm_phone('+6581000005');
   if v_client_again = v_known_client and v_count = 1 then
-    insert into v694_out values (5,'a guest whose phone the business already knows is recognised, not cloned','PASS');
+    insert into v806_out values (5,'a guest whose phone the business already knows is recognised, not cloned','PASS');
   else
-    insert into v694_out values (5,'a guest whose phone the business already knows is recognised, not cloned',
+    insert into v806_out values (5,'a guest whose phone the business already knows is recognised, not cloned',
       format('FAIL - booked_for=%s expected=%s rows_with_that_phone=%s',
              coalesce(v_client_again::text,'<null>'), v_known_client, v_count));
   end if;
@@ -218,9 +218,9 @@ begin
    where c.business_id = v_business and c.phone_norm = app.norm_phone('+6581000006');
   update public.staff set active = true where id = v_staff;
   if v_status in ('new','pending') and v_count = 0 then
-    insert into v694_out values (6,'a request auto-approve REFUSES stays pending and creates no customer','PASS');
+    insert into v806_out values (6,'a request auto-approve REFUSES stays pending and creates no customer','PASS');
   else
-    insert into v694_out values (6,'a request auto-approve REFUSES stays pending and creates no customer',
+    insert into v806_out values (6,'a request auto-approve REFUSES stays pending and creates no customer',
       format('FAIL - status=%s customers_created=%s', coalesce(v_status,'<null>'), v_count));
   end if;
 
@@ -231,9 +231,9 @@ begin
    where cons.business_id = v_business and cons.client_id = v_client
      and cons.channel = 'marketing' and cons.action = 'granted';
   if v_consent and v_count >= 1 then
-    insert into v694_out values (7,'the guest who ticked marketing consent is recorded as consenting, with a consents row','PASS');
+    insert into v806_out values (7,'the guest who ticked marketing consent is recorded as consenting, with a consents row','PASS');
   else
-    insert into v694_out values (7,'the guest who ticked marketing consent is recorded as consenting, with a consents row',
+    insert into v806_out values (7,'the guest who ticked marketing consent is recorded as consenting, with a consents row',
       format('FAIL - marketing_consent=%s consent_rows=%s', coalesce(v_consent::text,'<null>'), v_count));
   end if;
 
@@ -244,29 +244,29 @@ begin
                 and log.entity_id = v_request
                 and (log.detail->>'guest')::boolean
                 and (log.detail->>'client_id')::uuid = v_client) then
-    insert into v694_out values (8,'the guest approval is recorded in audit_log, naming the customer it used','PASS');
+    insert into v806_out values (8,'the guest approval is recorded in audit_log, naming the customer it used','PASS');
   else
-    insert into v694_out values (8,'the guest approval is recorded in audit_log, naming the customer it used',
+    insert into v806_out values (8,'the guest approval is recorded in audit_log, naming the customer it used',
       'FAIL - no auto_approved_v660 row marked guest for this request');
   end if;
 end
-$v694_test$;
+$v806_test$;
 
-select seq, step, outcome from v694_out order by seq;
+select seq, step, outcome from v806_out order by seq;
 
-do $v694_gate$
+do $v806_gate$
 declare v_bad integer; v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v694_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v806_out;
   if v_all <> 8 then
     raise exception 'nestly_v806: % of 8 assertions ran — the suite aborted early', v_all;
   end if;
   if v_bad > 0 then
     raise exception 'nestly_v806: % assertion(s) FAILED: %', v_bad,
       (select string_agg(seq || ' ' || step || ' => ' || outcome, ' || ')
-         from v694_out where outcome not like 'PASS%');
+         from v806_out where outcome not like 'PASS%');
   end if;
 end
-$v694_gate$;
+$v806_gate$;
 
 rollback;

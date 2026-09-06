@@ -26,7 +26,7 @@
 
 begin;
 
-create temp table v695_out(seq integer, step text, outcome text) on commit drop;
+create temp table v807_out(seq integer, step text, outcome text) on commit drop;
 
 create or replace function pg_temp.as_v807_system() returns void language plpgsql as $$
 begin
@@ -50,7 +50,7 @@ end
 $$;
 grant execute on function pg_temp.as_v807_user(uuid) to authenticated;
 
-do $v695_test$
+do $v807_test$
 declare
   v_business uuid := gen_random_uuid();
   v_slug text := 'v807-' || replace(gen_random_uuid()::text, '-', '');
@@ -117,9 +117,9 @@ begin
    where n.nspname = 'public'
      and p.proname = 'staff_reschedule_and_confirm_booking_request_v329';
   if v_count = 1 then
-    insert into v695_out values (1,'exactly one overload of the reschedule RPC exists (no PGRST203)','PASS');
+    insert into v807_out values (1,'exactly one overload of the reschedule RPC exists (no PGRST203)','PASS');
   else
-    insert into v695_out values (1,'exactly one overload of the reschedule RPC exists (no PGRST203)',
+    insert into v807_out values (1,'exactly one overload of the reschedule RPC exists (no PGRST203)',
       format('FAIL - %s overloads', v_count));
   end if;
 
@@ -169,9 +169,9 @@ begin
      and coalesce(v_res->>'outcome','') = 'applied'
      and v_appt_staff is not null
      and v_appt_staff <> v_staff then
-    insert into v695_out values (2,'p_clear_staff => true un-assigns the request, so round-robin books somebody who is actually free','PASS');
+    insert into v807_out values (2,'p_clear_staff => true un-assigns the request, so round-robin books somebody who is actually free','PASS');
   else
-    insert into v695_out values (2,'p_clear_staff => true un-assigns the request, so round-robin books somebody who is actually free',
+    insert into v807_out values (2,'p_clear_staff => true un-assigns the request, so round-robin books somebody who is actually free',
       format('FAIL - request.staff_id=%s outcome=%s appointment.staff_id=%s (asked_for=%s, and they are busy at that time)',
              coalesce(v_after::text,'<null>'), coalesce(v_res->>'outcome','<null>'),
              coalesce(v_appt_staff::text,'<null>'), v_staff));
@@ -194,9 +194,9 @@ begin
   select request_row.staff_id into v_after
     from public.booking_requests request_row where request_row.id = v_request;
   if v_after = v_staff then
-    insert into v695_out values (3,'the four-argument call (p_staff null, no flag) still leaves the assignment untouched','PASS');
+    insert into v807_out values (3,'the four-argument call (p_staff null, no flag) still leaves the assignment untouched','PASS');
   else
-    insert into v695_out values (3,'the four-argument call (p_staff null, no flag) still leaves the assignment untouched',
+    insert into v807_out values (3,'the four-argument call (p_staff null, no flag) still leaves the assignment untouched',
       format('FAIL - staff_id=%s expected=%s', coalesce(v_after::text,'<null>'), v_staff));
   end if;
 
@@ -216,9 +216,9 @@ begin
   select request_row.staff_id into v_after
     from public.booking_requests request_row where request_row.id = v_request;
   if v_after = v_other then
-    insert into v695_out values (4,'naming a different team member still re-assigns the request to them','PASS');
+    insert into v807_out values (4,'naming a different team member still re-assigns the request to them','PASS');
   else
-    insert into v695_out values (4,'naming a different team member still re-assigns the request to them',
+    insert into v807_out values (4,'naming a different team member still re-assigns the request to them',
       format('FAIL - staff_id=%s expected=%s', coalesce(v_after::text,'<null>'), v_other));
   end if;
 
@@ -242,9 +242,9 @@ begin
   select request_row.staff_id into v_after
     from public.booking_requests request_row where request_row.id = v_request;
   if v_err = '22023' and v_after = v_staff then
-    insert into v695_out values (5,'naming a member AND clearing is refused (22023), and the request is untouched','PASS');
+    insert into v807_out values (5,'naming a member AND clearing is refused (22023), and the request is untouched','PASS');
   else
-    insert into v695_out values (5,'naming a member AND clearing is refused (22023), and the request is untouched',
+    insert into v807_out values (5,'naming a member AND clearing is refused (22023), and the request is untouched',
       format('FAIL - sqlstate=%s staff_id=%s', coalesce(v_err,'<none>'), coalesce(v_after::text,'<null>')));
   end if;
 
@@ -260,29 +260,29 @@ begin
   select request_row.staff_id into v_after
     from public.booking_requests request_row where request_row.id = v_request;
   if v_err = '42501' and v_after = v_staff then
-    insert into v695_out values (6,'somebody who is not a member of the business is still refused (42501)','PASS');
+    insert into v807_out values (6,'somebody who is not a member of the business is still refused (42501)','PASS');
   else
-    insert into v695_out values (6,'somebody who is not a member of the business is still refused (42501)',
+    insert into v807_out values (6,'somebody who is not a member of the business is still refused (42501)',
       format('FAIL - sqlstate=%s staff_id=%s', coalesce(v_err,'<none>'), coalesce(v_after::text,'<null>')));
   end if;
 end
-$v695_test$;
+$v807_test$;
 
-select seq, step, outcome from v695_out order by seq;
+select seq, step, outcome from v807_out order by seq;
 
-do $v695_gate$
+do $v807_gate$
 declare v_bad integer; v_all integer;
 begin
-  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v695_out;
+  select count(*) filter (where outcome not like 'PASS%'), count(*) into v_bad, v_all from v807_out;
   if v_all <> 6 then
     raise exception 'nestly_v807: % of 6 assertions ran — the suite aborted early', v_all;
   end if;
   if v_bad > 0 then
     raise exception 'nestly_v807: % assertion(s) FAILED: %', v_bad,
       (select string_agg(seq || ' ' || step || ' => ' || outcome, ' || ')
-         from v695_out where outcome not like 'PASS%');
+         from v807_out where outcome not like 'PASS%');
   end if;
 end
-$v695_gate$;
+$v807_gate$;
 
 rollback;

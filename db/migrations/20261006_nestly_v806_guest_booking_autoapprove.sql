@@ -84,7 +84,7 @@
        deterministic `order by candidate.staff_id` fallback, the audit row it already writes.
        Only the client is new.
 
-   Rollback suite: db/tests/v694_guest_booking_autoapprove.sql */
+   Rollback suite: db/tests/v806_guest_booking_autoapprove.sql */
 begin;
 
 create or replace function app.v660_autoapprove_booking_request(p_request uuid)

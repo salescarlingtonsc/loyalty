@@ -83,7 +83,7 @@ test('F037 growStampsSetLengthV422 clears the busy flag even when the owner has 
    copy was "it stops paying out for everyone right away". nestly_v805 made the server tell the
    truth instead — business_delete_reward_v326 now withdraws a stamp gift version-forward (the
    v433 begin/commit path) and every reader asks app.reward_live_on_offer_v805 — so the copy must
-   now promise exactly what db/tests/v693_stamp_gift_delete_version_forward.sql proves. If this
+   now promise exactly what db/tests/v805_stamp_gift_delete_version_forward.sql proves. If this
    assertion is ever flipped back, that migration has been reverted; check the server first.
    The sibling suite tests/business-ui/w4b2-audit-wave.test.mjs pins the neighbouring F031 delete
    controls and carries no F038 copy assertion, so nothing there needs to move with this. */
