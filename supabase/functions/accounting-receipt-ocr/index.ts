@@ -176,11 +176,18 @@ async function processQueue(): Promise<Record<string, unknown>> {
       );
       if (!use) { await fail('model_returned_no_extraction'); continue; }
 
-      const { error: writeError } = await admin.rpc(
+      const { data: writeResult, error: writeError } = await admin.rpc(
         'internal_record_receipt_extraction_v199',
         { p_receipt: receipt.id, p_extracted: normalizeExtraction(use.input), p_error: null },
       );
       if (writeError) { await fail('extraction_store_failed'); continue; }
+      if (!writeResult?.updated) {
+        // The claim lease moved on (reclaimed by a second worker, or already
+        // resolved) before this worker's write landed. Nothing was persisted by
+        // THIS attempt, so it must not be reported as extracted.
+        processed.push({ receipt: receipt.id, status: 'failed', error: 'claim_lost' });
+        continue;
+      }
       processed.push({ receipt: receipt.id, status: 'extracted' });
     } catch (error) {
       await fail(String(error instanceof Error ? error.message : error).slice(0, 200));

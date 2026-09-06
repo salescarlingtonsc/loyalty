@@ -50,7 +50,9 @@ test('v146 prospect create keeps one retry key and does not misreport refresh fa
   assert.match(modal,/createAttemptFingerprint!==fingerprint\)createAttemptKey=idempotencyKey\(\)/);
   assert.match(modal,/p_operation_key:createAttemptKey/);
   assert.doesNotMatch(modal,/p_idempotency_key:idempotencyKey\(\)/);
-  assert.match(modal,/controls\.close\(\);[\s\S]+Prospect \{name\} created[\s\S]+try\{await renderOnboarding/);
+  assert.match(modal,/* audit F117 (wave 4E): the post-create refresh goes through the caller's own refresh when one is
+     supplied, so an out-of-order render cannot overwrite a newer page. */
+  /controls\.close\(\);[\s\S]+Prospect \{name\} created[\s\S]+try\{if\(context\.refresh\)await context\.refresh\(\);else await renderOnboarding/);
   assert.match(modal,/was saved\. Refresh the onboarding list/);
 });
 

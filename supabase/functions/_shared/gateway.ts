@@ -121,8 +121,12 @@ export async function ipHash(req) {
 }
 
 export async function enforceRateLimit(req, scope, limit, windowSeconds, extraKey = '') {
-  const baseHash = await ipHash(req);
-  const keyHash = extraKey ? await sha256Hex(`${baseHash}\0${extraKey}`) : baseHash;
+  // extraKey scopes the limiter to a specific resource (e.g. a booking-management
+  // token hash). That limiter must be per-resource, not per-(IP, resource) — folding
+  // the caller's IP into the key would let an attacker holding a leaked token reset
+  // their budget just by rotating IP. Callers that also want a coarse per-IP ceiling
+  // pass a separate, extraKey-less enforceRateLimit call (see manage-booking/index.ts).
+  const keyHash = extraKey ? await sha256Hex(extraKey) : await ipHash(req);
   const { data, error } = await adminClient().rpc('internal_gateway_rate_limit', {
     p_scope: scope,
     p_key_hash: keyHash,
@@ -150,9 +154,18 @@ export async function verifyTurnstile(req, token, expectedAction) {
   form.set('response', String(token));
   const clientIp = authoritativeClientIp(req.headers);
   if (clientIp !== 'unknown') form.set('remoteip', clientIp);
-  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST', body: form,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  let response;
+  try {
+    response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST', body: form, signal: controller.signal,
+    });
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
   if (!response.ok) return false;
   const result = await response.json();
   return turnstileBindingValid(result, expectedAction, expectedHostname, testMode);

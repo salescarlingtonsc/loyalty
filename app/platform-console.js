@@ -4679,6 +4679,20 @@
   function nullableMoneyInputToCents(value) {
     return String(value??'').trim()===''?null:moneyInputToCents(value);
   }
+  /* F121: platform_issue_credit_note_v147 rejects a partial credit note unless its tax satisfies
+     the CUMULATIVE check `v_credited_tax+p_tax_cents = round((v_credited_subtotal+p_subtotal_cents)
+     *invoice.tax_cents/invoice.subtotal_cents)` — the running total, not this call's own subtotal
+     proportioned against the invoice in isolation. Deriving p_tax_cents as the remainder needed to
+     reach that exact cumulative figure keeps every call, first or Nth, satisfying the server's
+     check exactly (round(a)+round(b) does not always equal round(a+b), so proportioning each call
+     independently can drift by a cent once a prior credit note already exists). */
+  function creditNoteCumulativeTaxCents({invoiceSubtotalCents,invoiceTaxCents,priorCreditedSubtotalCents=0,priorCreditedTaxCents=0,subtotalCents}) {
+    const tax=Number(invoiceTaxCents||0);
+    if(tax<=0)return 0;
+    const subtotal=Math.max(1,Number(invoiceSubtotalCents||0));
+    const cumulativeTax=Math.round((Number(priorCreditedSubtotalCents||0)+Number(subtotalCents||0))*tax/subtotal);
+    return Math.max(0,cumulativeTax-Number(priorCreditedTaxCents||0));
+  }
   function percentInputToBasisPoints(value) {
     const text=String(value??'').trim();
     if(!/^\d+(?:\.\d{1,2})?$/.test(text)||Number(text)>100)throw new Error(pt('Enter a percentage from 0 to 100 with no more than two decimal places.'));
@@ -9912,9 +9926,29 @@
       <div class="wide">${CUI.field({id:'booksReceiptReference',label:'Payment reference',required:true,attributes:'name="reference" minlength="3"'})}</div>
     </div>`,onSubmit:async(form,controls)=>{await rpc(sb,'platform_record_invoice_receipt_v147',{p_invoice:document.id,p_payment_date:form.get('date'),p_amount_cents:Math.round(Number(form.get('amount'))*100),p_reference:form.get('reference'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Receipt recorded and posted.'))}});
   }
-  function accountingCreditModal(document,context,range) {
+  function accountingCreditModal(document,context,range,allDocuments=[]) {
     const {CUI,sb}=context;const attemptKey=idempotencyKey();
-    modal({title:'Issue credit note',submitLabel:'Issue credit note',CUI,body:`<div class="platform-form-grid">${CUI.field({id:'booksCreditDate',label:'Issue date',type:'date',required:true,value:range.to,attributes:'name="date"'})}${CUI.field({id:'booksCreditAmount',label:'Credit amount before tax (SGD)',type:'number',required:true,attributes:`name="amount" min="0.01" max="${(Number(document.outstanding_cents)/100).toFixed(2)}" step="0.01"`})}<div class="wide">${CUI.field({id:'booksCreditReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{const subtotal=Math.round(Number(form.get('amount'))*100),tax=Math.round(subtotal*Number(document.tax_cents||0)/Math.max(1,Number(document.subtotal_cents||0)));await rpc(sb,'platform_issue_credit_note_v147',{p_invoice:document.id,p_issue_date:form.get('date'),p_subtotal_cents:subtotal,p_tax_cents:tax,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Credit note issued and posted.'))}});
+    /* F121: platform_issue_credit_note_v147 requires the CUMULATIVE credited tax (this credit
+       plus every non-reversed credit_note already issued against this invoice) to equal
+       round(cumulative_subtotal * invoice.tax_cents / invoice.subtotal_cents) — not this credit's
+       own subtotal proportioned against the original invoice in isolation. round(a)+round(b) does
+       not always equal round(a+b), so a second/later partial credit computed the old way could be
+       off by a cent and get rejected with a confusing server error. Reconstruct the already-
+       credited totals from sibling documents already loaded in this books view (the same list the
+       credit-note button itself was rendered from) and derive this call's tax as the remainder
+       needed to keep the running total exactly proportional. */
+    const priorCredits=asArray(allDocuments).filter(sibling=>
+      sibling.document_type==='credit_note'&&String(sibling.original_document)===String(document.id)&&!sibling.reversed);
+    const priorCreditedSubtotal=priorCredits.reduce((sum,sibling)=>sum+Number(sibling.subtotal_cents||0),0);
+    const priorCreditedTax=priorCredits.reduce((sum,sibling)=>sum+Number(sibling.tax_cents||0),0);
+    modal({title:'Issue credit note',submitLabel:'Issue credit note',CUI,body:`<div class="platform-form-grid">${CUI.field({id:'booksCreditDate',label:'Issue date',type:'date',required:true,value:range.to,attributes:'name="date"'})}${CUI.field({id:'booksCreditAmount',label:'Credit amount before tax (SGD)',type:'number',required:true,attributes:`name="amount" min="0.01" max="${(Number(document.outstanding_cents)/100).toFixed(2)}" step="0.01"`})}<div class="wide">${CUI.field({id:'booksCreditReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{
+      const subtotal=Math.round(Number(form.get('amount'))*100);
+      const tax=creditNoteCumulativeTaxCents({
+        invoiceSubtotalCents:document.subtotal_cents,invoiceTaxCents:document.tax_cents,
+        priorCreditedSubtotalCents:priorCreditedSubtotal,priorCreditedTaxCents:priorCreditedTax,
+        subtotalCents:subtotal
+      });
+      await rpc(sb,'platform_issue_credit_note_v147',{p_invoice:document.id,p_issue_date:form.get('date'),p_subtotal_cents:subtotal,p_tax_cents:tax,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Credit note issued and posted.'))}});
   }
   function accountingDebitModal(document,context,range) {
     const {CUI,sb}=context;const attemptKey=idempotencyKey();
@@ -11863,7 +11897,7 @@
       main.querySelectorAll('[data-reverse-expense]').forEach(button=>button.onclick=()=>platformExpenseReversalModal(button.dataset.reverseExpense,context,range));
       main.querySelectorAll('[data-print-document]').forEach(button=>button.onclick=()=>printFinancialDocument(documents.find(document=>String(document.id)===button.dataset.printDocument),CUI));
       main.querySelectorAll('[data-record-receipt]').forEach(button=>button.onclick=()=>accountingReceiptModal(documents.find(document=>String(document.id)===button.dataset.recordReceipt),context,range));
-      main.querySelectorAll('[data-credit-note]').forEach(button=>button.onclick=()=>accountingCreditModal(documents.find(document=>String(document.id)===button.dataset.creditNote),context,range));
+      main.querySelectorAll('[data-credit-note]').forEach(button=>button.onclick=()=>accountingCreditModal(documents.find(document=>String(document.id)===button.dataset.creditNote),context,range,documents));
       main.querySelectorAll('[data-debit-note]').forEach(button=>button.onclick=()=>accountingDebitModal(documents.find(document=>String(document.id)===button.dataset.debitNote),context,range));
       main.querySelectorAll('[data-reverse-document]').forEach(button=>button.onclick=()=>accountingDocumentReversalModal(documents.find(document=>String(document.id)===button.dataset.reverseDocument),context,range));
       CUI.focusRoute(main);
@@ -12356,7 +12390,13 @@
     modal({title:'Support request',submitLabel:'Save update',CUI,body:`${detail}
       <div class="platform-form-grid">
         ${CUI.field({id:'supportTicketStatusV672',label:'Set status',control:'select',required:true,
-          options:['in_progress','resolved','closed'].map(value=>({value,label:supportStatusLabel(value)})),
+          /* F120: the ticket's current status must be the one pre-selected — an 'open' ticket has
+             no matching option in this list (it is not itself a settable target status here), so
+             it falls back to 'in_progress', the natural first step out of Open. Any other current
+             status (in_progress/resolved/closed) must stay selected as-is, or opening a resolved/
+             closed ticket just to add a note silently reopens it on an unnoticed Save. */
+          options:['in_progress','resolved','closed'].map(value=>({value,label:supportStatusLabel(value),
+            selected:value===(ticket.status==='open'?'in_progress':ticket.status)})),
           attributes:'name="status"'})}
         <div class="wide">${CUI.field({id:'supportTicketNoteV672',label:'What you did',control:'textarea',required:true,
           hint:'Recorded against the ticket. Write what was actually done, not a placeholder.',
@@ -13046,8 +13086,18 @@
           result=recovered?.data||result;
         }
       }
-      controls.close();context.close?.();
+      /* F138: onCompleted (only supplied by the CRM "Create Stripe checkout" button) does a
+         SECOND write — platform_link_checkout_command_v156 — that can still throw after the
+         billing command itself has already succeeded (e.g. a permission-scope change, or the
+         billing_commands row not yet visible as completed). Closing the confirm dialog and the
+         drawer BEFORE awaiting that write meant a thrown error had nowhere left to land: modal()'s
+         own catch writes into the confirm dialog's errorHost, but that dialog (and its errorHost)
+         had already been removed from the DOM one line above, so the operator saw nothing at all
+         and believed the link succeeded. Awaiting onCompleted first — matching every other
+         controls.close()-then-write call site in this file — lets a failure surface on the dialog
+         that is still open and lets the operator retry, instead of silently vanishing.  */
       if(context.onCompleted)await context.onCompleted(result);
+      controls.close();context.close?.();
       if(result?.redirect_url&&['create_checkout','create_portal'].includes(type)){
         if(context.suppressRedirect)return;
         if(globalObject.location?.assign)globalObject.location.assign(result.redirect_url);
@@ -13910,11 +13960,20 @@
       };
     }
     const roleSelect=overlay.querySelector('#platformAccessRole');
+    /* F118: capture each module select's own seeded value (its ORIGINAL admin-shape value, from
+       accessPermissionRows) before the sales_staff branch below ever overwrites it, so switching
+       Role back to Admin can restore what was actually there rather than leaving the sales_staff-
+       forced values sitting stale in a now-re-enabled dropdown. Read once, before any onchange
+       has run, so it is unaffected by later toggling back and forth. */
+    overlay.querySelectorAll('[data-access-module]').forEach(row=>{
+      const select=row.querySelector('select');
+      select.dataset.adminSeedValue=select.value;
+    });
     const updateRoleHelp=()=>{
       const sales=roleSelect.value==='sales_staff';
       overlay.querySelectorAll('[data-access-module]').forEach(row=>{
         const key=row.dataset.accessModule,select=row.querySelector('select');
-        if(!sales){select.disabled=false;return}
+        if(!sales){select.disabled=false;select.value=select.dataset.adminSeedValue||'rw';return}
         if(key==='overview'){select.value='r';select.disabled=true}
         else if(key==='onboarding'){select.value='rw';select.disabled=true}
         else if(key==='firms'||key==='reports'){
@@ -14179,7 +14238,7 @@
   }
 
   async function renderScopedFirms(context,search=null,{pageState=null}={}) {
-    const {main,CUI,sb,access}=context;
+    const {main,CUI,sb,access,generation,isCurrent}=context;
     const route=scopedDirectoryStateFromHash(context.hash);
     const activeSearch=search===null?route.search:search;
     const prior=asObject(pageState);
@@ -14194,6 +14253,9 @@
       const snapshotAt=payload.snapshot_at||prior.snapshot_at||null;
       const total=Number(payload.total_count??items.length);
       const requestedFirm=route.firm;
+      // F117: same stale-response guard every super-admin render task in this file applies after
+      // its own awaits — this scoped (admin/sales_staff) equivalent omitted it.
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       main.innerHTML=`${CUI.pageHeader({title:'Firms',subtitle:'Search the firms available to your platform role.',iconName:'branch'})}
         ${scopedScopeNote(access,CUI)}
         <form class="card platform-scoped-search" id="platformScopedFirmSearch">
@@ -14395,7 +14457,7 @@
   }
 
   async function renderScopedOnboarding(context,search=null,{pageState=null}={}) {
-    const {main,CUI,sb,access}=context;
+    const {main,CUI,sb,access,generation,isCurrent}=context;
     const route=scopedDirectoryStateFromHash(context.hash);
     const activeSearch=search===null?route.search:search;
     const prior=asObject(pageState);
@@ -14414,6 +14476,9 @@
       // Same best-effort per-business v513 hydration as the super-admin
       // pipeline (renderOnboarding): a missing chip never blocks the board.
       const cardItems=await hydrateOnboardingReviewV513(sb,items).catch(()=>items);
+      // F117: same stale-response guard every super-admin render task in this file applies after
+      // its own awaits — this scoped (admin/sales_staff) equivalent omitted it.
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       main.innerHTML=`${CUI.pageHeader({
         title:'Onboarding',subtitle:access.scope==='own_created_or_assigned'
           ?'Manage only the firms you created or are assigned to.'
@@ -14501,7 +14566,7 @@
   }
 
   async function renderScopedReports(context,search=null,{pageState=null}={}) {
-    const {main,CUI,sb,access}=context;
+    const {main,CUI,sb,access,generation,isCurrent}=context;
     const route=scopedDirectoryStateFromHash(context.hash);
     const activeSearch=search===null?route.search:search;
     const prior=asObject(pageState);
@@ -14521,6 +14586,9 @@
       const selectedOptions=selectedId&&!selectedLoaded
         ?`<label data-deep-linked-firm><input type="radio" name="business" value="${escapeHtml(selectedId)}" checked><span><b>${escapeHtml(pt('Selected assigned firm'))}</b><small>${escapeHtml(pt('Loaded securely from the report link'))}</small></span></label>`
         :'';
+      // F117: same stale-response guard every super-admin render task in this file applies after
+      // its own awaits — this scoped (admin/sales_staff) equivalent omitted it.
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       main.innerHTML=`${CUI.pageHeader({title:'Reports',subtitle:'Generate analysis using only firms inside your platform scope.',iconName:'reports'})}
         ${scopedScopeNote(access,CUI)}
         <form class="card platform-scoped-search" id="platformScopedReportSearch">
@@ -14542,9 +14610,16 @@
           <button class="btn" type="submit">${CUI.icon('reports',{size:17})}<span>${escapeHtml(pt('Generate report'))}</span></button>
         </form>
         <section id="platformScopedReportResult" class="platform-report-host" aria-live="polite">${CUI.emptyState({iconName:'reports',title:'Choose a firm to report on',body:'Customer groups, product and service patterns, and consultative actions will appear here when the evidence threshold is met.'})}</section>`;
+      /* F117: two overlapping generate() calls (re-clicking "Generate report" for a different
+         firm before the first resolves) target the same #platformScopedReportResult host within
+         the SAME render — the outer generation/isCurrent guard above cannot distinguish them,
+         since both belong to this one render() call. reportToken is a local per-call counter:
+         only the call that is still the most recently started may write the host. */
+      let reportToken=0;
       const generate=async(selected,from,to)=>{
         const host=main.querySelector('#platformScopedReportResult');
         if(!selected||!host){CUI.announce('Select one firm.',{assertive:true});return}
+        const token=++reportToken;
         host.innerHTML=CUI.loadingState({title:'Generating consultant brief',body:'Reconciling customer, product and service evidence…',iconName:'reports'});
         try{
           const [report,affinity,recommendations]=await Promise.all([
@@ -14558,10 +14633,12 @@
               p_business:selected,p_branch:null,p_from:from,p_to:to
             })
           ]);
+          if(token!==reportToken||!host.isConnected||(isCurrent&&!isCurrent()))return;
           host.innerHTML=consultativeIntelligenceHtml(
             asObject(report),asObject(affinity),asObject(recommendations),CUI
           );
         }catch(error){
+          if(token!==reportToken||!host.isConnected||(isCurrent&&!isCurrent()))return;
           host.innerHTML=CUI.errorState({
             title:'Report unavailable',message:platformErrorMessage(error,'Try again.')
           });
@@ -14598,7 +14675,7 @@
   }
 
   async function renderScopedOverview(context) {
-    const {main,CUI,sb,access}=context;
+    const {main,CUI,sb,access,generation,isCurrent}=context;
     const sales=access.role==='sales_staff';
     main.innerHTML=loading(CUI,sales?'Today':'Platform overview','Loading your permitted firm summary…','platform');
     try{
@@ -14619,6 +14696,9 @@
         })
       ]);
       const scopedDomain=scopedCoverage.domains[0];
+      // F117: same stale-response guard every super-admin render task in this file applies after
+      // its own awaits — this scoped (admin/sales_staff) equivalent omitted it.
+      if(generation!==renderGeneration||!main.isConnected||(isCurrent&&!isCurrent()))return;
       main.innerHTML=`${CUI.pageHeader({
         title:sales?'Today':'Platform overview',
         subtitle:sales
@@ -16029,6 +16109,12 @@
     try{
       access=normalizePlatformAccess(await rpc(sb,'platform_list_my_access_v89'));
     }catch(error){
+      /* F116: platform_list_my_access_v89 is a full network round trip on EVERY console
+         navigation. If a newer render() (or a non-console repaint — SIGNED_OUT, Back/Forward,
+         an external link) has already taken over `root` by the time this one's access RPC
+         settles, this stale render must not overwrite it — exactly the guard every downstream
+         page task in this file already applies after its own awaits. */
+      if(generation!==renderGeneration||(isCurrent&&!isCurrent()))return;
       if(isPlatformAccessDeniedError(error)){
         root.innerHTML=platformAccessDeniedHtml({
           CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
@@ -16045,6 +16131,8 @@
       CUI.focusRoute(root.querySelector('#platformMain'));
       return;
     }
+    // F116: same stale-response guard as the catch branch above, for the success path.
+    if(generation!==renderGeneration||(isCurrent&&!isCurrent()))return;
     if(!access){
       root.innerHTML=platformAccessDeniedHtml({
         CUI,brand:brand||globalObject.NestlyBrand||{},workspaceHash,onSignOut
@@ -16179,7 +16267,7 @@
     firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,scopedFirmIdFromHash,scopedFirmHash,normalizePlatformGrantPermissions,
     enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
     buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
-    moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+    moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,creditNoteCumulativeTaxCents,requestBillingCommand,
     safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
     accountDeletionQueueHtml,privacyOperationAttempt,accountSignupQueueHtml,
     onboardingHash,onboardingStateFromHash,onboardingTabs,onboardingTabsFor,onboardingTabStripHtml,
@@ -16225,7 +16313,7 @@
       firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,scopedFirmIdFromHash,scopedFirmHash,normalizePlatformGrantPermissions,
       enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
       buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
-      moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,
+      moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,creditNoteCumulativeTaxCents,requestBillingCommand,
       safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
       onboardingHash,onboardingStateFromHash,onboardingTabs,onboardingTabsFor,onboardingTabStripHtml,accountSignupQueueHtml,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,

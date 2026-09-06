@@ -1384,6 +1384,10 @@ let dashboardRenderEpoch=0; // invalidates pending dashboard/filter work as soon
 let customerWalletRenderEpoch=0; // prevents an older customer-wallet RPC from repainting a new route
 let routeRenderEpoch=0; // prevents an older async route from redirecting over newer navigation
 let portalRenderEpoch=0; // prevents delayed persona/profile/session work repainting another portal/route
+const beginRouteInvocation=()=>{
+  const routeEpoch=++routeRenderEpoch;
+  return ()=>routeRenderEpoch===routeEpoch;
+};
 /* F039: quiet growPage() re-renders write into the SAME outerMain node (a hard route change is
    the only thing that ever replaces <main>), so isGrowCurrent()'s outerMain.isConnected/M()===
    outerMain checks stay true across two overlapping quiet renders regardless of which one
@@ -1393,10 +1397,6 @@ let portalRenderEpoch=0; // prevents delayed persona/profile/session work repain
    newer growPage() invocation always loses, independent of resolution order — the same pattern
    dashboardRenderEpoch/routeRenderEpoch/portalRenderEpoch already use. */
 let growPageRenderEpoch=0;
-const beginRouteInvocation=()=>{
-  const routeEpoch=++routeRenderEpoch;
-  return ()=>routeRenderEpoch===routeEpoch;
-};
 
 /* V314 (W6 increment 1): `programmes` is this session's mirror of public.business_programmes —
    the four-row programme spine that became the ONE authority on which programmes run when v314
