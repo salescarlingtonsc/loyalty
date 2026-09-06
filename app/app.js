@@ -57758,20 +57758,22 @@ async function loadSignupConfig(host){
 
    The registered company name and the UEN used to be in here too (V188); nestly_v788 moved them
    to the branch, because branches may be different ACRA entities. */
-/* nestly_v421: whether the customer-facing wording field belongs on screen. 'Other' is the only
-   sector with no customer-readable name of its own, so it is the only one that needs the field —
-   plus any firm that already has wording saved, whose text would otherwise be live with nothing
-   to edit it by. */
-function workspaceIndustryLabelNeededV421(industry,label){
-  return String(industry||'').trim().toLowerCase()==='other'||!!String(label||'').trim();
-}
-/* Keeps that row in step with the select without a re-render, so a half-typed name in the field
-   above is not thrown away when the sector is picked. */
-function syncWorkspaceIndustryLabelRowV421(){
-  const row=$('biLabelRowV421');
-  if(!row)return;
-  const needed=workspaceIndustryLabelNeededV421($('bi')?.value||S.biz.industry,$('bilabel')?.value);
-  row.hidden=!needed;
+/* nestly_v799 SUPERSEDES the v421 gate. v421 showed the customer-facing wording field only on
+   'Other' (or where wording was already saved), because every other sector already had a word a
+   customer understands. Owner ruling 2026-09-06: "allow business to change the wording for this —
+   it will not affect the modules or any operations. just how customer reads it." So the field is
+   always on screen for every sector. Nothing about what it WRITES changed: it is still
+   businesses.industry_label, still the only thing a customer reads under the business name, and it
+   still touches no module and no entitlement — unlike the sector itself, which the firm cannot
+   move at all (see workspaceBrandPanelHtmlV259). The gate function and its sync are gone rather
+   than left returning true: a predicate nothing can make false is a lie about the rule. */
+/* The words a firm sees for "leave it blank and this is what shows". 'Other' is the one sector
+   whose label must never reach a customer (v421, photo 3 — customerBusinessTaglineV385 draws no
+   line at all for it), so it is the one case that promises nothing instead. */
+function workspaceIndustryLabelFallbackV799(industry){
+  const key=String(industry||'').trim().toLowerCase();
+  if(!key||key==='other')return '';
+  return INDUSTRIES[key]?.label||'';
 }
 function workspaceBrandPanelHtmlV259(){
   return `<div class="card" style="margin-top:16px"><b>Business</b>
@@ -57815,10 +57817,10 @@ function workspaceBrandPanelHtmlV259(){
             It also stays visible for a firm that already has wording saved against another
             sector: that text is live on their customers' screens, and hiding the only control
             that edits it would strand it. */''}
-      <div id="biLabelRowV421"${workspaceIndustryLabelNeededV421(S.biz.industry,S.biz.industry_label)?'':' hidden'}>
+      <div id="biLabelRowV421">
         <label for="bilabel">What customers see under your name</label>
         <input id="bilabel" maxlength="60" placeholder="e.g. Facial studio" value="${esc(S.biz.industry_label||'')}">
-        <p class="muted small" style="margin-top:4px">Shown under your business name in the customer app. Leave it blank and no line is shown.</p>
+        <p class="muted small" style="margin-top:4px">Your own words for what you do — this is the line customers read under your business name. ${workspaceIndustryLabelFallbackV799(S.biz.industry)?`Leave it blank and &ldquo;${esc(workspaceIndustryLabelFallbackV799(S.biz.industry))}&rdquo; is shown.`:'Leave it blank and no line is shown.'} It changes nothing else.</p>
       </div>
       ${/* V375 (owner, photo 17: the swatch struck through, "remove"). Every business's customer
             surface now uses Peekaa's own accent, so there is no colour to pick and none to save.
@@ -58855,13 +58857,12 @@ function wireCustomerInterfacePreviewV243(){
   /* V385: the industry select and its customer-facing wording feed the identity line under the
      business name, so both refresh the preview. 'change' as well as 'input' — a <select> on
      WebKit does not always fire input on a pick. */
-  /* nestly_v421: and the sector decides whether the customer-facing wording field is on screen. */
-  syncWorkspaceIndustryLabelRowV421();
-  ['bn','bc','bp','bbio','bilabel','bi'].forEach(id=>{
+  /* nestly_v799: the wording field is always on screen now, so there is no row to keep in step and
+     no reason to listen to the sector select — which is read-only and fires nothing anyway. */
+  ['bn','bc','bp','bbio','bilabel'].forEach(id=>{
     const el=$(id);
     if(!el)return;
     el.addEventListener('input',refreshCustomerInterfaceLivePreviewV326);
-    if(id==='bi')el.addEventListener('change',syncWorkspaceIndustryLabelRowV421);
     if(el.tagName==='SELECT')el.addEventListener('change',refreshCustomerInterfaceLivePreviewV326);
   });
 }

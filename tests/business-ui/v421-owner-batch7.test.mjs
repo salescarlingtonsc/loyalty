@@ -170,14 +170,30 @@ test('v421 a portrait poster no longer spills out of the swipe card', () => {
 
 /* ------------------------------ 4. photo 3, Industry = Other -------------------------------- */
 
-test('v421 the customer-facing wording field appears when, and only when, it is needed', () => {
-  const { workspaceIndustryLabelNeededV421 } =
-    load(fnSource('workspaceIndustryLabelNeededV421', 'syncWorkspaceIndustryLabelRowV421'));
-  assert.equal(workspaceIndustryLabelNeededV421('other', ''), true, 'Other needs it');
-  assert.equal(workspaceIndustryLabelNeededV421('Other', null), true, 'however it is cased');
-  assert.equal(workspaceIndustryLabelNeededV421('facial', ''), false, 'a named sector does not');
-  assert.equal(workspaceIndustryLabelNeededV421('facial', 'Facial studio'), true,
-    'but wording already live on customers must stay editable');
+/* nestly_v799 SUPERSEDES the v421 gate. Owner ruling 2026-09-06: "allow business to change the
+   wording for this — it will not affect the modules or any operations. just how customer reads it."
+   The field is on screen for EVERY sector now, so the predicate that hid it is gone. What v421 was
+   really protecting is the test below, which is untouched: 'Other' must never reach a customer. */
+test('v799 the customer-facing wording field is on screen for every sector', () => {
+  const panel = appJs.slice(appJs.indexOf('function workspaceBrandPanelHtmlV259(){'),
+    appJs.indexOf('function refreshWorkspaceIdentityV798'));
+  assert.match(panel, /<div id="biLabelRowV421">/,
+    'the wording row must render unconditionally — no hidden attribute, no gate');
+  assert.doesNotMatch(panel, /workspaceIndustryLabelNeededV421/);
+  assert.doesNotMatch(appJs, /function workspaceIndustryLabelNeededV421|function syncWorkspaceIndustryLabelRowV421/,
+    'the gate and its sync are deleted, not left returning true');
+  assert.match(panel, /id="bilabel"/, 'and the input itself is still the one that writes industry_label');
+});
+
+test('v799 the blank-field promise names the sector, and never names "Other"', () => {
+  const { workspaceIndustryLabelFallbackV799 } =
+    load(`const INDUSTRIES={salon:{label:'Hair Salon'},other:{label:'Other'}};\n`
+      + fnSource('workspaceIndustryLabelFallbackV799', 'workspaceBrandPanelHtmlV259'));
+  assert.equal(workspaceIndustryLabelFallbackV799('salon'), 'Hair Salon',
+    'a named sector is what a blank field falls back to');
+  assert.equal(workspaceIndustryLabelFallbackV799('other'), '',
+    'Other must never be offered as the words a customer would read');
+  assert.equal(workspaceIndustryLabelFallbackV799(''), '');
 });
 
 test('v421 "Other" is never printed to a customer as a description of the business', () => {

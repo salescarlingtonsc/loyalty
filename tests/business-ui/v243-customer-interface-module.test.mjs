@@ -319,8 +319,12 @@ test('V326 the live preview reflects the CURRENT form values, not last-saved sta
   const wire = section(app, 'function wireCustomerInterfacePreviewV243(', 'function customerInterfaceSectionsHtmlV243(');
   assert.match(wire, /refreshCustomerInterfaceLivePreviewV326\(\);/);
   /* V385: the industry select and its customer-facing wording feed the identity line under the
-     business name in the preview, so they refresh it too. */
-  assert.match(wire, /\['bn','bc','bp','bbio','bilabel','bi'\]\.forEach\(id=>\{/);
+     business name in the preview, so they refresh it too.
+     nestly_v799: 'bi' left this list. The sector select is read-only (businesses.industry mirrors
+     the assigned bundle and only the platform may move it), so it fires no input and no change —
+     a listener on it could never run. 'bilabel', the wording the customer actually reads, is still
+     here and is what keeps the identity line live as the owner types. */
+  assert.match(wire, /\['bn','bc','bp','bbio','bilabel'\]\.forEach\(id=>\{/);
   assert.match(wire, /el\.addEventListener\('input',refreshCustomerInterfaceLivePreviewV326\)/);
   const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function refreshCustomerInterfaceLivePreviewV326(');
   // Reads the live input value, falling back to saved state only when the field isn't on screen.

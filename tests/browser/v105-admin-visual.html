@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="9841027d5e35ff59cd7a036095eb25b22ece5c8fbb53d800d890b1d331f5ba8d">
+<meta name="v105-production-component-sha256" content="bb132f3337ac578b2736f260d680571231881824bfd7b11794c4a22889cb502b">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -3402,7 +3402,15 @@ button.c360-act-ref-v267{cursor:pointer;text-decoration:underline;text-decoratio
 .customer-programme-card-copy{min-width:0}.customer-programme-card-copy h2{font-size:15px;line-height:1.25;overflow-wrap:anywhere}.customer-programme-card-copy p{line-height:1.35;overflow-wrap:anywhere}
 .customer-programme-card-balance{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:3px;padding-top:10px;border-top:1px solid var(--hair)}
 .customer-programme-card-balance b{font-size:17px;font-variant-numeric:tabular-nums}.customer-programme-card-balance span{color:var(--muted);font-size:11.5px}
-.customer-programme-logo{width:54px;height:54px;display:grid;place-items:center;overflow:hidden;border-radius:15px;background:color-mix(in srgb,var(--merchant-accent,var(--coral)) 13%,#fff);color:var(--merchant-accent,var(--coral));font-size:20px;font-weight:850}
+/* nestly_v799 (owner, 2026-09-06: the uploaded logo "is correct but reflected (too cropped) in
+   the customer view"). The box is a FLEX ITEM inside .customer-business-identity-v346, and it
+   carried the default flex-shrink:1 — so a long business name squeezed it narrower than its own
+   height and the `object-fit:cover` below then cropped the sides off a perfectly square logo.
+   MEASURED at a 300px track with "Hairdressing @ Choa Chu Kang": 33.55 x 44.00 before, 44.00 x
+   44.00 after. Set on the shared rule rather than on that one row because a squashed logo is
+   never right anywhere; .customer-programme-compact-head already had its own flex:0 0 48px, and
+   grid contexts ignore this entirely. */
+.customer-programme-logo{width:54px;height:54px;flex:0 0 auto;display:grid;place-items:center;overflow:hidden;border-radius:15px;background:color-mix(in srgb,var(--merchant-accent,var(--coral)) 13%,#fff);color:var(--merchant-accent,var(--coral));font-size:20px;font-weight:850}
 .customer-programme-card-v95 .customer-programme-logo{width:42px;height:42px;border-radius:12px;font-size:15px;letter-spacing:.02em}
 .customer-programme-logo img{width:100%;height:100%;object-fit:cover}
 .customer-merchant-hero{position:relative;overflow:hidden;min-height:280px;padding:0;border:0;border-radius:24px;background:var(--merchant-accent,#28212f);color:#fff;box-shadow:0 20px 48px rgba(23,22,26,.2)}
@@ -6724,7 +6732,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 9841027d5e35</span>
+<span class="v105-provenance">v105 production-component harness · bb132f3337ac</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6849,7 +6857,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'9841027d5e35ff59cd7a036095eb25b22ece5c8fbb53d800d890b1d331f5ba8d',
+  sourceHash:'bb132f3337ac578b2736f260d680571231881824bfd7b11794c4a22889cb502b',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
