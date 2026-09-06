@@ -22066,7 +22066,7 @@ function reversalResultHtml(kind,result){
   if(!result)return '';
   if(kind==='sale'&&result.no_money_refund)return `<div class="imp-note"><b>Session use undone.</b> No payment refund was created. ${Number(result.restored_sessions||1)} package session added back.</div>`;
   if(kind==='sale')return `<div class="imp-note"><b>Reversal completed.</b> ${money(Number(result.reversed_cents||0))} reversed · ${money(Number(result.refunded_payment_cents||0))} refunded${result.replayed?' · exact replay verified':''}.</div>`;
-  /* nestly_v690 (F059): a stamp gift restores no points. What comes back is the CLAIM, and with
+  /* nestly_v802 (F059): a stamp gift restores no points. What comes back is the CLAIM, and with
      it the slot on the card — and the card itself when the gift sat on the final stamp and closed
      it. Telling a cashier who just un-redeemed the tenth-stamp free coffee that "0 points" were
      restored describes nothing that happened. The server names the stamp shape explicitly
@@ -22085,7 +22085,7 @@ function openReversalDialog(kind,item,onDone){
   if(!reversalKeys.has(keyId))reversalKeys.set(keyId,crypto.randomUUID());
   const packageNote=kind==='sale'&&item.is_package_session
     ?'<div class="imp-note"><b>Package session use only.</b> This undoes one recorded package session use. No payment refund occurs.</div>':'';
-  /* nestly_v690 (F059): the same dialog now opens over a stamp gift, which has no points entry
+  /* nestly_v802 (F059): the same dialog now opens over a stamp gift, which has no points entry
      and no FEFO batch drains to check — the proof it needs is the claim row. Describing the
      points machinery over a free coffee is a promise about work nobody does. points_spent is 0
      for every stamp gift, and for a zero-point reward the generic copy is right too. */
@@ -36157,13 +36157,13 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
       <b>Take this gift off stamp ${growStampsPickedV416}?</b>
       <p class="muted small" style="margin-top:6px">${
-        /* F038, closed by nestly_v693. business_delete_reward_v326 no longer flips the LIVE
+        /* F038, closed by nestly_v805. business_delete_reward_v326 no longer flips the LIVE
            loyalty_rewards row for a stamp gift: it withdraws the gift version-forward through the
            same v433 begin/commit path the gift and card-length editors use, so it leaves the NEXT
            published version while every open card keeps resolving the version it started under
            (app.stamp_cycle_version_v416). All five readers — reward_availability_v432,
            redeem_reward_core, customer_get_stamp_card_v323, customer_create_redemption_intent_v89
-           and stamp_reward_expire_due_v464 — ask app.reward_live_on_offer_v693 instead of the live
+           and stamp_reward_expire_due_v464 — ask app.reward_live_on_offer_v805 instead of the live
            row alone, so a customer one stamp short still gets paid. Keep this text and that
            migration saying the same thing. */''
       }Cards already going keep this gift until they finish — even a customer one stamp short. It comes off the next card, so anyone starting a new one will not see it.</p>
@@ -39074,7 +39074,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=false;growPointsDeletePendingV326='';
     if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
-    /* nestly_v693 (F038): the stamp path publishes a new configuration version, so it runs the
+    /* nestly_v805 (F038): the stamp path publishes a new configuration version, so it runs the
        same stamps validation a Go-live does. Taking the gift off the LAST stamp cannot publish
        until another gift sits there, and the server reports that as publish_status 'pending' with
        owner-language blockers rather than raising — the gift is still on the card, so say so and
@@ -45566,7 +45566,7 @@ async function appointmentsPage(){
      from `staff`, so an unassigned request had no matching <option>, the browser fell back to the
      alphabetically-first team member, and "Move & confirm" silently pinned the request to whoever
      that happened to be. The unassigned choice is now a real option; its empty value reaches the
-     RPC as p_staff:null. W4G/nestly_v695: that alone only kept an ALREADY-unassigned request
+     RPC as p_staff:null. W4G/nestly_v807: that alone only kept an ALREADY-unassigned request
      unassigned — `staff_id = coalesce(p_staff, staff_id)` reads null as "leave it alone", so a
      request the customer filed with a named team member could not be un-assigned at all, and was
      confirmed with the original person still on it (proven against production). Both reschedule
@@ -45575,7 +45575,7 @@ async function appointmentsPage(){
   const rescheduleStaffOptionsV329=currentStaffId=>
     `<option value="" ${currentStaffId?'':'selected'}>Anyone available</option>`
     +staff.map(s=>`<option value="${s.id}" ${currentStaffId===s.id?'selected':''}>${esc(staffLabel(s))}</option>`).join('');
-  /* W4G/nestly_v695. The empty option means "leave it open", which the RPC can only be told
+  /* W4G/nestly_v807. The empty option means "leave it open", which the RPC can only be told
      with p_clear_staff — a null p_staff has always meant "unchanged". Guarded on the select
      actually existing: a missing element must never read as a request to un-assign. */
   const rescheduleStaffChoiceV695=staffSelect=>{
@@ -51936,7 +51936,7 @@ async function customerIntelligencePage(){
         p_business:S.biz.id,p_from:fromDate,p_to:toDate,p_branch:selectedBranchId||null
       }),
       /* nestly_v685: ranked opportunities — branch-scoped like the v679 trio above.
-         nestly_v696: p_extended=>true (the v688 consultant-spine-v2 flag) so each candidate carries
+         nestly_v808: p_extended=>true (the v688 consultant-spine-v2 flag) so each candidate carries
          incentive/why_now/reversal_condition/alternatives/cost_basis, impact gains scenario_cents +
          expected_value, and the payload gains report_sections + top_actions. */
       sb.rpc('get_ci_opportunities_v1',{
@@ -52177,7 +52177,7 @@ function ciOpportunityImpactV685(impact,currency){
 function scopeMoneyV685(cents,currency='SGD'){
   return `${currency} ${(Number(cents||0)/100).toFixed(2)}`;
 }
-/* nestly_v696 (check p_extended-consumer) — v688 gave get_ci_opportunities_v1 a trailing
+/* nestly_v808 (check p_extended-consumer) — v688 gave get_ci_opportunities_v1 a trailing
    p_extended flag; the RPC call site above now always passes p_extended:true. Every figure below
    is read verbatim off the payload — never computed client-side (v145's browser-side-readiness
    ban applies equally here to expected value: only the server's own return_probability_v681 model

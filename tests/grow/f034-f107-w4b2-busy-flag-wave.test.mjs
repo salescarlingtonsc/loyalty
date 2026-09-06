@@ -78,11 +78,11 @@ test('F037 growStampsSetLengthV422 clears the busy flag even when the owner has 
 });
 
 /* ================================================================== F038 */
-/* UPDATED BY nestly_v693. This pin used to require the opposite sentence: while the server flipped
+/* UPDATED BY nestly_v805. This pin used to require the opposite sentence: while the server flipped
    loyalty_rewards.active on the LIVE row, "you keep it mid-card" was a lie and the only honest
-   copy was "it stops paying out for everyone right away". nestly_v693 made the server tell the
+   copy was "it stops paying out for everyone right away". nestly_v805 made the server tell the
    truth instead — business_delete_reward_v326 now withdraws a stamp gift version-forward (the
-   v433 begin/commit path) and every reader asks app.reward_live_on_offer_v693 — so the copy must
+   v433 begin/commit path) and every reader asks app.reward_live_on_offer_v805 — so the copy must
    now promise exactly what db/tests/v693_stamp_gift_delete_version_forward.sql proves. If this
    assertion is ever flipped back, that migration has been reverted; check the server first.
    The sibling suite tests/business-ui/w4b2-audit-wave.test.mjs pins the neighbouring F031 delete
@@ -91,7 +91,7 @@ test('F037 growStampsSetLengthV422 clears the busy flag even when the owner has 
 test('F038 the delete confirmation promises what the server now does: next card only', () => {
   const src = section('<b>Take this gift off stamp', '</p>');
   assert.doesNotMatch(src, /stops paying out for everyone right away/i,
-    'the pre-v693 "immediately for everyone" copy must be gone — it now understates the fix');
+    'the pre-v805 "immediately for everyone" copy must be gone — it now understates the fix');
   assert.match(src, /keep this gift until they finish/i,
     'the copy must say an open card keeps the gift');
   assert.match(src, /comes off the next card/i,
