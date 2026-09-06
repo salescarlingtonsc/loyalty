@@ -3987,6 +3987,12 @@
       "path": "db/migrations/20261006_nestly_v794_first_live_payment_record.sql",
       "semanticVersion": "v794",
       "proposedDeployVersion": "20261006140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v797_console_payment_method.sql",
+      "semanticVersion": "v797",
+      "proposedDeployVersion": "20261006150000"
     }
   ]
 }

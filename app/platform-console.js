@@ -3428,7 +3428,9 @@
       'Uploading {name}…':'正在上传 {name}…','Saving note…':'正在保存备注…','Note saved.':'备注已保存。','Note saved with {count} attachment(s).':'备注已保存，附件 {count} 个。',
       'The note could not be saved.':'无法保存备注。','Follow-up marked as done.':'跟进已标记完成。','Could not update the follow-up.':'无法更新跟进。',
       'Attachment':'附件','Unnamed prospect':'未命名潜在商户',
-      'Paid to {date}':'已付至 {date}','Auto deduction · On':'自动扣款 · 开','Auto deduction · Off':'自动扣款 · 关',
+      'Paid to {date}':'已付至 {date}',
+      'Payment method on file':'已存付款方式','Card on file':'已存银行卡','No card yet':'尚未存卡',
+      '{brand} ending {last4}':'{brand} 尾号 {last4}','Card':'银行卡','Auto deduction · On':'自动扣款 · 开','Auto deduction · Off':'自动扣款 · 关',
       'Auto deduction · Off at renewal':'自动扣款 · 续费时关闭','No subscription':'无订阅'
     }),
     ms:Object.freeze({
@@ -3464,7 +3466,9 @@
       'Uploading {name}…':'Memuat naik {name}…','Saving note…':'Menyimpan nota…','Note saved.':'Nota disimpan.','Note saved with {count} attachment(s).':'Nota disimpan dengan {count} lampiran.',
       'The note could not be saved.':'Nota tidak dapat disimpan.','Follow-up marked as done.':'Susulan ditandakan selesai.','Could not update the follow-up.':'Susulan tidak dapat dikemas kini.',
       'Attachment':'Lampiran','Unnamed prospect':'Prospek tanpa nama',
-      'Paid to {date}':'Dibayar hingga {date}','Auto deduction · On':'Potongan automatik · Hidup','Auto deduction · Off':'Potongan automatik · Mati',
+      'Paid to {date}':'Dibayar hingga {date}',
+      'Payment method on file':'Kaedah bayaran disimpan','Card on file':'Kad disimpan','No card yet':'Belum ada kad',
+      '{brand} ending {last4}':'{brand} berakhir {last4}','Card':'Kad','Auto deduction · On':'Potongan automatik · Hidup','Auto deduction · Off':'Potongan automatik · Mati',
       'Auto deduction · Off at renewal':'Potongan automatik · Mati pada pembaharuan','No subscription':'Tiada langganan'
     })
   });
@@ -15570,6 +15574,20 @@
     const paymentData=asObject(payments?.value),paidInvoices=asArray(paymentData.invoices).filter(row=>row.paid_normalized===true||String(row.status||'')==='paid');
     const subscription=asObject(paymentData.subscription);
     const billingBranches=asArray(paymentData.branches).length?asArray(paymentData.branches):branches.map(branch=>({...branch,branch_id:branch.id}));
+    /* nestly_v797: the card a branch is charged on, in the SAME words the business's own
+       Subscription page uses (billingCardTextV758). An operator and the firm they are calling must
+       read the same sentence, and neither may ever invent digits: a provider that confirmed a
+       method without giving its last four is "Payment method on file", not a guessed card. */
+    const cardTextV797=method=>{
+      const card=asObject(method);
+      const last4=String(card.last4||'').trim();
+      const brand=String(card.brand||'').trim();
+      const kind=String(card.kind||'').trim();
+      if(kind&&kind!=='card')return pt('Payment method on file');
+      if(last4)return pt('{brand} ending {last4}',{brand:brand||pt('Card'),last4});
+      if(brand||kind)return pt('Card on file');
+      return pt('No card yet');
+    };
     const autoDeductionFor=branch=>{
       const state=String(branch.billing_state||'');
       if(state==='pending_payment')return {text:pt('Awaiting payment'),tone:'soon'};
@@ -15596,6 +15614,9 @@
             <span class="pill">${escapeHtml(v779BranchStateLabel(branch))}</span>
             <span class="muted small">${escapeHtml(paid.until?pt('Paid to {date}',{date:pipelineSgDateV785(paid.until)}):pt('No payment yet'))}${paid.latest?` · ${escapeHtml(currency(paid.latest.total_cents,paid.latest.currency||'SGD'))}`:''}</span>
             <span class="platform-pipeline-due" data-tone="${escapeHtml(auto.tone)}">${escapeHtml(auto.text)}</span>
+            ${/* v797: which card, under the auto-deduction pill, so a failed renewal can be chased
+                 by name without opening Stripe. */''}
+            <span class="muted small">${escapeHtml(cardTextV797(branch.payment_method||paymentData.payment_method))}</span>
           </li>`;}).join('')}</ul>
         ${subscription.current_period_end?`<p class="muted small" style="margin-top:8px">${escapeHtml(pt('Renews on {date}',{date:pipelineSgDateV785(subscription.current_period_end)}))}${subscription.cadence?` · ${escapeHtml(platformStatus(subscription.cadence))}`:''}</p>`:''}`;
     const tabs=[['activity','Activity'],['contacts','Contacts'],['branches','Branches'],['deal','Deal'],['files','Files']];

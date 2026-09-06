@@ -3982,6 +3982,12 @@
       "version": "20261006140000",
       "name": "nestly_v794_first_live_payment_record",
       "sourcePath": "db/migrations/20261006_nestly_v794_first_live_payment_record.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006150000",
+      "name": "nestly_v797_console_payment_method",
+      "sourcePath": "db/migrations/20261006_nestly_v797_console_payment_method.sql"
     }
   ]
 }
