@@ -3981,6 +3981,12 @@
       "path": "db/migrations/20261006_nestly_v793_due_day_buckets.sql",
       "semanticVersion": "v793",
       "proposedDeployVersion": "20261006130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v794_first_live_payment_record.sql",
+      "semanticVersion": "v794",
+      "proposedDeployVersion": "20261006140000"
     }
   ]
 }

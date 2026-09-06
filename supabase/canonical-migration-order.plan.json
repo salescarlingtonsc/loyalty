@@ -3976,6 +3976,12 @@
       "version": "20261006130000",
       "name": "nestly_v793_due_day_buckets",
       "sourcePath": "db/migrations/20261006_nestly_v793_due_day_buckets.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261006140000",
+      "name": "nestly_v794_first_live_payment_record",
+      "sourcePath": "db/migrations/20261006_nestly_v794_first_live_payment_record.sql"
     }
   ]
 }
