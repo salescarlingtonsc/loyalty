@@ -177,14 +177,25 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
   for (const id of ['bn', 'bi', 'bilabel', 'bbio', 'bru']) { // nestly_v788: blegal/buen moved to the branch
     assert.match(brandPanel, new RegExp(`id="${id}"`), `${id} must not be split out of the form`);
   }
+  /* nestly_v798: 'bi' is the one field in this panel the UPDATE deliberately does NOT write.
+     businesses.industry mirrors the assigned sector bundle and only a super admin may move it
+     (platform console -> Sectors -> Assign sector); an editable control here 42501'd the WHOLE
+     card for every firm with a sector assignment, which was every self-service firm. So it stays
+     in the panel to be READ, and the rule this test guards becomes: every EDITABLE field in the
+     panel is in the one UPDATE, and the one read-only field is out of it. */
+  assert.match(brandPanel, /<select id="bi"[^>]*\bdisabled\b/,
+    'the Industry select must be read-only, or this save fails on a column the owner cannot move');
   assert.doesNotMatch(brandPanel, /id="bp"/, 'the booking policy is saved by Appointment Setting now');
   /* Scoped to the #bsave UPDATE itself — `brandWiring` runs on past this handler and into the
      Appointment Setting card, which is exactly where booking_policy is supposed to be written now. */
   const bsaveUpdate = brandWiring.slice(brandWiring.indexOf("sb.from('businesses').update("),
     brandWiring.indexOf("Object.assign(S.biz"));
   assert.doesNotMatch(bsaveUpdate, /booking_policy/, 'this save must not blank a column it no longer shows');
-  assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name:\$\('bn'\)\.value\.trim\(\),/);
-  assert.match(brandWiring, /industry,industry_label:industryLabel,review_url:reviewUrl,/);
+  assert.match(brandWiring, /sb\.from\('businesses'\)\.update\(\{name,/);
+  assert.match(brandWiring, /industry_label:industryLabel,review_url:reviewUrl,/);
+  assert.doesNotMatch(bsaveUpdate, /(^|[^_])\bindustry\b\s*[,:]/,
+    'nestly_v798: `industry` must not be in this write — the v75 sector guard 42501s it and takes '
+    + 'the name, the bio, the wording line and the review link down with it');
   assert.match(brandWiring, /review_url:reviewUrl,\n\s*bio\}\)\.eq\('id',S\.biz\.id\)/); // nestly_v788: legal_name/registration_number left this write
 });
 

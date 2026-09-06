@@ -32,17 +32,22 @@ test('legacy module RPC remains owner-authorized while tenant settings are platf
   assert.match(migration, /revoke all privileges on table public\.module_registry from public, anon, authenticated/i);
   assert.match(migration, /grant select on table public\.module_registry to authenticated/i);
   assert.doesNotMatch(app, /sb\.rpc\('set_business_modules',\{p_business:S\.biz\.id,p_modules:on\}\)/);
-  /* V385 (owner markup, photo 11: the Industry select ringed, "make editable"). The sector is
-     the owner's to state now. What this test actually guards is unchanged and asserted below:
-     the sector does not carry ENTITLEMENT. Choosing one writes businesses.industry and nothing
-     else — no enabled_modules write, no set_business_modules call — so a firm still cannot grant
-     itself a module by renaming what it does. */
-  assert.match(app, /Peekaa uses this to shape your defaults/);
-  assert.match(app, /<select id="bi" aria-describedby="biSectorHint">/);
+  /* V385 (owner markup, photo 11) made the Industry select editable; nestly_v798 SUPERSEDES that
+     on the owner's ruling 2026-09-06 — the select is cosmetic, "just to let user to read the
+     company's industry". It is read-only, and the write below no longer names businesses.industry
+     at all, because that column MIRRORS the assigned sector bundle: app.business_sector_modules_
+     guard_v75 raises 42501 at any other writer for a firm with a sector assignment, which is every
+     self-service firm. What this test guards is stronger than before and still exactly the point —
+     the sector carries no ENTITLEMENT and the workspace cannot move it at all. */
+  assert.match(app, /Set with your plan when you signed up/);
+  assert.match(app, /<select id="bi" disabled aria-describedby="biSectorHint">/);
   assert.doesNotMatch(app, /from\('businesses'\)\.update\(\{enabled_modules:on\}/);
   const brandSave=app.slice(app.indexOf('function wireWorkspaceBrandV259(){'),app.indexOf('function customerInterfaceStepperHtmlV325('));
   assert.doesNotMatch(brandSave, /enabled_modules|set_business_modules/,
     'editing the sector must never rewrite this firm\'s module entitlement');
+  /* nestly_v798: and the workspace no longer writes the sector column itself either. */
+  assert.doesNotMatch(brandSave, /\bindustry\s*[,:]/,
+    'businesses.industry mirrors the assigned sector bundle — only the platform may move it');
 });
 
 test('the workspace never presents editable sector entitlements', async () => {

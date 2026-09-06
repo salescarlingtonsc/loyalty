@@ -92,7 +92,9 @@ test('the fields left Business Profile and live on the branch — the Branches f
   const brand = slice('function workspaceBrandPanelHtmlV259()', 'function wireWorkspaceBrandV259()');
   assert.doesNotMatch(brand, /id="blegal"|id="buen"/);
   assert.match(brand, /set per branch in <a href="#\/branches">Branches<\/a>/);
-  const write = slice("sb.from('businesses').update({name:$('bn').value.trim(),", ".eq('id',S.biz.id);");
+  /* nestly_v798: the UPDATE no longer opens with an inline $('bn') read (the name is a const, and
+     `industry` left this write entirely — see the v798 suite), so the slice anchors on the call. */
+  const write = slice("sb.from('businesses').update({name,", ".eq('id',S.biz.id);");
   assert.doesNotMatch(write, /legal_name|registration_number/, 'the business save must not blank the firm application identity');
   // the branch form
   const form = slice('function openForm(b){', "$('brSave').onclick=");

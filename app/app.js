@@ -19833,7 +19833,7 @@ function profileHtml(){
             ${/* V444: the name column must own the row's spare width (flex:1). Without it, the
                  switch trigger's content width squeezed the name to nothing inside the 222px
                  menu and "Cubbly SPA" rendered one character per line (seen live on v443). */''}
-            <div style="min-width:0;flex:1 1 auto"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
+            <div id="profMenuIdentityV798" style="min-width:0;flex:1 1 auto"><b data-merchant-content style="display:block">${esc(S.biz.name)}</b><span data-merchant-content class="small muted">${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'')}</span></div>
             ${businessWorkspaceSwitchHtml(S.staffWorkspaces,S.biz.slug,false)}
           </div>
         </div>
@@ -57786,9 +57786,23 @@ function workspaceBrandPanelHtmlV259(){
             a fixed list. The free-text line beneath is the only thing a customer reads, and it
             exists precisely because "Facial / Spa" is Peekaa's word for a sector rather than
             this firm's word for itself. Blank means the sector label is used, so a firm that
-            never touches it still shows something true. */''}
-      <label for="bi">Industry</label><select id="bi" aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
-      <p class="muted small" id="biSectorHint" style="margin-top:4px">Peekaa uses this to shape your defaults.</p>
+            never touches it still shows something true.
+            nestly_v798 SUPERSEDES V385's "make editable" on this select, on the owner's ruling
+            2026-09-06 ("it is just cosmetic to let user to read the company's industry. no module
+            changes anyway"). businesses.industry MIRRORS the assigned sector bundle --
+            platform_assign_business_sector_v75 writes the column from the bundle's sector_key, and
+            app.business_sector_modules_guard_v75 has raised 42501 at any other writer since v75.
+            Every self-service firm takes an assignment at payment, so from V385 until now an owner
+            touching this select got that 42501 -- and because industry rode the SAME businesses
+            UPDATE as the name, the bio, the wording line and the review link, it failed the WHOLE
+            card and lost those edits with it. That is the bug the owner reported as "changing
+            industry does not reflect when i save".
+            So the control stays exactly where it was and reads the sector; it no longer claims to
+            set it, and `industry` is gone from the write below. Changing a firm's sector is a
+            super-admin action (platform console -> Sectors -> Assign sector), which moves the
+            bundle, the module list and this column together and cannot leave them disagreeing. */''}
+      <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
+      <p class="muted small" id="biSectorHint" style="margin-top:4px">Set with your plan when you signed up. Ask Peekaa to change it — your modules follow your sector.</p>
       ${/* nestly_v421 (owner, photo 3: the Industry select ringed on "Other" — "if i choose other
             in Industry it should then pop up 'What customers see under your name', not a fixed
             'Other'. you may hide it first, until clicked others").
@@ -57833,6 +57847,24 @@ function workspaceBrandPanelHtmlV259(){
             between the last field and the Save button, in the one place a form should end. */''}
       <div class="settings-save-row"><button class="btn" id="bsave">Save Profile</button></div></div>`;
 }
+/* nestly_v798. The two lines the profile menu prints for the workspace — the business name and,
+   under it, the sector — are repainted in place after a Business Profile save, so that save does
+   not need the full route() that used to end it (see the #bsave handler below for what route()
+   was destroying). Written as textContent onto the nodes profileHtml already rendered rather than
+   re-rendered from a shared template: profileHtml is lifted whole into a vm by the v440/v443
+   tests, so a call out to a helper defined 38,000 lines away does not resolve there — and
+   textContent needs no escaping, where a second copy of the markup would need to stay in step
+   with the first one forever. */
+function refreshWorkspaceIdentityV798(){
+  const host=$('profMenuIdentityV798');
+  if(host){
+    const nameNode=host.querySelector('b'),sectorNode=host.querySelector('span');
+    if(nameNode)nameNode.textContent=S.biz.name||'';
+    if(sectorNode)sectorNode.textContent=INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'';
+  }
+  const avatar=document.querySelector('#profWho .avatar');
+  if(avatar)avatar.textContent=(S.biz.name||'?').trim().charAt(0).toUpperCase();
+}
 function wireWorkspaceBrandV259(){
   if(!$('bsave'))return;
   if(S.myRole==='owner')loadWorkspaceLogoEditorV96();
@@ -57853,20 +57885,43 @@ function wireWorkspaceBrandV259(){
        business columns — sending them from here would blank a firm's application identity. */
     /* V325: bio rides this same UPDATE — no new call site. */
     const bio=($('bbio')?.value||'').trim()||null;
-    /* V385: industry is editable here now, and industry_label is the wording customers read.
-       Blank label is stored as NULL rather than '' so the sector label is what shows — an empty
-       string would print an empty line under the business name in the customer app.
+    /* V385: industry_label is the wording customers read. Blank is stored as NULL rather than ''
+       so the sector label is what shows — an empty string would print an empty line under the
+       business name in the customer app.
        booking_policy is gone from this write because its field moved to Appointment Setting;
        sending it from here would blank the column every time this form saved. */
-    const industry=$('bi')?.value||S.biz.industry||null;
+    /* nestly_v798: `industry` is NO LONGER in this UPDATE. businesses.industry mirrors the
+       assigned sector bundle, and app.business_sector_modules_guard_v75 has raised 42501 on any
+       other writer since v75 — so from V385 until now, touching the Industry select failed this
+       ENTIRE write and took the name, the bio, the wording line and the review link down with it.
+       The select is read-only now (see the card above), so this write cannot fail on a column the
+       owner is not allowed to move, and the four fields they CAN edit save on their own. */
+    const name=$('bn').value.trim();
     const industryLabel=($('bilabel')?.value||'').trim()||null;
     invalidateBusinessRecordCacheV370(); // V370: the cached firm row is now stale
-    const {error}=await sb.from('businesses').update({name:$('bn').value.trim(),
-      industry,industry_label:industryLabel,review_url:reviewUrl,
+    const {error}=await sb.from('businesses').update({name,
+      industry_label:industryLabel,review_url:reviewUrl,
       bio}).eq('id',S.biz.id);
     if(error)return fail(error);
-    Object.assign(S.biz,{name:$('bn').value.trim(),industry,industry_label:industryLabel,review_url:reviewUrl,bio});
-    toast('Saved');route();
+    Object.assign(S.biz,{name,industry_label:industryLabel,review_url:reviewUrl,bio});
+
+    /* nestly_v798: the logo sits inside THIS card, and its own button was the only thing that
+       uploaded it — a button labelled "Upload logo", which neither this Save nor the page's
+       save-all (it presses buttons whose label starts with "Save") ever pressed. An owner who
+       chose a file and pressed Save watched nothing happen and lost the choice to the re-render
+       below. Pressing it here is one path, not a second copy of the publish. */
+    toast('Saved');
+    const logoFileV798=$('workspaceLogoFileV96')?.files?.[0];
+    const logoPublishV798=$('workspaceLogoPublishV96');
+    if(logoFileV798&&logoPublishV798&&!logoPublishV798.disabled)logoPublishV798.click();
+
+    /* nestly_v798: route() used to run on every save. It repaints the whole page, which reloads
+       the Photos and links card from the server — silently throwing away any photo added or
+       caption typed that had not yet gone through that card's own Save, and cancelling a logo
+       upload started a moment ago. Nothing on a plain field save needs a full repaint; the two
+       places the name is actually painted are refreshed directly. */
+    refreshWorkspaceIdentityV798();
+    refreshCustomerInterfaceLivePreviewV326();
   };
 }
 /* V325 (owner-authorized restructure, 2026-08-14 Customer Interface cosmetics brief). The numbered
