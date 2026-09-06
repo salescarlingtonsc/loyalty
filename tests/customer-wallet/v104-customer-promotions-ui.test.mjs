@@ -68,9 +68,19 @@ test('each promotion CTA has one clear, working outcome',()=>{
   assert.match(merchant,/requestedKind==='book'&&!bookingEnabled\?'programme':requestedKind/);
   assert.match(merchant,/<button class="btn sm" type="button" data-promotion-details>View more<\/button>/);
   const sheet=section('function showCustomerOfferDetailV173','function wireCustomerHomeOffersV167');
-  assert.match(sheet,/cta\.kind==='book'\?`<a class="btn" href="#\/b\/\$\{slug\}"/,
-    'the sheet is where Book now lives now');
-  assert.match(sheet,/ctaLabel\|\|'Book now'/,
+  /* Pin updated (audit F112): the sheet is still where Book now lives — but it is no longer
+     rendered straight from the offer's raw metadata.cta.kind. The CARD downgrades a 'book' CTA when
+     the business's booking capability is off (the line asserted above); the sheet used to ignore
+     that entirely and print a working Book now for a business that had switched booking off, and
+     nothing on the server refuses such a request. Every CTA kind now goes through the same live
+     customer_get_business_actions_v89 check the sibling branch already used. */
+  assert.match(sheet,/<span data-offer-book><\/span>/,
+    'the sheet is where Book now lives now — inserted only after the live capability read');
+  assert.doesNotMatch(sheet,/cta\.kind==='book'\?`<a class="btn" href="#\/b\/\$\{slug\}"/,
+    'never unconditionally, from the offer\u2019s own unfiltered metadata');
+  assert.match(sheet,/if\(!host\|\|error\|\|data\?\.booking\?\.enabled!==true\)return/,
+    'fail closed: an unknown booking state offers no button at all');
+  assert.match(sheet,/cta\.kind==='book'\?\(ctaLabel\|\|'Book now'\):ct\('bookNow'\)/,
     'and the business\u2019s own configured CTA wording lands on the button that actually books');
   assert.match(merchant,/data-promotion-counter/);
   assert.match(merchant,/data-promotion-details/);

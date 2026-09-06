@@ -116,6 +116,10 @@ const runRedeemHandler = ({ error }) => {
     loadTransactions: () => {},
     customerCounterMomentV468: async () => {},
     customerHoldWalletScrollV748: () => () => {},
+    /* audit F051 (wave 4C): the shared redeem handler now brackets its RPC in an in-flight
+       counter so a silent repaint cannot swallow the minted intent; inert here. */
+    customerRedeemInFlightBeginV4C: () => {},
+    customerRedeemInFlightEndV4C: () => {},
     customerRedemptionIntentArgsV89: () => ({}),
     showPendingRedemptionQr: () => {},
     CUSTOMER_REDEMPTION_STATUS_COPY: {}

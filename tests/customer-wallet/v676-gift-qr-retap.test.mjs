@@ -48,7 +48,13 @@ const run = ({ replies }) => {
   const shown = [];
   const toasts = [];
   const button = makeButton();
+  /* audit F051: the handler now brackets its round trip with a "redeem in flight" counter that
+     customerWalletSilentPaintV333 respects, so a doorbell repaint cannot replace the section from
+     under an intent the customer has already started. Recorded here so the balance is provable. */
+  const inFlight = { depth: 0, peak: 0 };
   const scope = {
+    customerRedeemInFlightBeginV4C: () => { inFlight.depth += 1; inFlight.peak = Math.max(inFlight.peak, inFlight.depth) },
+    customerRedeemInFlightEndV4C: () => { inFlight.depth -= 1 },
     host: { querySelectorAll: () => [button] },
     businessId: 'biz-1',
     b: { name: 'Kopi Lab' },
@@ -77,7 +83,7 @@ const run = ({ replies }) => {
   // The shipped block assigns onclick onto every button the host hands it; run it verbatim.
   const names = Object.keys(scope);
   new Function(...names, `${keySrc}\n${handlerSrc}`)(...names.map(n => scope[n]));
-  return { button, calls, shown, toasts, store };
+  return { button, calls, shown, toasts, store, inFlight };
 };
 
 const pending = (key, id = 'intent-1') => ({
@@ -86,6 +92,20 @@ const pending = (key, id = 'intent-1') => ({
     qr_token: `token-for-${id}`, expires_at: '2026-09-02T12:15:00+08:00', replayed: false
   },
   error: null
+});
+
+test('audit F051 the gift handler holds off silent repaints for exactly its round trip', async () => {
+  const rig = run({ replies: () => pending('k') });
+  await rig.button.onclick();
+  assert.equal(rig.inFlight.peak, 1, 'the guard is raised while the intent is being minted');
+  assert.equal(rig.inFlight.depth, 0, 'and released once, even though the mint can run twice');
+});
+
+test('audit F051 the guard is released when the mint fails', async () => {
+  const rig = run({ replies: () => ({ data: null, error: { code: '42501', message: 'not available' } }) });
+  await rig.button.onclick();
+  assert.equal(rig.inFlight.peak, 1);
+  assert.equal(rig.inFlight.depth, 0, 'a failed mint must not leave the wallet frozen against repaints');
 });
 
 test('v676 a re-tap after closing the sheet reuses the SAME idempotency key', async () => {

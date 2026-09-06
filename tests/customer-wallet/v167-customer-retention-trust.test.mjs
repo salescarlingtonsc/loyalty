@@ -93,7 +93,11 @@ test('security readiness is explicit instead of allowing a silent sign-in no-op'
   assert.match(signIn,/id="customerPasswordSignIn" type="submit" style=[^>]*>[\s\S]*?<span>Sign in<\/span>/);
   assert.doesNotMatch(signIn,/id="customerPasswordSignIn"[^>]*disabled/);
   assert.doesNotMatch(signIn,/Waiting for security check|Security check is still running|captchaToken/);
-  assert.match(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]*signIn\.disabled=false;[\s\S]*passkeyButton\.disabled=!passkeySupported;[\s\S]*textContent='Sign in'/);
+  /* Pin updated (audit F044): the passkey control is restored from the SURFACE's own truth. In the
+     Capacitor shell customerPasskeySupported() is hard-wired false (v669), so restoring from
+     passkeySupported alone left the Face ID button permanently disabled after one wrong password.
+     The requirement this line encodes — a failed attempt hands both controls back — is unchanged. */
+  assert.match(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]*signIn\.disabled=false;[\s\S]*passkeyButton\.disabled=nativeShell\?!biometricEnrolled:!passkeySupported;[\s\S]*textContent='Sign in'/);
   assert.doesNotMatch(signIn,/if\(error\|\|!data\?\.user\)\{[\s\S]{0,200}signIn\.disabled=true/);
 });
 

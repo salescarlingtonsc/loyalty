@@ -78,9 +78,17 @@ test('V370 a poll tick reads ONE thing and only pays for the full refresh when i
     'a failed pulse is not "nothing changed" and must not repaint either');
   /* The pulse readers are single-RPC by construction. If either ever grows a second read, the
      tick stops being cheap and this test is the thing that should fail. */
-  const home = section('function customerWalletHomePulseReaderV370', 'function watchCustomerWalletV295');
+  /* Pin updated (audit F053): a third reader now sits between these two — the ACTIONABLE Home's,
+     which that Home never had a watcher to use. Each is still exactly one read; the new one is
+     asserted alongside the others rather than folded into the Home slice. */
+  const home = section('function customerWalletHomePulseReaderV370', 'function customerWalletActionableHomePulseReaderV370');
+  const actionableHome = section('function customerWalletActionableHomePulseReaderV370', 'function watchCustomerWalletV295');
   const programme = section('function customerWalletProgrammePulseReaderV370', 'function customerWalletHomePulseReaderV370');
   assert.equal((home.match(/customerRpc\(|sb\.rpc\(/g) || []).length, 1, 'Home pulse is exactly one read');
+  assert.equal((actionableHome.match(/customerRpc\(|sb\.rpc\(/g) || []).length, 1,
+    'the actionable Home pulse is exactly one read too');
+  assert.match(actionableHome, /customerWalletPulseSignatureOfV370\(result\.data\?\.cards\?\?null\)/,
+    'and it projects the cards exactly as the seed does — as_of must never enter the signature');
   assert.equal((programme.match(/customerRpc\(|sb\.rpc\(/g) || []).length, 2,
     'programme pulse is one read per branch (actionable card, or the summary when that feature is off)');
 });
@@ -96,8 +104,15 @@ test('V370 the tick allowance is a budget for the page, not for each glance', ()
 
 test('V370 the pulse baseline is seeded from data the render already fetched', () => {
   const wallet = section('async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=false}={}){', 'async function renderCustomerInAppInbox');
-  assert.match(wallet, /rememberCustomerWalletPulseSignatureV370\(customerWalletProgrammePulseOfV370\(actionableCard,null\)\)/,
+  /* Pin updated (audit F054): the baseline is COMPUTED here from data this render already holds —
+     still no extra round trip — but it is now held in programmePulseBaselineV4C and committed only
+     once a paint has actually landed. Recording it before the paint meant a silent paint that stood
+     down (an open sheet, a focused control) still advanced the baseline, so every later tick matched
+     and the change was never painted. */
+  assert.match(wallet, /programmePulseBaselineV4C=customerWalletProgrammePulseOfV370\(actionableCard,null\)/,
     'no extra round trip to establish the baseline');
+  assert.match(wallet, /customerWalletFactsPaintedV333\(programmeSignatureV333\);[\s\S]{0,320}?rememberCustomerWalletPulseSignatureV370\(programmePulseBaselineV4C\)/,
+    'and it is committed with the paint, never before it');
   /* `as_of` is statement_timestamp() — including it would make every tick look changed. */
   assert.match(wallet, /rememberCustomerWalletPulseV370\(data\?\.cards\?\?null\)/,
     'the envelope carries a moving as_of and must never be part of the signature');
@@ -160,13 +175,28 @@ test('the native app tells the truth about notifications instead of hiding them'
 test('v498 a refused channel join is retried with bounded backoff, never abandoned silently', () => {
   assert.match(watcher, /\.subscribe\(status=>\{/,
     'subscribe must observe its own outcome — the naked .subscribe() is the shape that failed');
-  assert.match(watcher, /if\(status==='SUBSCRIBED'\)\{signalRetriesV498=0;return\}/,
+  /* Pin updated (audit F052): SUBSCRIBED also cancels any rebuild still queued from this channel's
+     own bad start. Leaving that timer armed made a healthy channel get torn down 2s later, which
+     emitted CLOSED, which queued the next one — a permanent leave/rejoin loop that the >=5 cap could
+     never stop, because SUBSCRIBED kept resetting the counter. */
+  assert.match(watcher, /if\(status==='SUBSCRIBED'\)\{\s*\r?\n\s*signalRetriesV498=0;/,
     'a successful join resets the budget so a later drop starts its backoff fresh');
+  assert.match(watcher, /if\(status==='SUBSCRIBED'\)\{[\s\S]{0,320}?if\(signalRetryTimerV498\)\{clearTimeout\(signalRetryTimerV498\);signalRetryTimerV498=0\}/,
+    'and cancels the ghost rebuild that would otherwise remove it');
+  assert.match(watcher, /if\(signalChannelV479!==channelV4C\)return;/,
+    'statuses from a channel we already replaced are inert — leave\(\) fires CLOSED on every rebuild');
   assert.match(watcher, /if\(signalRetriesV498>=5\|\|signalRetryTimerV498\)return;/,
     'bounded: five attempts, one timer — a genuinely-down tenant is not hammered');
   assert.match(watcher, /1000\*\(2\*\*signalRetriesV498\)/, 'exponential backoff: 2s,4s,8s,16s,32s');
-  assert.match(watcher, /if\(signalChannelV479\)\{try\{sb\.removeChannel\(signalChannelV479\)\}catch\{\}signalChannelV479=null\}\s*\r?\n\s*try\{\s*\r?\n?\s*signalChannelV479=sb\.channel/,
+  /* Pin updated (audit F052): the fresh channel is bound to a local first (channelV4C) so the
+     subscribe callback can tell its own statuses from a replaced channel's; the slot is then set to
+     it. The requirement — every attempt builds a brand new channel — is unchanged. */
+  assert.match(watcher, /if\(signalChannelV479\)\{const previousV4C=signalChannelV479;signalChannelV479=null;try\{sb\.removeChannel\(previousV4C\)\}catch\{\}\}\s*\r?\n\s*try\{/,
+    'each attempt tears the old channel down first — and clears the live slot BEFORE it does, so a '
+    + 'synchronous CLOSED from that teardown cannot be mistaken for the current channel failing');
+  assert.match(watcher, /const channelV4C=sb\.channel\(`wallet-signal-\$\{S\.user\.id\}`\)/,
     'each attempt rebuilds the channel from scratch — an errored postgres_changes channel does not recover');
+  assert.match(watcher, /signalChannelV479=channelV4C;/, 'and the live slot points at it');
   assert.match(watcher, /if\(!signalChannelUpV498\(\)\)\{signalRetriesV498=0;joinSignalChannelV498\(\)\}/,
     'a return to the foreground gives the doorbell its chance back');
 });

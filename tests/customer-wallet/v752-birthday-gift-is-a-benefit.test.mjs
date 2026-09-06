@@ -110,6 +110,10 @@ test('Show QR at counter mints a birthday gift intent through the shared handler
     showPendingRedemptionQr: options => shown.push(options),
     loadRewards: () => {},
     customerCounterMomentV468: async () => {},
+    /* audit F051 (wave 4C): the shared redeem handler now brackets its RPC in an in-flight
+       counter so a silent repaint cannot swallow the minted intent; inert here. */
+    customerRedeemInFlightBeginV4C: () => {},
+    customerRedeemInFlightEndV4C: () => {},
     customerHoldWalletScrollV748: () => () => {}
   };
   const names = Object.keys(scope);

@@ -27,8 +27,11 @@ test('v286: a failed profile read is named as a failure with a retry, not as an 
   assert.match(profile, /const detailsLoadFailedV286=!profile&&context\.features\.customer_phone_registration===true&&context\.profileError!=null/);
   assert.match(profile, /We couldn’t load your details/);
   assert.match(profile, /id="customerProfileDetailsRetry"/);
-  /* The retry must actually re-run the read. */
-  assert.match(profile, /detailsRetry\.onclick=\(\)=>\{[^}]*renderCustomerProfile\(\)/);
+  /* The retry must actually re-run the read.
+     Pin updated (audit F041): the re-render now carries `requestedView`, so a retry raised on
+     #/customer/settings repaints the settings half instead of silently switching the page to
+     Profile. Same requirement — it still re-runs renderCustomerProfile — with the view preserved. */
+  assert.match(profile, /detailsRetry\.onclick=\(\)=>\{[^}]*renderCustomerProfile\(requestedView\)/);
   /* "Not available for this account" survives only as the genuine feature-off / no-row case. */
   assert.match(profile, /:'<section class="card"><h2>Profile editing is not available<\/h2>[\s\S]*?Profile editing isn’t available for this account\./);
 });
@@ -51,7 +54,9 @@ test('v286: account-level controls do not depend on the profile row', () => {
 
 test('v286: a failed marketing-preference read keeps a way back to the control', () => {
   assert.match(profile, /ct\('Your marketing choice could not be loaded\. No change has been made\.'\)\)\}<\/p><button class="btn ghost" id="customerMarketingRetry"/);
-  assert.match(profile, /marketingRetry\.onclick=\(\)=>\{[\s\S]*?renderCustomerProfile\(\)/);
+  /* Pin updated (audit F041): the marketing card lives inside #customerProfileSettingsV583, which is
+     hidden unless requestedView==='settings' — a bare re-render hid the very card being retried. */
+  assert.match(profile, /marketingRetry\.onclick=\(\)=>\{[\s\S]*?renderCustomerProfile\(requestedView\)/);
 });
 
 test('v293: the preferred-language control changes the app and says exactly what it covers', () => {
@@ -61,7 +66,9 @@ test('v293: the preferred-language control changes the app and says exactly what
   assert.match(appJs, /const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
   assert.match(profile, /\$\{esc\(ct\('preferredLanguage'\)\)\}/);
   assert.match(profile, /\$\{esc\(ct\('languageHelp',\{product:BRAND\.productName\}\)\)\}/);
-  assert.match(profile, /if\(nextLocale!==customerLocale\)\{[\s\S]{0,240}?renderCustomerProfile\(\)/);
+  /* Pin updated (audit F041): the re-render carries `requestedView` so it stays on the route the
+     URL names. The v293 requirement — a changed locale re-renders the profile — is unchanged. */
+  assert.match(profile, /if\(nextLocale!==customerLocale\)\{[\s\S]{0,300}?renderCustomerProfile\(requestedView\)/);
   assert.doesNotMatch(profile, /Keep your name and preferred language current across/);
 });
 

@@ -103,7 +103,10 @@ test('the stored preferred language drives the wallet and legacy zh folds to zh-
 
 test('a saved language change applies immediately and re-renders the profile',()=>{
   assert.match(js,/const nextLocale=normalizeCustomerLocale\(language\);/);
-  assert.match(js,/if\(nextLocale!==customerLocale\)\{[\s\S]{0,300}?renderCustomerProfile\(\);/);
+  /* Pin updated (audit F041): the re-render now carries `requestedView`, so a language change made
+     on #/customer/settings stays on that route instead of flipping the page to Profile. The v293
+     requirement — a changed locale re-renders the profile immediately — is unchanged. */
+  assert.match(js,/if\(nextLocale!==customerLocale\)\{[\s\S]{0,300}?renderCustomerProfile\(requestedView\);/);
   assert.match(js,/CUI\.announce\(ct\('profileSaved'\)\)/);
 });
 

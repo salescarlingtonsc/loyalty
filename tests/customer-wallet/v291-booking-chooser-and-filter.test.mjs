@@ -78,7 +78,12 @@ test('the chooser opens the Ongoing tab and the empty state no longer duplicates
      now the only place they appear, so the third argument is the groups on every tab. */
   assert.doesNotMatch(paint, /customerBookingChooserV291\(allGroups\)/);
   assert.match(paint, /customerBookingSearchMarkupV577\(\)/);
-  assert.match(paint, /customerBookingEmptyMarkupV183\(currentBookingTab,emptyCopy,currentBookingTab==='bookings'\?\[\]:allGroups\)/);
+  /* Pin updated (audit F115): the ternary was inverted and the buttons therefore never rendered on
+     ANY tab. customerBookingEmptyMarkupV183 only builds its "Book with X" invites when its tab
+     argument is 'bookings' — which is exactly the case this call was passing [] for. With the
+     chooser removed (nestly_v577) the empty state is the only place they appear, so the tab that
+     uses them is the tab that must receive the groups. */
+  assert.match(paint, /customerBookingEmptyMarkupV183\(currentBookingTab,emptyCopy,currentBookingTab==='bookings'\?allGroups:\[\]\)/);
   const grouping = section('function composeCustomerBookingGroups', 'function customerBookingRequestTabV178');
   assert.match(grouping, /group\.industry=String\(business\.industry\|\|''\)/);
 });
