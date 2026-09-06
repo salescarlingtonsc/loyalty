@@ -34,13 +34,17 @@ test('legacy module RPC remains owner-authorized while tenant settings are platf
   assert.doesNotMatch(app, /sb\.rpc\('set_business_modules',\{p_business:S\.biz\.id,p_modules:on\}\)/);
   /* V385 (owner markup, photo 11) made the Industry select editable; nestly_v798 SUPERSEDES that
      on the owner's ruling 2026-09-06 — the select is cosmetic, "just to let user to read the
-     company's industry". It is read-only, and the write below no longer names businesses.industry
-     at all, because that column MIRRORS the assigned sector bundle: app.business_sector_modules_
+     company's industry". nestly_v800 lets it open again as a picker for the customer-facing
+     wording; either way the write below no longer names businesses.industry at all, because that column MIRRORS the assigned sector bundle: app.business_sector_modules_
      guard_v75 raises 42501 at any other writer for a firm with a sector assignment, which is every
      self-service firm. What this test guards is stronger than before and still exactly the point —
      the sector carries no ENTITLEMENT and the workspace cannot move it at all. */
-  assert.match(app, /Set with your plan when you signed up/);
-  assert.match(app, /<select id="bi" disabled aria-describedby="biSectorHint">/);
+  assert.match(app, /Your plan sector: <b>/,
+    'the sector that governs the modules must be stated to the owner');
+  assert.match(app, /<select id="bi" aria-describedby="biSectorHint">/);
+  /* nestly_v800: the select opens again, but it picks WORDING — it fills #bilabel and writes
+     nothing itself, so the entitlement claim below is unchanged. */
+  assert.match(app, /Industry \(what customers read\)/);
   assert.doesNotMatch(app, /from\('businesses'\)\.update\(\{enabled_modules:on\}/);
   const brandSave=app.slice(app.indexOf('function wireWorkspaceBrandV259(){'),app.indexOf('function customerInterfaceStepperHtmlV325('));
   assert.doesNotMatch(brandSave, /enabled_modules|set_business_modules/,

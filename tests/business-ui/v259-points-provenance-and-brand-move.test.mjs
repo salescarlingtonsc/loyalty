@@ -182,9 +182,12 @@ test('V259 the form travelled WHOLE — one form, one save, no fork', () => {
      (platform console -> Sectors -> Assign sector); an editable control here 42501'd the WHOLE
      card for every firm with a sector assignment, which was every self-service firm. So it stays
      in the panel to be READ, and the rule this test guards becomes: every EDITABLE field in the
-     panel is in the one UPDATE, and the one read-only field is out of it. */
-  assert.match(brandPanel, /<select id="bi"[^>]*\bdisabled\b/,
-    'the Industry select must be read-only, or this save fails on a column the owner cannot move');
+     panel is in the one UPDATE, and the one field that only FILLS another is out of it.
+     nestly_v800: 'bi' opens again, but it types into 'bilabel' and is never itself written. */
+  assert.doesNotMatch(brandPanel, /<select id="bi"[^>]*\bdisabled\b/,
+    'nestly_v800: the owner asked for the control to open again');
+  assert.match(brandPanel, /Industry \(what customers read\)/,
+    'and it must say it picks wording — it cannot move the sector, which is what 42501s this save');
   assert.doesNotMatch(brandPanel, /id="bp"/, 'the booking policy is saved by Appointment Setting now');
   /* Scoped to the #bsave UPDATE itself — `brandWiring` runs on past this handler and into the
      Appointment Setting card, which is exactly where booking_policy is supposed to be written now. */

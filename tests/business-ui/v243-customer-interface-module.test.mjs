@@ -320,11 +320,13 @@ test('V326 the live preview reflects the CURRENT form values, not last-saved sta
   assert.match(wire, /refreshCustomerInterfaceLivePreviewV326\(\);/);
   /* V385: the industry select and its customer-facing wording feed the identity line under the
      business name in the preview, so they refresh it too.
-     nestly_v799: 'bi' left this list. The sector select is read-only (businesses.industry mirrors
-     the assigned bundle and only the platform may move it), so it fires no input and no change —
-     a listener on it could never run. 'bilabel', the wording the customer actually reads, is still
-     here and is what keeps the identity line live as the owner types. */
-  assert.match(wire, /\['bn','bc','bp','bbio','bilabel'\]\.forEach\(id=>\{/);
+     nestly_v799 dropped 'bi' while the select was disabled; nestly_v800 restores it, because the
+     select opens again as a picker that fills 'bilabel' — the line the customer actually reads.
+     Its own change handler is wired BEFORE this loop so the fill has landed by the time the loop's
+     listener repaints the preview. */
+  assert.match(wire, /\['bn','bc','bp','bbio','bilabel','bi'\]\.forEach\(id=>\{/);
+  assert.match(wire, /box\.value=INDUSTRIES\[chosen\]\?\.label\|\|''/,
+    'picking a sector must fill the wording box — that is the whole job of the control');
   assert.match(wire, /el\.addEventListener\('input',refreshCustomerInterfaceLivePreviewV326\)/);
   const markup = section(app, 'function customerInterfaceLivePreviewMarkupV326(', 'function refreshCustomerInterfaceLivePreviewV326(');
   // Reads the live input value, falling back to saved state only when the field isn't on screen.

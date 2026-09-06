@@ -136,9 +136,10 @@ test('responsive pipeline keeps a mobile list and accessible dialogs', async () 
   assert.match(styles, /\.platform-prospect-list:not\(\[hidden\]\)\{display:grid/);
   assert.match(styles, /\.platform-kanban\[hidden\],\.platform-prospect-list\[hidden\]\{display:none!important\}/);
   assert.match(styles, /min-height:44px/);
-  /* V385 (owner, photo 11: "make editable") is SUPERSEDED by nestly_v798: the sector select reads
-     the firm's sector and cannot set it — the platform owns both the entitlement and the column. */
-  assert.match(index, /<select id="bi" disabled aria-describedby="biSectorHint">/);
+  /* V385 (owner, photo 11: "make editable") is SUPERSEDED by nestly_v798/v800: the control picks
+     the words customers read; the platform owns both the entitlement and the sector column. */
+  assert.match(index, /<select id="bi" aria-describedby="biSectorHint">/);
+  assert.match(index, /Your plan sector:/);
   assert.doesNotMatch(index, /You can change them anytime in Settings/);
   assert.doesNotMatch(index, /id="msave"/);
 });

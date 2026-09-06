@@ -96,13 +96,19 @@ function harness({
   return {save: loadHandler(context), calls, state: context.S};
 }
 
-test('v798: the card is rendered with the Industry select read-only', () => {
+/* nestly_v800 supersedes v798's `disabled`: the owner asked for the control to open again
+   ("still cannot drop down"), so it is a PICKER for the customer-facing wording, not for the
+   sector. What must hold is unchanged and is asserted by the two tests below plus the estate-wide
+   scan at the bottom: nothing on this card writes businesses.industry. */
+test('v800: the Industry select opens, and offers wording rather than sectors to switch to', () => {
   const card = section(app, 'function workspaceBrandPanelHtmlV259(){', '\nfunction refreshWorkspaceIdentityV798');
   const select = card.match(/<select id="bi"[^>]*>/);
   assert.ok(select, 'the Industry select is gone from the Business Profile card');
-  assert.match(select[0], /\bdisabled\b/,
-    'the Industry select must be read-only: businesses.industry mirrors the assigned sector bundle, '
-    + 'and an editable control here fails the whole card with 42501');
+  assert.doesNotMatch(select[0], /\bdisabled\b/, 'the owner must be able to open it');
+  assert.match(card, /Industry \(what customers read\)/,
+    'the label must say what the control does, or it claims to set the sector again');
+  assert.match(card, /Your plan sector:/,
+    'the real sector must still be stated — it is what decides their modules');
 });
 
 test('v798: saving never sends `industry`, even when the select shows a different sector', async () => {

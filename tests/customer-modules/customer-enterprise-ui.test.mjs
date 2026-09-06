@@ -230,7 +230,10 @@ test('Settings forms are explicitly labelled and reflow without 390px page overf
   assert.match(customerInterface,/<div class="customer-interface-sections-v243">/);
   for(const [source,id,label] of [
     /* V375 (owner, photo 17: "remove") — the brand colour picker is gone from the form. */
-    [brand,'bn','Name'],[brand,'bi','Industry'],
+    /* nestly_v800: the Industry label says what the control does. It opens again (the owner asked
+       for it back) but it picks the WORDS customers read and fills #bilabel below — it cannot move
+       the sector, which businesses.industry mirrors from the assigned bundle. */
+    [brand,'bn','Name'],[brand,'bi','Industry (what customers read)'],
     /* V385 (owner, photo 12): the booking policy moved to Appointment Setting, and is labelled
        there. The customer-facing industry wording (photo 11) joined this form and is labelled here. */
     [bookingRules,'bp','Booking policy (shown to customers when they book)'],

@@ -57775,6 +57775,31 @@ function workspaceIndustryLabelFallbackV799(industry){
   if(!key||key==='other')return '';
   return INDUSTRIES[key]?.label||'';
 }
+/* nestly_v800 (owner, 2026-09-06: "still cannot drop down", ringing the Industry select, after
+   ruling twice that it must not touch modules). v798 disabled the control because it looked like
+   it set the sector and could not: businesses.industry mirrors the assigned sector bundle and
+   app.business_sector_modules_guard_v75 42501s any other writer.
+   So it opens again, as what the owner actually wanted from it — a PICKER for the words customers
+   read. Choosing a sector types that sector's words into the field below, which the owner can then
+   edit freely. The field stays the single authority for the column; the select only fills it, and
+   still writes nothing of its own. The firm's real sector is stated underneath, because it is what
+   decides their modules and nothing on this card can move it.
+   'Other' is not offered: it is Peekaa's word for "not on this list", never a description a
+   customer should read (v421, photo 3), so picking it could only put a wrong word in the box. */
+const WORKSPACE_WORDING_SECTORS_V800=()=>Object.entries(INDUSTRIES)
+  .filter(([key])=>String(key).toLowerCase()!=='other');
+/* Which option the picker shows: the sector whose words are currently in the box, or '' when the
+   firm has typed something of its own — a sector selected while the customer reads different words
+   would be the same lie v798 removed, one field along. */
+function workspaceWordingSectorV800(label,industry){
+  const typed=String(label||'').trim();
+  if(typed){
+    const hit=WORKSPACE_WORDING_SECTORS_V800().find(([,value])=>value.label===typed);
+    return hit?hit[0]:'';
+  }
+  const key=String(industry||'').trim().toLowerCase();
+  return WORKSPACE_WORDING_SECTORS_V800().some(([sector])=>sector===key)?key:'';
+}
 function workspaceBrandPanelHtmlV259(){
   return `<div class="card" style="margin-top:16px"><b>Business</b>
       ${S.myRole==='owner'?`<div id="workspaceLogoEditorV96">${CUI.loadingState({title:'Loading business logo',iconName:'branch'})}</div>`:''}
@@ -57803,8 +57828,10 @@ function workspaceBrandPanelHtmlV259(){
             set it, and `industry` is gone from the write below. Changing a firm's sector is a
             super-admin action (platform console -> Sectors -> Assign sector), which moves the
             bundle, the module list and this column together and cannot leave them disagreeing. */''}
-      <label for="bi">Industry</label><select id="bi" disabled aria-describedby="biSectorHint">${Object.entries(INDUSTRIES).map(([k,v])=>`<option value="${k}" ${S.biz.industry===k?'selected':''}>${v.em} ${v.label}</option>`).join('')}</select>
-      <p class="muted small" id="biSectorHint" style="margin-top:4px">Set with your plan when you signed up. Ask Peekaa to change it — your modules follow your sector.</p>
+      <label for="bi">Industry (what customers read)</label><select id="bi" aria-describedby="biSectorHint">${(()=>{
+        const showing=workspaceWordingSectorV800(S.biz.industry_label,S.biz.industry);
+        return `${showing?'':'<option value="" selected>Your own wording</option>'}${WORKSPACE_WORDING_SECTORS_V800().map(([k,v])=>`<option value="${esc(k)}" ${showing===k?'selected':''}>${v.em} ${esc(v.label)}</option>`).join('')}`;
+      })()}</select>
       ${/* nestly_v421 (owner, photo 3: the Industry select ringed on "Other" — "if i choose other
             in Industry it should then pop up 'What customers see under your name', not a fixed
             'Other'. you may hide it first, until clicked others").
@@ -57820,7 +57847,8 @@ function workspaceBrandPanelHtmlV259(){
       <div id="biLabelRowV421">
         <label for="bilabel">What customers see under your name</label>
         <input id="bilabel" maxlength="60" placeholder="e.g. Facial studio" value="${esc(S.biz.industry_label||'')}">
-        <p class="muted small" style="margin-top:4px">Your own words for what you do — this is the line customers read under your business name. ${workspaceIndustryLabelFallbackV799(S.biz.industry)?`Leave it blank and &ldquo;${esc(workspaceIndustryLabelFallbackV799(S.biz.industry))}&rdquo; is shown.`:'Leave it blank and no line is shown.'} It changes nothing else.</p>
+        <p class="muted small" style="margin-top:4px">Your own words for what you do — this is the line customers read under your business name. Pick from Industry above to fill it in, or type your own. ${workspaceIndustryLabelFallbackV799(S.biz.industry)?`Leave it blank and &ldquo;${esc(workspaceIndustryLabelFallbackV799(S.biz.industry))}&rdquo; is shown.`:'Leave it blank and no line is shown.'} It changes nothing else.</p>
+        <p class="muted small" id="biSectorHint" style="margin-top:8px">Your plan sector: <b>${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'—')}</b> — this is what decides your modules. Ask Peekaa to change it.</p>
       </div>
       ${/* V375 (owner, photo 17: the swatch struck through, "remove"). Every business's customer
             surface now uses Peekaa's own accent, so there is no colour to pick and none to save.
@@ -58857,9 +58885,18 @@ function wireCustomerInterfacePreviewV243(){
   /* V385: the industry select and its customer-facing wording feed the identity line under the
      business name, so both refresh the preview. 'change' as well as 'input' — a <select> on
      WebKit does not always fire input on a pick. */
-  /* nestly_v799: the wording field is always on screen now, so there is no row to keep in step and
-     no reason to listen to the sector select — which is read-only and fires nothing anyway. */
-  ['bn','bc','bp','bbio','bilabel'].forEach(id=>{
+  /* nestly_v800: the Industry select is a PICKER for the wording field — choosing a sector types
+     its words into #bilabel, which stays the one thing that is saved. Wired before the loop below
+     so the fill has landed by the time that loop's own change listener refreshes the preview. */
+  const wordingPickerV800=$('bi');
+  if(wordingPickerV800)wordingPickerV800.addEventListener('change',()=>{
+    const chosen=wordingPickerV800.value;
+    const box=$('bilabel');
+    if(!box||!chosen)return;
+    box.value=INDUSTRIES[chosen]?.label||'';
+    refreshCustomerInterfaceLivePreviewV326();
+  });
+  ['bn','bc','bp','bbio','bilabel','bi'].forEach(id=>{
     const el=$(id);
     if(!el)return;
     el.addEventListener('input',refreshCustomerInterfaceLivePreviewV326);
