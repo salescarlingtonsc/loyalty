@@ -22,6 +22,9 @@
 --      provider_base_price_id already comes from the tier catalogue, which v791 repriced.
 --   0b. branch_subscriptions_v786.provider accepts 'stripe' as well as 'razorpay' (it pinned
 --      Razorpay alone), so a Stripe branch payment can be recorded at all.
+--   5. apply_stripe_billing_event_v94_base upserts the customer row on business_id (v760 removed the
+--      unique it still named, so every company Stripe event failed 42P10) and RELINKS a business
+--      whose row holds another provider's customer, audited, instead of raising.
 --   4. get_business_billing_v786 presents a company subscription on a RETIRED provider as no plan:
 --      no provider object, no plan label, no amount, state 'none'. The Subscription page then says
 --      "Not paid yet" and offers Choose plan, which is the truth — that subscription cannot renew
@@ -403,5 +406,94 @@ revoke all on function public.get_business_billing_v786(uuid) from public, anon;
 grant execute on function public.get_business_billing_v786(uuid) to authenticated, service_role;
 comment on function public.get_business_billing_v786(uuid) is
   'v786 + v792: branch subscriptions and the flat price; a company or branch subscription left on a retired provider reads as no plan.';
+
+-- =============================================================================================
+-- 5 · The Stripe company applier can write a customer row again, and a switched tenant relinks.
+--
+--     billing_provider_customers lost its unique(provider_customer_id) in v760 (a Razorpay customer
+--     spans several businesses) and gained unique(business_id). The Stripe base applier — untouched
+--     since August — still upserts `on conflict(provider_customer_id)`, so EVERY company-level
+--     Stripe event would have failed with 42P10: the owner's card would be charged and the workspace
+--     never activated. Caught by this migration's acceptance suite (D5) before a live payment.
+--
+--     The same block also raised when a business already held a DIFFERENT customer id, which is
+--     exactly what a provider switch looks like. v760 settled that question on the Razorpay side: a
+--     cross-BUSINESS collision is an error, the same business being handed a new customer id is a
+--     relink, recorded in audit_log. The Stripe path now says the same thing.
+-- =============================================================================================
+do $v792_customer_patch$
+declare v_body text; v_new text;
+begin
+  v_body := pg_get_functiondef('public.apply_stripe_billing_event_v94_base(text)'::regprocedure);
+  if position('PROVIDER_CUSTOMER_RELINKED_V792' in v_body) > 0 then
+    raise exception 'v792: apply_stripe_billing_event_v94_base already carries v792';
+  end if;
+  v_new := replace(v_body, $needle$      if exists(
+        select 1 from public.billing_provider_customers customer
+         where (
+           customer.provider_customer_id=v_customer
+           and customer.business_id<>v_business
+         ) or (
+           customer.business_id=v_business
+           and customer.provider_customer_id<>v_customer
+         )
+      ) then
+        raise exception 'Stripe customer is already linked to another business';
+      end if;
+      insert into public.billing_provider_customers(
+        business_id,provider_customer_id,currency,livemode,provider_created_at,
+        provider_event_created_at,provider_event_rank,last_event_id
+      ) values (
+        v_business,v_customer,upper(nullif(v_object->>'currency','')),
+        v_event.livemode,app.stripe_epoch_v77(v_object->'created'),
+        v_event.event_created_at,v_rank,v_event.event_id
+      )
+      on conflict(provider_customer_id) do update
+        set currency=coalesce(excluded.currency,billing_provider_customers.currency),
+            provider_event_created_at=excluded.provider_event_created_at,
+            provider_event_rank=excluded.provider_event_rank,
+            last_event_id=excluded.last_event_id,updated_at=now()
+      where (excluded.provider_event_created_at,excluded.provider_event_rank)
+            >= (billing_provider_customers.provider_event_created_at,
+                billing_provider_customers.provider_event_rank);$needle$, $fixed$      if exists(
+        select 1 from public.billing_provider_customers customer
+         where customer.provider_customer_id=v_customer
+           and customer.business_id<>v_business
+      ) then
+        raise exception 'Stripe customer is already linked to another business';
+      end if;
+      insert into public.audit_log(business_id,actor,action,entity,entity_id,detail)
+      select v_business,null,'PROVIDER_CUSTOMER_RELINKED_V792','billing_provider_customers',
+             customer.id,
+             jsonb_build_object('provider','stripe','previous_provider',customer.provider,
+               'previous_customer_id',customer.provider_customer_id,'customer_id',v_customer,
+               'event_id',v_event.event_id,'event_type',v_event.event_type)
+        from public.billing_provider_customers customer
+       where customer.business_id=v_business
+         and customer.provider_customer_id<>v_customer;
+      insert into public.billing_provider_customers(
+        business_id,provider,provider_customer_id,currency,livemode,provider_created_at,
+        provider_event_created_at,provider_event_rank,last_event_id
+      ) values (
+        v_business,'stripe',v_customer,upper(nullif(v_object->>'currency','')),
+        v_event.livemode,app.stripe_epoch_v77(v_object->'created'),
+        v_event.event_created_at,v_rank,v_event.event_id
+      )
+      on conflict(business_id) do update
+        set provider_customer_id=excluded.provider_customer_id,
+            provider='stripe',
+            currency=coalesce(excluded.currency,billing_provider_customers.currency),
+            provider_event_created_at=excluded.provider_event_created_at,
+            provider_event_rank=excluded.provider_event_rank,
+            last_event_id=excluded.last_event_id,updated_at=now()
+      where (excluded.provider_event_created_at,excluded.provider_event_rank)
+            >= (billing_provider_customers.provider_event_created_at,
+                billing_provider_customers.provider_event_rank);$fixed$);
+  if v_new = v_body then
+    raise exception 'v792: the Stripe customer upsert needle did not match';
+  end if;
+  execute v_new;
+end
+$v792_customer_patch$;
 
 commit;

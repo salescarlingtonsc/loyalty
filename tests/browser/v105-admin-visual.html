@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="61da02057f54e9c2f1822f5b04d886c09b20b9b4e66e40ea47e480a897ef7d49">
+<meta name="v105-production-component-sha256" content="0826ee0ac1991bedc5a7c9e986a393e1f3d71506124c6d2acbc3270237db03b8">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -6642,13 +6642,16 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .platform-pipeline-line{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);min-width:0}
 .platform-pipeline-line span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .platform-pipeline-line .cui-icon,.platform-pipeline-line svg{flex:0 0 auto;color:var(--muted)}
-.platform-pipeline-due{
+/* nestly_v793: the lifecycle kanban's day-distance chip is the same object as the pipeline's,
+   so it shares the rules rather than growing a second near-identical pill that drifts. */
+.platform-pipeline-due,.platform-due-chip{
   display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;
   background:var(--neutral-bg);color:var(--ink2);white-space:nowrap
 }
-.platform-pipeline-due[data-tone="overdue"]{background:var(--danger-bg);color:var(--danger)}
+.platform-due-chip{margin-left:8px;vertical-align:middle}
+.platform-pipeline-due[data-tone="overdue"],.platform-due-chip[data-tone="overdue"]{background:var(--danger-bg);color:var(--danger)}
 .platform-pipeline-due[data-tone="today"]{background:var(--danger-bg);color:var(--danger)}
-.platform-pipeline-due[data-tone="soon"]{background:var(--warn-bg);color:var(--warn)}
+.platform-pipeline-due[data-tone="soon"],.platform-due-chip[data-tone="soon"]{background:var(--warn-bg);color:var(--warn)}
 .platform-pipeline-due[data-tone="won"]{background:var(--success-bg);color:var(--success)}
 .platform-pipeline-add{
   margin-top:8px;width:100%;padding:10px;border:1px dashed rgba(23,22,26,.18);border-radius:10px;background:transparent;color:var(--muted);font-weight:650;font-size:12.5px
@@ -6721,7 +6724,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 61da02057f54</span>
+<span class="v105-provenance">v105 production-component harness · 0826ee0ac199</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6846,7 +6849,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'61da02057f54e9c2f1822f5b04d886c09b20b9b4e66e40ea47e480a897ef7d49',
+  sourceHash:'0826ee0ac1991bedc5a7c9e986a393e1f3d71506124c6d2acbc3270237db03b8',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

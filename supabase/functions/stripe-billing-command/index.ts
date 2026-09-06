@@ -292,9 +292,14 @@ Deno.serve(async (req) => {
       data.pricing_model === 'v124_customer_capacity' &&
       ['create_checkout', 'change_cadence', 'change_capacity', 'change_branches'].includes(commandType)
     ) {
-      providerCallStarted = true;
+      /* nestly_v793: validateV124Prices only READS prices (stripe.prices.retrieve). Bracketing it
+         with providerCallStarted=true left the flag set when it threw — the catalogue-mismatch
+         error is not a StripeInvalidRequestError, so nonExecutionProven stayed false and a pure
+         configuration fault was persisted as 'uncertain' ("retry this command"), hiding the real
+         message from the owner and from the logs. A read cannot have moved money, so the flag
+         stays false here and a validation failure is reported as what it is: 'failed', carrying
+         the actual reason. */
       await validateV124Prices(stripe, data);
-      providerCallStarted = false;
     }
 
     const portalRecoveryReplay =

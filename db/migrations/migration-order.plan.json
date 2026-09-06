@@ -3975,6 +3975,12 @@
       "path": "db/migrations/20261006_nestly_v792_provider_ids_belong_to_one_provider.sql",
       "semanticVersion": "v792",
       "proposedDeployVersion": "20261006120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v793_due_day_buckets.sql",
+      "semanticVersion": "v793",
+      "proposedDeployVersion": "20261006130000"
     }
   ]
 }

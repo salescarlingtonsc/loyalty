@@ -864,7 +864,12 @@
       '{count} not recorded':'{count} 项未填写',
       'No payment date':'无付款日期',
       '{days} days overdue':'逾期 {days} 天',
+      '1 day overdue':'逾期 1 天',
+      '2-7 days overdue':'逾期 2 至 7 天',
+      '8+ days overdue':'逾期 8 天以上',
       'Due today':'今天到期',
+      'Next 3 days':'未来 3 天',
+      'Due in 1 day':'1 天后到期',
       'Due in {days} days':'{days} 天后到期',
       'No contact number':'没有联络号码',
       'Auto-collect':'自动扣款',
@@ -1244,7 +1249,12 @@
       '{count} not recorded':'{count} belum direkodkan',
       'No payment date':'Tiada tarikh bayaran',
       '{days} days overdue':'{days} hari tertunggak',
+      '1 day overdue':'1 hari tertunggak',
+      '2-7 days overdue':'2-7 hari tertunggak',
+      '8+ days overdue':'8+ hari tertunggak',
       'Due today':'Perlu dibayar hari ini',
+      'Next 3 days':'3 hari akan datang',
+      'Due in 1 day':'Perlu dibayar dalam 1 hari',
       'Due in {days} days':'Perlu dibayar dalam {days} hari',
       'No contact number':'Tiada nombor untuk dihubungi',
       'Auto-collect':'Kutipan automatik',
@@ -9925,12 +9935,38 @@
       due:params.get('due')||''
     };
   }
+  /* nestly_v793: the owner chases by the day ("outstanding payment for 1 day"), so one day late
+     must not read "1 days overdue" — the plural was the only wording here and it made the most
+     urgent, most recoverable case look like a typo. Exactly-one is its own sentence on both
+     sides of the due date; everything else keeps the counted plural it already had. */
   function companyDueLabel(days) {
     if(days===null||days===undefined)return pt('No payment date');
     const n=Number(days);
+    if(n===-1)return pt('1 day overdue');
     if(n<0)return pt('{days} days overdue',{days:Math.abs(n)});
     if(n===0)return pt('Due today');
+    if(n===1)return pt('Due in 1 day');
     return pt('Due in {days} days',{days:n});
+  }
+  /* The same fact as a lane chip. Kanban cards carry a renewal DATE; a date alone makes an
+     operator do the arithmetic for every card on the board, which is exactly the work the
+     directory's due windows exist to remove. Returns null when there is no date to count from,
+     so a card renders without an empty chip rather than with a hollow one. */
+  function companyDueDaysFromDate(value) {
+    if(!value)return null;
+    const at=new Date(value);
+    if(Number.isNaN(at.getTime()))return null;
+    const day=date=>Date.UTC(date.getFullYear(),date.getMonth(),date.getDate());
+    /* Both sides are read in Singapore time, the zone the server counts days in, so a card and
+       the directory chip never disagree by one day for a browser in another zone. */
+    const sgt=date=>new Date(date.toLocaleString('en-US',{timeZone:'Asia/Singapore'}));
+    return Math.round((day(sgt(at))-day(sgt(new Date())))/86400000);
+  }
+  function companyDueChipHtml(value) {
+    const days=companyDueDaysFromDate(value);
+    if(days===null)return '';
+    const tone=days<0?'overdue':days<=3?'soon':'ok';
+    return `<span class="platform-due-chip" data-tone="${tone}">${escapeHtml(companyDueLabel(days))}</span>`;
   }
   // A phone number is only actionable if we can dial it, so the buttons appear
   // exactly when there is a number and are absent otherwise — never dead.
@@ -11668,7 +11704,12 @@
           ['To chase',Number(collection.chase||0),'info'],
           ['Auto-collect',Number(collection.auto||0),'check'],
           ['Overdue',Number(due.overdue||0),'retention'],
-          ['Due today',Number(due.today||0),'reports']
+          /* v793: day one of chasing is its own number. A card that failed yesterday usually
+             settles on the provider's own retry; one that has been failing for a week does not.
+             Reading them as a single "overdue" total hid which call to make first. */
+          ['1 day overdue',Number(due.overdue_1||0),'retention'],
+          ['Due today',Number(due.today||0),'reports'],
+          ['Next 3 days',Number(due.in_3||0),'reports']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(String(value))}</div></article>`).join('')}</section>
         <section class="card">
           <form id="companySearch" class="platform-filter-grid"><label>${escapeHtml(pt('Search companies'))}<input type="search" name="q" value="${escapeHtml(active.search)}" placeholder="${escapeHtml(pt('Name, contact, phone or email'))}"></label><button class="btn" type="submit">${escapeHtml(pt('Search'))}</button></form>
@@ -11681,9 +11722,19 @@
             ${chip(pt('Any date'),'','due',active.due)}
             ${chip(pt('Overdue'),'overdue','due',active.due)}
             ${chip(pt('Due today'),'today','due',active.due)}
+            ${chip(pt('Next 3 days'),'3','due',active.due)}
             ${chip(pt('Next 7 days'),'7','due',active.due)}
             ${chip(pt('Next 14 days'),'14','due',active.due)}
             ${chip(pt('Next 30 days'),'30','due',active.due)}
+          </div>
+          ${/* v793: the overdue side split by how late, on its own row so the three read as one
+               ladder rather than as more date filters. They partition Overdue exactly — the
+               server proves that in db/tests/v793_due_day_buckets.sql — so an operator can work
+               down the ladder knowing no firm sits between two chips. */''}
+          <div class="platform-actions" style="margin-top:8px">
+            ${chip(pt('1 day overdue'),'overdue1','due',active.due)}
+            ${chip(pt('2-7 days overdue'),'overdue2_7','due',active.due)}
+            ${chip(pt('8+ days overdue'),'overdue8','due',active.due)}
           </div>
           <div class="platform-actions" style="margin-top:8px">
             ${chip(pt('All sectors'),'','sector',active.sector)}
@@ -12695,7 +12746,19 @@
     const tabStrip=subscriptionOperationsTabStripHtml('lifecycle');
     main.innerHTML=loading(CUI,'Customer lifecycle','Loading system-derived customer status…','branch');
     try{const payload=asObject(await rpc(sb,'platform_get_subscription_operations_v156',{p_search:null,p_status:null,p_limit:500})),rows=asArray(payload.subscriptions),lanes=[['payment_received','Payment received'],['onboarding','Onboarding'],['active','Active'],['renewal_approaching','Renewal approaching'],['payment_action_required','Payment action required'],['past_due','Past due'],['cancel_at_period_end','Cancel at period end'],['cancelled','Cancelled']];
-      const cards=items=>items.map(row=>`<article class="card platform-prospect-card"><b>${escapeHtml(row.business_name)}</b><p class="muted small">${escapeHtml(platformStatus(row.canonical_status))} · ${escapeHtml(platformStatus(row.billing_interval||'subscription'))}</p><p class="small">${escapeHtml(pt('Paid through'))}: ${escapeHtml(dateTime(row.paid_through))}<br>${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}</p><p class="muted small platform-break">${escapeHtml(row.billing_email||pt('Billing contact missing'))}</p><a class="btn ghost sm" href="#/platform/subscription-operations?search=${encodeURIComponent(row.business_name)}">${escapeHtml(pt('Open operations'))}</a></article>`).join('');
+      /* nestly_v793: a lane used to be an unordered pile of cards showing two dates, so "who do I
+         call first" meant reading every card and doing the arithmetic. Each card now carries the
+         same day-distance chip the directory uses, and a lane is ordered by it: furthest overdue
+         first, then soonest due, then the cards with no date at all. Same rows, same source RPC —
+         only the ordering and one chip are new. */
+      const dueSorted=items=>items.slice().sort((left,right)=>{
+        const a=companyDueDaysFromDate(left.next_renewal),b=companyDueDaysFromDate(right.next_renewal);
+        if(a===null&&b===null)return String(left.business_name||'').localeCompare(String(right.business_name||''));
+        if(a===null)return 1;
+        if(b===null)return -1;
+        return a-b;
+      });
+      const cards=items=>dueSorted(items).map(row=>`<article class="card platform-prospect-card"><b>${escapeHtml(row.business_name)}</b>${companyDueChipHtml(row.next_renewal)}<p class="muted small">${escapeHtml(platformStatus(row.canonical_status))} · ${escapeHtml(platformStatus(row.billing_interval||'subscription'))}</p><p class="small">${escapeHtml(pt('Paid through'))}: ${escapeHtml(dateTime(row.paid_through))}<br>${escapeHtml(pt('Next renewal'))}: ${escapeHtml(dateTime(row.next_renewal))}</p><p class="muted small platform-break">${escapeHtml(row.billing_email||pt('Billing contact missing'))}</p><a class="btn ghost sm" href="#/platform/subscription-operations?search=${encodeURIComponent(row.business_name)}">${escapeHtml(pt('Open operations'))}</a></article>`).join('');
       main.innerHTML=`${CUI.pageHeader({title:'Customer lifecycle',subtitle:'System-derived subscription and onboarding truth. These lanes cannot be changed by dragging.',iconName:'branch',actions:`<div class="platform-actions" role="group" aria-label="${escapeHtml(pt('Customer lifecycle view'))}"><button class="btn ghost" data-lifecycle-view="kanban" aria-pressed="${view==='kanban'}">${escapeHtml(pt('Kanban'))}</button><button class="btn ghost" data-lifecycle-view="list" aria-pressed="${view==='list'}">${escapeHtml(pt('List'))}</button></div>`})}${tabStrip}
         <div class="platform-kanban platform-kanban-responsive" ${view==='kanban'?'':'hidden'} aria-label="${escapeHtml(pt('System-derived customer lifecycle'))}">${lanes.map(([key,label])=>{const items=rows.filter(row=>lifecycleLane(row)===key);return`<section class="platform-kanban-column"><div class="platform-kanban-head"><h2>${escapeHtml(pt(label))}</h2><span>${escapeHtml(items.length)}</span></div>${cards(items)||`<p class="muted small">${escapeHtml(pt('No customers'))}</p>`}</section>`}).join('')}</div>
         <section class="platform-prospect-list" ${view==='list'?'':'hidden'}><div class="platform-table-scroll">${subscriptionOperationsTable(rows,CUI,false)}</div></section>
