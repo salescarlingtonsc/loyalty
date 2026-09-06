@@ -13,10 +13,10 @@
 
 | | |
 |---|---|
-| HEAD SHA | `3a9f3d79c11b4bf073d3e029e0bc7ab332aa0c8a` |
+| HEAD SHA | `feb81b90ddf333f5a80dd41fae8b0e2504622cbe` |
 | Branch | `claude/audit-p2-ship` |
-| Commit date | 2026-09-07T02:52:16+08:00 |
-| Record generated | 2026-09-06T18:54:54.382Z |
+| Commit date | 2026-09-07T03:06:26+08:00 |
+| Record generated | 2026-09-06T19:06:55.941Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
 | Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |
