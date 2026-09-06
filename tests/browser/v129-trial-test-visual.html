@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="bae8716803431119b2e666a99213d1d0b9313b2b3264741068820f63911e0c4c"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="970049b349d9a877e5ffae67046a6d3e49c51e8db977540259d8d2bbc5c99db5"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5771,7 +5771,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · bae8716803431119b2e666a99213d1d0b9313b2b3264741068820f63911e0c4c</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 970049b349d9a877e5ffae67046a6d3e49c51e8db977540259d8d2bbc5c99db5</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6506,8 +6506,12 @@ async function clientsPage(){
   const routeMain=M();
   const canWrite=canWriteModule('clients');
   const canWriteReferrals=canWriteModule('referrals');
+  // F080: stage_import_rows (the RPC behind the Import button/modal) requires app.is_salon_owner —
+  // a manager with plain write access gets a 42501 the moment they try, so gate the button on the
+  // same rule the server actually enforces instead of a broader client-side check that promises
+  // something the server refuses.
   const customerActions=CUI.action({id:'exp',label:'Export CSV',iconName:'export',variant:'secondary',className:'sm'})+
-    (canWrite?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
+    (S.myRole==='owner'?importBtn('customers'):'')+(canWrite?CUI.action({id:'add',label:'Add customer',iconName:'add'}):'');
   routeMain.innerHTML=`<section id="customersView">
     <header class="v150-titlebar" data-workspace-i18n>
       <div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customers</h1></div></div>
@@ -8483,13 +8487,17 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
   const duplicate=doneInfo.duplicate===true;
   const pointsEarned=Number.isFinite(Number(doneInfo.pointsEarned))?Number(doneInfo.pointsEarned):0;
   const pointsTotal=Number.isFinite(Number(doneInfo.pointsTotal))?Number(doneInfo.pointsTotal):null;
+  /* F021: a retry after a lost network response replays the server's §8.2 exact-replay branch,
+     which always answers points_earned:0 even on a sale the cashier never saw succeed — it does
+     NOT mean "no extra points were added". Report the honest, verifiable fact (the customer's
+     current balance) instead of asserting a negative about this attempt we cannot know is true. */
   return {
-    heading:duplicate?'Already recorded':'Done',
+    heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
-    message:duplicate?`This sale was already recorded — no extra ${unitNounV430} added.`
+    message:duplicate?`Recorded — current balance: ${pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'} ${unitNounV430}.`
       :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:`No ${unitNounV430} earned for this purchase.`,
     pointsEarned,
-    pointsTotal:pointsEarned>0?pointsTotal:null,
+    pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
     duplicate
   };
 }
@@ -8920,6 +8928,15 @@ function groupRedeemableRewardsV432(rewards){
     return (ai<0?order.length:ai)-(bi<0?order.length:bi);
   });
 }
+/* F019: mirror app.norm_phone's country-code fold so a pasted "+65 8186 3833" (or "065 8186
+   3833") lands on the customer's real 8-digit number instead of being truncated to its first 8
+   raw digits (which silently produces a different, still-plausible number). */
+function tillFoldPhoneDigitsV019(raw){
+  const digits=String(raw||'').replace(/\D/g,'');
+  if(digits.length===10&&digits.startsWith('65'))return digits.slice(2);
+  if(digits.length===11&&digits.startsWith('065'))return digits.slice(3);
+  return digits.slice(0,8);
+}
 async function tillPage(){
   const routeMain=M();
   const isTillCurrent=()=>routeMain.isConnected&&M()===routeMain;
@@ -9191,7 +9208,7 @@ async function tillPage(){
       </div>`;
     const inp=$('tPhone');
     inp.focus();
-    inp.oninput=()=>{phone=inp.value.replace(/\D/g,'').slice(0,8);inp.value=phone};
+    inp.oninput=()=>{phone=tillFoldPhoneDigitsV019(inp.value);inp.value=phone};
     inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
     $('tFind').onclick=doFind;
     if(canScanRedemption())$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
@@ -9372,8 +9389,11 @@ async function tillPage(){
     };
   }
   function drawCustomerCard(){
-    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
-    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    // F024: record_sale_by_phone rejects any p_staff other than the caller's own staff row
+    // (42501 "sale staff attribution must match the authenticated staff identity"), so a
+    // "Who made this sale?" picker on this legacy card can only ever fail or lie — remove it
+    // and always attribute to the person actually recording the sale.
+    tillSaleStaffId=tillActingStaffId;
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
@@ -9385,9 +9405,6 @@ async function tillPage(){
         ${canRecordSales?`${accessibleTillBranches.length>1
           ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
           :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`}
-        ${tillAttributableStaff.length>1?`<label for="tillSaleStaff">Who made this sale?</label>
-        <select id="tillSaleStaff" style="margin-bottom:12px">${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
-        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`:''}
         <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
@@ -9406,11 +9423,6 @@ async function tillPage(){
       document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.textContent.trim()}));
     });
-    /* Re-attributing is a different sale: drop the idempotency key so the next confirm is a
-       fresh attempt rather than a replay of the previous teammate's sale. */
-    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
-      tillSaleStaffId=event.target.value||tillActingStaffId;saleIdem=null;
-    };
     if($('tAmt')){$('tAmt').focus();$('tAmt').oninput=()=>{saleIdem=null}};
     if($('tAmt'))$('tAmt').onkeydown=e=>{if(e.key==='Enter')$('tConfirm')?.click()};
     if($('tConfirm'))$('tConfirm').onclick=async()=>{
@@ -11448,6 +11460,16 @@ async function tillPage(){
       draw();return;}
     if(code==='22023'&&/idempotency key conflicts|key conflict/i.test(msg)){ // same key, different request
       payError={kind:'conflict'};draw();return;}
+    if(code==='22023'&&/tier_benefit_/.test(msg)){
+      // F022: staff_issue_tier_benefit_v365 re-checks the perk's allowance under lock at finalise
+      // time and raises a TYPED 22023 (not a transport failure) when it has just been consumed
+      // elsewhere or the birthday window has closed. Treating this as the generic retry lock trapped
+      // the cart with no way out — drop the spent perk and re-price instead, same as a stale price.
+      payError=null;appliedTierBenefitV656=null;
+      toast('That perk has already been used this period — removed from the bill');
+      await runEvaluate();
+      if(!isTillCurrent())return;
+      draw();return;}
     if(code==='42501'||/create_sales/.test(msg)){ // permission denied
       payError=null;evalError={kind:'perm',message:"You don't have permission to record sales."};evalState='error';draw();return;}
     payError={kind:'retry'};draw(); // network / timeout / lost response / anything else — keep the key, offer Retry
@@ -11551,12 +11573,12 @@ async function tillPage(){
         ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
         ${receiptIdentityHtmlV788(d.branchIdentityV788,d.businessName||S.biz.name,d.branchName)}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
-        <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
+        <h2 style="margin:8px 0 4px">${d.duplicate?'Recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
           :d.pointsEarned>0
           ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
-          ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
+          ?`<p class="muted">Recorded — current balance: ${d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—'} ${tillUnitNounV430(catalog)}.</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
@@ -11634,7 +11656,7 @@ async function tillPage(){
   /* A phone handed in from the global app-bar search starts step 1 pre-filled and, when it is a
      complete number, runs the same lookup a keypad tap would (lookup_client_by_phone) — no new
      call, just a jump straight to the customer's card. */
-  if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
+  if(pendingTillPhone){phone=tillFoldPhoneDigitsV019(pendingTillPhone);pendingTillPhone='';}
   draw();
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
@@ -11655,6 +11677,35 @@ function sgLedgerDateV154(iso){
     date:new Intl.DateTimeFormat('en-SG',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Asia/Singapore'}).format(d),
     time:new Intl.DateTimeFormat('en-SG',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(d)
   };
+}
+/* nestly_v579 (audit F005): correct_quick_sale_amount_v84 only accepts a quick sale that is
+   either net-unpaid or fully paid by a single cash payment (see
+   db/migrations/20260726_nestly_v84_fast_sale_corrections.sql ~line 484-505). The Amend button
+   used to be offered on every active quick sale regardless, so a card/PayNow/other-paid sale
+   walked the owner through the whole deliberate-confirm flow only to fail at the very end with
+   a raw errcode 0A000 message. This mirrors the server's own method_nets computation from the
+   `payments` table client-side so the button can be hidden (with a plain-language reason)
+   before that dead end is reached; the server remains the actual authority and re-checks this
+   exactly the same way. */
+function quickSaleCorrectableV579(sale,paymentsBySale){
+  if(sale.kind!=='quick_sale'||!(Number(sale.amount_cents)>0)||sale.reversal_of)return {allowed:false};
+  const rows=(paymentsBySale&&paymentsBySale.get(sale.id))||[];
+  const nets=new Map();
+  rows.forEach(row=>nets.set(row.method,(nets.get(row.method)||0)+Number(row.amount_cents||0)));
+  const values=[...nets.values()];
+  const netCents=values.reduce((sum,v)=>sum+v,0);
+  const nonzeroMethods=values.filter(v=>v!==0).length;
+  const positiveMethods=[...nets.entries()].filter(([,v])=>v>0);
+  if(netCents===0&&nonzeroMethods===0)return {allowed:true};
+  if(netCents===Number(sale.amount_cents)&&nonzeroMethods===1&&positiveMethods.length===1&&positiveMethods[0][0]==='cash')return {allowed:true};
+  return {allowed:false,reason:'Card/PayNow/other-paid sales: reverse and record again'};
+}
+function saleAmendCellV579(sale,paymentsBySale){
+  if(sale.kind!=='quick_sale'||!(Number(sale.amount_cents)>0)||sale.reversal_of)return '';
+  const correctable=quickSaleCorrectableV579(sale,paymentsBySale);
+  return correctable.allowed
+    ?`<button class="btn ghost sm" data-correct-sale="${sale.id}">Amend</button>`
+    :`<span class="muted small" data-workspace-i18n title="${esc(correctable.reason)}">${esc(correctable.reason)}</span>`;
 }
 function saleRecordStatusV154(s,w={}){
   if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
@@ -11721,7 +11772,7 @@ async function salesPage(){
   /* V291: the filtered answer in full (counts, export, payment-state filtering) and how much of
      it is currently painted. */
   const SALES_PAGE_SIZE_V291=50;
-  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false;
+  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false,salesPaymentsBySaleV579=new Map(),salesLoadSeqV579=0;
   M().innerHTML=`${salesHeadHtmlV291(true)}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
@@ -11752,6 +11803,16 @@ async function salesPage(){
     note.style.color=tone==='warn'?'#C24135':'';
   };
   async function loadRecent(){
+    /* nestly_v579 (audit F006): loadRecent has no serialisation of its own — every filter
+       onchange (and Apply) calls it directly, and each call awaits a full paged ledger read
+       plus the workflow RPC before painting. Two overlapping calls can resolve out of order
+       (the earlier, slower one landing after a later, faster one), silently repainting the
+       table/summary/export-set with a stale filter's answer while the controls show the new
+       one. A generation counter fixes it the same way isCurrent() guards elsewhere in this
+       file: only the call that is still the latest one when each await returns is allowed to
+       touch shared state or the DOM. */
+    const salesLoadSeqSelfV579=++salesLoadSeqV579;
+    const isCurrentLoadV579=()=>salesLoadSeqSelfV579===salesLoadSeqV579;
     const from=$('salesFrom')?.value,to=$('salesTo')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
     if(from&&to&&from>to){salesFilterNoteV266('The From date is after the To date. Nothing was filtered.','warn');return}
     const applyButton=$('salesApply');
@@ -11772,6 +11833,7 @@ async function salesPage(){
     if(staff)query=query.eq('staff_id',staff);
     if(type)query=query.eq('kind',type);
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
+    if(!isCurrentLoadV579())return;
     if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
     /* V291 audit fix (F001): the server clamps any non-zero p_limit to 100
        (least(greatest(coalesce(p_limit,50),1),100)) with NO date/staff/type/branch predicate —
@@ -11781,7 +11843,24 @@ async function salesPage(){
        status/Net (falling back to `w={}`). Pass 0 — the RPC's explicit "unbounded" value,
        already used by Customer 360 above — so every painted row has real reversal/status data. */
     const workflow=await loadReversalWorkflows(null,0).catch(e=>{fail(e);return null});
+    if(!isCurrentLoadV579())return;
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
+    /* nestly_v579 (audit F002): staff_get_reversal_workflows requires refund_sales — every
+       role except owner/manager gets a 42501 that loadReversalWorkflows swallows to null, so W
+       is empty for everyone else and a reversed original silently painted as a plain "Sale"
+       with Net = Gross (and exported that way in the CSV below). The ledger rows themselves
+       already carry `reversal_of`, so when the workflow map is unavailable — or simply missing
+       a row, e.g. a future server change — derive the Reversed status and a zero Net from that
+       linkage instead of trusting an empty `w`. Reverse/Amend stay hidden (can_reverse stays
+       false) since this role was never granted refund_sales in the first place. */
+    const workflowDeniedV579=workflow===null;
+    const reversalOfMapV579=new Map();
+    (sl||[]).forEach(row=>{if(row.reversal_of)reversalOfMapV579.set(row.reversal_of,row.id)});
+    (sl||[]).forEach(row=>{
+      if(row.reversal_of||W[row.id]||!reversalOfMapV579.has(row.id))return;
+      W[row.id]={reversal_sale_id:reversalOfMapV579.get(row.id),net_amount_cents:0,can_reverse:false,
+        refusal_reason:workflowDeniedV579?'Refund permission needed to reverse':undefined};
+    });
     salesWorkflowMayHaveMoreV291=!!workflow?.may_have_more;
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
     let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
@@ -11799,12 +11878,28 @@ async function salesPage(){
         paymentStateApplied=true;
       }catch(paymentError){fail(paymentError)}
     }
+    if(!isCurrentLoadV579())return;
     /* V291 (audit follow-up). fetchAllRowsResult pages the WHOLE filtered ledger — a year of a
        busy cafe is tens of thousands of rows — and every one of them was turned into table
        markup on each Apply. The full set is still fetched, because the count summary, the CSV
        export and the payment-state filter all have to act on the complete answer; only the
        PAINT is now bounded. Load more extends the painted window; it never re-queries, so the
        rows already on screen cannot shuffle underneath the person reading them. */
+    /* nestly_v579 (audit F005): fetch each quick sale's own payment rows so the Amend button
+       can be hidden — with a plain-language reason — for the card/PayNow/other-paid sales the
+       correction RPC refuses outright, instead of only finding out after the full confirm flow. */
+    const correctionCandidateIdsV579=rows.filter(row=>row.kind==='quick_sale'&&Number(row.amount_cents)>0&&!row.reversal_of).map(row=>row.id);
+    salesPaymentsBySaleV579=new Map();
+    try{
+      const paymentRowsV579=correctionCandidateIdsV579.length
+        ?await fetchRowsByIds('payments','sale_id,method,amount_cents',correctionCandidateIdsV579,'sale_id')
+        :[];
+      paymentRowsV579.forEach(row=>{
+        const list=salesPaymentsBySaleV579.get(row.sale_id)||[];
+        list.push(row);salesPaymentsBySaleV579.set(row.sale_id,list);
+      });
+    }catch(paymentsError){fail(paymentsError)}
+    if(!isCurrentLoadV579())return;
     salesFilteredRowsV291=rows;salesWorkflowV291=W;
     salesVisibleCountV291=Math.min(rows.length,SALES_PAGE_SIZE_V291);
     renderSalesRowsV291();
@@ -11815,13 +11910,14 @@ async function salesPage(){
     /* F001: the RPC still reports may_have_more/bounded even though this page now asks for
        0 (unbounded) — surface it instead of silently painting rows with no reversal/status
        data if that ever changes underneath us. */
-    const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows':'';
+    const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows'
+      :workflowDeniedV579?' · Reverse controls need refund permission; Reversed status is inferred from the ledger':'';
     salesFilterNoteV266(paymentStateApplied
       ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
       :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied${workflowWarning}`,
       (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
-      if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
+      if(applyButton?.isConnected&&isCurrentLoadV579())CUI.setButtonBusy(applyButton,{busy:false});
     }
   }
   function renderSalesRowsV291(){
@@ -11836,7 +11932,7 @@ async function salesPage(){
              money it explains, rather than out on the far left away from it. */''}
         <td data-label="Item">${salesItemCellV571(s)}</td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
-        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
+        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${saleAmendCellV579(s,salesPaymentsBySaleV579)}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
     bindReversalButtons(loadRecent);
@@ -12017,6 +12113,7 @@ async function servicesPage(){
       buffer_before_min:bufferBefore,buffer_after_min:bufferAfter
     }).select().single();
     CUI.setButtonBusy(btn,{busy:false});
+    if(!isCurrent())return;
     if(error) return fail(error);
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
@@ -12078,6 +12175,7 @@ async function servicesPage(){
           buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,
           commission_bps:commissionBpsV584}).eq('id',id).select().limit(1);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
+      if(!isCurrent())return;
       if(error){if(status)status.textContent=ownerErrorText(error);return}
       const row=svCache.find(x=>x.id===id);
       if(row&&data&&data[0])Object.assign(row,data[0]);
@@ -12086,6 +12184,7 @@ async function servicesPage(){
          here is reported and does NOT roll back the fields above — those are already saved, and
          claiming otherwise would be the worse lie. */
       const branchError=await saveServiceBranchesV613(id,status);
+      if(!isCurrent())return;
       if(branchError)return;
       editingServiceId=null;
       if(closeServiceDialogV584){const close=closeServiceDialogV584;closeServiceDialogV584=null;close()}
@@ -12141,6 +12240,7 @@ async function servicesPage(){
   window.toggleSvc=async(id,to)=>{
     if(!canWrite)return;
     const {error}=await sb.from('services').update({active:to}).eq('id',id);
+    if(!isCurrent())return;
     if(error)return fail(error);
     const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
   };
@@ -16000,6 +16100,12 @@ async function promotionsPage(selectedPromotionId=null){
   let promotionBranches=[];
   try{({branches:promotionBranches}=await visibleBranchesForCurrentUser())}
   catch(error){promotionBranches=[]}
+  /* F030: the server's branch scope check (foreign_or_inactive_branch_scope, v155 migration
+     lines 71-83) only ever authorises `coalesce(branch.active,true)` branches. Filtering here
+     with the same helper the reporting scope pages already use means an inactive/unpaid branch
+     never appears in the "Selected branches" checklist, so it can never be checked in the first
+     place — no separate submit-time validation needed. */
+  promotionBranches=activeBranchesForScopeV217(promotionBranches);
   const entitlement=data?.entitlement||{},max=Math.max(0,Number(entitlement.max_published_offers??10)),
     published=Math.max(0,Number(entitlement.published_count||0)),
     quotaUsed=Math.max(0,Number(entitlement.quota_used??published)),
@@ -16123,6 +16229,7 @@ async function promotionsPage(selectedPromotionId=null){
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
       p_business:businessId,p_promotion_id:id,p_expected_version:null});
+    if(!isPromotionCurrent())return;
     if(error){
       if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
       toast(ownerErrorText(error));return;
@@ -16237,7 +16344,15 @@ async function promotionsPage(selectedPromotionId=null){
     pendingFinalize=readSessionValue(pendingStorageKey),
     interruptedPromotionId=pendingFinalize?.promotionId||pendingCreate?.promotionId||null,
     workingPromotion=selected,
-    workingPromotionId=selected?.id||interruptedPromotionId||(
+    /* F032: interruptedPromotionId is only a safe fallback when the owner explicitly navigated
+       to that id (selectedPromotionId truthy) — the redirect guard just below then takes over
+       and re-enters this page pinned to it. Pressing "+ Add" for a brand-new promotion passes
+       no selectedPromotionId at all, so it must never inherit a stale interrupted receipt: doing
+       so silently hijacked the new draft onto the old promotion (discarding the owner's new text,
+       or refusing with a raw "promotion_id_already_exists"). The old interrupted promotion still
+       resolves in the background via pendingFinalize/pendingCreate elsewhere; it just does not
+       steal a fresh draft's id. */
+    workingPromotionId=selected?.id||(selectedPromotionId?interruptedPromotionId:null)||(
       pendingCreate&&(!selectedPromotionId||pendingCreate.promotionId===selectedPromotionId)
         ?pendingCreate.promotionId:null
     )||selectedPromotionId||crypto.randomUUID(),
@@ -16532,6 +16647,22 @@ async function promotionsPage(selectedPromotionId=null){
     if(!draft.name||!draft.description)return toast('Polish or write the headline and customer message.');
     if(!draft.starts_at||!draft.ends_at||new Date(draft.ends_at)<=new Date(draft.starts_at))return toast('Choose a valid start and end date.');
     if(!PROMOTION_COPY_POLICY_V104.ctas[draft.ctaKind]||!draft.ctaLabel)return toast('Choose a clear customer action.');
+    /* F029: mirror the server's own min/max lengths (business_create_promotion_draft_v155 /
+       business_finalize_promotion_v282, both raise `valid_promotion_*_fields_required`) BEFORE
+       any photo upload runs — a refusal caught here never reaches uploadPromotionPhoto, so
+       cleanFailedUpload never has to delete a photo the owner just picked. Field lengths below
+       are counted the same way the server counts them: btrim(value).length. */
+    if(draft.name.length<2||draft.name.length>70)return toast('The headline needs to be 2–70 characters.');
+    if(draft.description.length<10||draft.description.length>600)return toast('The customer message needs to be 10–600 characters.');
+    if(draft.offerFacts.length<2||draft.offerFacts.length>500)return toast('The exact offer needs to be 2–500 characters.');
+    if(draft.ctaLabel.length<2||draft.ctaLabel.length>40)return toast('The customer action label needs to be 2–40 characters.');
+    if(draft.occasion&&(draft.occasion.length<2||draft.occasion.length>80))return toast('The occasion needs to be 2–80 characters, or left blank.');
+    if(draft.terms&&draft.terms.length>1000)return toast('Terms are limited to 1000 characters.');
+    /* Publishing (not saving a draft) additionally requires the end date to still be in the
+       future — business_finalize_promotion_v282 raises valid_promotion_finalize_fields_required
+       for `p_publish and p_ends_at<=now()`; every other date on this page is already Asia/
+       Singapore wall-clock via promotionBoundaryV104, so this comparison inherits that. */
+    if(publish&&!unpublish&&new Date(draft.ends_at)<=new Date())return toast('The end date/time has already passed — choose a later end date to publish.');
     const photoRefusalV280=promotionPhotoRefusalV280(file);
     if(photoRefusalV280){
       const refusedStatus=field('promotionImageStatus');
@@ -16810,7 +16941,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      context (ctx-tiers); both belong in the focus slot, not the draft-id slot. */
   const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
   if(!routedFocus&&(directFocusTokens.has(hashParamBaseV294)||/^ctx-(points|tiers)$/.test(String(hashParam||'')))){routedFocus=hashParam;hashParam=null}
-  const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
+  /* F039: this call's own epoch — see the growPageRenderEpoch declaration for why. */
+  const myGrowRenderEpochV039=++growPageRenderEpoch;
+  const outerMain=M(),isGrowCurrent=()=>growPageRenderEpoch===myGrowRenderEpochV039&&outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
   const modules=S.myModules||[];
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
   const isOwner=S.myRole==='owner';
@@ -16820,6 +16953,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
+  /* F086: route()'s gate (programmeSpineRowsV314()===null) only ever fetches the programme spine
+     ONCE per business per browser session — a second tab/device that switches a programme on/off
+     leaves every other open session's cache (and therefore the switch-confirm dialog's "this will
+     turn X off" text, drawn straight from that cache) silently wrong until a full reload. Refresh
+     it on every real navigation into Grow (fromRouteV288), the same way this page already
+     re-fetches tiers/bring-back/usage on every open — but not on the quiet in-page re-renders a
+     save triggers, so a Save keeps costing the one round trip it already did instead of two. */
+  if(fromRouteV288&&canRewards){
+    await refreshProgrammeSpineV314();
+    if(!isGrowCurrent())return;
+  }
   if(!quiet)outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
   /* PERF (2026-08-17). The reads below are independent: none of them consumes the snapshot or
      each other's result, they only need canRewards/canWinback and S.biz.id, all resolved above.
@@ -18616,7 +18760,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
       <b>Take this gift off stamp ${growStampsPickedV416}?</b>
-      <p class="muted small" style="margin-top:6px">The stamp stays on the card; it just stops paying out. Customers already part-way through keep the card they started.</p>
+      <p class="muted small" style="margin-top:6px">${
+        /* F038, closed by nestly_v805. business_delete_reward_v326 no longer flips the LIVE
+           loyalty_rewards row for a stamp gift: it withdraws the gift version-forward through the
+           same v433 begin/commit path the gift and card-length editors use, so it leaves the NEXT
+           published version while every open card keeps resolving the version it started under
+           (app.stamp_cycle_version_v416). All five readers — reward_availability_v432,
+           redeem_reward_core, customer_get_stamp_card_v323, customer_create_redemption_intent_v89
+           and stamp_reward_expire_due_v464 — ask app.reward_live_on_offer_v805 instead of the live
+           row alone, so a customer one stamp short still gets paid. Keep this text and that
+           migration saying the same thing. */''
+      }Cards already going keep this gift until they finish — even a customer one stamp short. It comes off the next card, so anyone starting a new one will not see it.</p>
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(growPointsEditingV326)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
     </div>`:''}
   </li>`:'';
@@ -20352,7 +20506,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;
       await retentionPage(draft,editProgramId);
     }
-    else await studioPage(draft);
+    /* F098: studioPage(draftVersionId) treats ANY truthy id as a publish-review request and
+       bounces to #/grow unless nestly:grow-publish-review:<id> is set. `draft` here is just
+       "whatever Grow config draft this business currently has open" (growDraftVersionId) —
+       true for a plain #/studio visit whenever the owner has an unrelated Rewards/Retention
+       edit in flight, which is routine, not a review. Only forward the id when this really is
+       the protected review flow computed above; otherwise pass null so the plain overview
+       renders instead of silently bouncing away. */
+    else await studioPage(protectedStudioReview?draft:null);
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
@@ -20752,8 +20913,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {error}=await sb.rpc('business_upsert_bringback_v361',{p_business:S.biz.id,
       p_campaign:growBbEditingV361,p_name:name,p_reward_label:reward,
       p_away_days:away,p_expiry_days:expiry});
-    if(!isGrowCurrent())return;
+    /* F034: reset the busy flag before the route-currency check — the flag is module-level and
+       is never cleared by ordinary navigation, so returning early here (as happens whenever the
+       owner leaves #/grow while this RPC is in flight) permanently deadened Save/Turn on/Delete
+       on this page until reload or sign-out. */
     growBbBusyV361=false;
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     const wasEditing=Boolean(growBbEditingV361);
     growBbEditingV361=null;growBbAddOpenV361=false;
@@ -20767,8 +20932,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growBbBusyV361=true;growBbErrorV361='';
     const {error}=await sb.rpc('business_set_bringback_paused_v361',{
       p_business:S.biz.id,p_campaign:id,p_paused:!want});
-    if(!isGrowCurrent())return;
+    /* F034: see the matching note on growBbSave above. */
     growBbBusyV361=false;
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Sending again':'Stopped sending');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
@@ -20786,8 +20952,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=el.dataset.growBbDeleteYesV361;
     growBbBusyV361=true;growBbErrorV361='';
     const {error}=await sb.rpc('business_delete_bringback_v361',{p_business:S.biz.id,p_campaign:id});
-    if(!isGrowCurrent())return;
+    /* F034: see the matching note on growBbSave above. */
     growBbBusyV361=false;growBbDeletePendingV361='';
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Campaign deleted — vouchers already sent stay valid');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
@@ -20912,8 +21079,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
     const {ok,error,cancelled,data}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(cancelled)return growRerenderV322({quiet:true});
     if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
     /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
@@ -21106,8 +21274,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_stamp_reward_expiry_days:rewardExpiryDaysV464});
     const earnSaveV435=earnSaveCallV435.data;
     const error=earnSaveCallV435.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growEarnBusyV359=false;
+    if(!isGrowCurrent())return;
     if(error){growEarnErrorV359=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the header line ("Current setting: ...") updates without a full refetch. */
     if(!snapshot.loyalty)snapshot.loyalty={};
@@ -21218,8 +21387,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       {p_business:S.biz.id,p_stamps:next});
     const lenResV433=lenCallV433.data;
     const error=lenCallV433.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the grid redraws at the new length without a second read — the same pattern
        the model switch uses. The snapshot is refetched on the next full load either way. */
@@ -21350,7 +21520,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         growPointsBusyV326=false;growPointsErrorV326=uploadError?.message||'The photo could not be uploaded.';
         return growRerenderV322({quiet:true});
       }
-      if(!isGrowCurrent())return;
+      if(!isGrowCurrent()){growPointsBusyV326=false;return;}
     }
     let error;
     let saveResV433;
@@ -21395,8 +21565,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_entitlement_expiry_days:null,
         p_claim_expires_after_days:expiryDaysV520}));
     }
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     /* V356: the old 'prompt' state ("Gift saved and live... / Add another gift / Done") is gone.
@@ -21443,8 +21614,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_image_ref:imageRef||null,p_clear_image:false});
     const rowResV433=rowCallV433.data;
     const error=rowCallV433.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growStampPublishToastV433(rowResV433,'Level updated — applies to new cards. Customers mid-card keep their current card.');
     growRerenderV322({quiet:true});
@@ -21481,8 +21653,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     button.disabled=true;
     const {error}=await sb.rpc('business_set_reward_paused_v326',{
       p_business:S.biz.id,p_reward:id,p_paused:!want});
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Turned on for customers':'Turned off for customers');
     growRerenderV322({quiet:true});
@@ -21500,10 +21673,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=button.dataset.growPointsGiftDeleteYesV326;
     growPointsBusyV326=true;growPointsErrorV326='';
     button.disabled=true;
-    const {error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
-    if(!isGrowCurrent())return;
+    const {data:deleteResultV693,error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;growPointsDeletePendingV326='';
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    /* nestly_v805 (F038): the stamp path publishes a new configuration version, so it runs the
+       same stamps validation a Go-live does. Taking the gift off the LAST stamp cannot publish
+       until another gift sits there, and the server reports that as publish_status 'pending' with
+       owner-language blockers rather than raising — the gift is still on the card, so say so and
+       leave the editor open instead of toasting a removal that did not happen. */
+    const deleteOutcomeV693=deleteResultV693&&typeof deleteResultV693==='object'?deleteResultV693:null;
+    if(deleteOutcomeV693&&deleteOutcomeV693.publish_status==='pending'){
+      growPointsErrorV326=(Array.isArray(deleteOutcomeV693.blockers)?deleteOutcomeV693.blockers:[])
+        .map(blocker=>blocker&&blocker.message).filter(Boolean).join(' ')
+        ||'Add another gift at the last stamp before taking this one off the card.';
+      return growRerenderV322({quiet:true});
+    }
     /* nestly_v416: deleting from inside the stamp dialog has to close the dialog too — it was
        opened ON the gift that no longer exists, and leaving it up would show a form editing
        nothing. The level row this used to hang off simply vanished from the list instead. */
@@ -21511,7 +21697,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       growPointsAddOpenV326='';growPointsEditingV326=null;growStampsPickedV416=null;
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     }
-    toast('Moved to History');
+    toast(deleteOutcomeV693&&deleteOutcomeV693.mode==='withdrawn'?'Off the next card':'Moved to History');
     growRerenderV322({quiet:true});
   });
   /* ============ V331 — TIERS PAGE WIRING ====================================================
@@ -26191,7 +26377,13 @@ async function studioOverview(routeMain,isCurrent){
         ${detail}
       </div></div>`;
   };
-  const rerender=()=>studioPage();
+  /* F100: studioSetRuleActive/openStudioEmergencyDialog call this unconditionally once their RPC
+     resolves, with no route-currency check of their own — studioPage()'s very first synchronous
+     act is `M().innerHTML=loadingState(...)`, which clobbers whatever page is on screen if the
+     owner navigated away while the pause/resume/emergency RPC was in flight. Guard the rerender
+     itself with the isCurrent() this page was already handed, matching the pattern every other
+     write path in this file already checks before touching the DOM. */
+  const rerender=()=>{if(isCurrent())studioPage()};
   const legacyRows=legacy.map(x=>rowFor(x,'legacy')).join('');
   const studioRows=studio.map(x=>rowFor(x,'studio')).join('');
   routeMain.innerHTML=`${CUI.pageHeader({title:'Advanced rule controls',subtitle:'Review and pause published advanced rules without changing everyday reward setup.',iconName:'loyalty',canWrite:true,moduleLabel:'Advanced rule controls'})}
@@ -27715,7 +27907,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       </div>`;
     const inp=$('tPhone');
     inp.focus();
-    inp.oninput=()=>{phone=inp.value.replace(/\D/g,'').slice(0,8);inp.value=phone};
+    inp.oninput=()=>{phone=tillFoldPhoneDigitsV019(inp.value);inp.value=phone};
     inp.onkeydown=(e)=>{if(e.key==='Enter') doFind();};
     $('tFind').onclick=doFind;
     if(canScanRedemption())$('tScanRedemption').onclick=()=>openMerchantRedemptionScanner({
@@ -27896,8 +28088,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
     };
   }
   function drawCustomerCard(){
-    const tillAttributableStaff=tillAttributableStaffFor(tillBranchId);
-    if(!tillAttributableStaff.some(person=>person.id===tillSaleStaffId))tillSaleStaffId=tillActingStaffId;
+    // F024: record_sale_by_phone rejects any p_staff other than the caller's own staff row
+    // (42501 "sale staff attribution must match the authenticated staff identity"), so a
+    // "Who made this sale?" picker on this legacy card can only ever fail or lie — remove it
+    // and always attribute to the person actually recording the sale.
+    tillSaleStaffId=tillActingStaffId;
     M().innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:`Itemized catalogue selection is off for this firm. Confirm the amount paid and payment method; ${BRAND.productName} records the purchase and applies points only when an active published loyalty programme makes it eligible.`,iconName:'till',canWrite:canRecordSales,moduleLabel:'Record sale'})}
       <div class="card frontline-card">
         <div style="text-align:center">
@@ -27909,9 +28104,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
         ${canRecordSales?`${accessibleTillBranches.length>1
           ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
           :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`}
-        ${tillAttributableStaff.length>1?`<label for="tillSaleStaff">Who made this sale?</label>
-        <select id="tillSaleStaff" style="margin-bottom:12px">${tillAttributableStaff.map(person=>`<option value="${esc(person.id)}" ${person.id===tillSaleStaffId?'selected':''} data-merchant-content>${esc(person.full_name||'Team member')}${person.id===tillActingStaffId?' (you)':''}</option>`).join('')}</select>
-        <p class="muted small" style="margin:-6px 0 12px">Commission for this sale is recorded against this teammate.</p>`:''}
         <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
@@ -27930,11 +28122,6 @@ async function svRunTopupFlow({branches,state,testOnly}){
       document.querySelectorAll('[data-tender]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));
       CUI.announce(workspaceTemplateTextV97('itemSelected',{item:button.textContent.trim()}));
     });
-    /* Re-attributing is a different sale: drop the idempotency key so the next confirm is a
-       fresh attempt rather than a replay of the previous teammate's sale. */
-    if($('tillSaleStaff'))$('tillSaleStaff').onchange=event=>{
-      tillSaleStaffId=event.target.value||tillActingStaffId;saleIdem=null;
-    };
     if($('tAmt')){$('tAmt').focus();$('tAmt').oninput=()=>{saleIdem=null}};
     if($('tAmt'))$('tAmt').onkeydown=e=>{if(e.key==='Enter')$('tConfirm')?.click()};
     if($('tConfirm'))$('tConfirm').onclick=async()=>{
@@ -29972,6 +30159,16 @@ async function svRunTopupFlow({branches,state,testOnly}){
       draw();return;}
     if(code==='22023'&&/idempotency key conflicts|key conflict/i.test(msg)){ // same key, different request
       payError={kind:'conflict'};draw();return;}
+    if(code==='22023'&&/tier_benefit_/.test(msg)){
+      // F022: staff_issue_tier_benefit_v365 re-checks the perk's allowance under lock at finalise
+      // time and raises a TYPED 22023 (not a transport failure) when it has just been consumed
+      // elsewhere or the birthday window has closed. Treating this as the generic retry lock trapped
+      // the cart with no way out — drop the spent perk and re-price instead, same as a stale price.
+      payError=null;appliedTierBenefitV656=null;
+      toast('That perk has already been used this period — removed from the bill');
+      await runEvaluate();
+      if(!isTillCurrent())return;
+      draw();return;}
     if(code==='42501'||/create_sales/.test(msg)){ // permission denied
       payError=null;evalError={kind:'perm',message:"You don't have permission to record sales."};evalState='error';draw();return;}
     payError={kind:'retry'};draw(); // network / timeout / lost response / anything else — keep the key, offer Retry
@@ -30075,12 +30272,12 @@ async function svRunTopupFlow({branches,state,testOnly}){
         ${/* nestly_v788: the identity is the BRANCH's — see receiptIdentityHtmlV788. */''}
         ${receiptIdentityHtmlV788(d.branchIdentityV788,d.businessName||S.biz.name,d.branchName)}
         <p class="muted small" style="margin:0">${esc(d.paidAt?sgt(d.paidAt):sgt(new Date().toISOString()))}${d.saleId?` · Receipt ${esc(String(d.saleId).slice(0,8).toUpperCase())}`:''}</p>
-        <h2 style="margin:8px 0 4px">${d.duplicate?'Already recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
+        <h2 style="margin:8px 0 4px">${d.duplicate?'Recorded':anyExtraFailed?'Mostly done':'Done'}</h2>
         ${d.walkin?`<p class="muted">Walk-in — no points earned</p>`
           :d.pointsEarned>0
           ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
-          ?`<p class="muted">This sale was already recorded — no extra points added.</p>`
+          ?`<p class="muted">Recorded — current balance: ${d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—'} ${tillUnitNounV430(catalog)}.</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
@@ -30158,7 +30355,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
   /* A phone handed in from the global app-bar search starts step 1 pre-filled and, when it is a
      complete number, runs the same lookup a keypad tap would (lookup_client_by_phone) — no new
      call, just a jump straight to the customer's card. */
-  if(pendingTillPhone){phone=String(pendingTillPhone).replace(/\D/g,'').slice(0,8);pendingTillPhone='';}
+  if(pendingTillPhone){phone=tillFoldPhoneDigitsV019(pendingTillPhone);pendingTillPhone='';}
   draw();
   if(pendingTillRedemptionScan){
     pendingTillRedemptionScan=false;
@@ -30531,6 +30728,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'bae8716803431119b2e666a99213d1d0b9313b2b3264741068820f63911e0c4c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'970049b349d9a877e5ffae67046a6d3e49c51e8db977540259d8d2bbc5c99db5',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

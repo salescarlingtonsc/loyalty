@@ -1,6 +1,7 @@
 /* GENERATED FILE — do not edit.
    The merchant sign-in, persona and invite screens of app/app.js, split by scripts/quality/split-app-bundle.mjs.
    Edit app/app.js and run: npm run bundle-stamp */
+function invalidateBusinessControlCacheV370(){businessControlCacheV370={key:'',at:0,result:null}}
 function renderPersonaResolutionUnavailable(){
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="auth-card card" aria-labelledby="accountAccessTitle">
@@ -340,7 +341,12 @@ function renderBusinessWorkspaceControl(control={}){
     ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   $('main').focus();
   CUI.announce(title+'.',{assertive:true});
-  $('businessControlRetry').onclick=route;
+  /* nestly_v579 (audit F015): loadBusinessControlV370 caches a negative (workspace_access:false)
+     result for BOOTSTRAP_CACHE_TTL_V370.control (120s) and route() never asks for a refresh, so
+     pressing "Check again" right after a super admin approves (or an overdue payment clears)
+     re-served the same stale answer for up to two minutes — the v569 "Waiting for approval"
+     card already learned this lesson and passes {refresh:true} on its own retry. */
+  $('businessControlRetry').onclick=()=>{invalidateBusinessControlCacheV370();invalidatePersonaCacheV370();route()};
   $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   wireAccountDeletionButton();
 }

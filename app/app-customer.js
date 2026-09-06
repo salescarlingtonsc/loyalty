@@ -185,6 +185,10 @@ function redemptionCountdownText(expiresAt,now=Date.now()){
   const minutes=Math.floor(seconds/60),remainder=seconds%60;
   return seconds>0?`Expires in ${minutes}:${String(remainder).padStart(2,'0')}`:'Expired';
 }
+/* audit F049: how many customer decision dialogs are open right now. A sheet that raised one and
+   is still on screen underneath reads this to tell an ordinary Back ("close me") apart from the
+   Back that answered the question stacked on top of it. */
+let customerDecisionDialogDepthV4C=0;
 /* v177: also the app's prompt() replacement. Pass `input` and the dialog gains one text field and
    resolves with the typed string, or null when the customer backs out — native prompt() is
    unstyled, unlocalisable, invisible to our focus trap and blocked outright in some webviews. */
@@ -197,16 +201,32 @@ function showCustomerDecisionDialog({title,body,keepLabel='Keep',confirmLabel='C
     dialog.innerHTML=`<section class="modal-card"><h2 id="customerDecisionTitle">${esc(title)}</h2><p class="muted" style="margin-top:8px">${esc(body)}</p>${inputHtml}<div class="decision-actions"><button class="btn ghost" id="customerDecisionKeep" type="button">${esc(keepLabel)}</button><button class="btn ${danger?'danger':''}" id="customerDecisionConfirm" type="button">${esc(confirmLabel)}</button></div></section>`;
     document.body.appendChild(dialog);
     const field=input?dialog.querySelector('#customerDecisionInput'):null;
+    /* audit F049: this dialog is almost always raised from INSIDE another one — "Cancel this
+       redemption?" sits on top of the live redemption QR. Stacking a second history entry means
+       one Back pop is heard by BOTH popstate listeners: the confirmation closes, and the QR sheet
+       underneath sees itself still connected and closes too — so the gesture that means "no, keep
+       my QR" threw the QR away while the intent stayed pending server-side (and for a gift, the
+       re-tap is refused for fifteen minutes). Same cure as nestly_v597 gave confirmActionV386:
+       BORROW the open dialog's entry and hand it back untouched. With nothing underneath,
+       currentDialogHistoryId() is 0 and this pushes and pops exactly as it always did.
+       Borrowing stops the DOUBLE pop; the depth counter is what tells the sheet underneath that
+       the single pop it is hearing was the answer to a question stacked on top of it. Both halves
+       are needed — the entry is shared, but the popstate listeners are not. */
+    const stackedOnDialogV4C=Number(CUI.currentDialogHistoryId?.()||0);
+    customerDecisionDialogDepthV4C+=1;
     let settled=false,deactivate=null;
     const finish=value=>{
       if(settled)return;settled=true;
-      if(deactivate){const cleanup=deactivate;deactivate=null;cleanup()}
+      customerDecisionDialogDepthV4C=Math.max(0,customerDecisionDialogDepthV4C-1);
+      /* audit F049: the borrowed entry belongs to the dialog that is staying — never unwind it. */
+      if(deactivate){const cleanup=deactivate;deactivate=null;cleanup({restoreFocus:true,handOffHistory:stackedOnDialogV4C>0})}
       else dialog.remove();
       resolve(value);
     };
     const cancelValue=()=>input?null:false;
     const confirmValue=()=>input?String(field?.value??''):true;
-    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(cancelValue()),initialFocus:input?'#customerDecisionInput':'#customerDecisionKeep'});
+    deactivate=CUI.activateDialog(dialog,{onClose:()=>finish(cancelValue()),initialFocus:input?'#customerDecisionInput':'#customerDecisionKeep',
+      inheritHistoryId:stackedOnDialogV4C});
     dialog.querySelector('#customerDecisionKeep').onclick=()=>finish(cancelValue());
     dialog.querySelector('#customerDecisionConfirm').onclick=()=>finish(confirmValue());
     if(field)field.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();finish(confirmValue())}});
@@ -309,6 +329,30 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{},
       if(status&&!overlay.querySelector('#customerRedemptionFallback'))status.insertAdjacentHTML('afterend',`<details id="customerRedemptionFallback" style="margin-top:12px;text-align:left"><summary class="small">Show fallback token</summary><code class="growth-redemption-token">${esc(token)}</code></details>`);
     });
   let closed=false,pollTimer=0,pollInFlight=null,deactivateDialog=null,terminal=false,countdownTimer=0;
+  /* audit F049: BORROWING THE ENTRY IS ONLY HALF OF IT. "Cancel this redemption?" now shares this
+     sheet's single history entry, so one Back consumes one entry — but this sheet's own popstate
+     listener is still armed and hears that same pop. It sees itself connected and closes, which is
+     how the gesture that means "no, keep my QR" threw the QR away while the intent stayed pending
+     server-side (for a gift, the re-tap is then refused for fifteen minutes).
+     So: while a confirmation is stacked on top, a pop is that confirmation's answer and never this
+     sheet's dismissal. activateDialog's listener removes itself on the pop it just heard, so the
+     entry is re-pushed and a listener of our own re-armed — one Back still closes exactly one
+     thing, and the next Back still closes this sheet. Escape and the backdrop cannot reach here
+     while the confirmation is up: its overlay covers this one, and its keydown listener is on its
+     own element, which this overlay is not an ancestor of. */
+  let qrHistoryIdV4C=0,qrBackRearmV4C=null;
+  function dropQrBackRearmV4C(){
+    if(!qrBackRearmV4C)return;
+    try{window.removeEventListener('popstate',qrBackRearmV4C)}catch{}
+    qrBackRearmV4C=null;
+  }
+  function closeUnlessConfirmingV4C(){
+    if(closed||customerDecisionDialogDepthV4C<=0)return void close();
+    try{history.pushState({...(history.state||{}),cuiDialog:qrHistoryIdV4C},'')}catch{}
+    dropQrBackRearmV4C();
+    qrBackRearmV4C=()=>{dropQrBackRearmV4C();if(!closed&&overlay.isConnected)close()};
+    try{window.addEventListener('popstate',qrBackRearmV4C)}catch{}
+  }
   const updateCountdown=()=>{
     const countdown=overlay.querySelector('#customerRedemptionCountdown');
     if(!countdown||closed||terminal)return;
@@ -323,13 +367,15 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{},
   };
   const close=({restoreFocus=true}={})=>{
     if(closed)return;closed=true;clearTimeout(pollTimer);clearInterval(countdownTimer);document.removeEventListener('visibilitychange',onVisibilityChange);
+    dropQrBackRearmV4C(); // audit F049
     if(deactivateDialog){const cleanup=deactivateDialog;deactivateDialog=null;cleanup({restoreFocus})}
     else overlay.remove();
     if(activeCustomerRedemptionCleanup===close)activeCustomerRedemptionCleanup=()=>{};
     onClose();
   };
   activeCustomerRedemptionCleanup=close;
-  deactivateDialog=CUI.activateDialog(overlay,{onClose:close,initialFocus:'#customerRedemptionQrCancel'});
+  deactivateDialog=CUI.activateDialog(overlay,{onClose:closeUnlessConfirmingV4C,initialFocus:'#customerRedemptionQrCancel'});
+  qrHistoryIdV4C=Number(CUI.currentDialogHistoryId?.()||0); // audit F049: the entry just pushed
   const finish=(state,data={})=>{
     if(closed||terminal)return;terminal=true;clearTimeout(pollTimer);clearInterval(countdownTimer);document.removeEventListener('visibilitychange',onVisibilityChange);
     const panel=overlay.querySelector('.modal-card');
@@ -427,7 +473,12 @@ function showPendingRedemptionQr({intent,businessName,rewardName,onClose=()=>{},
   cancel.onclick=async()=>{
     if(!intent?.intent_id)return;
     const confirmed=await showCustomerDecisionDialog({title:'Cancel this redemption?',body:'No points will be used.',keepLabel:'Keep QR',confirmLabel:'Cancel redemption',danger:true});
-    if(!confirmed||!overlay.isConnected)return;
+    /* audit F050: `terminal` too. Staff can scan while the confirmation is open — finish() has
+       then already painted "Redeemed" and removed this button, and carrying on wrote "Cancelling
+       this redemption…" under that pill, called an RPC the server refuses ("completed redemption
+       cannot be cancelled") and landed in an error branch whose reconcile returns immediately
+       because terminal is set. The contradiction was never corrected. */
+    if(!confirmed||!overlay.isConnected||terminal)return;
     cancel.disabled=true;
     const status=overlay.querySelector('#customerRedemptionQrStatus');
     status.textContent='Cancelling this redemption…';
@@ -507,13 +558,17 @@ const sgHour=(date=new Date())=>Number(new Intl.DateTimeFormat('en-GB',{hour:'2-
    reversal happening by accident. ⚖️ Pre-ticking a marketing consent is PDPA territory and is a
    decision for the owner with counsel, not a cosmetic default — so the flags stay false and the
    owner has been asked to confirm. The long consent copy IS collapsed (that mark was safe). */
+/* audit F046: `signupPassword` is held IN MEMORY ONLY, for the single hop between "Send code" and
+   "Verify", and is wiped the moment it has been applied. It is never written to sessionStorage
+   alongside the consent and profile stashes — those survive a reload on purpose, and a password
+   must not. */
 let customerRegistrationState={
-  phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
+  phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false,signupPassword:''
 };
 let customerAutomaticPasskeyAttempted=false;
 function resetCustomerRegistrationState({phone=''}={}){
   customerRegistrationState={
-    phone,channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false
+    phone,channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false,signupPassword:''
   };
   try{sessionStorage.removeItem('peekaa-customer-signup-consent-v163')}catch{}
   try{sessionStorage.removeItem('peekaa-customer-signup-profile-v174')}catch{}
@@ -603,6 +658,25 @@ function customerRegistrationShell(body){
     </header>${joinContextV609}${body}<footer class="customer-entry-footer">${legalLinks(customerLocale)}</footer></div></main>`;
   CUI.focusRoute($('main'),{enhanceContent:true});
 }
+/* audit F046. When the phone already exists but is not yet confirmed — an abandoned sign-up, or
+   the OTP screen's own Back button followed by a different password — GoTrue's signUp resends the
+   code and DELIBERATELY does not touch the password ("we can't be sure of their claimed identity").
+   The client showed the OTP screen as though the new password had been accepted; verification and
+   registration then both succeeded, and the first password sign-in with the password the customer
+   had just chosen was refused as incorrect. Only Forgot password rescued them, and nothing said
+   why.
+   So the credential is made to match what was last typed, from inside the freshly verified session
+   — this is the customer changing their own password, on an account they have just proved control
+   of by OTP, and it is a no-op in the ordinary case where signUp already stored it. It widens
+   nothing: reaching here at all requires the code delivered to that number.
+   Reported, never swallowed: a failed sync leaves an account whose password is not the one the
+   customer believes in, and saying so is what turns a mystery refusal into one Forgot password. */
+async function customerSyncSignupPasswordV4C(password,updateUser){
+  const typed=String(password||'');
+  if(!typed)return 'skipped';
+  const result=await updateUser({password:typed});
+  return result?.error?'failed':'synced';
+}
 function renderCustomerOtpVerification(isRouteCurrent=()=>true){
   const {phone,channel,purpose}=customerRegistrationState;
   const recovering=purpose==='recovery';
@@ -648,6 +722,16 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
     if(recovering){
       rememberCustomerRecoveryVerified(data.user.id);
       return renderCustomerRecoveryPasswordSetup(isRouteCurrent);
+    }
+    /* audit F046: the session is live and this is the earliest moment the typed password can be
+       made true. Wiped first thing, whatever the outcome. */
+    const typedSignupPasswordV4C=customerRegistrationState.signupPassword;
+    customerRegistrationState={...customerRegistrationState,signupPassword:''};
+    const passwordSyncV4C=await customerSyncSignupPasswordV4C(typedSignupPasswordV4C,
+      payload=>sb.auth.updateUser(payload));
+    if(!isRouteCurrent())return;
+    if(passwordSyncV4C==='failed'){
+      toast('Your number is verified. The password you just chose could not be saved — if sign-in is refused later, use Forgot password.');
     }
     renderCustomerRegistration(isRouteCurrent);
   };
@@ -751,6 +835,23 @@ function customerPasswordUpdateErrorMessage(error){
   }
   return 'Your password could not be changed. Check that it is unique and meets every requirement, then try again.';
 }
+/* audit F040. customer_get_platform_marketing_preference COALESCEs a missing
+   customer_registration_preferences row to {opted_in:false}, so Profile renders a live tick and a
+   Save button for an identity that has no such row — while
+   customer_set_platform_marketing_preference is a plain UPDATE that raises 42501 when the row is
+   absent. An identity minted by customer_create_identity (the QR-join / claim path) never gets
+   one: only customer_register_verified_phone inserts it. The save then fails forever, and the
+   generic "please try again" told the customer to keep doing the one thing that cannot work.
+   The real fix is server-side — that UPDATE must become an upsert, because WITHDRAWAL is the
+   control PDPA requires to always work. Until that lands, this at least separates the two cases:
+   a transient failure worth retrying, and an account shape no retry will change. */
+function customerMarketingSaveErrorTextV4C(error){
+  const probe=`${error?.code||''} ${error?.message||''} ${error?.details||''}`.toLowerCase();
+  if(probe.includes('42501')||probe.includes('marketing preference is unavailable')){
+    return 'This account has no marketing record to change yet — it is created when you register your mobile number. Register your number, then set your choice here. Nothing has been changed.';
+  }
+  return 'Your marketing choice could not be saved. Please try again.';
+}
 function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
   if(!isRouteCurrent())return;
   customerRegistrationShell(`<section class="card" aria-labelledby="customerRecoveryPasswordTitle">
@@ -799,10 +900,13 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
     }
     const phone=customerRegistrationState.phone;
     rememberCustomerRecoveryVerified('');
+    /* audit F043: parked BEFORE the sign-out, so the SIGNED_OUT re-route repaints it. */
+    const passwordUpdatedNoticeV4C='Password updated. Sign in with your mobile number and new password.';
+    rememberCustomerSignInNoticeV4C(passwordUpdatedNoticeV4C,'success');
     await sb.auth.signOut();
     resetClientSessionState({preserveInvitation:true});
     resetCustomerRegistrationState({phone});
-    renderCustomerPasswordSignIn(isRouteCurrent,{notice:'Password updated. Sign in with your mobile number and new password.'});
+    renderCustomerPasswordSignIn(isRouteCurrent,{notice:passwordUpdatedNoticeV4C});
   };
 }
 /* v193 (owner: "save password not working"). A password manager offers to save on a real FORM
@@ -810,12 +914,37 @@ function renderCustomerRecoveryPasswordSetup(isRouteCurrent=()=>true){
    type="button", so Chrome and Safari had nothing to recognise and never prompted. The phone field
    also carried autocomplete="tel", which is not the username hint a manager pairs a credential to
    — and "username webauthn" is the documented pairing for passkey autofill as well. */
+/* audit F043. Three handlers sign the customer out and then paint the sign-in card with the one
+   sentence that explains what just happened ("Password updated…", "Signed out…", "That sign-up was
+   never finished…"). supabase-js awaits _notifyAllSubscribers('SIGNED_OUT') inside signOut(), and
+   our listener schedules route() on a 0ms timer; the hash does not change during these in-place
+   flows, so route() lands back on renderCustomerRegistration → this same sign-in card, with NO
+   notice, and replaces root.innerHTML. The sentence was on screen for one task and nobody ever saw
+   it — worst of all after a password reset, where not knowing whether the save worked sends people
+   back through Forgot password and burns another OTP.
+   The notice is therefore ALSO parked here before the sign-out, and a sign-in render that carries
+   none of its own adopts it. The freshness window exists so a parked notice can never surface on an
+   unrelated sign-in screen minutes later if the re-route never happens. */
+let pendingCustomerSignInNoticeV4C=null;
+const CUSTOMER_SIGNIN_NOTICE_TTL_MS_V4C=15000;
+function rememberCustomerSignInNoticeV4C(notice,noticeTone='success',now=Date.now()){
+  pendingCustomerSignInNoticeV4C=notice?{notice:String(notice),noticeTone,at:now}:null;
+}
+function takeCustomerSignInNoticeV4C(now=Date.now()){
+  const parked=pendingCustomerSignInNoticeV4C;
+  pendingCustomerSignInNoticeV4C=null;
+  if(!parked||now-parked.at>CUSTOMER_SIGNIN_NOTICE_TTL_MS_V4C)return {notice:'',noticeTone:'success'};
+  return {notice:parked.notice,noticeTone:parked.noticeTone};
+}
 /* nestly_v764: the two field prefixes on the sign-in screen. Inline so they need no icon set
    and no emoji font (a flag emoji is two letters on Windows). */
 const SG_FLAG_SVG_V764='<svg viewBox="0 0 36 24" width="34" height="23" aria-hidden="true" focusable="false"><rect width="36" height="24" rx="4" fill="#fff"/><path d="M4 0h28a4 4 0 0 1 4 4v8H0V4a4 4 0 0 1 4-4Z" fill="#EF3340"/><circle cx="9.5" cy="6" r="3.6" fill="#fff"/><circle cx="10.9" cy="6" r="3.1" fill="#EF3340"/><g fill="#fff"><circle cx="12.2" cy="4.1" r=".7"/><circle cx="14.4" cy="5.2" r=".7"/><circle cx="13.9" cy="7.6" r=".7"/><circle cx="11.4" cy="8" r=".7"/><circle cx="10.4" cy="5.6" r=".7"/></g><rect x=".5" y=".5" width="35" height="23" rx="3.5" fill="none" stroke="rgba(0,0,0,.08)"/></svg>';
 const LOCK_SVG_V764='<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg>';
 function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeTone='success'}={}){
   if(!isRouteCurrent())return;
+  /* audit F043: a caller that supplied its own notice keeps the parked copy alive for the
+     SIGNED_OUT re-route that is about to repaint this same card; a caller with none adopts it. */
+  if(!notice){const adoptedV4C=takeCustomerSignInNoticeV4C();notice=adoptedV4C.notice;noticeTone=adoptedV4C.noticeTone}
   /* nestly_v764 (owner photo 1, 2026-09-05: "change my UI UX of my customer log in — follow
      photo 1"; "just style only"). The same form, the same ids, the same handlers: what changed is
      the skin. The hero is the brand mark and one tagline instead of an icon and two sentences;
@@ -960,7 +1089,12 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
     if(error||!data?.user){
       // A failed sign-in must not become a dead end — hand the form straight back.
       signIn.disabled=false;
-      passkeyButton.disabled=!passkeySupported;
+      /* audit F044: from the surface's OWN truth. customerPasskeySupported() is hard-wired false
+         in the Capacitor shell (v669, WebAuthn is impossible in a WKWebView), so restoring from
+         passkeySupported disabled the Face ID button permanently after one typo — while the status
+         line underneath still read "Sign in with Face ID." In the shell the button belongs to the
+         Keychain credential, and biometricEnrolled is what says whether there is one. */
+      passkeyButton.disabled=nativeShell?!biometricEnrolled:!passkeySupported;
       signIn.querySelector('span').textContent='Sign in';
       errorHost.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'sign_in'))}</div>`;return;
     }
@@ -1155,7 +1289,9 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
     customerRegistrationState={
       phone,channel,purpose,
       legalAccepted:recovering?false:$('customerSignupConsent').checked,
-      marketingOptedIn:recovering?false:$('customerSignupMarketing').checked
+      marketingOptedIn:recovering?false:$('customerSignupMarketing').checked,
+      /* audit F046: carried for exactly one hop — see customerSyncSignupPasswordV4C. */
+      signupPassword:recovering?'':password
     };
     rememberCustomerSignupConsent(!recovering&&$('customerSignupConsent').checked,
       !recovering&&$('customerSignupMarketing').checked);
@@ -1403,11 +1539,13 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
   const startOver=$('customerProfileStartOver');
   if(startOver)startOver.onclick=async()=>{
     startOver.disabled=true;
+    /* audit F043: parked BEFORE the sign-out, so the SIGNED_OUT re-route repaints it. */
+    const startOverNoticeV4C='Signed out. Tap Create account to start again.';
+    rememberCustomerSignInNoticeV4C(startOverNoticeV4C,'info');
     await sb.auth.signOut();
     resetClientSessionState();resetCustomerRegistrationState();S.user=null;
     if(!isRouteCurrent())return;
-    renderCustomerPasswordSignIn(isRouteCurrent,{noticeTone:'info',
-      notice:'Signed out. Tap Create account to start again.'});
+    renderCustomerPasswordSignIn(isRouteCurrent,{noticeTone:'info',notice:startOverNoticeV4C});
   };
   if(signupStash&&customerSignupConsentRecorded())register.onclick();
 }
@@ -1484,12 +1622,14 @@ async function renderCustomerRegistration(isRouteCurrent=()=>true){
        unusable session and land on sign-in, where Create account is one tap away. Nothing is lost:
        an account with no profile holds no rewards, bookings or history. */
     if(!customerSignupConsentRecorded()){
+      /* audit F043: parked BEFORE the sign-out — this explanation IS the point of the branch. */
+      const strandedNoticeV4C='That sign-up was never finished. Sign in if you already have an account, or tap Create account to start again.';
+      rememberCustomerSignInNoticeV4C(strandedNoticeV4C,'info');
       await sb.auth.signOut();
       resetClientSessionState();
       S.user=null;
       if(!isRouteCurrent())return;
-      return renderCustomerPasswordSignIn(isRouteCurrent,{noticeTone:'info',
-        notice:'That sign-up was never finished. Sign in if you already have an account, or tap Create account to start again.'});
+      return renderCustomerPasswordSignIn(isRouteCurrent,{noticeTone:'info',notice:strandedNoticeV4C});
     }
     return renderCustomerRegistrationProfile(isRouteCurrent);
   }
@@ -2196,7 +2336,17 @@ function customerBookingRowV580(group,item,tab){
      what the owner says the box governs. A PENDING request keeps its own Reschedule and X — those
      are the request-row controls (amend/withdraw), which are deliberately not gated. */
   const changesAllowedV660=group.appointmentChangesEnabled===true;
-  const rescheduleV508=group.bookingEnabled===true&&changesAllowedV660&&!!group.business_slug&&!!item.appointment_id
+  /* audit F114: the business's NEW-booking switch is not the permission these two controls need.
+     group.bookingEnabled is customer_get_business_actions_v89's booking.enabled, which additionally
+     requires at least one service with show_on_booking_page — so a business that paused online
+     booking (renovation, fully booked) while leaving "customers may change a confirmed appointment"
+     ON lost both Reschedule and the X, and the detail sheet then told the customer to phone about
+     something the business had NOT switched off. Both server RPCs authorise on
+     business_customer_capabilities_v89.appointment_changes_enabled alone —
+     customer_reschedule_appointment_v508 and customer_cancel_appointment_v655 never read
+     booking_enabled — and the wallet page's own Change control has always gated on
+     appointmentChangesEnabled by itself. Matched to the server's rule and to its sibling. */
+  const rescheduleV508=changesAllowedV660&&!!group.business_slug&&!!item.appointment_id
     &&String(item.status||'')==='booked'&&tab==='bookings';
   /* nestly_v655 (owner photo 1: "where's the cancel appointment button. i need it there. X").
      A confirmed booking offered Reschedule and no way out. The X is the same control the Pending
@@ -2694,7 +2844,14 @@ async function renderCustomerBookings(){
     ${groups.length?`<div class="customer-booking-list customer-booking-rows-v580">${customerBookingRowListV580(groups,currentBookingTab)}</div>
       ${/* nestly_v605: requests are rows in the list above now, sorted by the time the customer
            asked for, so this per-business block underneath is the same records a second time. */''}`
-      :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?[]:allGroups)}
+      /* audit F115: the ternary was the wrong way round. customerBookingEmptyMarkupV183 only
+         builds its "Book with X" invites when its tab argument is 'bookings' — and that is exactly
+         the case this call passed [] for, while handing allGroups to every tab that ignores the
+         parameter. So `bookable` was always empty and the invites never rendered on any tab, in any
+         state. With customerBookingChooserV291 superseded (nestly_v577) these buttons are the only
+         way to start a booking from this screen with a linked business that has nothing booked yet
+         — a customer who just joined by QR saw an empty Confirmed tab and no way in. */
+      :customerBookingEmptyMarkupV183(currentBookingTab,emptyCopy,currentBookingTab==='bookings'?allGroups:[])}
     </div>`;
     const retry=$('customerBookingsRetry');if(retry)retry.onclick=()=>renderCustomerBookings();
     const applyRange=(next,focusId)=>{
@@ -3087,7 +3244,7 @@ async function renderCustomerProfile(requestedView){
   let profileAttempt=null;
   /* v286: the retry re-runs the whole profile render, which re-reads customer_get_profile. */
   const detailsRetry=$('customerProfileDetailsRetry');
-  if(detailsRetry)detailsRetry.onclick=()=>{detailsRetry.disabled=true;CUI.announce('Loading your details again.');renderCustomerProfile()};
+  if(detailsRetry)detailsRetry.onclick=()=>{detailsRetry.disabled=true;CUI.announce('Loading your details again.');renderCustomerProfile(requestedView)};
   if($('customerProfileSave'))$('customerProfileSave').onclick=async()=>{
     const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
     const status=$('customerProfileSaveStatus');
@@ -3109,7 +3266,7 @@ async function renderCustomerProfile(requestedView){
       if(S.customerProfile)S.customerProfile.preferred_language=language;
       globalThis.document?.documentElement?.setAttribute('lang',customerLocale);
       CUI.announce(ct('profileSaved'));
-      renderCustomerProfile();
+      renderCustomerProfile(requestedView); // audit F041: stay on the route the URL names
       return;
     }
     if(S.customerProfile)S.customerProfile.preferred_language=language;
@@ -3131,7 +3288,10 @@ async function renderCustomerProfile(requestedView){
       if(!isCurrent()||!marketingSave.isConnected)return;
       marketingSave.disabled=false;
       if(error||data?.outcome!=='updated'){
-        status.innerHTML='<div class="err">Your marketing choice could not be saved. Please try again.</div>';return;
+        /* audit F040: the reason, not a blanket retry prompt. */
+        const reasonV4C=customerMarketingSaveErrorTextV4C(error);
+        status.innerHTML=`<div class="err">${esc(reasonV4C)}</div>`;
+        CUI.announce(reasonV4C,{assertive:true});return;
       }
       marketingAttempt=null;
       if(optedIn&&!await grantAllCommunicationsV265()){
@@ -3146,9 +3306,13 @@ async function renderCustomerProfile(requestedView){
   }
   /* v286: re-runs the profile render, which re-reads customer_get_platform_marketing_preference,
      so a customer who came here to switch marketing off is never stranded by one failed read. */
+  /* audit F041: WITH THE VIEW IT WAS RENDERED FOR. The marketing card only exists inside
+     #customerProfileSettingsV583, which this function hides unless requestedView==='settings'. A
+     bare re-render therefore repainted the page as Profile — the card being retried disappeared,
+     the shell's back chevron changed destination, and the URL still said #/customer/settings. */
   const marketingRetry=$('customerMarketingRetry');
   if(marketingRetry)marketingRetry.onclick=()=>{
-    marketingRetry.disabled=true;CUI.announce('Loading your marketing choice again.');renderCustomerProfile();
+    marketingRetry.disabled=true;CUI.announce('Loading your marketing choice again.');renderCustomerProfile(requestedView);
   };
   $('customerProfilePasswordSave').onclick=async()=>{
     const password=$('customerProfilePassword').value;
@@ -3512,9 +3676,20 @@ async function renderCustomerClaim(){
   const phoneClaimAvailable=!invitationToken
     && customerCapabilities.customer_phone_claims===true
     && customerCapabilities.customer_phone_registration===true;
+  /* audit F047: the email method opens with customer_create_identity, which raises 42501 unless
+     auth.users carries a CONFIRMED email. Everyone who signed up on this surface has a phone and no
+     email, so "Use my confirmed email instead" was a choice that always failed — and failed with
+     "Customer access is unavailable. Please try again later.", i.e. blamed Peekaa for an outage
+     and invited an identical retry. Offered only when the signed-in account actually holds one.
+     This reads the customer's OWN session, never anybody else's account, so it is not an oracle.
+     email_confirmed_at is the exact column customer_create_identity tests. GoTrue's generic
+     confirmed_at is set by a confirmed PHONE too, so accepting it would have re-offered the method
+     to a phone-confirmed account carrying an unconfirmed email — the same 42501, back again. */
+  const emailClaimAvailableV4C=!!String(S.user?.email||'').trim()
+    && !!S.user?.email_confirmed_at;
   renderCustomerShell({active:'programmes',body:`<div class="card"><h1>${esc(invitationToken?ct('Accept invitation'):ct('Add a business programme'))}</h1><p class="muted small" style="margin-top:6px">${esc(invitationToken?ct('Confirm this private invitation while signed in to the intended account.'):phoneClaimAvailable?ct('Enter the business link from its QR or invitation. We only connect an exact unclaimed record.'):ct('Use the same confirmed email your business has on file.'))}</p>
       <div id="claimPersonas" style="margin-top:14px"><p class="muted small">${esc(ct('Checking access…'))}</p></div>
-      ${invitationToken?'':`${phoneClaimAvailable?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">${esc(ct('How should we find your record?'))}</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my verified mobile number'))}</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my confirmed email instead'))}</span></label></fieldset>`:''}<label for="claimSlug">${esc(ct('Business link'))}</label><input id="claimSlug" autocomplete="off" placeholder="business-slug or ${esc(BRAND.productName)} link" value="${esc(businessIntent)}">`}
+      ${invitationToken?'':`${phoneClaimAvailable&&emailClaimAvailableV4C?`<fieldset style="border:0;padding:0;margin-top:14px"><legend class="small" style="font-weight:700">${esc(ct('How should we find your record?'))}</legend><label class="row" for="claimByPhone" style="color:var(--ink);font-weight:500"><input id="claimByPhone" name="claimMethod" type="radio" value="phone" checked style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my verified mobile number'))}</span></label><label class="row" for="claimByEmail" style="margin-top:10px;color:var(--ink);font-weight:500"><input id="claimByEmail" name="claimMethod" type="radio" value="email" style="width:20px;min-width:20px;min-height:20px"> <span>${esc(ct('Use my confirmed email instead'))}</span></label></fieldset>`:''}<label for="claimSlug">${esc(ct('Business link'))}</label><input id="claimSlug" autocomplete="off" placeholder="business-slug or ${esc(BRAND.productName)} link" value="${esc(businessIntent)}">`}
       <button class="btn" id="claimStart" style="margin-top:14px">${esc(invitationToken?ct('Accept invitation'):ct('Claim'))}</button>
       <div id="claimResult"></div></div>`});
   focusCustomerRoute();
@@ -3564,7 +3739,14 @@ async function renderCustomerClaim(){
       if(!isClaimCurrent())return;
       if(identity.error){
         $('claimStart').disabled=false;$('claimStart').textContent=originalLabel;
-        $('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return;
+        /* audit F047: 42501 here means "this account has no confirmed email", which is a fact
+           about the account and not an outage. Saying "try again later" sent people back to an
+           identical failure. */
+        const identityProbeV4C=`${identity.error?.code||''} ${identity.error?.message||''}`.toLowerCase();
+        const identityTextV4C=identityProbeV4C.includes('42501')||identityProbeV4C.includes('verified email is required')
+          ?'This account has no confirmed email. Use your verified mobile number instead.'
+          :ct('Customer access is unavailable. Please try again later.');
+        $('claimResult').innerHTML=`<div class="err">${esc(identityTextV4C)}</div>`;return;
       }
     }
     const {data,error}=invitationToken
@@ -3577,6 +3759,19 @@ async function renderCustomerClaim(){
     if(error){$('claimResult').innerHTML=`<div class="err">${esc(ct('Customer access is unavailable. Please try again later.'))}</div>`;return}
     pendingCustomerInvitationToken='';
     const outcome=data?.outcome||'no_link_created';
+    /* audit F045 / F111: all three claim RPCs answer {outcome:'try_later',retry_after_seconds:900}
+       once five distinct attempts land inside fifteen minutes. That is a REFUSAL, and it was being
+       painted as the success-styled "Request received — … the business link will appear here",
+       which reads as "we are checking, wait". Nothing was requested and nothing will appear, so the
+       customer edits the slug and tries again — every one of those also refused. The registration
+       screen has always said this plainly (renderCustomerRegistrationProfile); this one now does
+       too, with the server's own window, and leaves the Claim button enabled. */
+    if(outcome==='try_later'){
+      const minutesV4C=Math.max(1,Math.ceil(Number(data?.retry_after_seconds||0)/60));
+      const waitTextV4C=`Too many attempts. Try again in about ${minutesV4C} minute${minutesV4C===1?'':'s'}. Nothing has been changed.`;
+      $('claimResult').innerHTML=`<div class="err" style="margin-top:16px">${esc(waitTextV4C)}</div>`;
+      CUI.announce(waitTextV4C,{assertive:true});return;
+    }
     if(!invitationToken&&outcome==='linked'){
       pendingCustomerBusinessSlug='';
       rememberPendingCustomerDestination('');
@@ -4423,8 +4618,16 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
            it means leaving the sheet and finding the business again. The button is rendered only
            once the business itself confirms customer booking is on — the v183 fail-closed rule —
            so it can never send someone to a booking page that will refuse them. */''}
-      ${cta.kind==='book'?`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ctaLabel||'Book now')}</a>`
-        :`<span data-offer-book></span>`}
+      ${/* audit F112: EVERY CTA kind goes through the live check below, including 'book'. The list
+           card already downgrades a 'book' CTA to 'programme' when the business's booking
+           capability is off (customerPromotionCtaV104, the v183 fail-closed rule) — but tapping
+           that same card opened this sheet, which re-read the offer's raw, unfiltered
+           metadata.cta.kind and rendered a working Book now regardless. Nothing downstream refuses
+           it either (get_business_public / internal_public_booking_page / internal_public_booking_
+           submit gate on per-service show_on_booking_page, never on booking_enabled), so a business
+           that had switched customer booking off still took the request. The label is unchanged:
+           the business's own configured wording still lands on the button that actually books. */''}
+      <span data-offer-book></span>
       ${customerShareButtonMarkupV264(item?.id,{small:false})}
     </div></section>`;
   document.body.appendChild(overlay);
@@ -4474,14 +4677,14 @@ function showCustomerOfferDetailV173(item,{inheritHistoryId=0}={}){
           if(summary.length)rowLines.textContent=summary.join(' · ');
         }
       }).catch(()=>contactFailed());
-    if(business.slug&&cta.kind!=='book'){
+    if(business.slug){ // audit F112: no longer `&&cta.kind!=='book'` — one live-checked branch
       Promise.resolve(sb.rpc('customer_get_business_actions_v89',{p_business:business.id}))
         .then(({data,error})=>{
           const host=overlay.isConnected?overlay.querySelector('[data-offer-book]'):null;
           if(!host||error||data?.booking?.enabled!==true)return;
           /* filled INSIDE the placeholder, then wired within it, so the links already bound
              above are not given a second click handler. */
-          host.innerHTML=`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(ct('bookNow'))}</a>`;
+          host.innerHTML=`<a class="btn" href="#/b/${slug}" data-offer-detail-nav>${esc(cta.kind==='book'?(ctaLabel||'Book now'):ct('bookNow'))}</a>`;
           wireCustomerSheetNavV183(host,deactivate);
         }).catch(()=>{});
     }
@@ -5632,6 +5835,16 @@ function closeCustomerBusinessShortcutPageV348(){
    for a reward's redeem control, is the customer saying "I am at the till". */
 function wireCustomerCounterMomentV468(root){
   if(!root||typeof root.addEventListener!=='function')return;
+  /* audit F055: ONCE PER #walletBody ELEMENT. The caller's reasoning ("the body is replaced
+     wholesale by every paint") holds only for a full render — a silent repaint keeps the same
+     node and only swaps its innerHTML, yet the render still re-wires afterwards. Every doorbell
+     ping, every closed redemption QR and every changed-fact tick therefore added another listener,
+     and one tap on a redeem control then fired N counter moments — N concurrent forced wallet
+     renders (~27 requests each) and N in-place repaints while the customer is holding up the QR. */
+  if(root.dataset){
+    if(root.dataset.counterMomentWiredV468==='1')return;
+    root.dataset.counterMomentWiredV468='1';
+  }
   root.addEventListener('click',event=>{
     if(event.target?.closest?.('[data-member-code-w6i2],[data-customer-redeem]'))void customerCounterMomentV468();
   });
@@ -6551,6 +6764,20 @@ function customerWalletHomePulseReaderV370(){
     return customerWalletPulseSignatureOfV370(result.data??null);
   };
 }
+/* audit F053. The actionable Home — the branch every customer with at least one linked business
+   takes, and the feature is ON in production — never installed a watcher at all: since v295 the
+   only Home that watched was the legacy fallback, which that customer never reaches. So a sale
+   rung at the counter appeared on the business page within seconds and on Home not at all, until
+   the customer navigated away and back. This is that Home's pulse: the same cards the page draws
+   from, projected exactly as the seed projects them, so seed and tick can never compare different
+   shapes (the v370 rule). `as_of` is statement_timestamp() and is deliberately not in it. */
+function customerWalletActionableHomePulseReaderV370(){
+  return async()=>{
+    const result=await customerRpc('customer_get_actionable_wallet');
+    if(result.error)return null;
+    return customerWalletPulseSignatureOfV370(result.data?.cards??null);
+  };
+}
 /* nestly_v524 (owner, photo 1: "when i clicked out of rewards it should just brings me out of
    this pop up — current set up is to bring me back to home page"). THE FOURTH ARGUMENT IS WHICH
    WALLET THIS WATCHER SPEAKS FOR. activeCustomerWalletCounterMomentV468 is ONE module-level slot,
@@ -6703,9 +6930,22 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null,walletSlugV524=nul
   const signalChannelUpV498=()=>signalChannelV479?.state==='joined';
   const joinSignalChannelV498=()=>{
     if(stopped||!S.user?.id||typeof sb.channel!=='function')return;
-    if(signalChannelV479){try{sb.removeChannel(signalChannelV479)}catch{}signalChannelV479=null}
+    /* audit F052: the slot is cleared BEFORE the teardown, not after. removeChannel can emit the
+       old channel's CLOSED synchronously, and the guard in subscribe() below compares against this
+       slot — leaving it pointing at the channel being torn down would let that CLOSED look live. */
+    if(signalChannelV479){const previousV4C=signalChannelV479;signalChannelV479=null;try{sb.removeChannel(previousV4C)}catch{}}
     try{
-      signalChannelV479=sb.channel(`wallet-signal-${S.user.id}`)
+      /* audit F052: THIS CHANNEL'S OWN STATUSES ONLY. removeChannel above calls leave(), which
+         fires phx_close, and subscribe() registered _onClose(()=>cb('CLOSED')) — so every rebuild
+         made the OLD channel report CLOSED, which this callback read as a failure and answered with
+         another rebuild. The new channel then joined, reset the retry counter to 0 without
+         cancelling that pending timer, the timer removed the healthy channel, and CLOSED scheduled
+         the next one. Because SUBSCRIBED reset the counter every time, the >=5 cap was never
+         reached: the wallet left and rejoined customer_wallet_signals_v479 every ~2s for the rest
+         of the page view, dropping any doorbell that landed in a join gap and flipping
+         signalChannelUpV498() tick to tick. Comparing against the live slot makes a deliberate
+         teardown inert; clearing the timer on SUBSCRIBED kills the ghost rebuild. */
+      const channelV4C=sb.channel(`wallet-signal-${S.user.id}`)
         .on('postgres_changes',
           {event:'*',schema:'public',table:'customer_wallet_signals_v479',
            filter:`auth_user_id=eq.${S.user.id}`},
@@ -6715,10 +6955,18 @@ function watchCustomerWalletV295(isCurrent,refresh,pulse=null,walletSlugV524=nul
             if(now-lastSignalAtV479<1500)return;
             lastSignalAtV479=now;
             void counterMomentV468();
-          })
+          });
+      signalChannelV479=channelV4C;
+      channelV4C
         .subscribe(status=>{
           if(stopped)return;
-          if(status==='SUBSCRIBED'){signalRetriesV498=0;return}
+          if(signalChannelV479!==channelV4C)return; // audit F052: a channel we already replaced
+          if(status==='SUBSCRIBED'){
+            signalRetriesV498=0;
+            /* audit F052: and cancel any rebuild still queued from this channel's own bad start. */
+            if(signalRetryTimerV498){clearTimeout(signalRetryTimerV498);signalRetryTimerV498=0}
+            return;
+          }
           /* CLOSED also lands here when stop() removes the channel — the `stopped` guard above
              is what keeps teardown from scheduling a ghost rejoin. */
           if(status!=='CHANNEL_ERROR'&&status!=='TIMED_OUT'&&status!=='CLOSED')return;
@@ -6814,11 +7062,22 @@ function customerHoldWalletScrollV748(windowMs=700){
   requestAnimationFrame(tick);
   return release;
 }
+/* audit F051. Both redemption handlers mint the intent server-side and then bail SILENTLY if the
+   section was repainted while the RPC was in flight — no QR, no toast, and for a gift the re-tap is
+   refused for fifteen minutes because a pending intent already exists. The .modal / focused-control
+   guards below do not cover that window: the QR sheet is not open yet, and on iOS Safari a tapped
+   button takes no focus, so a doorbell-triggered counter moment (a sale or stamp recorded for THIS
+   customer — precisely the second they reach for Redeem) repaints straight through it. A redemption
+   the customer has already started is exactly as much "mid-interaction" as a focused field. */
+let customerRedeemInFlightV4C=0;
+function customerRedeemInFlightBeginV4C(){customerRedeemInFlightV4C+=1}
+function customerRedeemInFlightEndV4C(){customerRedeemInFlightV4C=Math.max(0,customerRedeemInFlightV4C-1)}
 function customerWalletSilentPaintV333(html){
   const host=$('walletBody');
   if(!host)return false;
   /* Never yank the DOM out from under a customer who is mid-interaction: a focused control
      inside the body, or an open sheet, means this repaint can wait for the next tick. */
+  if(customerRedeemInFlightV4C>0)return false; // audit F051
   if(document.querySelector('.modal'))return false;
   const focused=document.activeElement;
   if(focused&&focused!==document.body&&host.contains(focused))return false;
@@ -6863,13 +7122,18 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
   if(!silent)renderCustomerShell({active:businessSlug?'programmes':'home',businessSlug,compactBusinessHeadV339:!!businessSlug,staffWorkspaces:context.staffWorkspaces,messagesAvailable:customerFeatures.customer_in_app_inbox===true,
     body:`<div class="card"><p class="muted">Loading ${esc(BRAND.customerLabel)}…</p></div>`});
   let actionableCard=null,programmeCards=[];
+  /* audit F054: the programme page's poll baseline, held here until a paint actually lands. */
+  let programmePulseBaselineV4C=null;
   if(customerFeatures.customer_actionable_wallet===true){
     if(!businessSlug){
       const {data,error}=await customerRpc('customer_get_actionable_wallet');
       if(!isWalletCurrent())return;
       /* V370: `as_of` is statement_timestamp() and moves on every call, so the pulse baseline is
-         taken over the cards alone — comparing the envelope would report "changed" every tick. */
-      if(!error)rememberCustomerWalletPulseV370(data?.cards??null);
+         taken over the cards alone — comparing the envelope would report "changed" every tick.
+         audit F054: MOVED to after the paint (below, and in the two programme branches). Recording
+         it here meant a silent paint that stood down — the customer had a sheet open or a focused
+         control inside #walletBody — still advanced the baseline, so every later tick matched and
+         stood down too, and that change was never painted by the watcher at all. */
       if(!error&&Array.isArray(data?.cards)&&data.cards.length){
         /* v286: this pair used raw sb.rpc, so it carried NO abortSignal while every other read in
            the Promise.all aborts at 12s (v177) — and Promise.all waits for the slowest, so one
@@ -6922,6 +7186,8 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         profile:context.profile
       }))return;
       customerWalletFactsPaintedV333(homeSignatureV333);
+      /* audit F054: the poll baseline is committed with the paint, never before it. */
+      rememberCustomerWalletPulseV370(data?.cards??null);
       /* v194: Bookings counts what is still live — a request awaiting the business plus an
          upcoming appointment. It comes from data already fetched above, so the badge costs no
          round trip.
@@ -6951,6 +7217,13 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         paintCustomerInboxBellV286(customerHomeOverview.messageCount);
       });
       if(!silent)focusCustomerRoute();
+      /* audit F053: the watcher this branch never had. Same bounds as everywhere else — a real
+         render builds one, a silent pass must not build a second, and the tick pays for the full
+         re-read only when customer_get_actionable_wallet's cards differ from what is on screen.
+         The fourth argument is null because this is the Home wallet, not a business page (v524). */
+      if(!silent)watchCustomerWalletV295(isWalletCurrent,
+        forceV498=>renderCustomerWallet(null,{silent:true,forceV498:forceV498===true}),
+        customerWalletActionableHomePulseReaderV370(),null);
       return;
       }
     }
@@ -6980,8 +7253,10 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
       actionableCard=data?.card||null;
       programmeCards=walletResult.error?[]:(Array.isArray(walletResult.data?.cards)?walletResult.data.cards:[]);
       /* V370: seed the poll baseline from the card this render is about to draw, so the first
-         tick compares against exactly what is on screen. */
-      rememberCustomerWalletPulseSignatureV370(customerWalletProgrammePulseOfV370(actionableCard,null));
+         tick compares against exactly what is on screen.
+         audit F054: HELD, not committed — a silent paint may still stand down below, and a baseline
+         moved without a paint is a change the poll can never rediscover. */
+      programmePulseBaselineV4C=customerWalletProgrammePulseOfV370(actionableCard,null);
       if(!actionableCard)return silent?undefined:renderCustomerNotJoinedV289(businessSlug);
     }
   }
@@ -7064,7 +7339,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
   /* V370: with the actionable wallet feature OFF there is no card to pulse against, so the poll
      baseline comes from the same three summary sections the page draws its balances from. With it
      ON the card was already seeded above and this must not overwrite it with a different shape. */
-  if(!actionableCard)rememberCustomerWalletPulseSignatureV370(customerWalletProgrammePulseOfV370(null,summary));
+  if(!actionableCard)programmePulseBaselineV4C=customerWalletProgrammePulseOfV370(null,summary); // audit F054: held until the paint
   /* v286 (audit: a wasted round trip that also cost a control). This customer_get_wallet read was
      fetched and then never referenced, so with customer_actionable_wallet off programmeCards
      stayed empty: the multi-business switcher above the header vanished (it bails under two
@@ -7245,6 +7520,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
   if(silent){if(!customerWalletSilentPaintV333(programmeBodyMarkupV333))return}
   else $('walletBody').innerHTML=programmeBodyMarkupV333;
   customerWalletFactsPaintedV333(programmeSignatureV333);
+  /* audit F054: committed with the paint. A refused silent paint now leaves the old baseline in
+     place, so the very next tick still sees the change and repaints it. */
+  if(programmePulseBaselineV4C!==null)rememberCustomerWalletPulseSignatureV370(programmePulseBaselineV4C);
   wireCustomerRepeatBookingV167($('walletBody'));
   wireCustomerProgrammeTabsV194($('walletBody'));
   wireCustomerBusinessShortcutsV347($('walletBody'));
@@ -8435,14 +8713,19 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         const mintGiftIntentV676=key=>sb.rpc('customer_create_gift_intent_v515',{
           p_business:businessId,p_gift_kind:giftKind,p_target:targetId,p_idempotency_key:key});
         button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
-        let {data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId));
-        /* A key that replays something already finished (staff scanned it, or the customer
-           cancelled from another device) must not be shown as a live QR. Retire it and mint
-           once more; the server then either issues a fresh QR or says why it cannot. */
-        if(!error&&intent&&String(intent.status||'pending')!=='pending'){
-          clearWriteAttempt(giftSlotV676);
+        /* audit F051: hold off any silent repaint until this round trip has landed. */
+        customerRedeemInFlightBeginV4C();
+        let intent=null,error=null;
+        try{
           ({data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId)));
-        }
+          /* A key that replays something already finished (staff scanned it, or the customer
+             cancelled from another device) must not be shown as a live QR. Retire it and mint
+             once more; the server then either issues a fresh QR or says why it cannot. */
+          if(!error&&intent&&String(intent.status||'pending')!=='pending'){
+            clearWriteAttempt(giftSlotV676);
+            ({data:intent,error}=await mintGiftIntentV676(writeAttemptKey(giftSlotV676,targetId)));
+          }
+        }finally{customerRedeemInFlightEndV4C()}
         if(!isWalletSectionCurrent(host)||!button.isConnected)return;
         button.disabled=false;button.querySelector('span').textContent=restore;
         if(error){
@@ -8485,10 +8768,15 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         redemptionAttempt={actionKey:reward.action_key,key:crypto.randomUUID()};
       }
       button.disabled=true;button.querySelector('span').textContent='Preparing QR…';
-      const {data:intent,error:intentError}=await sb.rpc('customer_create_redemption_intent_v89',
-        customerRedemptionIntentArgsV89({
-          businessId,reward,idempotencyKey:redemptionAttempt.key
-        }));
+      /* audit F051: hold off any silent repaint until this round trip has landed. */
+      customerRedeemInFlightBeginV4C();
+      let intent=null,intentError=null;
+      try{
+        ({data:intent,error:intentError}=await sb.rpc('customer_create_redemption_intent_v89',
+          customerRedemptionIntentArgsV89({
+            businessId,reward,idempotencyKey:redemptionAttempt.key
+          })));
+      }finally{customerRedeemInFlightEndV4C()}
       if(!isWalletSectionCurrent(host)||!button.isConnected)return;
       button.disabled=false;button.querySelector('span').textContent=restoreLabelV397;
       if(intentError){

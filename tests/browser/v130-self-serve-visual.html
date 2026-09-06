@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="91701f5becdea8e89f1bdd6d7bf54e7d552530cab9f682fe78e8e8544555ecf7"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="4c45d1ae14baaff54092205fa5fba4b1426887a40a94d8378e81f7c1cd8d16e9"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6678,7 +6678,12 @@ function renderLockedWorkspacePaymentV620(control,entitlement){
     ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   $('main').focus();
   CUI.announce(title+'.',{assertive:true});
-  $('businessControlRetry').onclick=route;
+  /* nestly_v579 (audit F015): loadBusinessControlV370 caches a negative (workspace_access:false)
+     result for BOOTSTRAP_CACHE_TTL_V370.control (120s) and route() never asks for a refresh, so
+     pressing "Check again" right after a super admin approves (or an overdue payment clears)
+     re-served the same stale answer for up to two minutes — the v569 "Waiting for approval"
+     card already learned this lesson and passes {refresh:true} on its own retry. */
+  $('businessControlRetry').onclick=()=>{invalidateBusinessControlCacheV370();invalidatePersonaCacheV370();route()};
   $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   wireAccountDeletionButton();
 }

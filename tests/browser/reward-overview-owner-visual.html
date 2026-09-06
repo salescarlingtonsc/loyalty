@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="1988138b22c9c119939c4a0d2e60288ab87a5c75cdbfa2b734f86323b0c05153"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="fd14a02dffc77ad9c5d1417b7765aae133427d7892a2828db369532b8f81ba33"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5770,7 +5770,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 1988138b22c9c119939c4a0d2e60288ab87a5c75cdbfa2b734f86323b0c05153</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · fd14a02dffc77ad9c5d1417b7765aae133427d7892a2828db369532b8f81ba33</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -10921,7 +10921,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      context (ctx-tiers); both belong in the focus slot, not the draft-id slot. */
   const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
   if(!routedFocus&&(directFocusTokens.has(hashParamBaseV294)||/^ctx-(points|tiers)$/.test(String(hashParam||'')))){routedFocus=hashParam;hashParam=null}
-  const outerMain=M(),isGrowCurrent=()=>outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
+  /* F039: this call's own epoch — see the growPageRenderEpoch declaration for why. */
+  const myGrowRenderEpochV039=++growPageRenderEpoch;
+  const outerMain=M(),isGrowCurrent=()=>growPageRenderEpoch===myGrowRenderEpochV039&&outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
   const modules=S.myModules||[];
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
   const isOwner=S.myRole==='owner';
@@ -10931,6 +10933,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.grow_opened',S.biz.id,{
     context:{action_key:routedSurface||'overview',entry_point:'workspace_nav',locale:workspaceLocale,surface_version:'v100'}
   });
+  /* F086: route()'s gate (programmeSpineRowsV314()===null) only ever fetches the programme spine
+     ONCE per business per browser session — a second tab/device that switches a programme on/off
+     leaves every other open session's cache (and therefore the switch-confirm dialog's "this will
+     turn X off" text, drawn straight from that cache) silently wrong until a full reload. Refresh
+     it on every real navigation into Grow (fromRouteV288), the same way this page already
+     re-fetches tiers/bring-back/usage on every open — but not on the quiet in-page re-renders a
+     save triggers, so a Save keeps costing the one round trip it already did instead of two. */
+  if(fromRouteV288&&canRewards){
+    await refreshProgrammeSpineV314();
+    if(!isGrowCurrent())return;
+  }
   if(!quiet)outerMain.innerHTML=CUI.loadingState({title:'Programmes',iconName:'loyalty'});
   /* PERF (2026-08-17). The reads below are independent: none of them consumes the snapshot or
      each other's result, they only need canRewards/canWinback and S.biz.id, all resolved above.
@@ -12727,7 +12740,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
       <b>Take this gift off stamp ${growStampsPickedV416}?</b>
-      <p class="muted small" style="margin-top:6px">The stamp stays on the card; it just stops paying out. Customers already part-way through keep the card they started.</p>
+      <p class="muted small" style="margin-top:6px">${
+        /* F038, closed by nestly_v805. business_delete_reward_v326 no longer flips the LIVE
+           loyalty_rewards row for a stamp gift: it withdraws the gift version-forward through the
+           same v433 begin/commit path the gift and card-length editors use, so it leaves the NEXT
+           published version while every open card keeps resolving the version it started under
+           (app.stamp_cycle_version_v416). All five readers — reward_availability_v432,
+           redeem_reward_core, customer_get_stamp_card_v323, customer_create_redemption_intent_v89
+           and stamp_reward_expire_due_v464 — ask app.reward_live_on_offer_v805 instead of the live
+           row alone, so a customer one stamp short still gets paid. Keep this text and that
+           migration saying the same thing. */''
+      }Cards already going keep this gift until they finish — even a customer one stamp short. It comes off the next card, so anyone starting a new one will not see it.</p>
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-points-gift-delete-yes-v326="${esc(growPointsEditingV326)}">Delete</button><button type="button" class="btn ghost sm" data-grow-points-gift-delete-no-v326="1">Cancel</button></div>
     </div>`:''}
   </li>`:'';
@@ -14463,7 +14486,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(editProgramId&&!await materializeExactProgramme('retention',editProgramId))return;
       await retentionPage(draft,editProgramId);
     }
-    else await studioPage(draft);
+    /* F098: studioPage(draftVersionId) treats ANY truthy id as a publish-review request and
+       bounces to #/grow unless nestly:grow-publish-review:<id> is set. `draft` here is just
+       "whatever Grow config draft this business currently has open" (growDraftVersionId) —
+       true for a plain #/studio visit whenever the owner has an unrelated Rewards/Retention
+       edit in flight, which is routine, not a review. Only forward the id when this really is
+       the protected review flow computed above; otherwise pass null so the plain overview
+       renders instead of silently bouncing away. */
+    else await studioPage(protectedStudioReview?draft:null);
     const exactRewardOpened=await openExactReward();
     if(!exactRewardOpened&&focusTarget)focusGrowTarget(focusTarget,{activate:activateTarget});
     else if(!exactRewardOpened&&focus&&panel.isConnected)panel.focus({preventScroll:true});
@@ -14863,8 +14893,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {error}=await sb.rpc('business_upsert_bringback_v361',{p_business:S.biz.id,
       p_campaign:growBbEditingV361,p_name:name,p_reward_label:reward,
       p_away_days:away,p_expiry_days:expiry});
-    if(!isGrowCurrent())return;
+    /* F034: reset the busy flag before the route-currency check — the flag is module-level and
+       is never cleared by ordinary navigation, so returning early here (as happens whenever the
+       owner leaves #/grow while this RPC is in flight) permanently deadened Save/Turn on/Delete
+       on this page until reload or sign-out. */
     growBbBusyV361=false;
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     const wasEditing=Boolean(growBbEditingV361);
     growBbEditingV361=null;growBbAddOpenV361=false;
@@ -14878,8 +14912,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growBbBusyV361=true;growBbErrorV361='';
     const {error}=await sb.rpc('business_set_bringback_paused_v361',{
       p_business:S.biz.id,p_campaign:id,p_paused:!want});
-    if(!isGrowCurrent())return;
+    /* F034: see the matching note on growBbSave above. */
     growBbBusyV361=false;
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Sending again':'Stopped sending');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
@@ -14897,8 +14932,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=el.dataset.growBbDeleteYesV361;
     growBbBusyV361=true;growBbErrorV361='';
     const {error}=await sb.rpc('business_delete_bringback_v361',{p_business:S.biz.id,p_campaign:id});
-    if(!isGrowCurrent())return;
+    /* F034: see the matching note on growBbSave above. */
     growBbBusyV361=false;growBbDeletePendingV361='';
+    if(!isGrowCurrent())return;
     if(error){growBbErrorV361=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast('Campaign deleted — vouchers already sent stay valid');
     growPage(routedSurface,hashParam,routedFocus).catch(fail);
@@ -15023,8 +15059,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
     const {ok,error,cancelled,data}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(cancelled)return growRerenderV322({quiet:true});
     if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
     /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
@@ -15217,8 +15254,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_stamp_reward_expiry_days:rewardExpiryDaysV464});
     const earnSaveV435=earnSaveCallV435.data;
     const error=earnSaveCallV435.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growEarnBusyV359=false;
+    if(!isGrowCurrent())return;
     if(error){growEarnErrorV359=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the header line ("Current setting: ...") updates without a full refetch. */
     if(!snapshot.loyalty)snapshot.loyalty={};
@@ -15329,8 +15367,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       {p_business:S.biz.id,p_stamps:next});
     const lenResV433=lenCallV433.data;
     const error=lenCallV433.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* Local echo so the grid redraws at the new length without a second read — the same pattern
        the model switch uses. The snapshot is refetched on the next full load either way. */
@@ -15461,7 +15500,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         growPointsBusyV326=false;growPointsErrorV326=uploadError?.message||'The photo could not be uploaded.';
         return growRerenderV322({quiet:true});
       }
-      if(!isGrowCurrent())return;
+      if(!isGrowCurrent()){growPointsBusyV326=false;return;}
     }
     let error;
     let saveResV433;
@@ -15506,8 +15545,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_entitlement_expiry_days:null,
         p_claim_expires_after_days:expiryDaysV520}));
     }
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     /* V356: the old 'prompt' state ("Gift saved and live... / Add another gift / Done") is gone.
@@ -15554,8 +15594,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_image_ref:imageRef||null,p_clear_image:false});
     const rowResV433=rowCallV433.data;
     const error=rowCallV433.error;
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     growStampPublishToastV433(rowResV433,'Level updated — applies to new cards. Customers mid-card keep their current card.');
     growRerenderV322({quiet:true});
@@ -15592,8 +15633,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     button.disabled=true;
     const {error}=await sb.rpc('business_set_reward_paused_v326',{
       p_business:S.biz.id,p_reward:id,p_paused:!want});
-    if(!isGrowCurrent())return;
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
     toast(want?'Turned on for customers':'Turned off for customers');
     growRerenderV322({quiet:true});
@@ -15611,10 +15653,23 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const id=button.dataset.growPointsGiftDeleteYesV326;
     growPointsBusyV326=true;growPointsErrorV326='';
     button.disabled=true;
-    const {error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
-    if(!isGrowCurrent())return;
+    const {data:deleteResultV693,error}=await sb.rpc('business_delete_reward_v326',{p_business:S.biz.id,p_reward:id});
+    /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;growPointsDeletePendingV326='';
+    if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
+    /* nestly_v805 (F038): the stamp path publishes a new configuration version, so it runs the
+       same stamps validation a Go-live does. Taking the gift off the LAST stamp cannot publish
+       until another gift sits there, and the server reports that as publish_status 'pending' with
+       owner-language blockers rather than raising — the gift is still on the card, so say so and
+       leave the editor open instead of toasting a removal that did not happen. */
+    const deleteOutcomeV693=deleteResultV693&&typeof deleteResultV693==='object'?deleteResultV693:null;
+    if(deleteOutcomeV693&&deleteOutcomeV693.publish_status==='pending'){
+      growPointsErrorV326=(Array.isArray(deleteOutcomeV693.blockers)?deleteOutcomeV693.blockers:[])
+        .map(blocker=>blocker&&blocker.message).filter(Boolean).join(' ')
+        ||'Add another gift at the last stamp before taking this one off the card.';
+      return growRerenderV322({quiet:true});
+    }
     /* nestly_v416: deleting from inside the stamp dialog has to close the dialog too — it was
        opened ON the gift that no longer exists, and leaving it up would show a form editing
        nothing. The level row this used to hang off simply vanished from the list instead. */
@@ -15622,7 +15677,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       growPointsAddOpenV326='';growPointsEditingV326=null;growStampsPickedV416=null;
       growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;
     }
-    toast('Moved to History');
+    toast(deleteOutcomeV693&&deleteOutcomeV693.mode==='withdrawn'?'Off the next card':'Moved to History');
     growRerenderV322({quiet:true});
   });
   /* ============ V331 — TIERS PAGE WIRING ====================================================
@@ -16269,7 +16324,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'1988138b22c9c119939c4a0d2e60288ab87a5c75cdbfa2b734f86323b0c05153',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'fd14a02dffc77ad9c5d1417b7765aae133427d7892a2828db369532b8f81ba33',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

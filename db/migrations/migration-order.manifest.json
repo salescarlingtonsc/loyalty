@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 663,
-  "executableCount": 649,
+  "itemCount": 671,
+  "executableCount": 657,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -798,7 +798,7 @@
     },
     {
       "sourceDeployVersion": "20260902",
-      "count": 17,
+      "count": 24,
       "paths": [
         "db/migrations/20260902_nestly_v672_public_support_desk.sql",
         "db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql",
@@ -816,7 +816,14 @@
         "db/migrations/20260902_nestly_v685_singapore_day_authority.sql",
         "db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql",
         "db/migrations/20260902_nestly_v687_staff_self_profile.sql",
-        "db/migrations/20260902_nestly_v688_support_mark_read.sql"
+        "db/migrations/20260902_nestly_v688_support_mark_read.sql",
+        "db/migrations/20260902_nestly_v801_appointment_change_integrity.sql",
+        "db/migrations/20260902_nestly_v802_stamp_gift_reversal_and_pin.sql",
+        "db/migrations/20260902_nestly_v803_membership_pause_and_replay_markers.sql",
+        "db/migrations/20260902_nestly_v804_pot_scope_and_unpaged_totals.sql",
+        "db/migrations/20260902_nestly_v805_stamp_gift_delete_version_forward.sql",
+        "db/migrations/20260902_nestly_v806_guest_booking_autoapprove.sql",
+        "db/migrations/20260902_nestly_v807_reschedule_unassign_staff.sql"
       ]
     },
     {
@@ -6258,6 +6265,70 @@
       "semanticVersion": "v797",
       "proposedDeployVersion": "20261006150000",
       "sha256": "98878835533ac4d403f73ef110271990ba937857afe16f8c095e5efbb347e865"
+    },
+    {
+      "order": 664,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v801_appointment_change_integrity.sql",
+      "semanticVersion": "v801",
+      "proposedDeployVersion": "20261006160000",
+      "sha256": "22ee0008c65cdca6db414dd578cb9f6897c8085034a98b9045bc56b1ae43d334"
+    },
+    {
+      "order": 665,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v802_stamp_gift_reversal_and_pin.sql",
+      "semanticVersion": "v802",
+      "proposedDeployVersion": "20261006170000",
+      "sha256": "c75f763259ad2d20dd90b6a4a97348669428abceb3bb9883b09b0c12b1316f2e"
+    },
+    {
+      "order": 666,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v803_membership_pause_and_replay_markers.sql",
+      "semanticVersion": "v803",
+      "proposedDeployVersion": "20261006180000",
+      "sha256": "a4cfc165553dbacd42841227f245906b598ce21489fc312872f3736b851567bd"
+    },
+    {
+      "order": 667,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v804_pot_scope_and_unpaged_totals.sql",
+      "semanticVersion": "v804",
+      "proposedDeployVersion": "20261006190000",
+      "sha256": "864cdcd9887e633863d379ba6fb8846d5e763aaefd272fee9a6cd1e8e7e8745a"
+    },
+    {
+      "order": 668,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v805_stamp_gift_delete_version_forward.sql",
+      "semanticVersion": "v805",
+      "proposedDeployVersion": "20261006200000",
+      "sha256": "00f5de179f7ec6923ade02c8a4454bac2c1cb2b46a71f021135e235f0a0e1ec2"
+    },
+    {
+      "order": 669,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v806_guest_booking_autoapprove.sql",
+      "semanticVersion": "v806",
+      "proposedDeployVersion": "20261006210000",
+      "sha256": "4775746b2a210d71348bf50f5783489a6017fe9cea610fcd0163105d1bd3bf78"
+    },
+    {
+      "order": 670,
+      "kind": "executable",
+      "path": "db/migrations/20260902_nestly_v807_reschedule_unassign_staff.sql",
+      "semanticVersion": "v807",
+      "proposedDeployVersion": "20261006220000",
+      "sha256": "9e00e125840801cdc4003aab73bef55ea0551a1de7f7e77b4c3c96b025a166f9"
+    },
+    {
+      "order": 671,
+      "kind": "executable",
+      "path": "db/migrations/20260903_nestly_v808_marketing_preference_upsert.sql",
+      "semanticVersion": "v808",
+      "proposedDeployVersion": "20261006230000",
+      "sha256": "03d0c8e123dcad4816aa83592ca75617eae5ac84dee0af2c6090228353ea107b"
     }
   ]
 }

@@ -523,6 +523,7 @@ const filterResolvedModulesForRole=(modules,role)=>[...(Array.isArray(modules)?m
    across the in-place re-renders that adding/retiring a customer field trigger. */
 let pendingCustomerSearch='';
 let pendingTillPhone='';
+let pendingTillRedemptionScan=false;
 let pendingApptClientId=''; // Customer 360 → New appointment: prefills the existing #ac select, consumed once
 /* nestly_v571 (owner, Waitlist photo: "Seat now" renamed "Book", "will go to appointment to set
    date & time"). The walk-in whose Book button was pressed. The appointments page resolves this
@@ -708,7 +709,6 @@ const beginRouteInvocation=()=>{
   const routeEpoch=++routeRenderEpoch;
   return ()=>routeRenderEpoch===routeEpoch;
 };
-
 /* V314 (W6 increment 1): `programmes` is this session's mirror of public.business_programmes —
    the four-row programme spine that became the ONE authority on which programmes run when v314
    dropped the v308 sync triggers. It is cached exactly like myModules (fetched once per business,
@@ -1234,7 +1234,6 @@ function invalidatePersonaCacheV370(){
   personaCacheV370={userId:'',at:0,result:null};
   customerPersonaResolvedV370={userId:'',value:null};
 }
-function invalidateBusinessControlCacheV370(){businessControlCacheV370={key:'',at:0,result:null}}
 /* One get_my_personas per user per window, shared by every caller in a navigation.
    A FAILURE is never cached: personaError drives a "could not resolve" screen, and caching that
    would keep the screen up for 45 seconds after the network came back. */
@@ -1340,6 +1339,15 @@ const OWNER_ERROR_NOISE_RULES_V170=[
   [/operational_branch_required_for_current_scope/i,'No branch is selected. Choose one at the top.'],
   [/empty_selected_branch_scope/i,'Choose at least one branch to report on.'],
   [/unsupported_reporting_branch_scope/i,'That reporting scope is not supported. Choose a branch at the top.'],
+  /* F029. business_create_promotion_draft_v155 and business_finalize_promotion_v282 raise these
+     bare codes for exactly the length/date rules the runSave client check now mirrors before any
+     photo upload — but a stale tab, a second device, or any check this file's client validation
+     does not yet cover can still reach the server and surface the raw token. Give the owner the
+     same plain-English direction either way, instead of the misleading generic "reopen it" text
+     the version-conflict branch shows for unrelated causes. */
+  [/valid_promotion_(draft|finalize)_fields_required/i,'Some details do not meet the limits: headline 2–70 characters, message 10–600, exact offer 2–500, customer action label 2–40, occasion 2–80 if used, and the end date/time after the start date (and still in the future to publish). Fix those and try again.'],
+  [/promotion_publishing_window_closed/i,'This business is past its free publishing window for new offers. Contact Peekaa to continue publishing.'],
+  [/owner_required/i,'Only the business owner can save this. Ask the owner to make this change.'],
 ];
 const ownerErrorText=error=>{
   const raw=String(error?.message||(typeof error==='string'?error:'')||'').trim();
@@ -2351,6 +2359,13 @@ async function route(){
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)
        &&!BOTTLE_SURFACES_V275.has(pageKey)
        &&!canReadModule(moduleGateKeyV584)){
+      /* nestly_v579 (audit F016, defence in depth): the mobile dock's own gate now keeps a
+         till-less account from ever tapping a working-looking Scan QR button (see
+         staffMobileActionsHtml above), but a stale hash, a bookmark, or the flag set by any
+         other future caller of #/till should not leave pendingTillRedemptionScan armed for a
+         page that was just refused — it would silently "consume" a scan on some later,
+         unrelated till visit. */
+      if(pageKey==='till')pendingTillRedemptionScan=false;
       toast('You don\'t have access to that.');
       return nav(firstPermittedPageV570());
     }
@@ -7321,7 +7336,13 @@ async function runImport(recs,entity,idempotencyKey,onProgress){
   const {data:staged,error:stageError}=await sb.rpc('stage_import_rows',{
     p_business:S.biz.id,p_entity:entity,p_rows:recs.map(r=>r.mapped),
     p_idempotency_key:idempotencyKey});
-  if(stageError) return {inserted:0,failed:recs.length,errs:[stageError.message],blocked:true};
+  if(stageError){
+    // F080: distinguish "you're not allowed to do this" (42501, app.is_salon_owner) from an
+    // ordinary data-quality refusal so a caller can show the real reason instead of a generic
+    // import failure to someone who was never going to be able to import in the first place.
+    const permissionDenied=stageError.code==='42501';
+    return {inserted:0,failed:recs.length,errs:[stageError.message],blocked:true,permissionDenied};
+  }
   const rowErrors=(staged.errors||[]).map(e=>`Row ${e.row_number}: ${(e.errors||[]).join(', ')}`);
   if(staged.invalid>0) return {inserted:0,failed:staged.invalid,errs:rowErrors,blocked:true};
   if(onProgress) onProgress(recs.length,recs.length,'Saving');
@@ -7387,8 +7408,8 @@ window.openImport=function(moduleKey,onDone){
     $('impGo').onclick=async()=>{
       $('impGo').disabled=true;$('impGo').textContent='Importing…';
       if(!importIdem) importIdem=crypto.randomUUID();
-      const {inserted,failed,errs,blocked}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
-      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:var(--success-bg);color:#1f7a4d'}">${blocked?'Nothing imported. Correct the source data, then start the import again.':`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
+      const {inserted,failed,errs,blocked,permissionDenied}=await runImport(parsed.recs,moduleKey,importIdem,(d,t,stage)=>{$('impGo').innerHTML=`<span data-workspace-i18n>${esc(stage)}</span>… <span data-merchant-content>${d}/${t}</span>`});
+      R.innerHTML=`<div class="imp-note" style="${blocked?'background:#FFF1EF;color:#9D352C':'background:var(--success-bg);color:#1f7a4d'}">${blocked?(permissionDenied?'Only the business owner can run an import. Ask an owner to do this.':'Nothing imported. Correct the source data, then start the import again.'):`<span data-workspace-i18n>✓ Imported</span> <b data-merchant-content>${inserted}</b> <span data-workspace-i18n>${esc(cfg.title)}</span>.`}</div>
         ${errs.length?`<p class="small muted" style="margin-top:8px"><span data-workspace-i18n>First issues:</span> <span data-merchant-content>${errs.map(e=>esc(e)).join('; ')}</span></p>`:''}
         <div style="margin-top:14px"><button class="btn sm" id="impDone">${blocked?'Close':'Done'}</button></div>`;
       $('impDone').onclick=()=>{close();if(onDone)onDone()};

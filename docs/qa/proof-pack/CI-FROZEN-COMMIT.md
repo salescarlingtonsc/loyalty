@@ -13,13 +13,13 @@
 
 | | |
 |---|---|
-| HEAD SHA | `f998a00d4d9ba64ff0e1e824c596ef41851f8be3` |
-| Branch | `claude/razorpay-billing-v755` |
-| Commit date | 2026-09-06T18:32:27+08:00 |
-| Record generated | 2026-09-06T10:43:38.548Z |
+| HEAD SHA | `4d623861935349b5b70057d513b36c8cde979f00` |
+| Branch | `claude/audit-p2-ship` |
+| Commit date | 2026-09-07T02:42:25+08:00 |
+| Record generated | 2026-09-06T18:50:53.297Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
-| Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |
+| Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 24 |
 
 ## Migration ledger — canonical manifest checksums
 
@@ -29,12 +29,12 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 
 | Manifest | `.sha256` file contents | Independently recomputed SHA-256 | Match |
 |---|---|---|---|
-| `db/migrations/migration-order.manifest.json` | `8188039e9a10be3c85c87a900a81d7f9a4efb6d35cdb3b98254467d75cf3ec67  migration-order.manifest.json` | `8188039e9a10be3c85c87a900a81d7f9a4efb6d35cdb3b98254467d75cf3ec67` | MATCH |
-| `supabase/canonical-migration-order.manifest.json` | `8950d4d899454283381f3cd8659de71cd9f23e1810f7117608bc133efe4ebe1b  canonical-migration-order.manifest.json` | `8950d4d899454283381f3cd8659de71cd9f23e1810f7117608bc133efe4ebe1b` | MATCH |
+| `db/migrations/migration-order.manifest.json` | `b2d31c7581ef3136f9b99dc40630d4576968de46bb397b9ab5ca181b7bc78934  migration-order.manifest.json` | `b2d31c7581ef3136f9b99dc40630d4576968de46bb397b9ab5ca181b7bc78934` | MATCH |
+| `supabase/canonical-migration-order.manifest.json` | `617b5c0d72cb1e05fd9f56cb665f5d80ea51824a0791486e1ed4832439c7a90a  canonical-migration-order.manifest.json` | `617b5c0d72cb1e05fd9f56cb665f5d80ea51824a0791486e1ed4832439c7a90a` | MATCH |
 
 ## Migrations dated 2026-09-02
 
-**17** files, filename order:
+**24** files, filename order:
 
 * `db/migrations/20260902_nestly_v672_public_support_desk.sql`
 * `db/migrations/20260902_nestly_v673_staff_insert_owner_only.sql`
@@ -53,4 +53,11 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 * `db/migrations/20260902_nestly_v686_service_delete_owner_only_rpc.sql`
 * `db/migrations/20260902_nestly_v687_staff_self_profile.sql`
 * `db/migrations/20260902_nestly_v688_support_mark_read.sql`
+* `db/migrations/20260902_nestly_v801_appointment_change_integrity.sql`
+* `db/migrations/20260902_nestly_v802_stamp_gift_reversal_and_pin.sql`
+* `db/migrations/20260902_nestly_v803_membership_pause_and_replay_markers.sql`
+* `db/migrations/20260902_nestly_v804_pot_scope_and_unpaged_totals.sql`
+* `db/migrations/20260902_nestly_v805_stamp_gift_delete_version_forward.sql`
+* `db/migrations/20260902_nestly_v806_guest_booking_autoapprove.sql`
+* `db/migrations/20260902_nestly_v807_reschedule_unassign_staff.sql`
 
