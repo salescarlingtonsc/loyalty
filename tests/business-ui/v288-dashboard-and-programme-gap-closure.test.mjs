@@ -54,8 +54,16 @@ test('V288 MAJOR: the 60+ insight links to the 60+ audience it counted, not to 6
   assert.match(app, /data-insight-inactive="60_plus"/);
   // The drill carries a bucket key, not a day number the destination had to re-guess.
   /* V388: the dead `='30_59'` assignment — overwritten by the very next statement since V290 —
-     went with the tile's rewrite. The rule is that the drill asks for the bucket the tile counted. */
-  assert.match(dashboard,/if\(key==='inactive'\)pendingCustomerInactivity='all_inactive';/);
+     went with the tile's rewrite. The rule is that the drill asks for the bucket the tile counted.
+     nestly_v579 (audit F007): the tile's own `pendingCustomerInactivity='all_inactive'` line was
+     itself dead by that same standard — V470 removed the dialog's navigating footer, so nothing
+     ever read the flag before an unrelated later Customers visit inherited it as a stuck filter.
+     The rule now holds through the drill-down's own RPC call, hardcoded to the bucket the tile
+     counted, rather than through a handoff variable that can go stale. The insight-card link
+     below still arms the flag deliberately, because it is bound to a real #/clients href. */
+  assert.match(app, /p_inactive_bucket:'all_inactive'/);
+  assert.doesNotMatch(dashboard, /pendingCustomerInactivity='all_inactive'/,
+    'the tile no longer arms a flag its own dialog never consumes (audit F007)');
   assert.match(dashboard, /pendingCustomerInactivity=link\.dataset\.insightInactive\|\|'60_plus'/);
 });
 

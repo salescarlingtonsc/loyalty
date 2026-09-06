@@ -51,7 +51,9 @@ assert.ok(dialogStart > -1 && dialogEnd > dialogStart, 'openDashboardMetricRowsV
 const dialogBlock = app.slice(dialogStart, dialogEnd);
 
 test('V719 the Visits drill-down wires the grouped renderer, not a per-sale one', () => {
-  assert.match(dialogBlock, /groupVisitDaysV719\(data\|\|\[\]\)/,
+  /* audit F008 (wave 4A): the rows handed to the grouping are widened with out-of-window reversal
+     rows first, so the grouping receives visitScopeRowsV579 rather than the raw page. */
+  assert.match(dialogBlock, /groupVisitDaysV719\(visitScopeRowsV579\)/,
     'the visits branch must group the fetched sales rather than list them one-for-one');
   assert.match(dialogBlock, /visitDaySummaryV719\(group\)/,
     'each grouped row must print through visitDaySummaryV719');

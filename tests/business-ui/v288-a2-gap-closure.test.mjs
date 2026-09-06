@@ -112,10 +112,18 @@ test('HIGH 4 — the router keeps query strings instead of dropping the route', 
 });
 
 test('HIGH 4 — the deep link the Dashboard already publishes actually opens the List view', () => {
-  assert.match(app, /href="#\/appointments\?view=list&preset=today"/);
+  /* nestly_v579 (audit F009): the chip's href used to hard-code preset=today even when the
+     schedule strip was showing a different picked day (V252), so "+N more" for Tomorrow opened
+     TODAY's list and the overflow bookings it promised were unreachable. It now branches: today
+     keeps the original preset=today link, any other day gets an explicit from/to pair for that
+     same day. */
+  assert.match(app, /overflow>0\?`<li class="dashboard-schedule-chip more"><a href="#\/appointments\?view=list&\$\{isTodayV252\?'preset=today':`from=\$\{encodeURIComponent\(day\)\}&to=\$\{encodeURIComponent\(day\)\}`\}">/);
   assert.match(appointmentsPage, /const applyAppointmentPresetV288=\(preset,\{reload=true\}=\{\}\)=>\{/);
   assert.match(appointmentsPage, /applyAppointmentPresetV288\(routeParamV288\('preset'\),\{reload:false\}\)/);
   assert.match(appointmentsPage, /routeParamV288\('view'\)==='list'\)setCalendarView\('list'\)/);
+  // The explicit from/to pair is honoured the same way an explicit preset is honoured.
+  assert.match(appointmentsPage, /const routeFromV579=routeParamV288\('from'\),routeToV579=routeParamV288\('to'\);/);
+  assert.match(appointmentsPage, /appointmentListRangedFromParamsV579\|\|routeParamV288\('view'\)==='list'\)/);
 });
 
 /* ------------------------------------------------------------------ HIGH 5 */

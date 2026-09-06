@@ -181,7 +181,13 @@ test('4 — the Customers page counts buckets in ONE call, not by paging the dir
 
 test('4 — the dashboard tile counts all inactive customers and lands on exactly them', () => {
   assert.match(app, /p_inactive_bucket:'all_inactive',p_limit:1,p_offset:0/);
-  assert.match(app, /if\(key==='inactive'\)pendingCustomerInactivity='all_inactive';/);
+  /* nestly_v579 (audit F007): the tile's `pendingCustomerInactivity='all_inactive'` arming was
+     removed — V470 had already removed the dialog's navigating footer that would have consumed
+     it, so it stayed armed until an unrelated later Customers visit silently inherited it as a
+     stuck filter. "Lands on exactly them" now holds through the drill-down dialog's own RPC call
+     (asserted above), not through a global handoff flag nothing reads any more. */
+  assert.doesNotMatch(app, /if\(key==='inactive'\)pendingCustomerInactivity='all_inactive';/,
+    'the tile no longer arms a flag its own dialog never consumes (audit F007)');
   assert.match(app, /hint:'Last visit 30\+ days ago'/);
   /* The handoff must accept a named bucket, not only a number of days. */
   /* V290 merge note: folded into the V288 named-bucket resolver — 'all_inactive' is accepted

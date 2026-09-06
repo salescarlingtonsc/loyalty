@@ -41,7 +41,11 @@ test('campaign results consume v99 descriptive fields and withdraw superseded v5
 test('staff mobile shell keeps permitted daily jobs in a persistent bottom dock',()=>{
   const shell=between('function staffMobileActionsHtml','/* Global action cluster');
   assert.match(shell,/canReadModule\('till'\).*canReadModule\('clients'\).*hasRoleCapability\('create_sales'\)/s);
-  assert.match(shell,/canScanRedemption=canScanCustomerRedemption\(\{[\s\S]*loyaltyWritable:canWriteModule\('loyalty'\)/);
+  // nestly_v579 (audit F016): the scanner only exists on the till page (tapping it always
+  // navigates to #/till), so the dock's gate now also requires till read access — mirroring
+  // canQuickEarn just above it — instead of showing a button that only ever bounces off #/till
+  // with an access-denied toast for a till-less account.
+  assert.match(shell,/canScanRedemption=canReadModule\('till'\)&&canScanCustomerRedemption\(\{[\s\S]*loyaltyWritable:canWriteModule\('loyalty'\)/);
   assert.match(shell,/canViewAppts=canReadModule\('appointments'\)/);
   for(const id of ['staffMobileQuickEarn','staffMobileScan','staffMobileAppointments','staffMobileMore']){
     assert.match(shell,new RegExp(`id="${id}"`));

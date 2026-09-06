@@ -63,7 +63,9 @@ test('V266 A3 Apply filters always produces a visible result, even when the rows
   assert.match(block, /Showing \$\{rows\.length\} \$\{rows\.length===1\?'sale':'sales'\}/);
   // The button reports that it is working, and stops reporting it in a finally.
   assert.match(block, /CUI\.setButtonBusy\(applyButton,\{busy:true,label:'Applying…'\}\)/);
-  assert.match(block, /\}finally\{\s*\n\s*if\(applyButton\?\.isConnected\)CUI\.setButtonBusy\(applyButton,\{busy:false\}\);/);
+  // audit F006 (nestly_v579) added a load-generation guard alongside the isConnected check so a
+  // stale, overtaken load cannot clear the busy state for the load that superseded it.
+  assert.match(block, /\}finally\{\s*\n\s*if\(applyButton\?\.isConnected&&isCurrentLoadV579\(\)\)CUI\.setButtonBusy\(applyButton,\{busy:false\}\);/);
   // A failed read no longer leaves stale rows looking like the filtered answer.
   assert.match(block, /These filters could not be applied\. The rows below are unchanged\./);
 });

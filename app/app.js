@@ -4743,6 +4743,13 @@ async function route(){
     if(MODULES[pageKey]&&!OWNER_ONLY_MODULES.has(pageKey)
        &&!BOTTLE_SURFACES_V275.has(pageKey)
        &&!canReadModule(moduleGateKeyV584)){
+      /* nestly_v579 (audit F016, defence in depth): the mobile dock's own gate now keeps a
+         till-less account from ever tapping a working-looking Scan QR button (see
+         staffMobileActionsHtml above), but a stale hash, a bookmark, or the flag set by any
+         other future caller of #/till should not leave pendingTillRedemptionScan armed for a
+         page that was just refused — it would silently "consume" a scan on some later,
+         unrelated till visit. */
+      if(pageKey==='till')pendingTillRedemptionScan=false;
       toast('You don\'t have access to that.');
       return nav(firstPermittedPageV570());
     }
@@ -18221,7 +18228,12 @@ function renderBusinessWorkspaceControl(control={}){
     ${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
   $('main').focus();
   CUI.announce(title+'.',{assertive:true});
-  $('businessControlRetry').onclick=route;
+  /* nestly_v579 (audit F015): loadBusinessControlV370 caches a negative (workspace_access:false)
+     result for BOOTSTRAP_CACHE_TTL_V370.control (120s) and route() never asks for a refresh, so
+     pressing "Check again" right after a super admin approves (or an overdue payment clears)
+     re-served the same stale answer for up to two minutes — the v569 "Waiting for approval"
+     card already learned this lesson and passes {refresh:true} on its own retry. */
+  $('businessControlRetry').onclick=()=>{invalidateBusinessControlCacheV370();invalidatePersonaCacheV370();route()};
   $('businessControlSignOut').onclick=async()=>{killChannels();await sb.auth.signOut();resetClientSessionState();location.hash='#/';route()};
   wireAccountDeletionButton();
 }
@@ -19823,9 +19835,15 @@ function navHtml(page,idPrefix='nav'){
      opened. It participates in the same `enabled.includes(m)` test as every other module now,
      which is all it ever needed: 'dashboard' is a real key in ALLMODS, in every sector bundle
      and in staff_module_perms, so an inheriting staff member and every owner keep the row. */
+  /* nestly_v579 (audit F014): this used to advertise the row to owner OR manager, but
+     staffMembersPage() unconditionally awaits settingsPage(), whose very first line is
+     `if(S.myRole!=='owner')return ownerOnlyDeniedCardV285(...)` — there is no manager-capable
+     render path. A manager clicking this row always landed on a "Settings — Only the owner can
+     open this" refusal card. Rather than widen settingsPage's owner-only gate (never widen a
+     permission), match the rail to the gate that actually exists. */
   /* nestly_v768: a retired module is never a rail row, whatever the entitlement says. */
   const navModuleVisible=m=>!RETIRED_BUSINESS_MODULES_V768.has(m)&&((m==='dashboard'&&enabled.includes('dashboard'))
-    ||(m==='staffmembers'&&(S.myRole==='owner'||S.myRole==='manager'))
+    ||(m==='staffmembers'&&S.myRole==='owner')
     ||(m==='branches'&&S.myRole==='owner')
     ||(m==='customer-interface'&&S.myRole==='owner')
     ||(m==='remindernotify'&&S.myRole==='owner')
@@ -19910,7 +19928,12 @@ function staffMobileActionsHtml(page){
   const active=page[0];
   const items=[];
   const canQuickEarn=canReadModule('till')&&canReadModule('clients')&&hasRoleCapability('create_sales');
-  const canScanRedemption=canScanCustomerRedemption({
+  /* nestly_v579 (audit F016): the redemption scanner only exists on the till page — tapping
+     Scan QR always navigates to #/till — but this gate omitted canReadModule('till') (unlike
+     canQuickEarn just above, which requires it). A staff account granted Customers + Loyalty
+     write but not Record sale saw a working-looking Scan QR button that always bounced them
+     off #/till with an access-denied toast, leaving pendingTillRedemptionScan stuck true. */
+  const canScanRedemption=canReadModule('till')&&canScanCustomerRedemption({
     createSales:hasRoleCapability('create_sales'),
     clientsReadable:canReadModule('clients'),
     loyaltyWritable:canWriteModule('loyalty')
@@ -19923,7 +19946,12 @@ function staffMobileActionsHtml(page){
     <div class="mobile-action-sheet">
       <div class="mobile-workspace-summary" aria-label="Current workspace"><b data-merchant-content>${esc(S.biz?.name||BRAND.productName)}</b><span class="muted" data-merchant-content>${esc(INDUSTRIES[S.biz?.industry]?.label||S.biz?.industry||'Workspace')}</span><span class="muted">Signed in as ${esc(S.user?.email||'Email unavailable')}</span></div>
       <label class="mobile-language-label" for="workspaceLanguageMobileV151">Language</label>${workspaceLanguagePickerV97('workspaceLanguageMobileV151')}
-      <a class="btn ghost sm" href="#/settings">Workspace settings</a>
+      ${/* nestly_v579 (audit F017): this link used to render for every role. #/settings refuses
+           any non-owner with a toast and a bounce (see the pageKey==='settings' guard in the
+           router); the desktop profile menu already conditions the same link on
+           S.myRole==='owner' (see profileHtml/pmSettings) — this mirrors it so the mobile drawer
+           stops offering a guaranteed dead end to staff/frontdesk/bookkeeper/manager. */''}
+      ${S.myRole==='owner'?'<a class="btn ghost sm" href="#/settings">Workspace settings</a>':''}
     </div>
     <nav class="nav" aria-label="More workspace modules">${navHtml(page,'mobile-nav')}</nav></div></details>`);
   return `<div class="staff-mobile-dock" style="--staff-mobile-count:${items.length}" aria-label="Staff quick actions">${items.join('')}</div>`;
@@ -21990,8 +22018,13 @@ function openReversalDialog(kind,item,onDone){
     <label style="display:flex;gap:9px;align-items:flex-start;color:var(--ink2)"><input id="revConfirm" type="checkbox" style="width:auto;margin-top:2px">I checked the original record and understand this creates append-only compensating entries.</label>
     <div id="revOutcome"></div><div class="row" style="margin-top:16px"><button class="btn danger" id="revSubmit" disabled>Confirm reversal</button><button class="btn ghost sm" id="revCancel">Cancel</button></div>
   </div></div>`);
-  let deactivateDialog;
-  const close=()=>{if(deactivateDialog)deactivateDialog();else $('reversalModal')?.remove();if(onDone)onDone()};
+  let deactivateDialog,revBusyV579=false;
+  /* nestly_v579 (audit F004): Cancel/Close/Escape/backdrop all funnel through this close(), and
+     while a reversal RPC is in flight closing the dialog does NOT stop the write from landing —
+     it only stops the staff member from seeing the result. So close() is a no-op while busy;
+     the buttons are visibly disabled too, but the guard here is what actually matters since
+     Escape and the backdrop never touch button.disabled. */
+  const close=()=>{if(revBusyV579)return;if(deactivateDialog)deactivateDialog();else $('reversalModal')?.remove();if(onDone)onDone()};
   deactivateDialog=CUI.activateDialog($('reversalModal'),{onClose:close,initialFocus:'#revReason'});
   $('revClose').onclick=$('revCancel').onclick=close;
   $('revConfirm').onchange=()=>{$('revSubmit').disabled=!$('revConfirm').checked};
@@ -22013,7 +22046,20 @@ function openReversalDialog(kind,item,onDone){
         confirmLabel:'Confirm reversal',danger:true});
       if(!confirmedReversalV291){btn.disabled=false;btn.textContent='Confirm reversal';return}
     }
+    revBusyV579=true;
+    if($('revClose'))$('revClose').disabled=true;
+    if($('revCancel'))$('revCancel').disabled=true;
     const {data,error}=await sb.rpc(kind==='sale'?'reverse_sale_fast_v84':'reverse_loyalty_redemption',args);
+    revBusyV579=false;
+    if($('revClose'))$('revClose').disabled=false;
+    if($('revCancel'))$('revCancel').disabled=false;
+    if(!$('reversalModal')?.isConnected){
+      /* The dialog is gone anyway (e.g. removed by something outside this flow) — still
+         surface the result and let the caller refresh, rather than throwing on a null $(). */
+      toast(error?(error.message||'Reversal could not be completed'):(data?.replayed?'Exact replay returned the completed result':'Reversal completed'));
+      if(onDone)onDone();
+      return;
+    }
     if(error){
       const conflict=error.code==='23505'||/conflict|another immutable request|already reversed/i.test(error.message||'');
       const loyaltyShortfall=kind==='sale'&&/loyalty_already_spent/i.test(error.message||'');
@@ -22030,7 +22076,18 @@ function openReversalDialog(kind,item,onDone){
           confirmLabel:'Accept and reverse sale',danger:true});
         if(!accepted)return;
         acceptShortfall.disabled=true;
+        revBusyV579=true;
+        if($('revClose'))$('revClose').disabled=true;
+        if($('revCancel'))$('revCancel').disabled=true;
         const {data:overrideData,error:overrideError}=await sb.rpc('reverse_sale_fast_accept_loyalty_shortfall_v480',args);
+        revBusyV579=false;
+        if($('revClose'))$('revClose').disabled=false;
+        if($('revCancel'))$('revCancel').disabled=false;
+        if(!$('reversalModal')?.isConnected){
+          toast(overrideError?(overrideError.message||'The owner override could not be completed.'):'Reversal completed with recorded loyalty shortfall');
+          if(onDone)onDone();
+          return;
+        }
         if(overrideError){acceptShortfall.disabled=false;$('revOutcome').insertAdjacentHTML('beforeend',`<div class="err">${esc(overrideError.message||'The owner override could not be completed.')}</div>`);return}
         $('revOutcome').innerHTML=reversalResultHtml(kind,overrideData||{});
         btn.disabled=true;btn.textContent='Completed';$('revCancel').textContent='Done';
@@ -22050,9 +22107,26 @@ function openReversalDialog(kind,item,onDone){
   $('revSubmit').onclick=()=>invoke(false);
 }
 function bindReversalButtons(onDone){
-  document.querySelectorAll('[data-reverse-kind]').forEach(btn=>btn.onclick=()=>{
-    const item=reversalItems.get(reversalItemKey(btn.dataset.reverseKind,btn.dataset.reverseId));
-    openReversalDialog(btn.dataset.reverseKind,item,onDone);
+  document.querySelectorAll('[data-reverse-kind]').forEach(btn=>btn.onclick=async()=>{
+    const kind=btn.dataset.reverseKind,id=btn.dataset.reverseId;
+    const cached=reversalItems.get(reversalItemKey(kind,id));
+    /* nestly_v579 (audit F003): reversalItems is filled once at page load and never
+       re-checked. If the sale/redemption was reversed elsewhere (another tab, a colleague)
+       since then, the cached row still says can_reverse:true, so opening the dialog on it
+       runs straight into the server's shortfall check — which fires before its own
+       already-reversed check — misdiagnosing a plain "already reversed" as a loyalty
+       shortfall and inviting an owner to "accept" one that doesn't exist. Re-fetch this
+       item's live row, scoped to its customer, right before opening the dialog: the RPC's
+       own can_reverse/refusal_reason are already correct in real time (`rev.id is null`
+       computed fresh), so a stale click is now refused up front with the true reason
+       instead of reaching the dialog at all. Falls back to the cached row if the refetch
+       itself fails, so a network hiccup does not block a still-valid reversal. */
+    let item=cached;
+    try{
+      await loadReversalWorkflows(cached?.client_id||null,0,'all');
+      item=reversalItems.get(reversalItemKey(kind,id))||cached;
+    }catch(e){/* keep the cached item; the dialog's own can_reverse check still guards it */}
+    openReversalDialog(kind,item,onDone);
   });
   /* nestly_v665: giving a free gift or a tier perk back rides the same binder as every other
      reversal control, so any screen that already refreshes itself after a reversal refreshes
@@ -22212,8 +22286,10 @@ function openSaleAmountCorrectionDialog(item,onDone){
     <div class="row" style="margin-top:16px"><button class="btn danger" id="saleCorrectionSubmit" type="button" disabled>Confirm correction</button><button class="btn ghost sm" id="saleCorrectionCancel" type="button">Cancel</button></div>
   </div></div>`);
   const modal=$('saleCorrectionModal'),amount=$('saleCorrectedAmount'),checked=$('saleCorrectionChecked');
-  let deactivateDialog,completed=false,refreshed=false;
-  const close=()=>{if(deactivateDialog)deactivateDialog();else modal?.remove();if(completed&&!refreshed&&onDone)onDone()};
+  let deactivateDialog,completed=false,refreshed=false,correctionBusyV579=false;
+  /* nestly_v579 (audit F004): the correction RPC mutates money+points; closing mid-flight must
+     not be possible — Cancel/Close/Escape/backdrop all funnel through close(), so gate it here. */
+  const close=()=>{if(correctionBusyV579)return;if(deactivateDialog)deactivateDialog();else modal?.remove();if(completed&&!refreshed&&onDone)onDone()};
   deactivateDialog=CUI.activateDialog(modal,{onClose:close,initialFocus:'#saleCorrectedAmount'});
   $('saleCorrectionClose').onclick=$('saleCorrectionCancel').onclick=close;
   const correctedCents=()=>Math.round(Number(amount.value||0)*100);
@@ -22241,10 +22317,25 @@ function openSaleAmountCorrectionDialog(item,onDone){
       saleCorrectionAttempts.set(item.id,attempt);
     }
     const submit=$('saleCorrectionSubmit');submit.disabled=true;submit.textContent='Correcting…';
+    correctionBusyV579=true;
+    if($('saleCorrectionClose'))$('saleCorrectionClose').disabled=true;
+    if($('saleCorrectionCancel'))$('saleCorrectionCancel').disabled=true;
     const {data,error}=await sb.rpc('correct_quick_sale_amount_v84',{
       p_business:S.biz.id,p_sale:item.id,p_corrected_amount_cents:cents,
       p_idempotency_key:attempt.key,p_note:note||null
     });
+    correctionBusyV579=false;
+    if($('saleCorrectionClose'))$('saleCorrectionClose').disabled=false;
+    if($('saleCorrectionCancel'))$('saleCorrectionCancel').disabled=false;
+    if(!modal.isConnected){
+      /* Dialog is gone anyway — still surface the result and refresh the list behind it,
+         rather than throwing on a null $() the way the pre-fix code did. */
+      completed=true;refreshed=true;
+      toast(error?(error.message||'Correction refused'):(data?.replayed?'Correction retry verified':'Sale corrected and synchronized'));
+      saleCorrectionAttempts.delete(item.id);
+      if(typeof onDone==='function')onDone();
+      return;
+    }
     if(error){
       $('saleCorrectionOutcome').innerHTML=`<div class="err"><b>Correction refused.</b> ${esc(error.message||'No records were changed.')}</div>`;
       submit.disabled=false;submit.textContent='Retry correction';return;
@@ -22770,13 +22861,20 @@ async function openDashboardMetricRowsV388(options){
       return;
     }
     if(key==='new'){
+      /* nestly_v579 (audit F010): the tile counts every client created in the range with no
+         cap, but this read stopped at 500 with nothing saying so — the exact "shorter list
+         under a bigger number" this dialog's own header rule (see V287 above) forbids. The
+         inactive branch already states its server-side cap; state this client-side one the
+         same way instead of silently truncating. */
+      const NEW_CUSTOMERS_DIALOG_CAP_V579=500;
       const {data,error}=await sb.from('clients').select('id,full_name,phone,created_at')
         .eq('business_id',S.biz.id)
         .gte('created_at',sgDateBoundary(from)).lt('created_at',sgDateBoundary(to,1))
-        .order('created_at',{ascending:false}).limit(500);
+        .order('created_at',{ascending:false}).limit(NEW_CUSTOMERS_DIALOG_CAP_V579);
       if(!stillOpen())return;
       if(error)return failed(ownerErrorText(error));
       body.innerHTML=table(['Customer','Joined'],(data||[]).map(row=>`<tr><td data-label="Customer">${customerCellV408(row.id,row.full_name||'—',row.phone)}</td><td data-label="Joined">${esc(sgLedgerDateV154(row.created_at).date)}</td></tr>`));
+      if((data||[]).length>=NEW_CUSTOMERS_DIALOG_CAP_V579)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${NEW_CUSTOMERS_DIALOG_CAP_V579}. Open Customers for the rest.</p>`);
       return;
     }
     if(key==='inactive'){
@@ -22816,15 +22914,41 @@ async function openDashboardMetricRowsV388(options){
          An empty resolved list would mean "no authorised branches", which the RPC refuses
          outright, so the tile never renders and this path is unreachable with []. */
       if(branchIdsV519&&branchIdsV519.length)query=query.in('branch_id',branchIdsV519);
-      return query.order('occurred_at',{ascending:false});
+      /* nestly_v579 (audit F012): occurred_at is not unique across sales (till batches, package
+         sessions and imports can share a timestamp), so a range crossing fetchAllRows' 1000-row
+         page boundary had no stable ordering to paginate on — the same shape already fixed on
+         the ledger read below (`.order('id')`) and on the Sales page's own query. */
+      return query.order('occurred_at',{ascending:false}).order('id',{ascending:false});
     });
     if(!stillOpen())return;
     if(error)return failed(ownerErrorText(error));
+    /* nestly_v579 (audit F008): validVisitSales can only discover a reversal that is itself
+       inside the fetched window, but the server's valid_visits CTE excludes an original whenever
+       ANY reversal references it, with no date bound on the reversal
+       (db/migrations/20260828_nestly_v570_dashboard_off_means_off.sql "not exists (select 1
+       from sales r where r.reversal_of = s.id)"). A sale reversed after the report window ends
+       is therefore excluded from the Valid visits tile but still shown in this drill-down list.
+       Fetch reversal rows referencing the windowed originals with no date bound of our own —
+       validVisitSales already drops reversal rows themselves (reversal_of is set), so this only
+       ever affects which originals it treats as reversed, matching the server's own rule. */
+    let visitScopeRowsV579=data||[];
+    if(key==='visits'){
+      const originalIdsV579=(data||[]).filter(row=>row&&!row.reversal_of).map(row=>row.id);
+      if(originalIdsV579.length){
+        try{
+          const extraReversalsV579=await fetchRowsByIds('sales','id,reversal_of',originalIdsV579,'reversal_of');
+          const knownIdsV579=new Set((data||[]).map(row=>row.id));
+          const newRowsV579=(extraReversalsV579||[]).filter(row=>!knownIdsV579.has(row.id));
+          if(newRowsV579.length)visitScopeRowsV579=[...(data||[]),...newRowsV579];
+        }catch(scopeError){fail(scopeError)}
+        if(!stillOpen())return;
+      }
+    }
     if(key==='visits'){
       /* nestly_v717: one row per VISIT DAY, not per raw sale — see groupVisitDaysV719 above.
          The row count here is what must equal the tile's own count, since both now come from
          the same (client, SG day) grouping the server's Visits KPI applies. */
-      const groups=groupVisitDaysV719(data||[]);
+      const groups=groupVisitDaysV719(visitScopeRowsV579);
       body.innerHTML=table(['When','Customer','Visit'],groups.map(group=>`<tr><td data-label="When">${esc(sgLedgerDateV154(group.occurredAt).date)}</td><td data-label="Customer">${customerCellV408(group.clientId,group.name,'')}</td><td data-label="Visit">${esc(visitDaySummaryV719(group))}</td></tr>`));
       body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">One visit per customer per day; split bills count once.</p>`);
       return;
@@ -23062,7 +23186,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
        surface that owns the dialog rather than a second copy of it here: the dialog's complete,
        amend and cancel paths all live inside appointmentsPage's closure. */
     return `<li class="dashboard-schedule-chip"><a class="dashboard-schedule-chip-link-v375" href="#/appointments?appointment=${encodeURIComponent(row.id)}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:who})}><b>${esc(time)}</b><span data-merchant-content>${esc(who)}</span>${what?`<span class="muted small" data-merchant-content>${esc(what)}</span>`:''}</a></li>`;
-  }).join('')}${overflow>0?`<li class="dashboard-schedule-chip more"><a href="#/appointments?view=list&preset=today">+${overflow} more</a></li>`:''}</ol>`;
+  }).join('')}${overflow>0?`<li class="dashboard-schedule-chip more"><a href="#/appointments?view=list&${isTodayV252?'preset=today':`from=${encodeURIComponent(day)}&to=${encodeURIComponent(day)}`}">+${overflow} more</a></li>`:''}</ol>`;
 }
 /* V182: the benefits SMEs actually offer, in customer-facing words. */
 const TIER_BENEFIT_PRESETS_V182=Object.freeze([
@@ -23283,6 +23407,13 @@ async function dashboard(){
       localizeWorkspaceSubtreeV97(status);
     };
     if(!from||!to||from>to){showLoadError('Choose a valid dashboard date range.','dashboardReportRetry');return}
+    /* nestly_v579 (audit F011): get_dashboard_summary_v155 refuses p_to-p_from>1826 days with
+       'report date range cannot exceed 1827 days', but branchScopeErrorHintV217 only recognises
+       the three branch-scope codes and returns '' for everything else — so this reached the
+       owner as a bare "Performance data could not be loaded." with a Retry that fails
+       identically forever, since Retry re-reads the same unchanged inputs. Mirror the server's
+       own bound client-side so the real reason is stated up front. */
+    if(daysBetweenSgInputsV153(from,to)>1827){showLoadError('Choose a range of 5 years (1827 days) or less.','dashboardReportRetry');return}
     killCharts();
     status.innerHTML='';
     if(loyalty)loyalty.innerHTML='';
@@ -23312,10 +23443,10 @@ async function dashboard(){
       canReadModule('clients')?sb.rpc('preview_campaign_audience_v155',{p_business:S.biz.id,p_audience_key:'inactive_60_plus',...scopePayload}):Promise.resolve({data:null,error:null}),
       loyaltyVisibleV170?fetchAllRowsResult(()=>sb.from('points_ledger').select('points',{count:'exact'}).eq('business_id',S.biz.id).eq('entry_type','redeem').gte('created_at',sgDateBoundary(from,0)).lt('created_at',sgDateBoundary(to,1)).order('id')):Promise.resolve({data:null,error:null})
     ])}
-    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
+    catch(error){if(isCurrent())showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error)||ownerErrorText(error));return}
     if(!isCurrent())return;
     const {data,error}=response;
-    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error));return}
+    if(error){showLoadError('Performance data could not be loaded.','dashboardReportRetry',branchScopeErrorHintV217(error)||ownerErrorText(error));return}
     const d=data||{},wd=d.visits_by_weekday||[0,0,0,0,0,0,0];
     if(d.availability?.sales===false){
       status.innerHTML='';
@@ -23392,10 +23523,14 @@ async function dashboard(){
        it used to jump to is one press away at the foot of the dialog — nothing was taken away. */
     kpis.querySelectorAll('[data-dashboard-metric]').forEach(button=>button.onclick=()=>{
       const key=button.dataset.dashboardMetric;
-      /* V287/V290, unchanged: the report this dialog can hand off to must land on the SAME group
-         the tile counted. The bucket is set here, where the tile is, so the dialog's footer link
-         and the old direct route can never drill into a different set of people. */
-      if(key==='inactive')pendingCustomerInactivity='all_inactive';
+      /* nestly_v579 (audit F007): this used to arm pendingCustomerInactivity here "because the
+         report this dialog can hand off to must land on the same group the tile counted" — but
+         V470 removed that hand-off footer entirely (see openDashboardMetricRowsV388 below: Close
+         is the only exit, and per-row clicks go straight to #/client/<id>, never to #/clients).
+         Nothing in this flow ever consumed the flag any more, so it stayed armed until the NEXT
+         unrelated visit to Customers, silently pre-filtering it to "Inactive 30+ days". Only the
+         insight-card links below (bound to a real href="#/clients") still arm it, and they still
+         navigate there directly. */
       openDashboardMetricRowsV388({key,from,to,scopePayload,
         /* nestly_v519: the branch ids the SERVER actually counted, taken from the summary payload
            rather than re-derived here. get_dashboard_summary_v155 filters its sales with
@@ -28835,6 +28970,35 @@ function sgLedgerDateV154(iso){
     time:new Intl.DateTimeFormat('en-SG',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Singapore'}).format(d)
   };
 }
+/* nestly_v579 (audit F005): correct_quick_sale_amount_v84 only accepts a quick sale that is
+   either net-unpaid or fully paid by a single cash payment (see
+   db/migrations/20260726_nestly_v84_fast_sale_corrections.sql ~line 484-505). The Amend button
+   used to be offered on every active quick sale regardless, so a card/PayNow/other-paid sale
+   walked the owner through the whole deliberate-confirm flow only to fail at the very end with
+   a raw errcode 0A000 message. This mirrors the server's own method_nets computation from the
+   `payments` table client-side so the button can be hidden (with a plain-language reason)
+   before that dead end is reached; the server remains the actual authority and re-checks this
+   exactly the same way. */
+function quickSaleCorrectableV579(sale,paymentsBySale){
+  if(sale.kind!=='quick_sale'||!(Number(sale.amount_cents)>0)||sale.reversal_of)return {allowed:false};
+  const rows=(paymentsBySale&&paymentsBySale.get(sale.id))||[];
+  const nets=new Map();
+  rows.forEach(row=>nets.set(row.method,(nets.get(row.method)||0)+Number(row.amount_cents||0)));
+  const values=[...nets.values()];
+  const netCents=values.reduce((sum,v)=>sum+v,0);
+  const nonzeroMethods=values.filter(v=>v!==0).length;
+  const positiveMethods=[...nets.entries()].filter(([,v])=>v>0);
+  if(netCents===0&&nonzeroMethods===0)return {allowed:true};
+  if(netCents===Number(sale.amount_cents)&&nonzeroMethods===1&&positiveMethods.length===1&&positiveMethods[0][0]==='cash')return {allowed:true};
+  return {allowed:false,reason:'Card/PayNow/other-paid sales: reverse and record again'};
+}
+function saleAmendCellV579(sale,paymentsBySale){
+  if(sale.kind!=='quick_sale'||!(Number(sale.amount_cents)>0)||sale.reversal_of)return '';
+  const correctable=quickSaleCorrectableV579(sale,paymentsBySale);
+  return correctable.allowed
+    ?`<button class="btn ghost sm" data-correct-sale="${sale.id}">Amend</button>`
+    :`<span class="muted small" data-workspace-i18n title="${esc(correctable.reason)}">${esc(correctable.reason)}</span>`;
+}
 function saleRecordStatusV154(s,w={}){
   if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
   /* V287: this was the last line in the Sales audit disclosure that dropped a bare UUID into
@@ -28900,7 +29064,7 @@ async function salesPage(){
   /* V291: the filtered answer in full (counts, export, payment-state filtering) and how much of
      it is currently painted. */
   const SALES_PAGE_SIZE_V291=50;
-  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false;
+  let salesFilteredRowsV291=[],salesWorkflowV291={},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false,salesPaymentsBySaleV579=new Map(),salesLoadSeqV579=0;
   M().innerHTML=`${salesHeadHtmlV291(true)}
     <section class="card sales-ledger-card"><div class="v150-soft-head"><b>Sales ledger</b><p>A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.</p></div>
       <div class="sales-filter-panel" aria-label="Sales filters">
@@ -28931,6 +29095,16 @@ async function salesPage(){
     note.style.color=tone==='warn'?'#C24135':'';
   };
   async function loadRecent(){
+    /* nestly_v579 (audit F006): loadRecent has no serialisation of its own — every filter
+       onchange (and Apply) calls it directly, and each call awaits a full paged ledger read
+       plus the workflow RPC before painting. Two overlapping calls can resolve out of order
+       (the earlier, slower one landing after a later, faster one), silently repainting the
+       table/summary/export-set with a stale filter's answer while the controls show the new
+       one. A generation counter fixes it the same way isCurrent() guards elsewhere in this
+       file: only the call that is still the latest one when each await returns is allowed to
+       touch shared state or the DOM. */
+    const salesLoadSeqSelfV579=++salesLoadSeqV579;
+    const isCurrentLoadV579=()=>salesLoadSeqSelfV579===salesLoadSeqV579;
     const from=$('salesFrom')?.value,to=$('salesTo')?.value,staff=$('salesStaff')?.value,type=$('salesType')?.value,paid=$('salesPayment')?.value;
     if(from&&to&&from>to){salesFilterNoteV266('The From date is after the To date. Nothing was filtered.','warn');return}
     const applyButton=$('salesApply');
@@ -28951,6 +29125,7 @@ async function salesPage(){
     if(staff)query=query.eq('staff_id',staff);
     if(type)query=query.eq('kind',type);
     const {data:sl,error}=await fetchAllRowsResult(()=>query.order('occurred_at',{ascending:false}).order('id',{ascending:false}));
+    if(!isCurrentLoadV579())return;
     if(error){fail(error);salesFilterNoteV266('These filters could not be applied. The rows below are unchanged.','warn');return}
     /* V291 audit fix (F001): the server clamps any non-zero p_limit to 100
        (least(greatest(coalesce(p_limit,50),1),100)) with NO date/staff/type/branch predicate —
@@ -28960,7 +29135,24 @@ async function salesPage(){
        status/Net (falling back to `w={}`). Pass 0 — the RPC's explicit "unbounded" value,
        already used by Customer 360 above — so every painted row has real reversal/status data. */
     const workflow=await loadReversalWorkflows(null,0).catch(e=>{fail(e);return null});
+    if(!isCurrentLoadV579())return;
     const W=Object.fromEntries((workflow?.sales||[]).map(x=>[x.id,x]));
+    /* nestly_v579 (audit F002): staff_get_reversal_workflows requires refund_sales — every
+       role except owner/manager gets a 42501 that loadReversalWorkflows swallows to null, so W
+       is empty for everyone else and a reversed original silently painted as a plain "Sale"
+       with Net = Gross (and exported that way in the CSV below). The ledger rows themselves
+       already carry `reversal_of`, so when the workflow map is unavailable — or simply missing
+       a row, e.g. a future server change — derive the Reversed status and a zero Net from that
+       linkage instead of trusting an empty `w`. Reverse/Amend stay hidden (can_reverse stays
+       false) since this role was never granted refund_sales in the first place. */
+    const workflowDeniedV579=workflow===null;
+    const reversalOfMapV579=new Map();
+    (sl||[]).forEach(row=>{if(row.reversal_of)reversalOfMapV579.set(row.reversal_of,row.id)});
+    (sl||[]).forEach(row=>{
+      if(row.reversal_of||W[row.id]||!reversalOfMapV579.has(row.id))return;
+      W[row.id]={reversal_sale_id:reversalOfMapV579.get(row.id),net_amount_cents:0,can_reverse:false,
+        refusal_reason:workflowDeniedV579?'Refund permission needed to reverse':undefined};
+    });
     salesWorkflowMayHaveMoreV291=!!workflow?.may_have_more;
     const customerSearch=String($('salesCustomer')?.value||'').trim().toLowerCase();
     let rows=customerSearch?(sl||[]).filter(s=>String(s.clients?.full_name||'Walk-in').toLowerCase().includes(customerSearch)):(sl||[]);
@@ -28978,12 +29170,28 @@ async function salesPage(){
         paymentStateApplied=true;
       }catch(paymentError){fail(paymentError)}
     }
+    if(!isCurrentLoadV579())return;
     /* V291 (audit follow-up). fetchAllRowsResult pages the WHOLE filtered ledger — a year of a
        busy cafe is tens of thousands of rows — and every one of them was turned into table
        markup on each Apply. The full set is still fetched, because the count summary, the CSV
        export and the payment-state filter all have to act on the complete answer; only the
        PAINT is now bounded. Load more extends the painted window; it never re-queries, so the
        rows already on screen cannot shuffle underneath the person reading them. */
+    /* nestly_v579 (audit F005): fetch each quick sale's own payment rows so the Amend button
+       can be hidden — with a plain-language reason — for the card/PayNow/other-paid sales the
+       correction RPC refuses outright, instead of only finding out after the full confirm flow. */
+    const correctionCandidateIdsV579=rows.filter(row=>row.kind==='quick_sale'&&Number(row.amount_cents)>0&&!row.reversal_of).map(row=>row.id);
+    salesPaymentsBySaleV579=new Map();
+    try{
+      const paymentRowsV579=correctionCandidateIdsV579.length
+        ?await fetchRowsByIds('payments','sale_id,method,amount_cents',correctionCandidateIdsV579,'sale_id')
+        :[];
+      paymentRowsV579.forEach(row=>{
+        const list=salesPaymentsBySaleV579.get(row.sale_id)||[];
+        list.push(row);salesPaymentsBySaleV579.set(row.sale_id,list);
+      });
+    }catch(paymentsError){fail(paymentsError)}
+    if(!isCurrentLoadV579())return;
     salesFilteredRowsV291=rows;salesWorkflowV291=W;
     salesVisibleCountV291=Math.min(rows.length,SALES_PAGE_SIZE_V291);
     renderSalesRowsV291();
@@ -28994,13 +29202,14 @@ async function salesPage(){
     /* F001: the RPC still reports may_have_more/bounded even though this page now asks for
        0 (unbounded) — surface it instead of silently painting rows with no reversal/status
        data if that ever changes underneath us. */
-    const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows':'';
+    const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows'
+      :workflowDeniedV579?' · Reverse controls need refund permission; Reversed status is inferred from the ledger':'';
     salesFilterNoteV266(paymentStateApplied
       ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
       :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied${workflowWarning}`,
       (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
-      if(applyButton?.isConnected)CUI.setButtonBusy(applyButton,{busy:false});
+      if(applyButton?.isConnected&&isCurrentLoadV579())CUI.setButtonBusy(applyButton,{busy:false});
     }
   }
   function renderSalesRowsV291(){
@@ -29015,7 +29224,7 @@ async function salesPage(){
              money it explains, rather than out on the far left away from it. */''}
         <td data-label="Item">${salesItemCellV571(s)}</td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
-        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${s.kind==='quick_sale'&&s.amount_cents>0&&!s.reversal_of?`<button class="btn ghost sm" data-correct-sale="${s.id}">Amend</button>`:''}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
+        <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${saleAmendCellV579(s,salesPaymentsBySaleV579)}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
       <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
     bindReversalButtons(loadRecent);
@@ -47213,7 +47422,18 @@ async function appointmentsPage(){
   /* V288 (audit A2, HIGH 4): '#/appointments?view=list&preset=today' — the link the Dashboard
      schedule strip has been publishing all along — now lands on the List view for today rather
      than on the dashboard. Unknown values simply fall through to the normal Day view. */
-  if(applyAppointmentPresetV288(routeParamV288('preset'),{reload:false})||routeParamV288('view')==='list'){
+  /* nestly_v579 (audit F009): the dashboard's "+N more" schedule chip used to hard-code
+     preset=today, so a "+N more" for Tomorrow (or any picked day, V252) opened TODAY's list —
+     the 3 overflow bookings it was meant to reveal were never reachable from that link. The
+     chip now sends explicit from/to for a non-today day; honour them here the same way an
+     explicit preset is honoured, before falling through to the Day view default. */
+  const routeFromV579=routeParamV288('from'),routeToV579=routeParamV288('to');
+  let appointmentListRangedFromParamsV579=false;
+  if(!routeParamV288('preset')&&routeFromV579&&routeToV579&&$('appointmentListFrom')&&$('appointmentListTo')){
+    $('appointmentListFrom').value=routeFromV579;$('appointmentListTo').value=routeToV579;
+    listPage=0;appointmentListRangedFromParamsV579=true;
+  }
+  if(applyAppointmentPresetV288(routeParamV288('preset'),{reload:false})||appointmentListRangedFromParamsV579||routeParamV288('view')==='list'){
     if(routeParamV288('view')==='list')setCalendarView('list');
     else loadAppointmentsGuardedV288();
   }else loadAppointmentsGuardedV288();

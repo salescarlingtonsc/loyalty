@@ -89,7 +89,10 @@ test('V291 the erasure writer is curated in the PS0 registry as non-value',()=>{
 
 test('V291 the sales ledger paints a bounded window of the full filtered answer',()=>{
   assert.match(code,/const SALES_PAGE_SIZE_V291=50;/);
-  assert.match(code,/let salesFilteredRowsV291=\[\],salesWorkflowV291=\{\},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false;/); // audit F001: the reversal map is unbounded and reports may_have_more
+  // audit F001: the reversal map is unbounded and reports may_have_more.
+  // audit F006 (nestly_v579) appended a payments-by-sale cache and a load-generation counter
+  // to this same declaration line, so the pin is widened to match rather than weakened.
+  assert.match(code,/let salesFilteredRowsV291=\[\],salesWorkflowV291=\{\},salesVisibleCountV291=SALES_PAGE_SIZE_V291,salesWorkflowMayHaveMoreV291=false,salesPaymentsBySaleV579=new Map\(\),salesLoadSeqV579=0;/);
   const render=section('function renderSalesRowsV291(','/* V291: the export mirrors');
   // Only the window is turned into markup...
   assert.match(render,/const shown=rows\.slice\(0,salesVisibleCountV291\);/);
