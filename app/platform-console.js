@@ -13592,8 +13592,9 @@
   // V624: Billing alerts panel (System health / #/platform/automation).
   // System-detected billing exceptions the platform surfaces before a firm
   // notices — an unpaid checkout, a stuck webhook event, a failing payment, a
-  // branch waiting on payment, an open manual payment request, or a firm with
-  // reconciliation left unconfigured. Resolving one always requires a note.
+  // branch waiting on payment, an open manual payment request, a firm with
+  // reconciliation left unconfigured, a night the reconciliation call itself failed (v821), or
+  // a reconciliation that is scheduled but overdue (v821). Resolving one always requires a note.
   // --------------------------------------------------------------------------
   function billingAlertKindLabel(kind) {
     const labels={
@@ -13603,7 +13604,12 @@
       branch_awaiting:'Branch awaiting payment',
       manual_request_open:'Manual request waiting',
       reconcile_unconfigured:'Reconciliation not configured',
-      reconcile_failed:'Reconciliation run failed'
+      reconcile_failed:'Reconciliation run failed',
+      // v821: one row per night a reconciliation call came back 5xx / timed out, so an outage
+      // that lasts several nights reads as several nights instead of one stale complaint.
+      reconcile_call_failed:'Reconciliation call failed',
+      // v821: the reconciler is scheduled and has not come back green for 36 hours.
+      reconcile_stale:'Reconciliation overdue'
     };
     return pt(labels[kind]||plainLabel(kind));
   }

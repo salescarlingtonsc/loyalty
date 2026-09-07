@@ -307,12 +307,17 @@ async function reconcileSubscriptions({
   runId,
   cursor,
   run,
+  scopeIds,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
   stripe: Stripe;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
+  /* nestly_v821: the Stripe-tenant scope is resolved once per invocation in the handler and
+     passed in. It used to be read here as a free variable, which is a ReferenceError the moment
+     this function runs — see the header note at the call site. */
+  scopeIds: string[];
 }) {
   if (cursor.local_subscriptions_complete) {
     return {
@@ -431,12 +436,15 @@ async function reconcileInvoices({
   runId,
   cursor,
   run,
+  scopeIds,
 }: {
   admin: ReturnType<typeof billingAdminClient>;
   stripe: Stripe;
   runId: string;
   cursor: BillingReconciliationCursor;
   run: RunCounts;
+  /* nestly_v821: see reconcileSubscriptions — passed in, never a free variable. */
+  scopeIds: string[];
 }) {
   if (cursor.local_invoices_complete) {
     return {
@@ -804,6 +812,7 @@ Deno.serve(async (req) => {
         runId,
         cursor,
         run,
+        scopeIds,
       });
       cursor.local_subscriptions_after = subscriptionPage.after;
       cursor.local_subscriptions_complete = subscriptionPage.complete;
@@ -814,6 +823,7 @@ Deno.serve(async (req) => {
         runId,
         cursor,
         run,
+        scopeIds,
       });
       cursor.local_invoices_after = invoicePage.after;
       cursor.local_invoices_complete = invoicePage.complete;

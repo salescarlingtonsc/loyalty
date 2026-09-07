@@ -26,6 +26,11 @@ export type KeysetDrainResult = {
   processed: number;
 };
 
+export type ProviderPage<T> = {
+  data: T[];
+  has_more: boolean;
+};
+
 export type BillingReconciliationStatus = 'partial' | 'clean' | 'mismatch';
 
 export function newBillingReconciliationCursor(
@@ -150,6 +155,55 @@ export async function drainBoundedKeysetPages<T>({
     }
     if (!rows.length) {
       throw new Error('billing reconciliation page did not advance');
+    }
+  }
+  return { after: cursor, complete: false, pages, processed };
+}
+
+/* nestly_v821 — restored with the Stripe reconciler (nestly_v791). Stripe lists are cursor
+   paginated by object id (`starting_after`) and report `has_more`, so neither the keyset drainer
+   (which needs a monotonically ordered sort key) nor the Razorpay offset drainer fits: this one
+   carries the last id of the page as the cursor and stops when the provider says there is no more.
+   The bound is the same as the other two — at most `maxPages` pages per invocation, and the cursor
+   that survives into the next run is the last id consumed. Forward progress is enforced: a page
+   that repeats the cursor, repeats an id within itself, or claims more rows while returning none
+   would loop forever, so it raises instead. */
+export async function drainBoundedProviderPages<T extends { id?: string | null }>({
+  after,
+  maxPages,
+  fetchPage,
+  consumePage,
+}: {
+  after: string | null;
+  maxPages: number;
+  fetchPage: (after: string | null) => Promise<ProviderPage<T>>;
+  consumePage: (rows: T[]) => Promise<void>;
+}): Promise<KeysetDrainResult> {
+  let cursor = after;
+  let pages = 0;
+  let processed = 0;
+  while (pages < maxPages) {
+    const page = await fetchPage(cursor);
+    const rows = page.data;
+    /* `id` is declared optional on some Stripe object types (Stripe.Invoice in 18.x), so it is
+       normalised here and the emptiness check below is what makes the cursor a real string. */
+    const ids = rows.map((row) => row.id ?? '');
+    if (
+      ids.some((id) => !id) ||
+      new Set(ids).size !== ids.length ||
+      (cursor !== null && ids.includes(cursor))
+    ) {
+      throw new Error('billing provider pagination did not advance');
+    }
+    if (page.has_more && !rows.length) {
+      throw new Error('billing provider pagination returned an empty continuation');
+    }
+    await consumePage(rows);
+    if (rows.length) cursor = ids[ids.length - 1];
+    processed += rows.length;
+    pages += 1;
+    if (!page.has_more) {
+      return { after: cursor, complete: true, pages, processed };
     }
   }
   return { after: cursor, complete: false, pages, processed };
