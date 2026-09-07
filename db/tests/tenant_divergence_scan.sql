@@ -42,7 +42,8 @@
 --   D13  RUNTIME  a platform module override that would force a module on/off against the raw
 --                 enabled_modules array. The 42-reader split only bites when such a row exists.
 --   D14  RUNTIME  the v560 invariant: an active welcome offer with a zero-sale client holding no
---                 grant — a customer promised an offer the wallet cannot show.
+--                 grant — a customer promised an offer the wallet cannot show. PDPA-ERASED
+--                 clients are excluded; see the check's own comment for why.
 --   D15  RUNTIME  the silent-expiry-disagreement shape: the live row's stamp validity / reward
 --                 expiry is NULL while some historical version for that tenant carries a value,
 --                 and stamps are live. Whichever version a cycle pins decides expiry silently.
@@ -555,6 +556,22 @@ select s.business_id, s.business_name, 'D13', 'RUNTIME-DANGEROUS',
 
 -- D14 — the v560 welcome-offer invariant. business_welcome_offers_v215 has no `paused` column
 -- in production, so `active` alone is the live flag (see ADAPTATIONS at the foot of this file).
+--
+-- PDPA-ERASED CLIENTS ARE NOT DIVERGENCES. D14 asks "is a customer promised a welcome offer the
+-- wallet cannot show?" — a question about a person the tenant can still serve. erase_client_v290
+-- answers a data-subject erasure request: it anonymises the row in place (full_name becomes
+-- 'Erased customer', phone/email/birth_date/notes/tags/referral_code null, marketing_consent
+-- false) and records the erasure in public.client_erasures_v290, which is the authority for
+-- "this client was erased" — the anonymised column values are a consequence, not the marker,
+-- and nestly_v473 later unlinks the customer identity as well. Such a row can never hold a
+-- welcome-offer grant and must never be issued one: there is nobody left to show it to.
+-- Reporting it made the gate FAIL on two tenants (Cubbly SPA and Jess Salon, both erased
+-- 2026-09-05) for having correctly honoured an erasure, which trains the reader to ignore a
+-- RUNTIME-DANGEROUS row — the one outcome a divergence scanner must never produce.
+--
+-- Only D14 has this blind spot: it is the only check in this file that joins public.clients at
+-- all, so there is nothing else of the same class to fix. Deliberately keyed on the erasure
+-- LEDGER, not on `full_name = 'Erased customer'`: a tenant is free to type that name.
 insert into _scan
 select s.business_id, s.business_name, 'D14', 'RUNTIME-DANGEROUS',
        count(*)||' zero-sale client(s) of an active welcome offer hold no grant'
@@ -567,6 +584,8 @@ select s.business_id, s.business_name, 'D14', 'RUNTIME-DANGEROUS',
                       and sa.reversal_of is null)
    and not exists (select 1 from public.welcome_offer_grants_v215 g
                     where g.business_id=offer.business_id and g.client_id=c.id)
+   and not exists (select 1 from public.client_erasures_v290 erasure
+                    where erasure.business_id=c.business_id and erasure.client_id=c.id)
  group by s.business_id, s.business_name;
 
 -- D15 — silent expiry disagreement between the live row and the versions a cycle can pin.
@@ -638,6 +657,10 @@ rollback;
 -- ADAPTATIONS made because production differs from the checklist as written:
 --  * business_welcome_offers_v215 has no `paused` column — `active` is the only live flag, so
 --    D14 keys on it alone (this matches the v560 acceptance suite's own data assertion).
+--  * D14 excludes clients with a public.client_erasures_v290 row (nestly_v810). An erased data
+--    subject holds no grant BY DESIGN; before the exclusion the gate FAILED on two tenants for
+--    having correctly honoured a PDPA erasure. This narrows what D14 reports and cannot hide a
+--    real divergence: an erasure row exists only where erase_client_v290 ran.
 --  * platform_module_overrides_v94.mode is one of inherit|disabled|r|rw. D13 treats 'disabled'
 --    as force-off and 'r'/'rw' as force-on; 'inherit' is by definition never a divergence.
 --  * D07 resolves the version arm against businesses.active_config_version_id. The availability

@@ -4693,6 +4693,49 @@
     const cumulativeTax=Math.round((Number(priorCreditedSubtotalCents||0)+Number(subtotalCents||0))*tax/subtotal);
     return Math.max(0,cumulativeTax-Number(priorCreditedTaxCents||0));
   }
+  /* nestly_v810: where creditNoteCumulativeTaxCents' INPUTS come from. The console used to
+     reconstruct "what has this invoice already been credited" from the sibling documents loaded
+     in the books view — but that list is one PAGE of platform_get_accounting_books_v147 (newest
+     first, p_limit), so an older credit note that fell off the page is simply absent and the
+     running total starts too low; and a loaded row's `reversed` is not the writer's rule, which
+     excludes a credit note only when a journal_voucher exists against it. Two readers, two
+     definitions, and only one of them is the one platform_issue_credit_note_v147 enforces.
+
+     platform_invoice_credit_note_totals_v810 answers with the writer's own expression over every
+     document, so agreement is structural. It is PREFERRED; the loaded window is the fallback,
+     used when the read fails or answers with anything non-numeric. That direction matters: a
+     transport failure must degrade to the previous behaviour, never block a credit note that the
+     server would have accepted. */
+  async function creditNoteHistoryV810(sb,invoiceDocument,loadedDocuments) {
+    const invoice=invoiceDocument||{};
+    const siblings=asArray(loadedDocuments).filter(sibling=>
+      sibling&&sibling.document_type==='credit_note'
+      &&String(sibling.original_document)===String(invoice.id)&&!sibling.reversed);
+    const fallback={
+      invoiceSubtotalCents:Number(invoice.subtotal_cents||0),
+      invoiceTaxCents:Number(invoice.tax_cents||0),
+      priorCreditedSubtotalCents:siblings.reduce((sum,row)=>sum+Number(row.subtotal_cents||0),0),
+      priorCreditedTaxCents:siblings.reduce((sum,row)=>sum+Number(row.tax_cents||0),0),
+      source:'loaded-window'
+    };
+    try{
+      const totals=await rpc(sb,'platform_invoice_credit_note_totals_v810',{p_invoice:invoice.id});
+      if(!totals||typeof totals!=='object')return fallback;
+      const served={
+        invoiceSubtotalCents:Number(totals.invoice_subtotal_cents),
+        invoiceTaxCents:Number(totals.invoice_tax_cents),
+        priorCreditedSubtotalCents:Number(totals.credited_subtotal_cents),
+        priorCreditedTaxCents:Number(totals.credited_tax_cents),
+        source:'server'
+      };
+      const numbers=[served.invoiceSubtotalCents,served.invoiceTaxCents,
+        served.priorCreditedSubtotalCents,served.priorCreditedTaxCents];
+      if(!numbers.every(value=>Number.isFinite(value)))return fallback;
+      return served;
+    }catch(error){
+      return fallback;
+    }
+  }
   function percentInputToBasisPoints(value) {
     const text=String(value??'').trim();
     if(!/^\d+(?:\.\d{1,2})?$/.test(text)||Number(text)>100)throw new Error(pt('Enter a percentage from 0 to 100 with no more than two decimal places.'));
@@ -9936,16 +9979,25 @@
        off by a cent and get rejected with a confusing server error. Reconstruct the already-
        credited totals from sibling documents already loaded in this books view (the same list the
        credit-note button itself was rendered from) and derive this call's tax as the remainder
-       needed to keep the running total exactly proportional. */
-    const priorCredits=asArray(allDocuments).filter(sibling=>
-      sibling.document_type==='credit_note'&&String(sibling.original_document)===String(document.id)&&!sibling.reversed);
-    const priorCreditedSubtotal=priorCredits.reduce((sum,sibling)=>sum+Number(sibling.subtotal_cents||0),0);
-    const priorCreditedTax=priorCredits.reduce((sum,sibling)=>sum+Number(sibling.tax_cents||0),0);
+       needed to keep the running total exactly proportional.
+
+       nestly_v810: that reconstruction is now the FALLBACK, not the answer. The sibling list is
+       one PAGE of platform_get_accounting_books_v147 (newest first, p_limit), so an older credit
+       note that fell off the page is invisible here and the running total silently starts too
+       low; and `reversed` on a loaded row is not the writer's rule, which excludes a credit note
+       only when a journal_voucher exists against it. platform_invoice_credit_note_totals_v810
+       answers with the writer's own expression over every document, so the two agree
+       structurally rather than coincidentally. It is preferred, and the loaded window is used
+       only when that read fails — a transport failure must degrade to the previous behaviour,
+       never block a legitimate credit note. */
+    const history=()=>creditNoteHistoryV810(sb,document,allDocuments);
     modal({title:'Issue credit note',submitLabel:'Issue credit note',CUI,body:`<div class="platform-form-grid">${CUI.field({id:'booksCreditDate',label:'Issue date',type:'date',required:true,value:range.to,attributes:'name="date"'})}${CUI.field({id:'booksCreditAmount',label:'Credit amount before tax (SGD)',type:'number',required:true,attributes:`name="amount" min="0.01" max="${(Number(document.outstanding_cents)/100).toFixed(2)}" step="0.01"`})}<div class="wide">${CUI.field({id:'booksCreditReason',label:'Reason',control:'textarea',required:true,attributes:'name="reason" minlength="8" rows="3"'})}</div></div>`,onSubmit:async(form,controls)=>{
       const subtotal=Math.round(Number(form.get('amount'))*100);
+      const priors=await history();
       const tax=creditNoteCumulativeTaxCents({
-        invoiceSubtotalCents:document.subtotal_cents,invoiceTaxCents:document.tax_cents,
-        priorCreditedSubtotalCents:priorCreditedSubtotal,priorCreditedTaxCents:priorCreditedTax,
+        invoiceSubtotalCents:priors.invoiceSubtotalCents,invoiceTaxCents:priors.invoiceTaxCents,
+        priorCreditedSubtotalCents:priors.priorCreditedSubtotalCents,
+        priorCreditedTaxCents:priors.priorCreditedTaxCents,
         subtotalCents:subtotal
       });
       await rpc(sb,'platform_issue_credit_note_v147',{p_invoice:document.id,p_issue_date:form.get('date'),p_subtotal_cents:subtotal,p_tax_cents:tax,p_reason:form.get('reason'),p_idempotency_key:attemptKey});controls.close();await renderPlatformFinance(context,range);CUI.announce(pt('Credit note issued and posted.'))}});
@@ -16267,7 +16319,7 @@
     firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,scopedFirmIdFromHash,scopedFirmHash,normalizePlatformGrantPermissions,
     enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
     buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
-    moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,creditNoteCumulativeTaxCents,requestBillingCommand,
+    moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,creditNoteCumulativeTaxCents,creditNoteHistoryV810,requestBillingCommand,
     safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
     accountDeletionQueueHtml,privacyOperationAttempt,accountSignupQueueHtml,
     onboardingHash,onboardingStateFromHash,onboardingTabs,onboardingTabsFor,onboardingTabStripHtml,
@@ -16313,7 +16365,7 @@
       firmId,resolveEnterpriseSearchBusinessIds,canAssignScopedProspect,scopedConsultantOptions,scopedFirmIdFromHash,scopedFirmHash,normalizePlatformGrantPermissions,
       enterpriseReportHash,enterpriseFirmHash,enterpriseReportFiltersFromHash,fetchEnterpriseFirmPage,fetchFirmDirectoryPageV88,fetchAllFirmAttentionV88,fetchScopedFirms,fetchAllScopedFirms,
       buildPlatformTodayQueue,platformTodayCoverageDomain,buildPlatformTodayCoverage,platformTodayCoverageHtml,platformTodayMetric,platformTodayQueueHtml,
-      moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,creditNoteCumulativeTaxCents,requestBillingCommand,
+      moneyInputToCents,centsToMoneyInput,percentInputToBasisPoints,basisPointsToPercentInput,creditNoteCumulativeTaxCents,creditNoteHistoryV810,requestBillingCommand,
       safeStripeDocumentUrl,billingDocumentLinks,financeMonthRange,financeExpenseRows,financeInvoiceRows,
       onboardingHash,onboardingStateFromHash,onboardingTabs,onboardingTabsFor,onboardingTabStripHtml,accountSignupQueueHtml,
       platformText,platformErrorMessage,platformStatus,isPlatformInterfaceOption,
