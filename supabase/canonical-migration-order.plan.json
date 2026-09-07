@@ -4102,6 +4102,12 @@
       "version": "20261007100000",
       "name": "nestly_v819_reverse_merchant_settled_tenders",
       "sourcePath": "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007110000",
+      "name": "nestly_v820_role_decides_who_customers_can_book",
+      "sourcePath": "db/migrations/20261007_nestly_v820_role_decides_who_customers_can_book.sql"
     }
   ]
 }

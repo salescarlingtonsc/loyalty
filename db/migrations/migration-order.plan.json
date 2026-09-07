@@ -4107,6 +4107,12 @@
       "path": "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql",
       "semanticVersion": "v819",
       "proposedDeployVersion": "20261007100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v820_role_decides_who_customers_can_book.sql",
+      "semanticVersion": "v820",
+      "proposedDeployVersion": "20261007110000"
     }
   ]
 }
