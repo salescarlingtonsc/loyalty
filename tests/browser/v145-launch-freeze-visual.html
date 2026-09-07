@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="b4c77ba8f72e162df3e2b75d7f10c2f157348ce0b5f6b208e300167f1104e2be"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="b40a7d72f379b57df43e96bd564713e2f36a3455008b574c30872731d307df22"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5771,7 +5771,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · b4c77ba8f72e162df3e2b75d7f10c2f157348ce0b5f6b208e300167f1104e2be</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · b40a7d72f379b57df43e96bd564713e2f36a3455008b574c30872731d307df22</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -9398,8 +9398,12 @@ function renderHistPage(history,n,offsetV468=0){
       if(category.length<2)return toast('Category required');
       const saveButton=$('expEditSaveV285');
       CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
+      /* V809 (audit F105): p_note null has always meant "leave the note alone", so emptying the
+         field silently kept the old note under a "Expense corrected" toast. An emptied field is
+         now an explicit clear, and the two are never sent together — the server refuses that. */
+      const clearNote=!note&&!!String(expense.note||'').trim();
       const {error}=await sb.rpc('update_expense_v285',{p_business:S.biz.id,p_expense:expense.id,
-        p_amount_cents:amount,p_category:category,p_note:note||null});
+        p_amount_cents:amount,p_category:category,p_note:note||null,p_clear_note:clearNote});
       if(!isCurrent())return;
       CUI.setButtonBusy(saveButton,{busy:false});
       if(error)return fail(error);
@@ -9975,7 +9979,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'b4c77ba8f72e162df3e2b75d7f10c2f157348ce0b5f6b208e300167f1104e2be',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'b40a7d72f379b57df43e96bd564713e2f36a3455008b574c30872731d307df22',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

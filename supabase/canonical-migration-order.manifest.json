@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 627,
-  "itemCount": 672,
+  "pendingCount": 629,
+  "itemCount": 674,
   "items": [
     {
       "order": 1,
@@ -6727,6 +6727,26 @@
       "path": "supabase/migrations/20261006230000_nestly_v808_marketing_preference_upsert.sql",
       "octetLength": 12067,
       "sha256": "f6d46e19b393043690cfb56ea1abc8d7bd8b37e1c56547a370086fbd3b84b3a7",
+      "provenance": "local-source"
+    },
+    {
+      "order": 673,
+      "kind": "pending",
+      "version": "20261007000000",
+      "name": "nestly_v809_till_card_standing_and_expense_note",
+      "path": "supabase/migrations/20261007000000_nestly_v809_till_card_standing_and_expense_note.sql",
+      "octetLength": 24967,
+      "sha256": "3fb6f8276ca57960bb0b10e33446eb0f466211cc0f7dabcb964993f807c9d059",
+      "provenance": "local-source"
+    },
+    {
+      "order": 674,
+      "kind": "pending",
+      "version": "20261007010000",
+      "name": "nestly_v810_acl_and_credit_note_history",
+      "path": "supabase/migrations/20261007010000_nestly_v810_acl_and_credit_note_history.sql",
+      "octetLength": 16794,
+      "sha256": "8508e7822f95a9359c1948c0b5502fea7809689fccf9a6367c8cc93fb44679b8",
       "provenance": "local-source"
     }
   ]

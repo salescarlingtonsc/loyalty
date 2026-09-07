@@ -4041,6 +4041,18 @@
       "path": "db/migrations/20261006_nestly_v808_marketing_preference_upsert.sql",
       "semanticVersion": "v808",
       "proposedDeployVersion": "20261006230000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql",
+      "semanticVersion": "v809",
+      "proposedDeployVersion": "20261007000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql",
+      "semanticVersion": "v810",
+      "proposedDeployVersion": "20261007010000"
     }
   ]
 }

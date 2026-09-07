@@ -4036,6 +4036,18 @@
       "version": "20261006230000",
       "name": "nestly_v808_marketing_preference_upsert",
       "sourcePath": "db/migrations/20261006_nestly_v808_marketing_preference_upsert.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007000000",
+      "name": "nestly_v809_till_card_standing_and_expense_note",
+      "sourcePath": "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007010000",
+      "name": "nestly_v810_acl_and_credit_note_history",
+      "sourcePath": "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql"
     }
   ]
 }
