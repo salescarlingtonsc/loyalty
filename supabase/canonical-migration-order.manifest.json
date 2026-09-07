@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 630,
-  "itemCount": 675,
+  "pendingCount": 632,
+  "itemCount": 677,
   "items": [
     {
       "order": 1,
@@ -6757,6 +6757,26 @@
       "path": "supabase/migrations/20261007010000_nestly_v810_acl_and_credit_note_history.sql",
       "octetLength": 16794,
       "sha256": "8508e7822f95a9359c1948c0b5502fea7809689fccf9a6367c8cc93fb44679b8",
+      "provenance": "local-source"
+    },
+    {
+      "order": 676,
+      "kind": "pending",
+      "version": "20261007020000",
+      "name": "nestly_v811_self_serve_loyalty_birth",
+      "path": "supabase/migrations/20261007020000_nestly_v811_self_serve_loyalty_birth.sql",
+      "octetLength": 16430,
+      "sha256": "ca1ad095a993bebb5d846124052146f32b682d120e8593566818e40d50880a17",
+      "provenance": "local-source"
+    },
+    {
+      "order": 677,
+      "kind": "pending",
+      "version": "20261007040000",
+      "name": "nestly_v813_wallet_readers_pot_scope",
+      "path": "supabase/migrations/20261007040000_nestly_v813_wallet_readers_pot_scope.sql",
+      "octetLength": 17128,
+      "sha256": "89f73785666c3e42aedff73ca3f3511693d1d83f594763dd732016d031748933",
       "provenance": "local-source"
     }
   ]

@@ -4059,6 +4059,18 @@
       "path": "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql",
       "semanticVersion": "v810",
       "proposedDeployVersion": "20261007010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v811_self_serve_loyalty_birth.sql",
+      "semanticVersion": "v811",
+      "proposedDeployVersion": "20261007020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v813_wallet_readers_pot_scope.sql",
+      "semanticVersion": "v813",
+      "proposedDeployVersion": "20261007040000"
     }
   ]
 }

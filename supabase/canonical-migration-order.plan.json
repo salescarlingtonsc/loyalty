@@ -4054,6 +4054,18 @@
       "version": "20261007010000",
       "name": "nestly_v810_acl_and_credit_note_history",
       "sourcePath": "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007020000",
+      "name": "nestly_v811_self_serve_loyalty_birth",
+      "sourcePath": "db/migrations/20261007_nestly_v811_self_serve_loyalty_birth.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007040000",
+      "name": "nestly_v813_wallet_readers_pot_scope",
+      "sourcePath": "db/migrations/20261007_nestly_v813_wallet_readers_pot_scope.sql"
     }
   ]
 }
