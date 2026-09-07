@@ -4120,6 +4120,12 @@
       "version": "20261007130000",
       "name": "nestly_v822_daily_report_points_pot_scope",
       "sourcePath": "db/migrations/20261007_nestly_v822_daily_report_points_pot_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007140000",
+      "name": "nestly_v823_reconcile_call_timeout",
+      "sourcePath": "db/migrations/20261007_nestly_v823_reconcile_call_timeout.sql"
     }
   ]
 }
