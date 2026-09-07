@@ -18,10 +18,13 @@ import {
   buildTemplateSend,
   classifyMetaResponse,
   classifyTransportError,
+  quarantineArgs,
+  quarantineSend,
   reportFailureCode,
   reportSendOutcome,
   resolveOutcome,
   sendPath,
+  shouldQuarantineUnreported,
   toE164,
 } from '../_shared/whatsapp-send-boundaries.mjs';
 
@@ -93,6 +96,28 @@ Deno.serve(async (req) => {
 
   const admin = adminClient();
   const workerId = crypto.randomUUID();
+  /* One injected rpc for every boundary helper below, so nothing in this file talks to
+     PostgREST except through a value the tests can substitute. */
+  const rpc = (name: string, params: Record<string, unknown>) => admin.rpc(name, params);
+
+  /* v816, and it runs BEFORE anything is claimed. A row left 'processing' by a worker that
+     went away is an outcome the database never learned; the claim RPCs no longer re-claim it
+     (that is what produced the duplicate WhatsApp), so it must be retired to the terminal
+     'sent_unconfirmed' explicitly and with an audit row, or it would sit in the queue forever.
+     A failure here is logged and does not stop the run: both claim RPCs run their own queue's
+     quarantine too, so a stranded row cannot outlive one bad sweep. */
+  let quarantinedExpired = 0;
+  const { data: sweep, error: sweepError } = await admin.rpc(
+    'internal_whatsapp_quarantine_expired_sends_v816',
+    { p_worker_id: workerId, p_limit: 200 },
+  );
+  if (sweepError) {
+    log('quarantine_sweep_failed', { code: sweepError.code || null });
+  } else {
+    quarantinedExpired = Number((sweep as Record<string, unknown> | null)?.quarantined || 0);
+    if (quarantinedExpired > 0) log('quarantine_sweep', { quarantined: quarantinedExpired });
+  }
+
   const { data, error } = await admin.rpc('internal_support_claim_outbound_v535', {
     p_worker_id: workerId, p_limit: MAX_CLAIM, p_lease_seconds: LEASE_SECONDS,
   });
@@ -109,6 +134,10 @@ Deno.serve(async (req) => {
      so a dispatcher that is delivering messages it cannot record is visible in the cron response,
      not only in a customer's duplicate WhatsApp thread. */
   let unreported = 0;
+  /* v816: outcomes that ended in the terminal 'sent_unconfirmed' because this worker could not
+     write them down. Every one of these is a message the customer may never receive — and the
+     owner's ruling is that this is the better half of the trade. */
+  let quarantined = 0;
 
   /* One place where "the outcome is now durable" is decided, so the support loop and the
      template loop cannot drift apart on it. Bounded retries with backoff (the whole budget is
@@ -116,9 +145,8 @@ Deno.serve(async (req) => {
      case for a stale lease or a vanished row, and a counted, logged failure when it still will
      not write — never the old `await admin.rpc(...)` with the error dropped on the floor. */
   const report = async (fn: string, args: Record<string, unknown>, event: string, messageId: string,
-                        disposition: string) => {
-    const result = await reportSendOutcome(
-      (name: string, params: Record<string, unknown>) => admin.rpc(name, params), fn, args);
+                        disposition: string, queue: string) => {
+    const result = await reportSendOutcome(rpc, fn, args);
     if (result.ok) return true;
     unreported += 1;
     /* A uuid, a word and an error code. Never the wamid: it base64-decodes to the customer's
@@ -132,6 +160,30 @@ Deno.serve(async (req) => {
          database never learned it, so the row is still re-claimable. */
       delivered_but_unrecorded: disposition === 'sent',
     });
+
+    /* v816 closes the residual v687 could only count. Meta accepted this message and the write
+       still will not land, so the row must NOT be left re-claimable: retire it to the terminal
+       'sent_unconfirmed'. Bounded retries again, and if even that cannot be written the row
+       simply keeps its expired lease and the next run's quarantine sweep catches it — the one
+       thing that can no longer happen is a second send. */
+    if (shouldQuarantineUnreported(disposition, false)) {
+      const retired = await quarantineSend(rpc, quarantineArgs({
+        queue,
+        messageId,
+        leaseToken: String(args.p_lease_token || ''),
+        reason: 'report_write_failed',
+        workerId,
+      }));
+      if (retired.ok) quarantined += 1;
+      /* A uuid, a queue name and an error code. Same PII rule as every line above. */
+      log('quarantine', {
+        message_id: messageId,
+        queue,
+        quarantined: retired.ok,
+        attempts: retired.attempts,
+        code: retired.ok ? null : reportFailureCode(retired.error),
+      });
+    }
     return false;
   };
 
@@ -150,7 +202,7 @@ Deno.serve(async (req) => {
       await report('internal_support_report_outbound_v535', {
         p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
         p_error_code: !e164 ? 'recipient_not_normalisable' : 'rendered_body_missing',
-      }, 'report_failed', messageId, 'failed');
+      }, 'report_failed', messageId, 'failed', 'support');
       failed += 1;
       log('preflight_failed', { message_id: messageId });
       continue;
@@ -188,7 +240,7 @@ Deno.serve(async (req) => {
       p_error_code: disposition === 'sent' ? null : String(outcome.code || outcome.status),
       p_http_status: null,
       p_retry_in_seconds: outcome.retryInSeconds,
-    }, 'report_failed', messageId, disposition);
+    }, 'report_failed', messageId, disposition, 'support');
 
     if (disposition === 'sent') sent += 1;
     else if (disposition === 'retry') retried += 1;
@@ -228,7 +280,7 @@ Deno.serve(async (req) => {
         await report('internal_whatsapp_report_template_send_v557', {
           p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
           p_error_code: 'recipient_not_normalisable', p_http_status: null, p_retry_in_seconds: null,
-        }, 'template_report_failed', messageId, 'failed');
+        }, 'template_report_failed', messageId, 'failed', 'template');
         templateFailed += 1;
         log('template_preflight_failed', { message_id: messageId });
         continue;
@@ -244,7 +296,7 @@ Deno.serve(async (req) => {
         await report('internal_whatsapp_report_template_send_v557', {
           p_message: messageId, p_lease_token: leaseToken, p_disposition: 'failed',
           p_error_code: built.reason, p_http_status: null, p_retry_in_seconds: null,
-        }, 'template_report_failed', messageId, 'failed');
+        }, 'template_report_failed', messageId, 'failed', 'template');
         templateFailed += 1;
         log('template_preflight_failed', { message_id: messageId });
         continue;
@@ -272,7 +324,7 @@ Deno.serve(async (req) => {
         p_error_code: disposition === 'sent' ? null : String(outcome.code || outcome.status),
         p_http_status: null,
         p_retry_in_seconds: outcome.retryInSeconds,
-      }, 'template_report_failed', messageId, disposition);
+      }, 'template_report_failed', messageId, disposition, 'template');
 
       if (disposition === 'sent') templateSent += 1;
       else if (disposition === 'retry') templateRetried += 1;
@@ -292,5 +344,13 @@ Deno.serve(async (req) => {
        can record "sent, unconfirmed" (a terminal state the claim RPCs will not re-claim), which
        is a schema decision for the owner; until then this counter is the alarm. */
     unreported,
+    /* v816. `quarantined` is the count of outcomes retired to the terminal 'sent_unconfirmed'
+       because this worker could not write them down, and `quarantined_expired` the count of
+       rows a previous run left stranded in flight. Both are messages a customer may never
+       receive — the half of the owner's trade-off we accepted so the other half, a duplicate
+       WhatsApp, cannot happen. Non-zero here is worth looking at; it is no longer a warning
+       that a duplicate is coming. */
+    quarantined,
+    quarantined_expired: quarantinedExpired,
   });
 });

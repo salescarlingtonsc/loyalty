@@ -48007,11 +48007,14 @@ const SUPPORT_REFUSAL_COPY_V535=Object.freeze({
    with the customer is visibly unfinished rather than quietly annotated. */
 const SUPPORT_DELIVERY_COPY_V540=Object.freeze({
   queued:'Sending…', processing:'Sending…', sent:'Sent',
-  delivered:'Delivered', read:'Read', failed:'Not sent'
+  delivered:'Delivered', read:'Read', failed:'Not sent',
+  /* nestly_v816: Meta accepted the message but the outcome was never recorded, so the queue
+     retired it rather than risk a duplicate send. Terminal, and said plainly. */
+  sent_unconfirmed:'Sent, delivery unconfirmed'
 });
 /* Terminal = Meta has spoken. Everything else keeps polling and keeps its
    pending styling. */
-const SUPPORT_TERMINAL_STATUS_V540=new Set(['delivered','read','failed']);
+const SUPPORT_TERMINAL_STATUS_V540=new Set(['delivered','read','failed','sent_unconfirmed']);
 function supportDeliveryTextV540(status){
   return SUPPORT_DELIVERY_COPY_V540[status]||status||'';
 }

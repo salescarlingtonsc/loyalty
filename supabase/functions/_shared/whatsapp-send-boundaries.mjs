@@ -378,3 +378,51 @@ export function reportFailureCode(error) {
   if (code) return code.slice(0, 32);
   return 'report_write_failed';
 }
+
+// ---------------------------------------------------------------------------
+// Quarantine (v816) — the residual v687 could only count
+// ---------------------------------------------------------------------------
+
+// reportSendOutcome above collapses the common cause of an unwritten outcome (a
+// transient blip) but cannot make the write infallible. When it still fails on a
+// 'sent' disposition, Meta has accepted the message and the row is left
+// status='processing' — and until v816 the claim RPCs re-claimed exactly that,
+// so the next cron run sent the same WhatsApp again.
+//
+// v816 gives the queue a terminal 'sent_unconfirmed' and this is how the worker
+// reaches it: before releasing the row it tells the database "I could not record
+// what happened to this one; never send it again". The owner's ruling is that a
+// possibly-undelivered message beats a duplicate, so the honest unknown state is
+// the one we persist.
+//
+// It is the SAME durability problem one level down, so it deliberately reuses
+// reportSendOutcome rather than growing a second retry loop: bounded retries,
+// the same two never-retryable codes (40001 the lease is gone, P0002 the row is
+// gone — in both cases this worker no longer decides), the same injected rpc and
+// clock. The RPC itself is idempotent, so a retry after a write that in fact
+// landed returns ok rather than an error.
+
+export const QUARANTINE_SEND_FN = 'internal_whatsapp_quarantine_send_v816';
+
+// Only a 'sent' disposition. A 'retry' left in flight is supposed to be tried
+// again, and a permanent 'failed' that we could not write down was never
+// delivered — retiring either as "sent, unconfirmed" would be a lie. Both of
+// those are still caught by the expired-lease sweep, which is where a row whose
+// worker vanished mid-flight belongs.
+export function shouldQuarantineUnreported(disposition, reported) {
+  return reported === false && disposition === 'sent';
+}
+
+export function quarantineArgs({ queue, messageId, leaseToken, reason, workerId }) {
+  return {
+    p_queue: queue,
+    p_message: messageId,
+    p_lease_token: leaseToken || null,
+    p_reason: reason || 'report_write_failed',
+    p_worker_id: workerId || null,
+  };
+}
+
+export async function quarantineSend(rpc, args, options = {}) {
+  return await reportSendOutcome(rpc, QUARANTINE_SEND_FN, args, options);
+}
