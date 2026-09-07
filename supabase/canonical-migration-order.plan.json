@@ -4138,6 +4138,12 @@
       "version": "20261007160000",
       "name": "nestly_v826_owner_brief",
       "sourcePath": "db/migrations/20261007_nestly_v826_owner_brief.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007170000",
+      "name": "nestly_v825_security_hygiene_sweep",
+      "sourcePath": "db/migrations/20261007_nestly_v825_security_hygiene_sweep.sql"
     }
   ]
 }

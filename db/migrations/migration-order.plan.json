@@ -4143,6 +4143,12 @@
       "path": "db/migrations/20261007_nestly_v826_owner_brief.sql",
       "semanticVersion": "v826",
       "proposedDeployVersion": "20261007160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v825_security_hygiene_sweep.sql",
+      "semanticVersion": "v825",
+      "proposedDeployVersion": "20261007170000"
     }
   ]
 }
