@@ -4108,6 +4108,12 @@
       "version": "20261007110000",
       "name": "nestly_v820_role_decides_who_customers_can_book",
       "sourcePath": "db/migrations/20261007_nestly_v820_role_decides_who_customers_can_book.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007120000",
+      "name": "nestly_v821_billing_reconcile_call_failure_alerts",
+      "sourcePath": "db/migrations/20261007_nestly_v821_billing_reconcile_call_failure_alerts.sql"
     }
   ]
 }

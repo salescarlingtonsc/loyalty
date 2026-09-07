@@ -66,9 +66,9 @@ declare
   v_req bigint;
   v_id uuid;
 begin
-  insert into net._http_response (status_code, content, timed_out, error_msg)
-  values (p_status, p_body, false, null)
-  returning id into v_req;
+  v_req := coalesce((select max(id) from net._http_response), 0) + 1;
+  insert into net._http_response (id, status_code, content, timed_out, error_msg)
+  values (v_req, p_status, p_body, false, null);
   insert into public.platform_billing_reconcile_calls_v634 (net_request_id, requested_at)
   values (v_req, p_at) returning id into v_id;
   return v_id;

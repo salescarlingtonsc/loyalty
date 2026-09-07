@@ -477,12 +477,15 @@ begin
   begin
     /* A 503 BOOT_ERROR receipt from two nights ago, and another from last night: the exact shape
        production recorded on 2026-09-05 and 2026-09-06. */
-    insert into net._http_response (status_code, content)
-    values (503, '{"code":"BOOT_ERROR","message":"Function failed to start (please check logs)"}')
-    returning id into v_req_a;
-    insert into net._http_response (status_code, content)
-    values (503, '{"code":"BOOT_ERROR","message":"Function failed to start (please check logs)"}')
-    returning id into v_req_b;
+    /* Real pg_net gives net._http_response.id NO default (the worker copies the request id in),
+       so a fixture must bring its own id or `returning id` yields NULL and the call insert fails
+       its NOT NULL — which is exactly how the first production apply of this file was refused. */
+    v_req_a := coalesce((select max(id) from net._http_response), 0) + 900001;
+    v_req_b := v_req_a + 1;
+    insert into net._http_response (id, status_code, content)
+    values (v_req_a, 503, '{"code":"BOOT_ERROR","message":"Function failed to start (please check logs)"}');
+    insert into net._http_response (id, status_code, content)
+    values (v_req_b, 503, '{"code":"BOOT_ERROR","message":"Function failed to start (please check logs)"}');
 
     insert into public.platform_billing_reconcile_calls_v634 (net_request_id, requested_at)
     values (v_req_a, now() - interval '48 hours') returning id into v_call_a;
@@ -558,8 +561,9 @@ begin
     end if;
 
     /* A green run supersedes the whole family, per-day rows included. */
-    insert into net._http_response (status_code, content)
-    values (200, '{"status":"clean"}') returning id into v_req_a;
+    v_req_a := v_req_b + 1;
+    insert into net._http_response (id, status_code, content)
+    values (v_req_a, 200, '{"status":"clean"}');
     insert into public.platform_billing_reconcile_calls_v634 (net_request_id)
     values (v_req_a) returning id into v_call_a;
     perform app.check_billing_reconcile_calls_v634();

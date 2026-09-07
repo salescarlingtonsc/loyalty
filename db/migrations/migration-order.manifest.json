@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 683,
-  "executableCount": 669,
+  "itemCount": 684,
+  "executableCount": 670,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -964,7 +964,7 @@
     },
     {
       "sourceDeployVersion": "20261007",
-      "count": 11,
+      "count": 12,
       "paths": [
         "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql",
         "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql",
@@ -976,7 +976,8 @@
         "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql",
         "db/migrations/20261007_nestly_v818_line_commission_branch_availability_booking_sync.sql",
         "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql",
-        "db/migrations/20261007_nestly_v820_role_decides_who_customers_can_book.sql"
+        "db/migrations/20261007_nestly_v820_role_decides_who_customers_can_book.sql",
+        "db/migrations/20261007_nestly_v821_billing_reconcile_call_failure_alerts.sql"
       ]
     }
   ],
@@ -6444,6 +6445,14 @@
       "semanticVersion": "v820",
       "proposedDeployVersion": "20261007110000",
       "sha256": "d1ca367a4575e79c8bd0641bd29beca0c2f6bb545b0d6279767fac625e2d9071"
+    },
+    {
+      "order": 684,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v821_billing_reconcile_call_failure_alerts.sql",
+      "semanticVersion": "v821",
+      "proposedDeployVersion": "20261007120000",
+      "sha256": "591b7f8517b12592f1a0cb21283514cd889f3c9bf3e6ca6d8c06aabe05271f4f"
     }
   ]
 }

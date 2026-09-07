@@ -1,6 +1,6 @@
 # CI-100-CHECKLIST proof-pack — items 11/12 screenshot index
 
-Commit SHA: `93f658cb7994fe350e7c7a5534d14aa3c355842c`
+Commit SHA: `7c92a0f777d4494cd13bab9e0390ec25fb2cdcdd`
 Capture date: 2026-09-07
 Screenshot capture: captured with playwright-core
 

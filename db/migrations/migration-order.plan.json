@@ -4113,6 +4113,12 @@
       "path": "db/migrations/20261007_nestly_v820_role_decides_who_customers_can_book.sql",
       "semanticVersion": "v820",
       "proposedDeployVersion": "20261007110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v821_billing_reconcile_call_failure_alerts.sql",
+      "semanticVersion": "v821",
+      "proposedDeployVersion": "20261007120000"
     }
   ]
 }
