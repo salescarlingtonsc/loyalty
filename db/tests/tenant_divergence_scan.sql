@@ -732,3 +732,12 @@ rollback;
 --    names, which itself contains can_module AND raises 42501 — see the commentary in the $d20$
 --    block for why a wider hop would be a loophole and why splicing can_module back into the
 --    entry point would be a regression rather than a fix.
+--  * nestly_v817 converted the three D20 rows nestly_v721 left behind — create_customer_
+--    intelligence_export_v83, get_customer_intelligence_export_page_v83 and get_revenue_truth_
+--    v106 — from their own private has_perm/can_module guard onto the same shared
+--    app.ci_access_gate_v667 hop the rest of the family uses. They were never a gap in the RULE
+--    (ARM 1, the direct can_module substring, always saw them, so D20 passed for all three both
+--    before and after v817); they are noted here because a reader checking "which CI entry
+--    points still hold their own opinion instead of the one gate" should not have to re-derive
+--    it from the ARM 2 hop logic. All three now resolve via ARM 2, exactly like
+--    get_customer_intelligence_v83 has since nestly_v721.
