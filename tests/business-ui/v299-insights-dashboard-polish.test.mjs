@@ -178,9 +178,13 @@ test('V408 redeeming refreshes the customer standing from the server',()=>{
      comes from `cust`, captured at lookup; redeeming refetched only the catalogue. The new balance
      is ASKED FOR — subtracting the cost here would be inventing a balance (v145). */
   assert.match(app,/async function refreshTillCustomerStandingV408\(\)\{/);
+  /* nestly_v809 (audit F057): the CLIENT-ID read comes first, because a customer who arrived by
+     member/gift QR has no phone_norm and the phone-only version simply bailed — leaving the header
+     frozen at the pre-redemption figure. The phone lookup stays as the fallback. */
+  assert.match(app,/sb\.rpc\('till_customer_standing_v809',\s*\n?\s*\{p_business:S\.biz\.id,p_client:clientId\}\)/);
   assert.match(app,/sb\.rpc\('lookup_client_by_phone',\{p_business:S\.biz\.id,p_phone:lookupPhone\}\)/);
-  assert.match(app,/if\(data\?\.status==='found'&&String\(data\.client_id\)===String\(cust\.client_id\)\)cust=data;/,
-    'the refreshed row must be the SAME customer, or a re-typed number could swap them mid-sale');
+  assert.equal([...app.matchAll(/if\(data\?\.status==='found'&&String\(data\.client_id\)===clientId\)cust=data;/g)].length,2,
+    'BOTH refresh paths must check the refreshed row is the SAME customer, or a re-typed number could swap them mid-sale');
   // Both redemption doors refresh it: the manual one and the QR scan.
   assert.match(app,/await refreshTillCustomerStandingV408\(\);\s*\n\s*draw\(\);/);
   assert.match(app,/onComplete:async\(\)=>\{catalog=null;await refreshTillCustomerStandingV408\(\);draw\(\)\}/);

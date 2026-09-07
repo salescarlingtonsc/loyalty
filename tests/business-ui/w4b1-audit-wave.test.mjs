@@ -7,10 +7,19 @@
    reasonably be executed in isolation, the test anchors on the exact literal source that carries
    the behaviour (documented per-test) rather than re-describing it.
 
-   F020 (v666_till_customer_card missing stamp_card), F057 (refreshTillCustomerStandingV408 has no
-   client-id lookup path) and F105 (update_expense_v285 cannot express "clear the note") have NO
-   test here on purpose: all three need a server-side change (a new/altered RPC) that is out of
-   scope for this branch — see the audit report for the exact server change needed. */
+   F020, F057 and F105 were the three findings whose fix is server-side. They are now CLOSED by
+   nestly_v809 (db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql), whose
+   own acceptance suite — db/tests/v809_till_card_standing_and_expense_note.sql, 15 assertions,
+   12 of them proven to fail without the migration — carries the database half:
+     F020  app.till_stamp_card_v809 is now the ONE stamp-card authority, and
+           app.v666_till_customer_card (the member-QR and gift-QR entry points) serves the same
+           object public.lookup_client_by_phone always did. No client change was needed: the till
+           header already prefers cust.stamp_card over the raw pot, and the server now sends it on
+           every entry point — so the assertion below pins that preference so it cannot be undone.
+     F057  public.till_customer_standing_v809 re-reads a customer's standing BY CLIENT ID, and
+           refreshTillCustomerStandingV408 now uses it first (tested below).
+     F105  public.update_expense_v285 gained p_clear_note, and the correction dialog now sends it
+           when the Note field was emptied (tested below). */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -521,4 +530,138 @@ test('F136 the Add-teammate commission % rejects an out-of-range value instead o
   assert.equal(bps('#b'), undefined, '-5% must be rejected');
   assert.equal(bps('#c'), null, 'a blank field stays "not set"');
   assert.equal(bps('#d'), 1500, '15% still converts to 1500 bps');
+});
+
+/* ---------------------------------------------------------------- F020 / F057 / F105 (nestly_v809) */
+
+test('F020 the till header prefers the customer CARD over the raw pot whenever the server sends one', () => {
+  const src = section('    const tierLabel=catalog?.customerTierBenefits?.tier?.label', '\n    const standing=[tierLabel');
+  const calls = [];
+  const build = vm.runInNewContext(
+    `${src}; ({standingFigureV474, pointsValue})`,
+    {
+      catalog: { customerTierBenefits: { tier: { label: 'Gold' } } },
+      cust: { points: 18, stamp_card: { slots: 5, filled: 3, carried: 0, ready: false, pot: 18 } },
+      stampCardStandingV474: (card, balance, noun) => {
+        calls.push({ card, balance, noun });
+        return `${card.filled} of ${card.slots} ${noun}`;
+      },
+      tillUnitNounV430: () => 'stamps',
+    });
+  // The pot (18) must never reach the header when a card is present — owner rule v473.
+  assert.equal(build.standingFigureV474, '3 of 5 stamps');
+  assert.equal(calls.length, 1, 'the shared stampCardStandingV474 formatter must be the one that words it');
+  assert.deepEqual(calls[0].card, { slots: 5, filled: 3, carried: 0, ready: false, pot: 18 });
+
+  // A points firm (no stamp_card) still reads its balance, so v809 did not change that path.
+  const points = vm.runInNewContext(
+    `${src}; ({standingFigureV474})`,
+    {
+      catalog: null,
+      cust: { points: 1200 },
+      stampCardStandingV474: () => { throw new Error('must not be called without a card'); },
+      tillUnitNounV430: () => 'points',
+    });
+  assert.equal(points.standingFigureV474, '1,200 points');
+});
+
+test('F057 refreshTillCustomerStandingV408 refreshes by CLIENT ID, so a customer with no phone is not stranded', async () => {
+  const src = section('  async function refreshTillCustomerStandingV408(){', '\n  function openManualRedeemConfirmV404(');
+  const run = async ({ cust, phone, responses }) => {
+    const seen = [];
+    const context = {
+      cust, phone,
+      S: { biz: { id: 'biz-1' } },
+      isTillCurrent: () => true,
+      sb: {
+        rpc: async (name, payload) => {
+          seen.push({ name, payload });
+          return responses[name] ?? { data: null, error: { message: 'no stub' } };
+        },
+      },
+    };
+    const fn = vm.runInNewContext(`${src}; refreshTillCustomerStandingV408`, context);
+    await fn();
+    return { seen, cust: context.cust };
+  };
+
+  // The member-QR shape: a client id, no phone anywhere. Pre-v809 this returned without a call.
+  const scanned = await run({
+    cust: { client_id: 'c-1', phone: null, points: 1200 },
+    phone: '',
+    responses: {
+      till_customer_standing_v809: { data: { status: 'found', client_id: 'c-1', points: 700 }, error: null },
+    },
+  });
+  assert.deepEqual(scanned.seen.map(c => c.name), ['till_customer_standing_v809']);
+  // JSON, not deepEqual: the payload is built inside the vm realm, so its prototype differs.
+  assert.equal(JSON.stringify(scanned.seen[0].payload), JSON.stringify({ p_business: 'biz-1', p_client: 'c-1' }));
+  assert.equal(scanned.cust.points, 700, 'the header must take the server\'s new figure');
+
+  // Never adopts a different customer, even when the server answers with one.
+  const swapped = await run({
+    cust: { client_id: 'c-1', phone: null, points: 1200 },
+    phone: '',
+    responses: {
+      till_customer_standing_v809: { data: { status: 'found', client_id: 'c-2', points: 5 }, error: null },
+    },
+  });
+  assert.equal(swapped.cust.points, 1200, 'a mismatched client_id must never swap the customer under the cashier');
+
+  // Fallback: an older server without the RPC still refreshes by phone.
+  const fallback = await run({
+    cust: { client_id: 'c-1', phone: '81863833', points: 1200 },
+    phone: '',
+    responses: {
+      till_customer_standing_v809: { data: null, error: { message: 'function does not exist' } },
+      lookup_client_by_phone: { data: { status: 'found', client_id: 'c-1', points: 700 }, error: null },
+    },
+  });
+  assert.deepEqual(fallback.seen.map(c => c.name),
+    ['till_customer_standing_v809', 'lookup_client_by_phone']);
+  assert.equal(fallback.cust.points, 700);
+
+  // No customer at all: still no call, as before.
+  const none = await run({ cust: null, phone: '', responses: {} });
+  assert.deepEqual(none.seen, []);
+});
+
+test('F105 the expense correction dialog asks the server to CLEAR a note that was emptied', () => {
+  const src = section("      const amount=Math.round(parseFloat($('expEditAmountV285').value", '      if(!isCurrent())return;');
+  const run = (fields, expense) => {
+    let payload = null;
+    const toasts = [];
+    const context = {
+      $: id => ({ value: fields[id] }),
+      toast: message => { toasts.push(message); return undefined; },
+      CUI: { setButtonBusy: () => {} },
+      S: { biz: { id: 'biz-1' } },
+      expense,
+      sb: { rpc: (name, body) => { payload = { name, body }; return Promise.resolve({ error: null }); } },
+    };
+    vm.runInNewContext(`(async()=>{${src}})()`, context);
+    return { payload, toasts };
+  };
+
+  // The bug: a note that existed and was deleted must be cleared, not silently kept.
+  const cleared = run(
+    { expEditAmountV285: '12.34', expEditCategoryV285: 'Supplies', expEditNoteV285: '   ' },
+    { id: 'e-1', note: 'duplicate of invoice #204, TBD' });
+  assert.equal(cleared.payload.name, 'update_expense_v285');
+  assert.equal(cleared.payload.body.p_note, null);
+  assert.equal(cleared.payload.body.p_clear_note, true);
+
+  // A note that is being written is never sent alongside a clear — the server refuses that (22023).
+  const written = run(
+    { expEditAmountV285: '12.34', expEditCategoryV285: 'Supplies', expEditNoteV285: 'corrected' },
+    { id: 'e-1', note: 'duplicate of invoice #204, TBD' });
+  assert.equal(written.payload.body.p_note, 'corrected');
+  assert.equal(written.payload.body.p_clear_note, false);
+
+  // An expense that never had a note, saved with the field still empty, asks for no clear.
+  const untouched = run(
+    { expEditAmountV285: '12.34', expEditCategoryV285: 'Supplies', expEditNoteV285: '' },
+    { id: 'e-1', note: null });
+  assert.equal(untouched.payload.body.p_note, null);
+  assert.equal(untouched.payload.body.p_clear_note, false);
 });

@@ -224,12 +224,27 @@ test('a teammate is deactivated, not deleted, unless they never worked', () => {
 
 test('an expense can be corrected in place, and the immovable fields stay immovable', () => {
   assert.match(app, /window\.editExpenseV285=\(id\)=>\{/);
-  assert.match(app, /sb\.rpc\('update_expense_v285',\{p_business:S\.biz\.id,p_expense:expense\.id,\s*\n?\s*p_amount_cents:amount,p_category:category,p_note:note\|\|null\}\)/);
+  /* nestly_v809 (audit F105) added p_clear_note: an emptied Note field used to reach the server as
+     p_note null, which has always meant "unchanged", so a note could never be cleared. */
+  assert.match(app, /sb\.rpc\('update_expense_v285',\{p_business:S\.biz\.id,p_expense:expense\.id,\s*\n?\s*p_amount_cents:amount,p_category:category,p_note:note\|\|null,p_clear_note:clearNote\}\)/);
+  assert.match(app, /const clearNote=!note&&!!String\(expense\.note\|\|''\)\.trim\(\);/,
+    'a clear is asked for only when the field was emptied AND there was a note to clear');
   assert.match(app, /The date and the branch stay as they are/);
   const fn = migration.match(/create or replace function public\.update_expense_v285\([\s\S]*?\n\$\$;/)[0];
   assert.doesNotMatch(fn, /set[\s\S]*?branch_id\s*=/, 'the branch a cost landed in must not be writable');
   assert.doesNotMatch(fn, /set[\s\S]*?occurred_on\s*=/, 'the period a cost landed in must not be writable');
   assert.match(fn, /a voided expense cannot be edited/);
+  /* The LIVE definition is v809's. Both immovable fields, and the void refusal, must survive the
+     drop-and-recreate that added p_clear_note. */
+  const live = readFileSync(resolve(root,
+    'db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql'), 'utf8')
+    .match(/create or replace function public\.update_expense_v285\([\s\S]*?\n\$function\$;/)[0];
+  assert.doesNotMatch(live, /set[\s\S]*?branch_id\s*=/, 'the branch a cost landed in must not be writable');
+  assert.doesNotMatch(live, /set[\s\S]*?occurred_on\s*=/, 'the period a cost landed in must not be writable');
+  assert.match(live, /a voided expense cannot be edited/);
+  assert.match(live, /note = case when v_clear then null else coalesce\(v_note, expense\.note\) end/);
+  assert.match(live, /write a note or clear it, not both/,
+    'a note and a clear together must be refused, not resolved by precedence');
 });
 
 test('the bottle catalogue name and price are editable, and null still means unchanged', () => {
@@ -280,7 +295,7 @@ test('the products list uses the shared table skeleton', () => {
 test('every new V285 writer surface is curated in the PS-0 registry', () => {
   const ids = new Set([...registry.writers, ...registry.allowlist].map((entry) => entry.id));
   for (const id of [
-    'db.fn:public.update_expense_v285/5',
+    'db.fn:public.update_expense_v285/6',   // /5 until nestly_v809 added p_clear_note
     'browser.rpc:app/app.js:update_expense_v285',
     'browser.rpc:app/app.js:update_service_bundle_v285',
     'browser.rpc:app/app.js:delete_service_bundle_v285',

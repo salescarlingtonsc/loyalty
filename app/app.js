@@ -27899,12 +27899,29 @@ async function tillPage(){
      exactly what v145 forbids, and it would be wrong the moment anything else moved the ledger.
      The client_id guard means a stale or re-typed number can never swap the customer under the
      cashier while a sale is open. */
+  /* V809 (audit F057): the id path comes FIRST. A customer who reached the till through a member
+     QR or a gift QR carries clients.phone_norm, which is NULL for anyone the member-QR scan
+     auto-provisioned, and the keypad's `phone` is empty on the scan path — so the phone-only
+     version bailed and the header kept its pre-redemption figure after every redeem, gift scan
+     and gift undo. till_customer_standing_v809 returns the same card as the scan did, addressed
+     by the id the till already holds; the phone lookup stays as the fallback for a till that is
+     talking to a server without it. The balance is still ASKED FOR, never worked out here. */
   async function refreshTillCustomerStandingV408(){
+    const clientId=cust?.client_id?String(cust.client_id):'';
+    if(clientId){
+      const {data,error}=await sb.rpc('till_customer_standing_v809',
+        {p_business:S.biz.id,p_client:clientId});
+      if(!isTillCurrent())return;
+      if(!error){
+        if(data?.status==='found'&&String(data.client_id)===clientId)cust=data;
+        return;
+      }
+    }
     const lookupPhone=String(cust?.phone||phone||'').trim();
-    if(!lookupPhone||!cust?.client_id)return;
+    if(!lookupPhone||!clientId)return;
     const {data,error}=await sb.rpc('lookup_client_by_phone',{p_business:S.biz.id,p_phone:lookupPhone});
     if(error||!isTillCurrent())return;
-    if(data?.status==='found'&&String(data.client_id)===String(cust.client_id))cust=data;
+    if(data?.status==='found'&&String(data.client_id)===clientId)cust=data;
   }
   function openManualRedeemConfirmV404({rewardId,rewardName,costUnits,quantity,rewardUnit}){
     /* V432: the clicked reward's own unit when the server sent one — a points gift in a mixed
@@ -55347,8 +55364,12 @@ async function expensesPage(){
       if(category.length<2)return toast('Category required');
       const saveButton=$('expEditSaveV285');
       CUI.setButtonBusy(saveButton,{busy:true,label:'Saving…'});
+      /* V809 (audit F105): p_note null has always meant "leave the note alone", so emptying the
+         field silently kept the old note under a "Expense corrected" toast. An emptied field is
+         now an explicit clear, and the two are never sent together — the server refuses that. */
+      const clearNote=!note&&!!String(expense.note||'').trim();
       const {error}=await sb.rpc('update_expense_v285',{p_business:S.biz.id,p_expense:expense.id,
-        p_amount_cents:amount,p_category:category,p_note:note||null});
+        p_amount_cents:amount,p_category:category,p_note:note||null,p_clear_note:clearNote});
       if(!isCurrent())return;
       CUI.setButtonBusy(saveButton,{busy:false});
       if(error)return fail(error);
