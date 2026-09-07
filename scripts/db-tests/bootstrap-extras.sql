@@ -49,8 +49,9 @@ create or replace function net.http_post(
   headers jsonb default '{}'::jsonb,
   timeout_milliseconds integer default 5000
 ) returns bigint language sql as $$
-  insert into net._http_response(status_code, content)
-  values (0, jsonb_build_object('stub', true, 'url', url, 'body', body)::text)
+  insert into net._http_response(id, status_code, content)
+  values (coalesce((select max(id) from net._http_response), 0) + 1,
+          0, jsonb_build_object('stub', true, 'url', url, 'body', body)::text)
   returning id;
 $$;
 grant usage on schema net to postgres, service_role;
