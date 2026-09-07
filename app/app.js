@@ -942,7 +942,11 @@ let growPointsRewardTabV324='published';
 /* V326 (owner 5-photo Points System flow, photo 3): the new dedicated #/grow/points page.
    Published/History only — no Draft, since every gift change here is immediate-write
    (business_set_reward_paused_v326/business_delete_reward_v326/business_create_reward_v326),
-   never a draft. growPointsDeletePendingV326 holds the id of a gift with its delete confirm
+   never a draft the owner has to publish. (nestly_v805 and nestly_v814: for a STAMP gift on a
+   running stamps programme, deleting and switching off are now version-forward server-side —
+   they publish a configuration version of their own so a customer mid-card keeps what they were
+   promised. Still one click for the owner, still no draft on this page; but both RPCs can now
+   answer publish_status 'pending' with blockers, and both call sites handle that.) growPointsDeletePendingV326 holds the id of a gift with its delete confirm
    open (mirrors growSwitchPendingV322's one-open-at-a-time pattern). growPointsAddOpenV326 is
    ''|'form'|'prompt' — closed, the name+points add-gift form open, or the post-save "add
    another?" prompt; growPointsAddDraftV326 holds the in-progress form values across re-renders.
@@ -35940,7 +35944,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
      on/off mechanism (writeProgrammeSwitchesV314/data-grow-switchtoggle-v322, scoped to
      kind='points' — one more row in that same confirm/cancel micro-UI, not a second one), and
-     individual gift rows with their own on/off (business_set_reward_paused_v326) and delete
+     individual gift rows with their own on/off (business_set_reward_paused_v326 — nestly_v814:
+     version-forward for a stamp gift on a running programme, so the toggle's toast says "from
+     the next card" and a switch-off that cannot publish pends with blockers) and delete
      (business_delete_reward_v326, which moves the gift to History). Reads snapshot.rewards
      directly rather than rewardJourney.milestones — the journey's availability semantics
      (not_started/ended/programme_paused) don't carry `paused`, and this page needs a plain
@@ -39064,13 +39070,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const want=button.getAttribute('aria-checked')!=='true';
     growPointsBusyV326=true;growPointsErrorV326='';
     button.disabled=true;
-    const {error}=await sb.rpc('business_set_reward_paused_v326',{
+    const {data:pauseResultV814,error}=await sb.rpc('business_set_reward_paused_v326',{
       p_business:S.biz.id,p_reward:id,p_paused:!want});
     /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
     if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
-    toast(want?'Turned on for customers':'Turned off for customers');
+    /* nestly_v814 (owner ruling, 2026-10-07): switching a STAMP gift off follows the same rule
+       nestly_v805 gave Delete. The server publishes a new configuration version instead of
+       flipping the live flag alone, so it runs the same stamps validation a Go-live does —
+       switching off the gift at the LAST stamp cannot publish until another gift sits there, and
+       the server reports that as publish_status 'pending' with owner-language blockers rather
+       than raising. The gift is still switched on, so say so and leave the row as it is instead
+       of toasting a change that did not happen. */
+    const pauseOutcomeV814=pauseResultV814&&typeof pauseResultV814==='object'?pauseResultV814:null;
+    if(pauseOutcomeV814&&pauseOutcomeV814.publish_status==='pending'){
+      growPointsErrorV326=(Array.isArray(pauseOutcomeV814.blockers)?pauseOutcomeV814.blockers:[])
+        .map(blocker=>blocker&&blocker.message).filter(Boolean).join(' ')
+        ||'Add another gift at the last stamp before switching this one off.';
+      return growRerenderV322({quiet:true});
+    }
+    /* The version-forward truth, in the owner's words: a customer already collecting on a card
+       keeps the gift until that card ends, so the change reaches the NEXT card. A points gift or
+       a stopped stamps programme still changes for everyone at once and keeps the old wording. */
+    toast(pauseOutcomeV814&&pauseOutcomeV814.mode==='version_forward'
+      ?(want?'On from the next card':'Off from the next card')
+      :(want?'Turned on for customers':'Turned off for customers'));
     growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]').forEach(button=>button.onclick=()=>{
