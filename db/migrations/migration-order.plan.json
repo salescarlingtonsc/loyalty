@@ -4119,6 +4119,12 @@
       "path": "db/migrations/20261007_nestly_v821_billing_reconcile_call_failure_alerts.sql",
       "semanticVersion": "v821",
       "proposedDeployVersion": "20261007120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v822_daily_report_points_pot_scope.sql",
+      "semanticVersion": "v822",
+      "proposedDeployVersion": "20261007130000"
     }
   ]
 }
