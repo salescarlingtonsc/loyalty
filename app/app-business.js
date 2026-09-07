@@ -3599,13 +3599,22 @@ function openReversalDialog(kind,item,onDone){
      and no FEFO batch drains to check — the proof it needs is the claim row. Describing the
      points machinery over a free coffee is a promise about work nobody does. points_spent is 0
      for every stamp gift, and for a zero-point reward the generic copy is right too. */
+  /* nestly_v812 (owner photo 3: "Why reversal refused? If use other card or paynow then
+     can't reverse sale?"). A card, PayNow or bank-transfer sale now reverses — but Peekaa is
+     not the acquirer for a payment taken on the business's own terminal, so reversing here
+     corrects the books and moves no money. Staff have to be told that, or a sale gets
+     reversed in Peekaa and the customer is never actually refunded. Written for every
+     method rather than looked up per sale: the dialog does not carry the tender, and a
+     second place deciding what a sale was paid with is a second thing to keep true. */
+  const tenderNoteV812=kind!=='sale'||item.is_package_session?''
+    :`<div class="imp-note"><b>${esc(BRAND.productName)} records the correction, it does not move money.</b> Cash and store credit are settled here — store credit goes straight back to the customer's balance. If they paid by card, PayNow or bank transfer, refund them on the terminal or app you took that payment on.</div>`;
   const loyaltyNote=kind!=='redemption'?''
     :Number(item.points_spent||0)>0
     ?`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original points entry, every FEFO batch drain, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`
     :`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original claim on the customer's card, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal. The claim is removed and the slot on the card comes back; nothing in the history is deleted.</div>`;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal" role="dialog" aria-modal="true" aria-labelledby="revTitle" tabindex="-1"><div class="modal-card" style="max-width:560px">
     <div class="row"><div><h2 id="revTitle">${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
-    ${packageNote}${loyaltyNote}
+    ${packageNote}${tenderNoteV812}${loyaltyNote}
     <label for="revReason">${kind==='sale'?'Correction note (optional)':'Reason (required, at least 10 characters)'}</label><textarea id="revReason" rows="3" data-workspace-i18n placeholder="${kind==='sale'?'Add context if it helps your team.':'What happened and who approved this correction?'}"></textarea>
     <label style="display:flex;gap:9px;align-items:flex-start;color:var(--ink2)"><input id="revConfirm" type="checkbox" style="width:auto;margin-top:2px">I checked the original record and understand this creates append-only compensating entries.</label>
     <div id="revOutcome"></div><div class="row" style="margin-top:16px"><button class="btn danger" id="revSubmit" disabled>Confirm reversal</button><button class="btn ghost sm" id="revCancel">Cancel</button></div>
@@ -28631,7 +28640,16 @@ async function appointmentsPage(){
           ?`No ${selectedTiming.duration}-minute slot is left today. Move to another day, or use New appointment to pick a time.`
           :'No free slot is long enough on this day. Try another day or a shorter service.'}</p>`:''}</div>
       <div class="day-timeline-scroll"><div class="day-timeline" data-range-start="${rangeStart}" data-range-end="${rangeEnd}" data-hour-height="${hourHeight}" style="--day-columns:${columns.length};--day-height:${bodyHeight}px">
-        <div class="day-timeline-head" aria-hidden="true"></div>${columns.map(column=>`<div class="day-team-head"><span class="day-team-avatar" style="--staff-color:${esc(column.color)}">${esc(column.label.slice(0,1).toUpperCase())}</span><div><h3>${esc(column.label)}</h3><p class="small ${column.schedule.state==='working'?'':'muted'}">${esc(column.schedule.label)} · ${column.items.length} appointment${column.items.length===1?'':'s'}</p></div></div>`).join('')}
+        <div class="day-timeline-head" aria-hidden="true"></div>${columns.map(column=>{
+          /* nestly_v811 (owner photo 5: "1 appointment" ringed above a struck-through
+             cancellation — "since appointment is cancelled it should not show (1), it should
+             fall back to (0)"). column.items carries the cancelled and no-show rows too,
+             because V288 still DRAWS them as ghosts so staff can see what was called off.
+             The header is a count of what the member is actually doing that day, so it counts
+             what layoutCalendarDay treats as live — the same one set, never a second list. */
+          const liveCountV811=column.items.filter(item=>!inactiveAppointmentStatuses.has(String(item.status||'').toLowerCase())).length;
+          return `<div class="day-team-head"><span class="day-team-avatar" style="--staff-color:${esc(column.color)}">${esc(column.label.slice(0,1).toUpperCase())}</span><div><h3>${esc(column.label)}</h3><p class="small ${column.schedule.state==='working'?'':'muted'}">${esc(column.schedule.label)} · ${liveCountV811} appointment${liveCountV811===1?'':'s'}</p></div></div>`;
+        }).join('')}
         <div class="day-time-axis" style="height:${bodyHeight}px">${[...Array(Math.floor((rangeEnd-rangeStart)/60)+1)].map((_,i)=>`<span style="top:${i*hourHeight}px">${minuteClock(rangeStart+i*60)}</span>`).join('')}</div>
         ${columns.map(column=>{
           const schedule=column.schedule;

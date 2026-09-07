@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 636,
-  "itemCount": 681,
+  "pendingCount": 638,
+  "itemCount": 683,
   "items": [
     {
       "order": 1,
@@ -6817,6 +6817,26 @@
       "path": "supabase/migrations/20261007080000_nestly_v817_one_ci_gate_completion.sql",
       "octetLength": 20546,
       "sha256": "72d70f369fc81c7ab0cf03b2a5a267ccf6e4f3265d3e3e96b04b0ed6ee54bcd8",
+      "provenance": "local-source"
+    },
+    {
+      "order": 682,
+      "kind": "pending",
+      "version": "20261007090000",
+      "name": "nestly_v818_line_commission_branch_availability_booking_sync",
+      "path": "supabase/migrations/20261007090000_nestly_v818_line_commission_branch_availability_booking_sync.sql",
+      "octetLength": 33319,
+      "sha256": "ec53a2a61d3ef8cf958f32155b938e4edc96ab9705b3cbaa2bcb82c5a1ce21ce",
+      "provenance": "local-source"
+    },
+    {
+      "order": 683,
+      "kind": "pending",
+      "version": "20261007100000",
+      "name": "nestly_v819_reverse_merchant_settled_tenders",
+      "path": "supabase/migrations/20261007100000_nestly_v819_reverse_merchant_settled_tenders.sql",
+      "octetLength": 11808,
+      "sha256": "e4eacde77cc184e428b815423a79a838f459346469308f041ece4ec883c27dcd",
       "provenance": "local-source"
     }
   ]

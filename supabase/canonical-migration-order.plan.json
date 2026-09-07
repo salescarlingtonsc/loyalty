@@ -4090,6 +4090,18 @@
       "version": "20261007080000",
       "name": "nestly_v817_one_ci_gate_completion",
       "sourcePath": "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007090000",
+      "name": "nestly_v818_line_commission_branch_availability_booking_sync",
+      "sourcePath": "db/migrations/20261007_nestly_v818_line_commission_branch_availability_booking_sync.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007100000",
+      "name": "nestly_v819_reverse_merchant_settled_tenders",
+      "sourcePath": "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql"
     }
   ]
 }

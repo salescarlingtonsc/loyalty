@@ -4095,6 +4095,18 @@
       "path": "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql",
       "semanticVersion": "v817",
       "proposedDeployVersion": "20261007080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v818_line_commission_branch_availability_booking_sync.sql",
+      "semanticVersion": "v818",
+      "proposedDeployVersion": "20261007090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql",
+      "semanticVersion": "v819",
+      "proposedDeployVersion": "20261007100000"
     }
   ]
 }

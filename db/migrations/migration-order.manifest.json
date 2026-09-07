@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 680,
-  "executableCount": 666,
+  "itemCount": 682,
+  "executableCount": 668,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -964,7 +964,7 @@
     },
     {
       "sourceDeployVersion": "20261007",
-      "count": 8,
+      "count": 10,
       "paths": [
         "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql",
         "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql",
@@ -973,7 +973,9 @@
         "db/migrations/20261007_nestly_v814_stamp_gift_pause_version_forward.sql",
         "db/migrations/20261007_nestly_v815_redeem_across_pots_in_business_scope.sql",
         "db/migrations/20261007_nestly_v816_whatsapp_sent_unconfirmed.sql",
-        "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql"
+        "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql",
+        "db/migrations/20261007_nestly_v818_line_commission_branch_availability_booking_sync.sql",
+        "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql"
       ]
     }
   ],
@@ -6417,6 +6419,22 @@
       "semanticVersion": "v817",
       "proposedDeployVersion": "20261007080000",
       "sha256": "72d70f369fc81c7ab0cf03b2a5a267ccf6e4f3265d3e3e96b04b0ed6ee54bcd8"
+    },
+    {
+      "order": 681,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v818_line_commission_branch_availability_booking_sync.sql",
+      "semanticVersion": "v818",
+      "proposedDeployVersion": "20261007090000",
+      "sha256": "ec53a2a61d3ef8cf958f32155b938e4edc96ab9705b3cbaa2bcb82c5a1ce21ce"
+    },
+    {
+      "order": 682,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v819_reverse_merchant_settled_tenders.sql",
+      "semanticVersion": "v819",
+      "proposedDeployVersion": "20261007100000",
+      "sha256": "e4eacde77cc184e428b815423a79a838f459346469308f041ece4ec883c27dcd"
     }
   ]
 }

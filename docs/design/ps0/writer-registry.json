@@ -153,7 +153,7 @@
     "db_delegating_entrypoints": 13,
     "db_triggers_total": 132,
     "db_triggers_reaching_value": 4,
-    "migration_backfills": 25,
+    "migration_backfills": 26,
     "edge_functions": 4,
     "edge_direct_value_writes": 0,
     "browser_direct_writes": 32,
@@ -4157,6 +4157,10 @@
     {
       "id": "browser.rpc:app/app.js:till_customer_standing_v809",
       "reason": "nestly_v809 (audit F057) till standing reader. Read-only: it returns app.v666_till_customer_card - the same object the member-QR and gift-QR scans already handed this same caller - addressed by client id instead of by phone, behind lookup_client_by_phone's own gate (create_sales + clients read). It writes no row on any path, so it reaches no VALUE_TABLE. It exists because refreshTillCustomerStandingV408 could only re-read by phone, and a customer auto-provisioned by a member-QR scan has no phone_norm, so the till header stayed frozen at the pre-redemption figure after every redeem, gift scan and gift undo on the QR path. Same shape as the already-allowlisted lookup_client_by_phone and staff_scan_member_qr_v327."
+    },
+    {
+      "id": "db.backfill:20261007090000_nestly_v818_line_commission_branch_availability_booking_sync.sql:sale_items",
+      "reason": "nestly_v818 (owner photos 1 and 2) one-shot completion of four NEW columns on sale_items -- commission_rate_bps, commission_flat_cents, commission_cents, commission_resolved_at -- for the 293 lines written before the migration. NOT a value write: sale_items is not a VALUE_TABLE, the four columns did not exist before this migration so no prior snapshot is restated, and the UPDATE touches nothing else. It is only possible at all inside app.sale_items_commission_backfill, a window this same migration adds to app.sale_items_immutable_guard which refuses the write unless every economic column (sale_id, item_type, ref_id, qty, unit_cents, line_cents, product_id, staff_id, created_at, taxonomy) is byte-identical AND all four commission columns were still NULL -- so it can complete a snapshot and can never rewrite one. The window is opened and closed inside the migration transaction and no runtime path sets it. It runs because commission was resolved from sales.kind, which the till never sets to 'service', so every existing line would otherwise report the pre-v818 whole-basket product rate on Staff performance -- the report that raised the bug."
     }
   ]
 }
