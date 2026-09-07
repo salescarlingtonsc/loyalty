@@ -7,6 +7,7 @@ import {
 } from '../_shared/billing-service.ts';
 import {
   billingReconciliationStatus,
+  canonicalInstant,
   drainBoundedKeysetPages,
   drainBoundedProviderPages,
   newBillingReconciliationCursor,
@@ -72,9 +73,7 @@ type RunCounts = {
 };
 
 function epoch(value: unknown): string | null {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? new Date(value * 1000).toISOString()
-    : null;
+  return typeof value === 'number' ? canonicalInstant(value) : null;
 }
 
 function reconciliationAuthorized(req: Request): boolean {
@@ -126,7 +125,7 @@ function localSubscriptionSnapshot(
 ): Record<string, unknown> {
   return {
     status: subscription.status,
-    current_period_end: subscription.current_period_end,
+    current_period_end: canonicalInstant(subscription.current_period_end),
     cancel_at_period_end: subscription.cancel_at_period_end,
     items: [...items].sort((left, right) =>
       left.price_id.localeCompare(right.price_id) ||
@@ -171,7 +170,7 @@ function localInvoiceSnapshot(invoice: LocalInvoice): Record<string, unknown> {
     total_cents: invoice.total_cents,
     amount_paid_cents: invoice.amount_paid_cents,
     amount_remaining_cents: invoice.amount_remaining_cents,
-    paid_at: invoice.paid_at,
+    paid_at: canonicalInstant(invoice.paid_at),
   };
 }
 

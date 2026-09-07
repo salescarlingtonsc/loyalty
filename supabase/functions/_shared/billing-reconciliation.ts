@@ -1,3 +1,35 @@
+/* nestly_v822 — one spelling for an instant before either side of the Stripe reconciler digests
+   it. PostgREST renders a timestamptz read straight off the local tables as
+   `2026-09-06T07:38:46+00:00`; the Stripe-side snapshot builds `2026-09-06T07:38:46.000Z` from a
+   Unix epoch via `epoch()`. Same instant, different bytes, and `digest()` hashes bytes — so
+   production's first real reconciliation run (2026-09-07 17:10 UTC, run b3e84a97) reported
+   result=mismatch on subscriptions and invoices whose `current_period_end`/`paid_at` were
+   value-identical on both sides.
+
+   Both sides of every digested timestamp field pass through this function first. Unlike the
+   Razorpay reconciler's `isoInstant` (billing-instant.ts), which deliberately returns an
+   unparseable value as-is so it keeps mismatching, this one throws on garbage: a corrupt or
+   nonsensical timestamp must surface as a `failed` reconciliation item, never silently digest as
+   `null` (which would collide with a legitimately absent value and hide the corruption as a
+   false match/mismatch). Accepts either an ISO-8601 string (any offset or fractional-second
+   spelling) or a number of epoch seconds; null/undefined pass through as null. */
+export function canonicalInstant(
+  value: string | number | null | undefined,
+): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      throw new Error('billing reconciliation instant is not a finite epoch value');
+    }
+    return new Date(value * 1000).toISOString();
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('billing reconciliation instant is not a parseable date');
+  }
+  return date.toISOString();
+}
+
 export type BillingReconciliationCursor = {
   version: 2;
   snapshot_at: string;
