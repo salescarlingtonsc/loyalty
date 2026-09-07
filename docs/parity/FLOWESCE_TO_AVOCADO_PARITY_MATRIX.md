@@ -97,6 +97,12 @@ owner's explicit written decision.
 | UO-5 | **Storefront / Store orders / Website builder** | Never scoped | CLAUDE.md scopes Frenly as "loyalty-only… don't clone salon OS surface" — **directly contradicts** this protocol's "complete parity for every accessible feature." Needs the owner to reconcile the two instructions. |
 | UO-6 | **Completion ≠ payment split** | Never scoped | Architectural. Everything financial hangs off it. |
 
+### 4a. APPROVED OMISSIONS (owner-ruled, written)
+
+| # | Item | Owner ruling | Date | Consequence |
+|---|---|---|---|---|
+| AO-1 | **Gift cards** (FL-GIFT) and **Memberships** (FL-MEMBERSHIP) | "Hide gift card or membership — I am not implementing in live." | 2026-09-08 | Both stay hidden from the business UI and the till (`RETIRED_BUSINESS_MODULES_V768` retires `giftcards`; `UNVERIFIED_MODULES_V466` gates `memberships`). Existing DB objects and ledger history are kept, nothing is dropped. The open question from nestly_v818 — whether a gift-card or membership sale line should pay staff commission — is **moot** and closed: those lines will not exist in live. Do not build parity for either without a new written ruling. |
+
 ## 5. Contradiction requiring owner resolution
 
 `CLAUDE.md` currently says: *"Should NOT be duplicated / out of scope: Salon-specific surface
