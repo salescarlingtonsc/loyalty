@@ -257,7 +257,7 @@ end
 $d19$;
 
 do $d20$
-declare r record;
+declare r record; v_def text; v_gated boolean;
 begin
   for r in
     select * from (values
@@ -267,7 +267,16 @@ begin
       ('public.get_customer_intelligence_export_page_v83(uuid,integer,integer)','customerintel'),
       ('public.get_revenue_truth_v106(uuid,date,date,uuid,timestamptz)','customerintel'),
       ('public.set_expense_void(uuid,uuid,boolean)','expenses'),
-      ('public.update_expense_v285(uuid,uuid,integer,text,text)','expenses'),
+      /* nestly_v811: the arity moved, exactly as it did for evaluate_checkout in v657.
+         nestly_v809 DROPPED public.update_expense_v285(uuid,uuid,integer,text,text) and created a
+         six-argument overload carrying p_clear_note boolean, in one transaction and for the same
+         reason — two overloads a five-argument named call could both satisfy is the PGRST203
+         ambiguity that took every promotion save down in v410. The check itself is unchanged and
+         still the point; the gate is untouched and still present (verified against production
+         2026-10-07: app.can_module is in the live body). Only the signature this row looks the
+         function up by is corrected, so D20 stops reporting 'has gone or moved' about a function
+         that never lost its gate. */
+      ('public.update_expense_v285(uuid,uuid,integer,text,text,boolean)','expenses'),
       ('public.correct_quick_sale_amount_v84(uuid,uuid,integer,text,text)','sales'),
       /* nestly_v657: the arity moved. nestly_v656 gave evaluate_checkout a sixth, defaulted
          parameter (the tier discount the counter chose for this sale) and DROPPED the 5-argument
@@ -283,7 +292,45 @@ begin
     if to_regprocedure(r.sig) is null then
       insert into _scan values (null, '(platform)', 'D20', 'RUNTIME-DANGEROUS',
         r.sig||' has gone or moved -- the '||r.module||' module gate can no longer be verified');
-    elsif position('can_module' in pg_get_functiondef(to_regprocedure(r.sig))) = 0 then
+      continue;
+    end if;
+    v_def := pg_get_functiondef(to_regprocedure(r.sig));
+    -- ARM 1 -- the entry point asks app.can_module itself. This was the entire check until v811.
+    v_gated := position('can_module' in v_def) > 0;
+    -- ARM 2 (nestly_v811) -- the entry point delegates to a SHARED REFUSING GATE in app that asks
+    -- it. nestly_v721 deleted public.get_customer_intelligence_v83's own hand-written merchant
+    -- gate and replaced it with `perform app.ci_access_gate_v667(p_business, p_branch)`: one CI
+    -- authority for the whole family instead of one reader holding a second opinion. That fix was
+    -- correct (v83's private gate had no platform arm, so the assigned consultant and the super
+    -- admin were refused by THIS reader while all thirty-odd siblings served them) and it is
+    -- precisely what this rule's own prose asks for -- the function must CONSULT the module
+    -- authority. But the check was a substring test on the entry point's OWN body, so the moment
+    -- the authority moved one call deep it reported the best-gated reader in the family as
+    -- ungated. Splicing app.can_module back into v83 to satisfy the substring would re-create the
+    -- two-gate ambiguity v721 removed AND would refuse the platform arm all over again: a
+    -- regression dressed as a fix. So the check follows the call instead.
+    --
+    -- DELIBERATELY NARROW, so this is a refinement and not a loophole:
+    --   * ONE HOP only. A gate that a gate calls is not an authority a reader of this entry
+    --     point's source can see it consulting.
+    --   * The hopped function must live in `app` (the module authority is never a public
+    --     surface), must be named by this body as `app.<name>(`, must itself contain can_module,
+    --     and must RAISE 42501 -- it has to be a REFUSAL, not a helper that merely mentions the
+    --     authority while computing something. app.ci_access_gate_v667 satisfies all four.
+    -- An entry point that neither asks the authority nor calls a refusing gate that does is still
+    -- reported, which is the row this rule exists to raise.
+    if not v_gated then
+      select coalesce(bool_or(true), false) into v_gated
+        from pg_proc gate
+        join pg_namespace gate_ns on gate_ns.oid = gate.pronamespace
+       where gate_ns.nspname = 'app'
+         and gate.prokind = 'f'
+         and gate.prolang <> (select lang.oid from pg_language lang where lang.lanname = 'internal')
+         and v_def like '%app.'||gate.proname||'(%'
+         and position('can_module' in pg_get_functiondef(gate.oid)) > 0
+         and position('42501' in pg_get_functiondef(gate.oid)) > 0;
+    end if;
+    if not coalesce(v_gated, false) then
       insert into _scan values (null, '(platform)', 'D20', 'RUNTIME-DANGEROUS',
         r.sig||' serves data without consulting the '||r.module||' module authority '
         ||'(a ROLE permission alone is not the owner''s Off switch)');
@@ -672,3 +719,16 @@ rollback;
 --  * D11 is evaluated as (loyalty enabled AND no loyalty_programs row) OR (no active config
 --    version pointer) — the second disjunct is not gated on the loyalty module, because a NULL
 --    pointer strands every versioned reader regardless of which modules are on.
+--    D11 has ONE writer-side fix behind it: nestly_v565 made app.ensure_loyalty_program_row the
+--    single, ungated, idempotent birth of that row, and nestly_v811 pointed the last remaining
+--    path (self-serve activation, which had gone back to a c45-guarded insert that skipped
+--    silently) at it. The rule is deliberately NOT relaxed for "the owner has not finished the
+--    wizard": the wizard is not the writer — every birth path seeds the row and the seed trigger
+--    publishes version 1 from it, so a tenant without one cannot open Grow at all
+--    ('base configuration not found'), wizard or no wizard.
+--  * D20 resolves the module authority ONE call deep since nestly_v811, because nestly_v721
+--    moved the Customer Intelligence authority out of each reader and into the single shared
+--    refusing gate app.ci_access_gate_v667. The hop is restricted to an `app` function this body
+--    names, which itself contains can_module AND raises 42501 — see the commentary in the $d20$
+--    block for why a wider hop would be a loophole and why splicing can_module back into the
+--    entry point would be a regression rather than a fix.
