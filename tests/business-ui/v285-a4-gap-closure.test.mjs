@@ -102,10 +102,10 @@ test('every finance report states the branches its figures cover', () => {
   }
 });
 
-test('staff performance reads the branch it claims to cover', () => {
+test('staff commission reads the branch it claims to cover', () => {
+  /* nestly_v825: the read is the commission-lines RPC, scoped by the same p_branch. */
   const body = app.match(/async function staffPerfPage\([\s\S]*?\n\}\n/)[0];
-  assert.match(body, /const commissionQueryV285=sb\.from\('sale_commission'\)/);
-  assert.match(body, /selectedBranchId\?commissionQueryV285\.eq\('branch_id',selectedBranchId\):commissionQueryV285/,
+  assert.match(body, /sb\.rpc\('business_staff_commission_lines_v825',\s*\n?\s*\{p_business:S\.biz\.id,p_branch:selectedBranchId\|\|null/,
     'the commission read must be branch-scoped whenever a branch is selected');
   assert.match(body, /p_branch:selectedBranchId\|\|null,p_module:'staffperf'/,
     'the module-scope check must be asked about the same branch');

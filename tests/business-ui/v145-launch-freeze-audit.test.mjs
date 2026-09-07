@@ -242,42 +242,38 @@ test('P&L charts use complete server aggregates and Singapore dates, never cappe
   assert.match(pnl, /reportRangeValidation\(from,to\)/);
 });
 
-test('staff performance excludes non-revenue ledger rows from revenue while retaining full traceability', () => {
-  const helperStart=app.indexOf('function staffPerformanceAggregation(');
-  const helperEnd=app.indexOf('\nfunction waitlistTodaySummary(',helperStart);
-  assert.ok(helperStart>=0&&helperEnd>helperStart,'staff performance aggregation helper is missing');
-  const aggregate=new Function(`${app.slice(helperStart,helperEnd)};return staffPerformanceAggregation`)();
-  const rows=Array.from({length:1001},(_,index)=>({sale_id:`revenue-${index}`,staff_id:'staff-1',amount_cents:1,commission_cents:0,counts_as_revenue:true}));
+test('staff commission counts a reversed line in no total and pays each line to one member (nestly_v825)', () => {
+  /* nestly_v825 retired the revenue ranking this test executed; the helper that replaced it is
+     executed the same way, and the page-level pins follow the reader it now uses. */
+  const helperStart=app.indexOf('function staffCommissionAggregationV825(');
+  const helperEnd=app.indexOf('\nfunction commissionInputsHtmlV825(',helperStart);
+  assert.ok(helperStart>=0&&helperEnd>helperStart,'staff commission aggregation helper is missing');
+  const aggregate=new Function(`${app.slice(helperStart,helperEnd)};return staffCommissionAggregationV825`)();
+  const rows=Array.from({length:1001},(_,index)=>({sale_id:`sale-${index}`,staff_id:'staff-1',staff_name:'Aisha',line_cents:1,commission_cents:1,reversed:false}));
   rows.push(
-    {sale_id:'gift-card',staff_id:'staff-1',amount_cents:10000,commission_cents:0,counts_as_revenue:false},
-    {sale_id:'reversal',staff_id:'staff-1',amount_cents:-400,commission_cents:-40,counts_as_revenue:true}
+    {sale_id:'reversed',staff_id:'staff-1',staff_name:'Aisha',line_cents:10000,commission_cents:1000,reversed:true},
+    {sale_id:'nobody',staff_id:null,line_cents:400,commission_cents:0,reversed:false}
   );
-  const result=aggregate(rows,[{id:'staff-1',full_name:'Aisha'}]);
-  assert.equal(result.byStaff['staff-1'].ledgerRecords,1003);
-  assert.equal(result.byStaff['staff-1'].revenueRecords,1002);
-  assert.equal(result.byStaff['staff-1'].revenue,601,
-    'gift-card issuance is excluded while the signed reversal reduces attributed revenue');
-  assert.equal(result.byStaff['staff-1'].commission,-40);
+  const result=aggregate(rows);
+  const aisha=result.staff.find(s=>s.key==='staff-1');
+  assert.equal(aisha.name,'Aisha');
+  assert.equal(aisha.lines,1001);
+  assert.equal(aisha.commission,1001,'the reversed line pays nothing');
+  assert.equal(aisha.reversedSales,1,'…but is still counted as reversed for traceability');
+  assert.equal(result.staff.at(-1).key,'__unattributed','a line with no member is listed last, never under someone');
+  assert.equal(result.totals.commission,1001);
   const staff = section('async function staffPerfPage(drillId)', '/* ---------- daily report ---------- */');
   /* V285 retarget: the commission read is still one fetchAllRows over sale_commission, but the
      query is now built as a named const first so the branch chosen at the top bar can be applied
      to it (the page used to rank the whole business whatever the scope said). The pin follows the
      query rather than being deleted. */
-  assert.match(staff, /fetchAllRows\(\(\)=>\{\s*\n\s*const commissionQueryV285=sb\.from\('sale_commission'\)/);
+  assert.match(staff, /fetchAllRows\(\(\)=>sb\.rpc\('business_staff_commission_lines_v825'/);
   assert.match(staff, /require_module_scope_v145[\s\S]*p_module:'staffperf'/);
-  assert.match(staff, /Signed ledger records/);
-  assert.match(staff, /Ledger records/);
-  assert.match(staff, /counts_as_revenue/);
-  assert.match(staff, /Revenue records/);
-  assert.match(staff, /Revenue excludes rows whose immutable sale policy marks them non-revenue/);
-  assert.match(staff, /Revenue treatment/);
-  assert.match(staff, />Non-revenue</);
-  assert.match(staff, /Apply the new range to refresh staff performance/);
-  assert.match(staff, /Apply the new range to refresh these ledger records/);
-  assert.match(staff, /p_module:'clients'/);
-  assert.match(staff, /const clientsAvailable=!clientsScopeResult\?\.error/);
-  assert.match(staff, /Customer details unavailable/);
-  assert.match(staff, /cid&&clientName\[cid\]\?`<a href="#\/client\/\$\{cid\}"/);
+  assert.match(staff, /Reversed/);
+  assert.match(staff, /One sale line pays one team member/);
+  assert.match(staff, /Run the report to refresh staff commission for the new dates/);
+  assert.match(staff, /r\.client_id&&r\.client_name\?`<a href="#\/client\/\$\{esc\(r\.client_id\)\}"/);
+  assert.match(staff, /Customer record unavailable/);
 });
 
 test('Reports states the period, branch and business-wide scopes without claiming one common scope', () => {
@@ -788,10 +784,13 @@ test('Grow offers a real reward photo upload and never the raw image-storage wor
     'saving a reward the owner did not re-photograph must preserve its stored image reference');
   assert.match(editor, /id="rwPhotoV340" type="file" accept="image\/png,image\/jpeg,image\/webp"/,
     'the reward editor must offer a real photo upload, not a path field');
-  assert.match(loyalty, /sb\.storage\.from\('business-public'\)\s*\n?\s*\.upload\(objectPath/,
+  /* nestly_v825: the reward uploader is the one shared business-photo uploader, told the folder. */
+  assert.match(loyalty, /async function uploadRewardPhotoV340\(file\)\{return uploadBusinessPhotoV825\('reward',file\)\}/,
+    'reward photos must go through the one owned-bucket uploader');
+  assert.match(app, /async function uploadBusinessPhotoV825\(folder,file\)\{[\s\S]{0,900}sb\.storage\.from\('business-public'\)\s*\n?\s*\.upload\(objectPath/,
     'reward photos must go to the same owned public bucket as the logo and cover photo');
-  assert.match(loyalty, /\$\{S\.biz\.id\}\/reward\/\$\{crypto\.randomUUID\(\)\}/,
-    'the object path must match the reward prefix app.v95_storage_path_owned already permits');
+  assert.match(app, /\$\{S\.biz\.id\}\/\$\{folder\}\/\$\{crypto\.randomUUID\(\)\}/,
+    'the object path must match the folder prefix app.v95_storage_path_owned already permits');
   const customerCatalog = section('async function renderCustomerWallet(', 'async function renderCustomerInAppInbox(');
   assert.match(customerCatalog, /r\.image_ref/,
     'already-published reward images must continue to render customer-side');

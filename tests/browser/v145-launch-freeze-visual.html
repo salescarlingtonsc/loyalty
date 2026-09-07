@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="fa74da0f5e55d2969b35738939bb8c8aeb663820d991b41b840cdf124f748ff0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="27d79022181ea6d1c9df022053077e18f126294e8b141345480a8d849e6865d9"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5782,7 +5782,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · fa74da0f5e55d2969b35738939bb8c8aeb663820d991b41b840cdf124f748ff0</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 27d79022181ea6d1c9df022053077e18f126294e8b141345480a8d849e6865d9</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6057,35 +6057,81 @@ function expenseAmountProjection(expense,baseCurrency='SGD'){
     showBase:sourceCurrency!==normalizedBase||Math.abs(rate-1)>1e-12
   };
 }
-function staffPerformanceAggregation(rows,staffRows){
-  const names=Object.fromEntries((Array.isArray(staffRows)?staffRows:[])
-    .map(staff=>[staff.id,staff.full_name||'Team member']));
+/* nestly_v825 — what the Staff commission page computes from the rows it shows. Pure, so the
+   tests can execute it. A reversed line counts as reversed and in nothing else; every other line
+   pays exactly one team member (the row's staff_id, else "unattributed"), so no commission can
+   ever be counted under two people. Replaces staffPerformanceAggregation (v145), whose ranking
+   page this module retired (owner ruling 2026-09-08). */
+function staffCommissionAggregationV825(rows){
   const byStaff={};
-  Object.keys(names).forEach(id=>{byStaff[id]={ledgerRecords:0,revenueRecords:0,revenue:0,commission:0}});
+  const ensure=key=>{
+    if(!byStaff[key])byStaff[key]={key,name:key==='__unattributed'?'Unattributed':'Team member',
+      lines:0,sales:new Set(),reversedLines:0,reversedSales:new Set(),amount:0,commission:0};
+    return byStaff[key];
+  };
   (Array.isArray(rows)?rows:[]).forEach(row=>{
+    if(!row)return;
     const key=row.staff_id||'__unattributed';
-    if(!byStaff[key])byStaff[key]={ledgerRecords:0,revenueRecords:0,revenue:0,commission:0};
-    const amount=Number(row.amount_cents||0),commission=Number(row.commission_cents||0);
-    byStaff[key].ledgerRecords+=1;
-    byStaff[key].commission+=commission;
-    if(row.counts_as_revenue===true){
-      byStaff[key].revenueRecords+=1;
-      byStaff[key].revenue+=amount;
-    }
+    const bucket=ensure(key);
+    if(row.staff_id&&row.staff_name)bucket.name=String(row.staff_name);
+    if(row.reversed){bucket.reversedLines+=1;bucket.reversedSales.add(row.sale_id);return}
+    bucket.lines+=1;bucket.sales.add(row.sale_id);
+    bucket.amount+=Number(row.line_cents||0);
+    bucket.commission+=Number(row.commission_cents||0);
   });
   const keys=Object.keys(byStaff).sort((a,b)=>{
     if(a==='__unattributed')return 1;
     if(b==='__unattributed')return -1;
-    return (names[a]||'').localeCompare(names[b]||'');
+    return byStaff[a].name.localeCompare(byStaff[b].name);
   });
-  const totals=keys.reduce((total,key)=>({
-    ledgerRecords:total.ledgerRecords+byStaff[key].ledgerRecords,
-    revenueRecords:total.revenueRecords+byStaff[key].revenueRecords,
-    revenue:total.revenue+byStaff[key].revenue,
-    commission:total.commission+byStaff[key].commission
-  }),{ledgerRecords:0,revenueRecords:0,revenue:0,commission:0});
-  return {names,byStaff,keys,totals};
+  const staff=keys.map(key=>{
+    const b=byStaff[key];
+    return {key,name:b.name,lines:b.lines,sales:b.sales.size,reversedLines:b.reversedLines,
+      reversedSales:b.reversedSales.size,amount:b.amount,commission:b.commission};
+  });
+  const totals=staff.reduce((t,s)=>({lines:t.lines+s.lines,sales:t.sales+s.sales,
+    reversedLines:t.reversedLines+s.reversedLines,reversedSales:t.reversedSales+s.reversedSales,
+    amount:t.amount+s.amount,commission:t.commission+s.commission}),
+    {lines:0,sales:0,reversedLines:0,reversedSales:0,amount:0,commission:0});
+  return {staff,totals};
 }
+/* nestly_v825 — the commission pair on a product, a bundle or a package (owner ruling 2026-09-08:
+   "% or fixed amount, same as services"). One markup, one reader, one writer, so blank-vs-zero
+   means the same thing on every editor: blank = the team member's own rate, 0 = a real "no
+   commission", and a fixed amount outranks the % when both are set (v13's rule). The writer is
+   business_set_catalogue_commission_v825; services keep their own direct write. */
+function commissionInputsHtmlV825({idPrefix,row=null}){
+  const pct=row&&row.commission_bps!=null?String(Number(row.commission_bps)/100):'';
+  const flat=row&&row.commission_flat_cents!=null?(Number(row.commission_flat_cents)/100).toFixed(2):'';
+  return `<div><label for="${idPrefix}-commission-v825">Commission override %</label><input id="${idPrefix}-commission-v825" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(pct)}"></div><div><label for="${idPrefix}-commission-flat-v825">Fixed commission (${esc(S.biz?.currency||'SGD')})</label><input id="${idPrefix}-commission-flat-v825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${esc(flat)}"></div>`;
+}
+function fillCommissionInputsV825(idPrefix,row){
+  const pct=$(`${idPrefix}-commission-v825`),flat=$(`${idPrefix}-commission-flat-v825`);
+  if(pct){pct.value=row&&row.commission_bps!=null?String(Number(row.commission_bps)/100):'';pct.defaultValue=pct.value}
+  if(flat){flat.value=row&&row.commission_flat_cents!=null?(Number(row.commission_flat_cents)/100).toFixed(2):'';flat.defaultValue=flat.value}
+}
+function readCommissionInputsV825(idPrefix){
+  const pct=String($(`${idPrefix}-commission-v825`)?.value||'').trim();
+  const flat=String($(`${idPrefix}-commission-flat-v825`)?.value||'').trim();
+  const bps=pct===''?null:Math.round(parseFloat(pct)*100);
+  const flatCents=flat===''?null:Math.round(parseFloat(flat)*100);
+  if(bps!==null&&!(bps>=0&&bps<=10000))return {error:'Enter a commission between 0 and 100, or leave it blank.'};
+  if(flatCents!==null&&!(flatCents>=0))return {error:'Enter a fixed commission of 0 or more, or leave it blank.'};
+  return {bps,flatCents};
+}
+const commissionInputsChangedV825=idPrefix=>[$(`${idPrefix}-commission-v825`),$(`${idPrefix}-commission-flat-v825`)]
+  .some(el=>el&&String(el.value)!==String(el.defaultValue));
+async function saveCatalogueCommissionV825(kind,id,input){
+  const {error}=await sb.rpc('business_set_catalogue_commission_v825',{p_business:S.biz.id,p_kind:kind,p_id:id,
+    p_commission_bps:input.bps,p_commission_flat_cents:input.flatCents});
+  return error||null;
+}
+const commissionOverrideTextV825=row=>{
+  if(!row)return '';
+  if(row.commission_flat_cents!=null)return `${money(row.commission_flat_cents)} fixed`;
+  if(row.commission_bps!=null)return `${Number(row.commission_bps)/100}%`;
+  return '';
+};
 /* nestly_v571 (owner, Waitlist photo: "Add filter time here" over Today / Yesterday / date–date).
    The window is now a range rather than "everything since midnight". `windowEndMs` is exclusive
    and defaults to +infinity, which reproduces the shipped today-onwards behaviour exactly for
@@ -8575,7 +8621,7 @@ function renderHistPage(history,n,offsetV468=0){
     canReadModule('appointments')&&{key:'busy',bodyId:'busyBody',panelId:'reportPanelBusyV294',icon:'appointments',title:'Efficiency',emptyBody:'Run the report for this period.'},
     canSeeReturningAnswer&&{key:'returning',bodyId:'returningBody',panelId:'reportPanelReturningV294',icon:'customers',title:'Customer Retention',emptyBody:'Run the report for this period.'},
     canSeeReturningAnswer&&{key:'recovered',bodyId:'recoveredBody',panelId:'reportPanelRecoveredV550',icon:'till',title:'Recovered Revenue',emptyBody:'Run the report for this period.'},
-    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Team Performance'}
+    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Staff commission'}
   ].filter(Boolean);
   /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
      here" — the period and the Run report button decide what every card below shows, so they
@@ -9999,7 +10045,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'fa74da0f5e55d2969b35738939bb8c8aeb663820d991b41b840cdf124f748ff0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'27d79022181ea6d1c9df022053077e18f126294e8b141345480a8d849e6865d9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

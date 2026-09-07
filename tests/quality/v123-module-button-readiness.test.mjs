@@ -48,14 +48,13 @@ test('all application clipboard actions use one honest recoverable helper',()=>{
 });
 
 test('staff performance drill-down is a semantic keyboard link',()=>{
-  const staff=between('async function staffPerfPage','async function staffPerfDrill');
+  /* nestly_v825: the drill page is retired; each team member is a real button with a tab role on
+     the Staff commission page, so the name is still the keyboard-reachable control. */
+  const staff=between('async function staffPerfPage','function enhanceStaffMembersTabsV164');
   assert.doesNotMatch(staff,/<tr[^>]*onclick=/);
   assert.doesNotMatch(staff,/click a row/i);
-  // The separate "select a staff name" instruction is gone because the staff NAME is now the
-  // link itself — the affordance is the control, so prose explaining it is redundant. Assert
-  // that stronger property directly instead of the wording.
-  assert.match(staff,/<a[^>]+href="#\/staffperf\/\$\{[\s\S]{0,120}<b>\$\{[^}]*names\[k\]/,
-    'the staff name itself must be the keyboard-reachable drill-down link');
+  assert.match(staff,/<button type="button" class="qbtn\$\{selected\?' act':''\}" role="tab" aria-selected="\$\{selected\?'true':'false'\}" data-commission-staff-v825=/,
+    'the team member chip itself must be the keyboard-reachable control');
 });
 
 test('bundle creation uses one replay-safe server writer and disables the initiating control',()=>{

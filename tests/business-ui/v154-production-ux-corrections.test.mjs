@@ -17,7 +17,7 @@ const customers = section('async function clientsPage()', 'async function client
 const appointments = section('async function appointmentsPage()', 'async function waitlistPage()');
 const sales = section('async function salesPage()', 'async function servicesPage()');
 const reports = section('async function reportsPage()', 'async function setupPage()');
-const staff = section('async function staffPerfPage(drillId)', 'async function staffPerfDrill');
+const staff = section('async function staffPerfPage(drillId)', 'function enhanceStaffMembersTabsV164(');
 const grow = section('async function growPage(', 'function pbStatusChip');
 const nav = section('const MODULES={', 'function navHtml');
 
@@ -85,14 +85,14 @@ test('V154 reports remove redundant shared filter copy while preserving controls
   assert.match(reports, /Export sales CSV/);
 });
 
-test('V154 staff performance supports Today preset and explicit ranking basis', () => {
-  assert.match(staff, /data-d="1">Today/);
-  assert.match(staff, /staffPerfSort/);
-  assert.match(staff, /staffPerfDir/);
-  assert.match(staff, /Ranked by/);
-  assert.match(staff, /Highest attributed revenue/);
-  assert.match(staff, /Highest signed commission/);
-  assert.match(staff, /Most revenue-qualified records/);
+test('V154 → nestly_v825: Staff commission opens on Today and offers the calendar presets the owner asked for', () => {
+  /* The ranking controls this test pinned (sort basis, winner cards) went with the ranking page. */
+  assert.match(staff, /class="qbtn act" data-commission-period-v825="today">Today/);
+  assert.match(staff, /data-commission-period-v825="week">This week/);
+  assert.match(staff, /data-commission-period-v825="month">This month/);
+  assert.match(staff, /data-commission-period-v825="year">This year/);
+  assert.match(staff, /data-commission-staff-v825/);
+  assert.match(staff, /Commission earned/);
   assert.match(staff, /Rank/);
 });
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="764158e8eacb6aeda6b158ab004de7652e62289ce0dd176b3081653ab96e0342"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="fd8d149c799e4d914bb3df1054f227b77cc3f69f65f4781e92b7dc1657e3a39c"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5782,7 +5782,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 764158e8eacb6aeda6b158ab004de7652e62289ce0dd176b3081653ab96e0342</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · fd8d149c799e4d914bb3df1054f227b77cc3f69f65f4781e92b7dc1657e3a39c</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -12073,7 +12073,7 @@ async function servicesPage(){
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
-      <td class="num">${s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
+      <td class="num">${s.commission_flat_cents!=null?`${esc(money(s.commission_flat_cents))} fixed`:s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
       ${/* nestly_v658 (owner photo 7: "once fixed will be the model that other modules follow
            (status / edit / delete) will be the same for products & services"). The Packages row
            makes the STATUS PILL itself the switch; here the pill was inert and the real control
@@ -12107,8 +12107,9 @@ async function servicesPage(){
             <div><label for="svcEditBufferBefore">Buffer before (minutes)</label><input id="svcEditBufferBefore" type="number" min="0" step="5" value="${Number(s.buffer_before_min)||0}"></div>
             <div><label for="svcEditBufferAfter">Buffer after (minutes)</label><input id="svcEditBufferAfter" type="number" min="0" step="5" value="${Number(s.buffer_after_min)||0}"></div>
             <div><label for="svcEditCommissionV584">Commission override %</label><input id="svcEditCommissionV584" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(commissionPctV584(s.commission_bps))}"></div>
+            <div><label for="svcEditCommissionFlatV825">Fixed commission (${esc(S.biz.currency||'SGD')})</label><input id="svcEditCommissionFlatV825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${s.commission_flat_cents==null?'':esc((Number(s.commission_flat_cents)/100).toFixed(2))}"></div>
           </div>
-          <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission.</p>
+          <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission. A fixed amount is paid per service performed and outranks the %.</p>
           ${/* nestly_v613: only drawn for a firm that HAS more than one branch — a single-branch
                shop has no choice to make and the control would only be a question with one answer. */''}
           ${branchListV613.length>1?`<div class="svc-branch-picker-v613">
@@ -12191,17 +12192,24 @@ async function servicesPage(){
          (the retired card's own copy said so). Only a real number is written. */
       const commissionRawV584=String($('svcEditCommissionV584')?.value||'').trim();
       const commissionBpsV584=commissionRawV584===''?null:Math.round(parseFloat(commissionRawV584)*100);
+      /* nestly_v825: the fixed amount services carried since v13 but never exposed. Same blank-vs-
+         zero rule; written by the same direct update as the %. */
+      const commissionFlatRawV825=String($('svcEditCommissionFlatV825')?.value||'').trim();
+      const commissionFlatV825=commissionFlatRawV825===''?null:Math.round(parseFloat(commissionFlatRawV825)*100);
       if(name.length<2){if(status)status.textContent='Give the service a name.';return}
       if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
       if(!(duration>=5)){if(status)status.textContent='Enter a duration of at least 5 minutes.';return}
       if(commissionBpsV584!==null&&!(commissionBpsV584>=0&&commissionBpsV584<=10000)){
         if(status)status.textContent='Enter a commission between 0 and 100, or leave it blank.';return;
       }
+      if(commissionFlatV825!==null&&!(commissionFlatV825>=0)){
+        if(status)status.textContent='Enter a fixed commission of 0 or more, or leave it blank.';return;
+      }
       CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
       const {data,error}=await sb.from('services')
         .update({name,variant_label:variant,price_cents:price,duration_min:duration,
           buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,
-          commission_bps:commissionBpsV584}).eq('id',id).select().limit(1);
+          commission_bps:commissionBpsV584,commission_flat_cents:commissionFlatV825}).eq('id',id).select().limit(1);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
       if(!isCurrent())return;
       if(error){if(status)status.textContent=ownerErrorText(error);return}
@@ -12324,6 +12332,11 @@ async function servicesPage(){
         <div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>
         <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
         <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+        ${/* nestly_v825 (owner photo 2): a bundle can carry its own commission. When set it replaces
+             every included service's and product's rate for lines sold through this bundle; a
+             fixed amount is paid once per bundle sold. */''}
+        <div class="field-grid" style="margin-top:8px">${commissionInputsHtmlV825({idPrefix:'bundle'})}</div>
+        <p class="muted small help">Sets what everything in this bundle pays when sold together. Blank keeps each service's and product's own commission; a fixed amount is paid once per bundle sold.</p>
         <label>Included services</label><div id="bsv" class="small"></div>
         <label>Included products</label><div id="bpvV488" class="small"></div>
         <div style="margin-top:12px" class="row"><button class="btn ghost sm" id="cancelBundleForm">Cancel</button><span class="spacer"></span><button class="btn sm" id="badd3">Save bundle</button></div>
@@ -12364,8 +12377,8 @@ async function servicesPage(){
        bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
        rather than table DML. */
     bundleCacheV285=bu||[];
-    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||i.products?.name||'')).filter(Boolean).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
+    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Commission</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||i.products?.name||'')).filter(Boolean).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td>${commissionOverrideTextV825(b)?esc(commissionOverrideTextV825(b)):'<span class="muted">\u2014</span>'}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
@@ -12421,6 +12434,7 @@ async function servicesPage(){
     $('badd3').textContent='Save changes';
     $('bnm').value=bundle.name||'';
     $('bpr').value=(Number(bundle.price_cents||0)/100).toFixed(2);
+    fillCommissionInputsV825('bundle',bundle);
     const included=new Set((bundle.bundle_items||[]).map(item=>item.service_id).filter(Boolean));
     const includedProductsV488=new Set((bundle.bundle_items||[]).map(item=>item.product_id).filter(Boolean));
     document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=included.has(box.dataset.bs)});
@@ -12437,6 +12451,8 @@ async function servicesPage(){
        a real bundle, and a products-only bundle is one too. */
     if(picked.length+pickedProductsV488.length<2) return toast('Pick at least 2 items');
     const priceCents=Math.round(parseFloat($('bpr').value||'0')*100);
+    const bundleCommissionV825=readCommissionInputsV825('bundle');
+    if(bundleCommissionV825.error)return toast(bundleCommissionV825.error);
     /* nestly_v488: with products in the membership the save goes through the v488 writers. A
        services-only bundle keeps the v123/v285 writers it has always used — those are proven,
        and the CDN window means this bundle can be served before the migration is applied; the
@@ -12457,6 +12473,10 @@ async function servicesPage(){
       if(error)return missingV488(error)
         ?toast('Product bundles need the latest Peekaa service update.')
         :fail(error);
+      if(commissionInputsChangedV825('bundle')){
+        const commissionErrorV825=await saveCatalogueCommissionV825('bundle',editingBundleIdV285,bundleCommissionV825);
+        if(commissionErrorV825)return fail(commissionErrorV825);
+      }
       closeBundleFormV285();
       toast('Bundle updated');
       await loadBR();
@@ -12478,6 +12498,11 @@ async function servicesPage(){
         ?toast('Product bundles need the latest Peekaa service update.')
         :fail(error);
       clearWriteAttempt(bundleSlot);
+      const createdBundleIdV825=data?.bundle_id||null;
+      if(createdBundleIdV825&&(bundleCommissionV825.bps!==null||bundleCommissionV825.flatCents!==null)){
+        const commissionErrorV825=await saveCatalogueCommissionV825('bundle',createdBundleIdV825,bundleCommissionV825);
+        if(commissionErrorV825)return fail(commissionErrorV825);
+      }
       toast(isReplayResult(data)?'Bundle already created — no duplicate':'Bundle created');
       $('bnm').value='';document.querySelectorAll('[data-bs],[data-bp-v488]').forEach(box=>{box.checked=false});
       if($('bundleFormCard'))$('bundleFormCard').style.display='none';
@@ -12491,7 +12516,7 @@ async function servicesPage(){
      open Bundles in the same visit and it still said "add services first" — with no way to pick
      anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
      every time the Bundles view is opened. */
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();showBundleFormV613();loadBR();$('bnm')?.focus()};
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();showBundleFormV613();fillCommissionInputsV825('bundle',null);loadBR();$('bnm')?.focus()};
   if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>closeBundleFormV285();
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
@@ -14091,20 +14116,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      and it is already carried by the draft/publish kernel, so a second row saying the same thing
      would only be a second thing to disagree. The storage path is keyed on the BUSINESS, not on
      the reward, so a brand-new reward can carry a photo through its first save too. */
-  const REWARD_PHOTO_TYPES_V340=Object.freeze({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'});
-  const REWARD_PHOTO_MAX_BYTES_V340=10*1024*1024;
-  async function uploadRewardPhotoV340(file){
-    if(!S.biz?.id)throw new Error('Business context is required.');
-    if(!file)throw new Error('Choose a photo first.');
-    const ext=REWARD_PHOTO_TYPES_V340[file.type];
-    if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
-    if(file.size>REWARD_PHOTO_MAX_BYTES_V340)throw new Error('Use an image under 10 MB.');
-    const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
-    const {error}=await sb.storage.from('business-public')
-      .upload(objectPath,file,{contentType:file.type,upsert:false});
-    if(error)throw new Error(error.message||'The photo could not be uploaded.');
-    return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
-  }
+  /* nestly_v825: one uploader (uploadBusinessPhotoV825) — this was one of three byte-identical
+     copies, none of which downscaled or had a deadline. */
+  async function uploadRewardPhotoV340(file){return uploadBusinessPhotoV825('reward',file)}
   function openRewardEditor(reward){
     editorReward=reward;
     const r=reward||{};
@@ -15904,7 +15918,7 @@ const withDeadlineV280=(work,ms,timeoutMessage)=>new Promise(resolve=>{
   },ms);
   Promise.resolve(work).then(finish,error=>finish({data:null,error}));
 });
-async function downscalePromotionPhotoV280(file){
+async function downscalePromotionPhotoV280(file,{preserveTransparency=false}={}){
   if(!file||file.type==='image/gif')return file;
   if(Number(file.size||0)<=PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280)return file;
   if(typeof createImageBitmap!=='function'||typeof document==='undefined')return file;
@@ -15920,15 +15934,20 @@ async function downscalePromotionPhotoV280(file){
     canvas.width=width;canvas.height=height;
     const context=canvas.getContext('2d');
     if(!context)return file;
-    /* A transparent PNG re-encoded as JPEG would render its transparency as black. */
-    context.fillStyle='#ffffff';context.fillRect(0,0,width,height);
+    /* A transparent PNG re-encoded as JPEG would render its transparency as black. nestly_v825:
+       a caller that needs the transparency kept (the business logo) asks for it and gets a PNG at
+       the same reduced edge instead — still a fraction of a phone-camera original. Every other
+       business photo (catalogue, reward, gallery, programme) now comes through here too. */
+    const keepAlphaV825=preserveTransparency&&file.type==='image/png';
+    if(!keepAlphaV825){context.fillStyle='#ffffff';context.fillRect(0,0,width,height);}
     context.drawImage(bitmap,0,0,width,height);
+    const mimeV825=keepAlphaV825?'image/png':'image/jpeg';
     const blob=await new Promise(resolve=>{
-      try{canvas.toBlob(resolve,'image/jpeg',0.86)}catch(_error){resolve(null)}
+      try{canvas.toBlob(resolve,mimeV825,keepAlphaV825?undefined:0.86)}catch(_error){resolve(null)}
     });
     if(!blob||blob.size>=Number(file.size||0))return file;
     const base=String(file.name||'promotion').replace(/\.[^.]+$/,'')||'promotion';
-    return new File([blob],`${base}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
+    return new File([blob],`${base}.${keepAlphaV825?'png':'jpg'}`,{type:mimeV825,lastModified:Date.now()});
   }finally{try{bitmap.close?.()}catch(_error){}}
 }
 /* V280 (owner: "cannot publish"). The FIRST publish of a newly created promotion could never
@@ -16017,18 +16036,29 @@ function promotionPageCurrentV104(pageRoot,host){
    than between promotionsPage and growPage — tests/grow/v104-promotion-retry-safety.test.mjs
    asserts that whole gap never references S.biz.* directly (it must always go through the one
    frozen businessId/businessName/businessSlug snapshot promotionsPage itself takes). */
-async function uploadRewardPhotoV326(file){
+/* nestly_v825 (owner photo 1: "Uploading…" for far too long, "throughout the app"). The reward,
+   gallery and reward-editor photos were three byte-identical uploaders that sent the original
+   bytes — production objects average 1.7 MB and reach 4.1 MB — with no client-side downscale and
+   no deadline, while the promotions editor had both since v280. ONE uploader now: the same
+   1600 px downscale, the same 45 s deadline, the same folder grammar app.v95_storage_path_owned
+   enforces (the folder name is what makes the storage policy allow the write). */
+const BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825=45000;
+const BUSINESS_MEDIA_UPLOAD_TIMEOUT_TEXT_V825='The photo upload did not finish in time. Check the connection and try again.';
+async function uploadBusinessPhotoV825(folder,file){
   if(!S.biz?.id)throw new Error('Business context is required.');
   if(!file)throw new Error('Choose a photo first.');
-  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
-  if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
+  if(!({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type])throw new Error('Use a PNG, JPG or WebP image.');
   if(file.size>10*1024*1024)throw new Error('Use an image under 10 MB.');
-  const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
-  const {error}=await sb.storage.from('business-public')
-    .upload(objectPath,file,{contentType:file.type,upsert:false});
+  const sending=await downscalePromotionPhotoV280(file);
+  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[sending.type]||'jpg';
+  const objectPath=`${S.biz.id}/${folder}/${crypto.randomUUID()}.${ext}`;
+  const {error}=await withDeadlineV280(sb.storage.from('business-public')
+    .upload(objectPath,sending,{contentType:sending.type,upsert:false}),
+    BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825,BUSINESS_MEDIA_UPLOAD_TIMEOUT_TEXT_V825);
   if(error)throw new Error(error.message||'The photo could not be uploaded.');
   return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
 }
+async function uploadRewardPhotoV326(file){return uploadBusinessPhotoV825('reward',file)}
 /* V462 (owner ruling R2b) — "Shown on customer Home", stated on the editor as well as on the
    Limited Offer list, because an owner who publishes from here never sees that list. Both
    surfaces render the SAME server answer (business_get_promotion_editor_v155.featured_offer_id,
@@ -30794,6 +30824,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'764158e8eacb6aeda6b158ab004de7652e62289ce0dd176b3081653ab96e0342',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'fd8d149c799e4d914bb3df1054f227b77cc3f69f65f4781e92b7dc1657e3a39c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -102,7 +102,9 @@ test('reports read as money in, money out, result, then why', () => {
      They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
      FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
      them is a one-line change. */
-  assert.ok(app.includes("items:['dailyreport','sales','reports','customerintel']"),
+  /* nestly_v825 (owner ruling 2026-09-08): Staff commission — the retired ranking's successor — sits
+     between Sales & refunds and Business Insights. */
+  assert.ok(app.includes("items:['dailyreport','sales','staffperf','reports','customerintel']"),
     'reports nav order not applied');
 });
 

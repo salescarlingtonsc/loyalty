@@ -81,8 +81,10 @@ test('v418 the editor is on the Business Profile, and the branch card sits under
 });
 
 test('v418 a gallery upload writes to this business\'s own gallery folder', () => {
-  const upload = statement('async function uploadGalleryPhotoV418(', '\n}');
-  assert.match(upload, /\$\{S\.biz\.id\}\/gallery\/\$\{crypto\.randomUUID\(\)\}/,
+  /* nestly_v825: one uploader for every business photo; the gallery name pins the folder. */
+  assert.match(appJs, /async function uploadGalleryPhotoV418\(file\)\{return uploadBusinessPhotoV825\('gallery',file\)\}/);
+  const upload = statement('async function uploadBusinessPhotoV825(', '\n}');
+  assert.match(upload, /\$\{S\.biz\.id\}\/\$\{folder\}\/\$\{crypto\.randomUUID\(\)\}/,
     'the folder name is what makes the storage policy allow the write');
   assert.match(upload, /from\('business-public'\)/, 'the same bucket as every other business image');
   assert.match(upload, /'image\/png':'png','image\/jpeg':'jpg','image\/webp':'webp'/);

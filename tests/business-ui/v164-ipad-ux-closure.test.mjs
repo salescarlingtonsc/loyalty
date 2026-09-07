@@ -26,7 +26,7 @@ test('V164 sidebar terminology is merchant-facing', () => {
      They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
      FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
      them is a one-line change. */
-  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','reports','customerintel'\]\}/);
+  assert.match(appHtml, /\{key:'money',icon:'reports',label:'Reports',items:\['dailyreport','sales','staffperf','reports','customerintel'\]\}/); /* nestly_v825: Staff commission joins Reports */
 });
 
 test('V164 Dashboard adds schedule glance and in-card KPI action labels', () => {
@@ -67,16 +67,17 @@ test('V164 Reports page is renamed Business Insights and uses visual decision ca
   assert.match(appHtml, /title:'Sales & Revenue'/);
   assert.match(appHtml, /title:'Efficiency'/);
   assert.match(appHtml, /title:'Customer Retention'/);
-  assert.match(appHtml, /title:'Team Performance'/);
+  assert.match(appHtml, /title:'Staff commission'/); /* nestly_v825 */
 });
 
 test('V164 Staff Performance summary cards use concise visual ranking treatment', () => {
-  assert.match(appHtml, /Rank staff by revenue, signed commission and sales records for the selected period\./);
+  /* nestly_v825: the ranking page became the Staff commission module; the summary cards stay. */
+  assert.match(appHtml, /Every product and service sold, who bought it, and which team member it pays\./);
   assert.match(appHtml, /staff-rank-card/);
-  assert.match(appHtml, /rank-visual/);
-  assert.match(appHtml, /Highest attributed revenue/);
-  assert.match(appHtml, /Highest signed commission/);
-  assert.match(appHtml, /Most revenue-qualified records/);
+  assert.match(appHtml, /staffRankSummary/);
+  assert.match(appHtml, /Commission earned/);
+  assert.match(appHtml, /Sales reversed/);
+  assert.doesNotMatch(appHtml, /Most revenue-qualified records/, 'the ranking headline the owner retired stays retired');
 });
 
 test('V164 Staff Members defaults to a staff-list-first tab structure', () => {

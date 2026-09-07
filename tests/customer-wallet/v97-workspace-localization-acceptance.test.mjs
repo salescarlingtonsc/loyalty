@@ -178,7 +178,7 @@ test('v97 catalog covers every signed-in workspace route plus dialogs, states an
   const required=[
     'Dashboard','Customers','Record sale','Appointments','Bookings','Waitlist','Sales',
     'Rewards & bring-backs','Referrals','Memberships','Gift cards','Reports',
-    'Customer intelligence','Staff performance','Daily report','Expenses','P&L',
+    'Customer intelligence','Staff commission','Daily report','Expenses','P&L',
     'Inventory','Packages','Branches','Services','Settings','Get started',
     'Notifications','Stored value','Program Studio',
     'Loading…','No customers yet','Something went wrong. Please try again.',
@@ -211,7 +211,9 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        app/i18n/workspace-generated-copy-v97.additions.json, which is the generator this table
        never had. This count stays the gate on catalogue review; the generator is the gate on how
        the bytes get there. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,1475,`${locale} valid visible-literal inventory changed without catalog review`);
+    /* 1475 -> 1476: nestly_v825 adds "Staff commission" (the retired Staff performance page's
+       successor), through the same ledger and generator. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,1476,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
@@ -272,7 +274,9 @@ test('v97 localization preserves merchant/customer records even when values coll
   assert.match(localizer,/isWorkspaceTableDataNodeV97\(node\.parentElement\)/);
   assert.match(guard,/element instanceof HTMLOptionElement/);
   assert.match(app,/querySelector\('\.cui-page-title h1'\)\?\.setAttribute\('data-merchant-content',''\)/);
-  assert.match(app,/<h1 data-merchant-content>\$\{esc\(staffName\)\}<\/h1>/);
+  /* nestly_v825: the per-member drill page is gone; the Staff commission table marks each sold item
+     and each customer name as merchant content instead. */
+  assert.match(app,/<span data-merchant-content>\$\{esc\(r\.description\|\|''\)\}<\/span>/);
   assert.match(app,/id="appointmentDetailTitle" data-merchant-content/);
   assert.match(app,/<dd data-merchant-content>\$\{esc\(service\.name\|\|'General visit'\)\}<\/dd>/);
   assert.match(app,/<p data-merchant-content>\$\{esc\(client\.notes\|\|'None'\)\}<\/p>/);

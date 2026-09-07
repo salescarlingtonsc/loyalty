@@ -32,7 +32,7 @@ test('V272 (A) the report controls render above the four category cards', () => 
   assert.notEqual(scopeCard, -1, 'the control bar is missing');
   assert.notEqual(grid, -1, 'the category card grid is missing');
   assert.ok(scopeCard < grid, 'the control bar must precede the category cards');
-  for (const title of ['Sales & Revenue', 'Efficiency', 'Customer Retention', 'Team Performance']) {
+  for (const title of ['Sales & Revenue', 'Efficiency', 'Customer Retention', 'Staff commission']) { /* nestly_v825 */
     assert.ok(reports.includes(`title:'${title}'`), `missing category tab: ${title}`);
   }
 });
@@ -76,14 +76,17 @@ test('V272 (B) the excluded-branch truth the notice carried is restated next to 
   assert.equal(js.split('function reportScopeNoteTextV272(').length - 1, 1);
 });
 
-test('V272 (C) Staff performance is gone from the nav rail', () => {
+test('V272 (C) → nestly_v825: the staffperf route is back in the Reports rail as Staff commission', () => {
+  /* nestly_v825 (owner ruling 2026-09-08): the ranking page this test guarded is retired into the
+     Staff commission module, which the owner asked to find under Reports. Same key, so every
+     tenant's existing entitlement and the finance gate carry over. */
   const navGroups = js.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
-  assert.doesNotMatch(navGroups, /'staffperf'/);
+  assert.match(navGroups, /'staffperf'/);
   /* nestly_v517 (owner, photo 9: red crosses through Expenses and P&L, "delete this").
      They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
      FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
      them is a one-line change. */
-  assert.match(navGroups, /label:'Reports',items:\['dailyreport','sales','reports','customerintel'\]/);
+  assert.match(navGroups, /label:'Reports',items:\['dailyreport','sales','staffperf','reports','customerintel'\]/);
 });
 
 test('V272 (C) the #/staffperf route and the Team performance card link both survive', () => {
@@ -92,13 +95,11 @@ test('V272 (C) the #/staffperf route and the Team performance card link both sur
   assert.match(js, /async function staffPerfPage\(/);
   // The card on this page is still the entry point the owner pointed at.
   assert.match(reports, /canReadModule\('staffperf'\)&&\{href:'#\/staffperf'/);
-  assert.match(reports, /title:'Team Performance'/); /* V294 tab casing */
-  // The drill-down back-link inside the page still resolves too.
-  assert.match(js, /href="#\/staffperf">← Staff performance/);
+  assert.match(reports, /title:'Staff commission'/); /* nestly_v825: the card names the module it opens */
   // Module metadata and permission wiring are untouched, so the route stays authorisable.
-  assert.match(js, /staffperf:\['staff','Staff performance'\]/);
+  assert.match(js, /staffperf:\['staff','Staff commission'\]/);
   /* nestly_v522: membership, not the exact literal — customerintel joined the set. */
   assert.match(js, /const FINANCE_MODULES=new Set\(\[[^\]]*'staffperf'[^\]]*\]\)/);
-  // With no nav entry of its own the rail still lights its group rather than going blank.
-  assert.match(js, /pageKey==='staffperf'\?'reports'/);
+  // nestly_v825: with its own rail row the group lights from the row; the V272 mapping is gone.
+  assert.doesNotMatch(js, /pageKey==='staffperf'\?'reports'/);
 });

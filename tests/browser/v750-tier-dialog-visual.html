@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="179a908ccc997c19ac27dfd5924be01568f0e1754bb3fecbe486ffb6b37622b1"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="84decbb8ff0afcead6e3773ad74fd5d958e1fb577623539400a20f4dfad449e1"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5781,7 +5781,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 179a908ccc997c19ac27dfd5924be01568f0e1754bb3fecbe486ffb6b37622b1</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 84decbb8ff0afcead6e3773ad74fd5d958e1fb577623539400a20f4dfad449e1</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6433,7 +6433,7 @@ function growUsageComparisonChartV386(rows,previousByCategory,previousRange){
     const refreshRetentionPanel=()=>{};
     const renderPlaybooks=()=>{};
     function activeGroupKey(pageKey){
-  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey==='staffperf'?'reports':pageKey;
+  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey; /* nestly_v825: staffperf has its own rail row again */
   if(k==='grow')return 'grow';
   const g=NAVGROUPS.find(g=>g.items.includes(k));
   return g?g.key:null;

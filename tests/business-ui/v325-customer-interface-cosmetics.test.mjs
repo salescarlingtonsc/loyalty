@@ -205,7 +205,7 @@ test('V325 buffer-before/after are wired into the existing add and edit service 
      into the row's Edit). The service editor writes one more column now — the per-service
      override, which used to have its own card and its own Save further down the page. The two
      buffer columns V325 added are untouched, which is what this line is for. */
-  assert.match(servicesPage, /\.update\(\{name,variant_label:variant,price_cents:price,duration_min:duration,\s*\n\s*buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,\s*\n\s*commission_bps:commissionBpsV584\}\)\.eq\('id',id\)/);
+  assert.match(servicesPage, /\.update\(\{name,variant_label:variant,price_cents:price,duration_min:duration,\s*\n\s*buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,\s*\n\s*commission_bps:commissionBpsV584,commission_flat_cents:commissionFlatV825\}\)\.eq\('id',id\)/); /* nestly_v825: the fixed amount rides the same write */
   // No new RPC, no new call site — still the plain services table insert/update.
   assert.doesNotMatch(servicesPage, /sb\.rpc\('[a-z_]*buffer/i);
   /* nestly_v577 (owner mark, photo 9): Appointment Setting no longer carries the pointer sentence

@@ -283,7 +283,7 @@ const NAVGROUPS=[
      the owner wants them back. Deliberately not deleted deeper than the menu: expenses feed the
      P&L, the P&L feeds Business Insights, and removing the data would silently change figures the
      owner reads elsewhere. */
-  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','reports','customerintel']},
+  {key:'money',icon:'reports',label:'Reports',items:['dailyreport','sales','staffperf','reports','customerintel']},
   /* V275: "Bottle keep" is the bar's own configuration — one keep-days number and the shelf
      list — so it belongs beside Services and Products, not inside the daily Bottles screen. */
   {key:'setup',icon:'services',label:'Operations setup',items:['staffmembers','branches','services','inventory','packages','bottlesetup','remindernotify']}
@@ -1580,35 +1580,81 @@ function expenseAmountProjection(expense,baseCurrency='SGD'){
     showBase:sourceCurrency!==normalizedBase||Math.abs(rate-1)>1e-12
   };
 }
-function staffPerformanceAggregation(rows,staffRows){
-  const names=Object.fromEntries((Array.isArray(staffRows)?staffRows:[])
-    .map(staff=>[staff.id,staff.full_name||'Team member']));
+/* nestly_v825 — what the Staff commission page computes from the rows it shows. Pure, so the
+   tests can execute it. A reversed line counts as reversed and in nothing else; every other line
+   pays exactly one team member (the row's staff_id, else "unattributed"), so no commission can
+   ever be counted under two people. Replaces staffPerformanceAggregation (v145), whose ranking
+   page this module retired (owner ruling 2026-09-08). */
+function staffCommissionAggregationV825(rows){
   const byStaff={};
-  Object.keys(names).forEach(id=>{byStaff[id]={ledgerRecords:0,revenueRecords:0,revenue:0,commission:0}});
+  const ensure=key=>{
+    if(!byStaff[key])byStaff[key]={key,name:key==='__unattributed'?'Unattributed':'Team member',
+      lines:0,sales:new Set(),reversedLines:0,reversedSales:new Set(),amount:0,commission:0};
+    return byStaff[key];
+  };
   (Array.isArray(rows)?rows:[]).forEach(row=>{
+    if(!row)return;
     const key=row.staff_id||'__unattributed';
-    if(!byStaff[key])byStaff[key]={ledgerRecords:0,revenueRecords:0,revenue:0,commission:0};
-    const amount=Number(row.amount_cents||0),commission=Number(row.commission_cents||0);
-    byStaff[key].ledgerRecords+=1;
-    byStaff[key].commission+=commission;
-    if(row.counts_as_revenue===true){
-      byStaff[key].revenueRecords+=1;
-      byStaff[key].revenue+=amount;
-    }
+    const bucket=ensure(key);
+    if(row.staff_id&&row.staff_name)bucket.name=String(row.staff_name);
+    if(row.reversed){bucket.reversedLines+=1;bucket.reversedSales.add(row.sale_id);return}
+    bucket.lines+=1;bucket.sales.add(row.sale_id);
+    bucket.amount+=Number(row.line_cents||0);
+    bucket.commission+=Number(row.commission_cents||0);
   });
   const keys=Object.keys(byStaff).sort((a,b)=>{
     if(a==='__unattributed')return 1;
     if(b==='__unattributed')return -1;
-    return (names[a]||'').localeCompare(names[b]||'');
+    return byStaff[a].name.localeCompare(byStaff[b].name);
   });
-  const totals=keys.reduce((total,key)=>({
-    ledgerRecords:total.ledgerRecords+byStaff[key].ledgerRecords,
-    revenueRecords:total.revenueRecords+byStaff[key].revenueRecords,
-    revenue:total.revenue+byStaff[key].revenue,
-    commission:total.commission+byStaff[key].commission
-  }),{ledgerRecords:0,revenueRecords:0,revenue:0,commission:0});
-  return {names,byStaff,keys,totals};
+  const staff=keys.map(key=>{
+    const b=byStaff[key];
+    return {key,name:b.name,lines:b.lines,sales:b.sales.size,reversedLines:b.reversedLines,
+      reversedSales:b.reversedSales.size,amount:b.amount,commission:b.commission};
+  });
+  const totals=staff.reduce((t,s)=>({lines:t.lines+s.lines,sales:t.sales+s.sales,
+    reversedLines:t.reversedLines+s.reversedLines,reversedSales:t.reversedSales+s.reversedSales,
+    amount:t.amount+s.amount,commission:t.commission+s.commission}),
+    {lines:0,sales:0,reversedLines:0,reversedSales:0,amount:0,commission:0});
+  return {staff,totals};
 }
+/* nestly_v825 — the commission pair on a product, a bundle or a package (owner ruling 2026-09-08:
+   "% or fixed amount, same as services"). One markup, one reader, one writer, so blank-vs-zero
+   means the same thing on every editor: blank = the team member's own rate, 0 = a real "no
+   commission", and a fixed amount outranks the % when both are set (v13's rule). The writer is
+   business_set_catalogue_commission_v825; services keep their own direct write. */
+function commissionInputsHtmlV825({idPrefix,row=null}){
+  const pct=row&&row.commission_bps!=null?String(Number(row.commission_bps)/100):'';
+  const flat=row&&row.commission_flat_cents!=null?(Number(row.commission_flat_cents)/100).toFixed(2):'';
+  return `<div><label for="${idPrefix}-commission-v825">Commission override %</label><input id="${idPrefix}-commission-v825" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(pct)}"></div><div><label for="${idPrefix}-commission-flat-v825">Fixed commission (${esc(S.biz?.currency||'SGD')})</label><input id="${idPrefix}-commission-flat-v825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${esc(flat)}"></div>`;
+}
+function fillCommissionInputsV825(idPrefix,row){
+  const pct=$(`${idPrefix}-commission-v825`),flat=$(`${idPrefix}-commission-flat-v825`);
+  if(pct){pct.value=row&&row.commission_bps!=null?String(Number(row.commission_bps)/100):'';pct.defaultValue=pct.value}
+  if(flat){flat.value=row&&row.commission_flat_cents!=null?(Number(row.commission_flat_cents)/100).toFixed(2):'';flat.defaultValue=flat.value}
+}
+function readCommissionInputsV825(idPrefix){
+  const pct=String($(`${idPrefix}-commission-v825`)?.value||'').trim();
+  const flat=String($(`${idPrefix}-commission-flat-v825`)?.value||'').trim();
+  const bps=pct===''?null:Math.round(parseFloat(pct)*100);
+  const flatCents=flat===''?null:Math.round(parseFloat(flat)*100);
+  if(bps!==null&&!(bps>=0&&bps<=10000))return {error:'Enter a commission between 0 and 100, or leave it blank.'};
+  if(flatCents!==null&&!(flatCents>=0))return {error:'Enter a fixed commission of 0 or more, or leave it blank.'};
+  return {bps,flatCents};
+}
+const commissionInputsChangedV825=idPrefix=>[$(`${idPrefix}-commission-v825`),$(`${idPrefix}-commission-flat-v825`)]
+  .some(el=>el&&String(el.value)!==String(el.defaultValue));
+async function saveCatalogueCommissionV825(kind,id,input){
+  const {error}=await sb.rpc('business_set_catalogue_commission_v825',{p_business:S.biz.id,p_kind:kind,p_id:id,
+    p_commission_bps:input.bps,p_commission_flat_cents:input.flatCents});
+  return error||null;
+}
+const commissionOverrideTextV825=row=>{
+  if(!row)return '';
+  if(row.commission_flat_cents!=null)return `${money(row.commission_flat_cents)} fixed`;
+  if(row.commission_bps!=null)return `${Number(row.commission_bps)/100}%`;
+  return '';
+};
 /* nestly_v571 (owner, Waitlist photo: "Add filter time here" over Today / Yesterday / date–date).
    The window is now a range rather than "everything since midnight". `windowEndMs` is exclusive
    and defaults to +infinity, which reproduces the shipped today-onwards behaviour exactly for
@@ -2179,7 +2225,7 @@ function importBtn(moduleKey,label='Import',done='route'){
 /* V272: staffperf no longer has a nav entry of its own, so it borrows the Reports group it is
    reached from — otherwise the whole rail goes unlit on a route that is still reachable. */
 function activeGroupKey(pageKey){
-  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey==='staffperf'?'reports':pageKey;
+  const k=pageKey==='client'?'clients':['studio','storedvalue','promotions'].includes(pageKey)?'loyalty':pageKey; /* nestly_v825: staffperf has its own rail row again */
   if(k==='grow')return 'grow';
   const g=NAVGROUPS.find(g=>g.items.includes(k));
   return g?g.key:null;
@@ -11029,7 +11075,7 @@ async function servicesPage(){
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
-      <td class="num">${s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
+      <td class="num">${s.commission_flat_cents!=null?`${esc(money(s.commission_flat_cents))} fixed`:s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
       ${/* nestly_v658 (owner photo 7: "once fixed will be the model that other modules follow
            (status / edit / delete) will be the same for products & services"). The Packages row
            makes the STATUS PILL itself the switch; here the pill was inert and the real control
@@ -11063,8 +11109,9 @@ async function servicesPage(){
             <div><label for="svcEditBufferBefore">Buffer before (minutes)</label><input id="svcEditBufferBefore" type="number" min="0" step="5" value="${Number(s.buffer_before_min)||0}"></div>
             <div><label for="svcEditBufferAfter">Buffer after (minutes)</label><input id="svcEditBufferAfter" type="number" min="0" step="5" value="${Number(s.buffer_after_min)||0}"></div>
             <div><label for="svcEditCommissionV584">Commission override %</label><input id="svcEditCommissionV584" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(commissionPctV584(s.commission_bps))}"></div>
+            <div><label for="svcEditCommissionFlatV825">Fixed commission (${esc(S.biz.currency||'SGD')})</label><input id="svcEditCommissionFlatV825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${s.commission_flat_cents==null?'':esc((Number(s.commission_flat_cents)/100).toFixed(2))}"></div>
           </div>
-          <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission.</p>
+          <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission. A fixed amount is paid per service performed and outranks the %.</p>
           ${/* nestly_v613: only drawn for a firm that HAS more than one branch — a single-branch
                shop has no choice to make and the control would only be a question with one answer. */''}
           ${branchListV613.length>1?`<div class="svc-branch-picker-v613">
@@ -11147,17 +11194,24 @@ async function servicesPage(){
          (the retired card's own copy said so). Only a real number is written. */
       const commissionRawV584=String($('svcEditCommissionV584')?.value||'').trim();
       const commissionBpsV584=commissionRawV584===''?null:Math.round(parseFloat(commissionRawV584)*100);
+      /* nestly_v825: the fixed amount services carried since v13 but never exposed. Same blank-vs-
+         zero rule; written by the same direct update as the %. */
+      const commissionFlatRawV825=String($('svcEditCommissionFlatV825')?.value||'').trim();
+      const commissionFlatV825=commissionFlatRawV825===''?null:Math.round(parseFloat(commissionFlatRawV825)*100);
       if(name.length<2){if(status)status.textContent='Give the service a name.';return}
       if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
       if(!(duration>=5)){if(status)status.textContent='Enter a duration of at least 5 minutes.';return}
       if(commissionBpsV584!==null&&!(commissionBpsV584>=0&&commissionBpsV584<=10000)){
         if(status)status.textContent='Enter a commission between 0 and 100, or leave it blank.';return;
       }
+      if(commissionFlatV825!==null&&!(commissionFlatV825>=0)){
+        if(status)status.textContent='Enter a fixed commission of 0 or more, or leave it blank.';return;
+      }
       CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
       const {data,error}=await sb.from('services')
         .update({name,variant_label:variant,price_cents:price,duration_min:duration,
           buffer_before_min:bufferBefore,buffer_after_min:bufferAfter,
-          commission_bps:commissionBpsV584}).eq('id',id).select().limit(1);
+          commission_bps:commissionBpsV584,commission_flat_cents:commissionFlatV825}).eq('id',id).select().limit(1);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
       if(!isCurrent())return;
       if(error){if(status)status.textContent=ownerErrorText(error);return}
@@ -11280,6 +11334,11 @@ async function servicesPage(){
         <div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>
         <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
         <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+        ${/* nestly_v825 (owner photo 2): a bundle can carry its own commission. When set it replaces
+             every included service's and product's rate for lines sold through this bundle; a
+             fixed amount is paid once per bundle sold. */''}
+        <div class="field-grid" style="margin-top:8px">${commissionInputsHtmlV825({idPrefix:'bundle'})}</div>
+        <p class="muted small help">Sets what everything in this bundle pays when sold together. Blank keeps each service's and product's own commission; a fixed amount is paid once per bundle sold.</p>
         <label>Included services</label><div id="bsv" class="small"></div>
         <label>Included products</label><div id="bpvV488" class="small"></div>
         <div style="margin-top:12px" class="row"><button class="btn ghost sm" id="cancelBundleForm">Cancel</button><span class="spacer"></span><button class="btn sm" id="badd3">Save bundle</button></div>
@@ -11320,8 +11379,8 @@ async function servicesPage(){
        bundle_items carry READ-only RLS, so the three controls below go through the V285 writers
        rather than table DML. */
     bundleCacheV285=bu||[];
-    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
-      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||i.products?.name||'')).filter(Boolean).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
+    $('blist3').innerHTML=(bu&&bu.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Bundles catalogue"><table data-responsive="true"><tr><th>Bundle</th><th>Included services</th><th class="num">Price</th><th>Commission</th><th>Status</th><th></th></tr>${bu.map(b=>`<tr>
+      <td><b data-merchant-content>${esc(b.name)}</b></td><td data-merchant-content>${(b.bundle_items||[]).map(i=>esc(i.services?.name||i.products?.name||'')).filter(Boolean).join(' + ')||'—'}</td><td class="num">${money(b.price_cents)}</td><td>${commissionOverrideTextV825(b)?esc(commissionOverrideTextV825(b)):'<span class="muted">\u2014</span>'}</td><td><span class="pill ${b.active?'on':'off'}">${statusOnOff(b.active)}</span></td>
       <td>${canWrite?`<div class="row" style="gap:6px;justify-content:flex-end">
         <button class="btn ghost sm" type="button" data-bundle-edit="${b.id}">Edit</button>
         <button class="btn ghost sm" type="button" data-bundle-toggle="${b.id}">${b.active?'Turn off':'Turn on'}</button>
@@ -11377,6 +11436,7 @@ async function servicesPage(){
     $('badd3').textContent='Save changes';
     $('bnm').value=bundle.name||'';
     $('bpr').value=(Number(bundle.price_cents||0)/100).toFixed(2);
+    fillCommissionInputsV825('bundle',bundle);
     const included=new Set((bundle.bundle_items||[]).map(item=>item.service_id).filter(Boolean));
     const includedProductsV488=new Set((bundle.bundle_items||[]).map(item=>item.product_id).filter(Boolean));
     document.querySelectorAll('[data-bs]').forEach(box=>{box.checked=included.has(box.dataset.bs)});
@@ -11393,6 +11453,8 @@ async function servicesPage(){
        a real bundle, and a products-only bundle is one too. */
     if(picked.length+pickedProductsV488.length<2) return toast('Pick at least 2 items');
     const priceCents=Math.round(parseFloat($('bpr').value||'0')*100);
+    const bundleCommissionV825=readCommissionInputsV825('bundle');
+    if(bundleCommissionV825.error)return toast(bundleCommissionV825.error);
     /* nestly_v488: with products in the membership the save goes through the v488 writers. A
        services-only bundle keeps the v123/v285 writers it has always used — those are proven,
        and the CDN window means this bundle can be served before the migration is applied; the
@@ -11413,6 +11475,10 @@ async function servicesPage(){
       if(error)return missingV488(error)
         ?toast('Product bundles need the latest Peekaa service update.')
         :fail(error);
+      if(commissionInputsChangedV825('bundle')){
+        const commissionErrorV825=await saveCatalogueCommissionV825('bundle',editingBundleIdV285,bundleCommissionV825);
+        if(commissionErrorV825)return fail(commissionErrorV825);
+      }
       closeBundleFormV285();
       toast('Bundle updated');
       await loadBR();
@@ -11434,6 +11500,11 @@ async function servicesPage(){
         ?toast('Product bundles need the latest Peekaa service update.')
         :fail(error);
       clearWriteAttempt(bundleSlot);
+      const createdBundleIdV825=data?.bundle_id||null;
+      if(createdBundleIdV825&&(bundleCommissionV825.bps!==null||bundleCommissionV825.flatCents!==null)){
+        const commissionErrorV825=await saveCatalogueCommissionV825('bundle',createdBundleIdV825,bundleCommissionV825);
+        if(commissionErrorV825)return fail(commissionErrorV825);
+      }
       toast(isReplayResult(data)?'Bundle already created — no duplicate':'Bundle created');
       $('bnm').value='';document.querySelectorAll('[data-bs],[data-bp-v488]').forEach(box=>{box.checked=false});
       if($('bundleFormCard'))$('bundleFormCard').style.display='none';
@@ -11447,7 +11518,7 @@ async function servicesPage(){
      open Bundles in the same visit and it still said "add services first" — with no way to pick
      anything, Save bundle could only ever answer "Pick at least 2 services". Re-read the list
      every time the Bundles view is opened. */
-  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();showBundleFormV613();loadBR();$('bnm')?.focus()};
+  if(canWrite&&$('openBundleForm'))$('openBundleForm').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');closeBundleFormV285();showBundleFormV613();fillCommissionInputsV825('bundle',null);loadBR();$('bnm')?.focus()};
   if(canWrite&&$('cancelBundleForm'))$('cancelBundleForm').onclick=()=>closeBundleFormV285();
   $('servicesSeg').onclick=()=>{$('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';$('servicesSeg').setAttribute('aria-pressed','true');$('bundlesSeg').setAttribute('aria-pressed','false')};
   $('bundlesSeg').onclick=()=>{$('serviceSegmentBody').style.display='none';$('bundleSegmentBody').style.display='block';$('servicesSeg').setAttribute('aria-pressed','false');$('bundlesSeg').setAttribute('aria-pressed','true');loadBR()};
@@ -13023,20 +13094,9 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
      and it is already carried by the draft/publish kernel, so a second row saying the same thing
      would only be a second thing to disagree. The storage path is keyed on the BUSINESS, not on
      the reward, so a brand-new reward can carry a photo through its first save too. */
-  const REWARD_PHOTO_TYPES_V340=Object.freeze({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'});
-  const REWARD_PHOTO_MAX_BYTES_V340=10*1024*1024;
-  async function uploadRewardPhotoV340(file){
-    if(!S.biz?.id)throw new Error('Business context is required.');
-    if(!file)throw new Error('Choose a photo first.');
-    const ext=REWARD_PHOTO_TYPES_V340[file.type];
-    if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
-    if(file.size>REWARD_PHOTO_MAX_BYTES_V340)throw new Error('Use an image under 10 MB.');
-    const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
-    const {error}=await sb.storage.from('business-public')
-      .upload(objectPath,file,{contentType:file.type,upsert:false});
-    if(error)throw new Error(error.message||'The photo could not be uploaded.');
-    return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
-  }
+  /* nestly_v825: one uploader (uploadBusinessPhotoV825) — this was one of three byte-identical
+     copies, none of which downscaled or had a deadline. */
+  async function uploadRewardPhotoV340(file){return uploadBusinessPhotoV825('reward',file)}
   function openRewardEditor(reward){
     editorReward=reward;
     const r=reward||{};
@@ -14827,7 +14887,7 @@ const withDeadlineV280=(work,ms,timeoutMessage)=>new Promise(resolve=>{
   },ms);
   Promise.resolve(work).then(finish,error=>finish({data:null,error}));
 });
-async function downscalePromotionPhotoV280(file){
+async function downscalePromotionPhotoV280(file,{preserveTransparency=false}={}){
   if(!file||file.type==='image/gif')return file;
   if(Number(file.size||0)<=PROMOTION_MEDIA_DOWNSCALE_ABOVE_BYTES_V280)return file;
   if(typeof createImageBitmap!=='function'||typeof document==='undefined')return file;
@@ -14843,15 +14903,20 @@ async function downscalePromotionPhotoV280(file){
     canvas.width=width;canvas.height=height;
     const context=canvas.getContext('2d');
     if(!context)return file;
-    /* A transparent PNG re-encoded as JPEG would render its transparency as black. */
-    context.fillStyle='#ffffff';context.fillRect(0,0,width,height);
+    /* A transparent PNG re-encoded as JPEG would render its transparency as black. nestly_v825:
+       a caller that needs the transparency kept (the business logo) asks for it and gets a PNG at
+       the same reduced edge instead — still a fraction of a phone-camera original. Every other
+       business photo (catalogue, reward, gallery, programme) now comes through here too. */
+    const keepAlphaV825=preserveTransparency&&file.type==='image/png';
+    if(!keepAlphaV825){context.fillStyle='#ffffff';context.fillRect(0,0,width,height);}
     context.drawImage(bitmap,0,0,width,height);
+    const mimeV825=keepAlphaV825?'image/png':'image/jpeg';
     const blob=await new Promise(resolve=>{
-      try{canvas.toBlob(resolve,'image/jpeg',0.86)}catch(_error){resolve(null)}
+      try{canvas.toBlob(resolve,mimeV825,keepAlphaV825?undefined:0.86)}catch(_error){resolve(null)}
     });
     if(!blob||blob.size>=Number(file.size||0))return file;
     const base=String(file.name||'promotion').replace(/\.[^.]+$/,'')||'promotion';
-    return new File([blob],`${base}.jpg`,{type:'image/jpeg',lastModified:Date.now()});
+    return new File([blob],`${base}.${keepAlphaV825?'png':'jpg'}`,{type:mimeV825,lastModified:Date.now()});
   }finally{try{bitmap.close?.()}catch(_error){}}
 }
 /* V280 (owner: "cannot publish"). The FIRST publish of a newly created promotion could never
@@ -14940,18 +15005,29 @@ function promotionPageCurrentV104(pageRoot,host){
    than between promotionsPage and growPage — tests/grow/v104-promotion-retry-safety.test.mjs
    asserts that whole gap never references S.biz.* directly (it must always go through the one
    frozen businessId/businessName/businessSlug snapshot promotionsPage itself takes). */
-async function uploadRewardPhotoV326(file){
+/* nestly_v825 (owner photo 1: "Uploading…" for far too long, "throughout the app"). The reward,
+   gallery and reward-editor photos were three byte-identical uploaders that sent the original
+   bytes — production objects average 1.7 MB and reach 4.1 MB — with no client-side downscale and
+   no deadline, while the promotions editor had both since v280. ONE uploader now: the same
+   1600 px downscale, the same 45 s deadline, the same folder grammar app.v95_storage_path_owned
+   enforces (the folder name is what makes the storage policy allow the write). */
+const BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825=45000;
+const BUSINESS_MEDIA_UPLOAD_TIMEOUT_TEXT_V825='The photo upload did not finish in time. Check the connection and try again.';
+async function uploadBusinessPhotoV825(folder,file){
   if(!S.biz?.id)throw new Error('Business context is required.');
   if(!file)throw new Error('Choose a photo first.');
-  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
-  if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
+  if(!({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type])throw new Error('Use a PNG, JPG or WebP image.');
   if(file.size>10*1024*1024)throw new Error('Use an image under 10 MB.');
-  const objectPath=`${S.biz.id}/reward/${crypto.randomUUID()}.${ext}`;
-  const {error}=await sb.storage.from('business-public')
-    .upload(objectPath,file,{contentType:file.type,upsert:false});
+  const sending=await downscalePromotionPhotoV280(file);
+  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[sending.type]||'jpg';
+  const objectPath=`${S.biz.id}/${folder}/${crypto.randomUUID()}.${ext}`;
+  const {error}=await withDeadlineV280(sb.storage.from('business-public')
+    .upload(objectPath,sending,{contentType:sending.type,upsert:false}),
+    BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825,BUSINESS_MEDIA_UPLOAD_TIMEOUT_TEXT_V825);
   if(error)throw new Error(error.message||'The photo could not be uploaded.');
   return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
 }
+async function uploadRewardPhotoV326(file){return uploadBusinessPhotoV825('reward',file)}
 /* V462 (owner ruling R2b) — "Shown on customer Home", stated on the editor as well as on the
    Limited Offer list, because an owner who publishes from here never sees that list. Both
    surfaces render the SAME server answer (business_get_promotion_editor_v155.featured_offer_id,
@@ -31248,11 +31324,18 @@ async function inventoryPage(){
       const price=Math.round(parseFloat($('prodEditPrice').value||'0')*100);
       if(name.length<2){if(status)status.textContent='Give the product a name.';return}
       if(!(price>=0)){if(status)status.textContent='Enter a price of 0 or more.';return}
+      const commissionV825=readCommissionInputsV825('prodEdit');
+      if(commissionV825.error){if(status)status.textContent=commissionV825.error;return}
       CUI.setButtonBusy(b,{busy:true,label:'Saving…'});
       const {error}=await sb.from('products')
         .update({name,sku,retail_price_cents:price}).eq('id',id);
       if(b.isConnected)CUI.setButtonBusy(b,{busy:false});
       if(error){if(status)status.textContent=ownerErrorText(error);return}
+      /* nestly_v825: the commission pair goes through its one writer, and only when it changed. */
+      if(commissionInputsChangedV825('prodEdit')){
+        const commissionErrorV825=await saveCatalogueCommissionV825('product',id,commissionV825);
+        if(commissionErrorV825){if(status)status.textContent=ownerErrorText(commissionErrorV825);return}
+      }
       /* nestly_v627: written after the product row and as a diff, so opening the dialog on an
          unchanged product issues no branch writes at all. */
       const branchProblemV627=productBranchFailedV627
@@ -31294,13 +31377,14 @@ async function inventoryPage(){
       const asset=mediaMap.get(catalogueMediaCacheKeyV158('product',product.id));
       return {...product,image_url:catalogueImageUrlV158(asset)||product.image_url||''};
     });
-    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products catalogue"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th>Status</th><th></th></tr></thead><tbody>
+    $('ilist').innerHTML=(pr&&pr.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Products catalogue"><table class="cui-table" data-responsive="true"><thead><tr><th>Product</th><th>SKU</th><th class="num">Sell for</th><th>Commission</th><th>Status</th><th></th></tr></thead><tbody>
       ${pr.map(p=>{
         const image=catalogueImageUrlV158(p);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'product',entityId:p.id,label:image?'Change photo':'Attach photo'}):'';
         return `<tr><td data-label="Product"><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('inventory',{size:20})}</span>`}<div><b data-merchant-content>${esc(p.name)}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td>
       <td class="small" data-label="SKU">${esc(p.sku||'—')}</td>
       <td class="num" data-label="Sell for">${money(p.retail_price_cents)}</td>
+      <td data-label="Commission">${commissionOverrideTextV825(p)?esc(commissionOverrideTextV825(p)):'<span class="muted">\u2014</span>'}</td>
       ${/* nestly_v658 (owner photo 7: the Packages row "will be the model that other modules
            follow (status / edit / delete) ... for products & services"). Same change as Services:
            the STATUS PILL is the switch, the separate ✓/✗ icon is gone, and switching off asks
@@ -31325,7 +31409,9 @@ async function inventoryPage(){
             <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
             <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>
             <div><label for="prodEditPrice">Sell for (${S.biz.currency||'SGD'})</label><input id="prodEditPrice" type="number" min="0" step="0.01" value="${((p.retail_price_cents||0)/100).toFixed(2)}"></div>
+            ${commissionInputsHtmlV825({idPrefix:'prodEdit',row:p})}
           </div>
+          <p class="muted small help">Commission: blank leaves each team member on their own product rate. 0% means this product pays no commission. A fixed amount is paid per unit sold and outranks the %.</p>
           ${catalogueBranchPickerHtmlV627({
             branches:productBranchListV627,assigned:productBranchIdsV627(p.id),name:'product',
             label:'Sold at',failed:productBranchFailedV627,
@@ -31494,6 +31580,10 @@ async function packagesPage(options){
       <label for="kn">Name</label><input id="kn" placeholder="e.g. 5x Facial">
       <div class="split"><div><label for="kp">Price (${S.biz.currency||'SGD'})</label><input id="kp" type="number" min="0" step="0.01" value="400"></div>
       <div><label for="ks">Sessions</label><input id="ks" type="number" min="1" value="5"></div></div>
+      ${/* nestly_v825 (owner photo 4): paid ONCE, at purchase, to whoever sells it (owner ruling
+           2026-09-08); a session used later pays nothing. */''}
+      <div class="split">${commissionInputsHtmlV825({idPrefix:'k'})}</div>
+      <p class="muted small help">Paid once to the team member who sells the package. Blank keeps the seller's own product rate; a session used later pays nothing.</p>
       <label for="kv">Exact service / variation</label><select id="kv"><option value="">— flexible package, no list-price comparison —</option>${(sv||[]).filter(s=>s.active).map(s=>`<option value="${s.id}">${esc(serviceDisplayName(s))} · ${money(s.price_cents)}</option>`).join('')}</select>
       ${/* nestly_v593 (owner, photo 5: "for each designed package - i need to have an expiry date
            upon purchase. - how many days of expiry after purchase. - current model has no
@@ -31516,7 +31606,7 @@ async function packagesPage(options){
       <div id="kplist" style="margin-top:8px">${(plans||[]).filter(p=>!p.retired_at).length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Packages catalogue"><table class="cui-table" data-responsive="true"><thead><tr><th>Package</th><th class="num">Price</th><th class="num">Sessions</th><th>Status</th><th></th></tr></thead><tbody>${(plans||[]).filter(p=>!p.retired_at).map(p=>`<tr>
         <td data-label="Package"><b data-merchant-content>${esc(p.name)}</b>
           <div class="muted small">${p.service_id?`${esc(serviceDisplayName(serviceById[p.service_id]||{}))} · `:''}${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</div>
-          <div class="muted small">${esc(discountSummary(p))}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'}. Editing it changes what you sell from now on; they keep the price and sessions they paid for.`:'Not sold to anyone yet.'}</div></td>
+          <div class="muted small">${esc(discountSummary(p))}${commissionOverrideTextV825(p)?` · Commission ${esc(commissionOverrideTextV825(p))}`:''}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'}. Editing it changes what you sell from now on; they keep the price and sessions they paid for.`:'Not sold to anyone yet.'}</div></td>
         <td class="num" data-label="Price">${money(p.price_cents)}</td>
         <td class="num" data-label="Sessions">${p.sessions}</td>
         <td data-label="Status">
@@ -31665,6 +31755,8 @@ async function packagesPage(options){
           <label for="packageEditNameV601">Name</label><input id="packageEditNameV601" maxlength="120" required value="${esc(plan.name)}">
           <div class="split"><div><label for="packageEditPriceV601">Price (${esc(BRAND.currency||'SGD')})</label><input id="packageEditPriceV601" type="number" min="0" step="0.01" inputmode="decimal" required value="${esc((plan.price_cents/100).toFixed(2))}"></div>
             <div><label for="packageEditSessionsV601">Sessions</label><input id="packageEditSessionsV601" type="number" min="1" max="1000" step="1" inputmode="numeric" required value="${esc(String(plan.sessions))}"></div></div>
+          <div class="split">${commissionInputsHtmlV825({idPrefix:'packageEdit',row:plan})}</div>
+          <p class="muted small help">Paid once to the team member who sells the package. Blank keeps the seller's own product rate; a session used later pays nothing.</p>
           <label for="packageEditServiceV601">Exact service / variation</label>
           <select id="packageEditServiceV601">${packageServiceOptionsV601(plan.service_id)}</select>
           <label for="packageEditExpiryV601">Expires after purchase <span class="muted">(optional)</span></label>
@@ -31692,6 +31784,8 @@ async function packagesPage(options){
         if(expiry!==null&&!(expiry>=1&&expiry<=3650)){
           errorHost.innerHTML='<div class="err">Expiry must be between 1 and 3650 days, or left blank for no expiry.</div>';return;
         }
+        const commissionV825=readCommissionInputsV825('packageEdit');
+        if(commissionV825.error){errorHost.innerHTML=`<div class="err">${esc(commissionV825.error)}</div>`;return}
         const save=$('packageEditSaveV601');CUI.setButtonBusy(save,{busy:true,label:'Saving…'});
         const {data,error}=await sb.rpc('save_package_plan_v102',{
           p_business:S.biz.id,p_plan:plan.id,p_name:name,
@@ -31706,6 +31800,13 @@ async function packagesPage(options){
            mutating, and it clones the branch rows onto the new version, so this applies the change
            the owner just made on top of what the previous version was offered at. */
         const savedPlanIdV627=data?.id||null;
+        if(savedPlanIdV627&&commissionInputsChangedV825('packageEdit')){
+          const commissionErrorV825=await saveCatalogueCommissionV825('package',savedPlanIdV627,commissionV825);
+          if(commissionErrorV825){
+            errorHost.innerHTML=`<div class="err">${esc(humanErrorV295(commissionErrorV825,'The commission could not be saved.'))}</div>`;
+            return;
+          }
+        }
         if(savedPlanIdV627&&!packageBranchFailedV627){
           const problem=await saveCatalogueBranchesV627({table:'package_branches',column:'plan_id',
             entityId:savedPlanIdV627,name:'package-edit',branches:packageBranches,
@@ -31755,6 +31856,8 @@ async function packagesPage(options){
     });
     $('kadd').onclick=async()=>{
       if($('kn').value.trim().length<2) return toast('Name it');
+      const packageCommissionV825=readCommissionInputsV825('k');
+      if(packageCommissionV825.error)return toast(packageCommissionV825.error);
       const expiryDaysV593=packageExpiryDaysV593();
       if(expiryDaysV593!==null&&!(expiryDaysV593>=1&&expiryDaysV593<=3650))
         return toast('Expiry must be between 1 and 3650 days, or left blank for no expiry.');
@@ -31771,6 +31874,10 @@ async function packagesPage(options){
       });
       button.disabled=false;
       if(error)return fail(error);
+      if(data?.id&&commissionInputsChangedV825('k')){
+        const commissionErrorV825=await saveCatalogueCommissionV825('package',data.id,packageCommissionV825);
+        if(commissionErrorV825)return fail(commissionErrorV825);
+      }
       toast($('kid').value
         ?workspaceTemplateTextV97('packageVersionCreated',{version:Number(data?.version_no||0)})
         :'Package created');
@@ -34700,6 +34807,17 @@ function reportCalendarPresetV300(kind,todayStr){
   const daysBetween=(a,b)=>Math.round((Date.UTC(...b.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)))
     -Date.UTC(...a.split('-').map((v,i)=>i===1?Number(v)-1:Number(v))))/86400000);
   const prevMonth=(yy,mm)=>mm===1?[yy-1,12]:[yy,mm-1];
+  /* nestly_v825: Today and This week (Monday-start, Singapore calendar) for the Staff commission
+     page, compared with yesterday and the same weekdays of last week. */
+  if(kind==='today'){
+    const yesterday=addDays(todayStr,-1);
+    return {from:todayStr,to:todayStr,cf:yesterday,ct:yesterday};
+  }
+  if(kind==='week'){
+    const dow=(new Date(Date.UTC(y,m-1,d)).getUTCDay()+6)%7;
+    const from=addDays(todayStr,-dow);
+    return {from,to:todayStr,cf:addDays(from,-7),ct:addDays(todayStr,-7)};
+  }
   if(kind==='month'){
     const from=iso(y,m,1),[py,pm]=prevMonth(y,m);
     return {from,to:todayStr,cf:iso(py,pm,1),ct:clampDay(py,pm,d)};
@@ -35079,7 +35197,7 @@ async function reportsPage(){
     canReadModule('appointments')&&{key:'busy',bodyId:'busyBody',panelId:'reportPanelBusyV294',icon:'appointments',title:'Efficiency',emptyBody:'Run the report for this period.'},
     canSeeReturningAnswer&&{key:'returning',bodyId:'returningBody',panelId:'reportPanelReturningV294',icon:'customers',title:'Customer Retention',emptyBody:'Run the report for this period.'},
     canSeeReturningAnswer&&{key:'recovered',bodyId:'recoveredBody',panelId:'reportPanelRecoveredV550',icon:'till',title:'Recovered Revenue',emptyBody:'Run the report for this period.'},
-    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Team Performance'}
+    canReadModule('staffperf')&&{href:'#/staffperf',icon:'staff',title:'Staff commission'}
   ].filter(Boolean);
   /* V272: the owner bracketed the control bar up to just under the subtitle and wrote "put top
      here" — the period and the Run report button decide what every card below shows, so they
@@ -35698,283 +35816,147 @@ async function setupPage(){
 
 /* ---------- staff performance ---------- */
 async function staffPerfPage(drillId){
-  if(drillId) return staffPerfDrill(drillId);
+  /* nestly_v825 (owner, 2026-09-08): "i need a new module to track staff commission ... it will
+     list down all products/services sold and which customer bought it with its timestamp (if it
+     reversed sales, please remove it and indicate it as reversed.) ensure no overlapping of
+     commission for staffs. one commission for 1 staff. > (all / John / Jess / Kelvin) and
+     clicking in will show the sales exactly. (able to filter duration like my other module) -
+     default is daily. able to filter to this week / this month / this year".
+     This page REPLACES the Staff performance ranking that lived on this route since v145 (owner
+     ruling 2026-09-08: retire it into this module, so there is ONE commission authority). The
+     route key, the finance gate, the module-scope check and the branch-scope note all stay; what
+     changed is what is read and what is shown. It reads business_staff_commission_lines_v825 —
+     one row per sale LINE, each paying exactly one team member (the line's own attribution, else
+     the sale's), with the customer, the frozen rate and the commission. A sale that has been
+     reversed comes back FLAGGED rather than dropped: it is drawn struck through and counted in no
+     total. Every figure on the page is computed from the same rows the table shows — there is no
+     second read that could disagree with the list. The old per-staff drill route (#/staffperf/<id>)
+     now preselects that team member here. */
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const requestGate=createLatestRequestGate(isCurrent);
-  const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
-  let staffPerfSearch='',staffPerfSort='revenue',staffPerfDir='desc';
-  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff performance</h1><p class="muted small">Rank staff by revenue, signed commission and sales records for the selected period.</p></div></div>
-    ${/* nestly_v577 (owner mark, photo 11). Two marks on one control: the date boxes crossed out
-         and labelled "too big" with a small box drawn beside them, and both note lines bracketed
-         with an arrow into the range — "put inside this". `.range input{width:auto}` meant each
-         date input took its Safari intrinsic width, which on the owner's iPad is wide enough to
-         wrap onto its own full-width line — hence two giant stacked boxes. They are now pinned
-         narrow (staff-perf-range-v577), and the period control, Run report and both notes are one
-         panel. Same ids, same handlers, same quick-chip behaviour. */''}
+  const today=sgDateInputValue();
+  let selectedStaffV825=drillId?decodeURIComponent(String(drillId)):'all';
+  let rowsV825=[];
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff commission</h1><p class="muted small">Every product and service sold, who bought it, and which team member it pays.</p></div></div>
     <div class="range staff-perf-range-v577">
-      <button class="qbtn" data-d="1">Today</button><button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
-      <input type="date" id="pf" aria-label="From date" value="${d30}"> <span class="muted" aria-hidden="true">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
+      <button class="qbtn act" data-commission-period-v825="today">Today</button><button class="qbtn" data-commission-period-v825="week">This week</button><button class="qbtn" data-commission-period-v825="month">This month</button><button class="qbtn" data-commission-period-v825="year">This year</button>
+      <input type="date" id="pf" aria-label="From date" value="${today}"> <span class="muted" aria-hidden="true">→</span> <input type="date" id="pt" aria-label="To date" value="${today}">
       <button class="btn sm" id="papply">Run report</button>
-      ${/* nestly_v578 (owner mark, photo 4: the two note lines boxed — "convert this portion into
-           a '?' so owners will press '?' to view - dont need to show out"). v577 put them inside
-           this panel; they are still here, now behind the ? rather than standing open above the
-           report. Both keep their ids and roles: reportScopeNoteV272 is still what the branch-scope
-           loader writes into, and it is still aria-live, so a scope answer that arrives while the
-           panel is open is still announced. It is collapsed rather than removed because the second
-           line can say a branch's figures are missing, which is not decoration. */''}
       <button type="button" class="staff-perf-help-v578" id="staffPerfHelpV578" aria-expanded="false" aria-controls="staffPerfNotesV578" aria-label="About these figures" title="About these figures">?</button>
       <div class="staff-perf-range-notes-v577" id="staffPerfNotesV578" hidden>
-        <p class="muted small">Commission uses the rate frozen at the time of each sale — changing a staff member's or service's % today never changes past figures.</p>
+        <p class="muted small">Commission uses the rate frozen when each sale was recorded — changing a rate today never changes past figures. Each sale line pays exactly one team member. A reversed sale stays listed, struck through, and is left out of every total.</p>
         <p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p>
       </div>
     </div></div>
-    <div class="staff-performance-filterbar" aria-label="Staff performance filters">
-      <label class="small">Staff search <input type="search" id="staffPerfSearch" placeholder="Name or email"></label>
-      <label class="small">Sort by <select id="staffPerfSort"><option value="revenue">Attributed revenue</option><option value="commission">Signed commission</option><option value="revenueRecords">Revenue-qualified records</option><option value="ledgerRecords">Ledger-record count</option></select></label>
-      <label class="small">Direction <select id="staffPerfDir"><option value="desc">High to low</option><option value="asc">Low to high</option></select></label>
-    </div>
-    ${/* V297 (owner markup 2026-08-12): the Team Performance tab of Business Insights opens this
-         page, so it gets the same opening verdict the other three tabs now carry — one headline
-         number and how it moved against the previous equal-length period. */''}
-    <div class="report-verdict-host-v297" id="staffPerfVerdictV297"></div>
+    <div class="staff-performance-filterbar" id="staffCommissionPeopleV825" role="tablist" aria-label="Team members"></div>
     <div class="staff-rank-summary" id="staffRankSummary" aria-live="polite"></div>
-    <div class="staff-rank-basis" id="staffRankBasis"></div>
-    <div class="card" id="pbody">${CUI.tableSkeleton({rows:5,columns:5})}</div>`;
-  document.querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
-    document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');
-    const end=sgDateInputValue();$('pf').value=shiftSgDateInput(end,-(b.dataset.d-1));$('pt').value=end;load();
-  });
+    <div class="card" id="pbody">${CUI.tableSkeleton({rows:5,columns:6})}</div>`;
+  const setPeriodV825=kind=>{
+    document.querySelectorAll('[data-commission-period-v825]').forEach(x=>x.classList.toggle('act',x.dataset.commissionPeriodV825===kind));
+    const preset=reportCalendarPresetV300(kind,sgDateInputValue());
+    $('pf').value=preset.from;$('pt').value=preset.to;
+  };
+  document.querySelectorAll('[data-commission-period-v825]').forEach(b=>b.onclick=()=>{setPeriodV825(b.dataset.commissionPeriodV825);load()});
   const invalidate=()=>{
     requestGate.invalidate();
-    /* V297: a verdict left standing over a range that no longer applies is worse than no verdict. */
-    const verdict=$('staffPerfVerdictV297');if(verdict)verdict.innerHTML='';
-    const body=$('pbody');if(body)body.innerHTML=CUI.emptyState({iconName:'staff',title:'Date range changed',body:'Apply the new range to refresh staff performance.'});
+    document.querySelectorAll('[data-commission-period-v825]').forEach(x=>x.classList.remove('act'));
+    const body=$('pbody');if(body)body.innerHTML=CUI.emptyState({iconName:'staff',title:'Date range changed',body:'Run the report to refresh staff commission for the new dates.'});
   };
   $('pf').onchange=$('pt').onchange=invalidate;
   $('papply').onclick=()=>load();
-  /* nestly_v578: the ? discloses the notes. Assigned (not added) so a re-render rebinds rather
-     than stacking a second listener. */
   const staffPerfHelpV578=$('staffPerfHelpV578'),staffPerfNotesV578=$('staffPerfNotesV578');
   if(staffPerfHelpV578&&staffPerfNotesV578)staffPerfHelpV578.onclick=()=>{
     const open=staffPerfNotesV578.hidden;
     staffPerfNotesV578.hidden=!open;
     staffPerfHelpV578.setAttribute('aria-expanded',open?'true':'false');
   };
-  /* Wave 2C (Top-20 #9): the second filter card and its second commit verb are gone — search and
-     sort apply as you type, like a filter should. */
-  const staffPerfApplyFiltersV2C=()=>{
-    staffPerfSearch=String($('staffPerfSearch').value||'').trim().toLowerCase();
-    staffPerfSort=$('staffPerfSort').value||'revenue';
-    staffPerfDir=$('staffPerfDir').value||'desc';
-    load();
-  };
-  $('staffPerfSearch').oninput=staffPerfApplyFiltersV2C;
-  $('staffPerfSort').onchange=staffPerfApplyFiltersV2C;
-  $('staffPerfDir').onchange=staffPerfApplyFiltersV2C;
   renderReportScopeNoteV272(isCurrent);
+  const itemKindLabelV825=row=>{
+    if(row.bundle_id)return 'bundle';
+    return ({service:'service',retail:'product',package:'package',package_session:'package session',
+      custom:'custom',membership:'membership',gift_card:'gift card',studio_discount:'discount',
+      reward_fulfilment:'reward'})[row.item_type]||String(row.item_type||row.sale_kind||'').replace(/_/g,' ');
+  };
+  const rateTextV825=row=>{
+    if(row.flat_cents!=null)return `${money(row.flat_cents)} fixed`;
+    if(row.rate_bps!=null)return `${(Number(row.rate_bps)/100).toString()}%`;
+    return '—';
+  };
+  function render(){
+    const {staff,totals}=staffCommissionAggregationV825(rowsV825);
+    const known=new Set(staff.map(s=>s.key));
+    if(selectedStaffV825!=='all'&&!known.has(selectedStaffV825)&&rowsV825.length)selectedStaffV825='all';
+    const allSales=new Set(rowsV825.filter(r=>!r.reversed).map(r=>r.sale_id)).size;
+    const chip=(key,label,commission,selected)=>`<button type="button" class="qbtn${selected?' act':''}" role="tab" aria-selected="${selected?'true':'false'}" data-commission-staff-v825="${esc(key)}"><span data-merchant-content>${esc(label)}</span><span class="muted small" style="margin-left:8px">${esc(money(commission))}</span></button>`;
+    $('staffCommissionPeopleV825').innerHTML=chip('all','All',totals.commission,selectedStaffV825==='all')
+      +staff.map(s=>chip(s.key,s.name,s.commission,selectedStaffV825===s.key)).join('');
+    $('staffCommissionPeopleV825').querySelectorAll('[data-commission-staff-v825]').forEach(b=>b.onclick=()=>{
+      selectedStaffV825=b.dataset.commissionStaffV825;render();
+    });
+    const picked=selectedStaffV825==='all'
+      ?{name:'All team members',lines:totals.lines,sales:allSales,reversedSales:new Set(rowsV825.filter(r=>r.reversed).map(r=>r.sale_id)).size,amount:totals.amount,commission:totals.commission}
+      :(staff.find(s=>s.key===selectedStaffV825)||{name:'Team member',lines:0,sales:0,reversedSales:0,amount:0,commission:0});
+    const card=(title,value,note='')=>`<article class="card staff-rank-card"><span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(value)}</b>${note?`<p class="muted small">${esc(note)}</p>`:''}</article>`;
+    $('staffRankSummary').innerHTML=card('Commission earned',money(picked.commission),picked.name)
+      +card('Sales counted',String(picked.sales),`${picked.lines} line${picked.lines===1?'':'s'}`)
+      +card('Sales reversed',String(picked.reversedSales),picked.reversedSales?'listed, not counted':'none in this period')
+      +card('Amount sold',money(picked.amount),'before discounts on other lines');
+    const visible=rowsV825.filter(r=>selectedStaffV825==='all'||(r.staff_id||'__unattributed')===selectedStaffV825)
+      .sort((a,b)=>String(b.occurred_at).localeCompare(String(a.occurred_at))||String(a.sale_id).localeCompare(String(b.sale_id)));
+    if(!visible.length){
+      $('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No sales in this period',body:selectedStaffV825==='all'?'Sales recorded with a team member appear here as soon as they are rung up.':'Nothing was sold under this team member in the selected period.'});
+      return;
+    }
+    const counted=visible.filter(r=>!r.reversed);
+    const sumCommission=counted.reduce((t,r)=>t+Number(r.commission_cents||0),0);
+    const sumAmount=counted.reduce((t,r)=>t+Number(r.line_cents||0),0);
+    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><thead><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th class="num">Amount</th><th>Rate</th><th class="num">Commission</th><th>Status</th></tr></thead><tbody>
+      ${visible.map(r=>{
+        const customer=r.client_id&&r.client_name?`<a href="#/client/${esc(r.client_id)}" data-merchant-content><b>${esc(r.client_name)}</b></a>`
+          :r.client_id?'<span class="muted">Customer record unavailable</span>':'<span class="muted">Walk-in</span>';
+        const who=r.staff_id?`<span data-merchant-content>${esc(r.staff_name||'Team member')}</span>`:'<span class="muted">Unattributed</span>';
+        const status=r.reversed
+          ?`<span class="pill off" data-merchant-content title="${esc(r.reversal_reason||'Reversed')}">Reversed</span>`
+          :'<span class="pill on">Counted</span>';
+        return `<tr${r.reversed?' class="staff-commission-reversed-v825" style="opacity:.6"':''}><td data-label="When">${esc(sgt(r.occurred_at)||'')}</td>
+          <td data-label="Customer">${customer}</td>
+          <td data-label="Item"><span data-merchant-content>${esc(r.description||'')}</span> <span class="muted small">· ${esc(itemKindLabelV825(r))}${Number(r.qty)>1?` × ${Number(r.qty)}`:''}</span></td>
+          <td data-label="Team member">${who}</td>
+          <td class="num" data-label="Amount">${r.reversed?`<s>${esc(money(r.line_cents))}</s>`:esc(money(r.line_cents))}</td>
+          <td data-label="Rate">${esc(rateTextV825(r))}</td>
+          <td class="num" data-label="Commission">${r.reversed?`<s>${esc(money(r.commission_cents))}</s>`:`<b>${esc(money(r.commission_cents))}</b>`}</td>
+          <td data-label="Status">${status}</td></tr>`;
+      }).join('')}
+      <tr class="total-row"><td colspan="4"><b>Total counted</b></td><td class="num"><b>${esc(money(sumAmount))}</b></td><td></td><td class="num"><b>${esc(money(sumCommission))}</b></td><td></td></tr></tbody></table></div>
+      <p class="muted small" style="margin-top:10px">One sale line pays one team member. Reversed sales are shown for traceability and excluded from every total.</p>`;
+  }
   async function load(){
     const isLatest=requestGate.begin(),fromDate=$('pf').value,toDate=$('pt').value;
     const range=reportRangeValidation(fromDate,toDate);
     if(!range.ok){$('pbody').innerHTML=CUI.emptyState({iconName:'reports',title:'Choose a valid date range',body:range.reason});return}
     const from=sgDateBoundary(fromDate),toExclusive=sgDateBoundary(toDate,1);
-    $('pbody').innerHTML=CUI.tableSkeleton({rows:5,columns:5});
-    const staffVerdictHostV297=$('staffPerfVerdictV297');
-    if(staffVerdictHostV297)staffVerdictHostV297.innerHTML='';
-    /* V297: the same commission read, one period-length earlier, in the SAME Promise.all — so the
-       comparison adds no round trip and no server work. It resolves to null rather than rejecting:
-       a previous window we cannot read must leave the current figures standing with "No comparable
-       earlier period", not fail the whole page. */
-    const priorFromDateV297=shiftSgDateInput(fromDate,-range.days),priorToDateV297=shiftSgDateInput(fromDate,-1);
-    const priorWindowV297=reportPriorWindowV297({priorFrom:priorFromDateV297});
-    let scopeResult,sc,staffResult;
-    let priorCommissionV297=null;
+    $('pbody').innerHTML=CUI.tableSkeleton({rows:5,columns:6});
+    let scopeResult,rows;
     try{
-      [scopeResult,sc,staffResult,priorCommissionV297]=await Promise.all([
+      [scopeResult,rows]=await Promise.all([
         sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:selectedBranchId||null,p_module:'staffperf'}),
-        /* V285: this table carries branch_id and the page ignored it, so a workspace scoped to
-           one branch at the top bar still ranked the whole business — the one figure an owner
-           uses to compare two shops. The scope note above now states what is covered and this
-           read honours it. */
-        fetchAllRows(()=>{
-          const commissionQueryV285=sb.from('sale_commission')
-            .select('sale_id,staff_id,kind,occurred_at,amount_cents,commission_cents,counts_as_revenue',{count:'exact'})
-            .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
-          return (selectedBranchId?commissionQueryV285.eq('branch_id',selectedBranchId):commissionQueryV285)
-            .order('occurred_at').order('sale_id');
-        }),
-        sb.from('staff').select('id,full_name').eq('business_id',S.biz.id).order('full_name'),
-        priorWindowV297.comparable
-          ?fetchAllRows(()=>{
-              const priorQueryV297=sb.from('sale_commission')
-                .select('sale_id,staff_id,kind,occurred_at,amount_cents,commission_cents,counts_as_revenue',{count:'exact'})
-                .eq('business_id',S.biz.id)
-                .gte('occurred_at',sgDateBoundary(priorFromDateV297)).lt('occurred_at',sgDateBoundary(priorToDateV297,1));
-              return (selectedBranchId?priorQueryV297.eq('branch_id',selectedBranchId):priorQueryV297)
-                .order('occurred_at').order('sale_id');
-            }).then(rows=>rows,()=>null)
-          :Promise.resolve(null)
+        /* The reader is branch-scoped by the same p_branch the module-scope check is asked about
+           (V285's rule), and paginated through fetchAllRows like every other report read. */
+        fetchAllRows(()=>sb.rpc('business_staff_commission_lines_v825',
+            {p_business:S.biz.id,p_branch:selectedBranchId||null,p_from:from,p_to:toExclusive},{count:'exact'})
+          .order('occurred_at',{ascending:false}).order('sale_id').order('line_id'))
       ]);
     }catch(error){
       if(!isLatest())return;
       if(String(error.message||'').toLowerCase().includes('permission')){
-        $('pbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Finance access required',body:'Ask the owner for finance access to see staff performance.'});return
+        $('pbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Finance access required',body:'Ask the owner for finance access to see staff commission.'});return
       }
-      $('pbody').innerHTML=`<div class="err">Staff performance could not be loaded. <button class="btn ghost sm" id="staffPerfRetry">Retry</button></div>`;$('staffPerfRetry').onclick=load;return fail(error);
+      $('pbody').innerHTML=`<div class="err">Staff commission could not be loaded. <button class="btn ghost sm" id="staffPerfRetry">Retry</button></div>`;$('staffPerfRetry').onclick=load;return fail(error);
     }
     if(!isLatest())return;
-    if(scopeResult?.error){$('pbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Staff performance unavailable',body:'Staff performance is unavailable because its module or Sales access is not complete across every active branch.'});return}
-    if(staffResult.error)return fail(staffResult.error);
-    const {names,byStaff:agg,keys,totals}=staffPerformanceAggregation(sc,staffResult.data||[]);
-    /* V297: rendered BEFORE the "no staff sales" return, so a quiet period still opens with the
-       headline and its comparison rather than with an empty table and no answer. */
-    const priorTotalsV297=priorCommissionV297?staffPerformanceAggregation(priorCommissionV297,staffResult.data||[]).totals:null;
-    if(staffVerdictHostV297)staffVerdictHostV297.innerHTML=reportVerdictBandV297({
-      label:'Attributed revenue · selected period',
-      valueText:money(totals.revenue),
-      current:Number(totals.revenue||0),
-      previous:priorTotalsV297?Number(priorTotalsV297.revenue||0):null,
-      previousText:priorTotalsV297?money(priorTotalsV297.revenue):'',
-      days:range.days,available:Boolean(priorTotalsV297),
-      unavailableReason:priorWindowV297.comparable
-        ?'the same commission records could not be read for those earlier dates'
-        :priorWindowV297.reason,
-      zeroBaselineText:'no revenue was attributed to the team in the previous period',
-      note:`${priorTotalsV297?`Compared with ${priorFromDateV297} to ${priorToDateV297} on the same branch scope. `:''}Signed commission in this period: ${money(totals.commission)}. Revenue excludes rows whose immutable sale policy marks them non-revenue.`
-    });
-    if(!keys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No staff sales in this range',body:'Staff performance appears after sales are recorded with an assigned team member.'});return}
-    const sortMap={
-      revenue:{key:'revenue',label:'attributed revenue'},
-      commission:{key:'commission',label:'signed commission'},
-      revenueRecords:{key:'revenueRecords',label:'revenue-qualified records'},
-      ledgerRecords:{key:'ledgerRecords',label:'ledger-record count'}
-    };
-    const selectedSort=sortMap[staffPerfSort]||sortMap.revenue;
-    const matchesSearch=k=>{
-      if(!staffPerfSearch)return true;
-      if(k==='__unattributed')return 'unattributed'.includes(staffPerfSearch);
-      return String(names[k]||'Team member').toLowerCase().includes(staffPerfSearch);
-    };
-    const staffKeys=keys.filter(k=>k!=='__unattributed'&&matchesSearch(k));
-    staffKeys.sort((a,b)=>{
-      const delta=Number(agg[a][selectedSort.key]||0)-Number(agg[b][selectedSort.key]||0);
-      if(delta!==0)return staffPerfDir==='asc'?delta:-delta;
-      return String(names[a]||'').localeCompare(String(names[b]||''));
-    });
-    const displayKeys=[...staffKeys,...(keys.includes('__unattributed')&&matchesSearch('__unattributed')?['__unattributed']:[])];
-    const winnerCard=(metric,title,formatter=money)=>{
-      const winnerVisual='<span class="rank-visual" aria-hidden="true"><i></i><i></i><i></i></span>';
-      const eligible=keys.filter(k=>k!=='__unattributed'&&Number(agg[k][metric]||0)>0);
-      if(!eligible.length)return `<article class="card staff-rank-card">${winnerVisual}<span class="muted small">${esc(title)}</span><b>Not enough attributed data</b></article>`;
-      const top=Math.max(...eligible.map(k=>Number(agg[k][metric]||0)));
-      const winners=eligible.filter(k=>Number(agg[k][metric]||0)===top);
-      const label=winners.length>1?`Tie: ${winners.map(k=>names[k]||'Team member').join(', ')}`:(names[winners[0]]||'Team member');
-      return `<article class="card staff-rank-card">${winnerVisual}<span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(label)}</b><p class="muted small">${esc(formatter(top))}</p></article>`;
-    };
-    /* V180: "Most revenue-qualified records" was dropped on owner instruction. Counting records
-       rewards whoever rang up the most transactions, not whoever earned the most — it competes
-       with the two money cards beside it and reads as a third, contradictory ranking. The count
-       is still in the table below, where it belongs as traceability rather than a headline. */
-    $('staffRankSummary').innerHTML=`${winnerCard('revenue','Highest attributed revenue')}${winnerCard('commission','Highest signed commission')}`;
-    $('staffRankBasis').textContent=workspaceTranslationV97('Ranked by')+' '+selectedSort.label;
-    if(!displayKeys.length){$('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No matching staff records',body:'Clear the staff search or adjust the selected range.'});return}
-    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Rank</th><th>Staff</th><th>Ledger records</th><th>Revenue records</th><th class="num">Signed revenue attributed</th><th class="num">Signed commission</th></tr>
-      ${displayKeys.map((k,index)=>`<tr><td>${k==='__unattributed'?'—':index+1}</td><td><a href="#/staffperf/${k==='__unattributed'?'unattributed':encodeURIComponent(k)}"><b>${k==='__unattributed'?'Unattributed':esc(names[k]||'Team member')}</b></a></td>
-        <td>${agg[k].ledgerRecords}</td><td>${agg[k].revenueRecords}</td><td class="num">${money(agg[k].revenue)}</td><td class="num">${money(agg[k].commission)}</td></tr>`).join('')}
-      <tr class="total-row"><td></td><td><b>Total</b></td><td><b>${totals.ledgerRecords}</b></td><td><b>${totals.revenueRecords}</b></td><td class="num"><b>${money(totals.revenue)}</b></td><td class="num"><b>${money(totals.commission)}</b></td></tr></table></div>
-      <p class="muted small" style="margin-top:10px">Revenue excludes rows whose immutable sale policy marks them non-revenue. Ledger records and frozen commission remain visible for traceability.</p>`;
-  }
-  load();
-}
-
-/* Drill-down: one staff member's individual sales — customer clickable to their profile.
-   Money + frozen rate come from sale_commission (per-sale snapshot, never today's rates);
-   client_id isn't on that view, so a second sales fetch supplies it, joined client-side to
-   a clients fetch for names ("Walk-in" for null client_id, matching the list page). */
-async function staffPerfDrill(idParam){
-  const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
-  const requestGate=createLatestRequestGate(isCurrent);
-  const isUnattr=idParam==='unattributed';
-  const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
-  let staffName='Unattributed';
-  if(!isUnattr){
-    const {data:s}=await sb.from('staff').select('full_name').eq('id',idParam).limit(1);
-    staffName=s?.[0]?.full_name||'Team member';
-  }
-  M().innerHTML=`<div class="topbar"><div><h1 data-merchant-content>${esc(staffName)}</h1><p class="muted small">Signed ledger records in this business-wide range</p></div>
-    <a class="btn ghost sm" href="#/staffperf">← Staff performance</a></div>
-    <div class="range">
-      <button class="qbtn" data-d="7">7d</button><button class="qbtn act" data-d="30">30d</button><button class="qbtn" data-d="90">90d</button>
-      <input type="date" id="df" value="${d30}"> <span class="muted">→</span> <input type="date" id="dt" value="${today}">
-      <button class="btn sm" id="dapply">Apply</button>
-    </div>
-    <div class="card" style="margin-top:14px" id="dbody">${CUI.tableSkeleton({rows:5,columns:6})}</div>`;
-  document.querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
-    document.querySelectorAll('.qbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');
-    const end=sgDateInputValue();$('df').value=shiftSgDateInput(end,-(b.dataset.d-1));$('dt').value=end;load();
-  });
-  const invalidate=()=>{
-    requestGate.invalidate();
-    const body=$('dbody');if(body)body.innerHTML=CUI.emptyState({iconName:'sales',title:'Date range changed',body:'Apply the new range to refresh these ledger records.'});
-  };
-  $('df').onchange=$('dt').onchange=invalidate;
-  $('dapply').onclick=()=>load();
-  async function load(){
-    const isLatest=requestGate.begin(),fromDate=$('df').value,toDate=$('dt').value;
-    const range=reportRangeValidation(fromDate,toDate);
-    if(!range.ok){$('dbody').innerHTML=CUI.emptyState({iconName:'reports',title:'Choose a valid date range',body:range.reason});return}
-    const from=sgDateBoundary(fromDate),toExclusive=sgDateBoundary(toDate,1);
-    $('dbody').innerHTML=CUI.tableSkeleton({rows:5,columns:6});
-    let scopeResult,clientsScopeResult,sc;
-    try{
-      [scopeResult,clientsScopeResult,sc]=await Promise.all([
-        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'staffperf'}),
-        sb.rpc('require_module_scope_v145',{p_business:S.biz.id,p_branch:null,p_module:'clients'}),
-        fetchAllRows(()=>{
-        let q=sb.from('sale_commission')
-          .select('sale_id,staff_id,kind,occurred_at,amount_cents,commission_cents,counts_as_revenue',{count:'exact'})
-          .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
-        q=isUnattr?q.is('staff_id',null):q.eq('staff_id',idParam);
-        return q.order('occurred_at').order('sale_id');
-      })]);
-    }catch(error){
-      if(!isLatest())return;
-      if(String(error.message||'').toLowerCase().includes('permission')){
-        $('dbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Finance access required',body:'Ask the owner for finance access to see this.'});return
-      }
-      $('dbody').innerHTML=`<div class="err">Staff ledger records could not be loaded. <button class="btn ghost sm" id="staffDrillRetry">Retry</button></div>`;$('staffDrillRetry').onclick=load;return fail(error);
-    }
-    if(!isLatest())return;
-    if(scopeResult?.error){$('dbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Staff ledger unavailable',body:'Staff ledger records are unavailable because Staff performance or Sales access is not complete across every active branch.'});return}
-    if(!sc||!sc.length){$('dbody').innerHTML=CUI.emptyState({iconName:'sales',title:'No sales for this staff member',body:'Sales attributed to this team member will appear here for the selected range.'});return}
-    const clientsAvailable=!clientsScopeResult?.error;
-    const renderDependentReadError=error=>{
-      if(!isLatest())return;
-      $('dbody').innerHTML=`<div class="err">Staff ledger customer details could not be loaded. <button class="btn ghost sm" id="staffDrillRetry">Retry</button></div>`;
-      $('staffDrillRetry').onclick=load;fail(error);
-    };
-    let clientBySale={},clientName={};
-    if(clientsAvailable){
-      const ids=sc.map(r=>r.sale_id);
-      let sl;try{sl=await fetchRowsByIds('sales','id,client_id',ids)}catch(error){renderDependentReadError(error);return}
-      if(!isLatest())return;
-      clientBySale=Object.fromEntries((sl||[]).map(s=>[s.id,s.client_id]));
-      const clientIds=[...new Set((sl||[]).map(s=>s.client_id).filter(Boolean))];
-      if(clientIds.length){
-        let cl;try{cl=await fetchRowsByIds('clients','id,full_name',clientIds)}catch(error){renderDependentReadError(error);return}
-        if(!isLatest())return;
-        clientName=Object.fromEntries((cl||[]).map(c=>[c.id,c.full_name]));
-      }
-    }
-    if(!isLatest())return;
-    const rows=[...sc].sort((a,b)=>b.occurred_at.localeCompare(a.occurred_at));
-    $('dbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><tr><th>Date</th><th>Customer</th><th>Kind</th><th>Revenue treatment</th><th class="num">Signed amount</th><th class="num">Signed commission</th></tr>
-      ${rows.map(r=>{
-        const cid=clientBySale[r.sale_id];
-        const cust=!clientsAvailable?'<span class="muted">Customer details unavailable</span>'
-          :cid&&clientName[cid]?`<a href="#/client/${cid}" style="color:#D06A2E"><b>${esc(clientName[cid])}</b></a>`
-          :cid?'<span class="muted">Customer record unavailable</span>':'<span class="muted">Walk-in</span>';
-        return `<tr><td>${sgt(r.occurred_at)}</td><td>${cust}</td><td>${esc((r.kind||'').replace('_',' '))}</td><td>${r.counts_as_revenue?'<span class="pill on">Revenue</span>':'<span class="pill off">Non-revenue</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="num">${money(r.commission_cents||0)}</td></tr>`;
-      }).join('')}</table></div>`;
+    if(scopeResult?.error){$('pbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Staff commission unavailable',body:'Staff commission is unavailable because its module or Sales access is not complete across every active branch.'});return}
+    rowsV825=Array.isArray(rows)?rows:[];
+    render();
   }
   load();
 }
@@ -36803,17 +36785,23 @@ async function uploadCatalogueMediaV158({assetKind,entityId,file,altText=''}) {
   if(!file) throw new Error('Choose a photo first.');
   if(!CATALOGUE_MEDIA_TYPES_V158[file.type]) throw new Error('Use PNG, JPG, WebP or GIF.');
   if(file.size>CATALOGUE_MEDIA_MAX_BYTES_V158) throw new Error('Use an image under 10 MB.');
-  const dimensions=await imageDimensionsV95(file);
-  const ext=CATALOGUE_MEDIA_TYPES_V158[file.type];
+  /* nestly_v825 (owner photo 1): the original bytes used to go up untouched — production
+     catalogue photos average 1.2 MB and reach 2.1 MB — and a stalled upload sat on "Uploading…"
+     for ever. Downscaled like a promotion photo, with the same deadline, applied inside the
+     publisher so a timed-out upload is reported as a failed upload and nothing is published. */
+  const sending=await downscalePromotionPhotoV280(file);
+  const dimensions=await imageDimensionsV95(sending);
+  const ext=CATALOGUE_MEDIA_TYPES_V158[sending.type];
   const objectPath=`${S.biz.id}/${assetKind}/${crypto.randomUUID()}.${ext}`;
   const existing=catalogueMediaVersionCacheV158.get(catalogueMediaCacheKeyV158(assetKind,entityId));
   const publisher=window.NestlyMediaSyncV95||globalThis.NestlyMediaSyncV95;
   if(!publisher?.publish) throw new Error('Photo upload is not available. Refresh and try again.');
   const result=await publisher.publish({
-    storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file,
+    storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file:sending,
+    timeoutMs:BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825,
     publishArgs:{
       p_business:S.biz.id,p_asset_kind:assetKind,p_entity_id:entityId,p_branch:null,
-      p_object_path:objectPath,p_mime_type:file.type,p_width_px:dimensions.width,p_height_px:dimensions.height,
+      p_object_path:objectPath,p_mime_type:sending.type,p_width_px:dimensions.width,p_height_px:dimensions.height,
       p_alt_en:altText||`${assetKind} photo`,p_alt_zh_cn:null,p_hero_color:null,
       p_expected_asset_version:Number(existing?.version||0),p_expected_brand_version:null
     }
@@ -36931,19 +36919,23 @@ async function loadWorkspaceLogoEditorV96(){
     if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760){
       return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
     }
-    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
-    const objectPath=`${S.biz.id}/logo/${crypto.randomUUID()}.${extension}`;
     publish.disabled=true;status.textContent='Uploading and publishing logo…';
+    /* nestly_v825: downscaled before upload like every other business photo; a PNG logo keeps its
+       transparency. */
+    const sending=await downscalePromotionPhotoV280(file,{preserveTransparency:true});
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[sending.type];
+    const objectPath=`${S.biz.id}/logo/${crypto.randomUUID()}.${extension}`;
     let dimensions;
-    try{dimensions=await imageDimensionsV95(file)}
+    try{dimensions=await imageDimensionsV95(sending)}
     catch(dimensionError){
       publish.disabled=false;status.textContent='Logo dimensions could not be read.';
       return fail(dimensionError);
     }
     const result=await NestlyMediaSyncV95.publish({
-      storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file,
+      storage:sb.storage,client:sb,businessId:S.biz.id,objectPath,file:sending,
+      timeoutMs:BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825,
       publishArgs:workspaceLogoPublishArgsV96({
-        businessId:S.biz.id,objectPath,fileType:file.type,
+        businessId:S.biz.id,objectPath,fileType:sending.type,
         width:dimensions.width,height:dimensions.height,altEn,
         brand,existing
       })
@@ -37090,16 +37082,18 @@ async function loadCustomerProgrammePresentationEditorV95(){
     if(!file||!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>10485760)return toast('Choose a PNG, JPG, WebP or GIF up to 10 MB.');
     if(!altEn)return toast('Add a short image description.');
     const [kind,entityId]=String($('programmeImageEntity').value).split('|');
-    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[file.type];
+    /* nestly_v825: downscaled before upload; a PNG logo keeps its transparency. */
+    const sending=await downscalePromotionPhotoV280(file,{preserveTransparency:kind==='logo'});
+    const extension={['image/png']:'png',['image/jpeg']:'jpg',['image/webp']:'webp',['image/gif']:'gif'}[sending.type];
     const objectPath=`${S.biz.id}/${kind}/${crypto.randomUUID()}.${extension}`;
     const existing=assets.find(asset=>asset.asset_kind===kind&&String(asset.entity_id||'')===String(entityId||'')&&!asset.branch_id);
     $('programmeImageUpload').disabled=true;$('programmeImageStatus').textContent='Uploading image…';
-    const dimensions=await imageDimensionsV95(file);
+    const dimensions=await imageDimensionsV95(sending);
     const result=await NestlyMediaSyncV95.publish({
       storage:sb.storage,client:sb,
-      businessId:S.biz.id,objectPath,file,publishArgs:{
+      businessId:S.biz.id,objectPath,file:sending,timeoutMs:BUSINESS_MEDIA_UPLOAD_TIMEOUT_MS_V825,publishArgs:{
         p_business:S.biz.id,p_asset_kind:kind,p_entity_id:entityId||null,p_branch:null,
-        p_object_path:objectPath,p_mime_type:file.type,p_width_px:dimensions.width,p_height_px:dimensions.height,
+        p_object_path:objectPath,p_mime_type:sending.type,p_width_px:dimensions.width,p_height_px:dimensions.height,
         p_alt_en:altEn,p_alt_zh_cn:null,
         p_hero_color:kind==='logo'||kind==='hero'?(brand.hero_color||CUSTOMER_SURFACE_ACCENT_V375):null,
         p_expected_asset_version:Number(existing?.version||0),
@@ -37434,7 +37428,7 @@ async function settingsPage(){
         <span class="spacer"></span><select id="modulePerm-${s.id}-${module}" data-staff-module="${module}" data-perm-state-v382="${value==='off'?'off':'on'}" class="module-perm-select-v382" onchange="setModulePermissionV74('${s.id}','${module}',this.value)" ${sel.mode==='inherit'||financeDisabled?'disabled':''} style="width:auto;min-width:105px;padding:7px 30px 7px 10px">
           <option value="off" ${value==='off'?'selected':''}>Off</option><option value="r" ${value==='r'?'selected':''}>Read</option><option value="rw" ${value==='rw'?'selected':''}>Edit</option>
         </select>
-        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L, Staff performance and Customer intelligence require a finance-capable role.</span>`:''}
+        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L, Staff commission and Customer intelligence require a finance-capable role.</span>`:''}
       </div>`;
     }).join('');
   }
@@ -38021,7 +38015,7 @@ async function settingsPage(){
     if(error){fail(error);await loadTeam();return}
     const removedFinance=priorHadFinance&&['expenses','pnl'].filter(module=>!Object.hasOwn(data?.module_perms||{},module));
     permissionStatusByStaff[id]=removedFinance.length&&['staff','frontdesk'].includes(role)
-      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff performance and Customer intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
+      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff commission and Customer intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
       :'<div class="imp-note small">Role updated and effective module access refreshed.</div>';
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();
@@ -40123,20 +40117,7 @@ function businessLinkNormaliseV471(raw){
 let businessProfileExtrasV418=null;   /* {gallery:[...], social_links:[...]} once read */
 let businessProfileExtrasBusyV418=false;
 let businessProfileExtrasErrorV418='';
-async function uploadGalleryPhotoV418(file){
-  if(!S.biz?.id)throw new Error('Business context is required.');
-  if(!file)throw new Error('Choose a photo first.');
-  const ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
-  if(!ext)throw new Error('Use a PNG, JPG or WebP image.');
-  if(file.size>10*1024*1024)throw new Error('Use an image under 10 MB.');
-  /* Same grammar app.v95_storage_path_owned enforces — the folder name is what makes the storage
-     policy allow the write, so it is not a naming preference. */
-  const objectPath=`${S.biz.id}/gallery/${crypto.randomUUID()}.${ext}`;
-  const {error}=await sb.storage.from('business-public')
-    .upload(objectPath,file,{contentType:file.type,upsert:false});
-  if(error)throw new Error(error.message||'The photo could not be uploaded.');
-  return `${SB_URL.replace(/\/+$/,'')}/storage/v1/object/public/business-public/${objectPath}`;
-}
+async function uploadGalleryPhotoV418(file){return uploadBusinessPhotoV825('gallery',file)}
 function businessProfileExtrasCardHtmlV418(){
   return `<div class="card" style="margin-top:16px" data-profile-extras-v418><b>Photos and links</b>
     <p class="muted small" style="margin:6px 0 10px">Shown to customers on your profile. Add your menu, your room, your work — and the places customers can find you.</p>

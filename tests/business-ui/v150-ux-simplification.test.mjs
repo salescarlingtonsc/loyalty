@@ -44,7 +44,7 @@ test('V150 sidebar keeps operational actions separate from money history', () =>
      They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
      FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
      them is a one-line change. */
-  assert.match(navBlock, /items:\['dailyreport','sales','reports','customerintel'\]/);
+  assert.match(navBlock, /items:\['dailyreport','sales','staffperf','reports','customerintel'\]/); /* nestly_v825 */
   assert.doesNotMatch(navBlock, /items:\[[^\]]*'expenses'/, 'Expenses left the Reports nav');
   assert.doesNotMatch(navBlock, /items:\[[^\]]*'pnl'/, 'P&L left the Reports nav');
 });

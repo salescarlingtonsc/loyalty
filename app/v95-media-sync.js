@@ -25,10 +25,25 @@
     });
   }
 
-  async function publish({storage,client,businessId,objectPath,file,publishArgs}){
-    const uploaded=await storage.from(BUCKET).upload(
+  /* nestly_v825: a stalled upload used to hold "Uploading…" for ever. With a deadline it becomes an
+     ordinary failed upload — reported to the caller, nothing published, no cleanup owed (nothing
+     was confirmed written). Callers opt in with timeoutMs; a caller that passes none keeps the old
+     unbounded behaviour. */
+  function withUploadDeadline(work,ms){
+    if(!(ms>0))return work;
+    return new Promise(resolve=>{
+      let settled=false;
+      const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value)};
+      const timer=setTimeout(()=>finish({error:new Error(
+        'The photo upload did not finish in time. Check the connection and try again.')}),ms);
+      Promise.resolve(work).then(finish,error=>finish({error}));
+    });
+  }
+
+  async function publish({storage,client,businessId,objectPath,file,publishArgs,timeoutMs=0}){
+    const uploaded=await withUploadDeadline(storage.from(BUCKET).upload(
       objectPath,file,{contentType:file.type,upsert:false}
-    );
+    ),timeoutMs);
     if(uploaded.error)return {
       ok:false,stage:'upload',error:uploaded.error,cleanup:{status:'not_required'}
     };

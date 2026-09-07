@@ -4149,6 +4149,12 @@
       "path": "db/migrations/20261007_nestly_v825_security_hygiene_sweep.sql",
       "semanticVersion": "v825",
       "proposedDeployVersion": "20261007170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261008_nestly_v827_catalogue_commission_and_staff_commission_report.sql",
+      "semanticVersion": "v827",
+      "proposedDeployVersion": "20261008010000"
     }
   ]
 }

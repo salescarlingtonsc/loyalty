@@ -68,7 +68,7 @@ test('the deliberate separation between doing and reviewing is intact', () => {
      They leave the NAV only — expensesPage() and pnlPage(), their routes, RPCs and
      FINANCE_MODULES entitlement all survive, so no recorded cost is lost and re-listing
      them is a one-line change. */
-  assert.match(app, /label:'Reports',items:\['dailyreport','sales','reports','customerintel'\]/);
+  assert.match(app, /label:'Reports',items:\['dailyreport','sales','staffperf','reports','customerintel'\]/); /* nestly_v825 */
   const groups = app.match(/const NAVGROUPS=\[[\s\S]*?\n\];/)[0];
   assert.equal((groups.match(/'sales'/g) || []).length, 1, 'one entry, never duplicated');
 });

@@ -21,19 +21,19 @@ test('Staff performance is hidden from roles without the finance capability',()=
     `${required} must stay finance-gated`);
   const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
   /* The copy has to name every module the role actually loses, or it under-reports the change. */
-  assert.match(settings,/Expenses, P&amp;L, Staff performance and Customer intelligence require a finance-capable role/);
-  assert.match(settings,/Expenses, P&amp;L, Staff performance and Customer intelligence were removed because/);
+  assert.match(settings,/Expenses, P&amp;L, Staff commission and Customer intelligence require a finance-capable role/);
+  assert.match(settings,/Expenses, P&amp;L, Staff commission and Customer intelligence were removed because/);
 });
 
 test('Staff performance uses Singapore calendar boundaries and an exclusive end instant',()=>{
-  const list=section('async function staffPerfPage(drillId){','/* Drill-down: one staff member');
-  const drill=section('async function staffPerfDrill(idParam){','/* ---------- daily report ---------- */');
-  for(const source of [list,drill]){
+  /* nestly_v825: one page (the drill route preselects a team member on it), one RPC read whose
+     window is the same Singapore-day pair every other report uses. */
+  const list=section('async function staffPerfPage(drillId){','function enhanceStaffMembersTabsV164(');
+  for(const source of [list]){
     assert.match(source,/sgDateInputValue\(\)/);
-    assert.match(source,/shiftSgDateInput\(/);
     assert.match(source,/sgDateBoundary\([^)]*\)/);
     assert.match(source,/toExclusive=sgDateBoundary\([^,]+,1\)/);
-    assert.match(source,/\.gte\('occurred_at',from\)\.lt\('occurred_at',toExclusive\)/);
+    assert.match(source,/p_from:from,p_to:toExclusive/);
     assert.doesNotMatch(source,/toISOString\(\)\.slice\(0,10\)/);
     assert.doesNotMatch(source,/T23:59:59/);
   }

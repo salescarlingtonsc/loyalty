@@ -79,7 +79,7 @@ test('V260 (3) Business Insights folds the three answer collapsibles into their 
 test('V260 (4) Business Insights Team performance card routes to the real Staff performance page', () => {
   const reports = section(js, 'async function reportsPage(){', '\n/* ---------- get started');
   assert.match(reports, /canReadModule\('staffperf'\)&&\{href:'#\/staffperf'/);
-  assert.match(reports, /title:'Team Performance'/); /* V294 tab casing */
+  assert.match(reports, /title:'Staff commission'/); /* V294 tab casing; nestly_v825 names the module it opens */
   // #/staffperf is a real registered route (staffPerfPage), not an invented one.
   assert.match(js, /staffperf:staffPerfPage/);
 });
