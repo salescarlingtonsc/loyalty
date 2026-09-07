@@ -4126,6 +4126,12 @@
       "version": "20261007140000",
       "name": "nestly_v823_reconcile_call_timeout",
       "sourcePath": "db/migrations/20261007_nestly_v823_reconcile_call_timeout.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007150000",
+      "name": "nestly_v824_whatsapp_api_sends_off",
+      "sourcePath": "db/migrations/20261007_nestly_v824_whatsapp_api_sends_off.sql"
     }
   ]
 }
