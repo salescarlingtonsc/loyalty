@@ -6255,7 +6255,7 @@ async function clientDetail(id){
     ${/* nestly_v574: TEXT ONLY — no button, no toggle. This is the customer's own choice, made in
          their own Peekaa app (customer_set_whatsapp_marketing_consent_v574); staff cannot set it
          here or anywhere else, so this row deliberately carries no control at all. */
-      staffClientWhatsappConsentRowMarkupV574(whatsappPermissionV574)}
+      HIDE_WHATSAPP_API_SURFACES_V824?'':staffClientWhatsappConsentRowMarkupV574(whatsappPermissionV574)}
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
       c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
@@ -34728,6 +34728,7 @@ async function loadGrowBbWhatsappStripV551(root){
   const host=(root||document).querySelector('#growBbWhatsappStripV551');
   if(!host)return;
   host.innerHTML='';
+  if(HIDE_WHATSAPP_API_SURFACES_V824)return; // nestly_v824: API-driven WhatsApp surface hidden by owner ruling
   const {data,error}=await sb.rpc('get_retention_send_stats_v551',{p_business:S.biz.id});
   if(error||!data)return;
   if(!host.isConnected)return;
@@ -34802,6 +34803,7 @@ async function loadGrowWaAutomationCardV583(root){
   const host=(root||document).querySelector('#growWaAutomationCardV583');
   if(!host)return;
   host.innerHTML='';
+  if(HIDE_WHATSAPP_API_SURFACES_V824)return; // nestly_v824: API-driven WhatsApp surface hidden by owner ruling
   /* Two reads, one round trip — the appointment lanes and the bring-back lane are
      separate grants, and the owner must see each ceiling for what it is. */
   const [apptCap,bbCap]=await Promise.all([

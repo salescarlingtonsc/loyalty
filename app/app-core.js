@@ -449,6 +449,20 @@ const ALLMODS=['dashboard','till','clients','appointments','sales','services','b
    they are server-side entitlements other tenants' rows and RLS policies are written against, and
    deleting an entitlement key is a data change. Un-retiring a module is deleting it from this set. */
 const RETIRED_BUSINESS_MODULES_V768=new Set(['giftcards','support']);
+/* nestly_v824 (owner ruling 2026-09-08, verbatim: "i want to hide everything whatsapp inbox related.
+   except for manual whatsapp click. those API whatsapp i want it hide"). v768 retired the Inbox and
+   the analytics; this closes the rest of the API-driven WhatsApp surface in ONE switch:
+     * the Reminder & Notification "WhatsApp automation" card (loadGrowWaAutomationCardV583)
+     * the Bring-back "WhatsApp delivery" strip              (loadGrowBbWhatsappStripV551)
+     * the Customer 360 "WhatsApp offers" consent row         (staffClientWhatsappConsentRowMarkupV574)
+     * the customer wallet "WhatsApp from <business>" opt-in  (customerWhatsappConsentCardMarkupV574)
+   KEPT, deliberately, because they are a person tapping a link that opens WhatsApp on their own
+   phone with a message pre-filled — no API, nothing sent by Peekaa: the booking-confirmation
+   WhatsApp button (V330), the customer share sheet's WhatsApp channel (V264), and Bring-back's
+   "copy the contact list and message them yourself". The markup functions themselves are left
+   intact (their unit tests still execute them); only the surfaces stop being painted. Un-hiding =
+   flip this to false. Recorded in docs/parity/FLOWESCE_TO_AVOCADO_PARITY_MATRIX.md §4a (AO-2). */
+const HIDE_WHATSAPP_API_SURFACES_V824=true;
 const INDUSTRIES={
   fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The

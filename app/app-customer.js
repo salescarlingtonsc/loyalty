@@ -7513,7 +7513,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
         ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}
       </section>
-      ${customerWhatsappConsentCardMarkupV574(b.name,whatsappPermissionEntryV574)}
+      ${HIDE_WHATSAPP_API_SURFACES_V824?'':customerWhatsappConsentCardMarkupV574(b.name,whatsappPermissionEntryV574)}
       ${customerBusinessSecondaryMarkupV346(presentation)}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;

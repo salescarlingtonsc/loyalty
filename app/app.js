@@ -556,6 +556,20 @@ const UNVERIFIED_MODULES_V466=['memberships','giftcards'];
    they are server-side entitlements other tenants' rows and RLS policies are written against, and
    deleting an entitlement key is a data change. Un-retiring a module is deleting it from this set. */
 const RETIRED_BUSINESS_MODULES_V768=new Set(['giftcards','support']);
+/* nestly_v824 (owner ruling 2026-09-08, verbatim: "i want to hide everything whatsapp inbox related.
+   except for manual whatsapp click. those API whatsapp i want it hide"). v768 retired the Inbox and
+   the analytics; this closes the rest of the API-driven WhatsApp surface in ONE switch:
+     * the Reminder & Notification "WhatsApp automation" card (loadGrowWaAutomationCardV583)
+     * the Bring-back "WhatsApp delivery" strip              (loadGrowBbWhatsappStripV551)
+     * the Customer 360 "WhatsApp offers" consent row         (staffClientWhatsappConsentRowMarkupV574)
+     * the customer wallet "WhatsApp from <business>" opt-in  (customerWhatsappConsentCardMarkupV574)
+   KEPT, deliberately, because they are a person tapping a link that opens WhatsApp on their own
+   phone with a message pre-filled — no API, nothing sent by Peekaa: the booking-confirmation
+   WhatsApp button (V330), the customer share sheet's WhatsApp channel (V264), and Bring-back's
+   "copy the contact list and message them yourself". The markup functions themselves are left
+   intact (their unit tests still execute them); only the surfaces stop being painted. Un-hiding =
+   flip this to false. Recorded in docs/parity/FLOWESCE_TO_AVOCADO_PARITY_MATRIX.md §4a (AO-2). */
+const HIDE_WHATSAPP_API_SURFACES_V824=true;
 const INDUSTRIES={
   fnb:{em:'🍜',label:'F&B / Café',mods:['dashboard','till','clients','sales','bookings','waitlist','inventory','loyalty','retention','referrals','giftcards','reports','customerintel','staffperf','dailyreport','pnl','expenses']},
   /* V275 (owner, 2026-08-11): bars are a sector of their own, not a cafe with spirits. The
@@ -15764,7 +15778,7 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
         ${window.NestlyGrowthOffers?window.NestlyGrowthOffers.renderCustomerOffers({state:'loading'}):''}
         ${walletReviewUrlV183(b)?`<section class="card wallet-section" id="walletFeedback"></section>`:''}
       </section>
-      ${customerWhatsappConsentCardMarkupV574(b.name,whatsappPermissionEntryV574)}
+      ${HIDE_WHATSAPP_API_SURFACES_V824?'':customerWhatsappConsentCardMarkupV574(b.name,whatsappPermissionEntryV574)}
       ${customerBusinessSecondaryMarkupV346(presentation)}
       ${hasWalletSection?'':`<section class="card wallet-section" id="walletEmpty"><div class="wallet-section-head"><div><h2>Nothing to show yet</h2><p class="muted small">This business has no customer wallet sections available for your account.</p></div><span class="spacer"></span><button class="btn ghost sm" id="walletEmptyRetry">Refresh</button></div></section>`}
     </div>`;
@@ -24830,7 +24844,7 @@ async function clientDetail(id){
     ${/* nestly_v574: TEXT ONLY — no button, no toggle. This is the customer's own choice, made in
          their own Peekaa app (customer_set_whatsapp_marketing_consent_v574); staff cannot set it
          here or anywhere else, so this row deliberately carries no control at all. */
-      staffClientWhatsappConsentRowMarkupV574(whatsappPermissionV574)}
+      HIDE_WHATSAPP_API_SURFACES_V824?'':staffClientWhatsappConsentRowMarkupV574(whatsappPermissionV574)}
     ${/* V299 (landing-parity): the profile never said WHEN this person became a customer,
          though the row was already fetched. Absent stays absent — no "Unavailable" filler. */
       c.created_at?summaryRowV294('Member since',`<b>${esc(formatCustomerJoinedDateV141(c.created_at))}</b>`):''}
@@ -53710,6 +53724,7 @@ async function loadGrowBbWhatsappStripV551(root){
   const host=(root||document).querySelector('#growBbWhatsappStripV551');
   if(!host)return;
   host.innerHTML='';
+  if(HIDE_WHATSAPP_API_SURFACES_V824)return; // nestly_v824: API-driven WhatsApp surface hidden by owner ruling
   const {data,error}=await sb.rpc('get_retention_send_stats_v551',{p_business:S.biz.id});
   if(error||!data)return;
   if(!host.isConnected)return;
@@ -53784,6 +53799,7 @@ async function loadGrowWaAutomationCardV583(root){
   const host=(root||document).querySelector('#growWaAutomationCardV583');
   if(!host)return;
   host.innerHTML='';
+  if(HIDE_WHATSAPP_API_SURFACES_V824)return; // nestly_v824: API-driven WhatsApp surface hidden by owner ruling
   /* Two reads, one round trip — the appointment lanes and the bring-back lane are
      separate grants, and the owner must see each ceiling for what it is. */
   const [apptCap,bbCap]=await Promise.all([

@@ -21,7 +21,7 @@ const blockEnd = app.indexOf('/* V550 — the recovered-revenue report renderer'
 assert.ok(blockStart > -1 && blockEnd > blockStart, 'the strip loader is a top-level function before the V550 renderer');
 const block = app.slice(blockStart, blockEnd);
 
-function run(rpcResult) {
+function run(rpcResult, { hidden = false } = {}) {
   const calls = [];
   const host = { innerHTML: '<!-- untouched -->', isConnected: true };
   const rootEl = { querySelector: (sel) => (sel === '#growBbWhatsappStripV551' ? host : null) };
@@ -29,7 +29,11 @@ function run(rpcResult) {
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
     S: { biz: { id: 'biz-1' } },
     sb: { rpc: async (fn, args) => { calls.push({ fn, args }); return rpcResult; } },
-    document: { querySelector: () => null }
+    document: { querySelector: () => null },
+    /* nestly_v824: the strip is an API-driven WhatsApp surface and production hides it (owner
+       ruling 2026-09-08). The rendering tests below run it UN-hidden so the renderer itself stays
+       proven for the day it is switched back on; the last test pins the hidden posture. */
+    HIDE_WHATSAPP_API_SURFACES_V824: hidden
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
@@ -68,6 +72,13 @@ test('V551 an RPC error leaves the page silent, and the payload is never re-deri
 });
 
 /* ------------------------------------------------- migration + dispatcher contract pins */
+
+test('nestly_v824 with the API WhatsApp surfaces hidden, the strip paints nothing and never asks the server', async () => {
+  const { load, host, calls } = run({ data: { queued: 3, sent: 9, template_status: 'approved' }, error: null }, { hidden: true });
+  await load();
+  assert.equal(host.innerHTML, '', 'the host is cleared, not left with stale markup');
+  assert.equal(calls.length, 0, 'get_retention_send_stats_v551 is not called for a hidden surface');
+});
 
 test('V551 every gate is a named suppression and consent is checked twice', () => {
   for (const reason of ['platform_outbound_off', 'retention_sends_off', 'capability_disabled',
