@@ -15651,10 +15651,22 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
      at a business page before the link is confirmed), and the card below renders that as a
      distinct, disabled state rather than guessing a false "off". */
   const messagingPermissionsRequest=sb.rpc('customer_get_messaging_permissions_v574');
+  /* W4c audit: customer_get_effective_tier_v143 refuses with 42501 "loyalty module is unavailable
+     for this business" whenever the loyalty module is off or no loyalty programme is active — and
+     customer_portal_capabilities (fetched above, same render) already answers exactly that
+     question in `capabilities.tiers` (true only when the loyalty module is on, a tiers programme
+     is active, and a ladder exists — a strict subset of when this RPC would succeed). Skip the
+     call when it is false; effectiveTierResult keeps the same {error:{code:'42501'}} shape the
+     line below already renders as presentation.tier={unavailable:'not_running'} with no console
+     error, toast or retry — so a business without tiers gets that outcome for one fewer round
+     trip instead of a network 403. */
+  const effectiveTierRequest=businessId&&capabilities?.tiers===true
+    ?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId})
+    :Promise.resolve({data:null,error:{code:'42501',message:'loyalty module is unavailable for this business'}});
   const [businessActionsResult,presentationResult,effectiveTierResult,promotionsResult,promotionPromptResult,messagingPermissionsResult]=await Promise.all([
     businessId?sb.rpc('customer_get_business_actions_v89',{p_business:businessId}):unavailableBusinessId(),
     businessId?sb.rpc('customer_get_business_presentation_v95',{p_business:businessId,p_branch:null,p_locale:merchantCopyLocale()}):unavailableBusinessId(),
-    businessId?sb.rpc('customer_get_effective_tier_v143',{p_business:businessId}):unavailableBusinessId(),
+    effectiveTierRequest,
     /* V201 (owner: "customer view only have 1 company instead of multiple branch"). The customer
        sees the FIRM, so this read is firm-wide by definition — never the workspace's selected
        branch. selectedBranchId is workspace state; a staff member who is also a customer would
@@ -16028,8 +16040,9 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
      module off, backend not yet applied, denial, transport failure — removes the slot: this is
      a growth invitation, not the customer's money, so a retry card here would be noise about a
      feature the customer does not know exists. */
-  /* W4c: the member QR, gated EXACTLY like the W4b card stack — programmes_contract==='v310' with
-     at least one programme row — because a firm the spine cannot describe has no membership to
+  /* W4c: the member QR, gated EXACTLY like the W4b card stack — programmes_contract at or above
+     v310 (programmeStackV310's minimum-version check) with at least one programme row — because
+     a firm the spine cannot describe has no membership to
      show a code for, and the pre-v310 tab surface never had this card at all.
      CAPABILITY CHECK, deliberately silent: public.customer_get_member_code_v310 is NOT SHIPPED
      (see SERVER ASKS in the W6 increment 2 build report). Any answer other than a code removes the
@@ -16338,12 +16351,20 @@ async function renderCustomerWallet(businessSlug=null,{silent=false,forceV498=fa
        fetched with the catalogue rather than after it — one screen, one round trip. It mirrors
        staff_tier_benefits_for_client_v365 clause for clause on the server, so the card below can
        never promise a perk the counter would refuse. Fails closed and silently, the same rule the
-       v427 entitlements follow: no rows, no error card. */
+       v427 entitlements follow: no rows, no error card.
+       W4c audit: customer_get_birthday_benefit refuses with 0A000 "birthday benefits are
+       unavailable" whenever the PLATFORM flag customer_birthday_benefits is off — the same flag
+       already mirrored into customerFeatures at bootstrap and already used to gate this section's
+       own markup (line ~15718). Skip the call entirely when that flag is off instead of paying
+       for a refusal we already know is coming; {data:null,error:null} reproduces the exact
+       birthdayBenefitDataV752 outcome the error branch below already renders (nothing). */
     const [catalogResult,entitlementsResultV427,tierPerkResultV501,birthdayBenefitResultV752]=await Promise.all([
       customerRpc('customer_get_reward_catalog',args),
       customerRpc('customer_get_entitlements_v427',{p_business_slug:businessSlug}),
       customerRpc('customer_get_tier_benefits_v501',{p_business_slug:businessSlug}),
-      customerRpc('customer_get_birthday_benefit',{p_business_slug:businessSlug})
+      customerFeatures.customer_birthday_benefits===true
+        ?customerRpc('customer_get_birthday_benefit',{p_business_slug:businessSlug})
+        :Promise.resolve({data:null,error:null})
     ]);
     /* Awaited, not the raw promise: every reader below touches .error/.data synchronously. */
     const actionsResult=businessId?businessActionsResult:await unavailableBusinessId();
