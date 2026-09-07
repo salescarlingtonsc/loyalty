@@ -4132,6 +4132,12 @@
       "version": "20261007150000",
       "name": "nestly_v824_whatsapp_api_sends_off",
       "sourcePath": "db/migrations/20261007_nestly_v824_whatsapp_api_sends_off.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007160000",
+      "name": "nestly_v826_owner_brief",
+      "sourcePath": "db/migrations/20261007_nestly_v826_owner_brief.sql"
     }
   ]
 }

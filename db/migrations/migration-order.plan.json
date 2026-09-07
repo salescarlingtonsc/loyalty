@@ -4137,6 +4137,12 @@
       "path": "db/migrations/20261007_nestly_v824_whatsapp_api_sends_off.sql",
       "semanticVersion": "v824",
       "proposedDeployVersion": "20261007150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v826_owner_brief.sql",
+      "semanticVersion": "v826",
+      "proposedDeployVersion": "20261007160000"
     }
   ]
 }

@@ -33,22 +33,22 @@ exactly for every seeded business — there is no known gap left for this fixtur
 
 | | |
 |---|---|
-| Commit SHA | `1336c50828eb5fbb398fe18f1c7cd0fea63aceff` |
-| Branch | `claude/razorpay-billing-v755` |
-| Commit date | 2026-09-05T00:36:38+08:00 |
-| Report generated | 2026-09-04T17:36:23.414Z |
+| Commit SHA | `e4574f897d3a4d98cddf1393dd2bce2e54b6c57b` |
+| Branch | `HEAD` |
+| Commit date | 2026-09-08T02:23:51+08:00 |
+| Report generated | 2026-09-07T18:38:40.279Z |
 | Postgres (scratch harness server) | PostgreSQL 17.10 (Homebrew) on aarch64-apple-darwin25.4.0, compiled by Apple clang version 21.0.0 (clang-2100.0.123.102), 64-bit |
 | Node | v24.16.0 |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
-| Pending migrations replayed on top of the watermark | 258 |
+| Pending migrations replayed on top of the watermark | 309 |
 | Command (equivalent) | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v731_reconciliation_report --migrated-only` |
 
 ## Per-business reconciliation (captured `RAISE NOTICE` output, verbatim)
 
 ```
-v731 | biz=1 sector=fnb business_id=85a26d4a-17ba-4c32-89fc-600e5e60b02b | A_recorded=74400 B_dashboard=74400 C_sales_window=74400 D_platform=74400 E_direct_sql=74400 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
-v731 | biz=2 sector=salon business_id=f32f35e1-88eb-4b56-aa1b-d72ba1358ee0 | A_recorded=421600 B_dashboard=421600 C_sales_window=421600 D_platform=421600 E_direct_sql=421600 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
-v731 | biz=3 sector=retail business_id=17357405-fbb6-4d7d-89cd-0ed6da89c499 | A_recorded=190000 B_dashboard=190000 C_sales_window=190000 D_platform=190000 E_direct_sql=190000 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
+v731 | biz=1 sector=fnb business_id=ad603090-3bd7-4001-9ed5-993b66130319 | A_recorded=74400 B_dashboard=74400 C_sales_window=74400 D_platform=74400 E_direct_sql=74400 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
+v731 | biz=2 sector=salon business_id=e1918285-ed71-4fff-a53a-ff918b4c0c0f | A_recorded=421600 B_dashboard=421600 C_sales_window=421600 D_platform=421600 E_direct_sql=421600 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
+v731 | biz=3 sector=retail business_id=4bf5dfbf-7adc-4962-919b-72f9e84ceca0 | A_recorded=190000 B_dashboard=190000 C_sales_window=190000 D_platform=190000 E_direct_sql=190000 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
 ```
 
 ## Machine-readable per-business table (fixture's own `select ... from _report`, verbatim)
@@ -65,9 +65,9 @@ CREATE TABLE
 DO
  seq | business_index | sector |             business_id              | a_recorded | b_dashboard | c_sales_window | d_platform | e_direct_sql | pct_b | pct_c | pct_d | pct_e 
 -----+----------------+--------+--------------------------------------+------------+-------------+----------------+------------+--------------+-------+-------+-------+-------
-   1 |            701 | fnb    | 85a26d4a-17ba-4c32-89fc-600e5e60b02b |      74400 |       74400 |          74400 |      74400 |        74400 | 100.0 | 100.0 | 100.0 | 100.0
-   2 |            702 | salon  | f32f35e1-88eb-4b56-aa1b-d72ba1358ee0 |     421600 |      421600 |         421600 |     421600 |       421600 | 100.0 | 100.0 | 100.0 | 100.0
-   3 |            703 | retail | 17357405-fbb6-4d7d-89cd-0ed6da89c499 |     190000 |      190000 |         190000 |     190000 |       190000 | 100.0 | 100.0 | 100.0 | 100.0
+   1 |            701 | fnb    | ad603090-3bd7-4001-9ed5-993b66130319 |      74400 |       74400 |          74400 |      74400 |        74400 | 100.0 | 100.0 | 100.0 | 100.0
+   2 |            702 | salon  | e1918285-ed71-4fff-a53a-ff918b4c0c0f |     421600 |      421600 |         421600 |     421600 |       421600 | 100.0 | 100.0 | 100.0 | 100.0
+   3 |            703 | retail | 4bf5dfbf-7adc-4962-919b-72f9e84ceca0 |     190000 |      190000 |         190000 |     190000 |       190000 | 100.0 | 100.0 | 100.0 | 100.0
 (3 rows)
 
                                                                                                              verdict                                                                                                             | failures 
@@ -100,9 +100,9 @@ CREATE TABLE
 DO
  seq | business_index | sector |             business_id              | a_recorded | b_dashboard | c_sales_window | d_platform | e_direct_sql | pct_b | pct_c | pct_d | pct_e 
 -----+----------------+--------+--------------------------------------+------------+-------------+----------------+------------+--------------+-------+-------+-------+-------
-   1 |            701 | fnb    | 85a26d4a-17ba-4c32-89fc-600e5e60b02b |      74400 |       74400 |          74400 |      74400 |        74400 | 100.0 | 100.0 | 100.0 | 100.0
-   2 |            702 | salon  | f32f35e1-88eb-4b56-aa1b-d72ba1358ee0 |     421600 |      421600 |         421600 |     421600 |       421600 | 100.0 | 100.0 | 100.0 | 100.0
-   3 |            703 | retail | 17357405-fbb6-4d7d-89cd-0ed6da89c499 |     190000 |      190000 |         190000 |     190000 |       190000 | 100.0 | 100.0 | 100.0 | 100.0
+   1 |            701 | fnb    | ad603090-3bd7-4001-9ed5-993b66130319 |      74400 |       74400 |          74400 |      74400 |        74400 | 100.0 | 100.0 | 100.0 | 100.0
+   2 |            702 | salon  | e1918285-ed71-4fff-a53a-ff918b4c0c0f |     421600 |      421600 |         421600 |     421600 |       421600 | 100.0 | 100.0 | 100.0 | 100.0
+   3 |            703 | retail | 4bf5dfbf-7adc-4962-919b-72f9e84ceca0 |     190000 |      190000 |         190000 |     190000 |       190000 | 100.0 | 100.0 | 100.0 | 100.0
 (3 rows)
 
                                                                                                              verdict                                                                                                             | failures 
@@ -121,8 +121,8 @@ ROLLBACK
 ### stderr
 
 ```
-psql:/Users/cs/Downloads/loyalty-main/db/tests/executed/v731_reconciliation_report.sql:286: NOTICE:  v731 | biz=1 sector=fnb business_id=85a26d4a-17ba-4c32-89fc-600e5e60b02b | A_recorded=74400 B_dashboard=74400 C_sales_window=74400 D_platform=74400 E_direct_sql=74400 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
-psql:/Users/cs/Downloads/loyalty-main/db/tests/executed/v731_reconciliation_report.sql:286: NOTICE:  v731 | biz=2 sector=salon business_id=f32f35e1-88eb-4b56-aa1b-d72ba1358ee0 | A_recorded=421600 B_dashboard=421600 C_sales_window=421600 D_platform=421600 E_direct_sql=421600 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
-psql:/Users/cs/Downloads/loyalty-main/db/tests/executed/v731_reconciliation_report.sql:286: NOTICE:  v731 | biz=3 sector=retail business_id=17357405-fbb6-4d7d-89cd-0ed6da89c499 | A_recorded=190000 B_dashboard=190000 C_sales_window=190000 D_platform=190000 E_direct_sql=190000 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
+psql:/Users/cs/Downloads/loyalty-worktrees/wt-owner-brief/db/tests/executed/v731_reconciliation_report.sql:286: NOTICE:  v731 | biz=1 sector=fnb business_id=ad603090-3bd7-4001-9ed5-993b66130319 | A_recorded=74400 B_dashboard=74400 C_sales_window=74400 D_platform=74400 E_direct_sql=74400 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
+psql:/Users/cs/Downloads/loyalty-worktrees/wt-owner-brief/db/tests/executed/v731_reconciliation_report.sql:286: NOTICE:  v731 | biz=2 sector=salon business_id=e1918285-ed71-4fff-a53a-ff918b4c0c0f | A_recorded=421600 B_dashboard=421600 C_sales_window=421600 D_platform=421600 E_direct_sql=421600 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
+psql:/Users/cs/Downloads/loyalty-worktrees/wt-owner-brief/db/tests/executed/v731_reconciliation_report.sql:286: NOTICE:  v731 | biz=3 sector=retail business_id=4bf5dfbf-7adc-4962-919b-72f9e84ceca0 | A_recorded=190000 B_dashboard=190000 C_sales_window=190000 D_platform=190000 E_direct_sql=190000 | pct_B=100.0 pct_C=100.0 pct_D=100.0 pct_E=100.0
 ```
 

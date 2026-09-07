@@ -6,7 +6,7 @@
 > the verdict for each is from a LIVE harness run (same ScratchCluster machinery as
 > `reconciliation`), not a recorded number. Do not hand-edit — regenerate.
 
-Commit `1336c50828eb5fbb398fe18f1c7cd0fea63aceff`, generated 2026-09-04T17:36:46.387Z.
+Commit `e4574f897d3a4d98cddf1393dd2bce2e54b6c57b`, generated 2026-09-07T18:39:00.657Z.
 
 ## Scope
 

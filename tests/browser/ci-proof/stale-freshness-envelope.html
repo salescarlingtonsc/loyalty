@@ -533,6 +533,17 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:var(--shell);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,var(--head-tint));border-color:#E8D8D0}
 .dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+/* nestly_v826: the owner brief card under the Dashboard title. */
+.dashboard-brief-v826{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#F1F8F4);border-color:#D6E6DC}
+.dashboard-brief-head{display:flex;align-items:center;gap:10px}
+.dashboard-brief-head>svg{flex:none}
+.dashboard-brief-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.dashboard-brief-list li{position:relative;padding-left:16px;font-size:14px;line-height:1.45;color:var(--ink)}
+.dashboard-brief-list li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-list li.good::before{background:var(--green)}
+.dashboard-brief-list li.warn::before{background:var(--amber)}
+.dashboard-brief-list li.muted{color:var(--muted)}
+.dashboard-brief-foot{margin:10px 0 0}
 /* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
    short form rather than a grid of unlabelled boxes. */
 .tier-editor-step{color:var(--ink);font-size:14px}
@@ -6087,6 +6098,16 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:var(--shell);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,var(--head-tint));border-color:#E8D8D0}
 .dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.dashboard-brief-v826{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#F1F8F4);border-color:#D6E6DC}
+.dashboard-brief-head{display:flex;align-items:center;gap:10px}
+.dashboard-brief-head>svg{flex:none}
+.dashboard-brief-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.dashboard-brief-list li{position:relative;padding-left:16px;font-size:14px;line-height:1.45;color:var(--ink)}
+.dashboard-brief-list li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-list li.good::before{background:var(--green)}
+.dashboard-brief-list li.warn::before{background:var(--amber)}
+.dashboard-brief-list li.muted{color:var(--muted)}
+.dashboard-brief-foot{margin:10px 0 0}
 .tier-editor-step{color:var(--ink);font-size:14px}
 .tier-benefit-picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px}
 .tier-benefit-pick{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:#fff;font-size:13.5px;color:var(--ink);min-height:44px}

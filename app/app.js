@@ -23328,6 +23328,130 @@ function tierBasisHelpV182(program){
   if(basis==='points_earned')return 'Total points this customer has earned, all time.';
   return 'Number of visit-counted sale records for this customer. Several sales in one day count separately.';
 }
+/* nestly_v826 — the owner brief header (Home dashboard).
+   The brief is a snapshot the database composed last night (app.refresh_owner_brief_v826) from
+   the readers Performance and Insights already use. The browser reads it ONCE per business per
+   Singapore day and keeps it in memory, so returning to Home never refetches. Every line below is
+   a sentence built from server figures; nothing is computed here, and a fact the server marked
+   unavailable or insufficient is left out rather than guessed. */
+let ownerBriefCacheV826={key:'',response:null};
+function ownerBriefHourV826(h){
+  const n=Number(h);if(!Number.isFinite(n))return '';
+  const x=((Math.round(n)%24)+24)%24;const twelve=x%12===0?12:x%12;
+  return `${twelve}${x<12?'am':'pm'}`;
+}
+function ownerBriefPctV826(p){
+  const n=Number(p);if(!Number.isFinite(n))return '';
+  const a=Math.round(Math.abs(n));
+  return n>=0?`${a}% above`:`${a}% below`;
+}
+function ownerBriefSignedV826(p){
+  const n=Number(p);if(!Number.isFinite(n))return '';
+  const a=Math.round(Math.abs(n));
+  return n>=0?`+${a}%`:`−${a}%`;
+}
+function ownerBriefLinesV826(brief){
+  const lines=[];
+  if(!brief||typeof brief!=='object')return lines;
+  const plural=(n,one,many)=>Number(n)===1?one:many;
+  const w=brief.week||{};
+  if(w.status==='ok'){
+    const rev=money(w.revenue_cents||0);
+    if(w.revenue_delta_pct==null){
+      lines.push({kind:'plain',text:`Last 7 days: ${rev} from ${w.visits||0} ${plural(w.visits,'visit','visits')}. Not enough history yet to say what a normal week looks like.`});
+    }else{
+      const d=Number(w.revenue_delta_pct);
+      let text=`Last 7 days: ${rev}, ${ownerBriefPctV826(d)} a normal week (${money(w.baseline?.revenue_cents||0)}).`;
+      if(w.driver==='visits')text+=d<0?' Fewer people, not smaller orders.':' More people, not bigger orders.';
+      else if(w.driver==='basket')text+=d<0?' Smaller orders, not fewer people.':' Bigger orders, not more people.';
+      lines.push({kind:d<-5?'warn':d>5?'good':'plain',text});
+    }
+  }else if(w.status==='unavailable'){
+    lines.push({kind:'muted',text:'Last 7 days could not be prepared.'});
+  }
+  const o=brief.outlets||{};
+  if(o.status==='ok'){
+    const b=o.best,x=o.worst;
+    if(b&&x&&b.name!==x.name){
+      lines.push({kind:Number(x.revenue_delta_pct)<-5?'warn':'plain',text:`${b.name} ${Number(b.revenue_delta_pct)>=0?'carried the week':'held up best'} (${ownerBriefSignedV826(b.revenue_delta_pct)}). ${x.name} is dragging (${ownerBriefSignedV826(x.revenue_delta_pct)}).`});
+    }else if(b){
+      lines.push({kind:'plain',text:`${b.name}: ${ownerBriefPctV826(b.revenue_delta_pct)} its normal week. The other outlets have too little history to compare.`});
+    }
+  }
+  const dp=brief.daypart||{};
+  if(dp.status==='ok'){
+    const parts=[];
+    if(dp.busiest_weekday?.label)parts.push(`Busiest day ${dp.busiest_weekday.label}`);
+    if(dp.slowest_weekday?.label)parts.push(`slowest ${dp.slowest_weekday.label}`);
+    const q=dp.quietest_hours;
+    if(q&&q.start_hour!=null)parts.push(`quietest stretch ${ownerBriefHourV826(q.start_hour)}–${ownerBriefHourV826(q.end_hour)} (${Math.round(Number(q.share_pct)||0)}% of visits)`);
+    if(parts.length)lines.push({kind:'plain',text:`${parts.join(', ')}.`});
+  }
+  const c=brief.customers||{};
+  if(c.status==='ok'){
+    const n=Number(c.new_customers)||0,r=Number(c.returning_customers)||0;
+    lines.push({kind:'plain',text:n===0&&r===0?'No identified customers in the last 7 days.':`${n} new ${plural(n,'customer','customers')}, ${r} returning.`});
+  }
+  const a=brief.at_risk||{};
+  if(a.status==='ok'){
+    const n=(Number(a.overdue)||0)+(Number(a.slipping)||0);
+    const stake=Number(a.monthly_at_risk_cents)||0;
+    lines.push(n>0
+      ?{kind:'warn',text:`${n} ${plural(n,'regular is','regulars are')} overdue their usual visit${stake>0?` (${money(stake)} a month at stake)`:''}.`}
+      :{kind:'good',text:'No regulars overdue their usual visit.'});
+  }
+  const r=brief.rewards||{};
+  if(r.status==='ok'){
+    const ignored=Number(r.ignored_active)||0;
+    if(Number(r.redemptions)>0&&r.top?.name){
+      lines.push({kind:'plain',text:`Most redeemed reward: ${r.top.name} (${r.top.redemptions} in 8 weeks).${ignored>0?` ${ignored} active ${plural(ignored,'reward was','rewards were')} never redeemed.`:''}`});
+    }else if(ignored>0){
+      lines.push({kind:'warn',text:`No reward redeemed in 8 weeks; ${ignored} active ${plural(ignored,'reward is','rewards are')} untouched.`});
+    }
+  }
+  const act=brief.action||{};
+  if(act.status==='ok'&&act.top_action?.title){
+    const cost=Number(act.top_action.estimated_cost_cents);
+    lines.push({kind:'good',text:`Suggested: ${act.top_action.title}.${Number.isFinite(cost)&&cost>0?` Cost up to ${money(cost)}.`:''}`});
+  }
+  return lines;
+}
+function ownerBriefRenderV826(host,response){
+  if(!host)return;
+  const list=host.querySelector('#dashboardBriefList'),when=host.querySelector('#dashboardBriefWhen'),foot=host.querySelector('#dashboardBriefFoot');
+  host.removeAttribute('aria-busy');
+  const status=response?.data_status;
+  if(status==='not_computed'){
+    when.textContent='Your first brief will be ready tomorrow morning.';list.innerHTML='';foot.textContent='It is prepared every night from the same figures as Performance and Insights.';return;
+  }
+  if(status==='error'){
+    when.textContent='Your brief could not be prepared last night.';list.innerHTML='';foot.textContent='We will try again tonight.';return;
+  }
+  const lines=ownerBriefLinesV826(response?.brief);
+  when.textContent=response?.as_of?`Up to ${dashboardScheduleDayLabelV252(response.as_of)}`:'';
+  list.innerHTML=lines.length?lines.map(line=>`<li class="${esc(line.kind)}">${esc(line.text)}</li>`).join(''):'<li class="muted">Nothing to report yet.</li>';
+  const preparedAt=response?.computed_at?sgt(response.computed_at):'';
+  foot.textContent=status==='stale'
+    ?`Prepared ${preparedAt}. Last night’s update did not run, so these figures are older than a day.`
+    :`Prepared ${preparedAt}, from the same figures as Performance and Insights.`;
+}
+async function loadOwnerBriefV826(root){
+  const host=root?.querySelector('#dashboardBrief');
+  if(!host||!S.biz?.id)return;
+  const key=`${S.biz.id}:${sgDateInputValue()}`;
+  let response=ownerBriefCacheV826.key===key?ownerBriefCacheV826.response:null;
+  if(!response){
+    const {data,error}=await sb.rpc('get_owner_brief_v1',{p_business:S.biz.id});
+    if(error){
+      /* A login without sales access (or a business with the dashboard module off) is refused by
+         the server; the card simply does not appear for them. */
+      host.hidden=true;host.style.display='none';return;
+    }
+    response=data;ownerBriefCacheV826={key,response};
+  }
+  if(!root.isConnected)return;
+  ownerBriefRenderV826(host,response);
+}
 async function dashboard(){
   const today=sgDateInputValue(),d30=shiftSgDateInput(today,-29);
   const renderEpoch=++dashboardRenderEpoch;
@@ -23347,6 +23471,14 @@ async function dashboard(){
            through dashboardRoot, which contains the new position exactly as it did the old. -->
       <div class="v150-title-actions"></div>
     </header>
+    <!-- nestly_v826: the owner brief. One row, computed last night by app.refresh_owner_brief_v826
+         from the same readers Performance and Insights use; read here by get_owner_brief_v1 once
+         per session. Nothing on this card is computed in the browser. -->
+    <section class="card dashboard-brief-v826" id="dashboardBrief" aria-labelledby="dashboardBriefTitle" aria-busy="true">
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Your brief</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
+      <ul class="dashboard-brief-list" id="dashboardBriefList" aria-live="polite"></ul>
+      <p class="muted small dashboard-brief-foot" id="dashboardBriefFoot"></p>
+    </section>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
         <div class="dashboard-schedule-copy">
@@ -23467,6 +23599,7 @@ async function dashboard(){
   dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
+  loadOwnerBriefV826(dashboardRoot).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser

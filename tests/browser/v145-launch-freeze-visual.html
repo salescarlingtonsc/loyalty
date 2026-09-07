@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ff6fe2dc251dc288079214d653d202bf8cac970aedfe1791f01848cf360ee93c"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="fa74da0f5e55d2969b35738939bb8c8aeb663820d991b41b840cdf124f748ff0"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -526,6 +526,17 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:var(--shell);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,var(--head-tint));border-color:#E8D8D0}
 .dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+/* nestly_v826: the owner brief card under the Dashboard title. */
+.dashboard-brief-v826{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#F1F8F4);border-color:#D6E6DC}
+.dashboard-brief-head{display:flex;align-items:center;gap:10px}
+.dashboard-brief-head>svg{flex:none}
+.dashboard-brief-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.dashboard-brief-list li{position:relative;padding-left:16px;font-size:14px;line-height:1.45;color:var(--ink)}
+.dashboard-brief-list li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-list li.good::before{background:var(--green)}
+.dashboard-brief-list li.warn::before{background:var(--amber)}
+.dashboard-brief-list li.muted{color:var(--muted)}
+.dashboard-brief-foot{margin:10px 0 0}
 /* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
    short form rather than a grid of unlabelled boxes. */
 .tier-editor-step{color:var(--ink);font-size:14px}
@@ -5771,7 +5782,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · ff6fe2dc251dc288079214d653d202bf8cac970aedfe1791f01848cf360ee93c</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · fa74da0f5e55d2969b35738939bb8c8aeb663820d991b41b840cdf124f748ff0</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6475,6 +6486,14 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
            through dashboardRoot, which contains the new position exactly as it did the old. -->
       <div class="v150-title-actions"></div>
     </header>
+    <!-- nestly_v826: the owner brief. One row, computed last night by app.refresh_owner_brief_v826
+         from the same readers Performance and Insights use; read here by get_owner_brief_v1 once
+         per session. Nothing on this card is computed in the browser. -->
+    <section class="card dashboard-brief-v826" id="dashboardBrief" aria-labelledby="dashboardBriefTitle" aria-busy="true">
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Your brief</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
+      <ul class="dashboard-brief-list" id="dashboardBriefList" aria-live="polite"></ul>
+      <p class="muted small dashboard-brief-foot" id="dashboardBriefFoot"></p>
+    </section>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
         <div class="dashboard-schedule-copy">
@@ -6595,6 +6614,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   dashboardScheduleGlancePaintedForV370=appliedDashboardScopeV141.branchId;
   loadDashboardScheduleGlanceV180(dashboardRoot,appliedDashboardScopeV141.branchId);
   loadDashboardBottlesV278(dashboardRoot,appliedDashboardScopeV141.branchId).catch(()=>{});
+  loadOwnerBriefV826(dashboardRoot).catch(()=>{});
   /* V252: tabs and picker are two views of ONE piece of state — the Singapore calendar date
      being shown. Both routes call the same applier, so the tab pressed-state, the input value
      and the fetched day can never disagree. Dates are derived with the SGT helpers; a browser
@@ -9979,7 +9999,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'ff6fe2dc251dc288079214d653d202bf8cac970aedfe1791f01848cf360ee93c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'fa74da0f5e55d2969b35738939bb8c8aeb663820d991b41b840cdf124f748ff0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

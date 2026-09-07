@@ -3381,6 +3381,10 @@
       "reason": "v550 read-only recovered-revenue report: joins bring-back grants and attention outreach to counts_as_visit sales entirely in SELECTs behind require_module_scope_v145(reports+clients+sales); no DML, no ledger or value write."
     },
     {
+      "id": "browser.rpc:app/app.js:get_owner_brief_v1",
+      "reason": "browser RPC 'get_owner_brief_v1' resolves to a read-only / config / non-value writer (nestly_v826: the dashboard header reads the nightly owner brief snapshot; no ledger, no config write)"
+    },
+    {
       "id": "browser.rpc:app/app.js:get_reports_summary",
       "reason": "browser RPC 'get_reports_summary' resolves to a read-only / config / non-value writer (draft editors, getters, booking/appointment status, campaign config, imports staging, staff/consent, platform)"
     },

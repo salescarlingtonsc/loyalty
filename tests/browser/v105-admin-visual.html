@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="9d13fe83ab2877a67a09626c304100187bffd7619fd899385192982f2e1fc41e">
+<meta name="v105-production-component-sha256" content="4dceb365a110aa2256dfcfcda69d86206677aa8e876b80eb4a25da8119073217">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -532,6 +532,17 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:var(--shell);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,var(--head-tint));border-color:#E8D8D0}
 .dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+/* nestly_v826: the owner brief card under the Dashboard title. */
+.dashboard-brief-v826{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#F1F8F4);border-color:#D6E6DC}
+.dashboard-brief-head{display:flex;align-items:center;gap:10px}
+.dashboard-brief-head>svg{flex:none}
+.dashboard-brief-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.dashboard-brief-list li{position:relative;padding-left:16px;font-size:14px;line-height:1.45;color:var(--ink)}
+.dashboard-brief-list li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-list li.good::before{background:var(--green)}
+.dashboard-brief-list li.warn::before{background:var(--amber)}
+.dashboard-brief-list li.muted{color:var(--muted)}
+.dashboard-brief-foot{margin:10px 0 0}
 /* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
    short form rather than a grid of unlabelled boxes. */
 .tier-editor-step{color:var(--ink);font-size:14px}
@@ -6732,7 +6743,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 9d13fe83ab28</span>
+<span class="v105-provenance">v105 production-component harness · 4dceb365a110</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6857,7 +6868,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'9d13fe83ab2877a67a09626c304100187bffd7619fd899385192982f2e1fc41e',
+  sourceHash:'4dceb365a110aa2256dfcfcda69d86206677aa8e876b80eb4a25da8119073217',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

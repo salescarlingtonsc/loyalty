@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="561adf2225941c104ecb5ce32451dd73b606e4c7492c4a1625cb3eee2a313ad9"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="179a908ccc997c19ac27dfd5924be01568f0e1754bb3fecbe486ffb6b37622b1"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -526,6 +526,17 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .branch-loading-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border:1px dashed var(--line);border-radius:999px;background:var(--shell);color:var(--muted);font-size:12px;font-weight:700;white-space:nowrap}
 .dashboard-schedule-glance{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,var(--head-tint));border-color:#E8D8D0}
 .dashboard-schedule-top{display:flex;justify-content:space-between;align-items:center;gap:14px}
+/* nestly_v826: the owner brief card under the Dashboard title. */
+.dashboard-brief-v826{display:block;padding:16px 18px;background:linear-gradient(135deg,#fff,#F1F8F4);border-color:#D6E6DC}
+.dashboard-brief-head{display:flex;align-items:center;gap:10px}
+.dashboard-brief-head>svg{flex:none}
+.dashboard-brief-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.dashboard-brief-list li{position:relative;padding-left:16px;font-size:14px;line-height:1.45;color:var(--ink)}
+.dashboard-brief-list li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-list li.good::before{background:var(--green)}
+.dashboard-brief-list li.warn::before{background:var(--amber)}
+.dashboard-brief-list li.muted{color:var(--muted)}
+.dashboard-brief-foot{margin:10px 0 0}
 /* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
    short form rather than a grid of unlabelled boxes. */
 .tier-editor-step{color:var(--ink);font-size:14px}
@@ -5770,7 +5781,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 561adf2225941c104ecb5ce32451dd73b606e4c7492c4a1625cb3eee2a313ad9</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 179a908ccc997c19ac27dfd5924be01568f0e1754bb3fecbe486ffb6b37622b1</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
