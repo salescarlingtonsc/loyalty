@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 673,
-  "executableCount": 659,
+  "itemCount": 674,
+  "executableCount": 660,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -933,7 +933,7 @@
     },
     {
       "sourceDeployVersion": "20261006",
-      "count": 24,
+      "count": 25,
       "paths": [
         "db/migrations/20261006_nestly_v775_capacity_increase_invoice_reason.sql",
         "db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql",
@@ -951,6 +951,7 @@
         "db/migrations/20261006_nestly_v793_due_day_buckets.sql",
         "db/migrations/20261006_nestly_v794_first_live_payment_record.sql",
         "db/migrations/20261006_nestly_v797_console_payment_method.sql",
+        "db/migrations/20261006_nestly_v798_card_follows_live_provider.sql",
         "db/migrations/20261006_nestly_v801_appointment_change_integrity.sql",
         "db/migrations/20261006_nestly_v802_stamp_gift_reversal_and_pin.sql",
         "db/migrations/20261006_nestly_v803_membership_pause_and_replay_markers.sql",
@@ -6342,13 +6343,21 @@
     {
       "order": 672,
       "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v798_card_follows_live_provider.sql",
+      "semanticVersion": "v798",
+      "proposedDeployVersion": "20261006231000",
+      "sha256": "d8cf1eba26a4f1cd49cbd1121ce969282b43190b7d3e27d0840faed9eebba38d"
+    },
+    {
+      "order": 673,
+      "kind": "executable",
       "path": "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql",
       "semanticVersion": "v809",
       "proposedDeployVersion": "20261007000000",
       "sha256": "3fb6f8276ca57960bb0b10e33446eb0f466211cc0f7dabcb964993f807c9d059"
     },
     {
-      "order": 673,
+      "order": 674,
       "kind": "executable",
       "path": "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql",
       "semanticVersion": "v810",

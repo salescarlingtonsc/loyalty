@@ -4044,6 +4044,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20261006_nestly_v798_card_follows_live_provider.sql",
+      "semanticVersion": "v798",
+      "proposedDeployVersion": "20261006231000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql",
       "semanticVersion": "v809",
       "proposedDeployVersion": "20261007000000"

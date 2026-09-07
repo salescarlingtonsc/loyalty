@@ -38279,6 +38279,12 @@ function billingBranchCardLinesV784(branch,summary,billing,paymentMethod,options
     note:isDefault?'Includes your core Peekaa plan':(own?'Billed on its own card':''),
     pills,price,billed,when,when_tone:whenTone,action,
     card:billingCardTextV758(method),
+    /* nestly_v798: whether there is a card FACT to state at all. "No card yet" is worth saying on
+       a branch that is being billed — it is the warning that a renewal has nothing to charge — and
+       is pure noise on one that is not. The branch card below shows the line on that basis, so a
+       firm never reads a card sentence about a branch it does not pay for. */
+    card_known:!!method,
+    has_plan:hasPlan,
     billing_state:state,is_default:isDefault,mode:own?'own':'shared',cadence
   };
 }
@@ -38360,6 +38366,12 @@ function subscriptionBranchCardsV784(cards){
         ${card.price?`<p class="v784-price">${esc(card.price)}</p>`:''}
         ${card.billed?`<p class="muted small" style="margin:2px 0 0">${esc(card.billed)}</p>`:''}
         ${card.when?`<p class="small v784-when ${card.when_tone==='no'?'v784-when-no':'muted'}" style="margin:8px 0 0">${card.when_tone==='no'?CUI.icon('info',{size:16}):CUI.icon('daily',{size:16})}<span>${esc(card.when)}</span></p>`:''}
+        ${/* nestly_v798 (owner: "make sure the business view also able to see which card they are
+             using"). The card was computed here all along and rendered only inside the Manage
+             sheet, so an owner had to open a dialog per branch to learn what pays for it — while
+             the platform console showed it on the face of the record. Same sentence, same source,
+             both apps. */''}
+        ${card.card_known||card.has_plan?`<p class="muted small" style="margin:4px 0 0">${esc(card.card)}</p>`:''}
       </div>
       <div class="v784-card-action">${button}</div>
     </article>`;}).join('')}</div>`;
