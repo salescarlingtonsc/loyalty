@@ -573,7 +573,11 @@ let growPointsRewardTabV324='published';
 /* V326 (owner 5-photo Points System flow, photo 3): the new dedicated #/grow/points page.
    Published/History only — no Draft, since every gift change here is immediate-write
    (business_set_reward_paused_v326/business_delete_reward_v326/business_create_reward_v326),
-   never a draft. growPointsDeletePendingV326 holds the id of a gift with its delete confirm
+   never a draft the owner has to publish. (nestly_v805 and nestly_v814: for a STAMP gift on a
+   running stamps programme, deleting and switching off are now version-forward server-side —
+   they publish a configuration version of their own so a customer mid-card keeps what they were
+   promised. Still one click for the owner, still no draft on this page; but both RPCs can now
+   answer publish_status 'pending' with blockers, and both call sites handle that.) growPointsDeletePendingV326 holds the id of a gift with its delete confirm
    open (mirrors growSwitchPendingV322's one-open-at-a-time pattern). growPointsAddOpenV326 is
    ''|'form'|'prompt' — closed, the name+points add-gift form open, or the post-save "add
    another?" prompt; growPointsAddDraftV326 holds the in-progress form values across re-renders.

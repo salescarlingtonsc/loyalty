@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 676,
-  "executableCount": 662,
+  "itemCount": 680,
+  "executableCount": 666,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -964,12 +964,16 @@
     },
     {
       "sourceDeployVersion": "20261007",
-      "count": 4,
+      "count": 8,
       "paths": [
         "db/migrations/20261007_nestly_v809_till_card_standing_and_expense_note.sql",
         "db/migrations/20261007_nestly_v810_acl_and_credit_note_history.sql",
         "db/migrations/20261007_nestly_v811_self_serve_loyalty_birth.sql",
-        "db/migrations/20261007_nestly_v813_wallet_readers_pot_scope.sql"
+        "db/migrations/20261007_nestly_v813_wallet_readers_pot_scope.sql",
+        "db/migrations/20261007_nestly_v814_stamp_gift_pause_version_forward.sql",
+        "db/migrations/20261007_nestly_v815_redeem_across_pots_in_business_scope.sql",
+        "db/migrations/20261007_nestly_v816_whatsapp_sent_unconfirmed.sql",
+        "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql"
       ]
     }
   ],
@@ -6381,6 +6385,38 @@
       "semanticVersion": "v813",
       "proposedDeployVersion": "20261007040000",
       "sha256": "89f73785666c3e42aedff73ca3f3511693d1d83f594763dd732016d031748933"
+    },
+    {
+      "order": 677,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v814_stamp_gift_pause_version_forward.sql",
+      "semanticVersion": "v814",
+      "proposedDeployVersion": "20261007050000",
+      "sha256": "81caa2d2eedf2636aea7c67d58115e681f4948ad72249fdf1d95d1e6aec251fc"
+    },
+    {
+      "order": 678,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v815_redeem_across_pots_in_business_scope.sql",
+      "semanticVersion": "v815",
+      "proposedDeployVersion": "20261007060000",
+      "sha256": "81835085b5080075e981b4ebd853864c0df56a997b252f3aa156142727b8bd79"
+    },
+    {
+      "order": 679,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v816_whatsapp_sent_unconfirmed.sql",
+      "semanticVersion": "v816",
+      "proposedDeployVersion": "20261007070000",
+      "sha256": "5e2b31dc970d4a19a217f4c497055af8071fde87b23b547a99658907880b8612"
+    },
+    {
+      "order": 680,
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql",
+      "semanticVersion": "v817",
+      "proposedDeployVersion": "20261007080000",
+      "sha256": "72d70f369fc81c7ab0cf03b2a5a267ccf6e4f3265d3e3e96b04b0ed6ee54bcd8"
     }
   ]
 }

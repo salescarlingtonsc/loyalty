@@ -4066,6 +4066,30 @@
       "version": "20261007040000",
       "name": "nestly_v813_wallet_readers_pot_scope",
       "sourcePath": "db/migrations/20261007_nestly_v813_wallet_readers_pot_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007050000",
+      "name": "nestly_v814_stamp_gift_pause_version_forward",
+      "sourcePath": "db/migrations/20261007_nestly_v814_stamp_gift_pause_version_forward.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007060000",
+      "name": "nestly_v815_redeem_across_pots_in_business_scope",
+      "sourcePath": "db/migrations/20261007_nestly_v815_redeem_across_pots_in_business_scope.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007070000",
+      "name": "nestly_v816_whatsapp_sent_unconfirmed",
+      "sourcePath": "db/migrations/20261007_nestly_v816_whatsapp_sent_unconfirmed.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261007080000",
+      "name": "nestly_v817_one_ci_gate_completion",
+      "sourcePath": "db/migrations/20261007_nestly_v817_one_ci_gate_completion.sql"
     }
   ]
 }

@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 632,
-  "itemCount": 677,
+  "pendingCount": 636,
+  "itemCount": 681,
   "items": [
     {
       "order": 1,
@@ -6777,6 +6777,46 @@
       "path": "supabase/migrations/20261007040000_nestly_v813_wallet_readers_pot_scope.sql",
       "octetLength": 17128,
       "sha256": "89f73785666c3e42aedff73ca3f3511693d1d83f594763dd732016d031748933",
+      "provenance": "local-source"
+    },
+    {
+      "order": 678,
+      "kind": "pending",
+      "version": "20261007050000",
+      "name": "nestly_v814_stamp_gift_pause_version_forward",
+      "path": "supabase/migrations/20261007050000_nestly_v814_stamp_gift_pause_version_forward.sql",
+      "octetLength": 40149,
+      "sha256": "81caa2d2eedf2636aea7c67d58115e681f4948ad72249fdf1d95d1e6aec251fc",
+      "provenance": "local-source"
+    },
+    {
+      "order": 679,
+      "kind": "pending",
+      "version": "20261007060000",
+      "name": "nestly_v815_redeem_across_pots_in_business_scope",
+      "path": "supabase/migrations/20261007060000_nestly_v815_redeem_across_pots_in_business_scope.sql",
+      "octetLength": 25199,
+      "sha256": "81835085b5080075e981b4ebd853864c0df56a997b252f3aa156142727b8bd79",
+      "provenance": "local-source"
+    },
+    {
+      "order": 680,
+      "kind": "pending",
+      "version": "20261007070000",
+      "name": "nestly_v816_whatsapp_sent_unconfirmed",
+      "path": "supabase/migrations/20261007070000_nestly_v816_whatsapp_sent_unconfirmed.sql",
+      "octetLength": 38521,
+      "sha256": "5e2b31dc970d4a19a217f4c497055af8071fde87b23b547a99658907880b8612",
+      "provenance": "local-source"
+    },
+    {
+      "order": 681,
+      "kind": "pending",
+      "version": "20261007080000",
+      "name": "nestly_v817_one_ci_gate_completion",
+      "path": "supabase/migrations/20261007080000_nestly_v817_one_ci_gate_completion.sql",
+      "octetLength": 20546,
+      "sha256": "72d70f369fc81c7ab0cf03b2a5a267ccf6e4f3265d3e3e96b04b0ed6ee54bcd8",
       "provenance": "local-source"
     }
   ]

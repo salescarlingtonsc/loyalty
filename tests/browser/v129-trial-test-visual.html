@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9f4a1921094bfcd3b8b57df8dc9a595b17b8945c1b99bc980179177fda582e17"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ba00746fcce0ba45be272057ee9e856f64581e4dab8fa83f1eb11c6584f47db3"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5771,7 +5771,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 9f4a1921094bfcd3b8b57df8dc9a595b17b8945c1b99bc980179177fda582e17</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ba00746fcce0ba45be272057ee9e856f64581e4dab8fa83f1eb11c6584f47db3</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -18544,7 +18544,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
      on/off mechanism (writeProgrammeSwitchesV314/data-grow-switchtoggle-v322, scoped to
      kind='points' — one more row in that same confirm/cancel micro-UI, not a second one), and
-     individual gift rows with their own on/off (business_set_reward_paused_v326) and delete
+     individual gift rows with their own on/off (business_set_reward_paused_v326 — nestly_v814:
+     version-forward for a stamp gift on a running programme, so the toggle's toast says "from
+     the next card" and a switch-off that cannot publish pends with blockers) and delete
      (business_delete_reward_v326, which moves the gift to History). Reads snapshot.rewards
      directly rather than rewardJourney.milestones — the journey's availability semantics
      (not_started/ended/programme_paused) don't carry `paused`, and this page needs a plain
@@ -21668,13 +21670,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const want=button.getAttribute('aria-checked')!=='true';
     growPointsBusyV326=true;growPointsErrorV326='';
     button.disabled=true;
-    const {error}=await sb.rpc('business_set_reward_paused_v326',{
+    const {data:pauseResultV814,error}=await sb.rpc('business_set_reward_paused_v326',{
       p_business:S.biz.id,p_reward:id,p_paused:!want});
     /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
     if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
-    toast(want?'Turned on for customers':'Turned off for customers');
+    /* nestly_v814 (owner ruling, 2026-10-07): switching a STAMP gift off follows the same rule
+       nestly_v805 gave Delete. The server publishes a new configuration version instead of
+       flipping the live flag alone, so it runs the same stamps validation a Go-live does —
+       switching off the gift at the LAST stamp cannot publish until another gift sits there, and
+       the server reports that as publish_status 'pending' with owner-language blockers rather
+       than raising. The gift is still switched on, so say so and leave the row as it is instead
+       of toasting a change that did not happen. */
+    const pauseOutcomeV814=pauseResultV814&&typeof pauseResultV814==='object'?pauseResultV814:null;
+    if(pauseOutcomeV814&&pauseOutcomeV814.publish_status==='pending'){
+      growPointsErrorV326=(Array.isArray(pauseOutcomeV814.blockers)?pauseOutcomeV814.blockers:[])
+        .map(blocker=>blocker&&blocker.message).filter(Boolean).join(' ')
+        ||'Add another gift at the last stamp before switching this one off.';
+      return growRerenderV322({quiet:true});
+    }
+    /* The version-forward truth, in the owner's words: a customer already collecting on a card
+       keeps the gift until that card ends, so the change reaches the NEXT card. A points gift or
+       a stopped stamps programme still changes for everyone at once and keeps the old wording. */
+    toast(pauseOutcomeV814&&pauseOutcomeV814.mode==='version_forward'
+      ?(want?'On from the next card':'Off from the next card')
+      :(want?'Turned on for customers':'Turned off for customers'));
     growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]').forEach(button=>button.onclick=()=>{
@@ -30762,6 +30783,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'9f4a1921094bfcd3b8b57df8dc9a595b17b8945c1b99bc980179177fda582e17',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ba00746fcce0ba45be272057ee9e856f64581e4dab8fa83f1eb11c6584f47db3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

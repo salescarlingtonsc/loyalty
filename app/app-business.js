@@ -17336,7 +17336,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      immediate-write, see the RPCs below), a "Point system" summary row reusing the EXACT R6
      on/off mechanism (writeProgrammeSwitchesV314/data-grow-switchtoggle-v322, scoped to
      kind='points' — one more row in that same confirm/cancel micro-UI, not a second one), and
-     individual gift rows with their own on/off (business_set_reward_paused_v326) and delete
+     individual gift rows with their own on/off (business_set_reward_paused_v326 — nestly_v814:
+     version-forward for a stamp gift on a running programme, so the toggle's toast says "from
+     the next card" and a switch-off that cannot publish pends with blockers) and delete
      (business_delete_reward_v326, which moves the gift to History). Reads snapshot.rewards
      directly rather than rewardJourney.milestones — the journey's availability semantics
      (not_started/ended/programme_paused) don't carry `paused`, and this page needs a plain
@@ -20460,13 +20462,32 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const want=button.getAttribute('aria-checked')!=='true';
     growPointsBusyV326=true;growPointsErrorV326='';
     button.disabled=true;
-    const {error}=await sb.rpc('business_set_reward_paused_v326',{
+    const {data:pauseResultV814,error}=await sb.rpc('business_set_reward_paused_v326',{
       p_business:S.biz.id,p_reward:id,p_paused:!want});
     /* F037: reset before the route-currency check — see the matching note on growBbSave. */
     growPointsBusyV326=false;
     if(!isGrowCurrent())return;
     if(error){growPointsErrorV326=ownerErrorText(error);return growRerenderV322({quiet:true});}
-    toast(want?'Turned on for customers':'Turned off for customers');
+    /* nestly_v814 (owner ruling, 2026-10-07): switching a STAMP gift off follows the same rule
+       nestly_v805 gave Delete. The server publishes a new configuration version instead of
+       flipping the live flag alone, so it runs the same stamps validation a Go-live does —
+       switching off the gift at the LAST stamp cannot publish until another gift sits there, and
+       the server reports that as publish_status 'pending' with owner-language blockers rather
+       than raising. The gift is still switched on, so say so and leave the row as it is instead
+       of toasting a change that did not happen. */
+    const pauseOutcomeV814=pauseResultV814&&typeof pauseResultV814==='object'?pauseResultV814:null;
+    if(pauseOutcomeV814&&pauseOutcomeV814.publish_status==='pending'){
+      growPointsErrorV326=(Array.isArray(pauseOutcomeV814.blockers)?pauseOutcomeV814.blockers:[])
+        .map(blocker=>blocker&&blocker.message).filter(Boolean).join(' ')
+        ||'Add another gift at the last stamp before switching this one off.';
+      return growRerenderV322({quiet:true});
+    }
+    /* The version-forward truth, in the owner's words: a customer already collecting on a card
+       keeps the gift until that card ends, so the change reaches the NEXT card. A points gift or
+       a stopped stamps programme still changes for everyone at once and keeps the old wording. */
+    toast(pauseOutcomeV814&&pauseOutcomeV814.mode==='version_forward'
+      ?(want?'On from the next card':'Off from the next card')
+      :(want?'Turned on for customers':'Turned off for customers'));
     growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-points-gift-delete-v326]').forEach(button=>button.onclick=()=>{
@@ -29076,11 +29097,14 @@ const SUPPORT_REFUSAL_COPY_V535=Object.freeze({
    with the customer is visibly unfinished rather than quietly annotated. */
 const SUPPORT_DELIVERY_COPY_V540=Object.freeze({
   queued:'Sending…', processing:'Sending…', sent:'Sent',
-  delivered:'Delivered', read:'Read', failed:'Not sent'
+  delivered:'Delivered', read:'Read', failed:'Not sent',
+  /* nestly_v816: Meta accepted the message but the outcome was never recorded, so the queue
+     retired it rather than risk a duplicate send. Terminal, and said plainly. */
+  sent_unconfirmed:'Sent, delivery unconfirmed'
 });
 /* Terminal = Meta has spoken. Everything else keeps polling and keeps its
    pending styling. */
-const SUPPORT_TERMINAL_STATUS_V540=new Set(['delivered','read','failed']);
+const SUPPORT_TERMINAL_STATUS_V540=new Set(['delivered','read','failed','sent_unconfirmed']);
 function supportDeliveryTextV540(status){
   return SUPPORT_DELIVERY_COPY_V540[status]||status||'';
 }
