@@ -4879,6 +4879,258 @@ function ownerBriefLinesV826(brief){
   }
   return lines;
 }
+/* nestly_v828 — ownerBriefAnswersV828 groups every owner question from docs/design/whatsapp's
+   "Ask My Business" survey (7 worries) into one answer each, sourced from `brief.facts.<key>`
+   — the 19 fact functions app.owner_brief_fact_*_v828 compute server-side (see
+   scratchpad v828 money/items/people/ahead RESULT.md for the pinned JSON shapes). Six topics
+   ownerBriefLinesV826 already turns into sentences (week, outlets, daypart, customers, at_risk,
+   rewards) are REUSED here rather than re-derived — this function calls it once and slots its
+   lines into the matching worry. Every other fact is fail-closed the same way: unavailable ->
+   muted "could not be prepared" line, insufficient evidence -> muted "not enough history" line,
+   an inapplicable status (single_outlet / no_memberships / no_stamp_card / no_appointments) ->
+   the question is omitted entirely, never guessed. */
+function ownerBriefAnswersV828(brief){
+  if(!brief||typeof brief!=='object')return [];
+  const facts=brief.facts||{};
+  const plural=(n,one,many)=>Number(n)===1?one:many;
+  const pct1=n=>{const x=Number(n);return Number.isFinite(x)?(Number.isInteger(x)?x:Math.round(x*10)/10):null;};
+  const rpct=n=>{const x=Number(n);return Number.isFinite(x)?Math.round(x):null;};
+  /* Every fact-derivation below returns {question,answer,kind} or null (omit). `question` comes
+     verbatim, or lightly merged, from the <p class="ask"> rows under the matching worry heading
+     in the Ask My Business survey. */
+  function insufficientItem(question,extra){
+    return {question,answer:`Not enough history yet.${extra?` ${extra}`:''}`,kind:'muted'};
+  }
+  function unavailableItem(question){
+    return {question,answer:'Could not be prepared last night.',kind:'muted'};
+  }
+  const OMIT_STATUSES=new Set(['single_outlet','no_memberships','no_stamp_card','no_appointments']);
+  /* A tiny wrapper for every fact whose shape is "status ok/unavailable, evidence ok/insufficient,
+     omit-status guard". `build(fact)` only runs once all three gates pass. */
+  function factItem(key,question,build){
+    const fact=facts[key];
+    if(!fact||typeof fact!=='object')return null;
+    if(fact.status==='unavailable')return unavailableItem(question);
+    if(OMIT_STATUSES.has(fact.status))return null;
+    if(fact.evidence==='insufficient')return insufficientItem(question);
+    try{
+      const built=build(fact);
+      return built?{question,answer:built.answer,kind:built.kind}:null;
+    }catch(e){return null;}
+  }
+  const groups=[];
+  function pushGroup(worry,items){
+    const kept=items.filter(Boolean);
+    if(kept.length)groups.push({worry,items:kept});
+  }
+
+  /* Reused sentences from ownerBriefLinesV826, remapped into a worry + the closest matching
+     question text from Ask My Business. lineFor() re-runs the shared builder once and picks the
+     matching sentence out by its position/keyword rather than re-deriving the logic. */
+  const reusedLines=ownerBriefLinesV826(brief);
+  const findLine=re=>reusedLines.find(l=>re.test(l.text));
+  const weekLine=findLine(/^Last 7 days/);
+  const outletLine=findLine(/carried the (week|the)|its normal week/);
+  const daypartLine=findLine(/^Busiest day|^Slowest/);
+  const customersLine=findLine(/new .*(customer|customers).*returning|No identified customers/);
+  const atRiskLine=findLine(/overdue their usual visit/);
+  const rewardsLine=findLine(/Most redeemed reward|No reward redeemed/);
+  const asItem=(question,line)=>line?{question,answer:line.text,kind:line.kind}:null;
+
+  // ---- Worry 1: "Am I okay?" ----
+  pushGroup('Am I okay?',[
+    asItem('How did we do this week? Is that normal?',weekLine),
+    asItem('Which outlet is dragging, and why?',outletLine),
+    factItem('day','How did we do yesterday? Is that normal?',fact=>{
+      const y=fact.yesterday||{},b=fact.baseline||{};
+      const d=fact.revenue_delta_pct;
+      if(d==null)return {answer:`Yesterday${y.weekday_label?` (${y.weekday_label})`:''} was ${money(y.revenue_cents||0)}. Not enough history yet to say what a normal ${y.weekday_label||'day'} looks like.`,kind:'plain'};
+      const n=Number(d);
+      return {answer:`Yesterday${y.weekday_label?` (${y.weekday_label})`:''} was ${money(y.revenue_cents||0)}, ${ownerBriefPctV826(n)} a normal ${y.weekday_label||'day'} (${money(b.revenue_cents||0)}).`,kind:n<-5?'warn':n>5?'good':'plain'};
+    }),
+    factItem('month','This month so far, am I ahead or behind?',fact=>{
+      const mtd=fact.mtd||{},prev=fact.previous_month_same_days||{};
+      const d=fact.revenue_delta_pct;
+      const pace=Number.isFinite(Number(fact.on_pace_cents))?` On pace for ${money(fact.on_pace_cents)} this month.`:'';
+      if(d==null)return {answer:`Day ${fact.days_elapsed} of the month: ${money(mtd.revenue_cents||0)}.${pace}`,kind:'plain'};
+      const n=Number(d);
+      return {answer:`Day ${fact.days_elapsed} of the month: ${money(mtd.revenue_cents||0)} versus ${money(prev.revenue_cents||0)} at this point last month, ${ownerBriefPctV826(n)} last month.${pace}`,kind:n<-5?'warn':n>5?'good':'plain'};
+    }),
+    factItem('liability','If every customer redeemed tomorrow, what would it cost me?',fact=>{
+      const grants=fact.unredeemed_reward_grants||{};
+      const grantsClause=Number(grants.count)>0?` plus ${grants.count} unredeemed reward ${plural(grants.count,'grant','grants')} not counted in that figure`:'';
+      return {answer:`If every customer redeemed tomorrow, you would owe at least ${money(fact.known_cents_total||0)}${grantsClause}.`,kind:'plain'};
+    }),
+  ]);
+
+  // ---- Worry 2: "When am I busy, when am I dead?" ----
+  pushGroup('When am I busy, when am I dead?',[
+    asItem('Which day and hours are slow?',daypartLine),
+    factItem('slot_trend','Is the quiet new, or always like that?',fact=>{
+      const trend=fact.trend;
+      const ref=fact.reference_weekday;
+      if(!ref||!trend)return {answer:'Not enough history yet to tell if the quiet stretch is new or normal.',kind:'muted'};
+      const w=fact.windows||{};
+      const now1=w.weeks_1_4?.reference_weekday_share_pct,then=w.weeks_9_12?.reference_weekday_share_pct;
+      const cmp=(now1!=null&&then!=null)?` (${pct1(now1)}% of visits now versus ${pct1(then)}% twelve weeks ago)` : '';
+      return {answer:`${ref.label} is your slowest day, and it is ${trend}${cmp}.`,kind:trend==='worsening'?'warn':trend==='improving'?'good':'plain'};
+    }),
+  ]);
+
+  // ---- Worry 3: "What sells, what should I stop making?" ----
+  pushGroup('What sells, what should I stop making?',[
+    factItem('items','Top ten by revenue. Now top ten by profit.',fact=>{
+      const top=fact.top_by_revenue||[];
+      if(!top.length)return null;
+      const first=top[0];
+      const hasMargin=Array.isArray(fact.top_by_margin)&&fact.top_by_margin.length>0;
+      if(!hasMargin)return {answer:`Top seller by revenue: ${first.name} (${money(first.revenue_cents||0)}). Margin is unknown — no item in your catalogue has a cost price set yet.`,kind:'warn'};
+      const bestMargin=fact.top_by_margin[0];
+      return {answer:`Top seller by revenue: ${first.name} (${money(first.revenue_cents||0)}). Top by margin: ${bestMargin.name} (${money(bestMargin.margin_cents||0)}).`,kind:'plain'};
+    }),
+    factItem('dying','What is dying?',fact=>{
+      const items=fact.dying_items||[];
+      if(!items.length)return {answer:'Nothing looks like it is quietly dying right now.',kind:'good'};
+      const worst=items[0];
+      const more=items.length>1?` (${items.length-1} more)`:'';
+      return {answer:`"${worst.name}" fell ${pct1(worst.decline_pct)}% from its usual ${money(worst.baseline_mean_28d_cents||0)} to ${money(worst.current_28d_cents||0)} in the last 28 days, about ${money(worst.lost_revenue_cents||0)} lost${more}.`,kind:'warn'};
+    }),
+    factItem('pairs','What do people buy together?',fact=>{
+      const pairs=fact.top_pairs||[];
+      if(!pairs.length)return {answer:'No clear buy-together pattern yet.',kind:'plain'};
+      const p=pairs[0];
+      return {answer:`Most bought together: ${p.item_a} and ${p.item_b} (${pct1(p.attach_pct)}% attach rate).`,kind:'plain'};
+    }),
+    factItem('discounts','Who is giving discounts, and on what?',fact=>{
+      const staff=fact.staff;
+      if(!staff||!staff.length){
+        if(fact.staff_note)return {answer:`${money(fact.total_discount_cents||0)} in discounts were given, but none of it could be attributed to a staff member.`,kind:'plain'};
+        return null;
+      }
+      const top=staff[0];
+      return {answer:`${top.name} gave the most discounts: ${money(top.discount_cents||0)} across ${top.discount_count} ${plural(top.discount_count,'line','lines')} (${money(fact.total_discount_cents||0)} total).`,kind:'plain'};
+    }),
+  ]);
+
+  // ---- Worry 4: "Who am I losing?" ----
+  pushGroup('Who am I losing?',[
+    asItem('New versus returning this week?',customersLine),
+    asItem('Who used to come every week and stopped?',atRiskLine),
+    factItem('multi_outlet','Who visits more than one outlet?',fact=>{
+      const n=Number(fact.multi_outlet_customers)||0,total=Number(fact.identified_customers)||0;
+      if(total===0)return {answer:'No identified customers yet to say who visits more than one outlet.',kind:'plain'};
+      if(n===0)return {answer:`None of your ${total} identified customers visit more than one outlet yet.`,kind:'plain'};
+      return {answer:`${n} of ${total} identified customers (${rpct(fact.multi_outlet_share_pct)}%) visit more than one outlet.`,kind:'plain'};
+    }),
+    factItem('birthdays','Birthdays this month. Did we actually send anything?',fact=>{
+      const n=Number(fact.birthday_clients_this_month)||0;
+      if(n===0)return {answer:'No customers have a birthday this month.',kind:'plain'};
+      const granted=fact.granted_this_month,redeemed=fact.redeemed_this_month;
+      let extra='';
+      if(granted!=null)extra+=`, ${granted} activated their birthday reward`;
+      if(redeemed!=null)extra+=`, ${redeemed} redeemed it`;
+      return {answer:`${n} ${plural(n,'customer has','customers have')} a birthday this month${extra}.`,kind:'plain'};
+    }),
+  ]);
+
+  // ---- Worry 5: "Is the loyalty programme worth it?" ----
+  pushGroup('Is the loyalty programme worth it?',[
+    asItem('Which reward is popular, which is ignored?',rewardsLine),
+    factItem('points_expiry','How much expires unused?',fact=>{
+      const pct=fact.expired_pct_of_earned;
+      if(pct==null)return {answer:`${fact.earned_points||0} points earned in the last 90 days; none have expired yet.`,kind:'good'};
+      const n=Number(pct);
+      return {answer:`${fact.expired_points||0} of ${fact.earned_points||0} points earned in the last 90 days expired unused (${pct1(n)}%).`,kind:n>=15?'warn':n===0?'good':'plain'};
+    }),
+    factItem('member_lift','Do members spend more than non-members?',fact=>{
+      const m=fact.members,nm=fact.non_members;
+      if(!m||!nm)return null;
+      const better=Number(m.visit_days_per_customer)>Number(nm.visit_days_per_customer);
+      return {answer:`Members visit ${m.visit_days_per_customer} days on average versus ${nm.visit_days_per_customer} for non-members.`,kind:better?'good':'warn'};
+    }),
+    factItem('referrals','Referrals. Do the friends stick?',fact=>{
+      if(fact.referred_customers==null)return null;
+      const stuck=Number(fact.stuck_within_60_days)||0,total=Number(fact.referred_customers)||0,pct=fact.stick_pct;
+      return {answer:`${stuck} of ${total} referred customers made a second visit within 60 days${pct!=null?` (${pct1(pct)}%)`:''}.`,kind:pct!=null&&Number(pct)>=50?'good':'plain'};
+    }),
+    factItem('stamps','How many stamp cards get finished?',fact=>{
+      const pct=fact.completion_pct;
+      const started=fact.cycles_started||0,completed=fact.cycles_completed||0;
+      const drop=fact.dropoff_stamp?` Most abandoned cards stall at stamp ${fact.dropoff_stamp.position}.`:'';
+      if(pct==null)return {answer:`${completed} of ${started} stamp cards started in the last 90 days were completed.${drop}`,kind:'plain'};
+      const n=Number(pct);
+      return {answer:`${completed} of ${started} stamp cards started in the last 90 days were completed (${pct1(n)}%).${drop}`,kind:n<30?'warn':n>60?'good':'plain'};
+    }),
+    (()=>{
+      const fact=facts.anomalies;
+      if(!fact||typeof fact!=='object')return null;
+      if(fact.status==='unavailable')return unavailableItem('Is anyone gaming it?');
+      const flags=Number(fact.flags)||0;
+      if(flags===0)return {question:'Is anyone gaming it?',answer:'No signs of gaming in the last 8 weeks.',kind:'good'};
+      const clauses=[];
+      const a=fact.rule_a_redemption_burst;
+      if(a&&Number(a.count)>0)clauses.push(`${a.count} case${a.count===1?'':'s'} of a customer redeeming 3+ rewards in one day`);
+      const b=fact.rule_b_staff_concentration;
+      if(b&&b.flagged&&b.top)clauses.push(`${b.top.staff_name||'a staff login'} issued ${rpct(b.top.share_pct)}% of manual redemptions`);
+      const c=fact.rule_c_multi_branch_same_day;
+      if(c&&Number(c.count)>0)clauses.push(`${c.count} case${c.count===1?'':'s'} of a customer buying at 3+ branches in one day`);
+      const body=clauses.length?clauses.join('; '):'a pattern worth a second look';
+      return {question:'Is anyone gaming it?',answer:`${flags} ${plural(flags,'flag','flags')} raised: ${body}.`,kind:'warn'};
+    })(),
+  ]);
+
+  // ---- Worry 6: "Is my team performing?" ----
+  pushGroup('Is my team performing?',[
+    factItem('staff','Sales per staff, per shift, fair to the hours they worked?',fact=>{
+      const list=fact.staff||[];
+      if(!list.length)return null;
+      const withHours=list.filter(s=>s.rostered_hours!=null);
+      const zeroSales=withHours.find(s=>Number(s.sales)===0&&Number(s.rostered_hours)>0);
+      const ranked=withHours.filter(s=>s.revenue_per_rostered_hour_cents!=null).sort((a,b)=>b.revenue_per_rostered_hour_cents-a.revenue_per_rostered_hour_cents);
+      if(ranked.length>=2){
+        const best=ranked[0],worst=ranked[ranked.length-1];
+        let text=`${best.name} earns the most per rostered hour (${money(best.revenue_per_rostered_hour_cents)})`;
+        if(zeroSales&&zeroSales.name===worst.name){
+          text+=`; ${worst.name} is rostered ${worst.rostered_hours} hours with 0 sales in the window.`;
+        }else{
+          text+=`; ${worst.name} earns the least (${money(worst.revenue_per_rostered_hour_cents)})`;
+          text+=zeroSales?`, and ${zeroSales.name} is rostered ${zeroSales.rostered_hours} hours with 0 sales in the window.`:'.';
+        }
+        return {answer:text,kind:zeroSales?'warn':'plain'};
+      }
+      if(zeroSales)return {answer:`${zeroSales.name} is rostered ${zeroSales.rostered_hours} hours but has 0 attributed sales in the window.`,kind:'warn'};
+      return {answer:`${list.length} staff ${plural(list.length,'member is','members are')} attributed sales in the window.`,kind:'plain'};
+    }),
+  ]);
+
+  // ---- Worry 7: "What's coming that I should prepare for?" ----
+  pushGroup('What is coming that I should prepare for?',[
+    factItem('stock','What runs out before the next delivery?',fact=>{
+      const items=fact.running_out||[];
+      if(!items.length)return {answer:'Nothing is projected to run out in the next two weeks.',kind:'good'};
+      const worst=items[0];
+      const more=items.length>1?` (${items.length-1} more)`:'';
+      return {answer:`"${worst.name}" has about ${worst.days_left} ${plural(worst.days_left,'day','days')} of stock left at the current rate${more}.`,kind:'warn'};
+    }),
+    factItem('bookings_ahead','Next seven days of bookings versus the same week last year?',fact=>{
+      const next=fact.next_7_days||{},lw=fact.same_days_last_week||{};
+      let text=`${next.bookings||0} ${plural(next.bookings,'booking','bookings')} in the next 7 days`;
+      let kind='plain';
+      if(lw.delta_pct!=null){
+        const n=Number(lw.delta_pct);
+        text+=`, ${ownerBriefPctV826(n)} the same 7 days last week (${lw.bookings||0})`;
+        kind=n<-20?'warn':n>20?'good':'plain';
+      }
+      return {answer:`${text}.`,kind};
+    }),
+    factItem('memberships_due','Which memberships expire or failed to renew this month?',fact=>{
+      const due=fact.due_to_renew_30d||{},cancelled=fact.cancelled_this_month||{};
+      return {answer:`${due.count||0} ${plural(due.count,'membership renews','memberships renew')} in the next 30 days; ${cancelled.count||0} cancelled this month.`,kind:'plain'};
+    }),
+  ]);
+
+  return groups;
+}
 function ownerBriefRenderV826(host,response){
   if(!host)return;
   const list=host.querySelector('#dashboardBriefList'),when=host.querySelector('#dashboardBriefWhen'),foot=host.querySelector('#dashboardBriefFoot');
@@ -4897,6 +5149,16 @@ function ownerBriefRenderV826(host,response){
   foot.textContent=status==='stale'
     ?`Prepared ${preparedAt}. Last night’s update did not run, so these figures are older than a day.`
     :`Prepared ${preparedAt}, from the same figures as Performance and Insights.`;
+  /* nestly_v828: every owner question the brief can answer today, grouped by the worry it
+     belongs to (see ownerBriefAnswersV828). Collapsed by default — a curious owner opens it,
+     nobody else pays the scroll. */
+  const more=host.querySelector('#dashboardBriefMore');
+  if(more){
+    const groups=ownerBriefAnswersV828(response?.brief);
+    more.innerHTML=groups.length?`<details class="dashboard-brief-more"><summary>All answers</summary>${groups.map(group=>
+      `<h3>${esc(group.worry)}</h3><dl>${group.items.map(item=>`<dt>${esc(item.question)}</dt><dd class="brief-${esc(item.kind)}">${esc(item.answer)}</dd>`).join('')}</dl>`
+    ).join('')}</details>`:'';
+  }
 }
 async function loadOwnerBriefV826(root){
   const host=root?.querySelector('#dashboardBrief');
@@ -4941,6 +5203,7 @@ async function dashboard(){
       <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Your brief</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
       <ul class="dashboard-brief-list" id="dashboardBriefList" aria-live="polite"></ul>
       <p class="muted small dashboard-brief-foot" id="dashboardBriefFoot"></p>
+      <div id="dashboardBriefMore"></div>
     </section>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">

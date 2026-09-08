@@ -319,6 +319,18 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .dashboard-brief-list li.warn::before{background:var(--amber)}
 .dashboard-brief-list li.muted{color:var(--muted)}
 .dashboard-brief-foot{margin:10px 0 0}
+.dashboard-brief-more{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.dashboard-brief-more>summary{cursor:pointer;font-weight:650;font-size:13px;color:var(--muted);padding:6px 0;min-height:32px;display:flex;align-items:center}
+.dashboard-brief-more>summary:hover{color:var(--coral)}
+.dashboard-brief-more h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);font-weight:700;margin:14px 0 4px}
+.dashboard-brief-more h3:first-of-type{margin-top:8px}
+.dashboard-brief-more dl{margin:0;display:grid;gap:8px}
+.dashboard-brief-more dt{font-size:13.5px;font-weight:650;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
+.dashboard-brief-more dd{position:relative;margin:2px 0 0;padding-left:16px;font-size:13.5px;line-height:1.45;color:var(--ink2);max-width:100%;overflow-wrap:anywhere}
+.dashboard-brief-more dd::before{content:"";position:absolute;left:2px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-more dd.brief-good::before{background:var(--green)}
+.dashboard-brief-more dd.brief-warn::before{background:var(--amber)}
+.dashboard-brief-more dd.brief-muted{color:var(--muted)}
 .tier-editor-step{color:var(--ink);font-size:14px}
 .tier-benefit-picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px}
 .tier-benefit-pick{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:#fff;font-size:13.5px;color:var(--ink);min-height:44px}

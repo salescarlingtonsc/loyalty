@@ -4150,6 +4150,12 @@
       "version": "20261008010000",
       "name": "nestly_v827_catalogue_commission_and_staff_commission_report",
       "sourcePath": "db/migrations/20261008_nestly_v827_catalogue_commission_and_staff_commission_report.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261008020000",
+      "name": "nestly_v828_owner_brief_facts",
+      "sourcePath": "db/migrations/20261008_nestly_v828_owner_brief_facts.sql"
     }
   ]
 }

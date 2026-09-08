@@ -4155,6 +4155,12 @@
       "path": "db/migrations/20261008_nestly_v827_catalogue_commission_and_staff_commission_report.sql",
       "semanticVersion": "v827",
       "proposedDeployVersion": "20261008010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261008_nestly_v828_owner_brief_facts.sql",
+      "semanticVersion": "v828",
+      "proposedDeployVersion": "20261008020000"
     }
   ]
 }

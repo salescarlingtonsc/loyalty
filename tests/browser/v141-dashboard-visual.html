@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2663f0f658537242ba5d784fa17b6d628465ed8dd7b955bf8b8a62afdb508456"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="aec6b101d6bc49bf78a0ba77bab2a3fbc42b3ad23b7daf04f76504cc768a3d3c"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -538,6 +538,21 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .dashboard-brief-list li.warn::before{background:var(--amber)}
 .dashboard-brief-list li.muted{color:var(--muted)}
 .dashboard-brief-foot{margin:10px 0 0}
+/* nestly_v828: the "All answers" disclosure inside the owner brief card — every owner question
+   grouped by worry, collapsed by default. Reuses the same coloured-dot convention as the list
+   above (var(--muted)/--green/--amber) rather than inventing new colours. */
+.dashboard-brief-more{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.dashboard-brief-more>summary{cursor:pointer;font-weight:650;font-size:13px;color:var(--muted);padding:6px 0;min-height:32px;display:flex;align-items:center}
+.dashboard-brief-more>summary:hover{color:var(--coral)}
+.dashboard-brief-more h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);font-weight:700;margin:14px 0 4px}
+.dashboard-brief-more h3:first-of-type{margin-top:8px}
+.dashboard-brief-more dl{margin:0;display:grid;gap:8px}
+.dashboard-brief-more dt{font-size:13.5px;font-weight:650;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
+.dashboard-brief-more dd{position:relative;margin:2px 0 0;padding-left:16px;font-size:13.5px;line-height:1.45;color:var(--ink2);max-width:100%;overflow-wrap:anywhere}
+.dashboard-brief-more dd::before{content:"";position:absolute;left:2px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-more dd.brief-good::before{background:var(--green)}
+.dashboard-brief-more dd.brief-warn::before{background:var(--amber)}
+.dashboard-brief-more dd.brief-muted{color:var(--muted)}
 /* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
    short form rather than a grid of unlabelled boxes. */
 .tier-editor-step{color:var(--ink);font-size:14px}
@@ -6578,6 +6593,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Your brief</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
       <ul class="dashboard-brief-list" id="dashboardBriefList" aria-live="polite"></ul>
       <p class="muted small dashboard-brief-foot" id="dashboardBriefFoot"></p>
+      <div id="dashboardBriefMore"></div>
     </section>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
@@ -6969,6 +6985,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'2663f0f658537242ba5d784fa17b6d628465ed8dd7b955bf8b8a62afdb508456',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'aec6b101d6bc49bf78a0ba77bab2a3fbc42b3ad23b7daf04f76504cc768a3d3c',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="fd8d149c799e4d914bb3df1054f227b77cc3f69f65f4781e92b7dc1657e3a39c"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="872f798d00cadb553b83cf0452dad21bec1e47646d25c64d2bd3325986a93dfa"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -537,6 +537,21 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .dashboard-brief-list li.warn::before{background:var(--amber)}
 .dashboard-brief-list li.muted{color:var(--muted)}
 .dashboard-brief-foot{margin:10px 0 0}
+/* nestly_v828: the "All answers" disclosure inside the owner brief card — every owner question
+   grouped by worry, collapsed by default. Reuses the same coloured-dot convention as the list
+   above (var(--muted)/--green/--amber) rather than inventing new colours. */
+.dashboard-brief-more{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.dashboard-brief-more>summary{cursor:pointer;font-weight:650;font-size:13px;color:var(--muted);padding:6px 0;min-height:32px;display:flex;align-items:center}
+.dashboard-brief-more>summary:hover{color:var(--coral)}
+.dashboard-brief-more h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);font-weight:700;margin:14px 0 4px}
+.dashboard-brief-more h3:first-of-type{margin-top:8px}
+.dashboard-brief-more dl{margin:0;display:grid;gap:8px}
+.dashboard-brief-more dt{font-size:13.5px;font-weight:650;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
+.dashboard-brief-more dd{position:relative;margin:2px 0 0;padding-left:16px;font-size:13.5px;line-height:1.45;color:var(--ink2);max-width:100%;overflow-wrap:anywhere}
+.dashboard-brief-more dd::before{content:"";position:absolute;left:2px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dashboard-brief-more dd.brief-good::before{background:var(--green)}
+.dashboard-brief-more dd.brief-warn::before{background:var(--amber)}
+.dashboard-brief-more dd.brief-muted{color:var(--muted)}
 /* V182 tier editor: numbered steps and tick-box benefits, so setting up a tier reads as a
    short form rather than a grid of unlabelled boxes. */
 .tier-editor-step{color:var(--ink);font-size:14px}
@@ -5782,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · fd8d149c799e4d914bb3df1054f227b77cc3f69f65f4781e92b7dc1657e3a39c</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 872f798d00cadb553b83cf0452dad21bec1e47646d25c64d2bd3325986a93dfa</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -30824,6 +30839,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'fd8d149c799e4d914bb3df1054f227b77cc3f69f65f4781e92b7dc1657e3a39c',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'872f798d00cadb553b83cf0452dad21bec1e47646d25c64d2bd3325986a93dfa',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
