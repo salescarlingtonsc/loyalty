@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build every Peekaa app icon and favicon from ONE source of truth: app/brand/peekaa-logo.png.
+ * Build every Peekaa app icon and favicon from ONE source of truth: app/brand/peekaa-appicon.png.
  *
  *   node scripts/brand/generate-icons.mjs            # write
  *   node scripts/brand/generate-icons.mjs --check    # fail if any icon is stale
@@ -25,7 +25,13 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-export const SOURCE = 'app/brand/peekaa-logo.png';
+/* Two brand assets, two jobs. The LOCKUP is the wide wordmark the site header, the sign-in
+   hero, the OG card and schema.org all point at, sized 240x68 in markup — it is not an icon and
+   must never be swapped for one. The TILE is the finished square app-icon artwork, prepared by
+   scripts/brand/prepare-appicon.mjs. nestly_v830 moved the icon family onto the TILE; before
+   that every icon was the lockup letterboxed onto cream, which is why they all carried padding. */
+export const LOCKUP = 'app/brand/peekaa-logo.png';
+export const SOURCE = 'app/brand/peekaa-appicon.png';
 /* --bg is the manifest's own background_color, so the icon and the splash it sits on agree. */
 export const BACKGROUND = '#F7EBDB';
 
@@ -33,23 +39,24 @@ export const BACKGROUND = '#F7EBDB';
    0.14 matches the reference the owner supplied; the maskable's 0.26 keeps every inked pixel
    inside the 80% safe circle even when Android crops to a squircle. */
 export const ICONS = [
-  /* 32px is the browser tab, and six lowercase letters across ~30 pixels is roughly five pixels
-     per letter — "peekaa" reads as texture there no matter what padding is chosen. The owner asked
-     for the full lockup on the favicon too, so it is the full lockup; the padding is simply as
-     tight as the square allows, and the 192 below is offered alongside it for the surfaces
-     (bookmarks, new-tab tiles) that ask for something bigger and CAN show the name. */
-  { file: 'app/icons/peekaa-32.png', size: 32, padding: 0.04 },
-  { file: 'app/icons/apple-touch-icon.png', size: 180, padding: 0.14 },
-  { file: 'app/icons/peekaa-192.png', size: 192, padding: 0.14 },
-  { file: 'app/icons/peekaa-512.png', size: 512, padding: 0.14 },
+  /* padding = fraction of the square left EMPTY around the artwork. The tile is a finished icon
+     that already carries its own background, so every square surface takes it FULL BLEED: an
+     inset would letterbox a picture of an icon inside another icon, and on iOS it would also
+     stack a second corner radius inside Apple's own mask. */
+  { file: 'app/icons/peekaa-32.png', size: 32, padding: 0 },
+  { file: 'app/icons/apple-touch-icon.png', size: 180, padding: 0 },
+  { file: 'app/icons/peekaa-192.png', size: 192, padding: 0 },
+  { file: 'app/icons/peekaa-512.png', size: 512, padding: 0 },
+  /* The exception, and it must be. Android crops a maskable icon to an arbitrary shape — as far
+     as a circle inscribed in the square — so anything outside the inner 80% safe zone can be cut.
+     Full bleed would slice the "Peekaa" wordmark off the bottom of the tile, so this one is inset
+     onto the brand cream and keeps every inked pixel inside the safe circle. */
   { file: 'app/icons/peekaa-512-maskable.png', size: 512, padding: 0.26 },
-  /* The App Store marketing icon. It was hand-made in the 2026-08-02 rebrand and then missed by
-     v549, so it still carried the EYES ONLY while the home-screen tile beside it carried the
-     wordmark — the exact drift this script exists to end, and the owner's v549 photo named the
-     "app icon" explicitly. It lives here rather than in a second script because there is one
-     lockup, one cream, one padding; Apple's rules are only that it be 1024² and opaque, and the
-     PY step already flattens to RGB. iOS masks the corners itself, so no rounding here. */
-  { file: 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', size: 1024, padding: 0.14 },
+  /* The App Store icon, compiled into the binary. Apple requires 1024 square and opaque, and the
+     PY step flattens to RGB. iOS applies its own ~22.4% corner mask, so no rounding here — the
+     tile deliberately bleeds its cream off the top corners and its red band off the bottom ones
+     so that whatever Apple's mask keeps is the artwork's own colour, never a white wedge. */
+  { file: 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', size: 1024, padding: 0 },
 ];
 
 const PY = `
