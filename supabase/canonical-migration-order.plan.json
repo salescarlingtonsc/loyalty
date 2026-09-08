@@ -4156,6 +4156,12 @@
       "version": "20261008020000",
       "name": "nestly_v828_owner_brief_facts",
       "sourcePath": "db/migrations/20261008_nestly_v828_owner_brief_facts.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261009010000",
+      "name": "nestly_v831_benefits_blocked_by_use_not_deletion",
+      "sourcePath": "db/migrations/20261009_nestly_v831_benefits_blocked_by_use_not_deletion.sql"
     }
   ]
 }

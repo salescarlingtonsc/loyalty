@@ -4161,6 +4161,12 @@
       "path": "db/migrations/20261008_nestly_v828_owner_brief_facts.sql",
       "semanticVersion": "v828",
       "proposedDeployVersion": "20261008020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v831_benefits_blocked_by_use_not_deletion.sql",
+      "semanticVersion": "v831",
+      "proposedDeployVersion": "20261009010000"
     }
   ]
 }
