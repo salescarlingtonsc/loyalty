@@ -1020,27 +1020,56 @@ function redemptionTokenFromQr(value,currentUrl=location.href){
   return redemptionPayloadFromQr(value,currentUrl).token;
 }
 function merchantRedemptionReceiptView(data={}){
+  /* nestly_v829 (F-W4C-5): staff_scan_gift_qr_v515 answers with `gift_kind` and — read off
+     production — NO `redemption_kind` and NO `points_spent`. Every free gift therefore fell
+     through to the catalogue default below, so the counter's receipt for a welcome gift, a
+     bring-back voucher, a referral gift, a tier perk or a birthday gift read "Points spent 0"
+     and explained that the scan "records the points redemption" — about a gift that never cost
+     a point. A gift is its own kind now, with its own sentence per gift_kind. */
+  const giftKind=String(data.gift_kind||'').trim();
   const kind=data.redemption_kind==='growth_offer'
     ?'growth_offer'
     :data.redemption_kind==='promotion_offer'
     ?'promotion_offer'
     :data.redemption_kind==='package_session'
     ?'package_session'
-    :data.redemption_kind==='classic_points'?'classic_points':'catalog_reward';
+    :data.redemption_kind==='classic_points'?'classic_points'
+    :giftKind?'gift':'catalog_reward';
   const creditCents=Math.max(0,Number(data.credit_cents||0));
   const offerValueCents=Math.max(0,Number(data.value_cents||0));
   const offerCurrency=String(data.currency||'').trim().toUpperCase();
+  /* nestly_v829 (F-W4C-5): the ONE "how much is left" figure these redemption RPCs actually
+     return — staff_issue_tier_benefit_v365 sends `remaining` (uses left inside the perk's own
+     limit period) and NULL when the perk is unlimited. Nothing is inferred or arithmetic'd here:
+     the receipt shows a number only where the server put one. */
+  const remainingRaw=Number(data.remaining);
+  const remainingUses=data.remaining===null||data.remaining===undefined||!Number.isFinite(remainingRaw)
+    ?null:Math.max(0,remainingRaw);
+  const giftFulfilment=giftKind==='welcome'
+    ?'Hand this welcome gift over now. Nothing was charged and no points were spent.'
+    :giftKind==='bringback'
+    ?'Hand this bring-back gift over now. Nothing was charged and no points were spent.'
+    :giftKind==='referral'
+    ?'Hand this referral gift over now. Nothing was charged and no points were spent.'
+    :giftKind==='tier_perk'
+    ?'Give this membership perk now. Nothing was charged and no points were spent.'
+    :giftKind==='birthday'
+    ?'Give this birthday gift now. Nothing was charged and no points were spent.'
+    :'Hand this free gift over now. Nothing was charged and no points were spent.';
   return {
     kind,
+    giftKind,
     customerName:String(data.customer_name||'Customer'),
     rewardLabel:String(data.reward_label||(kind==='classic_points'
       ?'Points to store credit'
       :kind==='growth_offer'?'Customer offer'
-      :kind==='promotion_offer'?'Offer':'Reward')),
+      :kind==='promotion_offer'?'Offer'
+      :kind==='gift'?'Free gift':'Reward')),
     pointsSpent:Math.max(0,Number(data.points_spent||0)),
     creditCents,
     offerValueCents,
     offerCurrency,
+    remainingUses,
     operationId:String(data.operation_id||data.intent_id||data.entitlement_id||''),
     fulfilment:kind==='growth_offer'
       ?'This customer offer is now linked to the completed purchase. Provide the advertised benefit now if it was not already included in the sale.'
@@ -1048,6 +1077,8 @@ function merchantRedemptionReceiptView(data={}){
       ?'This offer is recorded as accepted for this customer. Apply the advertised benefit at the till — the scan records the acceptance, it does not calculate a discount.'
       :kind==='package_session'
       ?`One package session has been used. ${Number.isFinite(Number(data.remaining_after))?`${Number(data.remaining_after)} session${Number(data.remaining_after)===1?'':'s'} remain.`:'The package history now shows this use.'}`
+      :kind==='gift'
+      ?`${giftFulfilment}${remainingUses===null?'':` ${remainingUses} use${remainingUses===1?'':'s'} left in this period.`}`
       :kind==='classic_points'
       ?`Store credit of ${money(creditCents)} has been added to the customer’s programme.`
       :'Provide the reward shown above to the customer now. The scan records the points redemption but does not hand over a physical item.'
@@ -1059,7 +1090,10 @@ function merchantRedemptionReceiptHtml(data={}){
     <dl class="receipt-detail" style="margin-top:16px">
       <div><dt>Customer</dt><dd>${esc(receipt.customerName)}</dd></div>
       <div><dt>Reward</dt><dd>${esc(receipt.rewardLabel)}</dd></div>
-      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'||receipt.kind==='package_session'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
+      ${/* nestly_v829 (F-W4C-5): a gift joins the three kinds that never spend points, so the
+           counter is no longer told "Points spent 0" about a free gift. */''}
+      ${receipt.kind==='growth_offer'||receipt.kind==='promotion_offer'||receipt.kind==='package_session'||receipt.kind==='gift'?'':`<div><dt>Points spent</dt><dd>${receipt.pointsSpent}</dd></div>`}
+      ${receipt.remainingUses===null?'':`<div><dt>Uses left</dt><dd>${receipt.remainingUses}</dd></div>`}
       ${receipt.creditCents?`<div><dt>Store credit</dt><dd>${esc(money(receipt.creditCents))}</dd></div>`:''}
       ${receipt.offerValueCents&&receipt.offerCurrency
         ?`<div><dt>Offer value</dt><dd>${esc(`${receipt.offerCurrency} ${(receipt.offerValueCents/100).toFixed(2)}`)}</dd></div>`
@@ -1080,19 +1114,137 @@ function merchantRedemptionReceiptHtml(data={}){
    guess ("may be expired, already used, or for another business"), leaving staff unable to tell
    the customer what actually happened. Map the known refusals to their own sentence and fall
    back to the server's own message (via humanErrorV295) rather than a wrong fixed guess. */
-function merchantRedemptionRefusalTextV060(error){
+/* nestly_v829 (F-W4C-4): F060 mapped nine refusals. Reading every RAISE in the six redemption
+   functions off production — merchant_scan_redemption_qr_v117, staff_scan_gift_qr_v515,
+   app.redeem_reward_core, app.redeem_points_v40_internal, customer_create_redemption_intent_v89,
+   staff_manual_redeem_reward_v404, plus the four gift redeemers v515 routes into — turned up
+   about fifty distinct sentences, and everything unmapped reached the counter as raw database
+   English via humanErrorV295's pass-through. The most common of the lot was "redemption QR is no
+   longer pending", which only ever means the voucher has already been used. Internal invariants
+   ("points redemption batch delta does not reconcile", "reward drain provenance does not conserve
+   value") were shown verbatim; those now get an apology and a quotable reference instead. */
+function merchantRedemptionRefusalTextV060(error,fallback='This redemption could not be confirmed. It may be expired, already used, or for another business.'){
   const msg=String(error?.message||'');
-  if(error?.code==='42501'||/permission denied/i.test(msg))return "You don't have permission to confirm this redemption.";
+  /* nestly_v830: production uses 42501 for far more than "this staff member may not do that".
+     Read off prod, the redemption family raises it for `verified customer link required` (the
+     CUSTOMER has not signed in), `customer redemption is disabled for this business` (the owner
+     switched the feature off), `redemption branch scope is not permitted` (pick another branch),
+     and three `... does not belong to this business` scope refusals. v829 put the blanket code
+     test SECOND, which made its own more specific sentences for those unreachable and showed the
+     counter "You don't have permission to confirm this redemption." for conditions that are not
+     about permission at all. The blanket test is now the LAST rule before the fallback: every
+     message we recognise answers first, and 42501 only decides what an unrecognised refusal is
+     called. */
+  if(/verified customer link required/i.test(msg))return 'This customer needs to be signed in to their own Peekaa account first.';
   if(/insufficient proven points/i.test(msg))return "This customer doesn't have enough points for this reward.";
   if(/usage limit reached/i.test(msg))return 'This reward has reached its usage limit.';
   if(/requires a higher membership tier/i.test(msg))return 'This reward requires a higher membership tier.';
   if(/currently paused/i.test(msg))return 'This reward is paused right now — ask the owner to re-enable it.';
-  if(/terms changed/i.test(msg))return 'This reward’s terms changed since the QR was made. Ask the customer for a fresh QR.';
-  if(/not eligible at this branch/i.test(msg))return 'This reward is not available at this branch.';
+  if(/terms changed|configuration changed/i.test(msg))return 'This reward’s terms changed since the QR was made. Ask the customer for a fresh QR.';
+  /* nestly_v829: production raises BOTH "reward is not eligible at this branch" (v117) and its
+     sibling "reward not eligible at branch" (redeem_reward_core). F060's regex matched only the
+     first, so the second reached the counter as raw SQL English. */
+  if(/not eligible at (?:this )?branch/i.test(msg))return 'This reward is not available at this branch.';
   const expiredMatch=msg.match(/this reward expired on (.+)$/i);
   if(expiredMatch)return `This reward expired on ${expiredMatch[1]}.`;
   if(/redemption is disabled/i.test(msg))return 'Customer redemption is turned off for this business.';
-  return humanErrorV295(error,'This redemption could not be confirmed. It may be expired, already used, or for another business.');
+  /* nestly_v829 — an internal invariant is never shown to a counter: it means nothing to staff,
+     and it names our own tables. Apologise, and hand over a reference the owner can quote. */
+  if(MERCHANT_REDEMPTION_INVARIANT_V829.test(msg))
+    return `Something went wrong on our side, so nothing was redeemed. Try again — if it keeps happening, quote reference ${merchantSupportReferenceV829(error)} to Peekaa support.`;
+  /* nestly_v829 — the rest of production's redemption vocabulary, most common first. */
+  if(/redemption QR is no longer pending/i.test(msg))return 'This reward QR has already been used. Ask the customer to open Redeem again for a fresh one.';
+  if(/redemption QR is invalid|invalid redemption QR scan/i.test(msg))return 'This is not a redemption QR from this business.';
+  if(/redemption already in progress|still reserved/i.test(msg))return 'This redemption is already being confirmed. Give it a moment, then try again.';
+  if(/idempotency (?:key was already used|key conflicts|conflict)/i.test(msg))return 'This scan clashed with another redemption. Ask the customer for a fresh QR.';
+  if(/not enough stamps yet/i.test(msg))return "This customer doesn't have enough stamps for this reward yet.";
+  if(/insufficient points/i.test(msg))return "This customer doesn't have enough points for this reward.";
+  if(/this stamp gift has already been claimed on this card/i.test(msg))return 'This gift was already claimed on this stamp card.';
+  if(/this stamp card has no length set|not running a stamp card/i.test(msg))return 'This business’s stamp card is not set up yet. Ask the owner to finish it.';
+  if(/sits past the end of the stamp card/i.test(msg))return 'This gift needs more stamps than the card holds. Ask the owner to check the stamp card.';
+  if(/reward not found|reward not found or inactive/i.test(msg))return 'This reward is no longer in this business’s catalogue.';
+  if(/this reward has expired|reward expired/i.test(msg))return 'This reward has expired and can no longer be claimed.';
+  if(/reward unavailable|reward is unavailable/i.test(msg))return 'This reward is not available yet.';
+  if(/not eligible for service/i.test(msg))return 'This reward cannot be used on that service.';
+  if(/not eligible for product/i.test(msg))return 'This reward cannot be used on that item.';
+  if(/customer QR redemption is unavailable/i.test(msg))return 'Redeeming by customer QR is switched off for this business.';
+  if(/redemption is (?:inactive|unavailable)|loyalty redemption is unavailable/i.test(msg))return 'Redeeming is switched off for this programme right now.';
+  if(/not running a programme you can redeem from|programme is not running right now/i.test(msg))return 'This business is not running a programme this reward can come from right now.';
+  if(/no active redeemable points program/i.test(msg))return 'No points programme is set up to redeem from. Ask the owner to finish setting it up.';
+  if(/points are redeemed for gifts|redeems points through its reward catalog/i.test(msg))return 'This business redeems points for gifts, not store credit. Use the reward catalogue.';
+  if(/redemption kind and reward do not match/i.test(msg))return 'This QR does not match the reward it names. Ask the customer for a fresh QR.';
+  if(/context-restricted rewards require staff-assisted redemption/i.test(msg))return 'This reward has to be given by staff at the counter — it cannot be scanned from the customer’s phone.';
+  if(/branch scope is not permitted|an active business branch is required/i.test(msg))return 'Choose a branch you are allowed to serve before confirming this redemption.';
+  if(/does not belong to (?:this )?business/i.test(msg))return 'That customer, branch or reward does not belong to this business.';
+  if(/authorization required|authorization changed|not authorized|is not permitted for this staff member|access is required/i.test(msg))return "You don't have permission to confirm this redemption.";
+  if(/manual_redeem_reason/i.test(msg))return 'Choose a reason before redeeming without the customer’s QR.';
+  if(/manual_redeem_quantity_out_of_range/i.test(msg))return 'That quantity cannot be redeemed in one go.';
+  /* nestly_v830: last, not first — see the note above. An unrecognised 42501 (or a PostgREST/RLS
+     "permission denied for table ..." ) really is a permission problem and is named as one. */
+  if(error?.code==='42501'||/permission denied/i.test(msg))return "You don't have permission to confirm this redemption.";
+  return humanErrorV295(error,fallback);
+}
+const MERCHANT_REDEMPTION_INVARIANT_V829=/does not reconcile|drain was incomplete|does not conserve value|was not recorded|is not resolvable|cannot prove redemption|idempotency key must contain|idempotency key is required|unsupported redemption kind/i;
+function merchantSupportReferenceV829(error){
+  const code=String(error?.code||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,8);
+  return `PK-RDM-${code||'ERR'}`;
+}
+/* nestly_v829 (F-W4C-1, F-W4C-4): ONE gift-refusal map, called by BOTH arms that scan a gift QR —
+   this scanner's own error branch and the till keypad's settle-now confirm — so they can never
+   disagree about the same server answer again. They did: the scanner tested
+   `String(error.message).includes('qualifying sale')` with a SPACE, while production raises
+   `welcome_offer_requires_qualifying_sale` and `welcome_offer_min_spend_not_met` with
+   UNDERSCORES. Neither matched, so a customer who was simply short of the threshold was told the
+   gift "may have expired, already been used, or belong to another business" — while the till
+   keypad's own copy of the rule, /qualifying[ _]sale|min[ _]spend/i, got it right.
+   Both spellings match here, and the two cases are told apart: nothing rung up yet, versus a
+   sale that is under the minimum. `minSpendCents` is the server's OWN quoted figure when the
+   caller holds it (staff_scan_gift_qr_to_till_v666 returns `min_spend_cents` from the intent's
+   quoted_min_spend_cents); it is never guessed, and the sentence simply omits the amount when
+   the caller has none — the raises themselves carry no shortfall. */
+function merchantGiftRefusalTextV829(error,{minSpendCents=null}={}){
+  const msg=String(error?.message||'');
+  const detail=`${msg} ${String(error?.details||'')} ${String(error?.hint||'')}`;
+  const quoted=Number(minSpendCents);
+  const amount=Number.isFinite(quoted)&&quoted>0?` This gift needs at least ${money(quoted)} on the sale.`:'';
+  if(/qualifying[ _]sale[ _]not[ _]found/i.test(detail))
+    return 'That sale is not on this customer’s account. Ring the sale up for them, then scan this from the receipt screen.';
+  if(/requires[ _]qualifying[ _]sale|qualifying sale/i.test(detail))
+    return `Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.${amount}`;
+  if(/min[ _]spend[ _]not[ _]met|min[ _]spend/i.test(detail))
+    return `This customer has not spent enough on this sale yet.${amount} Add to the bill, then scan again from the receipt screen.`;
+  if(/period rolled over/i.test(detail))return 'This perk’s period has rolled over. Ask the customer to show a fresh QR.';
+  if(/already_redeemed/i.test(detail))return 'This gift has already been given to this customer.';
+  if(/_expired/i.test(detail))return 'This gift has expired and can no longer be given.';
+  if(/_not_found|this perk no longer exists/i.test(detail))return 'This gift is no longer on this customer’s account. Check the Rewards tab for what they can claim.';
+  if(/_not_redeemable/i.test(detail))return 'This gift is not waiting to be claimed, so it cannot be given now.';
+  if(/branch_not_permitted/i.test(detail))return 'This gift cannot be given at this branch.';
+  if(/tier_benefit_limit_reached/i.test(detail))return 'This customer has already used this perk as many times as their tier allows.';
+  if(/tier_benefit_not_earned/i.test(detail))return 'This customer’s tier does not include this perk any more.';
+  if(/tier_benefit_not_birthday_month|tier_benefit_birthday_unknown/i.test(detail))return 'This perk is only for the customer’s birthday month.';
+  if(/birthday benefit unavailable/i.test(detail))return 'This birthday gift is not available for this customer right now.';
+  if(/gift QR is invalid/i.test(detail))return 'This is not a reward QR from this business. Ask the customer to open the reward again.';
+  return merchantRedemptionRefusalTextV060(error,'This gift could not be given. It may have expired, already been used, or belong to another business.');
+}
+/* nestly_v829 (F-W4C-6): staff_scan_gift_qr_v515 RETURNS rather than raises for a QR that
+   expired or was cancelled, and staff_scan_gift_qr_to_till_v666 does the same for `invalid` and
+   `not_pending`. The scanner printed the raw enum — "Redemption was not completed (expired)." —
+   which is a machine word wearing a sentence's clothes. Each status gets a sentence. */
+const MERCHANT_SCAN_STATUS_COPY_V829=Object.freeze({
+  expired:'This reward QR has expired. Ask the customer to open Redeem again for a fresh one.',
+  cancelled:'The customer cancelled this reward QR. Ask them to open Redeem again.',
+  not_pending:'This reward QR has already been used, or it is no longer waiting to be confirmed.',
+  invalid:'This is not a Peekaa reward QR from this business.',
+  wrong_customer:'That QR belongs to a different customer. Check whose reward this is.',
+  already_redeemed:'This reward was already given to this customer.',
+  limit_reached:'This reward has reached its usage limit.'
+});
+function merchantScanStatusTextV829(status,rewardLabel=''){
+  const key=String(status||'').trim();
+  const named=MERCHANT_SCAN_STATUS_COPY_V829[key];
+  const label=String(rewardLabel||'').trim();
+  if(named)return label?`${named} (${label})`:named;
+  return `This redemption was not completed. Ask the customer to open Redeem again for a fresh QR.${key?` (reference ${key.replaceAll('_',' ')})`:''}`;
 }
 function openMerchantRedemptionScanner({
   businessId,branchId,saleId=null,customerName='',isCurrent=()=>true,onComplete=()=>{},onMemberResolved=null,
@@ -1107,7 +1259,7 @@ function openMerchantRedemptionScanner({
     <div class="scanner-frame" id="merchantScannerFrame" hidden><video class="scanner-video" id="merchantScannerVideo" playsinline muted aria-label="Camera preview for customer redemption QR"></video></div>
     <div class="row" style="margin-top:14px"><button class="btn" id="merchantScannerCamera" type="button">${CUI.icon('scan',{size:20})}<span>Use camera</span></button><span class="muted small" id="merchantScannerCapability"></span></div>
     <div class="scanner-fallback"><label for="merchantScannerImage">Or choose a QR image</label><input id="merchantScannerImage" type="file" accept="image/*">
-      <details style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="merchantScannerToken">Paste the QR content</label><input id="merchantScannerToken" type="text" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="merchantScannerConfirm" type="button" style="margin-top:10px">Confirm redemption</button></details>
+      <details id="merchantScannerRetry" style="margin-top:12px"><summary class="small">Camera unavailable?</summary><label for="merchantScannerToken">Paste the QR content</label><input id="merchantScannerToken" type="text" autocomplete="off" spellcheck="false"><button class="btn ghost sm" id="merchantScannerConfirm" type="button" style="margin-top:10px">Confirm redemption</button></details>
     </div><p id="merchantScannerStatus" class="muted small" role="status" aria-live="polite" style="margin-top:12px"></p></section>`;
   document.body.appendChild(overlay);
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.redemption_scan_started',businessId,{
@@ -1122,18 +1274,66 @@ function openMerchantRedemptionScanner({
   const cameraAvailable=!!navigator.mediaDevices?.getUserMedia;
   const scanCanvas=document.createElement('canvas'),scanContext=scanCanvas.getContext('2d',{willReadFrequently:true});
   let stream=null,frameHandle=0,submitting=false,closed=false,redemptionAttempt=null;
+  /* nestly_v829 (F-W4C-3): the decoded QR value the counter has already been refused for. The
+     camera loop re-decodes the SAME code every frame, so a refusal used to be re-submitted
+     immediately and forever — measured at 32 redemption calls in five seconds on a 150ms round
+     trip, with the status line stuck on "Confirming this redemption…" so the refusal itself was
+     never readable. A refused code is not sent again by the camera; a DIFFERENT code still is,
+     and the paste/Confirm button is the deliberate retry. */
+  let refusedScanValueV829='';
+  /* nestly_v830 (F-W4C-3 follow-up): the refusal above tells staff to press Confirm redemption to
+     try the same code again — but nothing ever wrote the camera's decoded value into
+     #merchantScannerToken, so following that instruction submitted an EMPTY box and
+     redemptionPayloadFromQr('') short-circuited into "That is not a Peekaa redemption QR". The
+     instruction is made true here: the refused code is loaded into the box and the fallback
+     panel is opened, so Confirm (and Enter) resend exactly what the lens saw. What staff typed
+     themselves is never clobbered — only an empty box, or one still holding our own last
+     prefill, is written to. */
+  let cameraRetryPrefillV830='';
+  const armCameraRetryV830=value=>{
+    const box=overlay.querySelector('#merchantScannerToken');
+    if(!box||(box.value&&box.value!==cameraRetryPrefillV830))return;
+    box.value=value;cameraRetryPrefillV830=value;
+    const panel=overlay.querySelector('#merchantScannerRetry');
+    if(panel)panel.open=true;
+  };
   const stopCamera=()=>{
     if(frameHandle)cancelAnimationFrame(frameHandle);frameHandle=0;
     if(stream)stream.getTracks().forEach(track=>track.stop());
     stream=null;if(video)video.srcObject=null;
   };
-  const close=()=>{
-    if(closed)return;closed=true;stopCamera();overlay.remove();
-    if(activeMerchantScannerCleanup===close)activeMerchantScannerCleanup=()=>{};
+  /* nestly_v829 (F-W4C-2): closing the panel mid-request used to SPEND the voucher silently.
+     The old code bailed on `closed||!isCurrent()` AFTER the RPC had returned — by which point the
+     server had already completed the redemption — so there was no toast, no receipt and no
+     onComplete, and staff landed back on an empty keypad with a stale balance and a gone voucher.
+     The cure chosen is the one that cannot lose an outcome: a close the OPERATOR asks for while a
+     request is in flight is deferred, not queued. The ✕ and the backdrop mean "cancel this scan";
+     once the server has answered there is no scan left to cancel, and the answer — receipt or
+     refusal — is the thing the counter needs, so the panel stays up to show it and staff dismiss
+     it from there.
+     A close the APP forces (disposeCurrentRoute on a route change, or re-opening the scanner) is
+     not an operator decision and cannot be deferred — disposeCurrentRoute sweeps every
+     .appointment-detail-modal out of the DOM straight afterwards, so deferring would leave the
+     camera running behind a removed overlay. Those go through forceCloseV829, which tears down
+     immediately; the settle path below then surfaces the outcome as a toast instead of a
+     receipt, so even that race reports what the server did. */
+  const close=({force=false}={})=>{
+    if(closed)return;
+    if(submitting&&!force){
+      if(status)status.textContent='Finishing this redemption — the answer will show here in a moment.';
+      return;
+    }
+    closed=true;stopCamera();overlay.remove();
+    if(activeMerchantScannerCleanup===forceCloseV829)activeMerchantScannerCleanup=()=>{};
   };
-  activeMerchantScannerCleanup=close;
-  const submit=async value=>{
+  const forceCloseV829=()=>close({force:true});
+  activeMerchantScannerCleanup=forceCloseV829;
+  const submit=async(value,{fromCamera=false}={})=>{
     if(submitting||closed||!isCurrent())return;
+    /* nestly_v829 (F-W4C-3): the camera never re-sends a code the counter has already been
+       refused for. Every other caller — the paste box's Confirm button, Enter in that box, a
+       chosen QR image — is a deliberate human retry and is never blocked. */
+    if(fromCamera&&value&&value===refusedScanValueV829)return;
     const payload=redemptionPayloadFromQr(value);
     const token=payload.token;
     if(!token){status.textContent='That is not a Peekaa redemption QR. Ask the customer to open Redeem again.';return}
@@ -1157,8 +1357,11 @@ function openMerchantRedemptionScanner({
       }
       submitting=true;status.textContent='Looking up this customer…';
       const {data,error}=await sb.rpc('staff_scan_member_qr_v327',{p_business:businessId,p_member_qr:token});
-      if(closed||!isCurrent())return;
+      /* nestly_v829 (F-W4C-2): the flag is released BEFORE the bail-out. close() now defers while
+         a request is in flight, so a `submitting` left true on this path would wedge the panel
+         shut for the operator. */
       submitting=false;
+      if(closed||!isCurrent())return;
       if(error||data?.status!=='found'){
         status.textContent=error?.code==='PGRST202'||error?.code==='42883'
           ?'Member lookup needs the latest Peekaa service update.'
@@ -1197,8 +1400,11 @@ function openMerchantRedemptionScanner({
       submitting=true;status.textContent='Looking up this reward…';
       const {data:identified,error:identifyError}=await sb.rpc('staff_scan_gift_qr_to_till_v666',{
         p_business:businessId,p_qr_token:token});
-      if(closed||!isCurrent())return;
+      /* nestly_v829 (F-W4C-2): the flag is released BEFORE the bail-out. close() now defers while
+         a request is in flight, so a `submitting` left true on this path would wedge the panel
+         shut for the operator. */
       submitting=false;
+      if(closed||!isCurrent())return;
       if(!identifyError&&identified?.status==='found'){
         stopCamera();close();
         onGiftIdentified(identified,token);
@@ -1217,8 +1423,11 @@ function openMerchantRedemptionScanner({
       submitting=true;status.textContent='Checking this reward…';
       const {data:staged,error:stageError}=await sb.rpc('staff_stage_gift_qr_v665',{
         p_business:businessId,p_client:stageClientId||null,p_qr_token:token});
-      if(closed||!isCurrent())return;
+      /* nestly_v829 (F-W4C-2): the flag is released BEFORE the bail-out. close() now defers while
+         a request is in flight, so a `submitting` left true on this path would wedge the panel
+         shut for the operator. */
       submitting=false;
+      if(closed||!isCurrent())return;
       if(!stageError&&staged?.status==='wrong_customer'){
         status.textContent='That QR belongs to a different customer. Check whose reward this is.';
         return;
@@ -1270,9 +1479,18 @@ function openMerchantRedemptionScanner({
         p_idempotency_key:redemptionAttempt.key
       });
     let {data,error}=response;
-    if(closed||!isCurrent())return;
     submitting=false;
-    if(error){status.textContent=error.code==='PGRST202'||error.code==='42883'
+    /* nestly_v829 (F-W4C-2): the old `if(closed||!isCurrent())return` sat HERE and threw the
+       server's answer away. `closed` can now only be true if the APP tore the scanner down under
+       a live request (a route change, or the scanner being re-opened) — an operator close is
+       deferred above — and `isCurrent()` can still be false if the till surface was replaced. In
+       both cases the redemption HAS happened, so the outcome is still surfaced: in the panel's
+       own status line and receipt while the panel is there, and as a toast when it is not.
+       onComplete is the one thing still gated on isCurrent(), because it belongs to a till
+       surface that no longer exists and repaints into it. */
+    const panelGoneV829=closed;
+    const sayV829=sentence=>{if(panelGoneV829)toast(sentence);else status.textContent=sentence};
+    if(error){sayV829(error.code==='PGRST202'||error.code==='42883'
       ?'Redemption scanning needs the latest Peekaa service update.'
       :payload.kind==='package'
         ?'This package session could not be used. It may have no sessions left, belong to another business, or not be valid at this branch.'
@@ -1280,15 +1498,15 @@ function openMerchantRedemptionScanner({
         ?'This offer could not be accepted. It may have expired, or it belongs to another business.'
       :payload.kind==='growth'
         ?'This offer could not be confirmed. Check that it belongs to this customer and purchase, and that it has not expired or already been used.'
+      /* nestly_v829 (F-W4C-1): ONE shared map, the same one the till keypad's own gift arm
+         calls, so the two arms can never disagree about the same server answer again. This arm
+         has no quoted minimum to name — staff_scan_gift_qr_v515 raises without one, and the
+         `min_spend_cents` staff_scan_gift_qr_to_till_v666 returns never reaches here. */
       :payload.kind==='gift'
-        ?(String(error.message||'').includes('qualifying sale')
-          ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
-          :String(error.message||'').includes('period rolled over')
-          ?'This perk\u2019s period has rolled over. Ask the customer to show a fresh QR.'
-          :'This gift could not be given. It may have expired, already been used, or belong to another business.')
-        :merchantRedemptionRefusalTextV060(error);return}
+        ?merchantGiftRefusalTextV829(error)
+        :merchantRedemptionRefusalTextV060(error));return}
     if(payload.kind==='promotion'&&data?.status==='already_redeemed'){
-      status.textContent=`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`;
+      sayV829(`This offer was already accepted${data.redeemed_at?` on ${new Date(data.redeemed_at).toLocaleString('en-SG',{timeZone:'Asia/Singapore'})}`:''}.`);
       return;
     }
     const accepted=payload.kind==='package'
@@ -1297,7 +1515,10 @@ function openMerchantRedemptionScanner({
       ?data?.status==='redeemed'||data?.status==='duplicate_ignored'
       :data?.status==='completed'||data?.status==='redeemed';
     if(!accepted){
-      status.textContent=`Redemption was not completed (${String(data?.status||'unknown').replaceAll('_',' ')}).`;return;
+      /* nestly_v829 (F-W4C-6): a server STATUS is not an error, and the raw enum in brackets was
+         not a sentence — staff_scan_gift_qr_v515 RETURNS {status:'expired'} / {status:'cancelled'}
+         rather than raising, and the counter read "Redemption was not completed (expired)." */
+      sayV829(merchantScanStatusTextV829(data?.status,data?.reward_label));return;
     }
     redemptionAttempt=null;
     if(payload.kind==='growth'){
@@ -1318,11 +1539,21 @@ function openMerchantRedemptionScanner({
         remaining_after:packageResult?.remainingAfter};
     }
     stopCamera();
+    const confirmedToastV829=data?.replayed===true?'Redemption already confirmed':'Redemption confirmed';
+    /* nestly_v829 (F-W4C-2): the redemption is DONE. Whatever happened to the surface while the
+       request was in the air, the counter is told — receipt in the panel when the panel is still
+       there, toast when the app tore it down under us. Never nothing. */
+    if(panelGoneV829){
+      toast(confirmedToastV829);
+      if(isCurrent())onComplete(data);
+      return;
+    }
     const panel=overlay.querySelector('.modal-card');
     panel.innerHTML=merchantRedemptionReceiptHtml(data);
-    panel.querySelector('#merchantScannerReceiptClose').onclick=close;
+    panel.querySelector('#merchantScannerReceiptClose').onclick=()=>close();
     panel.querySelector('#merchantScannerReceiptClose').focus();
-    toast(data?.replayed===true?'Redemption already confirmed':'Redemption confirmed');onComplete(data);
+    toast(confirmedToastV829);
+    if(isCurrent())onComplete(data);
   };
   const decodeSource=(source,width,height)=>{
     if(!decoderAvailable||!scanContext||!width||!height)return '';
@@ -1336,15 +1567,30 @@ function openMerchantRedemptionScanner({
     if(closed||!stream||submitting)return;
     try{
       const value=decodeSource(video,video.videoWidth,video.videoHeight);
-      if(value){
-        await submit(value);
+      /* nestly_v829 (F-W4C-3): the customer's QR stays in front of the lens after a refusal, so
+         the old loop decoded it again and re-submitted it on the very next frame — 32 redemption
+         calls in five seconds at a 150ms round trip, and the status line was overwritten with
+         "Confirming this redemption…" before anyone could read why it was refused. A code that
+         did not go through is remembered and not sent again BY THE CAMERA. A different QR is
+         still scanned normally (that is the whole point of holding the camera open), and the
+         paste box's Confirm button is the deliberate retry for the same code. */
+      if(value&&value!==refusedScanValueV829){
+        await submit(value,{fromCamera:true});
+        /* Still live after the round trip means nothing was accepted and nothing was handed off:
+           an accepted redemption calls stopCamera() (stream===null) and a member/staged/identified
+           QR closes the panel. So this branch is exactly "the counter was refused". */
+        if(!closed&&stream){
+          refusedScanValueV829=value;
+          armCameraRetryV830(value);
+          if(status)status.textContent=`${status.textContent} Scanning is paused for this code — show a different QR, or press “Confirm redemption” under “Camera unavailable?” to send this one again.`;
+        }
         if(!closed&&stream)frameHandle=requestAnimationFrame(detectFrame);
         return;
       }
     }catch{}
     frameHandle=requestAnimationFrame(detectFrame);
   };
-  overlay.querySelector('#merchantScannerClose').onclick=close;
+  overlay.querySelector('#merchantScannerClose').onclick=()=>close();
   overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
   camera.disabled=!cameraAvailable;
   /* V403: the camera starts itself now, so "will load when you open the camera" described a step
@@ -1361,11 +1607,23 @@ function openMerchantRedemptionScanner({
      dismissed, no camera, or a gesture rule this path cannot satisfy) the catch re-enables it and
      the overlay reads exactly as it did before, with the QR-image and paste fallbacks intact. So
      the worst case is the old behaviour, and the normal case is one fewer tap at a counter. */
+  /* nestly_v829 (F-W4C-8): mirrors the customer-side cure at v286. loadScannerLibrary pulls jsQR
+     from a CDN, so a blocked CDN, an SRI mismatch or an offline till used to reject inside the
+     SAME catch as getUserMedia and be reported as "Camera access was not available" — a lie about
+     a camera that was never even asked for — while the photo path, which needs that identical
+     missing decoder, blamed the customer's picture ("No Peekaa redemption QR was found in that
+     image"). The loader gets its own guard on BOTH decoder paths and reports the real failure,
+     with the camera button left as a live retry. */
+  const DECODER_LOAD_FAILURE_V829='The QR reader could not load. Check this device\u2019s connection and try again, or paste the QR content below.';
+  const loadDecoderV829=async()=>{try{await loadScannerLibrary();decoderAvailable=true;return true}catch{return false}};
   const startScannerCameraV403=async()=>{
     if(camera.disabled||closed)return;
     camera.disabled=true;status.textContent='Starting camera…';
+    if(!await loadDecoderV829()){
+      if(closed)return;
+      camera.disabled=false;status.textContent=DECODER_LOAD_FAILURE_V829;return;
+    }
     try{
-      await loadScannerLibrary();decoderAvailable=true;
       stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
       if(closed){stopCamera();return}
       video.srcObject=stream;await video.play();frame.hidden=false;status.textContent='Hold the QR inside the frame.';
@@ -1380,8 +1638,10 @@ function openMerchantRedemptionScanner({
   overlay.querySelector('#merchantScannerImage').onchange=async event=>{
     const file=event.target.files?.[0];if(!file)return;
     status.textContent='Reading QR image…';
+    /* nestly_v829 (F-W4C-8): the photo path needs the same CDN decoder, so it reports the same
+       honest failure instead of blaming the picture — the image was never the problem. */
+    if(!await loadDecoderV829()){status.textContent=DECODER_LOAD_FAILURE_V829;return}
     try{
-      await loadScannerLibrary();decoderAvailable=true;
       let source=null,revoke='';
       if(typeof createImageBitmap==='function')source=await createImageBitmap(file);
       else{
@@ -8527,17 +8787,17 @@ async function tillPage(){
             p_idempotency_key:crypto.randomUUID()});
           if(!isTillCurrent())return;
           if(giveErrorV681||givenV681?.status!=='completed'){
-            /* The same three sentences the scanner's own gift arm uses, because this is the same
-               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
-               counter. Anything unrecognised keeps the scanner's catch-all. */
-            const rawV681=String(giveErrorV681?.message||'');
-            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
-              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
-              :/period rolled over/i.test(rawV681)
-              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
-              :giveErrorV681
-              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
-              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+            /* nestly_v829 (F-W4C-1): this arm and the scanner's own gift arm now call the SAME
+               map, merchantGiftRefusalTextV829, because they are answering the same server call.
+               They had drifted: this copy used /qualifying[ _]sale|min[ _]spend/i and was right,
+               while the scanner tested `.includes('qualifying sale')` with a space and could
+               never match production's underscored welcome_offer_requires_qualifying_sale /
+               welcome_offer_min_spend_not_met. The keypad additionally knows the SERVER's quoted
+               minimum here — staff_scan_gift_qr_to_till_v666 returns min_spend_cents from the
+               intent — so the sentence can name the amount. A non-error refusal (a status the
+               server returns instead of raising) goes through the status map. */
+            if(giveErrorV681)return toast(merchantGiftRefusalTextV829(giveErrorV681,{minSpendCents:data?.min_spend_cents}));
+            return toast(merchantScanStatusTextV829(givenV681?.status,givenV681?.reward_label||labelV666));
           }
           /* V408's rule: a gift handed over changes what this customer holds, so the card and the
              catalogue both repaint before the counter reads either of them again. */
@@ -9566,7 +9826,14 @@ async function tillPage(){
         <button type="button" class="btn primary sm" id="tReferralRedeemV420" data-grant="${esc(referralOffer.grant_id)}">Give ${esc(referralOffer.reward_label||'the free item')}</button></div>`
       :'';
     const pendingVouchers=(catalog.customerVouchers||[]).length
-      ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
+      /* nestly_v829 (F-W4C-7): this banner was the LAST one still on a bare .permission-banner,
+         which is display:flex with the default row direction and no wrap — so at counter width
+         (430px) the heading, every voucher line and the Scan button were flex items on ONE line
+         and the heading was squeezed to 64px over three lines, while the sibling "Rewards this
+         customer can claim" banner in the same card got 328px on one line. Same fix V399 gave
+         that sibling, same existing class, no new CSS: till-tier-benefits-v369 turns exactly this
+         container into a column. */
+      ?`<div class="permission-banner till-tier-benefits-v369" style="margin-bottom:14px"><b>Reward voucher ready</b>
         ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} ${tillUnitNounV430(catalog)} <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
         ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
       :'';
@@ -14525,6 +14792,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     rewards:rewardsError?[]:rewards||[],
     products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
     birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
+    /* nestly_v849: fail-soft like every other field on this snapshot — a failed read shows no
+       banner rather than accusing a working firm of being switched off. */
+    birthdayWarnings:birthdayError?[]:birthdayPlatformWarningsV849(birthday),
     retention:retentionError?[]:retention||[],
     /* nestly_v521: null when the read failed or the role cannot see it — the band below only
        draws on an explicit false, never on an absence. */
@@ -14600,6 +14870,41 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
 /* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
    with a free item, or no minimum with a free item. The item comes from the live catalogue —
    a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+/* nestly_v849 — the platform switch `customer_birthday_benefits` has been OFF since 2026-07-22,
+   so a business could switch its birthday gift on and be told "saved and live for customers"
+   while nothing was ever going to reach anyone. business_save_birthday_program_v424 and
+   get_active_birthday_program now BOTH always return a `warnings` array (possibly empty) of
+   {code,message} — message is already a finished sentence written for a business owner. The
+   client's only job is to render it: branch on `code`, never on the message text, and never let
+   the raw `code` reach the screen (the v145 rule — the server decides, the client renders). These
+   three helpers are the one place that reads `warnings`, shared by the save toast and the
+   standing banner below, so the two surfaces cannot say different things. */
+function birthdayPlatformWarningsV849(source){
+  return Array.isArray(source?.warnings)
+    ?source.warnings.filter(w=>w&&typeof w.message==='string'&&w.message)
+    :[];
+}
+function birthdaySaveToastTextV849(saved,paused){
+  const warnings=birthdayPlatformWarningsV849(saved);
+  /* A save that returns status:'published' with a warning genuinely published — the owner's work
+     is saved, so the toast still opens by saying so. It just stops claiming customers are being
+     served, and says why (the platform switch, not the owner) without inventing new wording the
+     server did not send. */
+  if(warnings.length)return `Birthday gift saved. ${warnings.map(w=>w.message).join(' ')}`;
+  return paused?'Birthday gift saved and paused':'Birthday gift saved and live for customers';
+}
+/* Fed by get_active_birthday_program so an owner who opens this page tomorrow — not just at the
+   moment of saving — still sees it; a toast alone disappears in 2.6s. Reuses the same
+   `<div class="notice warn" role="status">` band nestly_v521 established for the identical shape
+   of problem (a working setup the platform is not actually serving) — same classes, no new CSS. */
+function birthdayPlatformNoticeHtmlV849(warnings){
+  const list=birthdayPlatformWarningsV849({warnings});
+  if(!list.length)return '';
+  return `<div class="notice warn" role="status" style="margin-top:14px" data-birthday-platform-warning-v849>
+    <b>Not reaching customers right now</b>
+    ${list.map(w=>`<p class="muted small" style="margin-top:6px">${esc(w.message)}</p>`).join('')}
+  </div>`;
+}
 /* ============ V364 — THE BIRTHDAY BENEFIT, AS ITS OWN POPUP ==================================
    Owner markup 2026-08-16 (photo 1): the whole Loyalty draft page struck through, with "when
    click the birthday rewards straightaway pop up birthday gift setting. SKIP HERE".
@@ -14811,9 +15116,10 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       ?'Only the business owner can change the birthday gift.'
       :ownerErrorText(saveError));
     if(saved?.status!=='published')return finish('The birthday gift was not made live. Reload and try again.');
+    const pausedV849=$('birthdayActiveV364')?.checked===false;
     busy=false;
     close();
-    toast($('birthdayActiveV364')?.checked===false?'Birthday gift saved and paused':'Birthday gift saved and live for customers');
+    toast(birthdaySaveToastTextV849(saved,pausedV849));
     if(typeof onSaved==='function')onSaved();
   };
 }
@@ -18285,6 +18591,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>Birthday gift</b>
         <p class="muted small" style="margin-top:4px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></span>
         ${canSetupGrow?`<button type="button" class="btn sm" id="growBirthdayEditV382">Edit</button>`:''}</div>
+      ${birthdayPlatformNoticeHtmlV849(snapshot.birthdayWarnings)}
       ${growBirthdayV382?`<section class="card" style="margin-top:14px">
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growBirthdayV382.customer_label||'Birthday treat')}</b>

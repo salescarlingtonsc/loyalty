@@ -1202,13 +1202,13 @@
     {
       "id": "db.fn:public.reverse_sale/6",
       "surface": "db_delegating_entrypoint",
-      "latest_file": "20260824000003_nestly_v480_loyalty_value_integrity_fence.sql",
-      "rows_written": "via app.reverse_sale_with_loyalty_v480: points_batches:UPDATE, points_ledger:INSERT; all sale/payment/package/discount compensation remains behind that core",
+      "latest_file": "20261009150000_nestly_v848_reversal_returns_the_voucher_and_the_books.sql",
+      "rows_written": "via app.reverse_sale_with_loyalty_v480: points_batches:UPDATE, points_ledger:INSERT; all sale/payment/package/discount compensation remains behind that core. nestly_v848 adds a direct UPDATE of public.welcome_offer_grants_v215 (redeemed->granted, un-linking the fulfilment sale) plus an audit_log row in the wrapper itself, guarded by qualifying_sale_id=p_sale AND status='redeemed' FOR UPDATE; neither table is a discover-writers.mjs VALUE_TABLE so this adds no new tracked claim, but it is the reason latest_file moves v480->v848 (the delegation target and every points/credit claim above are unchanged).",
       "detected_signals": "delegating SQL boundary",
       "delegates_to": [
         "app.reverse_sale_with_loyalty_v480"
       ],
-      "entry_point": "reverse_sale(p_business,p_sale,p_reason,p_idempotency_key,p_reference,p_restock_policy) [v480 public fail-closed loyalty-aware boundary]",
+      "entry_point": "reverse_sale(p_business,p_sale,p_reason,p_idempotency_key,p_reference,p_restock_policy) [v480 public fail-closed loyalty-aware boundary; v848 also returns a redeemed welcome-offer grant qualified by the reversed sale to 'granted']",
       "callers": "browser reversal workflows (staff_get_reversal_workflows surfaces; reverse_customer_birthday_benefit_for_client etc.); refund_sale alias",
       "reads": "checkout_discount_lines (of the original sale), budget_reservations, budget_periods (FOR UPDATE)",
       "idempotency": "app.sale_loyalty_reversal_operations_v480 binds actor and the complete request hash; exact replay returns its completed result and changed-request reuse raises 23505",
@@ -4149,6 +4149,30 @@
     {
       "id": "db.backfill:20261007090000_nestly_v818_line_commission_branch_availability_booking_sync.sql:sale_items",
       "reason": "nestly_v818 (owner photos 1 and 2) one-shot completion of four NEW columns on sale_items -- commission_rate_bps, commission_flat_cents, commission_cents, commission_resolved_at -- for the 293 lines written before the migration. NOT a value write: sale_items is not a VALUE_TABLE, the four columns did not exist before this migration so no prior snapshot is restated, and the UPDATE touches nothing else. It is only possible at all inside app.sale_items_commission_backfill, a window this same migration adds to app.sale_items_immutable_guard which refuses the write unless every economic column (sale_id, item_type, ref_id, qty, unit_cents, line_cents, product_id, staff_id, created_at, taxonomy) is byte-identical AND all four commission columns were still NULL -- so it can complete a snapshot and can never rewrite one. The window is opened and closed inside the migration transaction and no runtime path sets it. It runs because commission was resolved from sales.kind, which the till never sets to 'service', so every existing line would otherwise report the pre-v818 whole-basket product rate on Staff performance -- the report that raised the bug."
+    },
+    {
+      "id": "db.backfill:20261009120000_nestly_v845_stamp_card_reader_truth.sql:points_batches",
+      "reason": "NOT a migration-time backfill: no row persists past the migration. The scanner is reading the seed INSERT into points_batches inside do $v845_verify$ (a synthetic tenant built to prove the stamp-card reader agrees with app.reward_availability_v432), which lies outside any CREATE FUNCTION body so the FN_HEADER_SCAN body-range exclusion does not hide it from the top-level scan. The whole block is a PL/pgSQL BEGIN...EXCEPTION...END, which Postgres gives an implicit savepoint at entry; the block unconditionally raises 'v845 verify: rollback sentinel' (errcode P0845) once every assertion passes, the handler catches exactly that code and does nothing else, and the implicit savepoint rollback undoes every write the block made -- including this insert. The migration then re-counts businesses/stamp_cycles/auth.users before and after and raises if either changed, proving nothing leaked. Production points_batches is untouched."
+    },
+    {
+      "id": "db.backfill:20261009120000_nestly_v845_stamp_card_reader_truth.sql:points_ledger",
+      "reason": "Same do $v845_verify$ rolled-back sub-transaction as the points_batches entry immediately above (same file, same block, same P0845 sentinel/EXCEPTION pair) -- this is its points_ledger seed row (an 'adjust' entry minted with app.points_ledger_insert_id/app.points_ledger_write_scope set for the duration of the INSERT, exactly like a real earn write would be), thrown away by the same implicit-savepoint rollback. Not a migration-time backfill; production points_ledger is untouched."
+    },
+    {
+      "id": "db.backfill:20261009130000_nestly_v846_redemption_intent_agrees_with_the_engine.sql:points_batches",
+      "reason": "NOT a migration-time backfill. Same shape as the v845 entries above: do $v846_verify$ seeds two synthetic tenants, mints and scans redemption-intent QRs through the real minter/scanner functions this migration rewrites, and asserts customer_create_redemption_intent_v89 / merchant_scan_redemption_qr_v117 / app.redeem_reward_core agree throughout -- all inside a BEGIN...EXCEPTION...END that unconditionally raises the P0846 sentinel on success, is caught by 'when sqlstate ''P0846'' then null', and is undone by the implicit savepoint that exception handling creates. The migration's own header comment says it explicitly: 'All of it lives in a PL/pgSQL SUB-TRANSACTION that is ALWAYS rolled back'. The points_batches INSERTs the scanner finds (v846 lines ~740-743) are this fixture's earned-points seed; auth.users/businesses/points_ledger/points_batches row counts are compared before and after the block and the migration raises if any changed."
+    },
+    {
+      "id": "db.backfill:20261009130000_nestly_v846_redemption_intent_agrees_with_the_engine.sql:points_ledger",
+      "reason": "Same do $v846_verify$ rolled-back sub-transaction as the points_batches entry immediately above (same file, same block, same P0846 sentinel/EXCEPTION pair) -- these are its points_ledger seed rows (v846 lines ~728-736 and ~992-996), minted the same way a real earn would be (app.points_ledger_insert_id/app.points_ledger_write_scope set for the duration), thrown away by the same implicit-savepoint rollback. Not a migration-time backfill; production points_ledger is untouched."
+    },
+    {
+      "id": "db.backfill:20261009160000_nestly_v849_catalogue_truth_and_birthday_warning.sql:points_batches",
+      "reason": "NOT a migration-time backfill. Same shape as the v845/v846 entries above: do $v849_verify$ builds one synthetic tenant to prove public.customer_get_reward_catalog and app.get_active_birthday_program agree with the underlying published catalogue and birthday-warning state, entirely inside a BEGIN...EXCEPTION...END that unconditionally raises the P0849 sentinel once every assertion passes, is caught by 'when sqlstate ''P0849'' then null', and is undone by the implicit savepoint exception handling creates in PL/pgSQL. The migration re-counts businesses/auth.users/loyalty_rewards/birthday_program_versions before and after and raises if any of them changed. The points_batches INSERT the scanner finds (v849 line ~705) is this fixture's seed; production points_batches is untouched."
+    },
+    {
+      "id": "db.backfill:20261009160000_nestly_v849_catalogue_truth_and_birthday_warning.sql:points_ledger",
+      "reason": "Same do $v849_verify$ rolled-back sub-transaction as the points_batches entry immediately above (same file, same block, same P0849 sentinel/EXCEPTION pair) -- this is its points_ledger seed row (v849 line ~702, minted with app.points_ledger_insert_id/app.points_ledger_write_scope set for the duration, exactly like a real earn write would be), thrown away by the same implicit-savepoint rollback. Not a migration-time backfill; production points_ledger is untouched."
     }
   ]
 }

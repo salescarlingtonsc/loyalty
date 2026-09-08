@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 648,
-  "itemCount": 693,
+  "pendingCount": 653,
+  "itemCount": 698,
   "items": [
     {
       "order": 1,
@@ -6935,8 +6935,58 @@
       "version": "20261009010000",
       "name": "nestly_v831_benefits_blocked_by_use_not_deletion",
       "path": "supabase/migrations/20261009010000_nestly_v831_benefits_blocked_by_use_not_deletion.sql",
-      "octetLength": 29688,
-      "sha256": "f46f4732cc150924c5aa905e8c72c38c18b5ab8d57d70bec03e919489d791e89",
+      "octetLength": 32469,
+      "sha256": "a5bee9ddb30ad20d53e5896a785a5821b7378699b5d4d0dc0c1b35bbbeec90b1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 694,
+      "kind": "pending",
+      "version": "20261009120000",
+      "name": "nestly_v845_stamp_card_reader_truth",
+      "path": "supabase/migrations/20261009120000_nestly_v845_stamp_card_reader_truth.sql",
+      "octetLength": 36794,
+      "sha256": "5176ddc02000850354e3b9e8b878182f9e2d9267e9ae66a267bee2aca37c5b39",
+      "provenance": "local-source"
+    },
+    {
+      "order": 695,
+      "kind": "pending",
+      "version": "20261009130000",
+      "name": "nestly_v846_redemption_intent_agrees_with_the_engine",
+      "path": "supabase/migrations/20261009130000_nestly_v846_redemption_intent_agrees_with_the_engine.sql",
+      "octetLength": 68607,
+      "sha256": "696f780b006e1b39c504ac343056cce916be216f1fb7c0271647f4d1db35c8e1",
+      "provenance": "local-source"
+    },
+    {
+      "order": 696,
+      "kind": "pending",
+      "version": "20261009140000",
+      "name": "nestly_v847_redeem_engine_reversals_expiry_and_spine",
+      "path": "supabase/migrations/20261009140000_nestly_v847_redeem_engine_reversals_expiry_and_spine.sql",
+      "octetLength": 42640,
+      "sha256": "907b77ab8a1287cd209aaa99be07772da555040dcd7f84f96f622e1378e6324f",
+      "provenance": "local-source"
+    },
+    {
+      "order": 697,
+      "kind": "pending",
+      "version": "20261009150000",
+      "name": "nestly_v848_reversal_returns_the_voucher_and_the_books",
+      "path": "supabase/migrations/20261009150000_nestly_v848_reversal_returns_the_voucher_and_the_books.sql",
+      "octetLength": 28781,
+      "sha256": "1a1fa1225959e52947a4ac37b67924dfa7f847e78101ea3c955b54922f3008f5",
+      "provenance": "local-source"
+    },
+    {
+      "order": 698,
+      "kind": "pending",
+      "version": "20261009160000",
+      "name": "nestly_v849_catalogue_truth_and_birthday_warning",
+      "path": "supabase/migrations/20261009160000_nestly_v849_catalogue_truth_and_birthday_warning.sql",
+      "octetLength": 57881,
+      "sha256": "71b7c5df6f569bda3625a149493be75178ddadcfdc093c77ac90369fd03c2414",
       "provenance": "local-source"
     }
   ]

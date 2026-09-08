@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="872f798d00cadb553b83cf0452dad21bec1e47646d25c64d2bd3325986a93dfa"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="991def9395a5176c7694478dcc9b0c03128256ee22ddee5a6d92d60bbd63119f"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5797,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 872f798d00cadb553b83cf0452dad21bec1e47646d25c64d2bd3325986a93dfa</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 991def9395a5176c7694478dcc9b0c03128256ee22ddee5a6d92d60bbd63119f</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9277,17 +9277,17 @@ async function tillPage(){
             p_idempotency_key:crypto.randomUUID()});
           if(!isTillCurrent())return;
           if(giveErrorV681||givenV681?.status!=='completed'){
-            /* The same three sentences the scanner's own gift arm uses, because this is the same
-               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
-               counter. Anything unrecognised keeps the scanner's catch-all. */
-            const rawV681=String(giveErrorV681?.message||'');
-            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
-              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
-              :/period rolled over/i.test(rawV681)
-              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
-              :giveErrorV681
-              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
-              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+            /* nestly_v829 (F-W4C-1): this arm and the scanner's own gift arm now call the SAME
+               map, merchantGiftRefusalTextV829, because they are answering the same server call.
+               They had drifted: this copy used /qualifying[ _]sale|min[ _]spend/i and was right,
+               while the scanner tested `.includes('qualifying sale')` with a space and could
+               never match production's underscored welcome_offer_requires_qualifying_sale /
+               welcome_offer_min_spend_not_met. The keypad additionally knows the SERVER's quoted
+               minimum here — staff_scan_gift_qr_to_till_v666 returns min_spend_cents from the
+               intent — so the sentence can name the amount. A non-error refusal (a status the
+               server returns instead of raising) goes through the status map. */
+            if(giveErrorV681)return toast(merchantGiftRefusalTextV829(giveErrorV681,{minSpendCents:data?.min_spend_cents}));
+            return toast(merchantScanStatusTextV829(givenV681?.status,givenV681?.reward_label||labelV666));
           }
           /* V408's rule: a gift handed over changes what this customer holds, so the card and the
              catalogue both repaint before the counter reads either of them again. */
@@ -10316,7 +10316,14 @@ async function tillPage(){
         <button type="button" class="btn primary sm" id="tReferralRedeemV420" data-grant="${esc(referralOffer.grant_id)}">Give ${esc(referralOffer.reward_label||'the free item')}</button></div>`
       :'';
     const pendingVouchers=(catalog.customerVouchers||[]).length
-      ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
+      /* nestly_v829 (F-W4C-7): this banner was the LAST one still on a bare .permission-banner,
+         which is display:flex with the default row direction and no wrap — so at counter width
+         (430px) the heading, every voucher line and the Scan button were flex items on ONE line
+         and the heading was squeezed to 64px over three lines, while the sibling "Rewards this
+         customer can claim" banner in the same card got 328px on one line. Same fix V399 gave
+         that sibling, same existing class, no new CSS: till-tier-benefits-v369 turns exactly this
+         container into a column. */
+      ?`<div class="permission-banner till-tier-benefits-v369" style="margin-bottom:14px"><b>Reward voucher ready</b>
         ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} ${tillUnitNounV430(catalog)} <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
         ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
       :'';
@@ -15299,6 +15306,9 @@ async function growOverviewSnapshot({canRewards,canWinback,canSetupGrow,modules=
     rewards:rewardsError?[]:rewards||[],
     products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
     birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
+    /* nestly_v849: fail-soft like every other field on this snapshot — a failed read shows no
+       banner rather than accusing a working firm of being switched off. */
+    birthdayWarnings:birthdayError?[]:birthdayPlatformWarningsV849(birthday),
     retention:retentionError?[]:retention||[],
     /* nestly_v521: null when the read failed or the role cannot see it — the band below only
        draws on an explicit false, never on an absence. */
@@ -15374,6 +15384,41 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
 /* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
    with a free item, or no minimum with a free item. The item comes from the live catalogue —
    a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+/* nestly_v849 — the platform switch `customer_birthday_benefits` has been OFF since 2026-07-22,
+   so a business could switch its birthday gift on and be told "saved and live for customers"
+   while nothing was ever going to reach anyone. business_save_birthday_program_v424 and
+   get_active_birthday_program now BOTH always return a `warnings` array (possibly empty) of
+   {code,message} — message is already a finished sentence written for a business owner. The
+   client's only job is to render it: branch on `code`, never on the message text, and never let
+   the raw `code` reach the screen (the v145 rule — the server decides, the client renders). These
+   three helpers are the one place that reads `warnings`, shared by the save toast and the
+   standing banner below, so the two surfaces cannot say different things. */
+function birthdayPlatformWarningsV849(source){
+  return Array.isArray(source?.warnings)
+    ?source.warnings.filter(w=>w&&typeof w.message==='string'&&w.message)
+    :[];
+}
+function birthdaySaveToastTextV849(saved,paused){
+  const warnings=birthdayPlatformWarningsV849(saved);
+  /* A save that returns status:'published' with a warning genuinely published — the owner's work
+     is saved, so the toast still opens by saying so. It just stops claiming customers are being
+     served, and says why (the platform switch, not the owner) without inventing new wording the
+     server did not send. */
+  if(warnings.length)return `Birthday gift saved. ${warnings.map(w=>w.message).join(' ')}`;
+  return paused?'Birthday gift saved and paused':'Birthday gift saved and live for customers';
+}
+/* Fed by get_active_birthday_program so an owner who opens this page tomorrow — not just at the
+   moment of saving — still sees it; a toast alone disappears in 2.6s. Reuses the same
+   `<div class="notice warn" role="status">` band nestly_v521 established for the identical shape
+   of problem (a working setup the platform is not actually serving) — same classes, no new CSS. */
+function birthdayPlatformNoticeHtmlV849(warnings){
+  const list=birthdayPlatformWarningsV849({warnings});
+  if(!list.length)return '';
+  return `<div class="notice warn" role="status" style="margin-top:14px" data-birthday-platform-warning-v849>
+    <b>Not reaching customers right now</b>
+    ${list.map(w=>`<p class="muted small" style="margin-top:6px">${esc(w.message)}</p>`).join('')}
+  </div>`;
+}
 /* ============ V364 — THE BIRTHDAY BENEFIT, AS ITS OWN POPUP ==================================
    Owner markup 2026-08-16 (photo 1): the whole Loyalty draft page struck through, with "when
    click the birthday rewards straightaway pop up birthday gift setting. SKIP HERE".
@@ -15585,9 +15630,10 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       ?'Only the business owner can change the birthday gift.'
       :ownerErrorText(saveError));
     if(saved?.status!=='published')return finish('The birthday gift was not made live. Reload and try again.');
+    const pausedV849=$('birthdayActiveV364')?.checked===false;
     busy=false;
     close();
-    toast($('birthdayActiveV364')?.checked===false?'Birthday gift saved and paused':'Birthday gift saved and live for customers');
+    toast(birthdaySaveToastTextV849(saved,pausedV849));
     if(typeof onSaved==='function')onSaved();
   };
 }
@@ -19068,6 +19114,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>Birthday gift</b>
         <p class="muted small" style="margin-top:4px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></span>
         ${canSetupGrow?`<button type="button" class="btn sm" id="growBirthdayEditV382">Edit</button>`:''}</div>
+      ${birthdayPlatformNoticeHtmlV849(snapshot.birthdayWarnings)}
       ${growBirthdayV382?`<section class="card" style="margin-top:14px">
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growBirthdayV382.customer_label||'Birthday treat')}</b>
@@ -28044,17 +28091,17 @@ async function svRunTopupFlow({branches,state,testOnly}){
             p_idempotency_key:crypto.randomUUID()});
           if(!isTillCurrent())return;
           if(giveErrorV681||givenV681?.status!=='completed'){
-            /* The same three sentences the scanner's own gift arm uses, because this is the same
-               server call — a raw `welcome_offer_already_redeemed` is not a sentence for a
-               counter. Anything unrecognised keeps the scanner's catch-all. */
-            const rawV681=String(giveErrorV681?.message||'');
-            return toast(/qualifying[ _]sale|min[ _]spend/i.test(rawV681)
-              ?'Ring the sale up first, then scan this from the receipt screen — this gift needs a minimum spend.'
-              :/period rolled over/i.test(rawV681)
-              ?'This perk’s period has rolled over. Ask the customer to show a fresh QR.'
-              :giveErrorV681
-              ?'This reward could not be given. It may have expired, already been used, or belong to another business.'
-              :`This reward could not be given (${String(givenV681?.status||'unknown').replaceAll('_',' ')}).`);
+            /* nestly_v829 (F-W4C-1): this arm and the scanner's own gift arm now call the SAME
+               map, merchantGiftRefusalTextV829, because they are answering the same server call.
+               They had drifted: this copy used /qualifying[ _]sale|min[ _]spend/i and was right,
+               while the scanner tested `.includes('qualifying sale')` with a space and could
+               never match production's underscored welcome_offer_requires_qualifying_sale /
+               welcome_offer_min_spend_not_met. The keypad additionally knows the SERVER's quoted
+               minimum here — staff_scan_gift_qr_to_till_v666 returns min_spend_cents from the
+               intent — so the sentence can name the amount. A non-error refusal (a status the
+               server returns instead of raising) goes through the status map. */
+            if(giveErrorV681)return toast(merchantGiftRefusalTextV829(giveErrorV681,{minSpendCents:data?.min_spend_cents}));
+            return toast(merchantScanStatusTextV829(givenV681?.status,givenV681?.reward_label||labelV666));
           }
           /* V408's rule: a gift handed over changes what this customer holds, so the card and the
              catalogue both repaint before the counter reads either of them again. */
@@ -29083,7 +29130,14 @@ async function svRunTopupFlow({branches,state,testOnly}){
         <button type="button" class="btn primary sm" id="tReferralRedeemV420" data-grant="${esc(referralOffer.grant_id)}">Give ${esc(referralOffer.reward_label||'the free item')}</button></div>`
       :'';
     const pendingVouchers=(catalog.customerVouchers||[]).length
-      ?`<div class="permission-banner" style="margin-bottom:14px"><b>Reward voucher ready</b>
+      /* nestly_v829 (F-W4C-7): this banner was the LAST one still on a bare .permission-banner,
+         which is display:flex with the default row direction and no wrap — so at counter width
+         (430px) the heading, every voucher line and the Scan button were flex items on ONE line
+         and the heading was squeezed to 64px over three lines, while the sibling "Rewards this
+         customer can claim" banner in the same card got 328px on one line. Same fix V399 gave
+         that sibling, same existing class, no new CSS: till-tier-benefits-v369 turns exactly this
+         container into a column. */
+      ?`<div class="permission-banner till-tier-benefits-v369" style="margin-bottom:14px"><b>Reward voucher ready</b>
         ${(catalog.customerVouchers||[]).map(voucher=>`<p class="small" style="margin:5px 0">${esc(voucher.reward_name)} · ${voucher.points_spent} ${tillUnitNounV430(catalog)} <span class="muted">— scan the customer's QR to confirm it</span></p>`).join('')}
         ${canScanRedemption()?`<button type="button" class="btn ghost sm" id="tEntitlementScan">${CUI.icon('scan',{size:16})} Scan reward QR</button>`:''}</div>`
       :'';
@@ -30839,6 +30893,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'872f798d00cadb553b83cf0452dad21bec1e47646d25c64d2bd3325986a93dfa',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'991def9395a5176c7694478dcc9b0c03128256ee22ddee5a6d92d60bbd63119f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

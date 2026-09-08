@@ -4167,6 +4167,36 @@
       "path": "db/migrations/20261009_nestly_v831_benefits_blocked_by_use_not_deletion.sql",
       "semanticVersion": "v831",
       "proposedDeployVersion": "20261009010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v845_stamp_card_reader_truth.sql",
+      "semanticVersion": "v845",
+      "proposedDeployVersion": "20261009120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v846_redemption_intent_agrees_with_the_engine.sql",
+      "semanticVersion": "v846",
+      "proposedDeployVersion": "20261009130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v847_redeem_engine_reversals_expiry_and_spine.sql",
+      "semanticVersion": "v847",
+      "proposedDeployVersion": "20261009140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v848_reversal_returns_the_voucher_and_the_books.sql",
+      "semanticVersion": "v848",
+      "proposedDeployVersion": "20261009150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v849_catalogue_truth_and_birthday_warning.sql",
+      "semanticVersion": "v849",
+      "proposedDeployVersion": "20261009160000"
     }
   ]
 }

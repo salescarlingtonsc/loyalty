@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="d239db0d6f71c48b060ded55534fc2972280dce54c3c0b26a98e29c2892e5159"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="d05ab71b5c5580ba78c110572cedd3704e0acc87a5e4948e89c9dcab2771847f"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5796,7 +5796,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d239db0d6f71c48b060ded55534fc2972280dce54c3c0b26a98e29c2892e5159</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d05ab71b5c5580ba78c110572cedd3704e0acc87a5e4948e89c9dcab2771847f</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -7105,6 +7105,9 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
     rewards:rewardsError?[]:rewards||[],
     products:productsError?[]:(Array.isArray(products?.items)?products.items:[]),
     birthday:birthdayError?null:(Array.isArray(birthday?.programs)?birthday.programs[0]:null)||null,
+    /* nestly_v849: fail-soft like every other field on this snapshot — a failed read shows no
+       banner rather than accusing a working firm of being switched off. */
+    birthdayWarnings:birthdayError?[]:birthdayPlatformWarningsV849(birthday),
     retention:retentionError?[]:retention||[],
     /* nestly_v521: null when the read failed or the role cannot see it — the band below only
        draws on an explicit false, never on an absence. */
@@ -7180,6 +7183,41 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
 /* The editor deliberately offers exactly the two shapes the owner described: a minimum spend
    with a free item, or no minimum with a free item. The item comes from the live catalogue —
    a free item that is not on sale cannot be handed over, so it cannot be chosen. */
+/* nestly_v849 — the platform switch `customer_birthday_benefits` has been OFF since 2026-07-22,
+   so a business could switch its birthday gift on and be told "saved and live for customers"
+   while nothing was ever going to reach anyone. business_save_birthday_program_v424 and
+   get_active_birthday_program now BOTH always return a `warnings` array (possibly empty) of
+   {code,message} — message is already a finished sentence written for a business owner. The
+   client's only job is to render it: branch on `code`, never on the message text, and never let
+   the raw `code` reach the screen (the v145 rule — the server decides, the client renders). These
+   three helpers are the one place that reads `warnings`, shared by the save toast and the
+   standing banner below, so the two surfaces cannot say different things. */
+function birthdayPlatformWarningsV849(source){
+  return Array.isArray(source?.warnings)
+    ?source.warnings.filter(w=>w&&typeof w.message==='string'&&w.message)
+    :[];
+}
+function birthdaySaveToastTextV849(saved,paused){
+  const warnings=birthdayPlatformWarningsV849(saved);
+  /* A save that returns status:'published' with a warning genuinely published — the owner's work
+     is saved, so the toast still opens by saying so. It just stops claiming customers are being
+     served, and says why (the platform switch, not the owner) without inventing new wording the
+     server did not send. */
+  if(warnings.length)return `Birthday gift saved. ${warnings.map(w=>w.message).join(' ')}`;
+  return paused?'Birthday gift saved and paused':'Birthday gift saved and live for customers';
+}
+/* Fed by get_active_birthday_program so an owner who opens this page tomorrow — not just at the
+   moment of saving — still sees it; a toast alone disappears in 2.6s. Reuses the same
+   `<div class="notice warn" role="status">` band nestly_v521 established for the identical shape
+   of problem (a working setup the platform is not actually serving) — same classes, no new CSS. */
+function birthdayPlatformNoticeHtmlV849(warnings){
+  const list=birthdayPlatformWarningsV849({warnings});
+  if(!list.length)return '';
+  return `<div class="notice warn" role="status" style="margin-top:14px" data-birthday-platform-warning-v849>
+    <b>Not reaching customers right now</b>
+    ${list.map(w=>`<p class="muted small" style="margin-top:6px">${esc(w.message)}</p>`).join('')}
+  </div>`;
+}
 /* ============ V364 — THE BIRTHDAY BENEFIT, AS ITS OWN POPUP ==================================
    Owner markup 2026-08-16 (photo 1): the whole Loyalty draft page struck through, with "when
    click the birthday rewards straightaway pop up birthday gift setting. SKIP HERE".
@@ -7391,9 +7429,10 @@ async function openBirthdayBenefitEditorV364(current,onSaved){
       ?'Only the business owner can change the birthday gift.'
       :ownerErrorText(saveError));
     if(saved?.status!=='published')return finish('The birthday gift was not made live. Reload and try again.');
+    const pausedV849=$('birthdayActiveV364')?.checked===false;
     busy=false;
     close();
-    toast($('birthdayActiveV364')?.checked===false?'Birthday gift saved and paused':'Birthday gift saved and live for customers');
+    toast(birthdaySaveToastTextV849(saved,pausedV849));
     if(typeof onSaved==='function')onSaved();
   };
 }
@@ -12984,6 +13023,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="grow-tier-basis-card-v343"><span><b>Birthday gift</b>
         <p class="muted small" style="margin-top:4px">Treat customers in their birthday month. Staff hand it over at the counter after looking the customer up.</p></span>
         ${canSetupGrow?`<button type="button" class="btn sm" id="growBirthdayEditV382">Edit</button>`:''}</div>
+      ${birthdayPlatformNoticeHtmlV849(snapshot.birthdayWarnings)}
       ${growBirthdayV382?`<section class="card" style="margin-top:14px">
         <div class="row" style="align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="flex:1;min-width:min(100%,220px)"><b data-merchant-content>${esc(growBirthdayV382.customer_label||'Birthday treat')}</b>
