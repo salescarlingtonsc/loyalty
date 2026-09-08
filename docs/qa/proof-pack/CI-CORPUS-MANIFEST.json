@@ -975,8 +975,8 @@
       ],
       "checks": [],
       "businesses_seeded": 1,
-      "clients_seeded": 4,
-      "sha256": "a48bd6f634722d214f528a3fc8ffa6ccb41bdb61c4e3002a8077bda5277f6df8",
+      "clients_seeded": 5,
+      "sha256": "63cd632c439cb27cbf97176033c3bdc490a473983b836e3cd2ee0164ce63c772",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v764_corpus_birthday_rejoin_guard --migrated-only"
     },
     {

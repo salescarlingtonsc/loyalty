@@ -4165,6 +4165,12 @@
     },
     {
       "kind": "pending",
+      "version": "20261009020000",
+      "name": "nestly_v832_welcome_backfill_respects_consumption",
+      "sourcePath": "db/migrations/20261009_nestly_v832_welcome_backfill_respects_consumption.sql"
+    },
+    {
+      "kind": "pending",
       "version": "20261009120000",
       "name": "nestly_v845_stamp_card_reader_truth",
       "sourcePath": "db/migrations/20261009_nestly_v845_stamp_card_reader_truth.sql"

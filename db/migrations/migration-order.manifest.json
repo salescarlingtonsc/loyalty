@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 697,
-  "executableCount": 683,
+  "itemCount": 698,
+  "executableCount": 684,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -995,9 +995,10 @@
     },
     {
       "sourceDeployVersion": "20261009",
-      "count": 6,
+      "count": 7,
       "paths": [
         "db/migrations/20261009_nestly_v831_benefits_blocked_by_use_not_deletion.sql",
+        "db/migrations/20261009_nestly_v832_welcome_backfill_respects_consumption.sql",
         "db/migrations/20261009_nestly_v845_stamp_card_reader_truth.sql",
         "db/migrations/20261009_nestly_v846_redemption_intent_agrees_with_the_engine.sql",
         "db/migrations/20261009_nestly_v847_redeem_engine_reversals_expiry_and_spine.sql",
@@ -6546,13 +6547,21 @@
     {
       "order": 693,
       "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v832_welcome_backfill_respects_consumption.sql",
+      "semanticVersion": "v832",
+      "proposedDeployVersion": "20261009020000",
+      "sha256": "56758e23aa5cf59c2d789dc777d0de1c66c1931a6a3ffcd83ae81d4dfd12c60d"
+    },
+    {
+      "order": 694,
+      "kind": "executable",
       "path": "db/migrations/20261009_nestly_v845_stamp_card_reader_truth.sql",
       "semanticVersion": "v845",
       "proposedDeployVersion": "20261009120000",
       "sha256": "5176ddc02000850354e3b9e8b878182f9e2d9267e9ae66a267bee2aca37c5b39"
     },
     {
-      "order": 694,
+      "order": 695,
       "kind": "executable",
       "path": "db/migrations/20261009_nestly_v846_redemption_intent_agrees_with_the_engine.sql",
       "semanticVersion": "v846",
@@ -6560,7 +6569,7 @@
       "sha256": "696f780b006e1b39c504ac343056cce916be216f1fb7c0271647f4d1db35c8e1"
     },
     {
-      "order": 695,
+      "order": 696,
       "kind": "executable",
       "path": "db/migrations/20261009_nestly_v847_redeem_engine_reversals_expiry_and_spine.sql",
       "semanticVersion": "v847",
@@ -6568,7 +6577,7 @@
       "sha256": "907b77ab8a1287cd209aaa99be07772da555040dcd7f84f96f622e1378e6324f"
     },
     {
-      "order": 696,
+      "order": 697,
       "kind": "executable",
       "path": "db/migrations/20261009_nestly_v848_reversal_returns_the_voucher_and_the_books.sql",
       "semanticVersion": "v848",
@@ -6576,7 +6585,7 @@
       "sha256": "1a1fa1225959e52947a4ac37b67924dfa7f847e78101ea3c955b54922f3008f5"
     },
     {
-      "order": 697,
+      "order": 698,
       "kind": "executable",
       "path": "db/migrations/20261009_nestly_v849_catalogue_truth_and_birthday_warning.sql",
       "semanticVersion": "v849",

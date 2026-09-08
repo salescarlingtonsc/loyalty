@@ -4170,6 +4170,12 @@
     },
     {
       "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v832_welcome_backfill_respects_consumption.sql",
+      "semanticVersion": "v832",
+      "proposedDeployVersion": "20261009020000"
+    },
+    {
+      "kind": "executable",
       "path": "db/migrations/20261009_nestly_v845_stamp_card_reader_truth.sql",
       "semanticVersion": "v845",
       "proposedDeployVersion": "20261009120000"
