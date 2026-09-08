@@ -308,10 +308,13 @@ test('6 — the till extends the scanner it already has rather than growing a se
   assert.match(app, /if\(payload\.kind==='promotion'&&data\?\.status==='already_redeemed'\)/);
   assert.match(app, /\?data\?\.status==='redeemed'\|\|data\?\.status==='duplicate_ignored'/);
   assert.match(app, /redemption_kind:'promotion_offer'/);
-  assert.match(app, /kind==='promotion_offer'\?'Offer':'Reward'/);
-  /* The receipt must not invent a points line for something that spends no points. */
+  /* nestly_v829 retarget: 'Reward' is still the last fallback, but a free gift now gets its own
+     default label in between — staff_scan_gift_qr_v515 sends no redemption_kind at all. */
+  assert.match(app, /kind==='promotion_offer'\?'Offer'\s*\n?\s*:kind==='gift'\?'Free gift':'Reward'/);
+  /* The receipt must not invent a points line for something that spends no points — nestly_v829
+     adds the gift to that list for exactly the same reason. */
   assert.match(app,
-    /receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\|\|receipt\.kind==='package_session'\?'':`<div><dt>Points spent<\/dt>/);
+    /receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\|\|receipt\.kind==='package_session'\|\|receipt\.kind==='gift'\?'':`<div><dt>Points spent<\/dt>/);
 });
 
 /* ------------------------------------------------------ housekeeping */

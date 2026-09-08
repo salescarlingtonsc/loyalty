@@ -237,7 +237,7 @@ test('F058 a found gift stops the keypad on the identified customer', async () =
 /* ---------------------------------------------------------------- F060 */
 
 test('F060 merchantRedemptionRefusalTextV060 maps every known server refusal to its own sentence', () => {
-  const src = section('function merchantRedemptionRefusalTextV060(error){', '\nfunction openMerchantRedemptionScanner(');
+  const src = section('function merchantRedemptionRefusalTextV060(error,', '\nfunction openMerchantRedemptionScanner(');
   const context = { humanErrorV295: (error, fallback) => {
     const raw = String(error?.message || '');
     return /\s/.test(raw) ? raw : fallback;
@@ -250,16 +250,29 @@ test('F060 merchantRedemptionRefusalTextV060 maps every known server refusal to 
   assert.match(refusalText({ message: 'classic/catalog redemption terms changed; create a new QR' }), /fresh QR/);
   assert.match(refusalText({ message: 'reward is not eligible at this branch' }), /not available at this branch/);
   assert.match(refusalText({ message: 'this reward expired on 1 Jan 2026' }), /expired on 1 Jan 2026/);
-  assert.match(refusalText({ message: 'customer redemption is disabled for this business' }), /turned off for this business/);
+  /* nestly_v830: with its REAL production SQLSTATE. Both merchant_scan_redemption_qr_v117 and
+     customer_create_redemption_intent_v89 raise this one `using errcode='42501'`, so asserting it
+     without the code (as this test did) never exercised the case a counter actually meets. */
+  assert.match(refusalText({ code: '42501', message: 'customer redemption is disabled for this business' }),
+    /turned off for this business/);
+  assert.match(refusalText({ code: '42501', message: 'redemption branch scope is not permitted' }),
+    /branch you are allowed to serve/);
   assert.match(refusalText({ code: '42501', message: 'permission denied' }), /permission to confirm/);
   // an unmapped refusal falls back to the server's own message rather than the fixed wrong guess
   assert.equal(refusalText({ message: 'some brand-new server refusal' }), 'some brand-new server refusal');
 });
 
 test('F060 the classic redemption arm now uses merchantRedemptionRefusalTextV060 instead of a fixed guess', () => {
-  const block = section("'This gift could not be given. It may have expired, already been used, or belong to another business.')", "return}");
+  /* nestly_v829 retarget: the anchor moved because the gift arm's three inline sentences moved
+     into merchantGiftRefusalTextV829, the ONE map the till keypad's gift arm calls too. The rule
+     is unchanged and now covers both arms: neither may carry a fixed guess of its own. */
+  const block = section('if(error){sayV829(', 'return}');
   assert.match(block, /merchantRedemptionRefusalTextV060\(error\)/);
+  assert.match(block, /merchantGiftRefusalTextV829\(error\)/);
   assert.doesNotMatch(block, /may be expired, already used, or for another business/);
+  assert.doesNotMatch(block, /may have expired, already been used, or belong to another business/);
+  assert.doesNotMatch(block, /includes\('qualifying sale'\)/,
+    'the space-spelled test never matched production\'s underscored welcome_offer_* raises');
 });
 
 /* ---------------------------------------------------------------- F070 */

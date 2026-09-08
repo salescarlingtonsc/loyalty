@@ -39,9 +39,12 @@ test('completed-sale receipts expose one secondary offer action while next custo
 
 test('growth-offer receipt does not pretend that loyalty points were spent',()=>{
   /* V290 retarget: a promotion acceptance spends no points either, so the same suppression now
-     covers both non-points receipts. The rule this line guards is unchanged — a receipt must not
-     print a Points spent row for a redemption that spent none. */
-  assert.match(source,/receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\|\|receipt\.kind==='package_session'\?'':`<div><dt>Points spent/);
+     covers both non-points receipts. nestly_v829 retarget: a free gift spends none either — the
+     gift arm's server answer carries no points_spent at all, so the catalogue fallback was
+     printing "Points spent 0" on every welcome/bring-back/referral/tier-perk/birthday receipt.
+     The rule this line guards is unchanged — a receipt must not print a Points spent row for a
+     redemption that spent none. */
+  assert.match(source,/receipt\.kind==='growth_offer'\|\|receipt\.kind==='promotion_offer'\|\|receipt\.kind==='package_session'\|\|receipt\.kind==='gift'\?'':`<div><dt>Points spent/);
   assert.match(source,/receipt\.offerValueCents/);
   assert.match(source,/offerCurrency=String\(data\.currency\|\|''\)/);
   assert.doesNotMatch(source,/offerCurrency=String\(data\.currency\|\|S\.biz\?\.currency/);

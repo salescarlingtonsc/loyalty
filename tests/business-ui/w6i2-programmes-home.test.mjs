@@ -438,7 +438,9 @@ test('W6I2 D1 the counter parses a fourth code kind, and only a fourth', () => {
   for (const kind of ['redemption', 'growth', 'promotion'])
     assert.match(scanner, new RegExp(`nestly:${kind}:`), `the ${kind} prefix must survive`);
   // A member code writes nothing, so it returns before the idempotency machinery.
-  const submit = section("const submit=async value=>{", "const decodeSource=(source,width,height)=>{");
+  /* nestly_v829 retarget: the signature gained a `{fromCamera}` option so the camera loop can be
+     told apart from a deliberate human retry. The block under test is unchanged. */
+  const submit = section("const submit=async(value,{fromCamera=false}={})=>{", "const decodeSource=(source,width,height)=>{");
   assert.match(submit, /if\(payload\.kind==='member'\)\{/);
   assert.ok(submit.indexOf("payload.kind==='member'") < submit.indexOf('redemptionAttempt={fingerprint'),
     'the member branch must return before any idempotency key is minted');
@@ -463,7 +465,9 @@ test('W6I2 D2a v327 ships the GLOBAL member QR the owner asked for instead', () 
      Resolver: public.staff_scan_member_qr_v327 (the till's "Scan customer QR" -> onMemberResolved). */
   assert.match(code, /sb\.rpc\('customer_get_member_qr_v327'\)/);
   assert.match(code, /sb\.rpc\('staff_scan_member_qr_v327',\{p_business:businessId,p_member_qr:token\}\)/);
-  const submit = section("const submit=async value=>{", "const decodeSource=(source,width,height)=>{");
+  /* nestly_v829 retarget: the signature gained a `{fromCamera}` option so the camera loop can be
+     told apart from a deliberate human retry. The block under test is unchanged. */
+  const submit = section("const submit=async(value,{fromCamera=false}={})=>{", "const decodeSource=(source,width,height)=>{");
   assert.match(submit, /if\(payload\.kind==='member'\)\{/);
   assert.match(submit, /if\(!onMemberResolved\)\{/);
   assert.match(submit, /onMemberResolved\(data\);/);
