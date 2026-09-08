@@ -285,7 +285,12 @@ begin
          itself is unchanged and still the point: this function must consult the till module
          authority, not a role permission alone — and it still does. Only the signature this row
          looks the function up by has been corrected, so D20 can find it again. */
-      ('public.evaluate_checkout(uuid,uuid,uuid,jsonb,uuid,uuid)','till'),
+      /* nestly_v825: the arity moved again. nestly_v752 added a seventh, defaulted parameter
+         (p_birthday) as a NEW overload and never dropped v656's six-argument form, so every named
+         call was 42725-ambiguous; v825 dropped the six-argument twin. The till gate is unchanged
+         and still present in the survivor (verified against production 2026-09-08: app.can_module
+         is in the live body). Only the signature this row looks the function up by is corrected. */
+      ('public.evaluate_checkout(uuid,uuid,uuid,jsonb,uuid,uuid,boolean)','till'),
       ('public.reserve_checkout_sv_tender(uuid,uuid,integer,uuid)','till')
     ) as t(sig, module)
   loop
