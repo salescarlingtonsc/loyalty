@@ -4305,6 +4305,12 @@
       "path": "db/migrations/20261010_nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms.sql",
       "semanticVersion": "v878",
       "proposedDeployVersion": "20261010140000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v879_paid_means_the_contract_was_paid.sql",
+      "semanticVersion": "v879",
+      "proposedDeployVersion": "20261010150000"
     }
   ]
 }

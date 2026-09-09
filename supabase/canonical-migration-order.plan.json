@@ -4300,6 +4300,12 @@
       "version": "20261010140000",
       "name": "nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms",
       "sourcePath": "db/migrations/20261010_nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010150000",
+      "name": "nestly_v879_paid_means_the_contract_was_paid",
+      "sourcePath": "db/migrations/20261010_nestly_v879_paid_means_the_contract_was_paid.sql"
     }
   ]
 }
