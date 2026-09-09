@@ -3079,6 +3079,81 @@ function customerConsentHistoryMarkupV282(entries){
   }
   return rows.map(entry=>`<div class="wallet-line"><div><b>${esc(customerConsentHistorySentenceV282(entry))}</b><p class="muted small">${esc(walletDate(entry?.occurred_at,true)||'')}</p></div></div>`).join('');
 }
+/* nestly_v860 — the customer's switch for the biometric app lock, in Settings → Security.
+   Native shell only: on the web there is no owner check to perform, and a switch that cannot do
+   anything is worse than no switch. The card is painted busy and filled in here because
+   availability is an async question about the phone, not about the account.
+
+   Both directions require the check to pass first. Turning it ON without proving the customer can
+   satisfy it would gate them out of their own account at the next launch; turning it OFF is
+   exactly what somebody holding an unlocked phone would try first, so it is guarded too. The one
+   exception is a mechanism that has gone away entirely (biometrics and passcode both removed) —
+   then the check cannot be satisfied by anyone, and refusing to switch a dead lock off would be
+   the trap this whole feature must not become. */
+async function hydrateCustomerAppLockSettingV860(isCurrent){
+  const host=$('customerAppLockV860');
+  if(!host)return;
+  const stale=()=>(typeof isCurrent==='function'&&!isCurrent())||!host.isConnected;
+  const lock=appLockBridgeV860();
+  const available=lock?await appLockAvailableV860():false;
+  if(stale())return;
+  host.setAttribute('aria-busy','false');
+  const body=$('customerAppLockBodyV860'),status=$('customerAppLockStatusV860');
+  if(!body)return;
+  if(!lock||!available){
+    /* Two different causes, one honest sentence. The phone may genuinely have no biometrics or
+       passcode — or this may be an older installed build whose native half predates the lock,
+       since the web bundle ships the moment it is pushed and the App Store build follows days
+       later. The customer cannot tell those apart and does not need to; both are answered by
+       updating the app or setting up a phone lock. */
+    body.innerHTML='<p class="muted small">Peekaa cannot lock itself on this phone yet. Update Peekaa in the App Store, and make sure your phone has a passcode, Face ID or Touch ID set up.</p>';
+    return;
+  }
+  const armed=await refreshAppLockArmedV860();
+  if(stale())return;
+  body.innerHTML=`<label class="row" for="customerAppLockToggleV860" style="align-items:flex-start;color:var(--ink);font-weight:500"><span class="cui-switch" style="margin-top:1px"><input id="customerAppLockToggleV860" type="checkbox" ${armed?'checked':''}><i></i></span> <span>Lock Peekaa when I leave it<span class="muted small" style="display:block;font-weight:400;margin-top:3px">Your phone asks for your face, fingerprint or passcode before Peekaa opens again. Peekaa never sees any of them.</span></span></label>`;
+  const toggle=$('customerAppLockToggleV860');
+  if(!toggle)return;
+  const say=(message,tone='')=>{
+    if(!status?.isConnected)return;
+    status.innerHTML=message?`<span${tone==='ok'?' style="color:var(--green)"':''}>${esc(message)}</span>`:'';
+    if(message)CUI.announce(message);
+  };
+  toggle.onchange=async()=>{
+    const wanted=toggle.checked;
+    toggle.disabled=true;
+    say(wanted?'Confirm it is you to turn the lock on.':'Confirm it is you to turn the lock off.');
+    let outcome='failed';
+    try{outcome=String((await lock.authenticate({reason:wanted?'Turn on Peekaa’s lock':'Turn off Peekaa’s lock'}))?.status||'failed')}
+    catch{outcome='failed'}
+    if(stale())return;
+    /* A dead mechanism may always be switched off, never on. */
+    const permitted=outcome==='ok'||(outcome==='unavailable'&&!wanted);
+    if(!permitted){
+      toggle.checked=!wanted;toggle.disabled=false;
+      say(outcome==='canceled'
+        ?'Cancelled. Nothing was changed.'
+        :outcome==='lockout'
+          ?'Too many attempts. Your phone needs its passcode before biometrics work again.'
+          :outcome==='unavailable'
+            ?'Peekaa cannot lock itself on this phone yet. Update Peekaa in the App Store, and check your phone has a passcode or biometrics set up.'
+            :'That did not match, so nothing was changed.');
+      return;
+    }
+    const saved=await lock.setEnabled(wanted);
+    if(stale())return;
+    toggle.disabled=false;
+    if(!saved){
+      toggle.checked=!wanted;
+      say('That could not be saved on this phone, so it has been put back.');
+      return;
+    }
+    appLockArmedV860=wanted;
+    appLockHiddenAtV860=0;
+    say(wanted?'Peekaa will lock when you leave it.':'The lock is off.','ok');
+  };
+}
+
 async function hydrateCustomerConsentHistoryV282(isCurrent){
   const host=$('customerConsentHistoryBody');
   if(!host)return;
@@ -3087,9 +3162,21 @@ async function hydrateCustomerConsentHistoryV282(isCurrent){
   const section=$('customerConsentHistory');
   if(!host.isConnected)return;
   host.innerHTML=error
-    ? '<p class="muted small">Your consent history could not be loaded. Nothing has been changed.</p>'
+    ? `<p class="muted small">Your consent history could not be loaded. Nothing has been changed.</p><button class="btn ghost sm" id="customerConsentHistoryRetryV860" type="button" style="margin-top:12px">${esc(ct('retry'))}</button>`
     : customerConsentHistoryMarkupV282(data?.entries);
   if(section)section.setAttribute('aria-busy','false');
+  /* nestly_v860: this card had a failure state with nothing to press. It is the customer's record
+     of what they agreed to, so "could not be loaded" as a dead end is the wrong answer on this
+     card in particular. The retry re-reads only this section — it must not re-render the page,
+     because doing that from a card is what audit F041 caught the marketing retry doing. */
+  const retryV860=$('customerConsentHistoryRetryV860');
+  if(retryV860)retryV860.onclick=()=>{
+    retryV860.disabled=true;
+    host.innerHTML=`<p class="muted small">${esc(ct('Loading your consent history…'))}</p>`;
+    if(section)section.setAttribute('aria-busy','true');
+    CUI.announce(ct('Loading your consent history…'));
+    hydrateCustomerConsentHistoryV282(isCurrent);
+  };
 }
 
 /* nestly_v585 (owner photo 3, item 3: "when clicked settings icon it should land me in another
@@ -3193,6 +3280,7 @@ async function renderCustomerProfile(requestedView){
       <div id="customerProfilePasswordStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Update password</span></button>
     </section>
+    ${NestlyNativeBridge.isNative?`<section class="card" id="customerAppLockV860" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Lock this app</h2><p class="muted small">Use this phone’s own biometrics to keep your Peekaa closed to anyone else holding it.</p></div></div><div id="customerAppLockBodyV860" style="margin-top:12px"><p class="muted small">Checking this phone…</p></div><p id="customerAppLockStatusV860" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`:''}
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
     ${customerAccountDeletionCardHtmlV749()}
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
@@ -3422,6 +3510,7 @@ async function renderCustomerProfile(requestedView){
     passkeyStatus.textContent='Passkey added. You can use it at your next sign-in.';loadPasskeys();
   };
   loadPasskeys();
+  hydrateCustomerAppLockSettingV860(isCurrent);
   hydrateCustomerConsentHistoryV282(isCurrent);
   focusCustomerRoute();
 }
@@ -10357,3 +10446,10 @@ async function renderPortal(slug){
   }).catch(()=>{});
 }
 
+/* Whether the lock may be offered at all: the shell, with an owner check the device can actually
+   perform. Answering false is the normal case on the web and on a phone with no biometrics. */
+async function appLockAvailableV860(){
+  const lock=appLockBridgeV860();
+  if(!lock)return false;
+  try{return (await lock.available())?.available===true}catch{return false}
+}

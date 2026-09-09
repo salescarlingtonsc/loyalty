@@ -9596,6 +9596,81 @@ function customerConsentHistoryMarkupV282(entries){
   }
   return rows.map(entry=>`<div class="wallet-line"><div><b>${esc(customerConsentHistorySentenceV282(entry))}</b><p class="muted small">${esc(walletDate(entry?.occurred_at,true)||'')}</p></div></div>`).join('');
 }
+/* nestly_v860 — the customer's switch for the biometric app lock, in Settings → Security.
+   Native shell only: on the web there is no owner check to perform, and a switch that cannot do
+   anything is worse than no switch. The card is painted busy and filled in here because
+   availability is an async question about the phone, not about the account.
+
+   Both directions require the check to pass first. Turning it ON without proving the customer can
+   satisfy it would gate them out of their own account at the next launch; turning it OFF is
+   exactly what somebody holding an unlocked phone would try first, so it is guarded too. The one
+   exception is a mechanism that has gone away entirely (biometrics and passcode both removed) —
+   then the check cannot be satisfied by anyone, and refusing to switch a dead lock off would be
+   the trap this whole feature must not become. */
+async function hydrateCustomerAppLockSettingV860(isCurrent){
+  const host=$('customerAppLockV860');
+  if(!host)return;
+  const stale=()=>(typeof isCurrent==='function'&&!isCurrent())||!host.isConnected;
+  const lock=appLockBridgeV860();
+  const available=lock?await appLockAvailableV860():false;
+  if(stale())return;
+  host.setAttribute('aria-busy','false');
+  const body=$('customerAppLockBodyV860'),status=$('customerAppLockStatusV860');
+  if(!body)return;
+  if(!lock||!available){
+    /* Two different causes, one honest sentence. The phone may genuinely have no biometrics or
+       passcode — or this may be an older installed build whose native half predates the lock,
+       since the web bundle ships the moment it is pushed and the App Store build follows days
+       later. The customer cannot tell those apart and does not need to; both are answered by
+       updating the app or setting up a phone lock. */
+    body.innerHTML='<p class="muted small">Peekaa cannot lock itself on this phone yet. Update Peekaa in the App Store, and make sure your phone has a passcode, Face ID or Touch ID set up.</p>';
+    return;
+  }
+  const armed=await refreshAppLockArmedV860();
+  if(stale())return;
+  body.innerHTML=`<label class="row" for="customerAppLockToggleV860" style="align-items:flex-start;color:var(--ink);font-weight:500"><span class="cui-switch" style="margin-top:1px"><input id="customerAppLockToggleV860" type="checkbox" ${armed?'checked':''}><i></i></span> <span>Lock Peekaa when I leave it<span class="muted small" style="display:block;font-weight:400;margin-top:3px">Your phone asks for your face, fingerprint or passcode before Peekaa opens again. Peekaa never sees any of them.</span></span></label>`;
+  const toggle=$('customerAppLockToggleV860');
+  if(!toggle)return;
+  const say=(message,tone='')=>{
+    if(!status?.isConnected)return;
+    status.innerHTML=message?`<span${tone==='ok'?' style="color:var(--green)"':''}>${esc(message)}</span>`:'';
+    if(message)CUI.announce(message);
+  };
+  toggle.onchange=async()=>{
+    const wanted=toggle.checked;
+    toggle.disabled=true;
+    say(wanted?'Confirm it is you to turn the lock on.':'Confirm it is you to turn the lock off.');
+    let outcome='failed';
+    try{outcome=String((await lock.authenticate({reason:wanted?'Turn on Peekaa’s lock':'Turn off Peekaa’s lock'}))?.status||'failed')}
+    catch{outcome='failed'}
+    if(stale())return;
+    /* A dead mechanism may always be switched off, never on. */
+    const permitted=outcome==='ok'||(outcome==='unavailable'&&!wanted);
+    if(!permitted){
+      toggle.checked=!wanted;toggle.disabled=false;
+      say(outcome==='canceled'
+        ?'Cancelled. Nothing was changed.'
+        :outcome==='lockout'
+          ?'Too many attempts. Your phone needs its passcode before biometrics work again.'
+          :outcome==='unavailable'
+            ?'Peekaa cannot lock itself on this phone yet. Update Peekaa in the App Store, and check your phone has a passcode or biometrics set up.'
+            :'That did not match, so nothing was changed.');
+      return;
+    }
+    const saved=await lock.setEnabled(wanted);
+    if(stale())return;
+    toggle.disabled=false;
+    if(!saved){
+      toggle.checked=!wanted;
+      say('That could not be saved on this phone, so it has been put back.');
+      return;
+    }
+    appLockArmedV860=wanted;
+    appLockHiddenAtV860=0;
+    say(wanted?'Peekaa will lock when you leave it.':'The lock is off.','ok');
+  };
+}
+
 async function hydrateCustomerConsentHistoryV282(isCurrent){
   const host=$('customerConsentHistoryBody');
   if(!host)return;
@@ -9604,9 +9679,21 @@ async function hydrateCustomerConsentHistoryV282(isCurrent){
   const section=$('customerConsentHistory');
   if(!host.isConnected)return;
   host.innerHTML=error
-    ? '<p class="muted small">Your consent history could not be loaded. Nothing has been changed.</p>'
+    ? `<p class="muted small">Your consent history could not be loaded. Nothing has been changed.</p><button class="btn ghost sm" id="customerConsentHistoryRetryV860" type="button" style="margin-top:12px">${esc(ct('retry'))}</button>`
     : customerConsentHistoryMarkupV282(data?.entries);
   if(section)section.setAttribute('aria-busy','false');
+  /* nestly_v860: this card had a failure state with nothing to press. It is the customer's record
+     of what they agreed to, so "could not be loaded" as a dead end is the wrong answer on this
+     card in particular. The retry re-reads only this section — it must not re-render the page,
+     because doing that from a card is what audit F041 caught the marketing retry doing. */
+  const retryV860=$('customerConsentHistoryRetryV860');
+  if(retryV860)retryV860.onclick=()=>{
+    retryV860.disabled=true;
+    host.innerHTML=`<p class="muted small">${esc(ct('Loading your consent history…'))}</p>`;
+    if(section)section.setAttribute('aria-busy','true');
+    CUI.announce(ct('Loading your consent history…'));
+    hydrateCustomerConsentHistoryV282(isCurrent);
+  };
 }
 
 /* nestly_v585 (owner photo 3, item 3: "when clicked settings icon it should land me in another
@@ -9710,6 +9797,7 @@ async function renderCustomerProfile(requestedView){
       <div id="customerProfilePasswordStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Update password</span></button>
     </section>
+    ${NestlyNativeBridge.isNative?`<section class="card" id="customerAppLockV860" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Lock this app</h2><p class="muted small">Use this phone’s own biometrics to keep your Peekaa closed to anyone else holding it.</p></div></div><div id="customerAppLockBodyV860" style="margin-top:12px"><p class="muted small">Checking this phone…</p></div><p id="customerAppLockStatusV860" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`:''}
     <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
     ${customerAccountDeletionCardHtmlV749()}
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
@@ -9939,6 +10027,7 @@ async function renderCustomerProfile(requestedView){
     passkeyStatus.textContent='Passkey added. You can use it at your next sign-in.';loadPasskeys();
   };
   loadPasskeys();
+  hydrateCustomerAppLockSettingV860(isCurrent);
   hydrateCustomerConsentHistoryV282(isCurrent);
   focusCustomerRoute();
 }
@@ -61764,11 +61853,244 @@ async function renderPortal(slug){
   }).catch(()=>{});
 }
 
+/* nestly_v860 — BIOMETRIC APP LOCK.
+   Owner instruction: let the phone's own biometrics guard the app, the way a banking app does.
+   iOS already owns the whole ceremony — this asks LocalAuthentication "is this still the device
+   owner?" through the app-local plugin (NestlyNativeBridge.appLock) and gates the app on the
+   answer. Peekaa never sees a face, a fingerprint or the passcode.
+
+   Four decisions worth keeping, because each one is a way this could have gone wrong:
+
+   1. THE COVER IS PAINTED ON THE WAY OUT, NOT ON THE WAY BACK. iOS snapshots the screen at the
+      moment the app is backgrounded, and that snapshot is what the app switcher shows to whoever
+      is holding the phone. Re-authenticating on resume would leave that snapshot readable. So
+      paintAppLockCoverV860() runs SYNCHRONOUSLY in the background handler — which is why the
+      customer's preference is cached in appLockArmedV860 rather than awaited there.
+   2. A SHORT GRACE PERIOD, BUT ONLY FOR THE PROMPT. Choosing a photo, opening a link or taking a
+      call backgrounds the app for a moment; demanding a face every time would train people to
+      switch the lock off. Within the grace the cover is simply lifted. The cover itself has no
+      grace period — the snapshot is taken either way.
+   3. IT FAILS OPEN WHEN THE MECHANISM IS GONE, AND SAYS SO. If biometrics and the device passcode
+      have both been removed, there is no owner check left to perform and no security boundary to
+      enforce; refusing entry would only lock a customer out of their own points. The preference is
+      switched off and the app opens, rather than pretending a check happened. A cancelled or
+      failed attempt is different — the mechanism is there and was not satisfied, so the app stays
+      shut.
+   4. NOBODY IS EVER TRAPPED. The cover always offers Sign out, so a customer whose biometrics have
+      broken can still reach their account with their password on any device.
+
+   The lock only exists in the native shell and only while somebody is signed in: locking a
+   signed-out app would guard the sign-in screen, which guards itself. */
+const APP_LOCK_PROMPT_GRACE_MS_V860=15000;
+let appLockArmedV860=false;
+/* ARMED is the customer's preference; LOCKED is whether the app is actually shut right now. They
+   are separate because the cover is also painted for privacy at moments when nothing is locked
+   (a two-second app switch), and because both lifecycle signals below can fire for one switch:
+   without a gate state, the second signal would simply take the cover off a locked app. */
+let appLockLockedV860=false;
+let appLockCoverV860=null;
+let appLockPromptInFlightV860=false;
+let appLockHiddenAtV860=0;
+let appLockBoundV860=false;
+let appLockFocusGuardV860=null;
+function appLockBridgeV860(){
+  const bridge=globalThis.NestlyNativeBridge;
+  return bridge?.isNative===true&&bridge.appLock?bridge.appLock:null;
+}
+/* Whether the lock may be offered at all: the shell, with an owner check the device can actually
+   perform. Answering false is the normal case on the web and on a phone with no biometrics. */
+async function appLockAvailableV860(){
+  const lock=appLockBridgeV860();
+  if(!lock)return false;
+  try{return (await lock.available())?.available===true}catch{return false}
+}
+function appLockSignedInV860(){return !!S.user}
+/* Synchronous by construction — see decision 1. Appended to <body>, never to #root, because
+   route() rewrites #root wholesale and the cover has to outlive any repaint underneath it. */
+function paintAppLockCoverV860({prompting=false}={}){
+  if(!globalThis.document?.body)return null;
+  if(appLockCoverV860?.isConnected){
+    if(prompting)renderAppLockCoverBodyV860('prompting');
+    return appLockCoverV860;
+  }
+  const cover=document.createElement('div');
+  cover.id='appLockCoverV860';
+  cover.setAttribute('role','dialog');
+  cover.setAttribute('aria-modal','true');
+  cover.setAttribute('aria-label','Peekaa is locked');
+  /* Above every dialog in the stylesheet (the highest is .modal at 210): a lock that another
+     layer can paint over is not a lock. */
+  cover.tabIndex=-1;
+  cover.style.cssText='position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;'
+    +'justify-content:center;padding:24px;background:var(--bg,#F4F2EE);text-align:center';
+  document.body.appendChild(cover);
+  appLockCoverV860=cover;
+  renderAppLockCoverBodyV860(prompting?'prompting':'covered');
+  return cover;
+}
+/* Three states, and the customer is told which one they are in. 'covered' is the app-switcher
+   privacy screen and says nothing, because it is photographed. */
+function renderAppLockCoverBodyV860(state,message=''){
+  const cover=appLockCoverV860;
+  if(!cover?.isConnected)return;
+  const logo=`<img src="${esc(BRAND?.logoPath||'/brand/peekaa-logo.png')}" alt="${esc(BRAND.productName)}" width="150" height="100" style="max-width:60vw;height:auto" decoding="async">`;
+  if(state==='covered'){cover.innerHTML=`<div>${logo}</div>`;return}
+  const prompting=state==='prompting';
+  cover.innerHTML=`<div style="max-width:340px;width:100%">
+    <div style="margin-bottom:18px">${logo}</div>
+    <h1 style="font-size:1.35rem;margin:0 0 8px">${esc(prompting?'Unlocking Peekaa…':'Peekaa is locked')}</h1>
+    <p class="muted" id="appLockMessageV860" role="status" aria-live="polite" style="line-height:1.6;margin:0">${esc(message||(prompting?'Confirm it is you on your device.':'Use your face, fingerprint or device passcode to continue.'))}</p>
+    <button class="btn" id="appLockUnlockV860" type="button" style="width:100%;margin-top:20px"${prompting?' disabled':''}><span>Unlock</span></button>
+    <button class="btn ghost sm" id="appLockSignOutV860" type="button" style="width:100%;margin-top:10px"><span>Sign out instead</span></button>
+  </div>`;
+  const unlock=$('appLockUnlockV860');
+  if(unlock)unlock.onclick=()=>{promptAppLockV860({trigger:'manual'})};
+  const signOut=$('appLockSignOutV860');
+  /* The escape hatch of decision 4. Clearing the cover first is deliberate: sign-out re-renders
+     the app at the sign-in card, and leaving the lock over it would be a dead end. */
+  if(signOut)signOut.onclick=async()=>{
+    signOut.disabled=true;
+    appLockLockedV860=false;
+    removeAppLockCoverV860();
+    killChannels();
+    try{await sb.auth.signOut()}catch{}
+    resetClientSessionState();
+    location.hash='#/';
+    route();
+  };
+  if(!prompting)setTimeout(()=>{if(cover.isConnected)$('appLockUnlockV860')?.focus()},0);
+}
+function removeAppLockCoverV860(){
+  if(appLockCoverV860?.isConnected)appLockCoverV860.remove();
+  appLockCoverV860=null;
+}
+/* The ONLY way the cover comes off without an answer from the device: it was privacy, not a lock.
+   Every caller that merely thinks it should be gone goes through here, so no stray lifecycle event
+   can open a gated app. */
+function liftAppLockCoverIfUnlockedV860(){
+  if(appLockLockedV860||appLockPromptInFlightV860)return false;
+  removeAppLockCoverV860();
+  return true;
+}
+/* One prompt at a time. Two overlapping LocalAuthentication sheets is a state iOS itself does not
+   define, and the resume handler and the Unlock button can both arrive here. */
+async function promptAppLockV860({trigger='resume',assumeSignedIn=false}={}){
+  const lock=appLockBridgeV860();
+  /* assumeSignedIn is the launch path: boot() resolves the session itself, because route() has not
+     run yet and S.user is still null. Every other caller runs after a render and reads S.user. */
+  if(!lock||!appLockArmedV860||(!assumeSignedIn&&!appLockSignedInV860())){
+    appLockLockedV860=false;removeAppLockCoverV860();return true;
+  }
+  if(appLockPromptInFlightV860)return false;
+  appLockPromptInFlightV860=true;
+  appLockLockedV860=true;
+  paintAppLockCoverV860({prompting:true});
+  let status='failed';
+  try{status=String((await lock.authenticate({reason:'Unlock Peekaa'}))?.status||'failed')}
+  catch{status='failed'}
+  appLockPromptInFlightV860=false;
+  if(status==='ok'){
+    appLockHiddenAtV860=0;
+    appLockLockedV860=false;
+    removeAppLockCoverV860();
+    CUI.announce('Peekaa is unlocked.');
+    return true;
+  }
+  /* Decision 3: the mechanism itself is gone, so the preference is a promise that can no longer be
+     kept. Turn it off in the same breath as opening the app, so Settings tells the truth. */
+  if(status==='unavailable'){
+    appLockArmedV860=false;
+    appLockLockedV860=false;
+    try{await lock.setEnabled(false)}catch{}
+    removeAppLockCoverV860();
+    return true;
+  }
+  renderAppLockCoverBodyV860('locked',status==='lockout'
+    ?'Too many attempts. Your device needs its passcode before biometrics work again.'
+    :status==='canceled'
+      ?'Unlock cancelled. Tap Unlock to try again, or sign out to use your password.'
+      :'That did not match. Tap Unlock to try again, or sign out to use your password.');
+  return false;
+}
+/* Read once at startup and re-read whenever the customer changes it, so the background handler can
+   stay synchronous. */
+async function refreshAppLockArmedV860(){
+  const lock=appLockBridgeV860();
+  if(!lock){appLockArmedV860=false;return false}
+  try{appLockArmedV860=await lock.enabled()===true}catch{appLockArmedV860=false}
+  return appLockArmedV860;
+}
+function handleAppLockBackgroundedV860(){
+  if(!appLockArmedV860||!appLockSignedInV860())return;
+  /* Only the FIRST of the two signals starts the clock. Recording the later one would reset the
+     time away to nearly nothing and hand a returning phone a free pass. */
+  if(!appLockHiddenAtV860)appLockHiddenAtV860=Date.now();
+  paintAppLockCoverV860();
+}
+function handleAppLockForegroundedV860(){
+  if(!appLockArmedV860||!appLockSignedInV860()){
+    appLockLockedV860=false;removeAppLockCoverV860();return;
+  }
+  /* A foreground with no recorded background is the duplicate signal, or a spurious one. There is
+     nothing to decide: leave a gated app gated, and lift a cover that is only privacy. */
+  if(!appLockHiddenAtV860){liftAppLockCoverIfUnlockedV860();return}
+  const away=Date.now()-appLockHiddenAtV860;
+  appLockHiddenAtV860=0;
+  if(away<APP_LOCK_PROMPT_GRACE_MS_V860){liftAppLockCoverIfUnlockedV860();return}
+  promptAppLockV860({trigger:'resume'});
+}
+/* Capacitor's App plugin is the accurate signal in the shell; visibilitychange is kept as the
+   fallback for a build whose App plugin is missing, and is harmless when both fire — the handlers
+   are idempotent. */
+function bindAppLockLifecycleV860(){
+  if(appLockBoundV860)return;
+  appLockBoundV860=true;
+  try{
+    const app=globalThis.Capacitor?.Plugins?.App;
+    if(app?.addListener){
+      app.addListener('appStateChange',({isActive})=>{
+        if(isActive===false)handleAppLockBackgroundedV860();
+        else handleAppLockForegroundedV860();
+      });
+    }
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden')handleAppLockBackgroundedV860();
+      else handleAppLockForegroundedV860();
+    });
+    /* A cover you can tab behind is not a lock. There is rarely a keyboard on the phone this
+       ships to, but an external one is not rare, and the guard is three lines. Capture phase, so
+       it wins before anything underneath can act on the focus it just took. */
+    appLockFocusGuardV860=event=>{
+      const cover=appLockCoverV860;
+      if(!cover?.isConnected||cover.contains(event.target))return;
+      (cover.querySelector('#appLockUnlockV860')||cover).focus?.();
+    };
+    document.addEventListener('focusin',appLockFocusGuardV860,true);
+  }catch{}
+}
+/* Startup. The cover is not painted before the preference is known, because a flash of a lock
+   screen for the majority who never turned it on would be worse than the few hundred milliseconds
+   this costs — and at startup there is no snapshot to protect, only a session to gate. */
+async function startAppLockV860(){
+  if(!appLockBridgeV860())return;
+  bindAppLockLifecycleV860();
+  if(!await refreshAppLockArmedV860())return;
+  let signedIn=false;
+  try{signedIn=!!(await sb.auth.getSession())?.data?.session?.user}catch{}
+  if(!signedIn)return;
+  appLockHiddenAtV860=0;
+  await promptAppLockV860({trigger:'launch',assumeSignedIn:true});
+}
+
 async function boot(){
   try{await consumeBusinessOAuthRedirect()}catch{}
   try{await consumePlatformOAuthRedirect()}catch{}
   try{await consumePasswordRecoveryRedirect()}catch{}
   loadBuildIdentity();
+  /* nestly_v860: started before the first render so a locked app is covered as early as it can be.
+     Deliberately not awaited — the lock resolves its own session, and making the whole app wait on
+     a Keychain read would delay the sign-in screen for everyone who never turned the lock on. */
+  startAppLockV860();
   route();
 }
 /* Startup split: the page-scoped bundles (platform console, growth, media

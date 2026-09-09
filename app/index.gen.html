@@ -99,7 +99,7 @@
   <link rel="preload" as="script" href="/runtime-config.js?v=2">
   <link rel="preload" as="script" href="/runtime-config-loader.js?v=2">
   <link rel="preload" as="script" href="/customer-ui.js?v=20260829-v585-settings-cog">
-  <link rel="preload" as="script" href="/app-core.js?b=9cd5f2318ae5">
+  <link rel="preload" as="script" href="/app-core.js?b=4d53522a434c">
 <!-- Fraunces was dropped from this request: the wordmark is now a PNG (brandWordmark) and no rule
      in this document sets it, so it was a render-blocking download of an unused variable font.
      app/join.html still requests it separately and still uses it for its headings. -->
@@ -339,7 +339,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=426cc2cc23f0","customer":"/app-customer.js?b=8fd095776efb","business":"/app-business.js?b=5995f2fa932c","i18n":"/app-i18n.js?b=fe85abb74faf"}
+{"auth":"/app-auth.js?b=426cc2cc23f0","customer":"/app-customer.js?b=42857a18894f","business":"/app-business.js?b=5995f2fa932c","i18n":"/app-i18n.js?b=fe85abb74faf"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
@@ -363,6 +363,6 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   document.head.appendChild(link);
 }catch(error){}})();
 </script>
-<script src="/app-core.js?b=9cd5f2318ae5" defer></script>
+<script src="/app-core.js?b=4d53522a434c" defer></script>
 </body>
 </html>

@@ -11,6 +11,15 @@
     return target.href;
   };
 
+  /* Shared by biometricSignIn.availability() and appLock.available() below. Hoisted out here,
+     rather than having appLock.available() call `bridge.biometricSignIn.availability()`,
+     because `bridge` does not exist yet while its own object literal is still being built. */
+  async function biometricAvailability() {
+    if (!isNative || !plugins.BiometricCredential?.availability) return { available: false, biometry: 'none' };
+    try { return await plugins.BiometricCredential.availability(); }
+    catch { return { available: false, biometry: 'none' }; }
+  }
+
   const bridge = Object.freeze({
     isNative,
     platform: isNative ? capacitor.getPlatform?.() || 'native' : 'web',
@@ -45,11 +54,7 @@
        plugin, so callers never need a try/catch ladder. The password passes through here for
        exactly one call and is never retained, logged, or attached to anything. */
     biometricSignIn: {
-      async availability() {
-        if (!isNative || !plugins.BiometricCredential?.availability) return { available: false, biometry: 'none' };
-        try { return await plugins.BiometricCredential.availability(); }
-        catch { return { available: false, biometry: 'none' }; }
-      },
+      async availability() { return biometricAvailability(); },
       async enrolled() {
         if (!isNative || !plugins.BiometricCredential?.enrolled) return false;
         try { return (await plugins.BiometricCredential.enrolled())?.enrolled === true; }
@@ -72,6 +77,51 @@
         if (!isNative || !plugins.BiometricCredential?.clear) return true;
         try { return (await plugins.BiometricCredential.clear())?.status === 'ok'; }
         catch { return false; }
+      },
+    },
+    /* nestly_v860 — biometric APP LOCK: a re-auth gate the customer can opt into, requiring
+       their face/fingerprint (or the device passcode, iOS's own fallback) to re-enter the app.
+       Separate from biometricSignIn above: this never reads or writes the stored sign-in
+       credential, it only asks "is this still the device owner?" and remembers whether the
+       customer wants that check on. Same defensive shape as biometricSignIn: every method
+       degrades to an inert answer on the web and on a native build without the plugin, and a
+       throwing or malformed plugin answer never leaks upward as a truthy success.
+       IMPORTANT: the JS bundle ships to peekaa.asia the moment it's pushed, but the App Store
+       build lags behind it by days to weeks. An installed build can be running a Swift plugin
+       that predates these three methods, so every branch here must answer inertly in that
+       case ('unavailable' / false) — never throw — exactly as if app lock did not exist yet. */
+    appLock: {
+      /* Availability is a question about THIS BUILD, not only about the phone. The web bundle
+         reaches a customer the moment it is pushed; the App Store build follows days later, so an
+         installed shell can be running a native half that predates the app lock while the JS
+         already offers it. Asking the phone alone would answer "yes, Face ID is right here" and
+         put a switch on screen that nothing behind it can honour — so the plugin method the lock
+         actually needs is part of the question. */
+      async available() {
+        if (!isNative || !plugins.BiometricCredential?.authenticate) return { available: false, biometry: 'none' };
+        return biometricAvailability();
+      },
+      async authenticate({ reason = 'Unlock Peekaa' } = {}) {
+        if (!isNative || !plugins.BiometricCredential?.authenticate) return { status: 'unavailable' };
+        try {
+          const result = await plugins.BiometricCredential.authenticate({ reason: String(reason).slice(0, 120) });
+          return ['ok', 'canceled', 'failed', 'lockout', 'unavailable'].includes(result?.status)
+            ? { status: result.status }
+            : { status: 'failed' };
+        } catch { return { status: 'failed' }; }
+      },
+      async enabled() {
+        if (!isNative || !plugins.BiometricCredential?.lockPreference) return false;
+        try { return (await plugins.BiometricCredential.lockPreference())?.enabled === true; }
+        catch { return false; }
+      },
+      async setEnabled(enabled) {
+        if (!isNative || !plugins.BiometricCredential?.setLockPreference) return false;
+        const want = enabled === true;
+        try {
+          const result = await plugins.BiometricCredential.setLockPreference({ enabled: want });
+          return result?.status === 'ok' && result?.enabled === want;
+        } catch { return false; }
       },
     },
     /* The status bar follows the APP's surface, not the device's appearance. Peekaa's theme is a

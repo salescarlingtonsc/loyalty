@@ -20,6 +20,11 @@ import Security
 ///    trip reuse detection. The credential itself is stable and is what iOS AutoFill would
 ///    hold anyway.
 /// The plugin never logs, returns, or retains the secret outside the resolved call.
+///
+/// nestly_v860 adds a second, unrelated capability to the same plugin: an APP LOCK that
+/// re-prompts biometrics (or the device passcode) whenever the app should be gated shut. It
+/// never reads or writes the Keychain credential above — it only answers "is this still the
+/// device owner?" and persists a plain on/off preference.
 @objc(BiometricCredentialPlugin)
 public class BiometricCredentialPlugin: CAPPlugin, CAPBridgedPlugin {
   public let identifier = "BiometricCredentialPlugin"
@@ -30,10 +35,14 @@ public class BiometricCredentialPlugin: CAPPlugin, CAPBridgedPlugin {
     CAPPluginMethod(name: "store", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "retrieve", returnType: CAPPluginReturnPromise),
     CAPPluginMethod(name: "clear", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "authenticate", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "lockPreference", returnType: CAPPluginReturnPromise),
+    CAPPluginMethod(name: "setLockPreference", returnType: CAPPluginReturnPromise),
   ]
 
   private static let service = "asia.peekaa.app.signin"
   private static let account = "customer"
+  private static let lockPreferenceKey = "asia.peekaa.app.lock.enabled"
 
   private func baseQuery() -> [String: Any] {
     return [
@@ -134,5 +143,65 @@ public class BiometricCredentialPlugin: CAPPlugin, CAPBridgedPlugin {
       let status = SecItemDelete(self.baseQuery() as CFDictionary)
       call.resolve(["status": status == errSecSuccess || status == errSecItemNotFound ? "ok" : "failed"])
     }
+  }
+
+  // MARK: - App lock (nestly_v860)
+
+  /// The APP LOCK re-auth gate — separate from the biometric SIGN-IN credential above. This
+  /// method never touches the Keychain item; it only asks "is this still the device owner?"
+  /// and resolves a coarse status, never the underlying error.
+  ///
+  /// `.deviceOwnerAuthentication` (not `.deviceOwnerAuthenticationWithBiometrics`, which
+  /// `availability()` above still uses so it can report which biometry is enrolled) tries
+  /// biometrics first but lets iOS fall back to the device passcode on its own — the same
+  /// shape banking apps use. Without that fallback, a biometry lockout (too many failed
+  /// attempts) or a covered camera/sensor would strand the customer outside their own account
+  /// with no way back in; WITH it, a biometry lockout resolves through the passcode instead of
+  /// dead-ending the customer.
+  @objc func authenticate(_ call: CAPPluginCall) {
+    var reason = (call.getString("reason") ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    if reason.count > 120 { reason = String(reason.prefix(120)) }
+    if reason.isEmpty { reason = "Unlock Peekaa" }
+
+    let context = LAContext()
+    var error: NSError?
+    guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+      call.resolve(["status": "unavailable"])
+      return
+    }
+    context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, evalError in
+      if success {
+        call.resolve(["status": "ok"])
+        return
+      }
+      // Map to a coarse status only — never log, return, or retain the error text itself.
+      switch (evalError as? LAError)?.code {
+      case .userCancel, .systemCancel, .appCancel, .userFallback:
+        call.resolve(["status": "canceled"])
+      case .biometryLockout:
+        call.resolve(["status": "lockout"])
+      case .passcodeNotSet, .biometryNotAvailable, .biometryNotEnrolled:
+        call.resolve(["status": "unavailable"])
+      default:
+        call.resolve(["status": "failed"])
+      }
+    }
+  }
+
+  @objc func lockPreference(_ call: CAPPluginCall) {
+    call.resolve(["enabled": UserDefaults.standard.bool(forKey: Self.lockPreferenceKey)])
+  }
+
+  /// The flag lives in UserDefaults, not the WebView's website-data store — a cleared or
+  /// evicted web store (Safari's "Clear History", low-disk eviction, a reinstalled WKWebView)
+  /// can never silently switch a security setting off, because nothing about clearing web
+  /// storage touches UserDefaults.
+  @objc func setLockPreference(_ call: CAPPluginCall) {
+    guard let enabled = call.getBool("enabled") else {
+      call.resolve(["status": "invalid"])
+      return
+    }
+    UserDefaults.standard.set(enabled, forKey: Self.lockPreferenceKey)
+    call.resolve(["status": "ok", "enabled": enabled])
   }
 }
