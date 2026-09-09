@@ -4198,6 +4198,12 @@
       "version": "20261009160000",
       "name": "nestly_v849_catalogue_truth_and_birthday_warning",
       "sourcePath": "db/migrations/20261009_nestly_v849_catalogue_truth_and_birthday_warning.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261009170000",
+      "name": "nestly_v850_commission_accuracy",
+      "sourcePath": "db/migrations/20261009_nestly_v850_commission_accuracy.sql"
     }
   ]
 }

@@ -63,7 +63,7 @@ test('BUG 3 — the split stays (two sale kinds), the confirm screen states ONE 
   // The two write paths are NOT merged: the cart finalises through record_cart_sale and a package
   // is still its own sell_package_v102 row of kind='package' with its own policy.
   assert.match(till, /sb\.rpc\('record_cart_sale'/);
-  assert.match(till, /sb\.rpc\('sell_package_v102'/);
+  assert.match(till, /sb\.rpc\('sell_package_v832'/); // nestly_v832 (v102 + p_staff)
   assert.match(till, /function extrasTotalCents\(\)\{return extraLines\(\)\.reduce/);
   // What changed is the arithmetic the owner is shown: one combined figure, plain-words reason.
   assert.match(composer, /const collectBaseV257=\(hasSale&&evalResult&&evalState!=='error'\)/);

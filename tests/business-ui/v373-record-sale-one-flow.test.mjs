@@ -123,7 +123,7 @@ test('V373 changed the screen, not the money: every write path and guard is inta
   assert.match(till, /p_idempotency_key:finaliseKey/);
   assert.match(till, /clearWriteAttempt\(FINALISE_SLOT\);/);
   // Extras keep their own server-idempotent writers and their own keys.
-  assert.match(till, /sb\.rpc\('sell_package_v102'/);
+  assert.match(till, /sb\.rpc\('sell_package_v832'/); // nestly_v832: the package pays the member the till picked
   assert.match(till, /use_package_session_v102/);
   // Attribution still reaches the server from the same picker, with the same default.
   assert.match(composer, /const staffPickerV287=tillAttributableStaff\.length>1/);

@@ -282,7 +282,8 @@ test('the global search says why it cannot look instead of doing nothing', () =>
 test('the dead package-sell handler is gone and the till keeps selling', () => {
   assert.doesNotMatch(app, /\$\('ksell'\)/, 'no markup has rendered #ksell since selling moved to the till');
   assert.doesNotMatch(app, /\$\('kSaleBranch'\)/);
-  assert.match(app, /sb\.rpc\('sell_package_v102'/,
+  assert.match(app, /sb\.rpc\('sell_package_v832'/, // nestly_v832 (v102 + p_staff)
+   
     'the live till call site must survive the dead handler removal');
 });
 

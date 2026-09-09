@@ -129,7 +129,7 @@ test('package sale UI accepts only authoritative v102 receipt IDs and exact poin
   assert.equal(helpers.packageSaleResultV102({
     status:'completed',client_package_id:'cp-1',points_earned:17,points_total:240
   }),null);
-  const appPackageCalls=[...app.matchAll(/sb\.rpc\('sell_package_v102'/g)];
+  const appPackageCalls=[...app.matchAll(/sb\.rpc\('sell_package_v832'/g)]; // nestly_v832: v102 + p_staff, same receipt shape
   /* V285 retarget: there was a SECOND call site on the standalone Packages page, wired to a
      #ksell button no markup has rendered since selling moved into the till. The dead handler is
      gone; the surviving call site is the till's own checkout, which is the one that must use

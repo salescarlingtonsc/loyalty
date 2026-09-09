@@ -24,9 +24,13 @@ test('every money path uses the attributed teammate', () => {
      PayNow QR fingerprint/resume writes (beginPaynowPaymentV142 / resumePaynowPaymentV142). That
      whole payment rail (Razorpay SG has no Connect equivalent) is removed — see
      RAZORPAY_SWAP_SPEC.md — leaving the two money paths that remain: quick sale and cart
-     finalize (record_cart_sale). */
-  assert.equal((till.match(/tillSaleStaffId\|\|tillStaffId/g) || []).length, 2,
-    'quick sale and cart finalize');
+     finalize (record_cart_sale).
+     nestly_v832: three — the package sale (sell_package_v832) now carries the same attribution;
+     before v832 it silently paid whoever was logged in. */
+  assert.equal((till.match(/tillSaleStaffId\|\|tillStaffId/g) || []).length, 3,
+    'quick sale, cart finalize and package sale');
+  assert.match(till, /sb\.rpc\('sell_package_v832',\{[^)]*p_staff:tillSaleStaffId\|\|tillStaffId/,
+    'the package sale sends the attributed teammate');
   assert.ok(!/p_staff:tillStaffId\b/.test(till), 'no money path may still hardcode the operator');
 });
 

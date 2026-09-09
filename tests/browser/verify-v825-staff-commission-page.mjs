@@ -199,6 +199,12 @@ try{
   say('open Staff commission');
   await page.goto(`${ORIGIN}/index.html#/staffperf`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelectorAll('#pbody tbody tr').length>0,null,{timeout:30000});
+  /* nestly_v832 gave the page a "By line | By sale" toggle and made By sale the landing view
+     (owner, 2026-09-09). This proof is about the LINE list, so it selects that view first; the new
+     view, the filters and the Team comparison have their own proof in
+     verify-v832-staff-commission-views.mjs. */
+  await page.click('[data-commission-view-v832="line"]');
+  await page.waitForTimeout(200);
   let seen=await page.evaluate(READ);
   ok(seen.title==='Staff commission',`title reads "Staff commission" — got "${seen.title}"`);
 

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="54203cf7fc9b7baf5f9deae39548d04e2df19bef0cce020946ce0d08655cbe68"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="0c9b5ff720317d9bd155742dab8700f576e9b1caa54b8e43865d9f0a9ef60930"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5797,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 54203cf7fc9b7baf5f9deae39548d04e2df19bef0cce020946ce0d08655cbe68</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 0c9b5ff720317d9bd155742dab8700f576e9b1caa54b8e43865d9f0a9ef60930</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6109,6 +6109,175 @@ function staffCommissionAggregationV825(rows){
     amount:t.amount+s.amount,commission:t.commission+s.commission}),
     {lines:0,sales:0,reversedLines:0,reversedSales:0,amount:0,commission:0});
   return {staff,totals};
+}
+/* nestly_v832 (owner, 2026-09-09): "Boss able to track individual sales (with breakdown on the
+   sale) & filter accordingly" and "is there a tracker and analysis behind to show who is
+   performing better? lesser deals but bigger payment size etc."
+   Both answers are computed from the SAME rows the Staff commission table shows — one read, one
+   authority, so the cards, the comparison and the list can never disagree with each other. These
+   helpers are pure and touch no DOM, so the tests execute them rather than grepping the page. */
+const STAFF_COMMISSION_KINDS_V832=[
+  {key:'all',label:'All items'},
+  {key:'service',label:'Services'},
+  {key:'product',label:'Products'},
+  {key:'package',label:'Packages'},
+  {key:'bundle',label:'Bundles'},
+  {key:'custom',label:'Custom'},
+  {key:'discount',label:'Discounts'},
+  {key:'other',label:'Other'}
+];
+/* One line, one kind. A line that belongs to a bundle is a BUNDLE line whatever its own
+   item_type says — the bundle is what the shop sold and what the commission was priced on
+   (v825's resolution order) — which is the same rule itemKindLabelV825 prints. */
+function staffCommissionKindKeyV832(row){
+  if(!row)return 'other';
+  if(row.bundle_id)return 'bundle';
+  switch(row.item_type){
+    case 'service':return 'service';
+    case 'retail':return 'product';
+    case 'package':case 'package_session':return 'package';
+    case 'custom':return 'custom';
+    case 'studio_discount':return 'discount';
+    default:return 'other';
+  }
+}
+/* The one filter both views run on. Filtering is per LINE; the sale grouping is derived from the
+   lines that survived, so "a sale appears if any of its lines match" and "its subtotal covers the
+   matching lines only" are the same statement rather than two rules that could drift apart.
+   `hiddenLines` is what the sale is NOT showing, so the page can say so instead of quietly
+   presenting a partial sale as the whole one. Reversed lines are carried through — they are drawn
+   struck through — but they are counted in no total, exactly as they were before v832. */
+function staffCommissionFilterV832(rows,{staffKey='all',kind='all',search=''}={}){
+  const list=(Array.isArray(rows)?rows:[]).filter(Boolean);
+  const needle=String(search==null?'':search).trim().toLowerCase();
+  const matches=row=>{
+    if(staffKey&&staffKey!=='all'&&(row.staff_id||'__unattributed')!==staffKey)return false;
+    if(kind&&kind!=='all'&&staffCommissionKindKeyV832(row)!==kind)return false;
+    if(needle&&!`${row.client_name||''} ${row.description||''}`.toLowerCase().includes(needle))return false;
+    return true;
+  };
+  const linesPerSale=new Map();
+  list.forEach(row=>linesPerSale.set(row.sale_id,(linesPerSale.get(row.sale_id)||0)+1));
+  const shown=list.filter(matches).sort((a,b)=>
+    String(b.occurred_at||'').localeCompare(String(a.occurred_at||''))
+    ||String(a.sale_id||'').localeCompare(String(b.sale_id||''))
+    ||String(a.line_id||'').localeCompare(String(b.line_id||'')));
+  const bySale=new Map(),sales=[];
+  shown.forEach(row=>{
+    let sale=bySale.get(row.sale_id);
+    if(!sale){
+      sale={sale_id:row.sale_id,occurred_at:row.occurred_at||null,client_id:row.client_id||null,
+        client_name:row.client_name||null,sale_kind:row.sale_kind||null,lines:[],staffNames:[],
+        amount:0,commission:0,shownLines:0,totalLines:linesPerSale.get(row.sale_id)||0,
+        hiddenLines:0,reversed:true};
+      bySale.set(row.sale_id,sale);sales.push(sale);
+    }
+    sale.lines.push(row);
+    sale.shownLines+=1;
+    sale.amount+=Number(row.line_cents||0);
+    sale.commission+=Number(row.commission_cents||0);
+    if(!row.reversed)sale.reversed=false;
+    const who=row.staff_id?String(row.staff_name||'Team member'):'Unattributed';
+    if(!sale.staffNames.includes(who))sale.staffNames.push(who);
+  });
+  sales.forEach(sale=>{sale.hiddenLines=Math.max(0,sale.totalLines-sale.shownLines)});
+  const counted=shown.filter(row=>!row.reversed);
+  const totals={
+    lines:counted.length,
+    sales:new Set(counted.map(row=>row.sale_id)).size,
+    amount:counted.reduce((t,row)=>t+Number(row.line_cents||0),0),
+    commission:counted.reduce((t,row)=>t+Number(row.commission_cents||0),0),
+    reversedLines:shown.length-counted.length,
+    reversedSales:new Set(shown.filter(row=>row.reversed).map(row=>row.sale_id)).size,
+    hiddenLines:sales.reduce((t,sale)=>t+sale.hiddenLines,0)
+  };
+  return {rows:shown,sales,totals};
+}
+/* Who is performing better, from the rows on screen. A reversed line counts NOWHERE — not in a
+   sale count, not in an average, not in a mix — because it was never money. "Amount" is the NET
+   the customer paid on that member's lines (a discount line is negative and pulls it down), which
+   is why avgSale and biggestSale are per SALE rather than per line: the owner's question is about
+   ticket size, and a ticket is a sale. effectiveRateBps is the answer to "what does this member's
+   commission actually cost per dollar sold" — it is derived, never a rate anybody typed. */
+function staffCommissionInsightsV832(rows){
+  const list=(Array.isArray(rows)?rows:[]).filter(row=>row&&!row.reversed);
+  const emptyMix=()=>({service:0,product:0,package:0,bundle:0,custom:0,discount:0,other:0});
+  const byStaff=new Map(),teamSales=new Map(),teamMix=emptyMix();
+  list.forEach(row=>{
+    const key=row.staff_id||'__unattributed';
+    if(!byStaff.has(key))byStaff.set(key,{key,name:key==='__unattributed'?'Unattributed':'Team member',
+      lines:0,amount:0,commission:0,sales:new Map(),mix:emptyMix()});
+    const bucket=byStaff.get(key);
+    if(row.staff_id&&row.staff_name)bucket.name=String(row.staff_name);
+    const cents=Number(row.line_cents||0);
+    bucket.lines+=1;
+    bucket.amount+=cents;
+    bucket.commission+=Number(row.commission_cents||0);
+    bucket.sales.set(row.sale_id,(bucket.sales.get(row.sale_id)||0)+cents);
+    const kind=staffCommissionKindKeyV832(row);
+    bucket.mix[kind]+=cents;
+    teamMix[kind]+=cents;
+    teamSales.set(row.sale_id,(teamSales.get(row.sale_id)||0)+cents);
+  });
+  const buckets=[...byStaff.values()];
+  const teamAmount=buckets.reduce((t,b)=>t+b.amount,0);
+  const teamCommission=buckets.reduce((t,b)=>t+b.commission,0);
+  const biggestOf=nets=>nets.reduce((best,net)=>net>best?net:best,nets.length?nets[0]:0);
+  const rateOf=(commission,amount)=>amount>0?Math.round(commission/amount*10000):null;
+  const staff=buckets.map(b=>{
+    const nets=[...b.sales.values()],sales=b.sales.size;
+    return {key:b.key,name:b.name,sales,lines:b.lines,amount:b.amount,commission:b.commission,
+      avgSale:sales?Math.round(b.amount/sales):0,
+      biggestSale:biggestOf(nets),
+      effectiveRateBps:rateOf(b.commission,b.amount),
+      mix:b.mix,
+      amountShare:teamAmount?b.amount/teamAmount:0,
+      commissionShare:teamCommission?b.commission/teamCommission:0};
+  }).sort((a,b)=>{
+    if(a.key==='__unattributed')return 1;
+    if(b.key==='__unattributed')return -1;
+    return b.amount-a.amount||String(a.name).localeCompare(String(b.name));
+  });
+  const teamNets=[...teamSales.values()];
+  const team={sales:teamSales.size,lines:list.length,amount:teamAmount,commission:teamCommission,
+    avgSale:teamSales.size?Math.round(teamAmount/teamSales.size):0,
+    biggestSale:biggestOf(teamNets),
+    effectiveRateBps:rateOf(teamCommission,teamAmount),
+    mix:teamMix,amountShare:teamAmount?1:0,commissionShare:teamCommission?1:0};
+  return {staff,team};
+}
+/* The compact "what did they sell" string: the two biggest kinds by absolute value, so a big
+   discount is visible rather than hidden behind a positive total. */
+function staffCommissionMixTextV832(mix){
+  const labels={service:'Services',product:'Products',package:'Packages',bundle:'Bundles',
+    custom:'Custom',discount:'Discounts',other:'Other'};
+  const entries=Object.keys(labels).map(key=>({key,cents:Number((mix&&mix[key])||0)}))
+    .filter(entry=>entry.cents!==0);
+  const denominator=entries.reduce((t,entry)=>t+Math.abs(entry.cents),0);
+  if(!denominator)return '';
+  return entries.sort((a,b)=>Math.abs(b.cents)-Math.abs(a.cents)).slice(0,2)
+    .map(entry=>`${labels[entry.key]} ${Math.round(Math.abs(entry.cents)/denominator*100)}%`)
+    .join(' · ');
+}
+/* ONE sentence, and only about people who are actually in these rows. "Unattributed" is not a
+   person, so it is never named; with fewer than two named members there is nothing to compare and
+   the line is left out rather than padded with a comparison to nobody. */
+function staffCommissionInsightLineV832(insights,formatMoney){
+  const people=((insights&&insights.staff)||[]).filter(s=>s.key!=='__unattributed'&&s.sales>0);
+  if(people.length<2)return '';
+  const fmt=typeof formatMoney==='function'?formatMoney:(cents=>String(cents));
+  const most=people.reduce((best,s)=>s.sales>best.sales?s:best,people[0]);
+  const biggest=people.reduce((best,s)=>s.avgSale>best.avgSale?s:best,people[0]);
+  /* A tie is not a lead: with two members on the same count (or the same average) the sentence
+     must not crown one of them — the owner reads this line as a ranking. */
+  const salesTied=people.filter(s=>s.sales===most.sales).length>1;
+  const avgTied=people.filter(s=>s.avgSale===biggest.avgSale).length>1;
+  if(salesTied&&avgTied)return `Sales are level (${most.sales} each) and so is the average sale (${fmt(biggest.avgSale)}).`;
+  if(salesTied)return `Sales are level (${most.sales} each); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)}).`;
+  if(avgTied)return `${most.name} closes the most sales (${most.sales}); the average sale is level (${fmt(biggest.avgSale)}).`;
+  if(most.key===biggest.key)return `${most.name} leads on both: the most sales (${most.sales}) and the biggest average sale (${fmt(most.avgSale)}).`;
+  const tail=biggest.sales<most.sales?' — fewer deals, bigger tickets':'';
+  return `${most.name} closes the most sales (${most.sales}); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)})${tail}.`;
 }
 /* nestly_v825 — the commission pair on a product, a bundle or a package (owner ruling 2026-09-08:
    "% or fixed amount, same as services"). One markup, one reader, one writer, so blank-vs-zero
@@ -10061,7 +10230,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'54203cf7fc9b7baf5f9deae39548d04e2df19bef0cce020946ce0d08655cbe68',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'0c9b5ff720317d9bd155742dab8700f576e9b1caa54b8e43865d9f0a9ef60930',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

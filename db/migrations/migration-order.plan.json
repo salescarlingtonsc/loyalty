@@ -4203,6 +4203,12 @@
       "path": "db/migrations/20261009_nestly_v849_catalogue_truth_and_birthday_warning.sql",
       "semanticVersion": "v849",
       "proposedDeployVersion": "20261009160000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v850_commission_accuracy.sql",
+      "semanticVersion": "v850",
+      "proposedDeployVersion": "20261009170000"
     }
   ]
 }

@@ -478,11 +478,11 @@
       "call_site_finding": "none"
     },
     {
-      "id": "browser.rpc:app/app.js:sell_package_v102",
+      "id": "browser.rpc:app/app.js:sell_package_v832",
       "surface": "browser_rpc_binding",
-      "rpc": "sell_package_v102",
-      "resolves_to": "sell_package_v102/5 (idempotent, explicit branch, exact persisted result)",
-      "call_site_finding": "none (v102) — both cart and standalone Packages use the sole browser-granted branch-bound keyed package writer; legacy /4 and /3 execute are revoked"
+      "rpc": "sell_package_v832",
+      "resolves_to": "sell_package_v832/6 (nestly_v850, applied as v832: the v102 body plus p_staff — the team member the till picked sells the package; null keeps the caller's own row). Built by anchored replacement on the LIVE v102 body inside a DO block, so discovery cannot see its writes (the record_sale_by_phone/v630 precedent); its writes are v102's: client_packages:INSERT, sales:INSERT, sale_items:INSERT, sale_intent_operations:INSERT.",
+      "call_site_finding": "none (v832) — one call site, the till's cart checkout, sending the same p_staff record_cart_sale has always been sent (tillSaleStaffId||tillStaffId). sell_package_v102 remains as a SQL wrapper passing p_staff=null so sell_bespoke_package_v613 and any older caller keep their behaviour; the legacy /4 and /3 execute stay revoked."
     },
     {
       "id": "browser.rpc:app/app.js:sell_bespoke_package_v613",
@@ -1265,40 +1265,6 @@
       "locking": "advisory (xact)",
       "package_membership": "via sell_package/3",
       "kernel": "NEEDS-WORK — correct idempotent shell, but it wraps the non-idempotent /3 instead of a kernel; fold both into the kernel so there is one package-sale path."
-    },
-    {
-      "id": "db.fn:public.sell_package_v102/5",
-      "surface": "db_function",
-      "latest_file": "20260830090000_nestly_v627_package_product_branches_and_request_amend.sql",
-      "rows_written": "client_packages:INSERT, sales:INSERT, sale_intent_operations:INSERT",
-      "detected_signals": "idem-signal, advisory-lock, for-update",
-      "entry_point": "sell_package_v102(p_business,p_client,p_plan,p_branch,p_idempotency_key)",
-      "callers": "browser cart checkout and standalone Packages page",
-      "reads": "package_plans/services/branches/clients/staff; points_ledger by exact sale and customer",
-      "idempotency": "business/key advisory lock + immutable SHA-256 request hash including branch + sale_intent_operations exact JSON replay",
-      "locking": "advisory + staff FOR UPDATE + plan/branch FOR SHARE",
-      "package_membership": "atomically inserts one client_packages row with purchase snapshots, including the nestly_v593 expiry term and the SGT end-of-day deadline derived from it (NULL = never expires)",
-      "payment": "inserts one branch/staff-attributed package sale at the frozen plan price",
-      "loyalty": "sale trigger applies the owner policy once; response points_earned is summed only from points_ledger rows bearing the exact sale_id and points_total is ledger-derived",
-      "reversal": "sale remains compensatable through the canonical reversal provenance flow",
-      "kernel_migratability": "KERNEL-ADJACENT — v102 collapses browser package sale to one branch-bound keyed writer with exact replay; a later unified-kernel increment may absorb the sale insertion without changing its snapshot/idempotency contract"
-    },
-    {
-      "id": "db.fn:public.sell_bespoke_package_v613/9",
-      "surface": "db_function",
-      "latest_file": "20260829191021_nestly_v613_bespoke_customer_package.sql",
-      "rows_written": "no direct tracked write; via public.sell_package_v102: client_packages:INSERT, sales:INSERT, sale_intent_operations:INSERT",
-      "detected_signals": "idem-signal, advisory-lock",
-      "entry_point": "sell_bespoke_package_v613(p_business,p_client,p_name,p_price_cents,p_sessions,p_service,p_expiry_days,p_branch,p_idempotency_key)",
-      "callers": "browser Customer packages page (Customise package)",
-      "reads": "clients/services; sale_intent_operations for the replay check",
-      "idempotency": "takes sell_package_v102's own business/key advisory lock and returns the recorded result BEFORE minting a plan, so a replay creates no orphan package_plans row",
-      "locking": "advisory lock on the shared package-sale key + sale_intent_operations FOR SHARE",
-      "package_membership": "mints one package_plans row carrying bespoke_for_client (excluded from every catalogue listing), then the entitlement is created entirely by sell_package_v102 with its usual snapshots and v593 deadline",
-      "payment": "none of its own — the package sale is booked by sell_package_v102 at the minted plan's price",
-      "loyalty": "none of its own — inherited unchanged from sell_package_v102's sale trigger",
-      "reversal": "the sale it delegates remains compensatable through the canonical reversal provenance flow; the plan row is inert once its single entitlement is reversed",
-      "kernel_migratability": "KERNEL-ADJACENT — a thin mint-then-delegate wrapper; a later unified kernel absorbing sell_package_v102 absorbs this with it, since it adds no sale or ledger semantics of its own"
     },
     {
       "id": "db.fn:public.set_expense_void/3",
@@ -4173,6 +4139,11 @@
     {
       "id": "db.backfill:20261009160000_nestly_v849_catalogue_truth_and_birthday_warning.sql:points_ledger",
       "reason": "Same do $v849_verify$ rolled-back sub-transaction as the points_batches entry immediately above (same file, same block, same P0849 sentinel/EXCEPTION pair) -- this is its points_ledger seed row (v849 line ~702, minted with app.points_ledger_insert_id/app.points_ledger_write_scope set for the duration, exactly like a real earn write would be), thrown away by the same implicit-savepoint rollback. Not a migration-time backfill; production points_ledger is untouched."
+    },
+    {
+      "id": "db.backfill:20261009170000_nestly_v850_commission_accuracy.sql:sale_items",
+      "reason": "nestly_v850 (applied as v832) one-shot RE-PRICE of the four commission columns on the 10 existing studio_discount lines (4 tenants): a discount line now reduces commission at the bill's own blended percentage rate instead of the member's product rate. Runs under a new guard window (app.sale_items_discount_reprice_v832) that may touch ONLY those four columns of ONLY a studio_discount line; every positive line's frozen snapshot is untouched. NOT a value-table write: commission columns are payroll evidence, not ledger value. Run once by the migration."
     }
-  ]
+  ],
+  "counts_note": " v850 (2026-09-09, applied as v832): sell_package_v102/5 and sell_bespoke_package_v613/9 LEAVE the curated set — v102 is now a SQL wrapper over public.sell_package_v832/6 (p_staff: the member the till picked), and v832 was created by anchored replacement of the live v102 body inside a DO block, so discovery sees neither v832's writes nor the chain behind v613 (same shape as record_sale_by_phone after v630). The package sale still writes client_packages/sales/sale_items/sale_intent_operations exactly as v102 did; the browser binding moves to browser.rpc:app/app.js:sell_package_v832. One allowlisted run-once backfill (sale_items discount re-price)."
 }

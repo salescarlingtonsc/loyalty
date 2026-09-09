@@ -3863,6 +3863,175 @@ function staffCommissionAggregationV825(rows){
     {lines:0,sales:0,reversedLines:0,reversedSales:0,amount:0,commission:0});
   return {staff,totals};
 }
+/* nestly_v832 (owner, 2026-09-09): "Boss able to track individual sales (with breakdown on the
+   sale) & filter accordingly" and "is there a tracker and analysis behind to show who is
+   performing better? lesser deals but bigger payment size etc."
+   Both answers are computed from the SAME rows the Staff commission table shows — one read, one
+   authority, so the cards, the comparison and the list can never disagree with each other. These
+   helpers are pure and touch no DOM, so the tests execute them rather than grepping the page. */
+const STAFF_COMMISSION_KINDS_V832=[
+  {key:'all',label:'All items'},
+  {key:'service',label:'Services'},
+  {key:'product',label:'Products'},
+  {key:'package',label:'Packages'},
+  {key:'bundle',label:'Bundles'},
+  {key:'custom',label:'Custom'},
+  {key:'discount',label:'Discounts'},
+  {key:'other',label:'Other'}
+];
+/* One line, one kind. A line that belongs to a bundle is a BUNDLE line whatever its own
+   item_type says — the bundle is what the shop sold and what the commission was priced on
+   (v825's resolution order) — which is the same rule itemKindLabelV825 prints. */
+function staffCommissionKindKeyV832(row){
+  if(!row)return 'other';
+  if(row.bundle_id)return 'bundle';
+  switch(row.item_type){
+    case 'service':return 'service';
+    case 'retail':return 'product';
+    case 'package':case 'package_session':return 'package';
+    case 'custom':return 'custom';
+    case 'studio_discount':return 'discount';
+    default:return 'other';
+  }
+}
+/* The one filter both views run on. Filtering is per LINE; the sale grouping is derived from the
+   lines that survived, so "a sale appears if any of its lines match" and "its subtotal covers the
+   matching lines only" are the same statement rather than two rules that could drift apart.
+   `hiddenLines` is what the sale is NOT showing, so the page can say so instead of quietly
+   presenting a partial sale as the whole one. Reversed lines are carried through — they are drawn
+   struck through — but they are counted in no total, exactly as they were before v832. */
+function staffCommissionFilterV832(rows,{staffKey='all',kind='all',search=''}={}){
+  const list=(Array.isArray(rows)?rows:[]).filter(Boolean);
+  const needle=String(search==null?'':search).trim().toLowerCase();
+  const matches=row=>{
+    if(staffKey&&staffKey!=='all'&&(row.staff_id||'__unattributed')!==staffKey)return false;
+    if(kind&&kind!=='all'&&staffCommissionKindKeyV832(row)!==kind)return false;
+    if(needle&&!`${row.client_name||''} ${row.description||''}`.toLowerCase().includes(needle))return false;
+    return true;
+  };
+  const linesPerSale=new Map();
+  list.forEach(row=>linesPerSale.set(row.sale_id,(linesPerSale.get(row.sale_id)||0)+1));
+  const shown=list.filter(matches).sort((a,b)=>
+    String(b.occurred_at||'').localeCompare(String(a.occurred_at||''))
+    ||String(a.sale_id||'').localeCompare(String(b.sale_id||''))
+    ||String(a.line_id||'').localeCompare(String(b.line_id||'')));
+  const bySale=new Map(),sales=[];
+  shown.forEach(row=>{
+    let sale=bySale.get(row.sale_id);
+    if(!sale){
+      sale={sale_id:row.sale_id,occurred_at:row.occurred_at||null,client_id:row.client_id||null,
+        client_name:row.client_name||null,sale_kind:row.sale_kind||null,lines:[],staffNames:[],
+        amount:0,commission:0,shownLines:0,totalLines:linesPerSale.get(row.sale_id)||0,
+        hiddenLines:0,reversed:true};
+      bySale.set(row.sale_id,sale);sales.push(sale);
+    }
+    sale.lines.push(row);
+    sale.shownLines+=1;
+    sale.amount+=Number(row.line_cents||0);
+    sale.commission+=Number(row.commission_cents||0);
+    if(!row.reversed)sale.reversed=false;
+    const who=row.staff_id?String(row.staff_name||'Team member'):'Unattributed';
+    if(!sale.staffNames.includes(who))sale.staffNames.push(who);
+  });
+  sales.forEach(sale=>{sale.hiddenLines=Math.max(0,sale.totalLines-sale.shownLines)});
+  const counted=shown.filter(row=>!row.reversed);
+  const totals={
+    lines:counted.length,
+    sales:new Set(counted.map(row=>row.sale_id)).size,
+    amount:counted.reduce((t,row)=>t+Number(row.line_cents||0),0),
+    commission:counted.reduce((t,row)=>t+Number(row.commission_cents||0),0),
+    reversedLines:shown.length-counted.length,
+    reversedSales:new Set(shown.filter(row=>row.reversed).map(row=>row.sale_id)).size,
+    hiddenLines:sales.reduce((t,sale)=>t+sale.hiddenLines,0)
+  };
+  return {rows:shown,sales,totals};
+}
+/* Who is performing better, from the rows on screen. A reversed line counts NOWHERE — not in a
+   sale count, not in an average, not in a mix — because it was never money. "Amount" is the NET
+   the customer paid on that member's lines (a discount line is negative and pulls it down), which
+   is why avgSale and biggestSale are per SALE rather than per line: the owner's question is about
+   ticket size, and a ticket is a sale. effectiveRateBps is the answer to "what does this member's
+   commission actually cost per dollar sold" — it is derived, never a rate anybody typed. */
+function staffCommissionInsightsV832(rows){
+  const list=(Array.isArray(rows)?rows:[]).filter(row=>row&&!row.reversed);
+  const emptyMix=()=>({service:0,product:0,package:0,bundle:0,custom:0,discount:0,other:0});
+  const byStaff=new Map(),teamSales=new Map(),teamMix=emptyMix();
+  list.forEach(row=>{
+    const key=row.staff_id||'__unattributed';
+    if(!byStaff.has(key))byStaff.set(key,{key,name:key==='__unattributed'?'Unattributed':'Team member',
+      lines:0,amount:0,commission:0,sales:new Map(),mix:emptyMix()});
+    const bucket=byStaff.get(key);
+    if(row.staff_id&&row.staff_name)bucket.name=String(row.staff_name);
+    const cents=Number(row.line_cents||0);
+    bucket.lines+=1;
+    bucket.amount+=cents;
+    bucket.commission+=Number(row.commission_cents||0);
+    bucket.sales.set(row.sale_id,(bucket.sales.get(row.sale_id)||0)+cents);
+    const kind=staffCommissionKindKeyV832(row);
+    bucket.mix[kind]+=cents;
+    teamMix[kind]+=cents;
+    teamSales.set(row.sale_id,(teamSales.get(row.sale_id)||0)+cents);
+  });
+  const buckets=[...byStaff.values()];
+  const teamAmount=buckets.reduce((t,b)=>t+b.amount,0);
+  const teamCommission=buckets.reduce((t,b)=>t+b.commission,0);
+  const biggestOf=nets=>nets.reduce((best,net)=>net>best?net:best,nets.length?nets[0]:0);
+  const rateOf=(commission,amount)=>amount>0?Math.round(commission/amount*10000):null;
+  const staff=buckets.map(b=>{
+    const nets=[...b.sales.values()],sales=b.sales.size;
+    return {key:b.key,name:b.name,sales,lines:b.lines,amount:b.amount,commission:b.commission,
+      avgSale:sales?Math.round(b.amount/sales):0,
+      biggestSale:biggestOf(nets),
+      effectiveRateBps:rateOf(b.commission,b.amount),
+      mix:b.mix,
+      amountShare:teamAmount?b.amount/teamAmount:0,
+      commissionShare:teamCommission?b.commission/teamCommission:0};
+  }).sort((a,b)=>{
+    if(a.key==='__unattributed')return 1;
+    if(b.key==='__unattributed')return -1;
+    return b.amount-a.amount||String(a.name).localeCompare(String(b.name));
+  });
+  const teamNets=[...teamSales.values()];
+  const team={sales:teamSales.size,lines:list.length,amount:teamAmount,commission:teamCommission,
+    avgSale:teamSales.size?Math.round(teamAmount/teamSales.size):0,
+    biggestSale:biggestOf(teamNets),
+    effectiveRateBps:rateOf(teamCommission,teamAmount),
+    mix:teamMix,amountShare:teamAmount?1:0,commissionShare:teamCommission?1:0};
+  return {staff,team};
+}
+/* The compact "what did they sell" string: the two biggest kinds by absolute value, so a big
+   discount is visible rather than hidden behind a positive total. */
+function staffCommissionMixTextV832(mix){
+  const labels={service:'Services',product:'Products',package:'Packages',bundle:'Bundles',
+    custom:'Custom',discount:'Discounts',other:'Other'};
+  const entries=Object.keys(labels).map(key=>({key,cents:Number((mix&&mix[key])||0)}))
+    .filter(entry=>entry.cents!==0);
+  const denominator=entries.reduce((t,entry)=>t+Math.abs(entry.cents),0);
+  if(!denominator)return '';
+  return entries.sort((a,b)=>Math.abs(b.cents)-Math.abs(a.cents)).slice(0,2)
+    .map(entry=>`${labels[entry.key]} ${Math.round(Math.abs(entry.cents)/denominator*100)}%`)
+    .join(' · ');
+}
+/* ONE sentence, and only about people who are actually in these rows. "Unattributed" is not a
+   person, so it is never named; with fewer than two named members there is nothing to compare and
+   the line is left out rather than padded with a comparison to nobody. */
+function staffCommissionInsightLineV832(insights,formatMoney){
+  const people=((insights&&insights.staff)||[]).filter(s=>s.key!=='__unattributed'&&s.sales>0);
+  if(people.length<2)return '';
+  const fmt=typeof formatMoney==='function'?formatMoney:(cents=>String(cents));
+  const most=people.reduce((best,s)=>s.sales>best.sales?s:best,people[0]);
+  const biggest=people.reduce((best,s)=>s.avgSale>best.avgSale?s:best,people[0]);
+  /* A tie is not a lead: with two members on the same count (or the same average) the sentence
+     must not crown one of them — the owner reads this line as a ranking. */
+  const salesTied=people.filter(s=>s.sales===most.sales).length>1;
+  const avgTied=people.filter(s=>s.avgSale===biggest.avgSale).length>1;
+  if(salesTied&&avgTied)return `Sales are level (${most.sales} each) and so is the average sale (${fmt(biggest.avgSale)}).`;
+  if(salesTied)return `Sales are level (${most.sales} each); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)}).`;
+  if(avgTied)return `${most.name} closes the most sales (${most.sales}); the average sale is level (${fmt(biggest.avgSale)}).`;
+  if(most.key===biggest.key)return `${most.name} leads on both: the most sales (${most.sales}) and the biggest average sale (${fmt(most.avgSale)}).`;
+  const tail=biggest.sales<most.sales?' — fewer deals, bigger tickets':'';
+  return `${most.name} closes the most sales (${most.sales}); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)})${tail}.`;
+}
 /* nestly_v825 — the commission pair on a product, a bundle or a package (owner ruling 2026-09-08:
    "% or fixed amount, same as services"). One markup, one reader, one writer, so blank-vs-zero
    means the same thing on every editor: blank = the team member's own rate, 0 = a real "no
@@ -29585,8 +29754,11 @@ async function tillPage(){
     for(const l of extras){
       if(l._status==='issued'||l._status==='done')continue;
       let res;
-      if(l.type==='package')res=await sb.rpc('sell_package_v102',{p_business:S.biz.id,p_client:cust.client_id,
-        p_plan:l.ref,p_branch:tillBranchId,p_idempotency_key:l.key});
+      /* nestly_v832: the package pays the team member the till picked, not whoever is logged in.
+         sell_package_v102 attributed the sale to the CALLER's own staff row; v832 takes the same
+         p_staff record_cart_sale has always been sent (the picked member, else the actor). */
+      if(l.type==='package')res=await sb.rpc('sell_package_v832',{p_business:S.biz.id,p_client:cust.client_id,
+        p_plan:l.ref,p_branch:tillBranchId,p_idempotency_key:l.key,p_staff:tillSaleStaffId||tillStaffId||null});
       else res=await sb.rpc('enroll_membership_v41',{p_business:S.biz.id,p_client:cust.client_id,
         p_plan:l.ref,p_idempotency_key:l.key});
       if(!isTillCurrent())return;
@@ -55424,6 +55596,9 @@ async function staffPerfPage(drillId){
   const today=sgDateInputValue();
   let selectedStaffV825=drillId?decodeURIComponent(String(drillId)):'all';
   let rowsV825=[];
+  /* nestly_v832 — view + filter state. `commissionLoadedV832` keeps a filter change from wiping
+     the "run the report" prompt before any rows have been read. */
+  let commissionViewV832='sale',commissionKindV832='all',commissionSearchV832='',commissionLoadedV832=false;
   M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('staff',{size:24})}<div><h1>Staff commission</h1><p class="muted small">Every product and service sold, who bought it, and which team member it pays.</p></div></div>
     <div class="range staff-perf-range-v577">
       <button class="qbtn act" data-commission-period-v825="today">Today</button><button class="qbtn" data-commission-period-v825="week">This week</button><button class="qbtn" data-commission-period-v825="month">This month</button><button class="qbtn" data-commission-period-v825="year">This year</button>
@@ -55437,6 +55612,22 @@ async function staffPerfPage(drillId){
     </div></div>
     <div class="staff-performance-filterbar" id="staffCommissionPeopleV825" role="tablist" aria-label="Team members"></div>
     <div class="staff-rank-summary" id="staffRankSummary" aria-live="polite"></div>
+    ${/* nestly_v832 (owner, 2026-09-09): "Boss able to track individual sales (with breakdown on
+         the sale) & filter accordingly." The controls live OUTSIDE the region render() rewrites,
+         so typing in the search box never loses the caret to a re-render. */''}
+    <div class="sales-filter-panel" id="staffCommissionFiltersV832" aria-label="Staff commission filters">
+      <div class="row" style="gap:8px;flex-wrap:wrap" role="group" aria-label="Table view">
+        <span class="muted small">Show</span>
+        <button type="button" class="qbtn" data-commission-view-v832="line" aria-pressed="false">By line</button>
+        <button type="button" class="qbtn act" data-commission-view-v832="sale" aria-pressed="true">By sale</button>
+      </div>
+      <div class="sales-filter-row">
+        <div><label for="staffCommissionKindV832">Item kind</label><select id="staffCommissionKindV832">${STAFF_COMMISSION_KINDS_V832.map(kind=>`<option value="${esc(kind.key)}">${esc(kind.label)}</option>`).join('')}</select></div>
+        <div><label for="staffCommissionSearchV832">Search</label><input id="staffCommissionSearchV832" type="search" placeholder="Customer or item" autocomplete="off"></div>
+        <button class="btn ghost sm" id="staffCommissionClearV832">Clear filters</button>
+      </div>
+    </div>
+    <section class="card" id="staffCommissionCompareV832" hidden></section>
     <div class="card" id="pbody">${CUI.tableSkeleton({rows:5,columns:6})}</div>`;
   const setPeriodV825=kind=>{
     document.querySelectorAll('[data-commission-period-v825]').forEach(x=>x.classList.toggle('act',x.dataset.commissionPeriodV825===kind));
@@ -55444,6 +55635,22 @@ async function staffPerfPage(drillId){
     $('pf').value=preset.from;$('pt').value=preset.to;
   };
   document.querySelectorAll('[data-commission-period-v825]').forEach(b=>b.onclick=()=>{setPeriodV825(b.dataset.commissionPeriodV825);load()});
+  const refilterV832=()=>{if(commissionLoadedV832)render()};
+  document.querySelectorAll('[data-commission-view-v832]').forEach(b=>b.onclick=()=>{
+    commissionViewV832=b.dataset.commissionViewV832;
+    document.querySelectorAll('[data-commission-view-v832]').forEach(x=>{
+      const on=x.dataset.commissionViewV832===commissionViewV832;
+      x.classList.toggle('act',on);x.setAttribute('aria-pressed',on?'true':'false');
+    });
+    refilterV832();
+  });
+  $('staffCommissionKindV832').onchange=()=>{commissionKindV832=$('staffCommissionKindV832').value||'all';refilterV832()};
+  $('staffCommissionSearchV832').oninput=()=>{commissionSearchV832=$('staffCommissionSearchV832').value||'';refilterV832()};
+  $('staffCommissionClearV832').onclick=()=>{
+    commissionKindV832='all';commissionSearchV832='';
+    $('staffCommissionKindV832').value='all';$('staffCommissionSearchV832').value='';
+    refilterV832();
+  };
   const invalidate=()=>{
     requestGate.invalidate();
     document.querySelectorAll('[data-commission-period-v825]').forEach(x=>x.classList.remove('act'));
@@ -55469,53 +55676,135 @@ async function staffPerfPage(drillId){
     if(row.rate_bps!=null)return `${(Number(row.rate_bps)/100).toString()}%`;
     return '—';
   };
+  /* nestly_v832 — one sale is one thing that happened, so "By sale" is what the boss opens on: a
+     row per sale with its lines underneath it, rather than a flat list in which a three-item sale
+     looks like three unrelated events. "By line" is kept because commission is paid per line and
+     that is the view a payout argument needs. */
+  const saleKindLabelV832=kind=>({quick_sale:'Quick sale',service:'Service',retail:'Retail',
+    package:'Package',package_session:'Package session',membership:'Membership',
+    gift_card:'Gift card'})[kind]||String(kind||'Sale').replace(/_/g,' ');
+  const customerCellV832=r=>r.client_id&&r.client_name?`<a href="#/client/${esc(r.client_id)}" data-merchant-content><b>${esc(r.client_name)}</b></a>`
+    :r.client_id?'<span class="muted">Customer record unavailable</span>':'<span class="muted">Walk-in</span>';
+  const statusCellV832=r=>r.reversed
+    ?`<span class="pill off" data-merchant-content title="${esc(r.reversal_reason||'Reversed')}">Reversed</span>`
+    :'<span class="pill on">Counted</span>';
+  const ratePercentTextV832=bps=>bps==null?'—':`${Number((Number(bps)/100).toFixed(2))}%`;
+  const compareRowV832=(row,label,muted)=>`<tr${muted?' class="staff-commission-team-row-v832"':''}>
+      <td data-label="Team member"><span data-merchant-content>${esc(label||row.name)}</span></td>
+      <td class="num" data-label="Sales">${esc(String(row.sales))}</td>
+      <td class="num" data-label="Avg per sale">${esc(money(row.avgSale))}</td>
+      <td class="num" data-label="Biggest sale">${esc(money(row.biggestSale))}</td>
+      <td class="num" data-label="Amount sold">${esc(money(row.amount))}</td>
+      <td class="num" data-label="Share">${row.amountShare?esc(`${Math.round(row.amountShare*100)}%`):'—'}</td>
+      <td class="num" data-label="Commission">${esc(money(row.commission))}</td>
+      <td class="num" data-label="Effective rate">${esc(ratePercentTextV832(row.effectiveRateBps))}</td>
+      <td data-label="Mix"><span class="muted small">${esc(staffCommissionMixTextV832(row.mix)||'—')}</span></td></tr>`;
+  /* The comparison answers "who is performing better" with the two shapes the owner named — how
+     MANY deals and how BIG each one is — side by side, plus what the commission actually costs
+     per dollar sold. It is filtered by item kind and search (so it always reconciles with the
+     list under it) but never by the chip, because comparing one person to nobody is not a
+     comparison: picking a member narrows it to that member beside the team line. */
+  function renderTeamComparisonV832(insights){
+    const host=$('staffCommissionCompareV832');
+    if(!host)return;
+    const shown=selectedStaffV825==='all'?insights.staff:insights.staff.filter(s=>s.key===selectedStaffV825);
+    if(!shown.length){host.hidden=true;host.innerHTML='';return}
+    const insight=staffCommissionInsightLineV832(insights,money);
+    host.hidden=false;
+    host.innerHTML=`<div class="v150-soft-head"><b>Team comparison</b><p>Who sells more, and who sells bigger.</p></div>
+      <div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><thead><tr><th>Team member</th><th class="num">Sales</th><th class="num">Avg per sale</th><th class="num">Biggest sale</th><th class="num">Amount sold</th><th class="num">Share</th><th class="num">Commission</th><th class="num">Effective rate</th><th>Mix</th></tr></thead><tbody>
+        ${shown.map(s=>compareRowV832(s,null,false)).join('')}
+        ${compareRowV832(insights.team,selectedStaffV825==='all'?'Whole team':'Team average',true)}
+      </tbody></table></div>
+      ${insight?`<p class="staff-commission-insight-v832" style="margin-top:12px"><b data-merchant-content>${esc(insight)}</b></p>`:''}
+      <p class="muted small" style="margin-top:8px">Amount sold is what customers actually paid on the lines attributed to each member, after discounts. Effective rate = commission ÷ amount sold.</p>`;
+  }
+  /* nestly_v832 — the total row and the per-sale breakdown deliberately use NO colspan. CUI's
+     enhanceTables marks any table containing a colspan `data-responsive="false"` and re-asserts it
+     on every mutation, so one colspan on the total row is enough to strand the whole table as a
+     wide desktop grid on a phone — which is what the v825 table was doing. Spare cells and
+     indented sub-rows keep both views inside the responsive card layout, where `td:empty` hides
+     the blanks and every remaining cell prints its own data-label. */
+  const totalRowV832=(labelSpan,sumAmount,sumCommission)=>`<tr class="total-row"><td data-label="Total"><b>Total counted</b></td>${'<td></td>'.repeat(labelSpan-1)}<td class="num" data-label="Amount"><b>${esc(money(sumAmount))}</b></td><td></td><td class="num" data-label="Commission"><b>${esc(money(sumCommission))}</b></td><td></td></tr>`;
+  const commissionTableHeadV832='<thead><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th class="num">Amount</th><th>Rate</th><th class="num">Commission</th><th>Status</th></tr></thead>';
+  const commissionFootNoteV832='<p class="muted small" style="margin-top:10px">One sale line pays one team member. Reversed sales are shown for traceability and excluded from every total.</p>';
+  const lineRowsHtmlV832=visible=>visible.map(r=>`<tr${r.reversed?' class="staff-commission-reversed-v825" style="opacity:.6"':''}><td data-label="When">${esc(sgt(r.occurred_at)||'')}</td>
+          <td data-label="Customer">${customerCellV832(r)}</td>
+          <td data-label="Item"><span data-merchant-content>${esc(r.description||'')}</span> <span class="muted small">· ${esc(itemKindLabelV825(r))}${Number(r.qty)>1?` × ${Number(r.qty)}`:''}</span></td>
+          <td data-label="Team member">${r.staff_id?`<span data-merchant-content>${esc(r.staff_name||'Team member')}</span>`:'<span class="muted">Unattributed</span>'}</td>
+          <td class="num" data-label="Amount">${r.reversed?`<s>${esc(money(r.line_cents))}</s>`:esc(money(r.line_cents))}</td>
+          <td data-label="Rate">${esc(rateTextV825(r))}</td>
+          <td class="num" data-label="Commission">${r.reversed?`<s>${esc(money(r.commission_cents))}</s>`:`<b>${esc(money(r.commission_cents))}</b>`}</td>
+          <td data-label="Status">${statusCellV832(r)}</td></tr>`).join('');
+  const lineViewHtmlV832=(visible,sumAmount,sumCommission)=>`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table">${commissionTableHeadV832}<tbody>
+      ${lineRowsHtmlV832(visible)}
+      ${totalRowV832(4,sumAmount,sumCommission)}</tbody></table></div>
+      ${commissionFootNoteV832}`;
+  const saleViewHtmlV832=(sales,sumAmount,sumCommission)=>`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table">${commissionTableHeadV832}<tbody>
+      ${sales.map(sale=>{
+        const head=sale.lines[0];
+        const who=sale.staffNames.length===1&&sale.staffNames[0]==='Unattributed'
+          ?'<span class="muted">Unattributed</span>'
+          :`<span data-merchant-content>${esc(sale.staffNames.join(', '))}</span>`;
+        return `<tr class="staff-commission-sale-v832"${sale.reversed?' style="opacity:.6"':''}><td data-label="When">${esc(sgt(sale.occurred_at)||'')}</td>
+          <td data-label="Customer">${customerCellV832(head)}</td>
+          <td data-label="Sale"><b>${esc(saleKindLabelV832(sale.sale_kind))}</b> <span class="muted small">· ${esc(String(sale.shownLines))}${sale.hiddenLines?` of ${esc(String(sale.totalLines))}`:''} line${sale.shownLines===1&&!sale.hiddenLines?'':'s'}</span>${sale.hiddenLines?`<div class="muted small">${esc(String(sale.hiddenLines))} line${sale.hiddenLines===1?'':'s'} hidden by the current filter, so this subtotal covers only the lines shown.</div>`:''}</td>
+          <td data-label="Team member">${who}</td>
+          <td class="num" data-label="Amount">${sale.reversed?`<s>${esc(money(sale.amount))}</s>`:`<b>${esc(money(sale.amount))}</b>`}</td>
+          <td data-label="Rate"></td>
+          <td class="num" data-label="Commission">${sale.reversed?`<s>${esc(money(sale.commission))}</s>`:`<b>${esc(money(sale.commission))}</b>`}</td>
+          <td data-label="Status">${statusCellV832(head)}</td></tr>
+        ${sale.lines.map(r=>`<tr class="staff-commission-sale-line-v832"${r.reversed?' style="opacity:.6"':''}><td></td><td></td>
+          <td data-label="Item" style="padding-left:26px"><span class="muted" aria-hidden="true">↳</span> <span data-merchant-content>${esc(r.description||'')}</span> <span class="muted small">· ${esc(itemKindLabelV825(r))}${Number(r.qty)>1?` × ${Number(r.qty)}`:''}</span></td>
+          <td></td>
+          <td class="num" data-label="Amount">${r.reversed?`<s>${esc(money(r.line_cents))}</s>`:esc(money(r.line_cents))}</td>
+          <td data-label="Rate">${esc(rateTextV825(r))}</td>
+          <td class="num" data-label="Commission">${r.reversed?`<s>${esc(money(r.commission_cents))}</s>`:esc(money(r.commission_cents))}</td>
+          <td></td></tr>`).join('')}`;
+      }).join('')}
+      ${totalRowV832(4,sumAmount,sumCommission)}</tbody></table></div>
+      ${commissionFootNoteV832}`;
   function render(){
-    const {staff,totals}=staffCommissionAggregationV825(rowsV825);
+    const {staff}=staffCommissionAggregationV825(rowsV825);
     const known=new Set(staff.map(s=>s.key));
     if(selectedStaffV825!=='all'&&!known.has(selectedStaffV825)&&rowsV825.length)selectedStaffV825='all';
-    const allSales=new Set(rowsV825.filter(r=>!r.reversed).map(r=>r.sale_id)).size;
+    /* nestly_v832 — every number on this page now comes from ONE filtered projection of the rows
+       the table is drawing, so the chips, the four cards, the comparison and the Total counted row
+       can never disagree with the list. `scoped` is the same projection without the chip, which is
+       what the comparison and the chip amounts are measured against. */
+    const scoped=staffCommissionFilterV832(rowsV825,{staffKey:'all',kind:commissionKindV832,search:commissionSearchV832});
+    const view=staffCommissionFilterV832(rowsV825,{staffKey:selectedStaffV825,kind:commissionKindV832,search:commissionSearchV832});
+    const insights=staffCommissionInsightsV832(scoped.rows);
+    const commissionByKey=new Map(insights.staff.map(s=>[s.key,s.commission]));
+    const filteringV832=commissionKindV832!=='all'||String(commissionSearchV832).trim()!=='';
     const chip=(key,label,commission,selected)=>`<button type="button" class="qbtn${selected?' act':''}" role="tab" aria-selected="${selected?'true':'false'}" data-commission-staff-v825="${esc(key)}"><span data-merchant-content>${esc(label)}</span><span class="muted small" style="margin-left:8px">${esc(money(commission))}</span></button>`;
-    $('staffCommissionPeopleV825').innerHTML=chip('all','All',totals.commission,selectedStaffV825==='all')
-      +staff.map(s=>chip(s.key,s.name,s.commission,selectedStaffV825===s.key)).join('');
+    $('staffCommissionPeopleV825').innerHTML=chip('all','All',scoped.totals.commission,selectedStaffV825==='all')
+      +staff.map(s=>chip(s.key,s.name,commissionByKey.get(s.key)||0,selectedStaffV825===s.key)).join('');
     $('staffCommissionPeopleV825').querySelectorAll('[data-commission-staff-v825]').forEach(b=>b.onclick=()=>{
       selectedStaffV825=b.dataset.commissionStaffV825;render();
     });
-    const picked=selectedStaffV825==='all'
-      ?{name:'All team members',lines:totals.lines,sales:allSales,reversedSales:new Set(rowsV825.filter(r=>r.reversed).map(r=>r.sale_id)).size,amount:totals.amount,commission:totals.commission}
-      :(staff.find(s=>s.key===selectedStaffV825)||{name:'Team member',lines:0,sales:0,reversedSales:0,amount:0,commission:0});
+    const pickedName=selectedStaffV825==='all'?'All team members'
+      :((staff.find(s=>s.key===selectedStaffV825)||{}).name||'Team member');
+    const picked=view.totals;
     const card=(title,value,note='')=>`<article class="card staff-rank-card"><span class="muted small">${esc(title)}</span><b data-merchant-content>${esc(value)}</b>${note?`<p class="muted small">${esc(note)}</p>`:''}</article>`;
-    $('staffRankSummary').innerHTML=card('Commission earned',money(picked.commission),picked.name)
-      +card('Sales counted',String(picked.sales),`${picked.lines} line${picked.lines===1?'':'s'}`)
-      +card('Sales reversed',String(picked.reversedSales),picked.reversedSales?'listed, not counted':'none in this period')
-      +card('Amount sold',money(picked.amount),'before discounts on other lines');
-    const visible=rowsV825.filter(r=>selectedStaffV825==='all'||(r.staff_id||'__unattributed')===selectedStaffV825)
-      .sort((a,b)=>String(b.occurred_at).localeCompare(String(a.occurred_at))||String(a.sale_id).localeCompare(String(b.sale_id)));
+    $('staffRankSummary').innerHTML=card('Commission earned',money(picked.commission),filteringV832?`${pickedName} · filtered`:pickedName)
+      +card('Sales counted',String(picked.sales),`${picked.lines} line${picked.lines===1?'':'s'} shown`)
+      +card('Sales reversed',String(picked.reversedSales),picked.reversedSales?'listed, not counted':'none in this view')
+      +card('Amount sold',money(picked.amount),'net of discount lines shown');
+    renderTeamComparisonV832(insights);
+    const visible=view.rows;
     if(!visible.length){
-      $('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:'No sales in this period',body:selectedStaffV825==='all'?'Sales recorded with a team member appear here as soon as they are rung up.':'Nothing was sold under this team member in the selected period.'});
+      $('pbody').innerHTML=CUI.emptyState({iconName:'staff',title:filteringV832?'Nothing matches these filters':'No sales in this period',
+        body:filteringV832?'Clear the item kind or the search to see everything sold in this period.'
+          :(selectedStaffV825==='all'?'Sales recorded with a team member appear here as soon as they are rung up.':'Nothing was sold under this team member in the selected period.')});
       return;
     }
     const counted=visible.filter(r=>!r.reversed);
     const sumCommission=counted.reduce((t,r)=>t+Number(r.commission_cents||0),0);
     const sumAmount=counted.reduce((t,r)=>t+Number(r.line_cents||0),0);
-    $('pbody').innerHTML=`<div class="cui-table-wrap"><table data-responsive="true" class="cui-table"><thead><tr><th>When</th><th>Customer</th><th>Item</th><th>Team member</th><th class="num">Amount</th><th>Rate</th><th class="num">Commission</th><th>Status</th></tr></thead><tbody>
-      ${visible.map(r=>{
-        const customer=r.client_id&&r.client_name?`<a href="#/client/${esc(r.client_id)}" data-merchant-content><b>${esc(r.client_name)}</b></a>`
-          :r.client_id?'<span class="muted">Customer record unavailable</span>':'<span class="muted">Walk-in</span>';
-        const who=r.staff_id?`<span data-merchant-content>${esc(r.staff_name||'Team member')}</span>`:'<span class="muted">Unattributed</span>';
-        const status=r.reversed
-          ?`<span class="pill off" data-merchant-content title="${esc(r.reversal_reason||'Reversed')}">Reversed</span>`
-          :'<span class="pill on">Counted</span>';
-        return `<tr${r.reversed?' class="staff-commission-reversed-v825" style="opacity:.6"':''}><td data-label="When">${esc(sgt(r.occurred_at)||'')}</td>
-          <td data-label="Customer">${customer}</td>
-          <td data-label="Item"><span data-merchant-content>${esc(r.description||'')}</span> <span class="muted small">· ${esc(itemKindLabelV825(r))}${Number(r.qty)>1?` × ${Number(r.qty)}`:''}</span></td>
-          <td data-label="Team member">${who}</td>
-          <td class="num" data-label="Amount">${r.reversed?`<s>${esc(money(r.line_cents))}</s>`:esc(money(r.line_cents))}</td>
-          <td data-label="Rate">${esc(rateTextV825(r))}</td>
-          <td class="num" data-label="Commission">${r.reversed?`<s>${esc(money(r.commission_cents))}</s>`:`<b>${esc(money(r.commission_cents))}</b>`}</td>
-          <td data-label="Status">${status}</td></tr>`;
-      }).join('')}
-      <tr class="total-row"><td colspan="4"><b>Total counted</b></td><td class="num"><b>${esc(money(sumAmount))}</b></td><td></td><td class="num"><b>${esc(money(sumCommission))}</b></td><td></td></tr></tbody></table></div>
-      <p class="muted small" style="margin-top:10px">One sale line pays one team member. Reversed sales are shown for traceability and excluded from every total.</p>`;
+    $('pbody').innerHTML=commissionViewV832==='sale'
+      ?saleViewHtmlV832(view.sales,sumAmount,sumCommission)
+      :lineViewHtmlV832(visible,sumAmount,sumCommission);
   }
   async function load(){
     const isLatest=requestGate.begin(),fromDate=$('pf').value,toDate=$('pt').value;
@@ -55543,6 +55832,7 @@ async function staffPerfPage(drillId){
     if(!isLatest())return;
     if(scopeResult?.error){$('pbody').innerHTML=CUI.emptyState({iconName:'settings',title:'Staff commission unavailable',body:'Staff commission is unavailable because its module or Sales access is not complete across every active branch.'});return}
     rowsV825=Array.isArray(rows)?rows:[];
+    commissionLoadedV832=true;
     render();
   }
   load();
