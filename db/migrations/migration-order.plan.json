@@ -4209,6 +4209,12 @@
       "path": "db/migrations/20261009_nestly_v850_commission_accuracy.sql",
       "semanticVersion": "v850",
       "proposedDeployVersion": "20261009170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v861_custom_lines_pay_no_commission.sql",
+      "semanticVersion": "v861",
+      "proposedDeployVersion": "20261009180000"
     }
   ]
 }

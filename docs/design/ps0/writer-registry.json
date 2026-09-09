@@ -4143,6 +4143,10 @@
     {
       "id": "db.backfill:20261009170000_nestly_v850_commission_accuracy.sql:sale_items",
       "reason": "nestly_v850 (applied as v832) one-shot RE-PRICE of the four commission columns on the 10 existing studio_discount lines (4 tenants): a discount line now reduces commission at the bill's own blended percentage rate instead of the member's product rate. Runs under a new guard window (app.sale_items_discount_reprice_v832) that may touch ONLY those four columns of ONLY a studio_discount line; every positive line's frozen snapshot is untouched. NOT a value-table write: commission columns are payroll evidence, not ledger value. Run once by the migration."
+    },
+    {
+      "id": "db.backfill:20261009180000_nestly_v861_custom_lines_pay_no_commission.sql:sale_items",
+      "reason": "nestly_v861 one-shot re-price of the four commission columns on the 60 existing custom ('Other item') lines to 0 (owner ruling 2026-09-09: a typed-in line pays no commission). Same narrow guard window as v850's discount re-price, widened to custom lines; every other column is compared as a whole row. NOT a value-table write."
     }
   ],
   "counts_note": " v850 (2026-09-09, applied as v832): sell_package_v102/5 and sell_bespoke_package_v613/9 LEAVE the curated set — v102 is now a SQL wrapper over public.sell_package_v832/6 (p_staff: the member the till picked), and v832 was created by anchored replacement of the live v102 body inside a DO block, so discovery sees neither v832's writes nor the chain behind v613 (same shape as record_sale_by_phone after v630). The package sale still writes client_packages/sales/sale_items/sale_intent_operations exactly as v102 did; the browser binding moves to browser.rpc:app/app.js:sell_package_v832. One allowlisted run-once backfill (sale_items discount re-price)."

@@ -15,8 +15,8 @@
 --         service with $1.00 fixed   Kopi Set 1500            →  100   (fixed beats %)
 --         product with $0.50 fixed   Kaya Jar 800 × 3         →  150   (fixed × qty)
 --         product, blank             Kopi Powder 1200         →   60   (member's product 5%)
---         custom "Delivery" 1000                              →   50   (member's product 5%)
---       sale total 6,860, commission 512; the header staff is Mei on every line
+--         custom "Delivery" 1000                              →    0   (nestly_v861: a typed-in line pays nothing)
+--       sale total 6,860, commission 462; the header staff is Mei on every line
 --   V2  bundle with its own 8%: every member line pays floor(line × 8%), whatever the members'
 --       own rates say
 --   V3  bundle with a $2.00 fixed amount: the lines sum to exactly 200 (last line absorbs
@@ -111,10 +111,10 @@ begin
      or (select count(*) from public.sale_items where sale_id = v_s1 and item_type='service' and ref_id=q_kopi and line_cents=1500 and commission_flat_cents=100 and commission_cents=100) <> 1
      or (select count(*) from public.sale_items where sale_id = v_s1 and item_type='retail' and coalesce(product_id,ref_id)=q_jar and line_cents=2400 and commission_flat_cents=50 and commission_cents=150) <> 1
      or (select count(*) from public.sale_items where sale_id = v_s1 and item_type='retail' and coalesce(product_id,ref_id)=q_powder and line_cents=1200 and commission_rate_bps=500 and commission_cents=60) <> 1
-     or (select count(*) from public.sale_items where sale_id = v_s1 and item_type='custom' and line_cents=1000 and commission_rate_bps=500 and commission_cents=50) <> 1
-     or (select sum(commission_cents) from public.sale_items where sale_id = v_s1) <> 512
+     or (select count(*) from public.sale_items where sale_id = v_s1 and item_type='custom' and line_cents=1000 and commission_cents=0) <> 1
+     or (select sum(commission_cents) from public.sale_items where sale_id = v_s1) <> 462
      or (select staff_id from public.sales where id = v_s1) <> v_mei then
-    raise exception 'V%: five-line sale is not 152/100/150/60/50 = 512 on 6860 for Mei; got %', n, v_txt;
+    raise exception 'V%: five-line sale is not 152/100/150/60/0 = 462 on 6860 for Mei; got %', n, v_txt;
   end if;
 
   -- V2 bundle % override ---------------------------------------------------------------------
@@ -226,7 +226,7 @@ begin
     from public.business_staff_commission_lines_v825(q_biz, null, now() - interval '2 minutes', now() + interval '2 minutes') r where r.sale_id = v_s1;
   reset role; perform set_config('request.jwt.claims','',true);
   if not exists (select 1 from public.sales where reversal_of = v_s1) then raise exception 'V%: reversal did not create a row (%)', n, left(v_res::text,300); end if;
-  if v_sum <> -512 then raise exception 'V%: the reversal row carries % commission in sale_commission (expected −512)', n, v_sum; end if;
+  if v_sum <> -462 then raise exception 'V%: the reversal row carries % commission in sale_commission (expected −462)', n, v_sum; end if;
   if v_n <> 5 or v_bad <> 5 then raise exception 'V%: report shows % of % V1 lines reversed (expected 5 of 5)', n, v_bad, v_n; end if;
 
   -- V8 three readers agree per sale -------------------------------------------------------------

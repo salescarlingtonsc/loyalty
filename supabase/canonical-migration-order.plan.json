@@ -4204,6 +4204,12 @@
       "version": "20261009170000",
       "name": "nestly_v850_commission_accuracy",
       "sourcePath": "db/migrations/20261009_nestly_v850_commission_accuracy.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261009180000",
+      "name": "nestly_v861_custom_lines_pay_no_commission",
+      "sourcePath": "db/migrations/20261009_nestly_v861_custom_lines_pay_no_commission.sql"
     }
   ]
 }
