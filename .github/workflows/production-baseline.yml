@@ -41,6 +41,25 @@ jobs:
       - name: Install icon toolchain (Pillow)
         run: python3 -m pip install --quiet --user pillow
 
+      # Three phase0 tests (tests/phase0-foundation/ci-proof-pack.test.mjs: frozen, reconciliation,
+      # isolation) spin a throwaway Postgres cluster through scripts/db-tests/lib.mjs, which needs
+      # initdb/pg_ctl/psql/createdb/pg_dump on PATH. Only the executed-sql job installed them, so
+      # `npm test` inside validate failed those three in CI and nowhere else (2026-09-09). Same
+      # install, same reasons (initdb needs the server binaries; production is Postgres 17).
+      - name: Install PostgreSQL 17
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-17 postgresql-client-17
+          # The harness needs initdb/pg_ctl/pg_dump, which live outside the default PATH.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
       # -----------------------------------------------------------------------
       # `npm run validate`, not the three steps it replaced. Added 2026-09-09 (owner: "add npm
       # run validate to CI so this doesn't recur").

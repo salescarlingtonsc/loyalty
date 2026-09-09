@@ -297,7 +297,11 @@ const fmt=b=>`x ${b.left.toFixed(0)}..${b.right.toFixed(0)} y ${b.top.toFixed(0)
 
 const browser=await chromium.launch({
   headless:true,
-  executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  // CI installs playwright's own chromium and sets no PLAYWRIGHT_EXECUTABLE_PATH; defaulting to
+  // the macOS Chrome path there fails with "executable doesn't exist" (2026-09-09). Same
+  // conditional spread verify-reward-overview-owner.mjs uses: honour the override, else let
+  // playwright pick its bundled browser.
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})
 });
 const pageErrors=[];
 try{

@@ -241,6 +241,10 @@ function stripFrozenVariableLines(text) {
     .replace(/^\| HEAD SHA \| `[0-9a-f]{40}` \|$/m, '| HEAD SHA | `<stripped>` |')
     .replace(/^\| Branch \| `[^`]*` \|$/m, '| Branch | `<stripped>` |')
     .replace(/^\| Commit date \| .* \|$/m, '| Commit date | <stripped> |')
+    // The local psql build string differs by machine (Homebrew 17.10 on the Mac the record was
+    // generated on, the pgdg build on ubuntu in CI). It is environment, not content: stripped
+    // here and separately required to be a real Postgres version below, like the lines above.
+    .replace(/^\| Postgres \(local client\) \| psql \(PostgreSQL\) [^|]* \|$/m, '| Postgres (local client) | <stripped> |')
     .replace(/^\| Record generated \| .* \|$/m, '| Record generated | <stripped> |');
 }
 
