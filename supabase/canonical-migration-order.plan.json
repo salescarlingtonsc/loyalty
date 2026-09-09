@@ -4216,6 +4216,90 @@
       "version": "20261009190000",
       "name": "nestly_v851_one_overload_per_reward_rpc",
       "sourcePath": "db/migrations/20261009_nestly_v851_one_overload_per_reward_rpc.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010010000",
+      "name": "nestly_v865_one_visit_definition_on_the_dashboard",
+      "sourcePath": "db/migrations/20261010_nestly_v865_one_visit_definition_on_the_dashboard.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010020000",
+      "name": "nestly_v866_stamp_liability_deducts_closed_cycles",
+      "sourcePath": "db/migrations/20261010_nestly_v866_stamp_liability_deducts_closed_cycles.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010030000",
+      "name": "nestly_v867_owner_brief_three_wrong_facts",
+      "sourcePath": "db/migrations/20261010_nestly_v867_owner_brief_three_wrong_facts.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010040000",
+      "name": "nestly_v868_bundle_product_member_finalise",
+      "sourcePath": "db/migrations/20261010_nestly_v868_bundle_product_member_finalise.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010050000",
+      "name": "nestly_v869_discount_readers_read_the_fulfilment_registry",
+      "sourcePath": "db/migrations/20261010_nestly_v869_discount_readers_read_the_fulfilment_registry.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010060000",
+      "name": "nestly_v870_branch_comparison_counts_visit_days",
+      "sourcePath": "db/migrations/20261010_nestly_v870_branch_comparison_counts_visit_days.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010070000",
+      "name": "nestly_v871_stamp_conversion_reverses_and_parked_pots_are_visible",
+      "sourcePath": "db/migrations/20261010_nestly_v871_stamp_conversion_reverses_and_parked_pots_are_visible.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010080000",
+      "name": "nestly_v872_ci_revenue_valid_purchases_and_frequency_visit_days",
+      "sourcePath": "db/migrations/20261010_nestly_v872_ci_revenue_valid_purchases_and_frequency_visit_days.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010090000",
+      "name": "nestly_v873_bringback_sweep_counts_visits_only",
+      "sourcePath": "db/migrations/20261010_nestly_v873_bringback_sweep_counts_visits_only.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010100000",
+      "name": "nestly_v874_live_offer_count_honours_dates",
+      "sourcePath": "db/migrations/20261010_nestly_v874_live_offer_count_honours_dates.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010110000",
+      "name": "nestly_v875_customer_loyalty_activity_scoped_to_the_live_pot",
+      "sourcePath": "db/migrations/20261010_nestly_v875_customer_loyalty_activity_scoped_to_the_live_pot.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010120000",
+      "name": "nestly_v876_carried_stamp_card_keeps_its_clock_and_version",
+      "sourcePath": "db/migrations/20261010_nestly_v876_carried_stamp_card_keeps_its_clock_and_version.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010130000",
+      "name": "nestly_v877_owner_brief_month_evidence_birthday_dob_and_package_liability",
+      "sourcePath": "db/migrations/20261010_nestly_v877_owner_brief_month_evidence_birthday_dob_and_package_liability.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010140000",
+      "name": "nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms",
+      "sourcePath": "db/migrations/20261010_nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms.sql"
     }
   ]
 }

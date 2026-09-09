@@ -10719,18 +10719,43 @@ function actionableWalletExpiryText(expiry,unit){
   }
   return expiry?.mode==='inactivity'?'Expiry terms may apply':'No units expiring in the next 30 days';
 }
+/* nestly_v871 (B): a pot the business has paused is still the customer's. The wallet card lists
+   every non-live points/stamps pot the customer holds units in (server-side, read-only), and this
+   prints it — nothing here moves a unit or promises a redemption. */
+function actionableWalletParkedMarkupV871(card){
+  const parked=(Array.isArray(card?.parked_programmes)?card.parked_programmes:[]).filter(p=>Number(p?.balance||0)>0);
+  if(!parked.length)return '';
+  const parts=parked.map(p=>`${customerPointTotalV103(p.balance)} ${customerUnitNounV429(p.unit==='stamps'?'stamps':'points',p.balance)}`);
+  return `<div class="wallet-line" data-parked-programmes-v871><div><b>Also held</b><p class="muted small" style="margin-top:4px">${esc(parts.join(' and '))} from a programme this business has paused. Nothing is lost — ask at the counter if you want to use them.</p></div></div>`;
+}
 function actionableWalletActionText(card){
   const action=card?.action||{},reward=card?.next_eligible_reward||{},expiry=card?.expiry||{},visit=card?.visit_progress||{};
   const unit=String(card?.loyalty?.unit||'points');
-  if(action.reason==='expiring_within_7_days')return `${Number(expiry.expiring_within_7_days||0)} ${unit} expire soon${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
-  if(action.reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
-  if(action.reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
-  if(action.reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
+  /* nestly_v879: "is ready at the counter" is a PROMISE, and this line was making it off
+     action.reason, which the server bands from next_eligible_reward.available_now — and that flag
+     is `balance >= cost` against the whole lifetime pot. On a stamp card the pot is every stamp
+     ever earned, not the open card, so a customer whose current card is empty was promised a gift
+     the till then refuses (QA Kopi Lab today: 3 of its 4 customers, pots of 8/15/20 against a
+     ready_count of 0). Readiness is never re-derived here — v145 forbids the browser judging it —
+     so the answer comes from the same availability core the till and the business page read,
+     carried on the card as ready_count and read through customerCardRewardReadyV465. Where the
+     count contradicts the band, the remaining bands are judged in the server's own order over
+     fields the card already carries. reward_progress is deliberately NOT revived: its
+     remaining_units is that same pot subtraction and would read "0 stamps to go", which is the
+     promise again in other words. */
+  const reason=action.reason==='reward_available'&&!customerCardRewardReadyV465(card)
+    ?(Number(expiry.expiring_units||0)>0?'expiring_within_30_days'
+      :Number(visit.remaining)===1?'one_qualifying_visit_remaining':'none')
+    :action.reason;
+  if(reason==='expiring_within_7_days')return `${Number(expiry.expiring_within_7_days||0)} ${unit} expire soon${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
+  if(reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
+  if(reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
+  if(reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
   /* nestly_v429 (E): the DISTANCE to a reward is counted in the reward's unit, which v426 now
      sends; the expiry lines above stay on the balance's unit, because that is what expires. */
-  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${customerUnitNounV429(customerRewardUnitV429(reward,unit),reward.remaining_units)} to ${reward.name||'your next reward'}`;
-  if(action.reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
-  if(action.reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
+  if(reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${customerUnitNounV429(customerRewardUnitV429(reward,unit),reward.remaining_units)} to ${reward.name||'your next reward'}`;
+  if(reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
+  if(reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
   return 'No urgent action right now';
 }
 function birthdayBenefitMarkup(benefit,{interactive=false,compact=false}={}){
@@ -11511,10 +11536,17 @@ function customerRewardProgressMarkupV167(card){
        a free reward that the server has disabled, ended, tier-locked or claim-limited answers
        available_now:false and was still announced as "ready to redeem" here. The server's own
        flag is the only authority; the arithmetic below still draws the distance for the reward
-       the customer is still earning. */
-    available=reward.available_now===true,
+       the customer is still earning.
+       nestly_v879: and available_now is itself `pot >= cost` — the LIFETIME pot, not the open
+       stamp card — so on a stamps firm it announced a gift the card in the customer's hand has
+       not earned. The card's ready_count is the availability core's own answer (the one the till
+       reads) and wins wherever the two disagree; with no count at all customerCardRewardReadyV465
+       falls back to this same flag, which is every caller that hands us a synthesised card.
+       A contradicted card carries remaining_units 0 for the same pot reason, so the distance line
+       is printed only where the distance is a true thing to say. */
+    available=customerCardRewardReadyV465(card),
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100;
-  return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
+  return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:Number(reward.remaining_units||0)>0?`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`:`${esc(reward.name||'Your next reward')} is not ready to redeem yet.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
 }
 function customerTierHasProgressV103(tier={}){
   const named=[tier.current,tier.label,tier.next].some(value=>String(value||'').trim().length>0);
@@ -14346,6 +14378,7 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
     </div>
     <div class="wallet-line" style="margin-top:8px"><div style="width:100%"><b>Next reward</b>${reward?customerRewardProgressMarkupV167(card):'<p class="muted small" style="margin-top:4px">No active reward is available right now.</p>'}</div></div>
     ${card?.visits_remaining===null||card?.visits_remaining===undefined?'':`<div class="wallet-line"><div><b>Visit progress</b><p class="muted small" style="margin-top:4px">${Number(card.visits_remaining)===0?'Current visit goal is complete.':`${Number(card.visits_remaining)} qualifying visit${Number(card.visits_remaining)===1?'':'s'} remaining.`}${visit.customer_description?` ${esc(visit.customer_description)}`:''}</p></div></div>`}
+    ${actionableWalletParkedMarkupV871(card)}
     ${birthdayBenefitMarkup(card?.birthday_benefit,{interactive:detail,compact:!detail})}
     ${detail?`<p class="muted small" style="margin-top:14px">${esc(actionableWalletActionText(card))}</p>`:''}
   </article>`;
@@ -21416,8 +21449,29 @@ async function writeProgrammeSwitchesWithStampConversionV384(set,{paused=false,k
   const stampsRunningBeforeV435=(S.programmes||[]).some(row=>row?.kind==='stamps'&&row.active);
   const tiersOnBeforeV435=(S.programmes||[]).some(row=>row?.kind==='tiers'&&row.active);
   if(set?.points===true&&paused!==true&&stampsRunningBeforeV435){
-    if(!await confirmActionV386('Switch customers to Points? Stamp collecting stops, but customers keep their stamps and any gifts they already earned — those can still be claimed at the counter. If you switch back later, their card continues.'))
+    if(!await confirmActionV386('Switch customers to Points? Stamp collecting stops. Stamps that came from an earlier points conversion go back to points at the rate recorded then; stamps earned since are kept, and any gifts already earned can still be claimed at the counter. If you switch back later, their card continues.'))
       return {ok:false,cancelled:true,skipped:true,error:null};
+    /* nestly_v871 (owner, 2026-09-09: the 75,800-point movement "was a switch program by the
+       boss from points to stamps and it was converted"). business_switch_to_stamps_v384 has an
+       inverse now: business_switch_to_points_v871 returns what the recorded conversion issued
+       — and only what the customer still holds — at the RECORDED points_per_stamp, then flips
+       the spine back through set_programmes_v314. 22023 means this firm never converted, and
+       the plain switch below is the whole answer. Any other error is a real failure. */
+    const reverseKeyV871=key||crypto.randomUUID();
+    const {data:reversedV871,error:reverseErrorV871}=await sb.rpc('business_switch_to_points_v871',{
+      p_business:S.biz.id,p_idempotency_key:reverseKeyV871});
+    if(!reverseErrorV871){
+      rememberProgrammeSpineV314(reversedV871?.programmes);
+      /* A fixed sentence (no interpolation): toasts are translated as whole strings (V97). */
+      if(Number(reversedV871?.customers||0)>0)toast('Converted points were returned to customers at the recorded rate.');
+      /* The reverse keeps tiers as they are; honour an explicit tiers:false in the requested set. */
+      if(set?.tiers===false&&tiersOnBeforeV435){
+        const tiersResultV871=await writeProgrammeSwitchesV314(S.biz.id,set,{paused,key:crypto.randomUUID()});
+        if(tiersResultV871.ok&&!tiersResultV871.skipped)toast('Points are running. Tiers switched OFF with this change — turn them back on from the Tiers page if you still want them.');
+      }
+      return {ok:true,skipped:false,error:null,data:reversedV871};
+    }
+    if(String(reverseErrorV871.code||'')!=='22023')return {ok:false,skipped:false,error:reverseErrorV871};
   }
   const resultV435=await writeProgrammeSwitchesV314(S.biz.id,set,{paused,key});
   if(resultV435.ok&&!resultV435.skipped&&set?.points===true&&paused!==true
@@ -22014,8 +22068,12 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v561: the field holds Peekaa's own address — almost always browser autofill. */
   linkIsOwnAppV561:Object.freeze({en:'The {platform} link points at Peekaa itself — customers are already here. Paste the real address instead.','zh-CN':'{platform} 链接指向 Peekaa 本身——顾客已经在这里了。请改为粘贴真实地址。',ms:'Pautan {platform} menghala ke Peekaa sendiri — pelanggan sudah berada di sini. Tampal alamat sebenar.'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
-  completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
-  completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
+  /* nestly_v879 (number-accuracy audit): the CI header pill is data_quality.completed_transactions
+     — a trailing 13-complete-week forecast-evidence count that ignores the period start (49 against
+     a true 6 on a 7-day window). The sentence now names its window instead of reading as a period
+     figure; same keys, same one render path, reviewed in all three locales. */
+  completedTransaction:Object.freeze({en:'{count} completed transaction in the last 13 complete weeks','zh-CN':'过去 13 个完整周内 {count} 笔已完成交易',ms:'{count} transaksi selesai dalam 13 minggu lengkap terakhir'}),
+  completedTransactions:Object.freeze({en:'{count} completed transactions in the last 13 complete weeks','zh-CN':'过去 13 个完整周内 {count} 笔已完成交易',ms:'{count} transaksi selesai dalam 13 minggu lengkap terakhir'}),
   scopePeriod:Object.freeze({en:'{branch} · {from} to {to}','zh-CN':'{branch} · {from} 至 {to}',ms:'{branch} · {from} hingga {to}'}),
   allBranchesPeriod:Object.freeze({en:'All permitted branches · {from} to {to}','zh-CN':'所有获准分店 · {from} 至 {to}',ms:'Semua cawangan yang dibenarkan · {from} hingga {to}'}),
   performancePeriodRange:Object.freeze({en:'{from} to {to}','zh-CN':'{from} 至 {to}',ms:'{from} hingga {to}'}),
@@ -24494,7 +24552,11 @@ async function dashboard(){
         was:previousSummary?String(previousSummary.visits||0):null},
       {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange,
         was:previousSummary?money(previousSummary.revenue_cents||0):null},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange,
+      /* nestly_v879 (number-accuracy audit): public.clients has no branch column, so this figure
+         is whole-company however the branch scope is set, and it counts records CREATED — not
+         first purchases, which is what "New customers" means on Reports and the owner brief. The
+         server publishes both facts (scope.new_customers); the tile now says them. */
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Whole company · customer records created',delta:newCustomersChange,
         was:(previousSummary&&previousSummary.availability?.clients!==false)?String(previousSummary.new_customers||0):null}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
@@ -25402,7 +25464,16 @@ async function clientDetail(id){
        out and "0 points" written beside the pill). A programme row has to state THIS customer's
        standing, and for the tier row that means the ladder plus the firm's chosen tier basis.
        Both are fail-soft: an unreadable ladder makes the row say so, never invent a tier. */
-    canReadLoyalty?sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id)
+    /* nestly_v879: WHICH rungs. This read took the whole table, so a rung the owner had deleted or
+       paused still stood in the ladder this profile rebuilds — and app.tier_resolve_v426, the one
+       resolver the earn engine and the customer's own app both go through, refuses exactly those
+       rows (owner ruling v394: a paused or deleted tier grants nothing). At Cubbly SPA that put a
+       phantom rung on 9 of 13 customer profiles, four of them "Essential" off a rung deleted on
+       2026-08-15. The window columns come back too because the resolver also honours
+       effective_from/expires_at, which one PostgREST filter cannot express — the same window is
+       applied at tierLadderV296 below. */
+    canReadLoyalty?sb.from('loyalty_tiers').select('id,name,threshold,effective_from,expires_at')
+      .eq('business_id',S.biz.id).is('deleted_at',null).eq('paused',false)
       .order('threshold').then(r=>r.error?null:(r.data||[])).catch(()=>null):Promise.resolve(null),
     canReadLoyalty?sb.from('loyalty_programs').select('tier_basis').eq('business_id',S.biz.id).limit(1)
       .then(r=>r.error?null:((r.data||[])[0]?.tier_basis||null)).catch(()=>null):Promise.resolve(null)
@@ -25451,8 +25522,18 @@ async function clientDetail(id){
     tierMetricV296=earnedV296.error?null
       :(earnedV296.data||[]).reduce((total,row)=>total+(Number(row.points)||0),0);
   }
+  /* nestly_v879: the second half of the resolver's own WHERE clause — a rung that has not started
+     yet, or has already ended, grants nothing either. Both columns are null on every tenant today,
+     so this changes no live figure; it is here so the browser's ladder cannot drift from
+     app.tier_resolve_v426 the day an owner dates a rung. */
+  const tierRungLiveV838=(tier,at=Date.now())=>{
+    const from=tier?.effective_from?Date.parse(tier.effective_from):null;
+    const until=tier?.expires_at?Date.parse(tier.expires_at):null;
+    return !(Number.isFinite(from)&&from>at)&&!(Number.isFinite(until)&&until<=at);
+  };
   const tierLadderV296=Array.isArray(loyaltyTiersV296)
-    ?[...loyaltyTiersV296].sort((a,b)=>(Number(a.threshold)||0)-(Number(b.threshold)||0)):null;
+    ?loyaltyTiersV296.filter(tier=>tierRungLiveV838(tier))
+      .sort((a,b)=>(Number(a.threshold)||0)-(Number(b.threshold)||0)):null;
   const tierStandingV296=!tierLadderV296||!tierLadderV296.length||tierMetricV296==null
     ?{known:false,current:null,next:null}
     :{known:true,
@@ -26074,10 +26155,20 @@ async function clientDetail(id){
   let pointsHistoryResultV259=null;
   async function loadPointsHistoryV259(){
     if(pointsHistoryResultV259)return pointsHistoryResultV259;
-    const {data,error}=await fetchAllRowsResult(()=>sb.from('points_ledger')
-      .select('id,created_at,entry_type,points,sale_id,reference',{count:'exact'})
-      .eq('business_id',S.biz.id).eq('client_id',id)
-      .order('created_at',{ascending:true}).order('id'));
+    /* nestly_v879 (number-accuracy audit): this read summed EVERY pot the firm ever ran and
+       labelled the running balance with the live unit — on Cubbly SPA the dialog's "Ledger total"
+       disagreed with the pot-scoped balance on the card that opened it. Scoped to the live pot by
+       the one rule (liveBalanceProgrammeIdV461, mirroring app.live_balance_programme_v381), the
+       same way activityEarnedBySaleV375 already is. NULL (nothing running) keeps the whole ledger,
+       and the footer says which it printed. */
+    const potV879=liveBalanceProgrammeIdV461();
+    const {data,error}=await fetchAllRowsResult(()=>{
+      let query=sb.from('points_ledger')
+        .select('id,created_at,entry_type,points,sale_id,reference,programme_id',{count:'exact'})
+        .eq('business_id',S.biz.id).eq('client_id',id);
+      if(potV879)query=query.eq('programme_id',potV879);
+      return query.order('created_at',{ascending:true}).order('id');
+    });
     if(error)return {error};
     pointsHistoryResultV259={rows:data||[]};
     return pointsHistoryResultV259;
@@ -26135,7 +26226,7 @@ async function clientDetail(id){
     body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
       <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th class="num">Points</th><th class="num">Balance</th></tr></thead>
       <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
-      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}. ${programmePausedV259
+      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}${liveBalanceProgrammeIdV461()?' in the running programme — movements in a paused or retired programme are not listed here':''}. ${programmePausedV259
         ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
         :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</p>`;
     CUI.enhance(body);
@@ -52796,9 +52887,9 @@ async function customerIntelligencePage(){
       <p class="muted small" style="margin-top:12px">These rows cover identified customers only. They do not represent anonymous or total business revenue.</p>
       ${errorMarkup}
       ${lastCustomerError?'':`<div class="grid reports-grid" style="margin-top:16px">${forecastMarkup(data?.forecast||{},currency)}</div>
-      <section style="margin-top:16px"><div class="row"><div><h2>Identified customer records</h2><p class="muted small" style="margin-top:4px">Purchase, visit and linked-customer revenue facts open into the customer’s complete ledger. <b>Paid visits</b> counts only visits that charged an amount, so it is deliberately lower than the Dashboard’s <b>Valid visits</b>, which also counts zero-price visits such as package sessions.</p></div><span class="spacer"></span><span class="pill">${workspaceTemplateHtmlV97(completedCount===1?'completedTransaction':'completedTransactions',{count:completedCount})}</span></div>
+      <section style="margin-top:16px"><div class="row"><div><h2>Identified customer records</h2><p class="muted small" style="margin-top:4px">Purchase, visit and linked-customer revenue facts open into the customer’s complete ledger. <b>Paid visits</b> counts only visits that charged an amount, so it is deliberately lower than the Dashboard’s <b>Valid visits</b>, which also counts zero-price visits such as package sessions.</p></div><span class="spacer"></span><span class="pill" title="Forecast evidence window, not this period">${workspaceTemplateHtmlV97(completedCount===1?'completedTransaction':'completedTransactions',{count:completedCount})}</span></div>
         ${data?.pagination?.has_more?`<div class="imp-note small"><div class="row"><span>${workspaceTemplateHtmlV97('scopeCustomers',{shown:customers.length,total:Number(data.pagination.total_customers||0)})}</span><span class="spacer"></span><button class="btn ghost sm" id="ciMore">Load more customers</button></div></div>`:''}
-        ${customers.length?`<div class="cui-table-wrap" role="region" aria-label="Identified customer records"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Repeat this period</th><th>Purchases</th><th>Paid visits</th><th>Identified customer revenue</th><th>Cash collected</th><th>Frequency</th><th>Last purchase</th><th></th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer"><b>${esc(customer.full_name||'Customer')}</b><br><span class="muted small">${esc(customer.phone||customer.email||'No contact shown')}</span></td><td data-label="Repeat this period"><span class="pill ${Number(customer.purchase_count||0)>=2?'ok':'off'}">${Number(customer.purchase_count||0)>=2?'2+ purchases':'Fewer than 2'}</span></td><td data-label="Purchases">${Number(customer.purchase_count||0)}</td><td data-label="Paid visits">${Number(customer.visit_count||0)}</td><td data-label="Identified customer revenue"><b>${esc(scopeMoney(customer.net_revenue_cents,currency))}</b></td><td data-label="Cash collected">${esc(scopeMoney(customer.cash_collected_cents,currency))}</td><td data-label="Frequency">${esc(frequency(customer.average_days_between_purchases))}</td><td data-label="Last purchase">${esc(customer.last_purchase_at?walletDate(customer.last_purchase_at,true):'No completed purchase')}</td><td data-label="Record"><a class="btn ghost sm" href="#/client/${encodeURIComponent(customer.client_id)}">Open ledger</a></td></tr>`).join('')}</tbody></table></div>`
+        ${customers.length?`<div class="cui-table-wrap" role="region" aria-label="Identified customer records"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Repeat this period</th><th>Purchases</th><th>Paid visits</th><th>Identified customer revenue</th><th>Cash collected</th><th>Frequency</th><th>Last purchase</th><th></th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer"><b>${esc(customer.full_name||'Customer')}</b><br><span class="muted small">${esc(customer.phone||customer.email||'No contact shown')}</span></td><td data-label="Repeat this period"><span class="pill ${customer.returning_customer?'ok':'off'}">${customer.returning_customer?'Repeat (2+ days)':'Fewer than 2 days'}</span></td><td data-label="Purchases">${Number(customer.purchase_count||0)}</td><td data-label="Paid visits">${Number(customer.visit_count||0)}</td><td data-label="Identified customer revenue"><b>${esc(scopeMoney(customer.net_revenue_cents,currency))}</b></td><td data-label="Cash collected">${esc(scopeMoney(customer.cash_collected_cents,currency))}</td><td data-label="Frequency">${esc(frequency(customer.average_days_between_purchases))}</td><td data-label="Last purchase">${esc(customer.last_purchase_at?walletDate(customer.last_purchase_at,true):'No completed purchase')}</td><td data-label="Record"><a class="btn ghost sm" href="#/client/${encodeURIComponent(customer.client_id)}">Open ledger</a></td></tr>`).join('')}</tbody></table></div>`
           :'<div class="empty">No completed sales linked to an identified customer in this scope yet.</div>'}
         <div id="ciExportStatus" role="status" aria-live="polite"></div>
       </section>`}
@@ -53222,7 +53313,7 @@ async function customerIntelligencePage(){
     }
     if(!customers.length){button.disabled=false;button.textContent='Export customers CSV';return toast('No customer records to export')}
     const scope=lastPayload.scope||{};
-    const rows=[['customer','phone','email','repeat_in_period_2plus_purchases','purchase_count','paid_visit_count','net_revenue','cash_collected','average_revenue_per_purchase','average_days_between_purchases','first_purchase_at','last_purchase_at','days_since_last_purchase','branches_visited'],
+    const rows=[['customer','phone','email','repeat_in_period_2plus_purchase_days','purchase_count','paid_visit_count','net_revenue','cash_collected','average_revenue_per_purchase','average_days_between_purchases','first_purchase_at','last_purchase_at','days_since_last_purchase','branches_visited'],
       ...customers.map(customer=>[
         customer.full_name||'',customer.phone||'',customer.email||'',customer.returning_customer?'yes':'no',
         customer.purchase_count||0,customer.visit_count||0,(Number(customer.net_revenue_cents||0)/100).toFixed(2),
@@ -55058,9 +55149,15 @@ async function reportsPage(){
     const d=data||{},byKind=d.revenue_by_kind||{},nonRevByKind=d.non_revenue_by_kind||{},pt=d.points_by_type||{};
     lastScope={...scope,clientsAvailable:d.availability?.clients_export===true};
     const creditLiabilityAvailable=d.availability?.credit_liability===true;
-    const liab=creditLiabilityAvailable?d.credit_liability_cents:null,gcOut=d.gift_card_liability_cents||0;
+    /* nestly_v879: get_reports_summary still answers gift_card_liability_cents and
+       availability.gift_cards, and this function still bound both to names nothing rendered —
+       code that looked like a card was about to show gift-card money and never did. Under the
+       owner rulings of 2026-09-05 and 2026-09-08 gift cards are RETIRED (see
+       RETIRED_BUSINESS_MODULES_V768), so not rendering them is the correct outcome; the reads
+       are dropped so the intent is stated rather than left dangling. The server fields stay —
+       history is not being erased — they simply have no reader here. */
+    const liab=creditLiabilityAvailable?d.credit_liability_cents:null;
     const loyaltyAvailable=d.availability?.loyalty===true;
-    const giftCardsAvailable=d.availability?.gift_cards===true;
     const reconciliation=d.reversal_reconciliation||{};
     const reversalRows=Number(reconciliation.compensating_rows||0);
     const reversedCents=Number(reconciliation.reversed_revenue_cents||0);
@@ -55115,9 +55212,16 @@ async function reportsPage(){
         <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} earned</td><td class="num"><b>${pt.earn||0}</b></td></tr>
         <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} redeemed</td><td class="num"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
         <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} expired</td><td class="num"><b>${Math.abs(pt.expire||0)}</b></td></tr>
-        <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr></table>
+        <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr>
+        ${/* nestly_v879 (number-accuracy audit): the sentence below asked the owner to do the sum
+             and left out the adjustments row directly above it — on Cubbly SPA the stated formula
+             overstated what customers still hold 20x. The four rows are the SIGNED ledger sums
+             (redeem/expire arrive negative), so their plain total is the period's net, printed here
+             so nobody has to compute it. These rows are window-scoped; the outstanding balance on the
+             Liabilities card beside this is not, so the row says "from this period". */''}
+        <tr><td><b>Still held from this period</b></td><td class="num"><b>${(Number(pt.earn)||0)+(Number(pt.redeem)||0)+(Number(pt.expire)||0)+(Number(pt.adjust)||0)}</b></td></tr></table>
         ${/* V297: 78,232 points earned means nothing without knowing which way each row points. */''}
-        <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
+        <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned, minus redeemed, minus expired, plus or minus manual adjustments, is what customers are still holding from this period — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
         <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr></table>
@@ -56082,7 +56186,7 @@ const DAILY_REPORT_METRIC_DEFINITIONS_V468={
   revenue:{label:'Peekaa recorded revenue',action:'View records',buttonLabel:'View sales',
     definition:'Every sale record for this day, in this branch scope, whose immutable sale policy counts it as revenue. Reversal records are listed with their negative amount.'},
   visits:{label:'Visits',action:'View records',buttonLabel:'View sales',
-    definition:'Original visit sales recorded on this day that have not been reversed, including reversals recorded on a later day. Reversal records are never counted as visits.'},
+    definition:'One line per customer visit-day: the first original, unreversed visit sale of the day for each customer, however many bills they paid, plus each walk-in visit sale. Reversal records are never counted as visits.'},
   customers:{label:'Customer records with valid visits',action:'View records',buttonLabel:'View customers',
     definition:'One line per customer record behind this day\u2019s valid visits. Walk-in sales carry no customer record and are not counted.'},
   giftcards:{label:'Gift-card issuance amount recorded',action:'View records',
@@ -56249,9 +56353,16 @@ async function dailyReportPage(){
           }
           const valid=await dayValidVisitsV468();
           if(valid.error)return {error:valid.error};
+          /* nestly_v879 (number-accuracy audit): the tile counts one visit per customer per
+             Singapore day (app.ci_visit_day_v699) while this list printed every qualifying sale
+             row — 2 against 17 on one screen for Cubbly SPA, 2026-08-24. Same rule here: the
+             day's first qualifying sale per customer; walk-ins (no client) one row each. */
+          const visitDayRowsV879=(()=>{const seen=new Set();return [...valid.rows]
+            .sort((a,b)=>String(a.occurred_at||'').localeCompare(String(b.occurred_at||'')))
+            .filter(r=>{if(!r.client_id)return true;const k=`${r.client_id}|${(sgt(r.occurred_at)||'').slice(0,10)}`;if(seen.has(k))return false;seen.add(k);return true;});})();
           if(key==='visits')return {head:['Time','Customer','Item','Kind'],
             note:DAILY_REPORT_METRIC_DEFINITIONS_V468.visits.definition,
-            rows:valid.rows.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Kind">${esc(String(r.kind||'').replace('_',' '))}</td></tr>`)};
+            rows:visitDayRowsV879.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Kind">${esc(String(r.kind||'').replace('_',' '))}</td></tr>`)};
           /* One line per customer RECORD, which is what the tile counts — a customer with three
              valid visits today is one row here, and the visit count is stated on it. */
           const perCustomer=new Map();

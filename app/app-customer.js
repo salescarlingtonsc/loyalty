@@ -4046,18 +4046,43 @@ function actionableWalletExpiryText(expiry,unit){
   }
   return expiry?.mode==='inactivity'?'Expiry terms may apply':'No units expiring in the next 30 days';
 }
+/* nestly_v871 (B): a pot the business has paused is still the customer's. The wallet card lists
+   every non-live points/stamps pot the customer holds units in (server-side, read-only), and this
+   prints it — nothing here moves a unit or promises a redemption. */
+function actionableWalletParkedMarkupV871(card){
+  const parked=(Array.isArray(card?.parked_programmes)?card.parked_programmes:[]).filter(p=>Number(p?.balance||0)>0);
+  if(!parked.length)return '';
+  const parts=parked.map(p=>`${customerPointTotalV103(p.balance)} ${customerUnitNounV429(p.unit==='stamps'?'stamps':'points',p.balance)}`);
+  return `<div class="wallet-line" data-parked-programmes-v871><div><b>Also held</b><p class="muted small" style="margin-top:4px">${esc(parts.join(' and '))} from a programme this business has paused. Nothing is lost — ask at the counter if you want to use them.</p></div></div>`;
+}
 function actionableWalletActionText(card){
   const action=card?.action||{},reward=card?.next_eligible_reward||{},expiry=card?.expiry||{},visit=card?.visit_progress||{};
   const unit=String(card?.loyalty?.unit||'points');
-  if(action.reason==='expiring_within_7_days')return `${Number(expiry.expiring_within_7_days||0)} ${unit} expire soon${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
-  if(action.reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
-  if(action.reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
-  if(action.reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
+  /* nestly_v879: "is ready at the counter" is a PROMISE, and this line was making it off
+     action.reason, which the server bands from next_eligible_reward.available_now — and that flag
+     is `balance >= cost` against the whole lifetime pot. On a stamp card the pot is every stamp
+     ever earned, not the open card, so a customer whose current card is empty was promised a gift
+     the till then refuses (QA Kopi Lab today: 3 of its 4 customers, pots of 8/15/20 against a
+     ready_count of 0). Readiness is never re-derived here — v145 forbids the browser judging it —
+     so the answer comes from the same availability core the till and the business page read,
+     carried on the card as ready_count and read through customerCardRewardReadyV465. Where the
+     count contradicts the band, the remaining bands are judged in the server's own order over
+     fields the card already carries. reward_progress is deliberately NOT revived: its
+     remaining_units is that same pot subtraction and would read "0 stamps to go", which is the
+     promise again in other words. */
+  const reason=action.reason==='reward_available'&&!customerCardRewardReadyV465(card)
+    ?(Number(expiry.expiring_units||0)>0?'expiring_within_30_days'
+      :Number(visit.remaining)===1?'one_qualifying_visit_remaining':'none')
+    :action.reason;
+  if(reason==='expiring_within_7_days')return `${Number(expiry.expiring_within_7_days||0)} ${unit} expire soon${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
+  if(reason==='reward_available')return `${reward.name||'Reward'} is ready at the counter`;
+  if(reason==='expiring_within_30_days')return `${Number(expiry.expiring_units||0)} ${unit} expire within 30 days${action.deadline_at?` · ${walletDate(action.deadline_at)}`:''}`;
+  if(reason==='one_qualifying_visit_remaining')return `One qualifying visit remains${visit.customer_description?` · ${visit.customer_description}`:''}${action.deadline_at?` · by ${walletDate(action.deadline_at)}`:''}`;
   /* nestly_v429 (E): the DISTANCE to a reward is counted in the reward's unit, which v426 now
      sends; the expiry lines above stay on the balance's unit, because that is what expires. */
-  if(action.reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${customerUnitNounV429(customerRewardUnitV429(reward,unit),reward.remaining_units)} to ${reward.name||'your next reward'}`;
-  if(action.reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
-  if(action.reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
+  if(reason==='reward_progress')return `${Number(reward.remaining_units||0)} ${customerUnitNounV429(customerRewardUnitV429(reward,unit),reward.remaining_units)} to ${reward.name||'your next reward'}`;
+  if(reason==='birthday_benefit_expiring_within_7_days')return `Birthday benefit ends soon${action.deadline_at?` · ends ${walletDate(action.deadline_at,true)}`:''}`;
+  if(reason==='birthday_benefit_available')return 'Birthday benefit is ready to use';
   return 'No urgent action right now';
 }
 function birthdayBenefitMarkup(benefit,{interactive=false,compact=false}={}){
@@ -5928,6 +5953,7 @@ function actionableWalletCardMarkup(card,{detail=false}={}){
     </div>
     <div class="wallet-line" style="margin-top:8px"><div style="width:100%"><b>Next reward</b>${reward?customerRewardProgressMarkupV167(card):'<p class="muted small" style="margin-top:4px">No active reward is available right now.</p>'}</div></div>
     ${card?.visits_remaining===null||card?.visits_remaining===undefined?'':`<div class="wallet-line"><div><b>Visit progress</b><p class="muted small" style="margin-top:4px">${Number(card.visits_remaining)===0?'Current visit goal is complete.':`${Number(card.visits_remaining)} qualifying visit${Number(card.visits_remaining)===1?'':'s'} remaining.`}${visit.customer_description?` ${esc(visit.customer_description)}`:''}</p></div></div>`}
+    ${actionableWalletParkedMarkupV871(card)}
     ${birthdayBenefitMarkup(card?.birthday_benefit,{interactive:detail,compact:!detail})}
     ${detail?`<p class="muted small" style="margin-top:14px">${esc(actionableWalletActionText(card))}</p>`:''}
   </article>`;

@@ -2383,6 +2383,14 @@
       "kernel_migratability": "follows db.fn:public.business_switch_to_stamps_v384/4 — INDEPENDENT, run-once administrative conversion."
     },
     {
+      "id": "browser.rpc:app/app.js:business_switch_to_points_v871",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_switch_to_points_v871",
+      "resolves_to": "public.business_switch_to_points_v871/2 (owner-only; nestly_v871). The inverse of business_switch_to_stamps_v384: returns the stamps the tenant's latest recorded conversion issued — and only what each customer still holds — at the RECORDED points_per_stamp, moving stamp batches FEFO and writing the same guarded ledger pair shape v384 wrote under the 'programme_pot_transfer' scope, then flips the spine back to points through set_programmes_v314.",
+      "call_site_finding": "none — ONE call site: writeProgrammeSwitchesWithStampConversionV384 (app/app.js), on the reverse branch (requested set has points===true, paused!==true, and stamps is running). It fires after the owner confirms the switch; a 22023 reply (no recorded conversion for this firm) falls through to the plain writeProgrammeSwitchesV314 write, any other error is surfaced. The browser mints one idempotency key per attempt; a replay of the same key returns the stored response from programme_stamp_reversals_v871 and moves nothing. On success the returned programmes feed rememberProgrammeSpineV314.",
+      "kernel_migratability": "follows db.fn:public.business_switch_to_points_v871/2 — INDEPENDENT, run-once administrative reversal recorded in programme_stamp_reversals_v871."
+    },
+    {
       "id": "db.fn:public.staff_manual_redeem_reward_v404/8",
       "surface": "db_function",
       "latest_file": "20260821000002_nestly_v404_manual_reward_redemption.sql",

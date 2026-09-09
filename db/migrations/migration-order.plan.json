@@ -4221,6 +4221,90 @@
       "path": "db/migrations/20261009_nestly_v851_one_overload_per_reward_rpc.sql",
       "semanticVersion": "v851",
       "proposedDeployVersion": "20261009190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v865_one_visit_definition_on_the_dashboard.sql",
+      "semanticVersion": "v865",
+      "proposedDeployVersion": "20261010010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v866_stamp_liability_deducts_closed_cycles.sql",
+      "semanticVersion": "v866",
+      "proposedDeployVersion": "20261010020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v867_owner_brief_three_wrong_facts.sql",
+      "semanticVersion": "v867",
+      "proposedDeployVersion": "20261010030000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v868_bundle_product_member_finalise.sql",
+      "semanticVersion": "v868",
+      "proposedDeployVersion": "20261010040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v869_discount_readers_read_the_fulfilment_registry.sql",
+      "semanticVersion": "v869",
+      "proposedDeployVersion": "20261010050000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v870_branch_comparison_counts_visit_days.sql",
+      "semanticVersion": "v870",
+      "proposedDeployVersion": "20261010060000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v871_stamp_conversion_reverses_and_parked_pots_are_visible.sql",
+      "semanticVersion": "v871",
+      "proposedDeployVersion": "20261010070000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v872_ci_revenue_valid_purchases_and_frequency_visit_days.sql",
+      "semanticVersion": "v872",
+      "proposedDeployVersion": "20261010080000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v873_bringback_sweep_counts_visits_only.sql",
+      "semanticVersion": "v873",
+      "proposedDeployVersion": "20261010090000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v874_live_offer_count_honours_dates.sql",
+      "semanticVersion": "v874",
+      "proposedDeployVersion": "20261010100000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v875_customer_loyalty_activity_scoped_to_the_live_pot.sql",
+      "semanticVersion": "v875",
+      "proposedDeployVersion": "20261010110000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v876_carried_stamp_card_keeps_its_clock_and_version.sql",
+      "semanticVersion": "v876",
+      "proposedDeployVersion": "20261010120000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v877_owner_brief_month_evidence_birthday_dob_and_package_liability.sql",
+      "semanticVersion": "v877",
+      "proposedDeployVersion": "20261010130000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms.sql",
+      "semanticVersion": "v878",
+      "proposedDeployVersion": "20261010140000"
     }
   ]
 }

@@ -577,8 +577,10 @@ test('v97 dynamic count, page, amount, status, import, QR and billing copy local
     for(const value of Object.values(fixtures))assert.ok(rendered.includes(value),`${locale} preserves ${value}`);
     assert.doesNotMatch(rendered,/How Home is doing|customers · page|completed transactions|loaded onto account|Booked with|older QRs revoked|logins included/);
   }
-  assert.equal(templateText('completedTransaction',{count:1},'en'),'1 completed transaction');
-  assert.equal(templateText('completedTransactions',{count:2},'en'),'2 completed transactions');
+  /* nestly_v879 (number-accuracy audit): the pill counts the trailing 13-complete-week forecast
+     evidence, not the selected period, so the copy names its window. */
+  assert.equal(templateText('completedTransaction',{count:1},'en'),'1 completed transaction in the last 13 complete weeks');
+  assert.equal(templateText('completedTransactions',{count:2},'en'),'2 completed transactions in the last 13 complete weeks');
   /* nestly_v584: importBooking / importBookings retired with the bookings CSV importer (owner
      photo 13 deleted the Booking settings tab and its contents). The singular/plural pairing this
      line proved is still proved by the customer pair above and the QR pair below. */

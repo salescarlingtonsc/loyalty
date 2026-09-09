@@ -4414,10 +4414,17 @@ function customerRewardProgressMarkupV167(card){
        a free reward that the server has disabled, ended, tier-locked or claim-limited answers
        available_now:false and was still announced as "ready to redeem" here. The server's own
        flag is the only authority; the arithmetic below still draws the distance for the reward
-       the customer is still earning. */
-    available=reward.available_now===true,
+       the customer is still earning.
+       nestly_v879: and available_now is itself `pot >= cost` — the LIFETIME pot, not the open
+       stamp card — so on a stamps firm it announced a gift the card in the customer's hand has
+       not earned. The card's ready_count is the availability core's own answer (the one the till
+       reads) and wins wherever the two disagree; with no count at all customerCardRewardReadyV465
+       falls back to this same flag, which is every caller that hands us a synthesised card.
+       A contradicted card carries remaining_units 0 for the same pot reason, so the distance line
+       is printed only where the distance is a true thing to say. */
+    available=customerCardRewardReadyV465(card),
     progress=cost>0?Math.min(100,Math.max(0,Math.round((balance/cost)*100))):100;
-  return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
+  return `<div class="customer-reward-progress-copy"><p class="muted small">${available?`${esc(reward.name||'Reward')} is ready to redeem.`:Number(reward.remaining_units||0)>0?`${esc(customerPointTotalV103(reward.remaining_units||0))} ${esc(unit)} to ${esc(reward.name||'your next reward')}.`:`${esc(reward.name||'Your next reward')} is not ready to redeem yet.`}</p><div class="customer-reward-progress" role="progressbar" aria-label="Progress to ${esc(reward.name||'next reward')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--reward-progress:${progress}%"><span></span></div></div>`;
 }
 function customerTierHasProgressV103(tier={}){
   const named=[tier.current,tier.label,tier.next].some(value=>String(value||'').trim().length>0);
@@ -7567,8 +7574,12 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   /* nestly_v561: the field holds Peekaa's own address — almost always browser autofill. */
   linkIsOwnAppV561:Object.freeze({en:'The {platform} link points at Peekaa itself — customers are already here. Paste the real address instead.','zh-CN':'{platform} 链接指向 Peekaa 本身——顾客已经在这里了。请改为粘贴真实地址。',ms:'Pautan {platform} menghala ke Peekaa sendiri — pelanggan sudah berada di sini. Tampal alamat sebenar.'}),
   customerPagination:Object.freeze({en:'{total} customers · page {page} of {pages}','zh-CN':'{total} 位顾客 · 第 {page} 页，共 {pages} 页',ms:'{total} pelanggan · halaman {page} daripada {pages}'}),
-  completedTransaction:Object.freeze({en:'{count} completed transaction','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
-  completedTransactions:Object.freeze({en:'{count} completed transactions','zh-CN':'{count} 笔已完成交易',ms:'{count} transaksi selesai'}),
+  /* nestly_v879 (number-accuracy audit): the CI header pill is data_quality.completed_transactions
+     — a trailing 13-complete-week forecast-evidence count that ignores the period start (49 against
+     a true 6 on a 7-day window). The sentence now names its window instead of reading as a period
+     figure; same keys, same one render path, reviewed in all three locales. */
+  completedTransaction:Object.freeze({en:'{count} completed transaction in the last 13 complete weeks','zh-CN':'过去 13 个完整周内 {count} 笔已完成交易',ms:'{count} transaksi selesai dalam 13 minggu lengkap terakhir'}),
+  completedTransactions:Object.freeze({en:'{count} completed transactions in the last 13 complete weeks','zh-CN':'过去 13 个完整周内 {count} 笔已完成交易',ms:'{count} transaksi selesai dalam 13 minggu lengkap terakhir'}),
   scopePeriod:Object.freeze({en:'{branch} · {from} to {to}','zh-CN':'{branch} · {from} 至 {to}',ms:'{branch} · {from} hingga {to}'}),
   allBranchesPeriod:Object.freeze({en:'All permitted branches · {from} to {to}','zh-CN':'所有获准分店 · {from} 至 {to}',ms:'Semua cawangan yang dibenarkan · {from} hingga {to}'}),
   performancePeriodRange:Object.freeze({en:'{from} to {to}','zh-CN':'{from} 至 {to}',ms:'{from} hingga {to}'}),

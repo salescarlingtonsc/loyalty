@@ -4759,7 +4759,7 @@
 
   function firmRows(rows, CUI) {
     return rows.map(row => [
-      `<b>${escapeHtml(row.name || pt('Unnamed firm'))}</b>`,
+      `<b>${escapeHtml(row.name || pt('Unnamed firm'))}</b>${row.is_synthetic===true?` <span class="pill off">${escapeHtml(pt('Internal'))}</span>`:''}`,
       escapeHtml(row.industry || '—'),
       String(row.branch_count ?? 0),
       String(row.staff_count ?? 0),
@@ -4782,13 +4782,17 @@
   }
 
   function overviewHtml(rows, CUI) {
-    const totals = rows.reduce((summary,row) => ({
+    /* nestly_v879 (number-accuracy audit): 8 of 24 firms and 7 of 15 trials were internal/QA
+       tenants counted as customers. super_admin_list_businesses returns is_synthetic (nestly_v878);
+       the totals exclude those rows and say so, so an operator can see the filter ran. */
+    const realRows=rows.filter(row=>row.is_synthetic!==true),internalCount=rows.length-realRows.length;
+    const totals = realRows.reduce((summary,row) => ({
       firms:summary.firms + 1,
       seats:summary.seats + Number(row.billable_seats || 0),
       monthly:summary.monthly + Number(row.est_monthly_cents || 0),
       trials:summary.trials + (row.subscription_status === 'trialing' ? 1 : 0)
     }),{firms:0,seats:0,monthly:0,trials:0});
-    const list = rows.slice(0,8);
+    const list = realRows.slice(0,8);
     return `${CUI.pageHeader({
       title:'Platform overview',
       subtitle:'A current read-only view of firms and subscription projections already available to the platform.',
@@ -4802,6 +4806,7 @@
           ['Trials',totals.trials,'retention']
         ].map(([label,value,icon])=>`<article class="card platform-kpi"><div class="platform-kpi-label">${CUI.icon(icon,{size:17})}<span>${escapeHtml(pt(label))}</span></div><div class="platform-kpi-value">${escapeHtml(value)}</div></article>`).join('')}
       </section>
+      ${internalCount?`<p class="muted small">${escapeHtml(pt('{count} internal or QA firm(s) excluded from these totals.',{count:internalCount}))}</p>`:''}
       <div class="platform-section-grid">
         ${CUI.card({
           title:'Firm snapshot',
@@ -5548,6 +5553,11 @@
     const sales=asObject(data.sales),current=asObject(sales.current),prior=asObject(sales.prior);
     const growth=asObject(sales.growth),opens=asObject(data.account_opens);
     const outstanding=asObject(data.outstanding),counts=asObject(data.counts);
+    /* nestly_v879 (number-accuracy audit): v545 removed the cross-unit `outstanding.points` total
+       and this tile kept reading the deleted key, printing 0 for every firm with a balance. One
+       pot in its own unit; paused pots are listed, never summed (the server's unit_rule). */
+    const activeProgramme=asObject(outstanding.active_programme);
+    const historicalProgrammes=asArray(outstanding.historical_programmes).filter(row=>Number(row?.outstanding||0)>0);
     const openCurrent=asObject(opens.current),openPrior=asObject(opens.prior);
     const growthLabel=growth.net_revenue_pct===null||growth.net_revenue_pct===undefined
       ?'—':`${Number(growth.net_revenue_pct)>0?'+':''}${Number(growth.net_revenue_pct).toFixed(1)}%`;
@@ -5569,11 +5579,13 @@
       ]
     })})}
     ${workspaceMirrorKpisHtml([
-      ['Points outstanding',outstanding.points??0,'loyalty'],
+      [activeProgramme.unit==='stamps'?'Stamps outstanding':'Points outstanding',
+        activeProgramme.is_running===false||activeProgramme.outstanding===null||activeProgramme.outstanding===undefined?'—':activeProgramme.outstanding,'loyalty'],
       ['Credit outstanding',currency(outstanding.credit_cents,currencyCode),'reports'],
       ['Total customers',counts.customers??0,'customers'],
       ['Team',counts.active_staff??0,'staff']
     ],CUI,'Workspace mirror')}
+    ${historicalProgrammes.length?`<p class="muted small">${escapeHtml(pt('Paused programmes still owed'))}: ${historicalProgrammes.map(row=>escapeHtml(`${row.outstanding} ${row.unit}`)).join(' · ')}</p>`:''}
     <p class="muted small">${escapeHtml(pt('Points balance and credit balance are whole-firm totals.'))} ${escapeHtml(pt('Net revenue'))}: ${escapeHtml(growthLabel)}</p>`;
   }
   function workspaceMirrorAppointmentsHtml(data,CUI) {
@@ -10853,7 +10865,9 @@
     </div>`;
   }
   function prospectingPercent(value) {
-    return value===null||value===undefined||value===''?'—':`${(Number(value)*100).toFixed(1)}%`;
+    /* nestly_v879: platform_conversion_funnel_v312 returns rates already in percent (91.7), so
+       the old `*100` printed 9170.0%. */
+    return value===null||value===undefined||value===''?'—':`${Number(value).toFixed(1)}%`;
   }
   function prospectingFunnelStageRows(funnel) {
     const dash=value=>value===null||value===undefined?'—':String(value);
@@ -11710,7 +11724,8 @@
               ['Collection',escapeHtml(subscription.collection_mode==='auto'?pt('Auto-collect'):pt('Chase'))],
               ['Billing cadence',subscription.billing_cadence?escapeHtml(platformStatus(subscription.billing_cadence)):null],
               ['Plan',subscription.plan_code?escapeHtml(subscription.plan_code):null],
-              ['Period price',subscription.period_total_cents?escapeHtml(money(subscription.period_total_cents)):null],
+              ['Period price',detail.billing_summary&&detail.billing_summary.total_cents!==undefined&&detail.billing_summary.total_cents!==null?escapeHtml(money(detail.billing_summary.total_cents)):null],
+              ['Last invoice total',subscription.period_total_cents?escapeHtml(money(subscription.period_total_cents)):null],
               ['Subscription start',subscription.current_period_start?escapeHtml(dateTime(subscription.current_period_start)):null],
               ['Subscription end',subscription.current_period_end?escapeHtml(dateTime(subscription.current_period_end)):null],
               ['Trial ends',subscription.trial_ends_at?escapeHtml(dateTime(subscription.trial_ends_at)):null],
@@ -11767,7 +11782,16 @@
       if(pauseButton)pauseButton.onclick=()=>workspacePauseModal(detail,context,next=>renderDetail(next));
     };
     try{
-      const detail=asObject(await rpc(sb,'platform_company_detail_v225',{p_business:id}));
+      /* nestly_v879 (number-accuracy audit): subscriptions.period_total_cents is the LAST
+         invoice, not the period price — on 5 of 7 paying firms it disagreed with the firm's own
+         Subscription page. The price the firm sees is get_business_billing_v786's summary; it is
+         fetched beside the detail and the old figure is named for what it is. */
+      const [detailResultV879,billingResultV879]=await Promise.allSettled([
+        rpc(sb,'platform_company_detail_v225',{p_business:id}),
+        rpc(sb,'get_business_billing_v786',{p_business:id})]);
+      if(detailResultV879.status==='rejected')throw detailResultV879.reason;
+      const detail=asObject(detailResultV879.value);
+      detail.billing_summary=billingResultV879.status==='fulfilled'?asObject(asObject(billingResultV879.value).summary):null;
       renderDetail(detail);
     }catch(error){
       overlay.querySelector('[data-detail]').innerHTML=error?.platformUpdateRequired
@@ -13100,9 +13124,14 @@
         if(!error.platformUpdateRequired)throw error;
         detail=asObject(await rpc(sb,'get_business_billing_v125',{p_business:businessId}));
       }
+      /* nestly_v879: period_total_cents is overwritten by the LAST invoice, so "Amount due" showed
+         the last charge on firms that owed nothing. The period price the firm itself sees comes
+         from get_business_billing_v786 (summary.total_cents); the last invoice is named as such. */
+      let billingSummaryV879=null;
+      try{billingSummaryV879=asObject(asObject(await rpc(sb,'get_business_billing_v786',{p_business:businessId})).summary)}catch{billingSummaryV879=null}
       const commands=billingCommands(detail);
       overlay.querySelector('[data-detail]').innerHTML=`<div class="platform-actions" style="margin-bottom:14px">${commands.map(command=>`<button type="button" class="btn ${command.danger?'danger':'ghost'} sm" data-billing-command="${command.type}" data-cadence="${command.cadence||''}">${escapeHtml(pt(command.label))}</button>`).join('')}</div>
-        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,'Current customers':detail.current_customer_count,'Customer capacity':detail.terms?.customer_capacity,last_paid_at:detail.last_paid_at,'Money-back request until':detail.money_back_window?.money_back_request_until,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subscription amount':currency(detail.period_subtotal_cents,detail.currency),'GST not charged':currency(detail.period_tax_cents,detail.currency),'Amount due':currency(detail.period_total_cents,detail.currency)})})}</div>
+        <div class="platform-detail-grid">${CUI.card({title:'Subscription',body:detailObjectHtml({status:detail.status,cadence:detail.cadence,'Current customers':detail.current_customer_count,'Customer capacity':detail.terms?.customer_capacity,last_paid_at:detail.last_paid_at,'Money-back request until':detail.money_back_window?.money_back_request_until,next_payment_at:detail.next_payment_at,cancel_at_period_end:detail.cancel_at_period_end})})}${CUI.card({title:'Current period',body:detailObjectHtml({'Subscription amount':currency(detail.period_subtotal_cents,detail.currency),'GST not charged':currency(detail.period_tax_cents,detail.currency),'Last invoice total':currency(detail.period_total_cents,detail.currency),'Period price (as the firm sees it)':billingSummaryV879&&billingSummaryV879.total_cents!==undefined&&billingSummaryV879.total_cents!==null?currency(billingSummaryV879.total_cents,detail.currency):'—'})})}</div>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Invoices"))}</h2>${asArray(detail.invoices).map(invoice=>`<div class="platform-action-item"><div><b>${escapeHtml(invoice.number||invoice.provider_invoice_id)}</b><p class="muted small">${escapeHtml(platformStatus(invoice.status))} · ${escapeHtml(pt('Amount due: {amount}',{amount:currency(invoice.total_cents,invoice.currency)}))} · ${escapeHtml(pt('GST not charged'))}</p><div class="platform-actions">${billingDocumentLinks(invoice)||`<span class="muted small">${escapeHtml(pt('Awaiting Stripe document'))}</span>`}</div></div><span>${invoice.paid_normalized?CUI.status('Paid','ok'):CUI.status('Outstanding','no')}</span></div>`).join('')||localizedEmptyHtml('No invoices.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Payment attempts"))}</h2>${asArray(detail.payment_attempts).map(attempt=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(attempt.attempt_state))}</b><p class="muted small">${currency(attempt.amount_cents,detail.currency)} · ${escapeHtml(attempt.failure_code||pt('No failure'))}</p></div><span class="muted small">${escapeHtml(dateTime(attempt.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No payment attempts.')}</section>
         <section class="card platform-detail-section"><h2>${escapeHtml(pt("Adjustments"))}</h2>${asArray(detail.adjustments).map(adjustment=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(adjustment.adjustment_type))}</b><p class="muted small">${escapeHtml(pt('Amount: {amount}',{amount:currency(adjustment.total_cents,adjustment.currency||detail.currency)}))} · ${escapeHtml(adjustment.reason||pt('No reason recorded'))}</p></div><span class="muted small">${escapeHtml(dateTime(adjustment.occurred_at))}</span></div>`).join('')||localizedEmptyHtml('No adjustments.')}</section>
