@@ -4210,6 +4210,12 @@
       "version": "20261009180000",
       "name": "nestly_v861_custom_lines_pay_no_commission",
       "sourcePath": "db/migrations/20261009_nestly_v861_custom_lines_pay_no_commission.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261009190000",
+      "name": "nestly_v851_one_overload_per_reward_rpc",
+      "sourcePath": "db/migrations/20261009_nestly_v851_one_overload_per_reward_rpc.sql"
     }
   ]
 }

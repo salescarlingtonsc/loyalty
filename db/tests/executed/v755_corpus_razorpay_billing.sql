@@ -59,6 +59,16 @@ begin
     raise exception 'v755 fixture could not seed a business';
   end if;
 
+  -- v791 (20261006_nestly_v791_stripe_returns.sql) put real Stripe price ids back on the flat
+  -- (10,000) tiers when the owner reversed course back to Stripe — and monthly has no tier above
+  -- 10,000 (v664), so that flat tier IS the only monthly row. The "already-null monthly tier"
+  -- this fixture relied on was a byproduct of v755's own migration having just nulled every
+  -- price_* id; it is not a standing product contract, so recreate the pre-condition here inside
+  -- this rollback-only transaction instead of assuming the catalog still has one lying around.
+  update public.billing_capacity_tier_catalog_v664
+     set provider_base_price_id = null
+   where cadence='monthly' and active and provider_base_price_id is not null;
+
   update public.billing_capacity_tier_catalog_v664
      set provider_base_price_id = v_plan_id
    where id = (

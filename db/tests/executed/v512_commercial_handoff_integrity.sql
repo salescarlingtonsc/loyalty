@@ -53,6 +53,7 @@ declare
   v_created jsonb;v_claim jsonb;v_transition jsonb;v_conversion jsonb;
   v_invoice_result jsonb;v_upload jsonb;v_payment_result jsonb;
   v_prospect uuid;v_business uuid;v_invoice uuid;v_payment uuid;v_version bigint;
+  v_obligation_start date;v_obligation_end date;
   v_terms public.sme_commercial_terms%rowtype;
   v_accrual public.sme_commission_accruals_v512%rowtype;
   v_count integer;v_terms_id uuid;
@@ -171,6 +172,16 @@ begin
   if exists(select 1 from public.sme_commission_accruals_v512 where business_id=v_business) then
     raise exception 'FAIL an unpaid handoff accrued commission';end if;
 
+  -- nestly_v685 (Singapore Day Authority) made convert_sme_prospect_v79 write
+  -- obligation_period_start/_end via app.sg_day() (Asia/Singapore), not a bare UTC
+  -- current_date. Read the real obligation window back off the subscription instead of
+  -- re-deriving it with current_date, so the manual invoice's service period (matched
+  -- exactly, as a date, by app.v510_verified_initial_payment's manual_payment branch)
+  -- agrees with the product's own SG-day arithmetic instead of drifting from it for
+  -- roughly a third of every day (UTC 16:00-23:59, the SGT-vs-UTC day-rollover window).
+  select obligation_period_start,obligation_period_end into v_obligation_start,v_obligation_end
+    from public.subscriptions where business_id=v_business;
+
   perform public.platform_set_billing_profile_v156(jsonb_build_object(
     'registered_address','1 Synthetic Street, Singapore 018989','billing_email','billing-v512@example.invalid',
     'gst_status','not_registered','default_payment_terms','Due on receipt'),
@@ -181,7 +192,7 @@ begin
     'country','Singapore','contact_name','Proof Owner','email','owner-v512@example.invalid',
     'recipient_role','primary','active',true),'51200000-0000-4000-8000-000000000017');
   v_invoice_result:=public.platform_create_manual_invoice_v156(v_business,current_date,current_date+7,
-    current_date,current_date+364,
+    v_obligation_start,v_obligation_end,
     '[{"description":"Peekaa annual subscription","quantity":1,"unit_amount_cents":240000}]'::jsonb,
     0,'51200000-0000-4000-8000-000000000018');
   v_invoice:=(v_invoice_result#>>'{document,id}')::uuid;
@@ -220,7 +231,7 @@ begin
      or v_accrual.payment_source<>'manual_payment' or v_accrual.payment_evidence_id<>v_payment then
     raise exception 'FAIL accrual amount or evidence is wrong (basis %, commission %)',
       v_accrual.basis_cents,v_accrual.commission_cents;end if;
-  if v_accrual.obligation_period_start<>current_date or v_accrual.obligation_period_end<>current_date+364 then
+  if v_accrual.obligation_period_start<>v_obligation_start or v_accrual.obligation_period_end<>v_obligation_end then
     raise exception 'FAIL accrual is not keyed on the obligation period it paid';end if;
 
   -- D2. Replaying either projection cannot duplicate the accrual.

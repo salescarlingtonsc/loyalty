@@ -164,8 +164,14 @@ select pg_sleep(0.05);
 begin;
 do $$
 declare
+  -- nestly_v754 (20260924) added a trailing p_claim_expires_after_days parameter to
+  -- business_update_reward_v326 via CREATE OR REPLACE without dropping the pre-v754 13-arg
+  -- signature first, so the function is now genuinely overloaded (verified live: two rows from
+  -- pg_proc for this proname). The marker-detection probe below only needs to know whether ANY
+  -- overload already carries the v433 marker, so it is widened from a single-row scalar subquery
+  -- (which now raises "more than one row") to a string_agg across every overload.
   v433 boolean := position('stamp_config_edit_begin_v433' in coalesce((
-      select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      select string_agg(pg_get_functiondef(p.oid), '') from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname='public' and p.proname='business_update_reward_v326'), '')) > 0;
   v_biz uuid := (select v from _ctx where k='biz');
   v_cfg uuid := (select v from _ctx where k='cfg');
@@ -234,8 +240,9 @@ select pg_sleep(0.05);
 begin;
 do $$
 declare
+  -- see nestly_v754 overload note above (Phase A) — widened to string_agg for the same reason.
   v433 boolean := position('stamp_config_edit_begin_v433' in coalesce((
-      select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      select string_agg(pg_get_functiondef(p.oid), '') from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname='public' and p.proname='business_update_reward_v326'), '')) > 0;
   v_biz uuid := (select v from _ctx where k='biz');
   v_cfg uuid := (select v from _ctx where k='cfg');
@@ -316,8 +323,9 @@ select pg_sleep(0.05);
 begin;
 do $$
 declare
+  -- see nestly_v754 overload note above (Phase A) — widened to string_agg for the same reason.
   v433 boolean := position('stamp_config_edit_begin_v433' in coalesce((
-      select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      select string_agg(pg_get_functiondef(p.oid), '') from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname='public' and p.proname='business_update_reward_v326'), '')) > 0;
   v436 boolean := position('stamp_expire_open_cycle_v435' in coalesce((
       select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
@@ -489,14 +497,35 @@ begin
     raise exception 'D FAIL: with the programme OFF, the UNEARNED final gift is still listed';
   end if;
 
+  -- SUPERSEDED by nestly_v847 (db/migrations/20261009_nestly_v847_redeem_engine_reversals_expiry_
+  -- and_spine.sql, section B; its own acceptance suite assertion 12 pins this exact scenario:
+  -- an already-earned stamp milestone, claimed via redeem_reward_core with the spine OFF). v847
+  -- deleted the 'stamps' exemption from redeem_reward_core's spine-active gate ("a stopped
+  -- programme mints and pays nothing new ... now applied to the staff path"), so the counter now
+  -- refuses exactly what the catalogue above already hides — "both halves of the estate now
+  -- answer identically." v435 rule 7 ("stays claimable ... including while the programme is
+  -- switched off") no longer holds at the redemption path; this fixture previously encoded that
+  -- superseded contract. The survivor mechanism itself (nestly_v478) is untouched and is
+  -- exercised below once the programme is back on.
+  begin
+    perform app.redeem_reward_core(v_biz, v_client2, v_reward_free, 'v435-survival-claim-01', v_branch, null, null);
+    raise exception 'D FAIL: the earned milestone was claimable while the programme was OFF (nestly_v847 should refuse it with ''catalog redemption is inactive'')';
+  exception when others then
+    if sqlerrm not like '%catalog redemption is inactive%' then
+      raise exception 'D FAIL: expected ''catalog redemption is inactive'' with the programme OFF, got: %', sqlerrm;
+    end if;
+  end;
+  raise notice 'D ok: the earned milestone was refused while the programme was OFF (nestly_v847)';
+
+  update public.business_programmes set active = true where id = v_spine_stamps;
+
+  -- nestly_v478 survivor claim still works once the programme is back on (untouched by v847).
   v_json := app.redeem_reward_core(v_biz, v_client2, v_reward_free, 'v435-survival-claim-01', v_branch, null, null)::jsonb;
   if not coalesce((v_json->>'from_expired_card')::boolean, false)
      or coalesce((v_json->>'stamp_card_closed')::boolean, true) then
-    raise exception 'D FAIL: the survival claim did not run as a survival claim: %', v_json;
+    raise exception 'D FAIL: the survival claim did not run as a survival claim once the programme was back on: %', v_json;
   end if;
-  raise notice 'D ok: earned milestone claimed FROM THE EXPIRED CARD while the programme was OFF';
-
-  update public.business_programmes set active = true where id = v_spine_stamps;
+  raise notice 'D ok: earned milestone claimed FROM THE EXPIRED CARD once the programme was switched back on';
 
   -- The unearned final gift lapsed with the card.
   begin

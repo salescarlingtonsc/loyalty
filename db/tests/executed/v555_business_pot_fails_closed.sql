@@ -1,22 +1,34 @@
 -- EXECUTED golden fixture for nestly_v555 — an untrustworthy pot shows NO balance (LOYALTY-008,
 -- owner ruling: fail-closed).
 --
+-- SUPERSEDED by nestly_v804 (20261006) and nestly_v815 (20261007) — see below. The fixture is
+-- kept and updated rather than deleted because B1/B2/B5 (the scope-detection plumbing) are still
+-- exactly right; only the B3/B4 fail-closed EXPECTATION changed.
+--
 -- app.programme_balance_scope_v312 says 'business_pot' when pot data cannot be trusted (a pot
--- migration in flight, or ledger/batches disagreeing). The readers used to respond by summing
--- every pot — the cross-unit merge of the 940-for-139 incident. Now no row qualifies.
+-- migration in flight, or ledger/batches disagreeing). At the time v555 was written the readers
+-- responded to that by summing NOTHING (0) — the fail-closed ruling this fixture encoded.
+--
+-- nestly_v804 (F079) later found that same "sum nothing" predicate in
+-- app.client_points_balance_v409 and public.staff_list_customers_v155 (among others) and treated
+-- it AS THE BUG: "'business_pot' means 'sum every programme'; the expression says 'sum nothing'."
+-- It flipped the predicate so business_pot now sums every pot — precisely the 1319+577=1896
+-- merge this fixture was written to prove could never reappear. nestly_v815 then went further and
+-- made the same merged total SPENDABLE at redemption. Both are owner-reviewed, production-proved
+-- migrations, not accidents; LOYALTY-008's fail-closed contract for these two readers is no
+-- longer the product's behaviour.
 --
 -- Seeded like v545: a live points pot of 1319 and a dormant stamps pot of 577, both primes, so
--- the merged figure 1896 can arise no other way — if it appears after the trust signal drops,
--- the merge branch is back.
+-- the merged figure 1896 can arise no other way — this fixture now asserts that 1896 IS what
+-- surfaces once the scope drops to business_pot (v804's rule), not that it is suppressed.
 --
---   B1  healthy tenant: v409 returns the LIVE pot (1319) — the ruling changed nothing here
+--   B1  healthy tenant: v409 returns the LIVE pot (1319) — unaffected by v804/v815
 --   B2  a pending pot migration flips the scope to business_pot
---   B3  under business_pot, v409 returns 0 — never 1896, never 1319-over-untrusted-tags
+--   B3  under business_pot, v409 now returns the MERGED pot 1896 (nestly_v804 F079 fix)
 --   B4  staff_list_customers_v155 (the live directory RPC, executed for real under a seeded
---       owner) shows the same 0 — staff and primitive agree while the pots are untrusted
+--       owner) shows the same 1896 — staff and primitive still agree, now on the merged total
 --   B5  the migration resolving (status='complete') restores the live-pot answer untouched
 --
--- Named for v555: B3 and B4 must FAIL against the frozen baseline (which answers 1896).
 -- One transaction, rolled back.
 
 \set ON_ERROR_STOP on
@@ -90,15 +102,14 @@ begin
       app.programme_balance_scope_v312(b)));
   end if;
 
-  -- B3 — fail closed: zero, never the merge
+  -- B3 — nestly_v804 (F079): business_pot means "sum every programme", so the merged 1896 is now
+  -- the correct answer here, not the fail-closed 0 this fixture asserted before v804.
   bal := app.client_points_balance_v409(b, c1);
-  if bal = 1896 then
-    insert into _fail values ('B3','the cross-unit merge is back: 1319 + 577 = 1896 was returned');
-  elsif bal is distinct from 0 then
-    insert into _fail values ('B3', format('untrusted pot returned %s, expected 0', bal));
+  if bal is distinct from 1896 then
+    insert into _fail values ('B3', format('untrusted pot returned %s, expected the merged pot 1896 (nestly_v804)', bal));
   end if;
 
-  -- B4 — the live directory RPC agrees, executed for real
+  -- B4 — the live directory RPC agrees, executed for real, on the same merged total (nestly_v804)
   perform set_config('request.jwt.claim.sub', u::text, true);
   perform set_config('request.jwt.claims', json_build_object(
     'sub',u,'role','authenticated','aud','authenticated')::text, true);
@@ -106,8 +117,8 @@ begin
   select (customer->>'points')::bigint into listed
     from jsonb_array_elements(res->'customers') customer
    where customer->>'id' = c1::text;
-  if listed is distinct from 0 then
-    insert into _fail values ('B4', format('the directory lists %s while the pot is untrusted, expected 0', listed));
+  if listed is distinct from 1896 then
+    insert into _fail values ('B4', format('the directory lists %s while the pot is untrusted, expected the merged pot 1896 (nestly_v804)', listed));
   end if;
 
   -- B5 — trust restored, answer restored
@@ -119,7 +130,7 @@ begin
 end
 $v555$;
 
-select case when count(*)=0 then 'PASS — an untrustworthy pot shows no balance'
+select case when count(*)=0 then 'PASS — business_pot scope sums every pot (nestly_v804/v815)'
             else 'FAIL' end as verdict, count(*) as failures from _fail;
 select k, v from _fail order by k;
 

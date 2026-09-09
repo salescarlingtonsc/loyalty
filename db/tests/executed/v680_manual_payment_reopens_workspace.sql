@@ -131,10 +131,16 @@ begin
    where business_id = v_business;
 
   -- ---------------------------------------------------------------- SECTION 1
-  if app.business_operational_v620(v_business) then
-    raise exception 'S1-T1 FAIL: the tenant is operational before the renewal is even recorded';
+  -- nestly_v784 (2026-09-05, owner ruling "never lock, only switch off branches") rewrote
+  -- app.business_operational_v620 to stop reading the subscription at all: a workspace is open
+  -- when it is approved and not paused, full stop. Payment truth now acts on BRANCHES (v786),
+  -- never on the door. So a stale paid period no longer closes the workspace here — that is the
+  -- deliberate post-v784 contract, not a regression: this business was approved and unpaused by
+  -- the fixture setup above, so it stays operational even 41 days into a lapsed period.
+  if not app.business_operational_v620(v_business) then
+    raise exception 'S1-T1 FAIL: an approved, unpaused tenant is locked out by a stale payment (v784 says never)';
   end if;
-  insert into v680_evidence values('S1-T1','a 41-day-stale paid period closes the workspace');
+  insert into v680_evidence values('S1-T1','v784: an approved, unpaused workspace stays open regardless of a stale paid period');
 
   perform set_config('request.jwt.claims', json_build_object(
     'sub', v_recorder::text, 'role', 'authenticated',
@@ -158,10 +164,13 @@ begin
     v_invoice, v_amount::bigint, 'V680-TRANSFER', current_date, '1234', v_path, gen_random_uuid());
   v_payment := ((v_res->'payment')->>'id')::uuid;
 
-  if app.business_operational_v620(v_business) then
-    raise exception 'S1-T2 FAIL: an unverified payment opened the workspace';
+  -- nestly_v784: same as S1-T1 — the workspace was already open (approved + unpaused) before
+  -- this payment was even recorded, and recording-but-not-verifying it changes nothing either
+  -- way, since v620 no longer looks at payment state at all.
+  if not app.business_operational_v620(v_business) then
+    raise exception 'S1-T2 FAIL: recording an unverified payment somehow closed an approved, unpaused workspace';
   end if;
-  insert into v680_evidence values('S1-T2','recorded but unverified money does not open anything');
+  insert into v680_evidence values('S1-T2','v784: recorded-but-unverified money does not change an already-open workspace');
 
   -- ---------------------------------------------------------------- SECTION 2
   perform set_config('request.jwt.claims', json_build_object(

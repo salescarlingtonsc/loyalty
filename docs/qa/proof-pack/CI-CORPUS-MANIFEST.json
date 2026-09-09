@@ -833,7 +833,7 @@
       ],
       "businesses_seeded": 5,
       "clients_seeded": 5,
-      "sha256": "3279d9b169588892db0d8efc8f681551be80f0137148fb2acbf1baa062ed4322",
+      "sha256": "afc7f8fea53cd1ec5429e5c188c6fd83745a60ed73206ffcb0c48a3aa790046f",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus_synthetic_scanner --migrated-only"
     },
     {
@@ -844,7 +844,7 @@
       "checks": [],
       "businesses_seeded": 2,
       "clients_seeded": 2,
-      "sha256": "2b759ea4ba04083f10bb0c24de14653d6c773c3446bb89d8cf03542866e6f794",
+      "sha256": "5689eaf4ada84e019c0b1a36016a493d22e2c3e4817e496dfc0544b6d83fa2f1",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v744_corpus_scanner_blind_spots --migrated-only"
     },
     {
@@ -910,7 +910,7 @@
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 0,
-      "sha256": "5a4aa1f1c4d5bdd0a34cb13dccb55bbbe94e9df03bc6180d58457b602b5521f7",
+      "sha256": "60b78ccacb0af1c2b340b46082afb72f8c9eecf4a52c37a7bc16640572bbe774",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v755_corpus_razorpay_billing --migrated-only"
     },
     {
@@ -943,7 +943,7 @@
       "checks": [],
       "businesses_seeded": 3,
       "clients_seeded": 0,
-      "sha256": "fc79b300f627a3f3274681ad1ef0c67a31bb6733b339a6984233453bc325bc9c",
+      "sha256": "26e69a7347491e8eb51e4fb283644729310226d09e78eca629170b91867be587",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v758_corpus_billing_summary --migrated-only"
     },
     {
@@ -954,7 +954,7 @@
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 0,
-      "sha256": "6dbb68bf21f0b484547bc0bb2b325ea499f759d452bf119739e5cae6af7db922",
+      "sha256": "203753eb6e3787d98b322e02b686e8b89399ca34edf6d2f61c85db52e3f44052",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v760_corpus_shared_provider_customers --migrated-only"
     },
     {

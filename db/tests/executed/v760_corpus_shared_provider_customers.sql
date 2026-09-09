@@ -76,6 +76,15 @@ begin
 
   /* One monthly capacity tier carries the fixture's plan id so the applier can resolve cadence
      without the client asserting it. */
+  -- v791 (20261006_nestly_v791_stripe_returns.sql) restored real Stripe price ids on the flat
+  -- (10,000) tiers, the ONLY monthly tier (v664: monthly has no tier above 10,000), when the
+  -- owner reversed the provider back to Stripe. The already-null monthly tier this fixture
+  -- relied on was a byproduct of v755's own migration nulling every price_* id, not a standing
+  -- contract — recreate the pre-condition here inside this rollback-only transaction.
+  update public.billing_capacity_tier_catalog_v664
+     set provider_base_price_id = null
+   where cadence='monthly' and active and provider_base_price_id is not null;
+
   update public.billing_capacity_tier_catalog_v664
      set provider_base_price_id = v_plan_id
    where id = (

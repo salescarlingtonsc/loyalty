@@ -4215,6 +4215,12 @@
       "path": "db/migrations/20261009_nestly_v861_custom_lines_pay_no_commission.sql",
       "semanticVersion": "v861",
       "proposedDeployVersion": "20261009180000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261009_nestly_v851_one_overload_per_reward_rpc.sql",
+      "semanticVersion": "v851",
+      "proposedDeployVersion": "20261009190000"
     }
   ]
 }

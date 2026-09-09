@@ -1,3 +1,5 @@
+-- nestly_v851 (2026-09-09) added two allowlist rows (app.on_sale_item_commission_snapshot_v825,
+-- public.customer_delete_account_v749), so the sealed allowlist size below is 125, not 121 (two of the four are the nestly_v850 functions v851 lists by name).
 -- EXECUTED acceptance fixture for nestly_v744
 -- (db/migrations/20260920_nestly_v744_scanner_blind_spots.sql).
 --
@@ -274,7 +276,7 @@ begin
   end if;
 
   select count(*) into v_allowlist_size from app.ci_synthetic_scan_allowlist_v743;
-  if v_allowlist_size <> 121 then
+  if v_allowlist_size <> 125 then
     insert into _fail values ('SCANNER_allowlist_size',
       format('allowlist has %s rows (expected 121 = 90 nestly_v743 (incl. main''s v677 kernel, merged 2026-09-03) + 31 nestly_v744)',
              v_allowlist_size));

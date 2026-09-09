@@ -44,7 +44,12 @@ declare
   v_business uuid;v_business2 uuid;v_prospect uuid;v_prospect2 uuid;
   v_checklist uuid;v_checklist2 uuid;
   v_lead jsonb;v_json jsonb;v_submit jsonb;v_replay jsonb;
-  v_actor_text text;v_count integer;v_before integer;v_status text;v_day text:=current_date::text;
+  -- nestly_v685 (Singapore Day Authority, D-10) patched platform_sweep_stalled_onboarding_v513's
+  -- own day-key from `current_date::text` (UTC) to `app.sg_today()::text` (Asia/Singapore). This
+  -- fixture predates that migration and must build the SAME key the RPC now writes, or the two
+  -- diverge for roughly a third of every day (UTC 16:00-23:59, the SGT day-rollover window) and
+  -- the exists() lookups below never match.
+  v_actor_text text;v_count integer;v_before integer;v_status text;v_day text:=app.sg_today()::text;
 begin
   insert into auth.users(id,email,created_at,updated_at)
   values(v_admin,'v513-admin@example.invalid',clock_timestamp(),clock_timestamp()),

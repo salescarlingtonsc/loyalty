@@ -112,6 +112,13 @@ begin
   insert into public.staff(business_id,user_id,role,full_name,active,access_state)
   values (p_business,p_owner,'owner','V689 Owner '||p_label,true,'approved')
   returning id into v_owner_staff;
+  -- nestly_v820 (20261007): a new staff row's customer_bookable is stamped (role='staff') at
+  -- insert, so this owner-role row is created NOT bookable by default. This fixture's tenant is
+  -- solo -- the owner is also the only practitioner appointments are booked against -- and the
+  -- F065 slot-lister assertions below need that person to actually appear on the public booking
+  -- page, exactly the "owner explicitly agree" override v820's comment on
+  -- public.staff.customer_bookable describes.
+  update public.staff set customer_bookable = true where id = v_owner_staff;
 
   insert into public.branches(business_id,name,active,is_default,timezone)
   values (p_business,'V689 Main '||p_label,true,true,'Asia/Singapore')

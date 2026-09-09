@@ -53,6 +53,13 @@ begin
   -- reviewed lead's initial lifecycle state; it is itself versioned,
   -- idempotent and restricted to super-admins by v510.
   v_unexpected:=array_remove(v_unexpected,'platform_resolve_identity_review_v510');
+  -- nestly_v785 (Pipeline schedule): platform_pipeline_set_schedule_v785 updates sme_prospects
+  -- (next_appointment_at/next_follow_up_on/next_action_at) and merely READS current_stage_key
+  -- (joined to sme_pipeline_stages for the operating SLA) — it never writes the stage. It is gated
+  -- exactly like the other CRM writers above: app.v89_platform_can('onboarding','rw') plus
+  -- app.v89_can_access_prospect. The substring detector can't tell "reads the column" from "writes
+  -- it", so it flags this legitimate, scoped writer; allowlist it rather than the stage itself.
+  v_unexpected:=array_remove(v_unexpected,'platform_pipeline_set_schedule_v785');
   if cardinality(v_unexpected)>0 then
     raise exception 'FAIL unexpected authenticated lifecycle writer(s): %',array_to_string(v_unexpected,', ');end if;
 end $$;
