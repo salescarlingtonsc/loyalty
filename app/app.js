@@ -21449,29 +21449,12 @@ async function writeProgrammeSwitchesWithStampConversionV384(set,{paused=false,k
   const stampsRunningBeforeV435=(S.programmes||[]).some(row=>row?.kind==='stamps'&&row.active);
   const tiersOnBeforeV435=(S.programmes||[]).some(row=>row?.kind==='tiers'&&row.active);
   if(set?.points===true&&paused!==true&&stampsRunningBeforeV435){
-    if(!await confirmActionV386('Switch customers to Points? Stamp collecting stops. Stamps that came from an earlier points conversion go back to points at the rate recorded then; stamps earned since are kept, and any gifts already earned can still be claimed at the counter. If you switch back later, their card continues.'))
+    if(!await confirmActionV386('Switch customers to Points? Stamp collecting stops, but customers keep their stamps and any gifts they already earned — those can still be claimed at the counter. If you switch back later, their card continues.'))
       return {ok:false,cancelled:true,skipped:true,error:null};
-    /* nestly_v871 (owner, 2026-09-09: the 75,800-point movement "was a switch program by the
-       boss from points to stamps and it was converted"). business_switch_to_stamps_v384 has an
-       inverse now: business_switch_to_points_v871 returns what the recorded conversion issued
-       — and only what the customer still holds — at the RECORDED points_per_stamp, then flips
-       the spine back through set_programmes_v314. 22023 means this firm never converted, and
-       the plain switch below is the whole answer. Any other error is a real failure. */
-    const reverseKeyV871=key||crypto.randomUUID();
-    const {data:reversedV871,error:reverseErrorV871}=await sb.rpc('business_switch_to_points_v871',{
-      p_business:S.biz.id,p_idempotency_key:reverseKeyV871});
-    if(!reverseErrorV871){
-      rememberProgrammeSpineV314(reversedV871?.programmes);
-      /* A fixed sentence (no interpolation): toasts are translated as whole strings (V97). */
-      if(Number(reversedV871?.customers||0)>0)toast('Converted points were returned to customers at the recorded rate.');
-      /* The reverse keeps tiers as they are; honour an explicit tiers:false in the requested set. */
-      if(set?.tiers===false&&tiersOnBeforeV435){
-        const tiersResultV871=await writeProgrammeSwitchesV314(S.biz.id,set,{paused,key:crypto.randomUUID()});
-        if(tiersResultV871.ok&&!tiersResultV871.skipped)toast('Points are running. Tiers switched OFF with this change — turn them back on from the Tiers page if you still want them.');
-      }
-      return {ok:true,skipped:false,error:null,data:reversedV871};
-    }
-    if(String(reverseErrorV871.code||'')!=='22023')return {ok:false,skipped:false,error:reverseErrorV871};
+    /* Owner ruling 2026-09-09: converting on the switch TO stamps is one-way — "it should follow the
+       new rewards moving forward". Switching back to points parks the stamps pot (V355) and does NOT
+       turn converted stamps back into points; the customer sees the parked pot on their wallet card
+       (nestly_v871 parked_programmes). No reverse conversion is issued from here. */
   }
   const resultV435=await writeProgrammeSwitchesV314(S.biz.id,set,{paused,key});
   if(resultV435.ok&&!resultV435.skipped&&set?.points===true&&paused!==true
