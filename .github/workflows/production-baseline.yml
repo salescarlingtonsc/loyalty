@@ -28,14 +28,21 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Quality checks
-        run: npm run quality
-
-      - name: Tests
-        run: npm test
-
-      - name: Build validation
-        run: npm run build
+      # -----------------------------------------------------------------------
+      # `npm run validate`, not the three steps it replaced. Added 2026-09-09 (owner: "add npm
+      # run validate to CI so this doesn't recur").
+      #
+      # WHY: this job used to run quality -> npm test -> build. Those pass while the repo is
+      # inconsistent in ways only the check-only scripts catch: an app.js pushed without
+      # `bundle-stamp` (stale ?v= cache keys, so a returning browser keeps yesterday's file), a
+      # stylesheet pair behind index.html (`app-css:check`), icons or runtime config out of date,
+      # and — twice in one day — migration manifests certifying files that no longer existed
+      # (`migration-manifest:check`, `canonical-migrations:check`). Each of those was green in
+      # `npm test` and red in `npm run validate`, and each landed on main. `validate` is exactly
+      # the old three steps plus those six checks, so nothing runs twice.
+      # -----------------------------------------------------------------------
+      - name: Validate (quality, generated-file freshness, migration governance, tests, build)
+        run: npm run validate
 
   # ---------------------------------------------------------------------------
   # Executed SQL. Added 2026-08-22.
