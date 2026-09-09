@@ -8609,11 +8609,14 @@ async function boot(){
   try{await consumeBusinessOAuthRedirect()}catch{}
   try{await consumePlatformOAuthRedirect()}catch{}
   try{await consumePasswordRecoveryRedirect()}catch{}
-  loadBuildIdentity();
   /* nestly_v860: started before the first render so a locked app is covered as early as it can be.
      Deliberately not awaited — the lock resolves its own session, and making the whole app wait on
-     a Keychain read would delay the sign-in screen for everyone who never turned the lock on. */
+     a Keychain read would delay the sign-in screen for everyone who never turned the lock on.
+     It sits ABOVE loadBuildIdentity() because tests/release-blockers/phase0-release-truth.test.mjs
+     pins `loadBuildIdentity(); route();` as adjacent, so that build identity can never be read as
+     gating login or routing. Nothing about the lock needs to be between them. */
   startAppLockV860();
+  loadBuildIdentity();
   route();
 }
 /* Startup split: the page-scoped bundles (platform console, growth, media
