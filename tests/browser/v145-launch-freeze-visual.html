@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="0c9b5ff720317d9bd155742dab8700f576e9b1caa54b8e43865d9f0a9ef60930"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="3d0781022089c89234ced2825bae09319d93838b7cb2fdf18119149aae52ca78"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5797,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 0c9b5ff720317d9bd155742dab8700f576e9b1caa54b8e43865d9f0a9ef60930</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3d0781022089c89234ced2825bae09319d93838b7cb2fdf18119149aae52ca78</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6979,7 +6979,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         was:previousSummary?String(previousSummary.visits||0):null},
       {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange,
         was:previousSummary?money(previousSummary.revenue_cents||0):null},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange,
+      /* nestly_v879 (number-accuracy audit): public.clients has no branch column, so this figure
+         is whole-company however the branch scope is set, and it counts records CREATED — not
+         first purchases, which is what "New customers" means on Reports and the owner brief. The
+         server publishes both facts (scope.new_customers); the tile now says them. */
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Whole company · customer records created',delta:newCustomersChange,
         was:(previousSummary&&previousSummary.availability?.clients!==false)?String(previousSummary.new_customers||0):null}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
@@ -7392,7 +7396,16 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
        out and "0 points" written beside the pill). A programme row has to state THIS customer's
        standing, and for the tier row that means the ladder plus the firm's chosen tier basis.
        Both are fail-soft: an unreadable ladder makes the row say so, never invent a tier. */
-    canReadLoyalty?sb.from('loyalty_tiers').select('id,name,threshold').eq('business_id',S.biz.id)
+    /* nestly_v879: WHICH rungs. This read took the whole table, so a rung the owner had deleted or
+       paused still stood in the ladder this profile rebuilds — and app.tier_resolve_v426, the one
+       resolver the earn engine and the customer's own app both go through, refuses exactly those
+       rows (owner ruling v394: a paused or deleted tier grants nothing). At Cubbly SPA that put a
+       phantom rung on 9 of 13 customer profiles, four of them "Essential" off a rung deleted on
+       2026-08-15. The window columns come back too because the resolver also honours
+       effective_from/expires_at, which one PostgREST filter cannot express — the same window is
+       applied at tierLadderV296 below. */
+    canReadLoyalty?sb.from('loyalty_tiers').select('id,name,threshold,effective_from,expires_at')
+      .eq('business_id',S.biz.id).is('deleted_at',null).eq('paused',false)
       .order('threshold').then(r=>r.error?null:(r.data||[])).catch(()=>null):Promise.resolve(null),
     canReadLoyalty?sb.from('loyalty_programs').select('tier_basis').eq('business_id',S.biz.id).limit(1)
       .then(r=>r.error?null:((r.data||[])[0]?.tier_basis||null)).catch(()=>null):Promise.resolve(null)
@@ -7441,8 +7454,18 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     tierMetricV296=earnedV296.error?null
       :(earnedV296.data||[]).reduce((total,row)=>total+(Number(row.points)||0),0);
   }
+  /* nestly_v879: the second half of the resolver's own WHERE clause — a rung that has not started
+     yet, or has already ended, grants nothing either. Both columns are null on every tenant today,
+     so this changes no live figure; it is here so the browser's ladder cannot drift from
+     app.tier_resolve_v426 the day an owner dates a rung. */
+  const tierRungLiveV838=(tier,at=Date.now())=>{
+    const from=tier?.effective_from?Date.parse(tier.effective_from):null;
+    const until=tier?.expires_at?Date.parse(tier.expires_at):null;
+    return !(Number.isFinite(from)&&from>at)&&!(Number.isFinite(until)&&until<=at);
+  };
   const tierLadderV296=Array.isArray(loyaltyTiersV296)
-    ?[...loyaltyTiersV296].sort((a,b)=>(Number(a.threshold)||0)-(Number(b.threshold)||0)):null;
+    ?loyaltyTiersV296.filter(tier=>tierRungLiveV838(tier))
+      .sort((a,b)=>(Number(a.threshold)||0)-(Number(b.threshold)||0)):null;
   const tierStandingV296=!tierLadderV296||!tierLadderV296.length||tierMetricV296==null
     ?{known:false,current:null,next:null}
     :{known:true,
@@ -8064,10 +8087,20 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   let pointsHistoryResultV259=null;
   async function loadPointsHistoryV259(){
     if(pointsHistoryResultV259)return pointsHistoryResultV259;
-    const {data,error}=await fetchAllRowsResult(()=>sb.from('points_ledger')
-      .select('id,created_at,entry_type,points,sale_id,reference',{count:'exact'})
-      .eq('business_id',S.biz.id).eq('client_id',id)
-      .order('created_at',{ascending:true}).order('id'));
+    /* nestly_v879 (number-accuracy audit): this read summed EVERY pot the firm ever ran and
+       labelled the running balance with the live unit — on Cubbly SPA the dialog's "Ledger total"
+       disagreed with the pot-scoped balance on the card that opened it. Scoped to the live pot by
+       the one rule (liveBalanceProgrammeIdV461, mirroring app.live_balance_programme_v381), the
+       same way activityEarnedBySaleV375 already is. NULL (nothing running) keeps the whole ledger,
+       and the footer says which it printed. */
+    const potV879=liveBalanceProgrammeIdV461();
+    const {data,error}=await fetchAllRowsResult(()=>{
+      let query=sb.from('points_ledger')
+        .select('id,created_at,entry_type,points,sale_id,reference,programme_id',{count:'exact'})
+        .eq('business_id',S.biz.id).eq('client_id',id);
+      if(potV879)query=query.eq('programme_id',potV879);
+      return query.order('created_at',{ascending:true}).order('id');
+    });
     if(error)return {error};
     pointsHistoryResultV259={rows:data||[]};
     return pointsHistoryResultV259;
@@ -8125,7 +8158,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
       <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th class="num">Points</th><th class="num">Balance</th></tr></thead>
       <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
-      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}. ${programmePausedV259
+      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}${liveBalanceProgrammeIdV461()?' in the running programme — movements in a paused or retired programme are not listed here':''}. ${programmePausedV259
         ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
         :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</p>`;
     CUI.enhance(body);
@@ -8906,9 +8939,15 @@ function renderHistPage(history,n,offsetV468=0){
     const d=data||{},byKind=d.revenue_by_kind||{},nonRevByKind=d.non_revenue_by_kind||{},pt=d.points_by_type||{};
     lastScope={...scope,clientsAvailable:d.availability?.clients_export===true};
     const creditLiabilityAvailable=d.availability?.credit_liability===true;
-    const liab=creditLiabilityAvailable?d.credit_liability_cents:null,gcOut=d.gift_card_liability_cents||0;
+    /* nestly_v879: get_reports_summary still answers gift_card_liability_cents and
+       availability.gift_cards, and this function still bound both to names nothing rendered —
+       code that looked like a card was about to show gift-card money and never did. Under the
+       owner rulings of 2026-09-05 and 2026-09-08 gift cards are RETIRED (see
+       RETIRED_BUSINESS_MODULES_V768), so not rendering them is the correct outcome; the reads
+       are dropped so the intent is stated rather than left dangling. The server fields stay —
+       history is not being erased — they simply have no reader here. */
+    const liab=creditLiabilityAvailable?d.credit_liability_cents:null;
     const loyaltyAvailable=d.availability?.loyalty===true;
-    const giftCardsAvailable=d.availability?.gift_cards===true;
     const reconciliation=d.reversal_reconciliation||{};
     const reversalRows=Number(reconciliation.compensating_rows||0);
     const reversedCents=Number(reconciliation.reversed_revenue_cents||0);
@@ -8963,9 +9002,16 @@ function renderHistPage(history,n,offsetV468=0){
         <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} earned</td><td class="num"><b>${pt.earn||0}</b></td></tr>
         <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} redeemed</td><td class="num"><b>${Math.abs(pt.redeem||0)}</b></td></tr>
         <tr><td>${esc(loyaltyUnitNounV461(d.loyalty_unit))} expired</td><td class="num"><b>${Math.abs(pt.expire||0)}</b></td></tr>
-        <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr></table>
+        <tr><td>Manual adjustments</td><td class="num"><b>${pt.adjust||0}</b></td></tr>
+        ${/* nestly_v879 (number-accuracy audit): the sentence below asked the owner to do the sum
+             and left out the adjustments row directly above it — on Cubbly SPA the stated formula
+             overstated what customers still hold 20x. The four rows are the SIGNED ledger sums
+             (redeem/expire arrive negative), so their plain total is the period's net, printed here
+             so nobody has to compute it. These rows are window-scoped; the outstanding balance on the
+             Liabilities card beside this is not, so the row says "from this period". */''}
+        <tr><td><b>Still held from this period</b></td><td class="num"><b>${(Number(pt.earn)||0)+(Number(pt.redeem)||0)+(Number(pt.expire)||0)+(Number(pt.adjust)||0)}</b></td></tr></table>
         ${/* V297: 78,232 points earned means nothing without knowing which way each row points. */''}
-        <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned minus redeemed and expired is what customers are still holding — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
+        <p class="muted small" style="margin-top:8px">Earned is what customers built up this period, redeemed is what they spent, expired is what lapsed unused. Earned, minus redeemed, minus expired, plus or minus manual adjustments, is what customers are still holding from this period — a big unredeemed balance is a reward they can still come back and claim from you.</p></div>`:
         '<div class="card"><b>Loyalty flow</b><p class="muted small" style="margin-top:8px">Unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</p></div>'}
       <div class="card"><b>Liabilities (business-wide, now)</b><table style="margin-top:8px">
         <tr><td>Customer credit outstanding</td><td class="num"><b>${creditLiabilityAvailable?money(liab):'Unavailable'}</b></td></tr></table>
@@ -9476,9 +9522,16 @@ function renderHistPage(history,n,offsetV468=0){
           }
           const valid=await dayValidVisitsV468();
           if(valid.error)return {error:valid.error};
+          /* nestly_v879 (number-accuracy audit): the tile counts one visit per customer per
+             Singapore day (app.ci_visit_day_v699) while this list printed every qualifying sale
+             row — 2 against 17 on one screen for Cubbly SPA, 2026-08-24. Same rule here: the
+             day's first qualifying sale per customer; walk-ins (no client) one row each. */
+          const visitDayRowsV879=(()=>{const seen=new Set();return [...valid.rows]
+            .sort((a,b)=>String(a.occurred_at||'').localeCompare(String(b.occurred_at||'')))
+            .filter(r=>{if(!r.client_id)return true;const k=`${r.client_id}|${(sgt(r.occurred_at)||'').slice(0,10)}`;if(seen.has(k))return false;seen.add(k);return true;});})();
           if(key==='visits')return {head:['Time','Customer','Item','Kind'],
             note:DAILY_REPORT_METRIC_DEFINITIONS_V468.visits.definition,
-            rows:valid.rows.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Kind">${esc(String(r.kind||'').replace('_',' '))}</td></tr>`)};
+            rows:visitDayRowsV879.map(r=>`<tr><td data-label="Time">${esc(dayTimeV468(r))}</td><td data-label="Customer">${customerCell(r.client_id,r.custName,r.custPhone)}</td><td data-label="Item">${esc(r.label||'')}</td><td data-label="Kind">${esc(String(r.kind||'').replace('_',' '))}</td></tr>`)};
           /* One line per customer RECORD, which is what the tile counts — a customer with three
              valid visits today is one row here, and the visit count is stated on it. */
           const perCustomer=new Map();
@@ -10230,7 +10283,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'0c9b5ff720317d9bd155742dab8700f576e9b1caa54b8e43865d9f0a9ef60930',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'3d0781022089c89234ced2825bae09319d93838b7cb2fdf18119149aae52ca78',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

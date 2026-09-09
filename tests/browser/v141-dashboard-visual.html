@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="aec6b101d6bc49bf78a0ba77bab2a3fbc42b3ad23b7daf04f76504cc768a3d3c"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="b0211570165b601ccd3457e1e68d9d6be78528f47de49909496d57ad7766b670"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -6849,7 +6849,11 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         was:previousSummary?String(previousSummary.visits||0):null},
       {key:'revenue',value:money(d.revenue_cents||0),hint:'',delta:revenueChange,
         was:previousSummary?money(previousSummary.revenue_cents||0):null},
-      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'',delta:newCustomersChange,
+      /* nestly_v879 (number-accuracy audit): public.clients has no branch column, so this figure
+         is whole-company however the branch scope is set, and it counts records CREATED — not
+         first purchases, which is what "New customers" means on Reports and the owner brief. The
+         server publishes both facts (scope.new_customers); the tile now says them. */
+      customerMetricsAvailable&&{key:'new',value:String(d.new_customers||0),hint:'Whole company · customer records created',delta:newCustomersChange,
         was:(previousSummary&&previousSummary.availability?.clients!==false)?String(previousSummary.new_customers||0):null}
     ].filter(Boolean);
     if(customerMetricsAvailable&&canReadModule('clients')){
@@ -6985,6 +6989,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'aec6b101d6bc49bf78a0ba77bab2a3fbc42b3ad23b7daf04f76504cc768a3d3c',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'b0211570165b601ccd3457e1e68d9d6be78528f47de49909496d57ad7766b670',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

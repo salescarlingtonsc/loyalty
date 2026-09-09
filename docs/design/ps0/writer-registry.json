@@ -2383,6 +2383,19 @@
       "kernel_migratability": "follows db.fn:public.business_switch_to_stamps_v384/4 — INDEPENDENT, run-once administrative conversion."
     },
     {
+      "id": "db.fn:public.business_switch_to_points_v871/2",
+      "surface": "db_function",
+      "latest_file": "20261010070000_nestly_v871_stamp_conversion_reverses_and_parked_pots_are_visible.sql",
+      "rows_written": "points_batches:UPDATE (FEFO drain of the stamps pot, oldest first) and INSERT (new points batch backing the restored points, no expiry), points_ledger:INSERT (two adjust rows per customer - stamps returned negative, points restored positive), programme_stamp_reversals_v871:INSERT (idempotency receipt, one per reversal); via public.set_programmes_v314: business_programmes, loyalty_programs, audit_log",
+      "detected_signals": "idem-signal, advisory-lock, FOR UPDATE row-lock",
+      "entry_point": "business_switch_to_points_v871(p_business, p_idempotency_key) — the inverse of business_switch_to_stamps_v384, at the RECORDED points_per_stamp of the tenant's latest points-to-stamps conversion (never a caller-supplied rate). Per customer it returns only what that conversion issued and the customer still holds (least(issued, current stamps)) — stamps since spent stay spent, stamps since earned as regular play stay stamps. It then delegates to public.set_programmes_v314 (points true, stamps false, tiers left as-is, SAME idempotency key) to switch the spine back, exactly as v384 switched it away.",
+      "idempotency": "pg_advisory_xact_lock per business (same lock name v384 uses), then a replay of the SAME (business_id, idempotency_key) returns the stored response from programme_stamp_reversals_v871 without re-running anything. Reverses only the tenant's single latest recorded conversion, and refuses (23505) if that specific conversion has already been reversed once — a conversion can be reversed once, ever.",
+      "value": "VALUE MOVES, NOTHING IS MINTED FOR FREE. Pre- and post-state conservation between points_ledger sums and points_batches remaining sums is asserted (raises XX001 if not), exactly as v384 asserts before it moves anything. Per customer it drains the stamps batches FEFO (expires_at nulls last, earned_at, id; FOR UPDATE) by exactly the stamps being returned, writes one points_ledger adjust of -stamps on the stamps programme and one of +stamps*rate on the points programme, both under the sanctioned 'programme_pot_transfer' write-guard scope, and inserts one points_batches row backing the restored points. If the FEFO walk cannot account for the full amount it raises 23514 and the whole reversal rolls back.",
+      "authority": "SECURITY DEFINER, canonical search_path, EXECUTE revoked from PUBLIC/anon and granted only to authenticated/service_role; re-checks app.c45_owner_loyalty_write(p_business) first, so only an owner-scoped loyalty writer of that business can call it. Also gated on app.loyalty_integrity_control_v480.conversions_enabled (raises 55000 when disabled). The exception handler clears the write-guard scope before re-raising.",
+      "kernel": "NOT SETTLEMENT-BEARING — it touches no sale, no credit_ledger and no stored value; it un-does a prior owner-chosen re-denomination of an existing liability, alongside the spine flip the owner already ordered.",
+      "kernel_migratability": "INDEPENDENT — a run-once-per-conversion administrative reversal, not a checkout-path writer. It shares no row with sales or credit_ledger and would move under a unified checkout kernel unchanged; what the kernel would eventually own is the ordinary earn/redeem traffic on the two pots it bridges. Not called from app/app.js as of this migration — no browser.rpc binding exists yet."
+    },
+    {
       "id": "db.fn:public.staff_manual_redeem_reward_v404/8",
       "surface": "db_function",
       "latest_file": "20260821000002_nestly_v404_manual_reward_redemption.sql",

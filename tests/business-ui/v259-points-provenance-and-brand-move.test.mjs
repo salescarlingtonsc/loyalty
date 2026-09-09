@@ -63,7 +63,13 @@ test('V259 the dialog uses the shared modal + CUI.activateDialog pattern', () =>
 /* ------------------------------------------------------- (1b) the rows are the real ledger */
 
 test('V259 the history reads points_ledger, business- and customer-scoped, oldest first', () => {
-  assert.match(clientDetail, /sb\.from\('points_ledger'\)\s*\n?\s*\.select\('id,created_at,entry_type,points,sale_id,reference'/);
+  /* nestly_v879 (number-accuracy audit, commit 3ea31548): the select gained `programme_id` and the
+     query gained an optional `.eq('programme_id',potV879)` scope to the live pot — the dialog's
+     "Ledger total" had been summing every pot the firm ever ran, disagreeing with the pot-scoped
+     balance on the card that opened it. The original guarantee this test protects — points_ledger,
+     scoped to business AND customer, oldest first — is unchanged; both eq() calls and both order()
+     calls below are byte-identical to before v879. Only the select string is updated to match. */
+  assert.match(clientDetail, /sb\.from\('points_ledger'\)\s*\n?\s*\.select\('id,created_at,entry_type,points,sale_id,reference,programme_id'/);
   assert.match(clientDetail, /\.eq\('business_id',S\.biz\.id\)\.eq\('client_id',id\)/);
   assert.match(clientDetail, /\.order\('created_at',\{ascending:true\}\)\.order\('id'\)/);
 });

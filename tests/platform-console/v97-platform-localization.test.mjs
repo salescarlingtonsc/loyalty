@@ -363,7 +363,12 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // no subscription exists / no lifecycle row exists).
   // Merged 2026-09-03: main's F130 (+17) and the CI-100 wave's v727/check-98/v734 strings (+14, itemised
   // below) are both live, so the inventory is the sum of the two sides' additions.
-  assert.equal(explicit.length,1251,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch + v785 Pipeline + v793 due-day buckets (+5) + v797 card on the branch line (+5)
+  // nestly_v860-v878 (internal/QA firm exclusion, nestly_v879 number-accuracy audit): +3 distinct
+  // explicit pt() strings — the synthetic-firm 'Internal' pill on the firm roster row, the overview
+  // KPI footnote template '{count} internal or QA firm(s) excluded from these totals.', and the
+  // workspace-mirror 'Paused programmes still owed' label. All three shipped with no zh-CN or ms
+  // dictionary entry at all; both dictionaries carry them now.
+  assert.equal(explicit.length,1254,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch + v785 Pipeline + v793 due-day buckets (+5) + v797 card on the branch line (+5) + v860-v878 internal/QA firm exclusion (+3)
   // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
   // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
   // submitLabel are a ternary expression, not a literal, so they are not metadata matches).
