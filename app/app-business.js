@@ -3563,7 +3563,7 @@ async function decideBookingRequestGlobalV329(id,decision,contactDetails){
 }
 async function openBookingRequestPopupV329ById(id){
   if($('bookingRequestPopupV329'))return; // one at a time — a second INSERT while one is open just refreshes the badge
-  const {data,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name), staff(full_name), branches(name,address)')
+  const {data,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name), bundles!booking_requests_bundle_id_fkey(name), staff(full_name), branches(name,address)')
     .eq('id',id).eq('business_id',S.biz.id).maybeSingle();
   if(error||!data||!STAFF_BOOKING_DECISION_STATUSES.has(data.status))return;
   openBookingRequestPopupV329(data);
@@ -3702,7 +3702,7 @@ function openBookingRequestPopupV329(row){
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingRequestPopupV329" role="dialog" aria-modal="true" aria-labelledby="bookingRequestPopupTitleV329" tabindex="-1"><div class="modal-card" style="max-width:480px">
     <div class="row"><div><h2 id="bookingRequestPopupTitleV329">New booking request</h2><p class="muted small" style="margin-top:4px">${esc(row.name||'A customer')} wants to book.</p></div><span class="spacer"></span><button class="btn ghost sm" id="bookingRequestPopupCloseV329" type="button">Close</button></div>
     <div class="imp-note" style="margin-top:12px">
-      <div><b>Service</b> ${esc(row.services?.name||'General visit')}</div>
+      <div><b>Service</b> ${esc(bookingRequestForNameV882(row)||'General visit')}</div>
       <div><b>Preferred time</b> ${esc(sgt(row.preferred_at)||'—')}</div>
       <div><b>Team member</b> ${esc(row.staff?.full_name||'Anyone available')}</div>
       ${row.branches?.name?`<div><b>Branch</b> ${esc(row.branches.name)}</div>`:''}
@@ -12343,6 +12343,11 @@ function focusNotifiedBookingV206(list){
   if(action)action.focus({preventScroll:true});
   setTimeout(()=>row.classList.remove('is-notified-v206'),2600);
 }
+/* nestly_v882: a booking request is FOR a service or a bundle; every surface that prints the
+   service name goes through here so a bundle request never reads as a "General visit". */
+function bookingRequestForNameV882(row){
+  return row?.services?.name||(row?.bundles?.name?`Bundle · ${row.bundles.name}`:null);
+}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -12355,6 +12360,9 @@ function bookingDecisionNotice(result,decision){
      failure. Name the real cause and the fix (Change time / staff) instead of a bare snake_case
      outcome string. */
   if(outcome==='scheduling_conflict')return {ok:false,text:`${verb} could not be applied — the team member isn't available at that time, per their schedule. Try "Change time / staff" for a different slot.`};
+  /* nestly_v882: the server now names a request whose preferred time has passed instead of letting
+     the scheduler's raw refusal through. The rescue is Move & confirm on the Bookings row. */
+  if(outcome==='past_start')return {ok:false,text:'This time has already passed. Pick a new date and time and press Move & confirm, or decline the request.'};
   return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
 }
 function sectionTabsV200(root,{key='',label='Sections'}={}){
@@ -12541,7 +12549,7 @@ async function bookingsPage(){
     <p class="muted small">Booking rules, opening hours and who customers may choose now live in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>`;
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   async function load(){
-    const {data:br,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
+    const {data:br,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name), bundles!booking_requests_bundle_id_fkey(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
     if(!isCurrent())return;
     const list=$('blist');if(!list?.isConnected)return;
     /* V288 (audit A2, MEDIUM 19): a failed read used to raise a toast and leave the card on
@@ -12582,7 +12590,7 @@ async function bookingsPage(){
       return `<tr data-booking-row="${esc(b.id)}"${rowClassV594?` class="${rowClassV594}"`:''}${b.appointment_id?` data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
-        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
+        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||(b.bundles?.name?`Bundle · ${b.bundles.name}`:'')||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}${staleV880?' <span class="pill no" data-booking-stale-v880>Time has passed</span>':''}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
       ${/* nestly_v584 (owner photo 13: Confirm and Decline struck out, a green tick and a red cross
@@ -29158,7 +29166,7 @@ async function appointmentsPage(){
          (v327), so the filter is "this branch OR none on file" — the same one loadList uses. A
          failed read costs the tiles only: `error` below still ignores it. */
       canReadModule('bookings')
-        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min)',{count:'exact'})
+        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min),bundles!booking_requests_bundle_id_fkey(name)',{count:'exact'})
             .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
             .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
             .gte('preferred_at',sgDateBoundary(start)).lt('preferred_at',sgDateBoundary(end)).order('preferred_at'))
@@ -29206,7 +29214,7 @@ async function appointmentsPage(){
          branch business always has branch_id=null on its requests, so the filter stays "this
          branch OR none on file", exactly as the day view's read did. */
       view==='list'&&canReadModule('bookings')
-        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min)',{count:'exact'})
+        ?fetchAllRowsResult(()=>sb.from('booking_requests').select('id,name,phone,party_size,notes,preferred_at,staff_id,status,services(name,duration_min),bundles!booking_requests_bundle_id_fkey(name)',{count:'exact'})
             .eq('business_id',S.biz.id).or(`branch_id.is.null,branch_id.eq.${branchId}`)
             .in('status',[...STAFF_BOOKING_DECISION_STATUSES])
             .gte('preferred_at',sgDateBoundary(blockedFromV291)).lt('preferred_at',sgDateBoundary(blockedToV291,1)).order('preferred_at'))
@@ -29419,7 +29427,7 @@ async function appointmentsPage(){
       const rescheduling=reschedulingRequestIdV329===r.id;
       const callNumber=normalizeSingaporeCustomerPhone(r.phone);
       const waUrl=appointmentWhatsAppUrlV129({phone:r.phone,businessName:S.biz.name,customerName:r.name,
-        serviceName:r.services?.name,startsAt:r.preferred_at,staffName:r.staff_id?staffName[r.staff_id]:null,
+        serviceName:bookingRequestForNameV882(r),startsAt:r.preferred_at,staffName:r.staff_id?staffName[r.staff_id]:null,
         status:'awaiting your confirmation'});
       /* V330 (owner: "boss only cares about service/staff/date+time — these 3 should be bigger
          font"). The three decision-critical facts lead in a bigger line; the customer's own
@@ -29428,7 +29436,7 @@ async function appointmentsPage(){
       return `<div class="pending-request-card${r.id===highlightRequestId?' pending-request-highlight-v329':''}" id="pendingRequestCardV329-${esc(r.id)}" data-pending-request-card="${esc(r.id)}">
         <div class="row" style="align-items:flex-start;gap:10px">
           <div style="flex:1;min-width:0">
-            <div class="pending-request-core-v330">${esc(r.services?.name||'General visit')} · ${esc(r.staff_id?(staffName[r.staff_id]||'Team member'):'Anyone available')} · ${esc(bookingRequestBigWhenV330(r.preferred_at))}</div>
+            <div class="pending-request-core-v330">${esc(bookingRequestForNameV882(r)||'General visit')} · ${esc(r.staff_id?(staffName[r.staff_id]||'Team member'):'Anyone available')} · ${esc(bookingRequestBigWhenV330(r.preferred_at))}</div>
             <div class="small" style="margin-top:4px">
               <b>${esc(r.name||'Customer')}</b>${r.phone?` · ${esc(r.phone)}`:''}
               ${callNumber?` <a class="btn ghost sm" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:16})} Call</a>`:''}
@@ -29456,7 +29464,7 @@ async function appointmentsPage(){
   function pendingRequestContactDetailsV330(id){
     const r=pendingRequests.find(row=>row.id===id);
     if(!r)return null;
-    return {customerName:r.name,phone:r.phone,serviceName:r.services?.name,
+    return {customerName:r.name,phone:r.phone,serviceName:bookingRequestForNameV882(r),
       staffName:r.staff_id?staffName[r.staff_id]:null,startsAt:r.preferred_at,
       location:visibleBranches.find(b=>b.id===branchId)?.address};
   }
@@ -29512,7 +29520,7 @@ async function appointmentsPage(){
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pendingTileModalV330" role="dialog" aria-modal="true" aria-labelledby="pendingTileModalTitleV330" tabindex="-1"><div class="modal-card" style="max-width:460px">
       <div class="row"><div><h2 id="pendingTileModalTitleV330">Booking request</h2><p class="muted small" style="margin-top:4px">Not yet confirmed — still holds this slot.</p></div><span class="spacer"></span><button class="btn ghost sm" id="pendingTileModalCloseV330" type="button">Close</button></div>
       <div class="imp-note" style="margin-top:12px">
-        <div><b>Service</b> ${esc(row.services?.name||'General visit')}</div>
+        <div><b>Service</b> ${esc(bookingRequestForNameV882(row)||'General visit')}</div>
         <div><b>Team member</b> ${esc(row.staff_id?(staffName[row.staff_id]||'Team member'):'Anyone available')}</div>
         <div><b>Time</b> ${esc(bookingRequestBigWhenV330(row.preferred_at))}</div>
         <div><b>Customer</b> ${esc(row.name||'Customer')}${row.phone?` · ${esc(row.phone)}`:''}</div>

@@ -92,6 +92,9 @@ export function validBookingPayload(body) {
     && UUID_PATTERN.test(String(body.submission_id || ''))
     && (!body.service || UUID_PATTERN.test(String(body.service)))
     && (!body.table_type || UUID_PATTERN.test(String(body.table_type)))
+    // nestly_v882: an optional requested bundle. Shape only, and never alongside a service or a
+    // table hold — the tenant, active flag and schedulability are re-checked in the database.
+    && (!body.bundle || (UUID_PATTERN.test(String(body.bundle)) && !body.service && !body.table_type))
     // v183: an optional requested team member. Shape only — the tenant, the customer-bookable
     // flag and the service assignment are re-checked in the database.
     && (!body.staff || UUID_PATTERN.test(String(body.staff)))

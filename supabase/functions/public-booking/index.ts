@@ -39,10 +39,13 @@ Deno.serve(async (req) => {
         const service = params.get('service') || '';
         const staff = params.get('staff') || '';
         const branch = params.get('branch') || '';
+        // nestly_v882: a bundle's slot length is its summed service durations; never with a service.
+        const bundle = params.get('bundle') || '';
         const from = params.get('from') || '';
         const days = Number(params.get('days') || '7');
         if ((service && !UUID_PATTERN.test(service)) || (staff && !UUID_PATTERN.test(staff))
-          || (branch && !UUID_PATTERN.test(branch))) return publicError(req);
+          || (branch && !UUID_PATTERN.test(branch))
+          || (bundle && (!UUID_PATTERN.test(bundle) || service))) return publicError(req);
         if (from && !DATE_PATTERN.test(from)) return publicError(req);
         if (!Number.isInteger(days) || days < 1 || days > 14) return publicError(req);
         const { data, error } = await adminClient().rpc('internal_public_booking_availability', {
@@ -53,6 +56,7 @@ Deno.serve(async (req) => {
           p_days: days,
           // v327: the branch the customer picked, when this business has more than one.
           p_branch: branch || null,
+          p_bundle: bundle || null,
         });
         if (error || !data) return publicError(req);
         /* v637: an availability read means the customer is picking a slot — funnel 'started'. */
@@ -130,6 +134,8 @@ Deno.serve(async (req) => {
       // v327: the requested branch. The database re-validates it against the tenant and its
       // active status, and that the requested staff member is actually assigned to it.
       p_branch: body.branch || null,
+      // nestly_v882: a bundle request; the database refuses it alongside a service or table hold.
+      p_bundle: body.bundle || null,
     });
     if (error || !data) return publicError(req);
     if (data.conflict) return conflictError(req);

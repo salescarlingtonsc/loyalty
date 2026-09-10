@@ -55,6 +55,8 @@ export function canonicalBookingRequest(input: Record<string, unknown>) {
   if (input.staff) request.staff = String(input.staff);
   // v327: same reasoning, for a requested branch.
   if (input.branch) request.branch = String(input.branch);
+  // nestly_v882: same reasoning, for a requested bundle.
+  if (input.bundle) request.bundle = String(input.bundle);
   return request;
 }
 

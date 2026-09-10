@@ -4306,6 +4306,12 @@
       "version": "20261010150000",
       "name": "nestly_v879_paid_means_the_contract_was_paid",
       "sourcePath": "db/migrations/20261010_nestly_v879_paid_means_the_contract_was_paid.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010170000",
+      "name": "nestly_v882_booking_past_start_expiry_and_bookable_bundles",
+      "sourcePath": "db/migrations/20261010_nestly_v882_booking_past_start_expiry_and_bookable_bundles.sql"
     }
   ]
 }

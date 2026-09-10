@@ -9918,7 +9918,11 @@ async function renderPortal(slug){
   const bc=contrastSafeBrandColor(CUSTOMER_SURFACE_ACCENT_V375);
   const currency=biz.currency||'SGD';
   const services=(biz.services&&biz.services.length)?biz.services:[];
-  const hasServices=services.length>0;
+  /* nestly_v882 (owner: "i need bundle to show for customers to select"). Bundles come from the
+     same page read, already filtered server-side to active bundles with at least one service
+     member; a bundle books as ONE appointment for its summed duration at its own price. */
+  const bundles=Array.isArray(biz.bundles)?biz.bundles.filter(b=>b&&b.id&&Number(b.duration_min)>0):[];
+  const hasServices=services.length>0||bundles.length>0;
   const repeatService=repeatServiceParam?services.find(service=>service.id===repeatServiceParam)||null:null;
   const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
   const usesTables=!!biz.uses_tables;
@@ -9946,6 +9950,7 @@ async function renderPortal(slug){
   const steps=['service',branchChoice?'branch':'',middleStep,'time','details'].filter(Boolean);
   const stepMeta={service:{label:'Service'},branch:{label:'Branch'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
   let selSvc=repeatService?.id||null;     // null = general reservation, or a validated public service uuid
+  let selBundle=null;                     // nestly_v882: a validated public bundle uuid, exclusive with selSvc
   let serviceChosen=!!repeatService||!hasServices;
   let selTable=null;                     // reservation table type uuid (null = any/general)
   // The server lists branches with the shop default first — preselecting it keeps a
@@ -9960,7 +9965,8 @@ async function renderPortal(slug){
   let changeAttempt=null;
   let linkedCustomer=false;
   const nowSgtLocal=new Date(Date.now()+8*3600000).toISOString().slice(0,16);
-  const svcObj=()=>services.find(s=>s.id===selSvc)||null;
+  const svcObj=()=>services.find(s=>s.id===selSvc)||(selBundle?bundles.find(b=>b.id===selBundle)||null:null);
+  const bundleObj=()=>selBundle?bundles.find(b=>b.id===selBundle)||null:null;
   /* A team member is offered for a service when the business made no assignments for that
      service at all, or when this person is one of the people it assigned. Mirrors
      app.v183_bookable_staff() exactly so the page never offers someone the server will reject.
@@ -9972,8 +9978,16 @@ async function renderPortal(slug){
       const branches=Array.isArray(member?.branch_ids)?member.branch_ids:[];
       if(!branches.includes(selBranch))return false;
     }
-    if(!selSvc)return true;
     const assigned=Array.isArray(member?.service_ids)?member.service_ids:[];
+    /* nestly_v882: a bundle is every one of its services in one sitting, so a person is offered
+       only when they can do ALL of them (an unassigned person can do anything, as for services).
+       The server accepts any bookable person for a bundle, so this is a subset of what it allows. */
+    if(selBundle){
+      if(!assigned.length)return true;
+      const needed=Array.isArray(bundleObj()?.service_ids)?bundleObj().service_ids:[];
+      return needed.every(id=>assigned.includes(id));
+    }
+    if(!selSvc)return true;
     if(!assigned.length)return true;
     return assigned.includes(selSvc);
   });
@@ -9991,7 +10005,7 @@ async function renderPortal(slug){
     const matches=staffForService().filter(member=>String(member?.name||'').trim().toLowerCase()===wanted);
     if(matches.length===1)selStaff=matches[0].id;
   }
-  const availabilityKey=()=>JSON.stringify({service:selSvc||'',staff:selStaff||'',branch:selBranch||''});
+  const availabilityKey=()=>JSON.stringify({service:selSvc||'',bundle:selBundle||'',staff:selStaff||'',branch:selBranch||''});
   const slotLabel=iso=>{
     const at=new Date(iso);
     return Number.isNaN(at.getTime())?'':at.toLocaleTimeString('en-SG',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Singapore'});
@@ -10016,11 +10030,14 @@ async function renderPortal(slug){
     const progressHtml=`<ol class="pf-progress" id="pfProgress">${steps.map((k,i)=>`<li data-dot="${i}"><span class="pf-dot" aria-hidden="true">${i+1}</span>${esc(stepMeta[k].label)}</li>`).join('')}</ol>`;
     const serviceStep=`<section class="pf-step" data-step="service" hidden>
       <h2 tabindex="-1">${hasServices?'What would you like?':'Start your booking'}</h2>
-      <p class="pf-hint">${hasServices?'Choose a service to get started.':'Tell us a little about your visit.'}</p>
+      <p class="pf-hint">${hasServices?(bundles.length?'Choose a service or bundle to get started.':'Choose a service to get started.'):'Tell us a little about your visit.'}</p>
       ${hasServices?`<div class="pf-choice" role="group" aria-label="Choose a service">
         ${services.map(s=>`<button class="svc${selSvc===s.id?' sel':''}" type="button" aria-pressed="${selSvc===s.id}" data-svc="${esc(s.id)}">
           <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
           <b>${esc(currency)} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
+        ${bundles.map(b=>`<button class="svc${selBundle===b.id?' sel':''}" type="button" aria-pressed="${selBundle===b.id}" data-bundle="${esc(b.id)}">
+          <span><b>${esc(b.name)}</b> <span class="muted small">· Bundle · ${b.duration_min} min${Array.isArray(b.items)&&b.items.length?` · ${esc(b.items.join(' + '))}`:''}</span></span>
+          <b>${esc(currency)} ${(b.price_cents/100).toFixed(2)}</b></button>`).join('')}
         ${usesTables?`<button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>`:''}
       </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}
       <div class="pf-inlineerr" id="err-service" role="alert"></div>
@@ -10103,7 +10120,7 @@ async function renderPortal(slug){
     const buildSummary=()=>{
       const el=$('pfSummary');if(!el)return;
       const s=svcObj();
-      const rows=[['Service', s?esc(s.name):'General visit']];
+      const rows=[[selBundle&&s?'Bundle':'Service', s?esc(s.name):'General visit']];
       if(s)rows.push(['Duration & price',`${s.duration_min} min · ${esc(currency)} ${(s.price_cents/100).toFixed(2)}`]);
       if(branchChoice)rows.push(['Branch',selBranch?esc((bookableBranches.find(b=>b.id===selBranch)||{}).name||'Selected'):'Not chosen']);
       if(usesTables)rows.push(['Table', selTable?esc((tables.find(t=>t.table_type_id===selTable)||{}).name||'Selected'):'Any available']);
@@ -10154,7 +10171,7 @@ async function renderPortal(slug){
       if(manual)manual.hidden=true;
       let data=null;
       try{
-        data=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}&availability=1${selSvc?`&service=${encodeURIComponent(selSvc)}`:''}${selStaff?`&staff=${encodeURIComponent(selStaff)}`:''}${branchChoice&&selBranch?`&branch=${encodeURIComponent(selBranch)}`:''}&days=14`});
+        data=await publicGateway('public-booking',{method:'GET',query:`?slug=${encodeURIComponent(slug)}&availability=1${selSvc?`&service=${encodeURIComponent(selSvc)}`:''}${selBundle?`&bundle=${encodeURIComponent(selBundle)}`:''}${selStaff?`&staff=${encodeURIComponent(selStaff)}`:''}${branchChoice&&selBranch?`&branch=${encodeURIComponent(selBranch)}`:''}&days=14`});
       }catch{data=null}
       if(!isPortalCurrent()||!host.isConnected)return;
       availabilityState=data?{status:'ready',key,data}:{status:'error',key,data:null};
@@ -10178,9 +10195,16 @@ async function renderPortal(slug){
     };
     const setChoice=(selector,el)=>root.querySelectorAll(selector).forEach(b=>{const on=b===el;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));});
     root.querySelectorAll('[data-svc]').forEach(el=>el.onclick=()=>{
-      selSvc=el.dataset.svc||null;serviceChosen=true;setChoice('[data-svc]',el);
+      selSvc=el.dataset.svc||null;selBundle=null;serviceChosen=true;setChoice('[data-svc],[data-bundle]',el);
       /* A different service can mean a different team and a different slot length, so any
          earlier person and slot pick is dropped rather than silently carried forward. */
+      if(staffChoice&&!staffForService().some(member=>member.id===selStaff))selStaff=null;
+      selectedSlot='';renderTeamOptions();
+      const e=$('err-service');if(e)e.textContent='';
+    });
+    /* nestly_v882: picking a bundle clears any service, and vice versa — the request names one. */
+    root.querySelectorAll('[data-bundle]').forEach(el=>el.onclick=()=>{
+      selBundle=el.dataset.bundle||null;selSvc=null;serviceChosen=true;setChoice('[data-svc],[data-bundle]',el);
       if(staffChoice&&!staffForService().some(member=>member.id===selStaff))selStaff=null;
       selectedSlot='';renderTeamOptions();
       const e=$('err-service');if(e)e.textContent='';
@@ -10230,6 +10254,7 @@ async function renderPortal(slug){
       const bookingPayload={
         slug,name,email:email||null,
         phone:rawPhone?buildPhone('ppcc','pp'):null,service:selSvc,
+        bundle:selBundle,
         party:parseInt($('ps').value||'1'),
         /* A slot chosen from the live grid is already an exact instant; the manual picker is
            still a Singapore wall-clock value that has to be anchored to +08:00. */

@@ -4311,6 +4311,12 @@
       "path": "db/migrations/20261010_nestly_v879_paid_means_the_contract_was_paid.sql",
       "semanticVersion": "v879",
       "proposedDeployVersion": "20261010150000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v882_booking_past_start_expiry_and_bookable_bundles.sql",
+      "semanticVersion": "v882",
+      "proposedDeployVersion": "20261010170000"
     }
   ]
 }

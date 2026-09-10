@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="582e1ab06304ae9e74bc5a7d8608a0cea615e1fe1050c8ec5a21f199a7650261"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ba12d7224fb8e72662b8292ba7a7ba0479b7f391124a339d3fa5029ba485dd7b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5797,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 582e1ab06304ae9e74bc5a7d8608a0cea615e1fe1050c8ec5a21f199a7650261</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ba12d7224fb8e72662b8292ba7a7ba0479b7f391124a339d3fa5029ba485dd7b</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -12656,6 +12656,11 @@ function focusNotifiedBookingV206(list){
   if(action)action.focus({preventScroll:true});
   setTimeout(()=>row.classList.remove('is-notified-v206'),2600);
 }
+/* nestly_v882: a booking request is FOR a service or a bundle; every surface that prints the
+   service name goes through here so a bundle request never reads as a "General visit". */
+function bookingRequestForNameV882(row){
+  return row?.services?.name||(row?.bundles?.name?`Bundle · ${row.bundles.name}`:null);
+}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -12668,6 +12673,9 @@ function bookingDecisionNotice(result,decision){
      failure. Name the real cause and the fix (Change time / staff) instead of a bare snake_case
      outcome string. */
   if(outcome==='scheduling_conflict')return {ok:false,text:`${verb} could not be applied — the team member isn't available at that time, per their schedule. Try "Change time / staff" for a different slot.`};
+  /* nestly_v882: the server now names a request whose preferred time has passed instead of letting
+     the scheduler's raw refusal through. The rescue is Move & confirm on the Bookings row. */
+  if(outcome==='past_start')return {ok:false,text:'This time has already passed. Pick a new date and time and press Move & confirm, or decline the request.'};
   return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
 }
 /* V200 (owner: "in all the modules i need you to simplify the sub modules ... just tab the sub
@@ -12878,7 +12886,7 @@ async function bookingsPage(){
     <p class="muted small">Booking rules, opening hours and who customers may choose now live in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>`;
   $('cp').onclick=async()=>copyTextToClipboard(portal,{button:$('cp'),success:'Portal link copied'});
   async function load(){
-    const {data:br,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
+    const {data:br,error}=await sb.from('booking_requests').select('*, services!booking_requests_service_business_fkey(name), bundles!booking_requests_bundle_id_fkey(name)').eq('business_id',S.biz.id).order('created_at',{ascending:false});
     if(!isCurrent())return;
     const list=$('blist');if(!list?.isConnected)return;
     /* V288 (audit A2, MEDIUM 19): a failed read used to raise a toast and leave the card on
@@ -12919,7 +12927,7 @@ async function bookingsPage(){
       return `<tr data-booking-row="${esc(b.id)}"${rowClassV594?` class="${rowClassV594}"`:''}${b.appointment_id?` data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
-        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
+        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||(b.bundles?.name?`Bundle · ${b.bundles.name}`:'')||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}${staleV880?' <span class="pill no" data-booking-stale-v880>Time has passed</span>':''}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
       ${/* nestly_v584 (owner photo 13: Confirm and Decline struck out, a green tick and a red cross
@@ -30977,6 +30985,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'582e1ab06304ae9e74bc5a7d8608a0cea615e1fe1050c8ec5a21f199a7650261',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ba12d7224fb8e72662b8292ba7a7ba0479b7f391124a339d3fa5029ba485dd7b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
