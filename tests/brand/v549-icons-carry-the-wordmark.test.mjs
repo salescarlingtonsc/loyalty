@@ -10,12 +10,14 @@ import path from 'node:path';
    favicon"). The five icons carried the EYES ONLY while every other surface showed the wordmark,
    and nothing in the repo recorded how they had been made — so they could drift from the brand
    indefinitely and the only detector was somebody noticing a screenshot.
-   This test is the detector. It rebuilds every icon from app/brand/peekaa-logo.png into a temp
-   directory and demands byte equality with what is committed, the same contract the browser
-   visual fixtures are held to. Change the logo, or change the padding, and this fails until
-   `npm run icons` is run. */
+   This test is the detector. It rebuilds every icon from the source tile into a temp directory
+   and demands that the committed file carries the same build stamp as the fresh one (the sha256
+   of the tile, the icon's spec and the render recipe, written into a PNG tEXt chunk — see
+   generate-icons.mjs). Byte equality was the original contract, but Pillow's encoder is not
+   byte-stable across builds, so that only ever passed on the machine that rendered the icons.
+   Change the tile, or change the padding, and this fails until `npm run icons` is run. */
 const root = new URL('../../', import.meta.url);
-const { ICONS, SOURCE, LOCKUP, renderIcons } = await import(new URL('scripts/brand/generate-icons.mjs', root).href
+const { ICONS, SOURCE, LOCKUP, renderIcons, iconStamp, readStamp } = await import(new URL('scripts/brand/generate-icons.mjs', root).href
   + '?export-only=1').catch(() => ({}));
 
 test('every app icon and favicon is a current build of the brand lockup', async () => {
@@ -26,11 +28,10 @@ test('every app icon and favicon is a current build of the brand lockup', async 
     for (const icon of ICONS) {
       const fresh = await readFile(path.join(staging, path.basename(icon.file)));
       const committed = await readFile(new URL(icon.file, root));
-      assert.equal(
-        createHash('sha256').update(committed).digest('hex'),
-        createHash('sha256').update(fresh).digest('hex'),
-        `${icon.file} is stale — run \`npm run icons\``,
-      );
+      const expected = await iconStamp(icon);
+      assert.equal(readStamp(fresh), expected, `${icon.file}: the renderer writes the stamp it is asked to`);
+      assert.ok(readStamp(committed), `${icon.file} carries no build stamp — run \`npm run icons\``);
+      assert.equal(readStamp(committed), expected, `${icon.file} is stale — run \`npm run icons\``);
     }
   } finally {
     await rm(staging, { recursive: true, force: true });

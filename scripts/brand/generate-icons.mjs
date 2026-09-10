@@ -61,7 +61,7 @@ export const ICONS = [
 
 const PY = `
 import sys, json
-from PIL import Image
+from PIL import Image, PngImagePlugin
 spec = json.loads(sys.argv[1])
 src = Image.open(spec["source"]).convert("RGBA")
 bg = spec["background"].lstrip("#")
@@ -74,21 +74,62 @@ for icon in spec["icons"]:
     mark = src.resize((w, h), Image.LANCZOS)
     canvas = Image.new("RGBA", (size, size), rgb + (255,))
     canvas.alpha_composite(mark, ((size - w) // 2, (size - h) // 2))
-    canvas.convert("RGB").save(icon["path"], "PNG", optimize=True)
+    info = PngImagePlugin.PngInfo()
+    info.add_text(spec["stampKey"], icon["stamp"])
+    canvas.convert("RGB").save(icon["path"], "PNG", optimize=True, pnginfo=info)
 print("ok")
 `;
 
+/* The build stamp. Pillow's PNG encoder is not byte-stable across builds — the same pixels come
+   out as different files on macOS and on ubuntu — so "is this icon current" cannot be "are the
+   bytes identical": that only ever passed on the machine that rendered them (found the day
+   `icons:check` first ran in CI). Instead every rendered icon carries a tEXt chunk holding the
+   sha256 of everything that determines its pixels — the source tile's bytes, this icon's spec,
+   the background, and the render recipe itself — and --check compares the stamp the committed
+   file carries with the stamp the current inputs produce. Change the tile, the padding, or the
+   recipe and the stamp moves; change the Pillow build and it does not. */
+export const STAMP_KEY = 'peekaa-build';
+
+export async function iconStamp(icon, sourceBytes) {
+  const src = sourceBytes ?? await readFile(path.join(repoRoot, SOURCE));
+  return createHash('sha256')
+    .update(src)
+    .update('\0')
+    .update(JSON.stringify({ file: icon.file, size: icon.size, padding: icon.padding, background: BACKGROUND, recipe: PY }))
+    .digest('hex');
+}
+
+/* Reads the build stamp out of a PNG's tEXt chunks; null when the file carries none. */
+export function readStamp(png) {
+  if (!Buffer.isBuffer(png) || png.length < 8 || png.toString('latin1', 1, 4) !== 'PNG') return null;
+  let offset = 8;
+  while (offset + 8 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString('latin1', offset + 4, offset + 8);
+    const data = png.subarray(offset + 8, offset + 8 + length);
+    if (type === 'tEXt') {
+      const nul = data.indexOf(0);
+      if (nul > 0 && data.toString('latin1', 0, nul) === STAMP_KEY) return data.toString('latin1', nul + 1);
+    }
+    if (type === 'IEND') break;
+    offset += 12 + length;
+  }
+  return null;
+}
+
 export async function renderIcons(targetDir) {
+  const sourceBytes = await readFile(path.join(repoRoot, SOURCE));
   const spec = {
     source: path.join(repoRoot, SOURCE),
     background: BACKGROUND,
-    icons: ICONS.map(icon => ({ ...icon, path: path.join(targetDir, path.basename(icon.file)) })),
+    stampKey: STAMP_KEY,
+    icons: await Promise.all(ICONS.map(async icon => ({
+      ...icon, path: path.join(targetDir, path.basename(icon.file)), stamp: await iconStamp(icon, sourceBytes),
+    }))),
   };
   const result = spawnSync('python3', ['-c', PY, JSON.stringify(spec)], { encoding: 'utf8' });
   if (result.status !== 0) throw new Error(`icon render failed: ${result.stderr || result.stdout}`);
 }
-
-const sha = buffer => createHash('sha256').update(buffer).digest('hex');
 
 /* nestly_v459's guard, for the same reason it exists: `node --test` with no path argument
    collects every .mjs under tests/, and a test that IMPORTS this module to reuse ICONS and
@@ -108,7 +149,8 @@ try {
   for (const icon of ICONS) {
     const fresh = await readFile(path.join(staging, path.basename(icon.file)));
     const current = await readFile(path.join(repoRoot, icon.file)).catch(() => null);
-    if (current && sha(current) === sha(fresh)) continue;
+    const stamp = readStamp(fresh);
+    if (stamp && current && readStamp(current) === stamp) continue;
     stale.push(icon.file);
     if (!check) await writeFile(path.join(repoRoot, icon.file), fresh);
   }
