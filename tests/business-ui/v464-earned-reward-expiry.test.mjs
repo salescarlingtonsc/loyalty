@@ -152,6 +152,7 @@ async function runSave({ isStamps, fields }) {
     growPointsIsStampsV326: isStamps,
     growEarnErrorV359: '',
     growRerenderV322: () => {},
+    growRerenderOwnV880: () => {}, // nestly_v880: the handler's own busy render
     isGrowCurrent: () => true,
     ownerErrorText: e => String(e?.message || e),
     toast: () => {},

@@ -61,5 +61,7 @@ test('both pending-reschedule datetime-local inputs pre-fill via sgInput, not a 
 test('both reschedule submit handlers send sgIso(timeInput.value) unchanged',()=>{
   assert.match(app,/const preferred=sgIso\(timeInput\.value\);[\s\S]{0,400}staff_reschedule_and_confirm_booking_request_v329[\s\S]{0,80}p_preferred:preferred/);
   const occurrences=app.match(/const preferred=sgIso\(timeInput\.value\);/g)||[];
-  assert.equal(occurrences.length,2,'both the List-tab and tile-modal submit handlers must convert via sgIso');
+  /* nestly_v880 added a third door onto the same RPC — the Bookings page's Move & confirm for a
+     request whose preferred time has passed. */
+  assert.equal(occurrences.length,3,'the List-tab, tile-modal and Bookings-page (v880) submit handlers must all convert via sgIso');
 });

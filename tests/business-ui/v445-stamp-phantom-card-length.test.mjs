@@ -250,6 +250,7 @@ const wireUp = ({ stampTarget = 15, gifts = KAYA } = {}) => {
     'ownerErrorText', 'workspaceTemplateTextV97', 'growStampsCardLenV416',
     'GROW_STAMPS_MAX_LEN_V463', `
     let growPointsBusyV326=false, growPointsErrorV326='';
+    const growRerenderOwnV880=growRerenderV322; // nestly_v880: the handler's own busy render
     ${wiringSrc()}
     return {growStampsSetLengthV422};`)(
     outerMain, sb, snapshot, { biz: { id: 'biz-1' } }, () => {}, () => {}, () => true,

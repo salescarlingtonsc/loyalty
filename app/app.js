@@ -31235,6 +31235,16 @@ async function bookingsPage(){
     const visibleV584=pageSliceV584(br,bookingRequestPageV584);
     list.innerHTML=(br&&br.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Booking requests"><table class="cui-table" data-responsive="true"><thead><tr><th>Received</th><th>Name</th><th>Contact</th><th>For</th><th>Preferred</th><th>Party</th><th>Status</th><th></th></tr></thead><tbody>
       ${visibleV584.map(b=>{const actionable=STAFF_BOOKING_DECISION_STATUSES.has(b.status),notice=decisionNotices.get(b.id);
+      /* nestly_v880 (owner photo, AhXiang: two New rows preferred 28 Aug and 3 Sep, ticked on 8 Sep —
+         "Confirm failed. appointment start must be in the future"). Nothing ages a service request
+         out once its preferred time passes (app.expire_stale_bookings keys on expires_at, which
+         only table holds set), so a stale row kept its green tick and the tick could only ever
+         fail — the same misleading affordance V217 removed from the calendar. A request whose time
+         has passed is not confirmable AS FILED; it needs a new time or a decline. The tick goes,
+         and the one rescue that already exists (staff_reschedule_and_confirm_booking_request_v329,
+         until now wired only into the today-forward Appointments views, where a past request never
+         appears) is offered right here on the only page that still shows the row. */
+      const staleV880=actionable&&Boolean(b.preferred_at)&&Date.parse(b.preferred_at)<Date.now();
       /* nestly_v594 (owner, photo 1: the one New row boxed in red — "please highlight those
          appointments that yet to confirm"). Every row looked the same weight, so the single row
          that still needs a decision had to be found by reading the Status column of all of them.
@@ -31246,15 +31256,15 @@ async function bookingsPage(){
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
         : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||'—')}</td>
-      <td data-label="Preferred">${sgt(b.preferred_at)||'—'}</td><td data-label="Party">${b.party_size||'—'}</td>
+      <td data-label="Preferred">${sgt(b.preferred_at)||'—'}${staleV880?' <span class="pill no" data-booking-stale-v880>Time has passed</span>':''}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
       ${/* nestly_v584 (owner photo 13: Confirm and Decline struck out, a green tick and a red cross
            drawn in their place). Two round icon buttons — the decision is a yes/no on a row that
            already says who and when, so the words were carrying no information the tick and cross
            do not. Both keep their accessible name, their title and the same onclick, so a screen
            reader and the handler see exactly what they saw before. */''}
-      <td data-label="Actions">${actionable?`<span class="booking-decision-icons-v584">${canConvertBooking?`<button class="booking-decision booking-decision-yes-v584" type="button" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''} title="Confirm this booking" ${workspaceTemplateAttributeV97('aria-label','confirmBookingFor',{customer:b.name||'this customer'})}>${CUI.icon('check',{size:18})}</button>`:''}
-      ${canDeclineBooking?`<button class="booking-decision booking-decision-no-v584" type="button" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''} title="Decline this booking" ${workspaceTemplateAttributeV97('aria-label','declineBookingFor',{customer:b.name||'this customer'})}>${CUI.icon('close',{size:18})}</button>`:''}</span>`:'<span class="muted small">No action needed</span>'}
+      <td data-label="Actions">${actionable?`<span class="booking-decision-icons-v584">${canConvertBooking&&!staleV880?`<button class="booking-decision booking-decision-yes-v584" type="button" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','confirm')" ${pendingDecisions.has(b.id)?'disabled':''} title="Confirm this booking" ${workspaceTemplateAttributeV97('aria-label','confirmBookingFor',{customer:b.name||'this customer'})}>${CUI.icon('check',{size:18})}</button>`:''}
+      ${canDeclineBooking?`<button class="booking-decision booking-decision-no-v584" type="button" data-request="${b.id}" onclick="decideBookingRequestV73('${b.id}','decline')" ${pendingDecisions.has(b.id)?'disabled':''} title="Decline this booking" ${workspaceTemplateAttributeV97('aria-label','declineBookingFor',{customer:b.name||'this customer'})}>${CUI.icon('close',{size:18})}</button>`:''}</span>${canConvertBooking&&staleV880?`<div class="booking-move-v880" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><input type="datetime-local" id="bookingMoveTimeV880-${esc(b.id)}" data-booking-move-time-v880="${esc(b.id)}" aria-label="New date and time" ${pendingDecisions.has(b.id)?'disabled':''}><button class="btn sm" type="button" data-request="${b.id}" data-booking-move-v880="${esc(b.id)}" onclick="moveAndConfirmBookingRequestV880('${b.id}')" ${pendingDecisions.has(b.id)?'disabled':''}>Move & confirm</button></div>`:''}`:'<span class="muted small">No action needed</span>'}
       ${notice?`<div class="${notice.ok?'imp-note':'err'} small" role="status" style="margin-top:8px">${esc(notice.text)}</div>`:''}</td></tr>`}).join('')}</tbody></table></div>${pagerHtmlV584({scope:'bookings',page:bookingRequestPageV584,total:br.length,label:'Requests'})}`
       :CUI.emptyState({iconName:'appointments',title:'No booking requests yet',body:'Customer booking requests will appear here after customers use your booking link.'});
     wirePagerV584(list,'bookings',target=>{bookingRequestPageV584=target;paintBookingRequestsV584()});
@@ -31313,9 +31323,37 @@ async function bookingsPage(){
     if(!isCurrent())return;
     pendingDecisions.delete(id);
     if(error){
-      decisionNotices.set(id,{ok:false,text:`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Refresh and try again.'}`});
+      /* nestly_v880: the scheduler's own refusal names the cause but not the way out. */
+      const pastV880=/must be in the future/i.test(String(error.message||''));
+      decisionNotices.set(id,{ok:false,text:pastV880
+        ?'This time has already passed. Pick a new date and time and press Move & confirm, or decline the request.'
+        :`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Refresh and try again.'}`});
     }else{
       const notice=bookingDecisionNotice(data,decision);
+      decisionNotices.set(id,notice);toast(notice.text);
+    }
+    await load();
+  };
+  /* nestly_v880: the Bookings-page door onto the v329 rescue. Same RPC, same result contract
+     (bookingDecisionNotice), same "pick a time first" guard as the two Appointments call sites; no
+     staff select here, so p_staff stays null (= unchanged) and p_clear_staff false. */
+  window.moveAndConfirmBookingRequestV880=async id=>{
+    if(!canConvertBooking||pendingDecisions.has(id)||!isCurrent())return;
+    const timeInput=document.querySelector(`[data-booking-move-time-v880="${CSS.escape(id)}"]`);
+    if(!timeInput?.value)return toast('Pick a new date and time first');
+    const preferred=sgIso(timeInput.value);
+    if(!preferred||Date.parse(preferred)<Date.now())return toast('The new time must be in the future');
+    pendingDecisions.add(id);
+    document.querySelectorAll(`.booking-decision[data-request="${CSS.escape(id)}"],[data-booking-move-v880="${CSS.escape(id)}"]`).forEach(button=>button.disabled=true);
+    const {data,error}=await sb.rpc('staff_reschedule_and_confirm_booking_request_v329',{
+      p_business:S.biz.id,p_request:id,p_preferred:preferred,p_staff:null,p_clear_staff:false
+    });
+    if(!isCurrent())return;
+    pendingDecisions.delete(id);
+    if(error){
+      decisionNotices.set(id,{ok:false,text:`Could not move this request. ${error.message||'Try again.'}`});
+    }else{
+      const notice=bookingDecisionNotice(data,'confirm');
       decisionNotices.set(id,notice);toast(notice.text);
     }
     await load();
@@ -35429,7 +35467,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const hashParamBaseV294=String(hashParam||'').replace(/~?ctx-(points|tiers)$/,'');
   if(!routedFocus&&(directFocusTokens.has(hashParamBaseV294)||/^ctx-(points|tiers)$/.test(String(hashParam||'')))){routedFocus=hashParam;hashParam=null}
   /* F039: this call's own epoch — see the growPageRenderEpoch declaration for why. */
-  const myGrowRenderEpochV039=++growPageRenderEpoch;
+  let myGrowRenderEpochV039=++growPageRenderEpoch;
   const outerMain=M(),isGrowCurrent=()=>growPageRenderEpoch===myGrowRenderEpochV039&&outerMain.isConnected&&(M()===outerMain||outerMain.contains(M()));
   const modules=S.myModules||[];
   const canRewards=modules.includes('loyalty'),canWinback=modules.includes('retention');
@@ -39119,6 +39157,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      reappear. `quiet:true` skips only that opening flash; the same fresh data is still fetched and
      swapped in, so the result is identical, just without the blank-then-rebuild jolt. */
   const growRerenderV322=(opts={})=>growPage(routedSurface,hashParam,routedFocus,opts).catch(fail);
+  /* nestly_v880 — THE BUG THAT DEADENED EVERY GROW SAVE SINCE F039 (2026-09-07).
+     growPage bumps growPageRenderEpoch synchronously on entry, so a handler that calls
+     growRerenderV322() to paint its own busy state bumps the epoch ITSELF, and its own
+     isGrowCurrent() is false from that moment on. Every handler below that re-rendered before its
+     first await then took the "owner navigated away" early return after the RPC: the second write
+     never ran (Tier membership wrote its basis and never switched on — ÉLAN Wellness, three
+     attempts), busy flags stayed true (Set up / Save / Add tier greyed until sign-out), and the
+     final re-render never happened (the page kept showing pre-write data). A handler's OWN
+     re-render is not a navigation: adopt the epoch it just minted so the currency check keeps
+     meaning "did someone ELSE render this page since I started". */
+  const growRerenderOwnV880=(opts={})=>{const run=growRerenderV322(opts);myGrowRenderEpochV039=growPageRenderEpoch;return run;};
   /* V324: switching Published/Draft/History tabs is a pure client-side filter over data already
      on the page — no field on any offer changed, so this re-renders the same way the switch panel
      above deliberately does NOT: nothing here is worth a `hidden`-only optimisation, because the
@@ -39399,7 +39448,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       expiry=Math.round(Number(expiryRaw));
       if(!Number.isFinite(expiry)||expiry<1||expiry>3650){growBbErrorV361='Expiry must be between 1 and 3650 days, or blank.';return growRerenderV322({quiet:true});}
     }
-    growBbBusyV361=true;growBbErrorV361='';growRerenderV322({quiet:true});
+    growBbBusyV361=true;growBbErrorV361='';growRerenderOwnV880({quiet:true});
     const {error}=await sb.rpc('business_upsert_bringback_v361',{p_business:S.biz.id,
       p_campaign:growBbEditingV361,p_name:name,p_reward_label:reward,
       p_away_days:away,p_expiry_days:expiry});
@@ -39565,7 +39614,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growPointsSetupCta=$('growPointsSetupV326');
   if(growPointsSetupCta)growPointsSetupCta.onclick=async()=>{
     if(growPointsBusyV326)return;
-    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderOwnV880({quiet:true});
     const set={[growPointsSpineKindV326]:true};
     programmeExclusionsV322(growPointsSpineKindV326).forEach(other=>{set[other]=false});
     const {ok,error,cancelled,data}=await writeProgrammeSwitchesWithStampConversionV384(set,{paused:false,key:crypto.randomUUID()});
@@ -39697,9 +39746,9 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growRedemptionOn=outerMain.querySelector('[data-grow-redemption-on-v521]');
   if(growRedemptionOn)growRedemptionOn.onclick=async()=>{
     if(growRedemptionBusyV521)return;
-    growRedemptionBusyV521=true;growRedemptionErrorV521='';growRerenderV322({quiet:true});
+    growRedemptionBusyV521=true;growRedemptionErrorV521='';growRerenderOwnV880({quiet:true});
     const current=await sb.rpc('business_get_customer_capabilities_v89',{p_business:S.biz.id});
-    if(!isGrowCurrent())return;
+    if(!isGrowCurrent()){growRedemptionBusyV521=false;return;}
     if(current.error){
       growRedemptionBusyV521=false;
       growRedemptionErrorV521=ownerErrorText(current.error);
@@ -39711,8 +39760,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       p_redemption_enabled:true,
       p_appointment_changes_enabled:current.data?.appointment_changes_enabled===true
     });
-    if(!isGrowCurrent())return;
     growRedemptionBusyV521=false;
+    if(!isGrowCurrent())return;
     if(error){growRedemptionErrorV521=ownerErrorText(error);return growRerenderV322({quiet:true});}
     /* The write succeeded, so the snapshot this page is rendering from is now stale by exactly
        one field. Correcting it in place and rerendering is what makes the band disappear — a bare
@@ -39757,7 +39806,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       pointsRate=Number(String($('growEarnPointsV359')?.value||'').trim());
       if(!Number.isFinite(pointsRate)||pointsRate<=0){growEarnErrorV359='Points per dollar must be more than zero.';return growRerenderV322({quiet:true});}
     }
-    growEarnBusyV359=true;growEarnErrorV359='';growRerenderV322({quiet:true});
+    growEarnBusyV359=true;growEarnErrorV359='';growRerenderOwnV880({quiet:true});
     const earnSaveCallV435=await sb.rpc('business_set_earning_rule_v359',{p_business:S.biz.id,
       p_earn_points_per_dollar:pointsRate,p_stamp_per_cents:stampCents,
       p_expiry_mode:mode,p_expiry_days:days,p_stamp_validity_days:validityDays,
@@ -39872,7 +39921,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsSetLengthV422=async next=>{
     if(growPointsBusyV326)return;
     if(!(next>=1))return;
-    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderOwnV880({quiet:true});
     const lenCallV433=await sb.rpc('business_set_stamp_card_length_v414',
       {p_business:S.biz.id,p_stamps:next});
     const lenResV433=lenCallV433.data;
@@ -40000,7 +40049,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       growPointsErrorV326=`A stamp card is at most ${GROW_STAMPS_MAX_LEN_V463} stamps long, so a gift cannot sit on stamp ${points}. Choose a stamp between 1 and ${GROW_STAMPS_MAX_LEN_V463}.`;
       return growRerenderV322({quiet:true});
     }
-    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderOwnV880({quiet:true});
     /* V343: upload a newly-chosen photo before the RPC call, same storage path grammar the deep
        editor's own reward-photo control already uses (uploadRewardPhotoV326 below). */
     let imageRef;
@@ -40097,7 +40146,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!values)return;
     if(!values.name){growPointsErrorV326='Name the reward customers will see.';return growRerenderV322({quiet:true});}
     if(!Number.isFinite(values.stamps)||values.stamps<=0){growPointsErrorV326='Stamps required must be a positive number.';return growRerenderV322({quiet:true});}
-    growPointsBusyV326=true;growPointsErrorV326='';growRerenderV322({quiet:true});
+    growPointsBusyV326=true;growPointsErrorV326='';growRerenderOwnV880({quiet:true});
     const rowCallV433=await sb.rpc('business_update_reward_v326',{
       p_business:S.biz.id,p_reward:id,p_name:values.name,p_points:values.stamps,
       p_description:values.description||null,p_credit_cents:0,
@@ -40221,16 +40270,16 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growTiersSetupCta=$('growTiersSetupV331');
   if(growTiersSetupCta)growTiersSetupCta.onclick=async()=>{
     if(growTiersBusyV331)return;
-    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderOwnV880();
     const {error:basisError}=await sb.rpc('business_set_tier_basis_v347',{p_business:S.biz.id,p_basis:'points_earned'});
-    if(!isGrowCurrent())return;
+    if(!isGrowCurrent()){growTiersBusyV331=false;return;}
     if(basisError){growTiersBusyV331=false;growTiersErrorV331=ownerErrorText(basisError);return growRerenderV322();}
     if(snapshot.loyalty)snapshot.loyalty.tier_basis='points_earned';else snapshot.loyalty={tier_basis:'points_earned'};
     const set={tiers:true};
     programmeExclusionsV322('tiers').forEach(other=>{set[other]=false});
     const {ok,error:switchError}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
-    if(!isGrowCurrent())return;
     growTiersBusyV331=false;
+    if(!isGrowCurrent())return;
     if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
     growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
     growRerenderV322();
@@ -40249,10 +40298,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(growTiersBusyV331)return;
     const basis=growTiersBasisSelect.value;
     if(!['visits','spend','points_earned'].includes(basis))return;
-    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderOwnV880();
     const {error}=await sb.rpc('business_set_tier_basis_v347',{p_business:S.biz.id,p_basis:basis});
-    if(!isGrowCurrent())return;
     growTiersBusyV331=false;
+    if(!isGrowCurrent())return;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     if(snapshot.loyalty)snapshot.loyalty.tier_basis=basis;else snapshot.loyalty={tier_basis:basis};
     /* nestly_v585 (owner photo 8, "if not there will be misunderstanding"). Switching the basis
@@ -40346,7 +40395,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growReferralFriendOnV421=friendOn;
     growReferralFriendPointsV421=friendPointsRaw;
     growReferralFriendGiftV421=friendGift;
-    growReferralBusyV364=true;growReferralErrorV364='';growRerenderV322({quiet:true});
+    growReferralBusyV364=true;growReferralErrorV364='';growRerenderOwnV880({quiet:true});
     /* nestly_v558: `enabled` is now the owner's answer, and it has TWO homes that must agree.
        app.on_sale_recorded gates the referral payout on public.referral_programs.enabled while the
        spine row (public.business_programmes) gates what every surface says is running — the split
@@ -40379,7 +40428,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const referralSpineWriteV567=async()=>{
       if(!referralSwitchMovedV567)return true;
       const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
-      if(!isGrowCurrent())return null;
+      if(!isGrowCurrent()){growReferralBusyV364=false;return null;}
       return spine.ok?true
         :referralFailV567(`Referrals could not be turned ${wantOnV558?'on':'off'} — ${ownerErrorText(spine.error)}`);
     };
@@ -40394,7 +40443,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_friend_enabled:friendOn,
         p_friend_reward_points:kind==='voucher'?null:friendPoints,
         p_friend_reward_label:kind==='voucher'?(friendGift||null):null});
-      if(!isGrowCurrent())return null;
+      if(!isGrowCurrent()){growReferralBusyV364=false;return null;}
       /* nestly_v429 (B2): v425 refuses a reward type whose pot is not running, and the refusal
          names the switch to turn on ("referral reward type \"points\" needs the Point system
          switched on"). That sentence is the whole answer, so it is shown as written rather than
@@ -40544,7 +40593,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(badCapV657){growTiersErrorV331='A maximum discount must be an amount of money, or leave it blank for no ceiling.';return growRerenderV322();}
     if(!name){growTiersErrorV331='Name the tier customers will see.';return growRerenderV322();}
     if(!Number.isFinite(threshold)||threshold<0){growTiersErrorV331='Reached-at must be zero or a positive number.';return growRerenderV322();}
-    growTiersBusyV331=true;growTiersErrorV331='';growRerenderV322();
+    growTiersBusyV331=true;growTiersErrorV331='';growRerenderOwnV880();
     const wasEditing=Boolean(growTiersEditingV331);
     let error,data;
     if(wasEditing){
@@ -40554,8 +40603,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ({data,error}=await sb.rpc('business_create_tier_v331',{
         p_business:S.biz.id,p_name:name,p_threshold:threshold,p_perk_note:perkNote||null}));
     }
-    if(!isGrowCurrent())return;
     growTiersBusyV331=false;
+    if(!isGrowCurrent())return;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     /* V365: the benefit ROWS are written second, against the tier that now certainly exists (its
        id comes back from either RPC). The order matters: the tier write above carries a perk_note
@@ -40624,8 +40673,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growTiersBusyV331=true;growTiersErrorV331='';
     button.disabled=true;
     const {error}=await sb.rpc('business_delete_tier_v331',{p_business:S.biz.id,p_tier:id});
-    if(!isGrowCurrent())return;
     growTiersBusyV331=false;growTiersDeletePendingV331='';
+    if(!isGrowCurrent())return;
     if(error){growTiersErrorV331=ownerErrorText(error);return growRerenderV322();}
     toast('Moved to History');
     growRerenderV322();

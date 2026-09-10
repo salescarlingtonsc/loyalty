@@ -39,6 +39,7 @@ test('F034 growBbSave clears the busy flag even when the owner has navigated awa
     ownerErrorText: e => e?.message || 'error',
     toast: () => {},
     growRerenderV322: () => { context.rerendered = (context.rerendered || 0) + 1; },
+    growRerenderOwnV880: () => { context.rerendered = (context.rerendered || 0) + 1; }, // nestly_v880: the handler's own busy render
     growPage: async () => {}, fail: () => {},
     routedSurface: 'bringback', hashParam: null, routedFocus: null,
     isGrowCurrent: () => false, // simulates: owner navigated away before the RPC resolved
@@ -67,6 +68,7 @@ test('F037 growStampsSetLengthV422 clears the busy flag even when the owner has 
     sb: { rpc: async (name, args) => { rpcCalls.push({ name, args }); return { data: {}, error: { message: 'boom' } }; } },
     ownerErrorText: e => e?.message || 'error',
     growRerenderV322: () => {},
+    growRerenderOwnV880: () => {}, // nestly_v880: the handler's own busy render
     snapshot: { loyalty: {} },
     growStampPublishToastV433: () => {}, workspaceTemplateTextV97: () => '',
     isGrowCurrent: () => false,
@@ -106,7 +108,7 @@ test('F038 the delete confirmation promises what the server now does: next card 
 
 test('F039 an older growPage epoch loses currency to a newer one sharing the same <main> node', () => {
   const src = section(
-    'const myGrowRenderEpochV039=++growPageRenderEpoch;',
+    'let myGrowRenderEpochV039=++growPageRenderEpoch;',
     '\n  const modules=S.myModules||[];'
   );
   const sameMainNode = { isConnected: true, contains: () => true };

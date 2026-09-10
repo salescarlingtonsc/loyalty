@@ -69,6 +69,7 @@ async function run({ checked, reply }) {
     ownerErrorText: e => e?.message || 'error',
     toast: message => { state.toasts.push(message); },
     growRerenderV322: () => { state.rerenders += 1; },
+    growRerenderOwnV880: () => { state.rerenders += 1; }, // nestly_v880: the handler's own busy render
     isGrowCurrent: () => true,
     Array,
   };

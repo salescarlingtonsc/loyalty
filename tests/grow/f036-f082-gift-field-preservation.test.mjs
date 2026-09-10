@@ -107,6 +107,7 @@ async function runSaveHandler({ growPointsEditingV326, whereInputValue, isStamps
         growPointsPhotoFileV343=null,growPointsRemovePhotoV343=false,growPointsAddDraftV326=null,
         growPointsAddOpenV326='form',growStampsPickedV416=1;
     const growPointsAddSave={};
+    const growRerenderOwnV880=growRerenderV322; // nestly_v880: the handler's own busy render
     ${saveHandlerSrc}
     return growPointsAddSave.onclick;
     `

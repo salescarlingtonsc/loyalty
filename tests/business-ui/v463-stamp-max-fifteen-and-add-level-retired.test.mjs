@@ -157,6 +157,7 @@ test('v463 the length write handler refuses anything above 15 without calling th
     'ownerErrorText', 'workspaceTemplateTextV97', 'growStampsCardLenV416',
     'GROW_STAMPS_MAX_LEN_V463', `
     let growPointsBusyV326=false, growPointsErrorV326='';
+    const growRerenderOwnV880=growRerenderV322; // nestly_v880: the handler's own busy render
     ${wiring}
     return {growStampsSetLengthV422};`)(
     outerMain, sb, { loyalty: { stamp_target: 10 } }, { biz: { id: 'biz-1' } }, () => {}, () => {},
@@ -276,6 +277,7 @@ const attemptSave = async ({ isStamps, points }) => {
     const growPointsEndDateInstantV472=v=>(/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))
       ? new Date(String(v)+'T23:59:59.999+08:00').toISOString() : null);
     const growRerenderV322=()=>{state.error=growPointsErrorV326};
+    const growRerenderOwnV880=growRerenderV322; // nestly_v880
     ${saveHandlerSrc}
     return growPointsAddSave.onclick;`)(
     { querySelector: () => button }, id => fields[id], sb, { biz: { id: 'biz-1' } }, isStamps, 15,
