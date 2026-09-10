@@ -443,9 +443,12 @@ test('v449 rows of five is a layout change ONLY — the grid markup and every ha
      an aria-label or the trailing "+" had moved, these bytes would differ.
      nestly_v453 narrowed this from "everything the editor renders" to "the grid and the stranded
      note": v453 deliberately adds copy to the LENGTH BAR, and that bar has its own pins below —
-     including one that still holds it byte-identical to efeceb0 whenever no stepper is refused. */
+     including one that still holds it byte-identical to e91f58de whenever no stepper is refused. */
   const appNow = readFileSync(join(root, 'app', 'app.js'), 'utf8');
-  const appV445 = gitShow('efeceb0:app/app.js');
+  /* e91f58de is nestly_v445 as it landed on main. The pin used to name efeceb0, the same change on
+     the branch it was built on — identical app.js, but that branch was never pushed, so CI's clone
+     could not resolve it (found the first time the full validate gate ran on GitHub). */
+  const appV445 = gitShow('e91f58de:app/app.js');
   /* nestly_v463 narrowed this pin from a 15-stamp card to a 12-stamp one. 15 is the MAXIMUM now,
      and at the maximum the grid's trailing "+" is deliberately withheld — that is the one byte of
      this card v463 changes, and it is asserted on its own directly below. Everything else about
@@ -558,7 +561,7 @@ test('v453 says nothing when neither stepper is refused', () => {
   /* A refusal explains itself; a working control says nothing at all. Both steppers still offer
      exactly the length either side of the current one — v453 adds copy to a refusal, it does not
      change what the controls do.
-     This deliberately no longer asserts byte-identity with efeceb0's bar: v453 also wraps the
+     This deliberately no longer asserts byte-identity with e91f58de's bar: v453 also wraps the
      three controls in one nowrap group, because at 390 the bar was wrapping BETWEEN them (owner
      photo: "−" beside the heading, "15 stamps +" on the line below). That grouping is measured in
      Chrome by tests/browser/verify-v449-…, whose negative control reproduces the split against
