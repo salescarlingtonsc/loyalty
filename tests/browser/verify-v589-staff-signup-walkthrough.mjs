@@ -158,7 +158,7 @@ const WAITING_PREVIEW={status:'awaiting_approval',business_name:'QA Kopi Lab (Be
 const NEWBIE={id:'u-newbie',email:'qa-golive@example.invalid'};
 
 const browser=await chromium.launch({headless:true,
-  executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
 const pageErrors=[];
 try{
   await serverReady();

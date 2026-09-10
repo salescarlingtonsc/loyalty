@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="c032529820b1069c481d4d04df8e0d7e989cb084b55f3db0a7e593857bb69a07"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="9cc010222acdfa1923b847e76e1e32031e0c95164c9ea6387b4a2d474b45e518"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5796,7 +5796,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · c032529820b1069c481d4d04df8e0d7e989cb084b55f3db0a7e593857bb69a07</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 9cc010222acdfa1923b847e76e1e32031e0c95164c9ea6387b4a2d474b45e518</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6278,6 +6278,28 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     const CUI=window.FrenlyCustomerUI;
     const workspaceLocale='en';
     const workspaceTemplateHtmlV97=(key,{count}={})=>key==='growDraftReady'?'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.':count+' published '+(count===1?'reward':'rewards');
+    /* nestly_v456/v453 (i18n attribute templating, predates F039): growPage's own markup calls
+       workspaceTemplateAttributeV97() for aria-label/title/placeholder on several rows. Like
+       workspaceTemplateHtmlV97 above, the real function depends on the full
+       WORKSPACE_TEMPLATE_COPY_V97 dictionary and its interpolation-key inventory, which this
+       fixture has no reason to carry — this evidence is about layout, not translated copy. It was
+       simply never declared at all, so growPage threw a ReferenceError on the first row that
+       called it. Stubbed the same way the real function no-ops on an attribute/key it does not
+       recognise: no attribute is emitted. */
+    const workspaceTemplateAttributeV97=()=>'';
+    /* Same family, same reason: growPage also calls workspaceTemplateTextV97() directly (plain
+       translated text, not an attribute) in at least one row. Stubbed to the empty string for
+       the same reason as workspaceTemplateAttributeV97 above — this fixture is evidence about
+       layout, not translated copy, and the real implementation needs the full copy dictionary. */
+    const workspaceTemplateTextV97=()=>'';
+    /* customerHeroStampCardV422 (extracted below, real production code) reads ct() — the
+       customer-wallet i18n lookup keyed off CUSTOMER_COPY[customerLocale]. Same reasoning as the
+       workspace-template stubs above: this fixture is evidence about layout, not translated
+       copy, so the real dictionary is not worth carrying. The real ct() falls back to the key
+       itself when a translation is missing (the ??key fallback); this stub reproduces exactly that
+       fallback, so a caller that only wants "call this so it doesn't throw" and one that wants
+       "the untranslated label" both get sensible output. */
+    const ct=(key)=>key;
     const recordProductInteractionV100=()=>{};
     const localizeWorkspaceSubtreeV97=()=>{};
     const productProfitabilityV122=()=>null;
@@ -6540,7 +6562,17 @@ function pruneRewardSiblingsV139(root){
         {id:'bring-back-2',name:'Paused facial return',reward_label:'Glow credit',away_days:60,expiry_days:30,active:false,created_at:'2026-08-02T00:00:00.000Z'}],
       referral:emptyPrograms?null:{id:'referral-1',enabled:!configuredOff,reward_cents:1000,min_spend_cents:5000},
       memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
-      giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
+      giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false},
+      /* nestly_v880 (F039, 2026-09-07): growPage now calls refreshProgrammeSpineV314() on every
+         real navigation (extracted above as programmeSpine), which reads public.business_
+         programmes through sb.from(...) — a table fixtureQuery had no case for at all, so it fell
+         through to the generic empty-array branch below. That is not a neutral default: once the
+         spine has been read (even to an empty list), programmeSpineRunningV314() returns a real
+         false instead of the null ('spine not read yet') it used to fall back from — which made
+         the Point system tile read 'Not set up' instead of 'On' even though fixture.loyalty.active
+         is true. One row, mirroring fixture.loyalty's own active flag, keeps the spine and the
+         legacy column agreeing, exactly as v314's 'one authority' rule intends. */
+      programmes:emptyPrograms?[]:[{id:'programme-points-1',kind:'points',active:true,deactivated_at:null}]};
     window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
     /* v229's topic filter, the v386 usage window and the rest of the Grow module state used to be
        restated here one variable at a time; they come from production now (growState above). */
@@ -6557,6 +6589,7 @@ function pruneRewardSiblingsV139(root){
           else if(table==='membership_plans')data=fixture.memberships;
           else if(table==='firm_config_versions')data=state.equals.status==='draft'?(fixture.draft?[fixture.draft]:[]):[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
           else if(table==='firm_reward_taxonomy')data=fixture.taxonomy;
+          else if(table==='business_programmes')data=fixture.programmes;
           /* nestly_v456 (audit A). 'bringback_campaigns_v361' joins this set because nestly_v429
              moved the Bring-back tile's read there — growRewardsSnapshot's retentionRequest is
              that table now, and public.retention_programs is no longer read by this page at all.
@@ -8340,6 +8373,20 @@ function programmeScopeSwitchesV322(scope,{paused=false}={}){
    "never turned off" — the same thing an unread breadcrumb has always meant. */
 const programmeSpineRowV428=row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true,
   deactivatedAt:row?.deactivated_at||row?.paused_since||null});
+function rememberProgrammeSpineV314(programmes){
+  if(!Array.isArray(programmes))return false;
+  S.programmes=programmes.map(programmeSpineRowV428);
+  S.programmesBusinessId=S.biz?.id||null;
+  return true;
+}
+async function refreshProgrammeSpineV314(){
+  if(!S.biz?.id)return null;
+  const {data,error}=await sb.from('business_programmes').select('id,kind,active,deactivated_at').eq('business_id',S.biz.id);
+  if(error)return null;
+  S.programmes=(data||[]).map(programmeSpineRowV428);
+  S.programmesBusinessId=S.biz.id;
+  return S.programmes;
+}
     function promotionEditorItemV104(raw={}){
   const metadata=raw.metadata||{},cta=metadata.cta||{},
     media=raw.media||raw.media_asset||{};
@@ -10954,6 +11001,285 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   if(stepKindW6I2()==='tiers')prefillTiersW6I2();
   render();
   if(stepKindW6I2()==='live')loadComparison();
+}
+    /* F039: quiet growPage() re-renders write into the SAME outerMain node (a hard route change is
+   the only thing that ever replaces <main>), so isGrowCurrent()'s outerMain.isConnected/M()===
+   outerMain checks stay true across two overlapping quiet renders regardless of which one
+   started first — a pre-write quiet snapshot fetch that resolves after the post-write one can
+   paint stale data over a fresh "Saved" toast. This counter is bumped on every growPage() entry
+   (quiet or not) and folded into isGrowCurrent so a call whose epoch has been superseded by a
+   newer growPage() invocation always loses, independent of resolution order — the same pattern
+   dashboardRenderEpoch/routeRenderEpoch/portalRenderEpoch already use. */
+let growPageRenderEpoch=0;
+    const UNVERIFIED_MODULES_V466=['memberships','giftcards'];
+    /* nestly_v584 — ONE pager, for the two lists the owner drew it on: the Bookings request list
+   (photo 2, "every page got 20 lists") and Limited Offer (photo 8, "only show 20 lists every
+   page"). Both drew the same control — first, previous, a few numbers, next, last — so both get
+   the same one rather than two that drift. Paging is done in the browser over rows that are
+   already loaded: neither list is fetched page-by-page, so a page change costs nothing and the
+   counts above the table stay true. */
+const PAGE_SIZE_V584=20;
+function pageCountV584(total){return Math.max(1,Math.ceil(Math.max(0,Number(total)||0)/PAGE_SIZE_V584))}
+function pageSliceV584(rows,page){
+  const list=Array.isArray(rows)?rows:[];
+  const safe=Math.min(Math.max(0,Number(page)||0),pageCountV584(list.length)-1);
+  return list.slice(safe*PAGE_SIZE_V584,(safe+1)*PAGE_SIZE_V584);
+}
+function pagerHtmlV584({scope,page,total,label='Rows'}){
+  const pages=pageCountV584(total);
+  if(pages<2)return '';
+  const current=Math.min(Math.max(0,Number(page)||0),pages-1);
+  /* At most five numbers around the current page, with an ellipsis for the rest — the owner's own
+     drawing was "1 2 3 ... ", which is what a long list has to look like. */
+  const first=Math.max(0,Math.min(current-2,pages-5)),last=Math.min(pages-1,Math.max(current+2,4));
+  const numbers=[];
+  for(let index=Math.max(0,first);index<=last;index+=1)numbers.push(index);
+  /* The four step labels are fixed UI words chosen in this function, not merchant data, so they
+     carry data-workspace-i18n and are translated with the rest of the workspace copy. */
+  const step=(target,text,title,disabled)=>`<button type="button" class="pager-step-v584" data-workspace-i18n data-pager-go-v584="${target}" title="${esc(title)}" aria-label="${esc(title)}"${disabled?' disabled':''}>${text}</button>`;
+  /* A fixed accessible name: the list this pager belongs to already carries its own region label,
+     so interpolating the row noun here would only repeat it. */
+  return `<nav class="pager-v584" data-workspace-i18n data-pager-v584="${esc(scope)}" aria-label="Pages">
+    ${step(0,'&laquo;','First page',current===0)}${step(current-1,'&lsaquo;','Previous page',current===0)}
+    ${numbers[0]>0?'<span class="pager-gap-v584" aria-hidden="true">…</span>':''}
+    ${numbers.map(index=>`<button type="button" class="pager-num-v584${index===current?' is-on':''}" data-pager-go-v584="${index}" aria-current="${index===current?'page':'false'}">${index+1}</button>`).join('')}
+    ${numbers[numbers.length-1]<pages-1?'<span class="pager-gap-v584" aria-hidden="true">…</span>':''}
+    ${step(current+1,'&rsaquo;','Next page',current>=pages-1)}${step(pages-1,'&raquo;','Last page',current>=pages-1)}
+    <span class="muted small pager-count-v584">${esc(`${label}: ${Number(total)||0} · page ${current+1} of ${pages}`)}</span>
+  </nav>`;
+}
+function wirePagerV584(host,scope,go){
+  if(!host)return;
+  host.querySelectorAll(`[data-pager-v584="${scope}"] [data-pager-go-v584]`).forEach(button=>{
+    button.onclick=()=>{
+      const target=Number(button.dataset.pagerGoV584);
+      if(Number.isFinite(target))go(Math.max(0,target));
+    };
+  });
+}
+    const growPointsEndDateInstantV472=value=>{
+  const day=String(value||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return null;
+  const at=new Date(`${day}T23:59:59.999+08:00`);
+  return Number.isFinite(at.getTime())?at.toISOString():null;
+};
+/* The reverse, for pre-filling the field when the owner reopens a gift. Reads the stored instant
+   back as the SGT calendar day it belongs to — so a date saved as 21 Sep 23:59 +08 shows as
+   "2026-09-21" and not as the 21st or 22nd depending on where the owner happens to be. */
+const growPointsEndDateInputV472=value=>{
+  if(!value)return '';
+  const at=new Date(value);
+  if(!Number.isFinite(at.getTime()))return '';
+  return new Date(at.getTime()+8*3600000).toISOString().slice(0,10);
+};
+/* nestly_v754: the reverse of "N days from now" for the points quick-add dialog. A stored
+   claim_available_until in the past or already gone reads as "no days to show" — the field is
+   about setting a NEW deadline, not reporting how expired an old one already is — so the editor
+   reopens blank rather than showing a negative or zero count the owner never typed. Rounded up
+   (not down): the value was itself computed at some earlier publish instant, so reopening it a
+   few hours later must not visibly shrink a day the owner is sure they set. */
+const growPointsExpiryDaysFromUntilV754=value=>{
+  if(!value)return '';
+  const at=Date.parse(String(value));
+  if(!Number.isFinite(at))return '';
+  const days=Math.ceil((at-Date.now())/86400000);
+  return days>0?String(days):'';
+};
+/* The live preview shown while the owner types, and echoed back in the read-only detail list —
+   both read the SAME derivation the server uses (now() + N days), so the dialog never promises a
+   date the RPC will not pin. This is a PREVIEW only: the value that is actually stored is computed
+   server-side, at the RPC's own now(), not this one. */
+const growPointsExpiryPreviewDateV754=rawDays=>{
+  const days=Math.round(Number(rawDays));
+  if(!Number.isFinite(days)||days<=0)return '';
+  return walletDate(new Date(Date.now()+days*86400000).toISOString());
+};
+    function walletDate(value,withTime=false){
+  if(!value)return '';
+  const date=new Date(value);if(Number.isNaN(date.getTime()))return '';
+  return date.toLocaleString('en-SG',{timeZone:'Asia/Singapore',dateStyle:'medium',...(withTime?{timeStyle:'short'}:{})});
+}
+
+/* v295: title/description arrive as English ct() KEYS and are translated HERE, so all six
+   wallet detail sections localize at one chokepoint instead of six call sites. The translated
+   title is what lands in data-section-title, so walletSectionError's "<title> didn't load"
+   reads in the member's language too. */
+    const CUSTOMER_REWARD_WHERE_DEFAULT_V477='Valid across all eligible services and locations.';
+    const HIDE_WHATSAPP_API_SURFACES_V824=true;
+    async function loadGrowWaAutomationCardV583(root){
+  const host=(root||document).querySelector('#growWaAutomationCardV583');
+  if(!host)return;
+  host.innerHTML='';
+  if(HIDE_WHATSAPP_API_SURFACES_V824)return; // nestly_v824: API-driven WhatsApp surface hidden by owner ruling
+  /* Two reads, one round trip — the appointment lanes and the bring-back lane are
+     separate grants, and the owner must see each ceiling for what it is. */
+  const [apptCap,bbCap]=await Promise.all([
+    sb.rpc('business_get_capability_v518',{p_business:S.biz.id,p_capability:'whatsapp_appointment_notification'}),
+    sb.rpc('business_get_capability_v518',{p_business:S.biz.id,p_capability:'whatsapp_retention'})
+  ]);
+  if(!host.isConnected)return;
+  const grantedV583=res=>!res?.error&&res?.data&&res.data.allowed===true;
+  const capsV583={appointments:grantedV583(apptCap),bringback:grantedV583(bbCap)};
+  const wire=()=>{
+    host.querySelectorAll('[data-wa-auto-toggle-v583]').forEach(el=>el.onclick=async()=>{
+      const key=el.dataset.waAutoToggleV583,to=!S.biz[key];
+      el.disabled=true;
+      /* Same write shape as every other business setting (see wireBookingRulesV325):
+         a direct owner-scoped update, guarded by salons_update RLS. */
+      invalidateBusinessRecordCacheV370();
+      const {error}=await sb.from('businesses').update({[key]:to}).eq('id',S.biz.id);
+      if(!host.isConnected)return;
+      if(error){el.disabled=false;return fail(error)}
+      S.biz[key]=to;
+      render();
+      toast(to?'Switched on — Peekaa will send this.':'Switched off — Peekaa will not send this.');
+    });
+  };
+  const render=()=>{
+    host.innerHTML=growWaAutomationCardHtmlV583({business:S.biz,capabilities:capsV583,canEdit:S.myRole==='owner'});
+    wire();
+  };
+  render();
+}
+    /* V551 — the WhatsApp delivery strip on the Bring-back page. The server
+   (get_retention_send_stats_v551) owns every count and the template's approval
+   status; this only prints. While the Meta template is under review the strip
+   says so instead of showing a dead zero — and a suppression total is shown
+   with its named reasons, because a refusal the owner cannot see is a support
+   ticket, not a safety feature. */
+async function loadGrowBbWhatsappStripV551(root){
+  const host=(root||document).querySelector('#growBbWhatsappStripV551');
+  if(!host)return;
+  host.innerHTML='';
+  if(HIDE_WHATSAPP_API_SURFACES_V824)return; // nestly_v824: API-driven WhatsApp surface hidden by owner ruling
+  const {data,error}=await sb.rpc('get_retention_send_stats_v551',{p_business:S.biz.id});
+  if(error||!data)return;
+  if(!host.isConnected)return;
+  const n=k=>Number(data[k])||0;
+  const reasons=data.suppressed_reasons&&typeof data.suppressed_reasons==='object'?data.suppressed_reasons:{};
+  const reasonLabelV551={outbound_off:'messaging is off platform-wide',retention_sends_off:'WhatsApp offers are not switched on yet',capability_disabled:'WhatsApp offers are not enabled for this business',synthetic_client:'demo customers are never messaged',consent_missing:'the customer has not consented to offers',consent_withdrawn:'the customer opted out',whatsapp_consent_absent:'the customer has not opted in to WhatsApp offers yet',whatsapp_consent_withdrawn:'the customer withdrew WhatsApp consent',preference_opt_out:'the customer turned offers off in their app',no_phone:'no valid mobile number on file',customer_opted_out:'the customer replied STOP',stale_unsent:'the offer aged out before sending',cooldown_active:'Peekaa waits 30 days between offers to the same customer',automation_off_for_business:'you switched this message off in WhatsApp automation',platform_hold:'paused by Peekaa for a safety review',business_not_active:'your workspace is not active',demo_business_marketing:'demo businesses are never messaged',platform_channel_off:'WhatsApp is switched off platform-wide',business_not_eligible:'this business is not eligible for WhatsApp offers',synthetic_business:'this is a demo business — never messaged'};
+  const reasonBits=Object.entries(reasons).map(([k,v])=>`${Number(v)||0} — ${reasonLabelV551[k]||'not sent — held by a safety check'}`);
+  const pending=data.template_status&&data.template_status!=='approved';
+  const total=n('queued')+n('sent')+n('delivered')+n('read')+n('failed')+n('suppressed');
+  host.innerHTML=`<section class="card" style="margin-top:12px" aria-labelledby="growBbWaTitleV551">
+    <b id="growBbWaTitleV551">WhatsApp delivery</b>
+    ${pending
+      ?`<p class="muted small" style="margin-top:6px">The bring-back message is being reviewed by WhatsApp. Vouchers granted meanwhile queue up and send automatically once it is approved.</p>`
+      :`<p class="muted small" style="margin-top:6px">Consenting customers with a phone number get the voucher on WhatsApp automatically.</p>`}
+    ${total?`<div class="row" style="gap:14px;flex-wrap:wrap;margin-top:8px">
+      ${[['Waiting',n('queued')],['Sent',n('sent')],['Delivered',n('delivered')],['Read',n('read')],['Failed',n('failed')],['Not sent',n('suppressed')]]
+        .map(([label,value])=>`<span class="muted small"><b style="font-size:1.15em">${value}</b> ${label}</span>`).join('')}
+    </div>`:''}
+    ${reasonBits.length?`<p class="muted small" style="margin-top:8px">Not sent because: ${esc(reasonBits.join(' · '))}.</p>`:''}
+  </section>`;
+}
+    /* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
+   control in the same corner. Text "?" rather than the info glyph — it is what the owner drew,
+   and a question mark reads at a glance for a customer who does not read English well. */
+function customerRewardHelpButtonV468(attribute,value,label){
+  return `<button class="customer-reward-help-v468" type="button" ${attribute}="${esc(String(value||''))}" aria-label="${esc(`Rules for ${label||'this reward'}`)}" title="Reward rules"><span aria-hidden="true">?</span></button>`;
+}
+    const HERO_STAMP_COMPACT_FROM_V422=30;
+function customerHeroStampCardV422(quest){
+  const total=Math.max(0,Math.floor(Number(quest?.slots)||0));
+  if(!total)return '';
+  const filled=Math.max(0,Math.min(total,Math.floor(Number(quest.shown)||0)));
+  /* A slot can carry more than one gift — Cubbly has two rewards both sitting on stamp 5 — so the
+     map keeps the FIRST unclaimed one for that slot, falling back to the first of any. One slot,
+     one gift mark; the line below names what is actually next. */
+  const marks=new Map();
+  (Array.isArray(quest.milestones)?quest.milestones:[])
+    .filter(rung=>rung.slot>0&&rung.slot<=total)
+    .forEach(rung=>{
+      const held=marks.get(rung.slot);
+      if(!held||(held.claimed&&!rung.claimed))marks.set(rung.slot,rung);
+    });
+  const compact=total>HERO_STAMP_COMPACT_FROM_V422;
+  /* nestly_v471 (owner, photo 1: "1 stamp given = the first empty stamp box should be added with
+     a crown icon"). v422 marked a collected slot with a star. A crown is already this product's
+     mark for "you have earned something" — customerTierRungIconV195 uses it on the tier ladder —
+     so the two surfaces now say it the same way. Drawn as a filled path rather than reusing
+     CUI.icon('crown'), which is a stroked 24px glyph: at 11px inside a 26px circle its strokes
+     merge into a blob. Same viewBox, same size and same currentColor as the star it replaces, so
+     nothing about the cell's layout or the compact (22px) variant changes. */
+  const crownV471='<svg viewBox="0 0 16 16" width="11" height="11" focusable="false" aria-hidden="true"><path d="M2 5.4l3.1 2.2L8 3l2.9 4.6L14 5.4l-1 7.6H3L2 5.4Z" fill="currentColor"/></svg>';
+  /* nestly_v486 (owner, photo A: "stamp 2 / 4 / 10 is a gift - and i must be able to click into
+     2/4/10 to view what is that rewards (showing the gift / expiry and details all in one)").
+     A slot that CARRIES a gift becomes a real <button>; every other slot stays the inert <span>
+     it was. That split is deliberate - making all fifteen tappable would promise an answer on
+     twelve slots that have nothing to say.
+     A button, not a span with a click handler: it is reachable by keyboard and announced as
+     something you can press, which a styled <span> is not. The inner markup is untouched, so the
+     crown, the number and the raised gift glyph are drawn exactly as before. */
+  const cells=Array.from({length:total},(unused,index)=>{
+    const slot=index+1,rung=marks.get(slot),collected=index<filled;
+    const inner=`${rung?`<span class="customer-hero-stamp-gift-v422">${CUI.icon('giftcard',{size:compact?12:14})}</span>`:''
+      }${collected?crownV471:`<span class="customer-hero-stamp-num-v422">${slot}</span>`}`;
+    const cls=`customer-hero-stamp-cell-v422${collected?' is-filled':''}${rung?' is-gift':''}`;
+    if(!rung)return `<span class="${cls}" data-hero-stamp-slot-v422="${slot}" aria-hidden="true">${inner}</span>`;
+    return `<button type="button" class="${cls} is-tappable-v486" data-hero-stamp-slot-v422="${slot}" data-hero-stamp-gift-v486="${slot}" aria-label="${
+      esc(`Stamp ${slot} - ${rung.name||'reward'}. See what this gift is.`)}"><span aria-hidden="true">${inner}</span></button>`;
+  }).join('');
+  /* The one sentence the drawing puts under the grid. quest.next is the server's own first
+     unclaimed milestone, so this can never name a gift the counter would refuse. With every
+     milestone on the card already claimed there is nothing to promise, and it says so. */
+  const next=quest.next;
+  const nextLine=next
+    ? `Next available Reward: ${next.name||ct('rewardsTab')}`
+    : 'Next available Reward: all claimed on this card';
+  /* nestly_v475 (owner, photo 2: a ring drawn round the empty right-hand third of the red card,
+     "The photo must also be shown in the empty space I circled").
+     MEASURED: .wallet-inner is min(100%,390px) with 16px padding, the card adds 16px of its own,
+     and the stamp grid is a fixed 5x28 + 4x8 = 172px justified to the start — so roughly 154px of
+     the card is empty by construction. That is the space the owner ringed, and a 92px photo plus
+     its 12px gap fits inside it without touching the grid's fixed tracks, so v416/v449's guarantee
+     that the customer's card wraps exactly where the editor's does is untouched.
+     Deliberately the SAME shape, class vocabulary and onerror bargain as the reward hero page's
+     photo (customer-hero-reward-photo-v468): one visual idea, two surfaces, so a gift photographed
+     for the swipe and the same gift named on the card cannot look like two different products.
+     A milestone with no photo renders one column and the card is byte-identical to before. */
+  const photoV475=customerMediaUrlV95(next?.imageRef);
+  /* nestly_v562a: this comment exists to move the core chunk's content hash. The first v562
+     deploy's fingerprinted URL was probed through the CDN before Vercel had finished building,
+     and Cloudflare cached the pre-deploy answer under the new URL with max-age=31536000,
+     immutable — poisoning the SIN POP for that exact URL. A new hash is a new URL no POP has
+     seen. Rule recorded in memory: verify /api/build reports the new sha FIRST; probe chunk
+     URLs at the Vercel origin, never through the CDN, until it does. */
+  /* nestly_v562 (owner, KKY demo photo: a ring drawn round the empty right-hand side of the
+     stamp hero — "why does it not show the next rewards image?"). The gift ("Free upsize") had
+     no photo, and v475 deliberately rendered one column then — which reads as a hole on a card
+     whose right side was BUILT to carry the reward's picture. v487 already settled this exact
+     question for the points hero ("if no photo put [gift] logo": a real photo when one is known,
+     the gift glyph when it is not, never an empty hole). The stamp card now keeps the same
+     bargain, reusing v487's fallback class so the two heroes cannot drift apart. The column
+     appears whenever there is a NEXT gift to work toward; a card with every milestone claimed
+     still renders one column, because there is no gift to picture. */
+  const photoColumnV562=photoV475
+    ?`<img class="customer-hero-stamp-photo-v475" src="${esc(photoV475)}" alt="" loading="lazy" decoding="async" data-hero-stamp-photo-v475>`
+    :next?`<span class="customer-hero-gift-fallback-v487" data-hero-stamp-gift-fallback-v562>${CUI.icon('giftcard',{size:34})}</span>`:'';
+  /* nestly_v478: the same control the reward pages carry, over the gift this card is working
+     toward. A card with every milestone claimed has no `next` and so draws no "?" — a rules sheet
+     about nothing is a button that lies. Keyed by nothing: the sheet is built from the milestone
+     the button sits beside, so there is no id to look up and nothing to go stale. */
+  const helpV478=next?customerRewardHelpButtonV468('data-hero-stamp-rules-v478','1',next.name||'this reward'):'';
+  /* nestly_v486: role="img" made every child presentational - correct while the cells were inert
+     decoration, and wrong the moment some of them became buttons, because a screen reader ignores
+     the contents of an image. It is a labelled group now, so the progress summary is still
+     announced AND the gift buttons inside it can be reached. */
+  const gridV475=`<div class="customer-hero-stamp-grid-v422" role="group" aria-label="${esc(ct('stampsQuestProgress',{filled,total}))}">${cells}</div>`;
+  return `<div class="customer-hero-stampcard-v422${compact?' is-compact-v422':''}${photoColumnV562?' customer-hero-stamp-has-photo-v475':''}" data-hero-stampcard-v422="${filled}/${total}">
+    ${helpV478?`<div class="customer-hero-stamp-help-v478">${helpV478}</div>`:''}
+    <div class="customer-hero-stamp-body-v475">
+      <div class="customer-hero-stamp-copy-v475">
+        ${gridV475}
+        <p class="customer-hero-stamp-next-v422" data-merchant-content>${esc(nextLine)}</p>
+        ${/* nestly_v496: the carried line is gone from the hero too — a full card rolls the
+             moment the wallet draws it, so the hero shows the NEXT card with the excess already
+             on it (owner, photo 1). */''}
+      </div>
+      ${photoColumnV562}
+    </div>
+  </div>`;
 }
     const GROW_PROGRAMME_VIEWS_V371=Object.freeze(['overview','history','offers','points','tiers','bringback','birthday','welcome','ongoing','available','settings','setup']);
 async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=false,quiet=false}={}){
@@ -16426,7 +16752,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'c032529820b1069c481d4d04df8e0d7e989cb084b55f3db0a7e593857bb69a07',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'9cc010222acdfa1923b847e76e1e32031e0c95164c9ea6387b4a2d474b45e518',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

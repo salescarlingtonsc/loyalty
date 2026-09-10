@@ -204,7 +204,7 @@ const POINTS_LIVE=[{id:POINT_POT,kind:'points',active:true,deactivated_at:null}]
 const NOTHING_LIVE=[{id:POINT_POT,kind:'points',active:false,deactivated_at:'2026-06-01T00:00:00Z'}];
 
 const browser=await chromium.launch({headless:true,
-  executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})});
 const pageErrors=[];
 try{
   await serverReady();

@@ -85,7 +85,7 @@ const OTHER=[{business_id:'b2222222-2222-4222-8222-222222222222',business_slug:'
 
 const browser=await chromium.launch({
   headless:true,
-  executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})
 });
 const pageErrors=[];
 const settle=(page,ms=450)=>page.waitForTimeout?page.waitForTimeout(ms):new Promise(r=>setTimeout(r,ms));

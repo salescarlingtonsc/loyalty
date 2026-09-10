@@ -41,7 +41,66 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
   /* nestly_v421: anchored one declaration earlier. GROW_PROGRAMME_VIEWS_V371 is the list growPage
      matches its own hash against and it sits immediately above the function, so slicing from
      'async function growPage(' left the page reading an undefined constant. */
+  /* nestly_v422/v471/v475/v478/v486/v487/v562 (predates F039, independent gap): growPage's stamp
+     preview panel calls the REAL customerHeroStampCardV422 — the exact function the customer
+     wallet hero uses — deliberately, per its own comment at the call site ("This is not a
+     lookalike"). Neither it nor its own small helper customerRewardHelpButtonV468 was ever in the
+     fixture's extraction list, so the fixture threw before #rewardJourneyTitle rendered the
+     moment growPage reached the stamps preview. Both are self-contained aside from ct() (i18n
+     lookup) and CUI/esc/customerMediaUrlV95, which the fixture already has or stubs below. */
+  /* nestly_v584 (predates F039, independent gap): growPage paginates Limited Offer through the
+     shared pager (pageCountV584/pageSliceV584/pagerHtmlV584/wirePagerV584), which was never in
+     the fixture's extraction list either — another self-contained helper block growPage reaches
+     for outside its own sliced range. Self-contained aside from esc(), already available. */
+  const pager=sourceBetween(app,'/* nestly_v584 — ONE pager,','async function bookingsPage()');
+  /* nestly_v472/v754 (predates F039, independent gap): the Points gift editor's end-date field
+     round-trips through growPointsEndDateInstantV472/growPointsEndDateInputV472 and its expiry
+     preview through growPointsExpiryDaysFromUntilV754/growPointsExpiryPreviewDateV754 — none of
+     which were in the fixture. Clicking a gift's edit control threw a page-level error (an
+     onclick handler, not growPage itself, so it is not caught by growPage's own try/catch) before
+     #growPointsAddNameV326 ever mounted. Self-contained aside from walletDate(), extracted below. */
+  const pointsExpiryHelpers=sourceBetween(app,'const growPointsEndDateInstantV472=value=>{','/* reporting-scale:start');
+  /* walletDate() is the one dependency pointsExpiryHelpers needs beyond esc()/Date, formatting a
+     timestamp in Asia/Singapore — the customer wallet's own date renderer, reused here rather than
+     restated so a locale/timezone change shows up in this evidence too. */
+  const walletDateFn=sourceBetween(app,'function walletDate(value,withTime=false){','function walletSectionShell(');
+  /* nestly_v477 (predates F039, independent gap): the Points gift editor's "Where it works" field
+     reads this single named constant (so the customer sheet's fallback and the owner's own
+     placeholder never drift into two different sentences) directly, and it was never in the
+     fixture. Another single-identifier gap in the same editor form the pointsExpiryHelpers fix
+     above was already chasing. */
+  const customerRewardWhereDefault="const CUSTOMER_REWARD_WHERE_DEFAULT_V477='Valid across all eligible services and locations.';";
+  /* nestly_v824 (predates F039, independent gap): growPage fires loadGrowWaAutomationCardV583
+     off (`.catch(()=>{})`) on every real render, and neither it nor the flag it reads
+     (HIDE_WHATSAPP_API_SURFACES_V824, currently true — so the function returns before making any
+     network call) was in the fixture. An async function that throws inside is a rejected promise
+     its own .catch() swallows, but growPage(...)(outerMain) failing to resolve to a function AT
+     ALL is a synchronous ReferenceError the .catch() never gets a chance to attach to — which is
+     what threw here. The card's own render helper (growWaAutomationCardHtmlV583) is deliberately
+     NOT extracted: with the flag true the function returns on its second line and never reaches
+     it, so carrying it would be dead weight for this fixture. */
+  const hideWhatsappFlag="const HIDE_WHATSAPP_API_SURFACES_V824=true;";
+  const waAutomationLoader=sourceBetween(app,'async function loadGrowWaAutomationCardV583(root){','/* V550 — the recovered-revenue report renderer');
+  /* Same v824 family, same reason: growPage also fires loadGrowBbWhatsappStripV551 off
+     unconditionally. Same short-circuit (HIDE_WHATSAPP_API_SURFACES_V824 is true), so no network
+     call is ever made from this fixture; only the identifier needs to exist. */
+  const bbWhatsappStrip=sourceBetween(app,'/* V551 — the WhatsApp delivery strip on the Bring-back page.','/* nestly_v583 — the owner\'s automation control surface.');
+  const customerRewardHelpButton=sourceBetween(app,'/* V468-E4: one shape for the affordance','function showCustomerBusinessDetailV178');
+  const heroStampCard=sourceBetween(app,'const HERO_STAMP_COMPACT_FROM_V422=30;','/* nestly_v487. The gift tile');
   const grow=sourceBetween(app,'const GROW_PROGRAMME_VIEWS_V371=','/* ---------- Bring-back playbooks');
+  /* nestly_v880 (F039, 2026-09-07): growPage() and growRerenderOwnV880() both read/bump the
+     module-level `growPageRenderEpoch` counter, but it is declared far above GROW_PROGRAMME_
+     VIEWS_V371 — nowhere near the slice above — so the fixture threw
+     "ReferenceError: growPageRenderEpoch is not defined" before #rewardJourneyTitle ever
+     rendered (CI's timeout: production-baseline.yml "browser-walkthrough", 2026-09-09/10). Same
+     failure mode as the v421 notes above it: a helper growPage depends on that lives outside the
+     sliced range. Extracted here, whole, rather than restated. */
+  const growEpoch=sourceBetween(app,'/* F039: quiet growPage() re-renders','\n\n/* V314 (W6 increment 1)');
+  /* nestly_v466 (2026-08-23): growPage's topic list and the module gate both read this array
+     (memberships/giftcards are unverified and hidden everywhere), and it was never in the
+     fixture's extraction list at all — a gap that predates and is independent of the two F039
+     ones above it. Same symptom: ReferenceError before #rewardJourneyTitle renders. */
+  const unverifiedModules=sourceBetween(app,'const UNVERIFIED_MODULES_V466=','\n/* nestly_v768');
   /* V299: growPage now normalizes each promotion row through promotionEditorItemV104 (the V295
      "can straightaway go inside see which promotions available" drilling). The fixture ran the
      real growPage without that helper, so it threw before #rewardJourneyTitle ever rendered. */
@@ -76,11 +135,19 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
      image KINDS is a rule (v418: it must agree with app.v95_storage_path_owned), and a stub would
      quietly render kinds production refuses. */
   const mediaUrl=sourceBetween(app,'function customerMediaUrlV95(','let customerNavCountsV194=');
-  const programmeSpine=sourceBetween(app,'const normaliseLoyaltyModelV375=','function rememberProgrammeSpineV314(');
+  /* nestly_v880 (F039, 2026-09-07, same commit as growEpoch above): growPage() now calls
+     refreshProgrammeSpineV314() directly on every real navigation into Grow (fromRouteV288), not
+     just rememberProgrammeSpineV314() via the switch-RPC reply. The slice used to stop right
+     before rememberProgrammeSpineV314's own declaration, so the fixture never had either
+     function and threw "ReferenceError: refreshProgrammeSpineV314 is not defined" — same failure
+     shape as growEpoch, a different helper growPage reaches outside its sliced range. Extended
+     to also carry rememberProgrammeSpineV314 and refreshProgrammeSpineV314, stopping before
+     writeProgrammeSwitchesV314 (the switch-RPC writer), which growPage itself does not call. */
+  const programmeSpine=sourceBetween(app,'const normaliseLoyaltyModelV375=','/* The one client-side call site of public.set_programmes_v314');
   const promotionItem=sourceBetween(app,'function promotionEditorItemV104(','function promotionScopeMediaV104(');
   /* V299: growPage also reads the V291 pending-changes helpers when it summarizes a draft. */
   const pendingChanges=sourceBetween(app,'function growRewardDiffFieldsV291(','function growPublishFieldRowsV170(');
-  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${componentLibrary}\n${grow}\n${growState}\n${dateFormatters}\n${dateShift}\n${usageRanges}\n${mediaUrl}\n${statusWords}\n${programmeSpine}\n${promotionItem}\n${pendingChanges}`).digest('hex');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${componentLibrary}\n${growEpoch}\n${unverifiedModules}\n${pager}\n${pointsExpiryHelpers}\n${walletDateFn}\n${customerRewardWhereDefault}\n${hideWhatsappFlag}\n${waAutomationLoader}\n${bbWhatsappStrip}\n${customerRewardHelpButton}\n${heroStampCard}\n${grow}\n${growState}\n${dateFormatters}\n${dateShift}\n${usageRanges}\n${mediaUrl}\n${statusWords}\n${programmeSpine}\n${promotionItem}\n${pendingChanges}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa rewards overview browser acceptance</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -97,6 +164,28 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
     const CUI=window.FrenlyCustomerUI;
     const workspaceLocale='en';
     const workspaceTemplateHtmlV97=(key,{count}={})=>key==='growDraftReady'?'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.':count+' published '+(count===1?'reward':'rewards');
+    /* nestly_v456/v453 (i18n attribute templating, predates F039): growPage's own markup calls
+       workspaceTemplateAttributeV97() for aria-label/title/placeholder on several rows. Like
+       workspaceTemplateHtmlV97 above, the real function depends on the full
+       WORKSPACE_TEMPLATE_COPY_V97 dictionary and its interpolation-key inventory, which this
+       fixture has no reason to carry — this evidence is about layout, not translated copy. It was
+       simply never declared at all, so growPage threw a ReferenceError on the first row that
+       called it. Stubbed the same way the real function no-ops on an attribute/key it does not
+       recognise: no attribute is emitted. */
+    const workspaceTemplateAttributeV97=()=>'';
+    /* Same family, same reason: growPage also calls workspaceTemplateTextV97() directly (plain
+       translated text, not an attribute) in at least one row. Stubbed to the empty string for
+       the same reason as workspaceTemplateAttributeV97 above — this fixture is evidence about
+       layout, not translated copy, and the real implementation needs the full copy dictionary. */
+    const workspaceTemplateTextV97=()=>'';
+    /* customerHeroStampCardV422 (extracted below, real production code) reads ct() — the
+       customer-wallet i18n lookup keyed off CUSTOMER_COPY[customerLocale]. Same reasoning as the
+       workspace-template stubs above: this fixture is evidence about layout, not translated
+       copy, so the real dictionary is not worth carrying. The real ct() falls back to the key
+       itself when a translation is missing (the ??key fallback); this stub reproduces exactly that
+       fallback, so a caller that only wants "call this so it doesn't throw" and one that wants
+       "the untranslated label" both get sensible output. */
+    const ct=(key)=>key;
     const recordProductInteractionV100=()=>{};
     const localizeWorkspaceSubtreeV97=()=>{};
     const productProfitabilityV122=()=>null;
@@ -160,7 +249,17 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
         {id:'bring-back-2',name:'Paused facial return',reward_label:'Glow credit',away_days:60,expiry_days:30,active:false,created_at:'2026-08-02T00:00:00.000Z'}],
       referral:emptyPrograms?null:{id:'referral-1',enabled:!configuredOff,reward_cents:1000,min_spend_cents:5000},
       memberships:emptyPrograms?[]:[{id:'membership-1',name:'Glow Monthly',active:!configuredOff}],
-      giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false}};
+      giftcardPreferences:{status:'available',gift_card_sales_enabled:false,package_earns_points:false},
+      /* nestly_v880 (F039, 2026-09-07): growPage now calls refreshProgrammeSpineV314() on every
+         real navigation (extracted above as programmeSpine), which reads public.business_
+         programmes through sb.from(...) — a table fixtureQuery had no case for at all, so it fell
+         through to the generic empty-array branch below. That is not a neutral default: once the
+         spine has been read (even to an empty list), programmeSpineRunningV314() returns a real
+         false instead of the null ('spine not read yet') it used to fall back from — which made
+         the Point system tile read 'Not set up' instead of 'On' even though fixture.loyalty.active
+         is true. One row, mirroring fixture.loyalty's own active flag, keeps the spine and the
+         legacy column agreeing, exactly as v314's 'one authority' rule intends. */
+      programmes:emptyPrograms?[]:[{id:'programme-points-1',kind:'points',active:true,deactivated_at:null}]};
     window.__tableReads=[];window.__rpcCalls=[];window.__rpcArgs=[];window.__recommendationFailed=false;
     /* v229's topic filter, the v386 usage window and the rest of the Grow module state used to be
        restated here one variable at a time; they come from production now (growState above). */
@@ -177,6 +276,7 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
           else if(table==='membership_plans')data=fixture.memberships;
           else if(table==='firm_config_versions')data=state.equals.status==='draft'?(fixture.draft?[fixture.draft]:[]):[{id:'published-v1',version_no:1,status:'published',snapshot_hash:'published-hash'}];
           else if(table==='firm_reward_taxonomy')data=fixture.taxonomy;
+          else if(table==='business_programmes')data=fixture.programmes;
           /* nestly_v456 (audit A). 'bringback_campaigns_v361' joins this set because nestly_v429
              moved the Bring-back tile's read there — growRewardsSnapshot's retentionRequest is
              that table now, and public.retention_programs is no longer read by this page at all.
@@ -239,6 +339,17 @@ export function buildRewardOverviewVisualFixture(app,componentLibrary=''){
     ${programmeSpine}
     ${promotionItem}
     ${pendingChanges}
+    ${growEpoch}
+    ${unverifiedModules}
+    ${pager}
+    ${pointsExpiryHelpers}
+    ${walletDateFn}
+    ${customerRewardWhereDefault}
+    ${hideWhatsappFlag}
+    ${waAutomationLoader}
+    ${bbWhatsappStrip}
+    ${customerRewardHelpButton}
+    ${heroStampCard}
     ${grow}
     window.rewardOverviewMetrics=()=>({sourceHash:'${sourceHash}',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},

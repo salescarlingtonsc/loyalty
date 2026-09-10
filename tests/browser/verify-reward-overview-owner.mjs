@@ -168,10 +168,14 @@ try{
     'a read that failed stays unknown rather than being reported as off');
 
   await page.goto(`${base}?draft=none&configured=off`,{waitUntil:'networkidle'});await page.waitForSelector('#rewardJourneyTitle');
-  for(const topic of ['referrals','bringback']){
-    assert.match(await page.locator(`[data-grow-topic-v229="${topic}"]`).textContent(),/Paused/,
-      `${topic} configured-off state must not be called not set up`);
-  }
+  /* nestly_v558 (owner: "turn on / off - no pause") moved referrals off the shared 'Paused' word
+     onto the same on/off vocabulary the birthday gift and welcome offer use (STATUS_WORDS.off =
+     'Off'); bringback's tile still hardcodes the literal 'Paused' word. This walkthrough had not
+     run since v558 landed, so it still asserted the pre-v558 word for both. */
+  assert.match(await page.locator('[data-grow-topic-v229="referrals"]').textContent(),/Off/,
+    'referrals configured-off state must not be called not set up');
+  assert.match(await page.locator('[data-grow-topic-v229="bringback"]').textContent(),/Paused/,
+    'bringback configured-off state must not be called not set up');
 
   await page.goto(`${base}?draft=none&partial=all`,{waitUntil:'networkidle'});await page.waitForSelector('#growRewardsRetry');
   for(const topic of ['points','tiers','stamps','welcome','birthday','bringback','referrals']){

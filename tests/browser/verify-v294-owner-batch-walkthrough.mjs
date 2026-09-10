@@ -219,7 +219,7 @@ const stubSource=`(()=>{
 
 const browser=await chromium.launch({
   headless:true,
-  executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{})
 });
 const pageErrors=[];
 try{
