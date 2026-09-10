@@ -122,8 +122,8 @@ test('the firm record hosts the controls and wires them to the existing writers'
   assert.match(source,/mode:'inherit',expected_version:module\.override_version\?\?null/);
   assert.match(source,/data-prospect-subtitle/);
   const html=await read('app/index.html');
-  assert.match(html,/platform-console\.js\?v=20260910-v883/);
-  assert.match(html,/platform-console\.css\?v=20260910-v883/);
+  assert.match(html,/platform-console\.js\?v=20260910-v88[34]/);
+  assert.match(html,/platform-console\.css\?v=20260910-v88[34]/);
   const css=await read('app/platform-console.css');
   assert.match(css,/\.platform-switch\.on \.platform-switch-knob\{background:var\(--green\)\}/);
 });

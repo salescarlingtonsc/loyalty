@@ -612,7 +612,7 @@
       'Activity':'活动','Add line':'添加付款行','Add note':'添加备注','Add source data':'添加源数据',
       'Added':'已添加','Adjustments':'调整','Application approved':'申请已批准','Apply scope':'应用范围',
       'Approve batch':'批准批次','Approve firm':'批准企业','Approved owner link':'已批准负责人链接',
-      'Audit events':'审计事件','Business improvement report':'业务改善报告',
+      'Audit events':'审计事件','Back':'返回','Business improvement report':'业务改善报告',
       'Business profile and system readiness':'企业资料与系统准备情况','Checklist':'检查清单',
       'Commands':'命令','Complete':'完成','Complete snapshot':'完整快照','Consultative action plan':'顾问行动计划',
       'Convert to client':'转为客户','Copy secure owner link':'复制安全负责人链接',
@@ -723,7 +723,7 @@
       'Activity':'Aktiviti','Add line':'Tambah baris','Add note':'Tambah nota','Add source data':'Tambah data sumber',
       'Added':'Ditambah','Adjustments':'Pelarasan','Application approved':'Permohonan diluluskan',
       'Apply scope':'Gunakan skop','Approve batch':'Luluskan kumpulan','Approve firm':'Luluskan firma',
-      'Approved owner link':'Pautan pemilik diluluskan','Audit events':'Peristiwa audit',
+      'Approved owner link':'Pautan pemilik diluluskan','Audit events':'Peristiwa audit','Back':'Kembali',
       'Business improvement report':'Laporan penambahbaikan perniagaan',
       'Business profile and system readiness':'Profil perniagaan dan kesiapsiagaan sistem','Checklist':'Senarai semak',
       'Commands':'Arahan','Complete':'Selesai','Complete snapshot':'Petikan lengkap',
@@ -8193,8 +8193,12 @@
   }
   async function openProspectDetail(item,context) {
     const {CUI,sb}=context,id=item.id||item.prospect_id;
-    const overlay=document.createElement('div');overlay.className='platform-drawer';overlay.tabIndex=-1;
-    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="prospectDetailTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1><p class="muted small" data-prospect-subtitle>${escapeHtml(pt("Loading complete prospect detail…"))}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading contacts, activities, tasks and commercial context…',iconName:'customers'})}</div></section>`;
+    // nestly_v884: opened on top of another drawer (the Pipeline drawer's "Open full record"
+    // button) means closing this one should reveal the drawer underneath, not just look like a
+    // dead end next to the X. Checked before this overlay is appended, so it never counts itself.
+    const stackedOnAnotherDrawer=document.querySelectorAll('.platform-drawer').length>0;
+    const overlay=document.createElement('div');overlay.className='platform-drawer platform-prospect-drawer';overlay.tabIndex=-1;
+    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="prospectDetailTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1><p class="muted small" data-prospect-subtitle>${escapeHtml(pt("Loading complete prospect detail…"))}</p></div><div class="platform-actions">${stackedOnAnotherDrawer?`<button type="button" class="btn ghost sm" data-prospect-back>${CUI.icon('back',{size:16})}<span>${escapeHtml(pt('Back'))}</span></button>`:''}<button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div></div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading contacts, activities, tasks and commercial context…',iconName:'customers'})}</div></section>`;
     document.body.appendChild(overlay);
     let deactivate,closed=false,boardDirty=false;
     const close=()=>{
@@ -8216,6 +8220,9 @@
       }
     };
     overlay.querySelector('.platform-drawer-close').onclick=close;
+    // Back closes just this drawer — the underlying drawer (already in the DOM, just covered) is
+    // revealed the same way the X reveals the page behind it when there is no drawer beneath.
+    overlay.querySelector('[data-prospect-back]')?.addEventListener('click',close);
     deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
     try{
       await refreshProspectDrawer({...context,overlay,close,markBoardDirty:()=>{boardDirty=true}},id);
@@ -8288,10 +8295,31 @@
       detail,CUI,context.access?.role==='super_admin'
     );
     wireProspectDetail(detail,context);
+    // nestly_v884: the head (title, Back, X) is now sticky alongside the tab strip so both stay
+    // reachable mid-scroll instead of only the tab strip. Two stacked sticky elements need
+    // different offsets or they land on top of each other, and the head's real height depends on
+    // the firm's name length (it can wrap), so it is measured rather than guessed. -pt cancels the
+    // panel's own top padding, the same trick .platform-detail-nav already relied on, so both land
+    // flush against the panel's top edge instead of leaving a gap.
+    positionStickyProspectHead(overlay);
     const subtitle=overlay.querySelector('[data-prospect-subtitle]');
     if(subtitle)subtitle.textContent=prospectSubtitleText(detail);
     if(prospect.converted_business_id&&context.access?.role==='super_admin')loadFirmControls(detail,context);
     return detail;
+  }
+  /* nestly_v884: pins .platform-drawer-head and .platform-detail-nav to their exact stacked
+     sticky offsets. Both use position:sticky in CSS (a safe non-JS fallback), but the head's
+     rendered height is not a constant — a long firm name wraps to a second line — so the tab
+     strip's offset is measured off the real DOM instead of a guessed pixel value. Re-run after
+     every render; harmless (and cheap) if the elements are not present yet. */
+  function positionStickyProspectHead(overlay){
+    const panel=overlay.querySelector('.platform-drawer-panel');
+    const head=overlay.querySelector('.platform-drawer-head');
+    const nav=overlay.querySelector('.platform-detail-nav');
+    if(!panel||!head)return;
+    const panelTop=parseFloat(globalObject.getComputedStyle?.(panel)?.paddingTop)||0;
+    head.style.top=`-${panelTop}px`;
+    if(nav)nav.style.top=`${Math.max(0,head.offsetHeight-panelTop)}px`;
   }
   /* nestly_v883: the drawer head said "Loading complete prospect detail…" forever — nothing ever
      replaced it once the detail had loaded. */

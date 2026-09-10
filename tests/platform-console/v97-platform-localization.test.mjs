@@ -368,7 +368,7 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // KPI footnote template '{count} internal or QA firm(s) excluded from these totals.', and the
   // workspace-mirror 'Paused programmes still owed' label. All three shipped with no zh-CN or ms
   // dictionary entry at all; both dictionaries carry them now.
-  assert.equal(explicit.length,1274,'update the audited explicit-copy inventory when adding runtime UI'); // + v883 firm controls on the record (+20: billing schedule card, module switches, subtitle) // F130 + v734 + v779 payments by branch + v785 Pipeline + v793 due-day buckets (+5) + v797 card on the branch line (+5) + v860-v878 internal/QA firm exclusion (+3)
+  assert.equal(explicit.length,1275,'update the audited explicit-copy inventory when adding runtime UI'); // + v884 drawer back button (+1: 'Back', the prospect drawer's new Back button label) // + v883 firm controls on the record (+20: billing schedule card, module switches, subtitle) // F130 + v734 + v779 payments by branch + v785 Pipeline + v793 due-day buckets (+5) + v797 card on the branch line (+5) + v860-v878 internal/QA firm exclusion (+3)
   // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
   // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
   // submitLabel are a ternary expression, not a literal, so they are not metadata matches).
@@ -771,6 +771,10 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   /* nestly_v785: the Pipeline's hash builder, its .ics / Google Calendar fragments and the drawer's
      tel: / wa.me / mailto: quick actions are URL and protocol grammar, never UI copy. */
   classifications.push({kind:'technical',pattern:/^(?:#\/platform\/pipeline§|(?:sort|kpi|prospect)=§|UID:peekaa-pipeline-§-§@peekaa\.asia|DT(?:STAMP|START|END):§|SUMMARY:§|DESCRIPTION:§|https:\/\/calendar\.google\.com\/calendar\/render\?§|peekaa-§\.ics|tel:§|https:\/\/wa\.me\/§|mailto:§)$/});
+  // nestly_v884: positionStickyProspectHead() builds two inline `style.top` pixel values
+  // ('-${panelTop}px' and '${…}px') for the drawer's sticky head/tab-strip offsets. Layout
+  // arithmetic, not UI copy — the same category as the amount/cents fields above.
+  classifications.push({kind:'technical',pattern:/^-?§px$/});
   const classified=inventory.map(entry=>({
     ...entry,kind:classifications.find(rule=>rule.pattern.test(entry.text))?.kind||'unclassified'
   }));
@@ -778,11 +782,11 @@ test('mixed dynamic template inventory is explicitly classified',async()=>{
   // ?view= and Companies filter query strings from a retired route's old
   // hash onto its new home — five new technical URL-fragment segments (all
   // in the .hash() builders next to the routes[] registry).
-  assert.equal(classified.length,74,'review every interpolated template segment when the inventory changes'); // + v785 Pipeline (17: hash builders, .ics/Google Calendar fragments, drawer ids)
+  assert.equal(classified.length,76,'review every interpolated template segment when the inventory changes'); // + v884 drawer sticky head/tab-strip offsets (2: '-§px', '§px') // + v785 Pipeline (17: hash builders, .ics/Google Calendar fragments, drawer ids)
   assert.deepEqual(classified.filter(entry=>entry.kind==='unclassified'),[]);
   assert.equal(classified.filter(entry=>entry.kind==='localized-ui').length,6);
   assert.equal(classified.filter(entry=>entry.kind==='data-only').length,4);
-  assert.equal(classified.filter(entry=>entry.kind==='technical').length,64); // + v785 Pipeline (17)
+  assert.equal(classified.filter(entry=>entry.kind==='technical').length,66); // + v884 (2) + v785 Pipeline (17)
 });
 
 test('every mixed UI grammar template localizes arbitrary values in Chinese and Malay',async()=>{

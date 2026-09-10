@@ -9568,6 +9568,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px
 }
 .platform-drawer-close{min-width:44px;padding:10px}
+/* nestly_v884: only the prospect/firm drawer's head sticks — the class is scoped so this never
+   touches the dozen other drawers that reuse .platform-drawer-head. -24px cancels the panel's own
+   24px top padding so the head lands flush with the panel's top edge instead of a gap; JS
+   (positionStickyProspectHead) overrides this with the real measured value on every render, this
+   is only the pre-JS fallback. */
+.platform-prospect-drawer .platform-drawer-head{
+  position:sticky;top:-24px;z-index:6;background:var(--bg);padding-bottom:6px;margin-bottom:12px
+}
 .platform-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .platform-detail-section{margin-top:14px}.platform-detail-section h2{font-size:15px;margin-bottom:8px}
 /* V672: a support message is free text a member of the public typed. It keeps their line
@@ -9848,6 +9856,11 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 .platform-confirm-row{align-items:flex-start!important;gap:9px;min-height:44px;padding:9px 0;color:var(--ink2)}
 .platform-confirm-row input{width:20px;min-width:20px;height:20px;margin:1px 0 0}
+/* nestly_v884: top is the pre-JS fallback (matches the pre-existing behaviour of sticking flush
+   under the panel's top padding); positionStickyProspectHead() overrides it with the head's real
+   measured height so the tab strip sticks directly below the now-also-sticky head instead of
+   underneath it. z-index stays below the head's (6) so the head always paints on top of the tabs
+   during that brief pre-JS window. */
 .platform-detail-nav{
   position:sticky;top:-24px;z-index:4;display:flex;gap:4px;overflow-x:auto;
   margin:-6px -4px 12px;padding:7px 4px;border-bottom:1px solid var(--hair);
@@ -10017,6 +10030,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .platform-import-review-row{grid-template-columns:1fr}
   .platform-import-review-row select{width:100%}
   .platform-detail-nav{top:-20px}
+  .platform-prospect-drawer .platform-drawer-head{top:-20px}
   .platform-detail-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .platform-detail-shortcuts .btn{justify-content:center}
   .platform-detail-shortcuts .platform-action-disclosure{position:static}
