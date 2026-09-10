@@ -55,10 +55,10 @@ test('a Back button appears only when the prospect drawer opens on top of anothe
   assert.match(open,/overlay\.querySelector\('\.platform-drawer-close'\)\.onclick=close;\s*[\s\S]{0,220}overlay\.querySelector\('\[data-prospect-back\]'\)\?\.addEventListener\('click',close\);/);
 });
 
-test('the console asset version is bumped to v884',async()=>{
+test('the console asset version is bumped to v884 or later',async()=>{
   const html=await read('app/index.html');
-  assert.match(html,/platform-console\.js\?v=20260910-v884/);
-  assert.match(html,/platform-console\.css\?v=20260910-v884/);
+  assert.match(html,/platform-console\.js\?v=20260910-v88[45]/);
+  assert.match(html,/platform-console\.css\?v=20260910-v88[45]/);
   assert.doesNotMatch(html,/platform-console\.(?:js|css)\?v=20260910-v883/);
 });
 

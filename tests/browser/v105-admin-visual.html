@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="61f5234636280e99a838ed688ff8ebcc36fedebbd47da1ea387014fce470723b">
+<meta name="v105-production-component-sha256" content="cadfa4c27f046e256ec1fec566e185fa5a22d19a40d02302ed55234807cd3438">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -6788,6 +6788,14 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .platform-switch:focus-visible{outline:2px solid rgba(194,65,53,.55);outline-offset:2px;border-radius:999px}
 @media (max-width:720px){.platform-firm-controls-grid{grid-template-columns:1fr}}
 
+/* nestly_v885 — converted-firm drawer: collapsed pre-sale history + account-record disclosures. */
+.platform-presale-history summary{cursor:pointer;list-style:none;padding:4px 0}
+.platform-presale-history summary::-webkit-details-marker{display:none}
+.platform-presale-history summary h2{display:inline;margin:0}
+.platform-account-record summary{cursor:pointer;list-style:none;padding:8px 0;font-weight:700}
+.platform-account-record summary::-webkit-details-marker{display:none}
+.platform-account-record{margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}
+
 .v105-provenance{position:fixed;right:8px;bottom:8px;z-index:99;padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #ddd;color:#67616d;font:11px/1.2 system-ui}
 </style>
 </head>
@@ -6795,7 +6803,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 61f523463628</span>
+<span class="v105-provenance">v105 production-component harness · cadfa4c27f04</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6920,7 +6928,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'61f5234636280e99a838ed688ff8ebcc36fedebbd47da1ea387014fce470723b',
+  sourceHash:'cadfa4c27f046e256ec1fec566e185fa5a22d19a40d02302ed55234807cd3438',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

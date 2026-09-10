@@ -623,6 +623,7 @@
       'Evidence-backed priorities':'证据支持的优先事项','Explicit scope, no silent blending':'明确范围，不静默混合',
       'File':'文件','Find user':'查找用户','Firm module policy':'企业模块政策','Guarded rollback':'受控回滚',
       /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'自 {date} 起成为 Peekaa 商户','Firm controls':'企业控制','Firm controls unavailable':'企业控制不可用','No subscription record exists for this firm yet.':'该企业尚无订阅记录。','Managed by {provider}':'由 {provider} 管理','Frequency':'频率','Period started':'周期开始','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'这些日期由 {provider} 根据其付款设定。请在 {provider} 中更改方案，此记录会随之更新。','worked out automatically':'自动计算','Saved: {cadence} from {start}':'已保存：自 {start} 起{cadence}','Not set yet — payment reminders cannot run until it is.':'尚未设置——设置前无法发送付款提醒。','Save schedule':'保存计划','Module scope':'模块范围','Branch setting':'分店设置','Firm setting':'企业设置','Follows template':'沿用模板','Read-only access and sector templates: Firms directory':'只读权限与行业模板：企业目录','Billing schedule saved. Next payment {date}.':'账单计划已保存。下次付款 {date}。','{module} is now {state}.':'{module} 已{state}。','{count} module settings now follow the default.':'{count} 项模块设置已恢复默认。','Loading billing schedule and modules…':'正在加载账单计划与模块…','Billing schedule':'账单计划','Start date':'开始日期','Modules':'模块','Every month':'每月','Every 3 months':'每 3 个月','Every 6 months':'每 6 个月','Every year':'每年','These switches apply to every branch unless a branch has its own setting.':'这些开关适用于所有分店，除非分店有自己的设置。','These switches apply to this branch only and win over the firm setting.':'这些开关仅适用于此分店，并优先于企业设置。','Follow the template for every module':'所有模块沿用模板','Follow the firm for every module':'所有模块沿用企业设置','Branch modules could not be loaded.':'无法加载分店模块。','The module could not be changed.':'无法更改模块。','Module settings could not be reset.':'无法重置模块设置。','The schedule could not be saved.':'无法保存计划。','on':'开启','off':'关闭','{module} access':'{module} 权限',
+      /* nestly_v885 converted-firm drawer */ 'Sales contract & billing documents':'销售合同与账单文件','Contract & billing':'合同与账单','This firm self-served through {provider}.':'该企业通过 {provider} 自助开通。','No quotation was needed. Billing dates and modules are on the Controls tab.':'无需报价单。账单日期与模块见“控制”标签页。','Pre-sale history':'售前历史','Stage, priority and qualification notes from before this firm became a merchant.':'该企业成为商户之前的阶段、优先级与资格审查记录。','Account setup record':'账户设置记录',
       'Import completed':'导入完成','Included modules':'包含的模块','Inventory is not available here':'此处不提供库存功能',
       'Invitation token':'邀请令牌','Invoices':'发票','Item-level intelligence':'项目级洞察',
       'Item-level intelligence is disabled for this firm.':'此企业已停用项目级洞察。',
@@ -738,6 +739,7 @@
       'Explicit scope, no silent blending':'Skop jelas, tiada campuran senyap','File':'Fail','Find user':'Cari pengguna',
       'Firm module policy':'Polisi modul firma','Guarded rollback':'Pemulangan terkawal',
       /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'Pedagang Peekaa sejak {date}','Firm controls':'Kawalan firma','No subscription record exists for this firm yet.':'Firma ini belum mempunyai rekod langganan.','Managed by {provider}':'Diurus oleh {provider}','Frequency':'Kekerapan','Period started':'Tempoh bermula','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'{provider} menetapkan tarikh ini daripada pembayarannya sendiri. Tukar pelan di {provider}; rekod ini akan mengikutinya.','worked out automatically':'dikira secara automatik','Saved: {cadence} from {start}':'Disimpan: {cadence} mulai {start}','Not set yet — payment reminders cannot run until it is.':'Belum ditetapkan — peringatan pembayaran tidak dapat dihantar sehingga ia ditetapkan.','Save schedule':'Simpan jadual','Module scope':'Skop modul','Branch setting':'Tetapan cawangan','Firm setting':'Tetapan firma','Follows template':'Mengikut templat','Read-only access and sector templates: Firms directory':'Akses baca sahaja dan templat sektor: Direktori firma','Billing schedule saved. Next payment {date}.':'Jadual bil disimpan. Pembayaran seterusnya {date}.','{module} is now {state}.':'{module} kini {state}.','{count} module settings now follow the default.':'{count} tetapan modul kini mengikut lalai.','Loading billing schedule and modules…':'Memuatkan jadual bil dan modul…','Billing schedule':'Jadual bil','Start date':'Tarikh mula','Modules':'Modul','Every month':'Setiap bulan','Every 3 months':'Setiap 3 bulan','Every 6 months':'Setiap 6 bulan','Every year':'Setiap tahun','These switches apply to every branch unless a branch has its own setting.':'Suis ini terpakai untuk setiap cawangan kecuali cawangan mempunyai tetapan sendiri.','Follow the template for every module':'Ikut templat untuk setiap modul','Branch modules could not be loaded.':'Modul cawangan tidak dapat dimuatkan.','The module could not be changed.':'Modul tidak dapat diubah.','Module settings could not be reset.':'Tetapan modul tidak dapat ditetapkan semula.','The schedule could not be saved.':'Jadual tidak dapat disimpan.','Whole firm':'Seluruh firma','Next payment':'Pembayaran seterusnya',
+      /* nestly_v885 converted-firm drawer */ 'Sales contract & billing documents':'Kontrak jualan & dokumen bil','Contract & billing':'Kontrak & bil','This firm self-served through {provider}.':'Firma ini mendaftar sendiri melalui {provider}.','No quotation was needed. Billing dates and modules are on the Controls tab.':'Sebut harga tidak diperlukan. Tarikh bil dan modul terdapat pada tab Kawalan.','Pre-sale history':'Sejarah pra-jualan','Stage, priority and qualification notes from before this firm became a merchant.':'Peringkat, keutamaan dan nota kelayakan sebelum firma ini menjadi peniaga.','Account setup record':'Rekod persediaan akaun',
       'Import completed':'Import selesai','Included modules':'Modul disertakan',
       'Inventory is not available here':'Inventori tidak tersedia di sini','Invitation token':'Token jemputan',
       'Invoices':'Invois','Item-level intelligence':'Cerapan peringkat item',
@@ -8282,6 +8284,16 @@
       }catch(error){
         detail.onboarding_review_error=error;
       }
+      // nestly_v885: provider-awareness for the Commercial section. Non-super-admins get 42501
+      // from this RPC (it is super-admin-only, same as loadFirmControls' read) — that must not
+      // break the drawer for anyone else, so any error at all collapses to null, not a thrown error.
+      try{
+        detail.billing_schedule=asObject(await rpc(sb,'platform_get_billing_schedule_v883',{
+          p_business:prospect.converted_business_id
+        }));
+      }catch(error){
+        detail.billing_schedule=null;
+      }
     }
     return detail;
   }
@@ -8473,6 +8485,12 @@
     const subscriptionOps=asObject(detail.subscription_ops),billingContacts=asArray(subscriptionOps.billing_contacts),billingDocuments=asArray(subscriptionOps.documents);
     const audit=asArray(detail.audit),quality=asObject(detail.data_quality),stageEvidence=asArray(detail.stage_evidence);
     const termsAccepted=['accepted','signed'].includes(terms.contract_status);
+    // nestly_v885: a firm billed self-serve through Stripe/Razorpay never gets a manually
+    // finalised quotation or commercial-terms row — terms.id stays unset forever. Detect that
+    // shape so the Commercial section stops asking for documents that will never exist.
+    const billingProvider=String(asObject(detail.billing_schedule).provider||'');
+    const providerBilled=['stripe','razorpay'].includes(billingProvider);
+    const selfServed=providerBilled&&!terms.id;
     const primaryRow=contacts.find(row=>contactBase(row).is_primary)||contacts[0]||{},primary=contactBase(primaryRow);
     const whatsapp=contactExtended(primaryRow).whatsapp_e164||contactExtended(primaryRow).whatsapp_original||primary.phone;
     const callPhone=normalizePlatformPhone(primary.phone),whatsappPhone=normalizePlatformPhone(whatsapp);
@@ -8480,8 +8498,9 @@
       ${[
         ...(converted&&isSuperAdmin?[['detail-controls','Controls']]:[]),
         ['detail-overview','Overview'],['detail-company','Company'],['detail-contacts','Contacts'],
-        ['detail-qualification','Qualification'],['detail-activities','Activities'],['detail-tasks','Tasks'],
-        ['detail-commercial','Commercial'],['detail-documents','Documents'],['detail-conversion','Account'],
+        ['detail-qualification',converted?'Pre-sale history':'Qualification'],['detail-activities','Activities'],['detail-tasks','Tasks'],
+        ['detail-commercial','Contract & billing'],['detail-documents','Documents'],
+        ...(converted?[]:[['detail-conversion','Account']]),
         ['detail-onboarding','Onboarding'],['detail-audit','Audit']
       ].map(([id,label])=>`<button type="button" data-detail-section="${id}">${escapeHtml(pt(label))}</button>`).join('')}
     </nav>
@@ -8508,7 +8527,7 @@
       ${sectionHeader(pt('Overview'),`<button type="button" class="btn ghost sm" data-refresh-quality>${CUI.icon('retention',{size:16})}<span>${escapeHtml(pt("Refresh quality"))}</span></button>`)}
       <div class="platform-detail-grid">
         ${typedDetailHtml({...prospect,...company},[
-          ['current_stage_key','Stage',platformStatus],['priority','Priority',platformStatus],
+          ...(converted?[]:[['current_stage_key','Stage',platformStatus],['priority','Priority',platformStatus]]),
           ['region','Region'],['next_action_at','Next action',dateTime],
           ['stage_entered_at','Stage entered',dateTime],['converted_at','Converted',dateTime]
         ])}
@@ -8562,8 +8581,11 @@
           ])}<div class="platform-actions"><button type="button" class="btn ghost sm" data-edit-contact-profile="${escapeHtml(contact.id)}">${escapeHtml(pt("Edit contact profile"))}</button>${isSuperAdmin&&contact.full_name!=='[erased]'?`<button type="button" class="btn ghost sm" data-erase-contact="${escapeHtml(contact.id)}">${escapeHtml(pt("Erase personal data"))}</button>`:''}${contact.full_name==='[erased]'?CUI.status(pt('Personal data erased'),'off'):''}</div></article>`;
       }).join('')}</div>`:CUI.emptyState({iconName:'customers',title:'No contacts',body:'Add the first decision maker, champion, billing contact or technical administrator.'})}
     </section>
-    <section class="card platform-detail-section" id="detail-qualification">
-      ${sectionHeader(pt('Qualification and discovery'),`<button type="button" class="btn ghost sm" data-edit-qualification>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Record qualification"))}</span></button>`)}
+    ${(()=>{
+      // nestly_v885: once a firm is converted, stage/priority/qualification are pre-sale
+      // history — real, worth keeping, but not what a merchant-facing owner needs open by
+      // default. Collapse it under <details> rather than deleting it or hiding it entirely.
+      const qualificationBody=`${sectionHeader(pt('Qualification and discovery'),`<button type="button" class="btn ghost sm" data-edit-qualification>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Record qualification"))}</span></button>`)}
       ${typedDetailHtml(qualification,[
         ['qualification_status','Status',platformStatus],['primary_problem','Primary problem'],['desired_outcome','Desired outcome'],
         ['current_tool_vendor','Current tool / vendor'],['pain_points','Pain points'],['required_features','Required features'],
@@ -8572,8 +8594,14 @@
         ['purchase_timeframe','Purchase timeframe'],['target_go_live','Target go-live'],['decision_date','Decision date'],
         ['main_objection','Main objection'],['risk_level','Risk',platformStatus],['fit_score','Fit score'],
         ['intent_score','Intent score'],['system_suggested_score','System suggestion'],['human_confirmed_score','Human-confirmed score']
-      ])}
-    </section>
+      ])}`;
+      if(!converted)return`<section class="card platform-detail-section" id="detail-qualification">${qualificationBody}</section>`;
+      const stageBody=typedDetailHtml(prospect,[['current_stage_key','Stage',platformStatus],['priority','Priority',platformStatus]]);
+      return `<details class="card platform-detail-section platform-presale-history" id="detail-qualification">
+        <summary><h2>${escapeHtml(pt('Pre-sale history'))}</h2><p class="muted small">${escapeHtml(pt('Stage, priority and qualification notes from before this firm became a merchant.'))}</p></summary>
+        ${qualificationBody}${stageBody}
+      </details>`;
+    })()}
     <section class="card platform-detail-section" id="detail-activities">
       ${sectionHeader('Activities and timeline',`<details class="platform-action-disclosure"><summary class="btn ghost sm">${CUI.icon('add',{size:16})}<span>${escapeHtml(pt("Log activity"))}</span></summary><div class="platform-action-disclosure-menu">${['call','whatsapp','email','meeting'].map(type=>`<button type="button" class="btn ghost sm" data-add-activity="${type}">${escapeHtml(pt('Log {type}',{type:platformStatus(type)}))}</button>`).join('')}</div></details>`)}
       ${operatingTimeline.length?`<h3 class="small">${escapeHtml(pt('Complete operational timeline'))}</h3>${operatingTimeline.map(event=>`<article class="platform-timeline-item"><div class="platform-timeline-marker"></div><div><div class="platform-list-row"><b>${escapeHtml(platformStatus(event.event_type))}</b><span class="muted small">${escapeHtml(dateTime(event.occurred_at))}</span></div><p class="small">${escapeHtml(event.summary||'')}</p></div></article>`).join('')}`:''}
@@ -8581,8 +8609,8 @@
     </section>
     <section class="card platform-detail-section" id="detail-tasks">${sectionHeader('Tasks and next actions')}${tasks.length?tasks.map(task=>`<div class="platform-action-item"><div><b>${escapeHtml(task.title||pt('Task'))}</b><p class="muted small">${escapeHtml(pt('due {date}',{date:dateTime(task.due_at)}))} · ${escapeHtml(platformStatus(task.status||'open'))}</p></div>${task.status!=='completed'?`<button type="button" class="btn ghost sm" data-complete-task="${escapeHtml(task.id)}">${escapeHtml(pt("Complete"))}</button>`:''}</div>`).join(''):detailObjectHtml(null)}</section>
     <section class="card platform-detail-section" id="detail-commercial">
-      ${sectionHeader(pt('Commercial terms'),`<div class="platform-actions">${terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:''}<button type="button" class="btn ghost sm" data-v156-add-billing-contact>${escapeHtml(pt('Add billing recipient'))}</button><button type="button" class="btn sm" data-v156-quotation>${escapeHtml(pt('Generate quotation'))}</button>${prospect.converted_business_id?`<button type="button" class="btn ghost sm" data-v156-checkout>${escapeHtml(pt('Create Stripe checkout'))}</button>`:''}</div>`)}
-      <div class="platform-detail-grid">
+      ${sectionHeader(pt('Sales contract & billing documents'),`<div class="platform-actions">${terms.id?`<button type="button" class="btn ghost sm" data-edit-commercial-detail>${escapeHtml(pt("Record commercial detail"))}</button>`:''}<button type="button" class="btn ghost sm" data-v156-add-billing-contact>${escapeHtml(pt('Add billing recipient'))}</button>${selfServed?'':`<button type="button" class="btn sm" data-v156-quotation>${escapeHtml(pt('Generate quotation'))}</button>`}${!selfServed&&prospect.converted_business_id?`<button type="button" class="btn ghost sm" data-v156-checkout>${escapeHtml(pt('Create Stripe checkout'))}</button>`:''}</div>`)}
+      ${selfServed?`<div class="platform-route-note"><b>${escapeHtml(pt('This firm self-served through {provider}.',{provider:platformStatus(billingProvider)}))}</b><p class="small">${escapeHtml(pt('No quotation was needed. Billing dates and modules are on the Controls tab.'))}</p></div>`:`<div class="platform-detail-grid">
         ${typedDetailHtml(terms,[
           ['product_code','Product'],['plan_code','Plan'],['billing_cycle','Billing cycle',platformStatus],
           ['seats','Seats'],['accepted_value_cents','Accepted value',value=>value===undefined?'—':currency(value,terms.currency)],
@@ -8596,31 +8624,42 @@
           ['renewal_on','Renewal date'],['payment_terms_days','Payment terms',value=>value===undefined?'—':pt('{count} days',{count:value})],
           ['payment_status','Payment status',platformStatus],['amount_collected_cents','Amount collected',value=>value===undefined?'—':currency(value,terms.currency)]
         ])}
-      </div>
+      </div>`}
       <div class="platform-detail-grid" style="margin-top:14px"><div><h3>${escapeHtml(pt('Authorised billing recipients'))}</h3>${billingContacts.length?billingContacts.map(contact=>`<div class="platform-action-item"><div><b>${escapeHtml(contact.contact_name)}</b><p class="muted small platform-break">${escapeHtml(contact.email)}</p></div><div class="platform-actions">${CUI.status(platformStatus(contact.recipient_role),contact.recipient_role==='primary'?'ok':'new')}<button type="button" class="btn ghost sm" data-v156-edit-billing-contact="${escapeHtml(contact.id)}">${escapeHtml(pt('Edit'))}</button></div></div>`).join(''):`<p class="muted small">${escapeHtml(pt('Add a primary billing contact before finalising a quotation.'))}</p>`}</div><div><h3>${escapeHtml(pt('Subscription documents'))}</h3>${billingDocuments.length?billingDocuments.map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.number)}</b><p class="muted small">${escapeHtml(platformStatus(document.type))} · ${escapeHtml(platformStatus(document.status))}</p></div>${document.pdf_ready?`<button type="button" class="btn ghost sm" data-v156-document="${escapeHtml(document.id)}">${escapeHtml(pt('Open'))}</button>`:CUI.status(pt('Generating'),'new')}</div>`).join(''):`<p class="muted small">${escapeHtml(pt('No subscription documents yet.'))}</p>`}</div></div>
     </section>
     <section class="card platform-detail-section" id="detail-documents">
       ${sectionHeader(pt('Documents'),`<button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload"))}</span></button>`)}
       ${documents.length?documents.map(document=>`<div class="platform-action-item"><div><b>${escapeHtml(document.original_filename)}</b><p class="muted small">${escapeHtml(platformStatus(document.document_type))} · v${escapeHtml(document.version)} · ${escapeHtml(platformStatus(document.status))} · ${escapeHtml(formatFileSize(document.size_bytes))}</p></div>${['uploaded','verified'].includes(document.status)?`<button type="button" class="btn ghost sm" data-read-document="${escapeHtml(document.id)}">${escapeHtml(pt("Open"))}</button>`:CUI.status(platformStatus(document.status),'off')}</div>`).join(''):CUI.emptyState({iconName:'empty',title:'No documents',body:'Upload proposals, agreements, registration profiles or onboarding material to the private prospect vault.'})}
     </section>
-    <section class="card platform-detail-section" id="detail-conversion">
-      ${sectionHeader(pt('Conversion and account configuration'),`<button type="button" class="btn ghost sm" data-edit-conversion-config>${escapeHtml(pt("Configure account"))}</button>`)}
-      ${typedDetailHtml(conversion,[
+    ${(()=>{
+      // nestly_v885: once a firm is converted the account record is done — there is nothing
+      // left to configure and no separate tab is warranted, but the fields (workspace slug,
+      // seat limit, plan at conversion time…) remain useful history. Fold them into Audit
+      // instead of deleting them. Unconverted prospects keep the standalone tab unchanged,
+      // Configure account button included, because that is exactly what still needs doing.
+      const accountFields=[
         ['workspace_name','Workspace name'],['workspace_slug','Workspace slug'],['owner_email','Owner email'],
         ['seat_limit','Seat limit'],['plan_code','Plan'],['billing_cycle','Billing cycle',platformStatus],
         ['currency','Currency'],['timezone','Timezone'],['locale','Locale'],['data_import_status','Data import',platformStatus],
         ['require_two_factor','Require 2FA'],['customer_success_consultant_id','Customer success owner'],
         ['target_go_live','Target go-live']
-      ])}
-      ${converted?'':`<p class="platform-route-note small">${escapeHtml(pt('Current stage:'))} ${escapeHtml(platformStatus(stage))}. ${escapeHtml(pt(stage==='client'?(termsAccepted?'Commercial terms and verified payment are ready for account creation.':'Accepted commercial terms are required before account creation.'):stage==='closed_won'?'Create the inactive account now so Stripe or a manual invoice can collect payment. Activation remains blocked until payment is verified.':'Complete the evidence-backed commercial pipeline first.'))}</p>`}
-    </section>
+      ];
+      const conversionSection=converted?'':`<section class="card platform-detail-section" id="detail-conversion">
+      ${sectionHeader(pt('Conversion and account configuration'),`<button type="button" class="btn ghost sm" data-edit-conversion-config>${escapeHtml(pt("Configure account"))}</button>`)}
+      ${typedDetailHtml(conversion,accountFields)}
+      <p class="platform-route-note small">${escapeHtml(pt('Current stage:'))} ${escapeHtml(platformStatus(stage))}. ${escapeHtml(pt(stage==='client'?(termsAccepted?'Commercial terms and verified payment are ready for account creation.':'Accepted commercial terms are required before account creation.'):stage==='closed_won'?'Create the inactive account now so Stripe or a manual invoice can collect payment. Activation remains blocked until payment is verified.':'Complete the evidence-backed commercial pipeline first.'))}</p>
+    </section>`;
+      const accountRecord=converted?`<details class="platform-account-record"><summary>${escapeHtml(pt('Account setup record'))}</summary>${typedDetailHtml(conversion,accountFields)}</details>`:'';
+      return `${conversionSection}
     <section class="platform-detail-section" id="detail-onboarding">${converted?onboardingPanelHtml(detail.onboarding,detail.onboarding_error,CUI,isSuperAdmin,detail.onboarding_review,detail.onboarding_review_error):CUI.card({title:'Onboarding checklist',body:`<p class="muted small">${escapeHtml(pt("The evidence checklist is created during transactional account conversion."))}</p>`})}</section>
     <section class="card platform-detail-section" id="detail-audit">
       ${sectionHeader('Audit and stage history')}
       <div class="platform-detail-grid"><div><h3>${escapeHtml(pt("Stage history"))}</h3>${asArray(detail.stage_history).length?asArray(detail.stage_history).map(history=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(history.to_stage_key))}</b><p class="muted small">${escapeHtml(history.reason_code?platformStatus(history.reason_code):pt('Stage transition'))}</p></div><span class="muted small">${escapeHtml(dateTime(history.occurred_at))}</span></div>`).join(''):detailObjectHtml(null)}</div>
       <div><h3>${escapeHtml(pt("Recorded gate evidence"))}</h3>${stageEvidence.length?stageEvidence.map(evidence=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(evidence.stage_key))}</b><p class="muted small">${escapeHtml(Object.keys(asObject(evidence.evidence)).map(platformStatus).join(', '))}</p></div><span class="muted small">${escapeHtml(dateTime(evidence.created_at))}</span></div>`).join(''):detailObjectHtml(null)}</div></div>
       <h3 style="margin-top:14px">${escapeHtml(pt("Audit events"))}</h3>${audit.length?audit.map(event=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(event.action))}</b><p class="muted small">${escapeHtml(platformStatus(event.entity))}</p></div><span class="muted small">${escapeHtml(dateTime(event.created_at))}</span></div>`).join(''):detailObjectHtml(null)}
+      ${accountRecord}
     </section>`;
+    })()}`;
   }
   // --------------------------------------------------------------------------
   // nestly_v883 — Firm controls on the firm record itself.

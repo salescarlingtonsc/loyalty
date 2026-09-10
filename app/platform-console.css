@@ -984,3 +984,11 @@
 .platform-switch:disabled{opacity:.55;cursor:wait}
 .platform-switch:focus-visible{outline:2px solid rgba(194,65,53,.55);outline-offset:2px;border-radius:999px}
 @media (max-width:720px){.platform-firm-controls-grid{grid-template-columns:1fr}}
+
+/* nestly_v885 — converted-firm drawer: collapsed pre-sale history + account-record disclosures. */
+.platform-presale-history summary{cursor:pointer;list-style:none;padding:4px 0}
+.platform-presale-history summary::-webkit-details-marker{display:none}
+.platform-presale-history summary h2{display:inline;margin:0}
+.platform-account-record summary{cursor:pointer;list-style:none;padding:8px 0;font-weight:700}
+.platform-account-record summary::-webkit-details-marker{display:none}
+.platform-account-record{margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}

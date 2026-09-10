@@ -13,10 +13,10 @@
 
 | | |
 |---|---|
-| HEAD SHA | `e64751e571d381e8150dab68942a16acb8a7e8aa` |
+| HEAD SHA | `de0d20bde1c23206cddd746afab2a7a0706fe17d` |
 | Branch | `firm-controls-v883` |
-| Commit date | 2026-09-10T16:40:25+08:00 |
-| Record generated | 2026-09-10T08:53:47.803Z |
+| Commit date | 2026-09-10T17:52:48+08:00 |
+| Record generated | 2026-09-10T10:05:51.672Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
 | Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |
