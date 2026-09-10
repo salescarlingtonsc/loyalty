@@ -288,9 +288,14 @@ begin
   insert into public.benefit_fulfilments(id,business_id,canonical_benefit_key,source_engine,fulfilment_kind,
     client_id,detail_ref,face_value_cents,estimated_cost_cents,cost_basis,cost_confidence,config_version_id,occurred_at)
   values
-    (v_ffReal, v_biz, 'zz-v743-b2-real', 'checkout', 'discount', v_cReal, v_saleReal, 1000, 1000, 'discount_face','high', v_cfg, now()),
-    (v_ffSyn,  v_biz, 'zz-v743-b2-syn',  'checkout', 'discount', v_cSyn,  v_saleSyn,  1000, 1000, 'discount_face','high', v_cfg, now()),
-    (v_ffRev,  v_biz, 'zz-v743-b2-rev',  'checkout', 'discount', v_cReal, v_saleRev,  1000, 1000, 'discount_face','high', v_cfg, now());
+    -- nestly_v869 made public.get_checkout_discount_report read benefit_fulfilments filtered on
+    -- fulfilment_kind = 'checkout_discount' (the value the real checkout writer has used since
+    -- nestly_v683/v700). This fixture predates v869 and was still writing the fixture-only
+    -- literal 'discount', which the v869 reader silently matches zero rows against -- not a
+    -- timezone or environment difference, a stale literal. Corrected to the canonical value.
+    (v_ffReal, v_biz, 'zz-v743-b2-real', 'checkout', 'checkout_discount', v_cReal, v_saleReal, 1000, 1000, 'discount_face','high', v_cfg, now()),
+    (v_ffSyn,  v_biz, 'zz-v743-b2-syn',  'checkout', 'checkout_discount', v_cSyn,  v_saleSyn,  1000, 1000, 'discount_face','high', v_cfg, now()),
+    (v_ffRev,  v_biz, 'zz-v743-b2-rev',  'checkout', 'checkout_discount', v_cReal, v_saleRev,  1000, 1000, 'discount_face','high', v_cfg, now());
 
   insert into public.checkout_discount_lines(id,business_id,sale_id,evaluation_id,rule_id,effect_index,
     effect_type,level,amount_cents,benefit_fulfilment_id,config_version_id)

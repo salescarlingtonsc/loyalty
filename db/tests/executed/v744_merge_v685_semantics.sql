@@ -44,10 +44,22 @@ begin
   end if;
 
   -- 2. bring-back writer: SG last-seen day (v685) AND synthetic clients excluded (v743)
-  if position($a$app.sg_day(max(s.created_at)) as last_day$a$ in v_bring) = 0 then
-    v_fail := v_fail || ' [bringback lost v685: app.sg_day(max(s.created_at))]';
+  --
+  -- nestly_v873 (2026-10-10, "the sweep measures away from the last VISIT, not the last sale
+  -- row") deliberately moved the sweep's timestamp source from s.created_at to s.occurred_at --
+  -- its own commit message and in-migration verify block say so explicitly, and give a
+  -- concrete correctness reason: a back-dated sale (occurred_at in the past, created_at today)
+  -- was resetting "last seen" under the old column. v685's Singapore-day wrapping (app.sg_day)
+  -- is untouched; only which column feeds it moved. This proof was written 2026-09-03, before
+  -- v873 existed, and pinned the pre-v873 column name -- not a timezone or environment
+  -- difference, a stale expectation about which column is canonical. Updated to match the
+  -- column v873 established as correct, while still guarding against a regression to a bare
+  -- ::date cast on either column (the actual pre-v685 UTC-day bug this proof exists to catch).
+  if position($a$app.sg_day(max(s.occurred_at)) as last_day$a$ in v_bring) = 0 then
+    v_fail := v_fail || ' [bringback lost v685: app.sg_day(max(s.occurred_at))]';
   end if;
-  if position($a$max(s.created_at)::date$a$ in v_bring) > 0 then
+  if position($a$max(s.occurred_at)::date$a$ in v_bring) > 0
+     or position($a$max(s.created_at)::date$a$ in v_bring) > 0 then
     v_fail := v_fail || ' [bringback still keys the cycle on the UTC day]';
   end if;
   if position($a$sc.is_synthetic$a$ in v_bring) = 0 then
