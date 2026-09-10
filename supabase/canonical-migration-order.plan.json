@@ -4312,6 +4312,12 @@
       "version": "20261010170000",
       "name": "nestly_v882_booking_past_start_expiry_and_bookable_bundles",
       "sourcePath": "db/migrations/20261010_nestly_v882_booking_past_start_expiry_and_bookable_bundles.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010180000",
+      "name": "nestly_v883_firm_billing_schedule",
+      "sourcePath": "db/migrations/20261010_nestly_v883_firm_billing_schedule.sql"
     }
   ]
 }

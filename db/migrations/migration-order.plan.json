@@ -4317,6 +4317,12 @@
       "path": "db/migrations/20261010_nestly_v882_booking_past_start_expiry_and_bookable_bundles.sql",
       "semanticVersion": "v882",
       "proposedDeployVersion": "20261010170000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v883_firm_billing_schedule.sql",
+      "semanticVersion": "v883",
+      "proposedDeployVersion": "20261010180000"
     }
   ]
 }

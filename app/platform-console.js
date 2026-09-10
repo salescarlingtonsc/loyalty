@@ -622,6 +622,7 @@
       'Enterprise performance report':'企业绩效报告','Entry gate':'进入条件','Evidence-backed onboarding':'证据支持的入驻',
       'Evidence-backed priorities':'证据支持的优先事项','Explicit scope, no silent blending':'明确范围，不静默混合',
       'File':'文件','Find user':'查找用户','Firm module policy':'企业模块政策','Guarded rollback':'受控回滚',
+      /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'自 {date} 起成为 Peekaa 商户','Firm controls':'企业控制','Firm controls unavailable':'企业控制不可用','No subscription record exists for this firm yet.':'该企业尚无订阅记录。','Managed by {provider}':'由 {provider} 管理','Frequency':'频率','Period started':'周期开始','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'这些日期由 {provider} 根据其付款设定。请在 {provider} 中更改方案，此记录会随之更新。','worked out automatically':'自动计算','Saved: {cadence} from {start}':'已保存：自 {start} 起{cadence}','Not set yet — payment reminders cannot run until it is.':'尚未设置——设置前无法发送付款提醒。','Save schedule':'保存计划','Module scope':'模块范围','Branch setting':'分店设置','Firm setting':'企业设置','Follows template':'沿用模板','Read-only access and sector templates: Firms directory':'只读权限与行业模板：企业目录','Billing schedule saved. Next payment {date}.':'账单计划已保存。下次付款 {date}。','{module} is now {state}.':'{module} 已{state}。','{count} module settings now follow the default.':'{count} 项模块设置已恢复默认。','Loading billing schedule and modules…':'正在加载账单计划与模块…','Billing schedule':'账单计划','Start date':'开始日期','Modules':'模块','Every month':'每月','Every 3 months':'每 3 个月','Every 6 months':'每 6 个月','Every year':'每年','These switches apply to every branch unless a branch has its own setting.':'这些开关适用于所有分店，除非分店有自己的设置。','These switches apply to this branch only and win over the firm setting.':'这些开关仅适用于此分店，并优先于企业设置。','Follow the template for every module':'所有模块沿用模板','Follow the firm for every module':'所有模块沿用企业设置','Branch modules could not be loaded.':'无法加载分店模块。','The module could not be changed.':'无法更改模块。','Module settings could not be reset.':'无法重置模块设置。','The schedule could not be saved.':'无法保存计划。','on':'开启','off':'关闭','{module} access':'{module} 权限',
       'Import completed':'导入完成','Included modules':'包含的模块','Inventory is not available here':'此处不提供库存功能',
       'Invitation token':'邀请令牌','Invoices':'发票','Item-level intelligence':'项目级洞察',
       'Item-level intelligence is disabled for this firm.':'此企业已停用项目级洞察。',
@@ -736,6 +737,7 @@
       'Evidence-backed onboarding':'Penerimaan berasaskan bukti','Evidence-backed priorities':'Keutamaan berasaskan bukti',
       'Explicit scope, no silent blending':'Skop jelas, tiada campuran senyap','File':'Fail','Find user':'Cari pengguna',
       'Firm module policy':'Polisi modul firma','Guarded rollback':'Pemulangan terkawal',
+      /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'Pedagang Peekaa sejak {date}','Firm controls':'Kawalan firma','No subscription record exists for this firm yet.':'Firma ini belum mempunyai rekod langganan.','Managed by {provider}':'Diurus oleh {provider}','Frequency':'Kekerapan','Period started':'Tempoh bermula','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'{provider} menetapkan tarikh ini daripada pembayarannya sendiri. Tukar pelan di {provider}; rekod ini akan mengikutinya.','worked out automatically':'dikira secara automatik','Saved: {cadence} from {start}':'Disimpan: {cadence} mulai {start}','Not set yet — payment reminders cannot run until it is.':'Belum ditetapkan — peringatan pembayaran tidak dapat dihantar sehingga ia ditetapkan.','Save schedule':'Simpan jadual','Module scope':'Skop modul','Branch setting':'Tetapan cawangan','Firm setting':'Tetapan firma','Follows template':'Mengikut templat','Read-only access and sector templates: Firms directory':'Akses baca sahaja dan templat sektor: Direktori firma','Billing schedule saved. Next payment {date}.':'Jadual bil disimpan. Pembayaran seterusnya {date}.','{module} is now {state}.':'{module} kini {state}.','{count} module settings now follow the default.':'{count} tetapan modul kini mengikut lalai.','Loading billing schedule and modules…':'Memuatkan jadual bil dan modul…','Billing schedule':'Jadual bil','Start date':'Tarikh mula','Modules':'Modul','Every month':'Setiap bulan','Every 3 months':'Setiap 3 bulan','Every 6 months':'Setiap 6 bulan','Every year':'Setiap tahun','These switches apply to every branch unless a branch has its own setting.':'Suis ini terpakai untuk setiap cawangan kecuali cawangan mempunyai tetapan sendiri.','Follow the template for every module':'Ikut templat untuk setiap modul','Branch modules could not be loaded.':'Modul cawangan tidak dapat dimuatkan.','The module could not be changed.':'Modul tidak dapat diubah.','Module settings could not be reset.':'Tetapan modul tidak dapat ditetapkan semula.','The schedule could not be saved.':'Jadual tidak dapat disimpan.','Whole firm':'Seluruh firma','Next payment':'Pembayaran seterusnya',
       'Import completed':'Import selesai','Included modules':'Modul disertakan',
       'Inventory is not available here':'Inventori tidak tersedia di sini','Invitation token':'Token jemputan',
       'Invoices':'Invois','Item-level intelligence':'Cerapan peringkat item',
@@ -8192,7 +8194,7 @@
   async function openProspectDetail(item,context) {
     const {CUI,sb}=context,id=item.id||item.prospect_id;
     const overlay=document.createElement('div');overlay.className='platform-drawer';overlay.tabIndex=-1;
-    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="prospectDetailTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1><p class="muted small">${escapeHtml(pt("Loading complete prospect detail…"))}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading contacts, activities, tasks and commercial context…',iconName:'customers'})}</div></section>`;
+    overlay.innerHTML=`<section class="platform-drawer-panel"><div class="platform-drawer-head"><div><h1 id="prospectDetailTitle" style="font-size:1.45rem">${escapeHtml(prospectCompany(item))}</h1><p class="muted small" data-prospect-subtitle>${escapeHtml(pt("Loading complete prospect detail…"))}</p></div><button type="button" class="btn ghost sm platform-drawer-close" aria-label="${escapeHtml(pt('Close detail'))}">${CUI.icon('close',{size:18})}</button></div><div data-detail>${CUI.loadingState({title:'Prospect detail',body:'Loading contacts, activities, tasks and commercial context…',iconName:'customers'})}</div></section>`;
     document.body.appendChild(overlay);
     let deactivate,closed=false,boardDirty=false;
     const close=()=>{
@@ -8201,9 +8203,17 @@
       if(context.prospectCloseHash&&globalObject.history?.replaceState){
         globalObject.history.replaceState(null,'',context.prospectCloseHash);
       }
-      if(boardDirty)renderOnboarding({
-        ...context,hash:context.prospectCloseHash||context.hash
-      },context.onboardingFilters||defaultOnboardingFilters());
+      /* nestly_v883: the drawer used to re-render the ONBOARDING board on close whenever anything
+         inside it had changed — even when it had been opened from the CRM board or the Pipeline
+         drawer. The owner saw that as "it always glitches me out to the main kanban page". The
+         opener now says how to refresh itself (onBoardDirty); the onboarding board is refreshed
+         only when the onboarding board is what opened the drawer. */
+      if(boardDirty){
+        if(typeof context.onBoardDirty==='function')context.onBoardDirty();
+        else if(context.onboardingFilters)renderOnboarding({
+          ...context,hash:context.prospectCloseHash||context.hash
+        },context.onboardingFilters);
+      }
     };
     overlay.querySelector('.platform-drawer-close').onclick=close;
     deactivate=CUI.activateDialog(overlay,{onClose:close,initialFocus:'.platform-drawer-close'});
@@ -8278,7 +8288,20 @@
       detail,CUI,context.access?.role==='super_admin'
     );
     wireProspectDetail(detail,context);
+    const subtitle=overlay.querySelector('[data-prospect-subtitle]');
+    if(subtitle)subtitle.textContent=prospectSubtitleText(detail);
+    if(prospect.converted_business_id&&context.access?.role==='super_admin')loadFirmControls(detail,context);
     return detail;
+  }
+  /* nestly_v883: the drawer head said "Loading complete prospect detail…" forever — nothing ever
+     replaced it once the detail had loaded. */
+  function prospectSubtitleText(detail){
+    const prospect=asObject(detail.prospect),company=asObject(detail.company);
+    const parts=[platformStatus(prospectStage(prospect))];
+    const industry=company.industry||prospect.industry||prospect.sector_key;
+    if(industry)parts.push(sectorLabel(industry));
+    if(prospect.converted_at)parts.push(pt('Peekaa merchant since {date}',{date:billingDayLabel(String(prospect.converted_at).slice(0,10))}));
+    return parts.join(' · ');
   }
   function detailObjectHtml(value,empty='Not recorded') {
     const object=asObject(value),entries=Object.entries(object).filter(([,item])=>item!==null&&item!==''&&item!==undefined);
@@ -8427,6 +8450,7 @@
     const callPhone=normalizePlatformPhone(primary.phone),whatsappPhone=normalizePlatformPhone(whatsapp);
     return `<nav class="platform-detail-nav" aria-label="${escapeHtml(pt('Prospect detail sections'))}">
       ${[
+        ...(converted&&isSuperAdmin?[['detail-controls','Controls']]:[]),
         ['detail-overview','Overview'],['detail-company','Company'],['detail-contacts','Contacts'],
         ['detail-qualification','Qualification'],['detail-activities','Activities'],['detail-tasks','Tasks'],
         ['detail-commercial','Commercial'],['detail-documents','Documents'],['detail-conversion','Account'],
@@ -8451,6 +8475,7 @@
         </div>
       </details>
     </div>
+    ${converted&&isSuperAdmin?firmControlsSectionHtml(CUI):''}
     <section class="card platform-detail-section" id="detail-overview">
       ${sectionHeader(pt('Overview'),`<button type="button" class="btn ghost sm" data-refresh-quality>${CUI.icon('retention',{size:16})}<span>${escapeHtml(pt("Refresh quality"))}</span></button>`)}
       <div class="platform-detail-grid">
@@ -8568,6 +8593,183 @@
       <div><h3>${escapeHtml(pt("Recorded gate evidence"))}</h3>${stageEvidence.length?stageEvidence.map(evidence=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(evidence.stage_key))}</b><p class="muted small">${escapeHtml(Object.keys(asObject(evidence.evidence)).map(platformStatus).join(', '))}</p></div><span class="muted small">${escapeHtml(dateTime(evidence.created_at))}</span></div>`).join(''):detailObjectHtml(null)}</div></div>
       <h3 style="margin-top:14px">${escapeHtml(pt("Audit events"))}</h3>${audit.length?audit.map(event=>`<div class="platform-action-item"><div><b>${escapeHtml(platformStatus(event.action))}</b><p class="muted small">${escapeHtml(platformStatus(event.entity))}</p></div><span class="muted small">${escapeHtml(dateTime(event.created_at))}</span></div>`).join(''):detailObjectHtml(null)}
     </section>`;
+  }
+  // --------------------------------------------------------------------------
+  // nestly_v883 — Firm controls on the firm record itself.
+  //
+  // Owner, 2026-09-10: billing start + frequency and module on/off "are so hard to access, and it
+  // always glitches me out to the main kanban page". Until now the module policy lived only on the
+  // Firms-directory drawer (a second drawer for the same firm) as a four-way select behind a
+  // modal, and no schedule editor existed at all. This section sits at the top of the record the
+  // owner already has open. Same writers as before — platform_set_module_overrides_v105 and the
+  // new platform_set_billing_schedule_v883 — so enforcement is unchanged; only the door moved.
+  // --------------------------------------------------------------------------
+  const BILLING_CADENCE_LABELS=Object.freeze({monthly:'Every month',quarterly:'Every 3 months',half_yearly:'Every 6 months',annual:'Every year'});
+  const BILLING_CADENCE_MONTHS=Object.freeze({monthly:1,quarterly:3,half_yearly:6,annual:12});
+  /* The next payment is the start day plus one cadence, month-end clamped exactly the way Postgres
+     adds an interval of months (30 Nov + 3 months = 28 Feb), so the date the owner sees before
+     saving is the date the server writes. Pure: YYYY-MM-DD in, YYYY-MM-DD out, null when unusable. */
+  function billingNextPaymentDay(startDay,cadence){
+    const months=BILLING_CADENCE_MONTHS[cadence];
+    const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(startDay||''));
+    if(!months||!match)return null;
+    const year=Number(match[1]),month=Number(match[2])-1,day=Number(match[3]);
+    const targetIndex=month+months;
+    const targetYear=year+Math.floor(targetIndex/12),targetMonth=targetIndex%12;
+    const lastDay=new Date(Date.UTC(targetYear,targetMonth+1,0)).getUTCDate();
+    return `${targetYear}-${String(targetMonth+1).padStart(2,'0')}-${String(Math.min(day,lastDay)).padStart(2,'0')}`;
+  }
+  function sgTodayDay(){
+    return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Singapore'});
+  }
+  function billingDayLabel(day){
+    if(!day)return '—';
+    const date=new Date(`${day}T00:00:00+08:00`);
+    return Number.isNaN(date.getTime())?String(day):date.toLocaleDateString(platformIntlLocale(),{dateStyle:'medium',timeZone:'Asia/Singapore'});
+  }
+  function firmControlsSectionHtml(CUI){
+    return `<section class="card platform-detail-section platform-firm-controls" id="detail-controls" data-firm-controls>
+      ${sectionHeader(pt('Firm controls'))}
+      <div data-firm-controls-body>${CUI.loadingState({title:'Firm controls',body:'Loading billing schedule and modules…',iconName:'settings'})}</div>
+    </section>`;
+  }
+  function billingScheduleCardHtml(schedule,CUI){
+    const s=asObject(schedule);
+    if(!s.exists)return CUI.card({title:'Billing schedule',body:`<p class="muted small">${escapeHtml(pt('No subscription record exists for this firm yet.'))}</p>`});
+    if(!s.editable){
+      const provider=platformStatus(s.provider||'provider');
+      return CUI.card({title:'Billing schedule',body:`<div class="platform-control-status">${CUI.status(pt('Managed by {provider}',{provider}),'info')}<span class="muted small">${escapeHtml(platformStatus(s.payment_status||'—'))}</span></div>
+        <dl class="platform-context-list"><div><dt>${escapeHtml(pt('Frequency'))}</dt><dd>${escapeHtml(pt(BILLING_CADENCE_LABELS[s.cadence]||'—'))}</dd></div><div><dt>${escapeHtml(pt('Period started'))}</dt><dd>${escapeHtml(billingDayLabel(s.period_start_day))}</dd></div><div><dt>${escapeHtml(pt('Next payment'))}</dt><dd>${escapeHtml(billingDayLabel(s.next_payment_day))}</dd></div></dl>
+        <p class="muted small">${escapeHtml(pt('{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.',{provider}))}</p>`});
+    }
+    const cadence=BILLING_CADENCE_MONTHS[s.cadence]?s.cadence:'monthly';
+    const startDay=s.period_start_day||sgTodayDay();
+    const next=s.cadence?s.next_payment_day:billingNextPaymentDay(startDay,cadence);
+    return CUI.card({title:'Billing schedule',body:`<form class="platform-billing-schedule" data-billing-schedule-form>
+      <div class="platform-form-grid">
+        ${CUI.field({id:'v883BillingStart',label:'Start date',type:'date',value:startDay,required:true,attributes:'name="start_day" data-billing-start'})}
+        ${CUI.field({id:'v883BillingCadence',label:'Frequency',control:'select',options:Object.keys(BILLING_CADENCE_LABELS).map(value=>({value,label:pt(BILLING_CADENCE_LABELS[value]),selected:value===cadence})),attributes:'name="cadence" data-billing-cadence'})}
+      </div>
+      <div class="platform-billing-next"><span class="muted small">${escapeHtml(pt('Next payment'))}</span><b data-billing-next>${escapeHtml(billingDayLabel(next))}</b><span class="muted small">${escapeHtml(pt('worked out automatically'))}</span></div>
+      <div class="platform-form-actions platform-billing-actions"><span class="muted small">${escapeHtml(s.cadence
+        ?pt('Saved: {cadence} from {start}',{cadence:pt(BILLING_CADENCE_LABELS[s.cadence]),start:billingDayLabel(s.period_start_day)})
+        :pt('Not set yet — payment reminders cannot run until it is.'))}</span><button type="submit" class="btn sm">${escapeHtml(pt('Save schedule'))}</button></div>
+      <div data-error role="alert"></div>
+    </form>`});
+  }
+  function firmControlModules(){
+    return sectorModuleCatalog.filter(module=>!['inventory','customerintel'].includes(module.key));
+  }
+  function moduleSwitchesHtml(effective,branches,scopeBranchId,CUI){
+    const byKey=new Map(asArray(effective?.modules).map(module=>[module.module_key,module]));
+    const scopeId=String(scopeBranchId||'');
+    const scopes=[{id:'',label:pt('Whole firm')},...asArray(branches).filter(branch=>branch.active!==false)
+      .map(branch=>({id:String(branch.branch_id||branch.id||''),label:branch.name||pt('Branch')})).filter(branch=>branch.id)];
+    const hasOverride=asArray(effective?.modules).some(module=>String(module.override_mode||'inherit')!=='inherit');
+    const modules=firmControlModules(),groups=[...new Set(modules.map(module=>module.group))];
+    return CUI.card({title:'Modules',body:`
+      ${scopes.length>2?`<div class="platform-scope-chips" role="tablist" aria-label="${escapeHtml(pt('Module scope'))}">${scopes.map(scope=>`<button type="button" role="tab" class="platform-scope-chip${scopeId===scope.id?' active':''}" aria-selected="${scopeId===scope.id}" data-module-scope="${escapeHtml(scope.id)}">${escapeHtml(scope.label)}</button>`).join('')}</div>`:''}
+      <p class="muted small">${escapeHtml(pt(scopeId?'These switches apply to this branch only and win over the firm setting.':'These switches apply to every branch unless a branch has its own setting.'))}</p>
+      <div class="platform-module-switch-list">${groups.map(group=>`<section class="platform-module-policy-group"><h3>${escapeHtml(pt(group))}</h3>${modules.filter(module=>module.group===group).map(module=>{
+        const current=byKey.get(module.key),mode=String(current?.mode||'disabled'),on=mode==='rw'||mode==='r';
+        const source=String(current?.source||'');
+        const hint=source==='branch_override'?pt('Branch setting'):source==='firm_override'?pt('Firm setting'):pt('Follows template');
+        return `<div class="platform-module-switch-row"><div class="platform-module-policy-copy"><b>${escapeHtml(pt(module.label))}</b><small>${escapeHtml(hint)}${mode==='r'?` · ${escapeHtml(pt('Read only'))}`:''}</small></div>
+          <button type="button" role="switch" class="platform-switch${on?' on':''}" aria-checked="${on}" aria-label="${escapeHtml(pt('{module} access',{module:pt(module.label)}))}" data-module-switch="${escapeHtml(module.key)}"><span class="platform-switch-knob"></span><span class="platform-switch-text">${escapeHtml(pt(on?'On':'Off'))}</span></button></div>`;
+      }).join('')}</section>`).join('')}</div>
+      <div class="platform-actions platform-module-switch-actions">${hasOverride?`<button type="button" class="btn ghost sm" data-module-reset>${escapeHtml(pt(scopeId?'Follow the firm for every module':'Follow the template for every module'))}</button>`:''}<a class="muted small" href="#/platform/firms">${escapeHtml(pt('Read-only access and sector templates: Firms directory'))}</a></div>`});
+  }
+  async function loadFirmControls(detail,context){
+    const {overlay,CUI,sb}=context,prospect=asObject(detail.prospect),businessId=prospect.converted_business_id;
+    const host=overlay.querySelector('[data-firm-controls-body]');
+    if(!host||!businessId)return;
+    const state={scope:'',branches:[],schedule:null,effective:null};
+    const readEffective=scope=>rpc(sb,'platform_get_effective_modules_v105',{p_business:businessId,p_branch:scope||null}).then(asObject);
+    try{
+      const [schedule,effective,payments]=await Promise.all([
+        rpc(sb,'platform_get_billing_schedule_v883',{p_business:businessId}).then(asObject),
+        readEffective(''),
+        rpc(sb,'platform_get_business_payments_v779',{p_business:businessId}).then(asObject).catch(()=>({}))
+      ]);
+      if(!host.isConnected)return;
+      state.schedule=schedule;state.effective=effective;state.branches=asArray(payments.branches);
+    }catch(error){
+      if(!host.isConnected)return;
+      host.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,pt('Firm controls'))
+        :CUI.errorState({title:'Firm controls unavailable',message:platformErrorMessage(error,'Please try again.')});
+      return;
+    }
+    const announceError=(error,fallback)=>CUI.announce(platformErrorMessage(error,fallback),{assertive:true});
+    const paint=()=>{
+      host.innerHTML=`<div class="platform-detail-grid platform-firm-controls-grid">${billingScheduleCardHtml(state.schedule,CUI)}${moduleSwitchesHtml(state.effective,state.branches,state.scope,CUI)}</div>`;
+      wire();
+    };
+    const wire=()=>{
+      const form=host.querySelector('[data-billing-schedule-form]');
+      if(form){
+        const start=form.querySelector('[data-billing-start]'),cadence=form.querySelector('[data-billing-cadence]'),next=form.querySelector('[data-billing-next]');
+        const preview=()=>{next.textContent=billingDayLabel(billingNextPaymentDay(start.value,cadence.value))};
+        start.oninput=preview;cadence.onchange=preview;
+        form.onsubmit=async event=>{
+          event.preventDefault();
+          const submit=form.querySelector('[type="submit"]'),errorHost=form.querySelector('[data-error]');
+          submit.disabled=true;errorHost.innerHTML='';
+          try{
+            state.schedule=asObject(await rpc(sb,'platform_set_billing_schedule_v883',{
+              p_business:businessId,p_start_day:start.value,p_cadence:cadence.value,
+              p_reason:['Set from the firm record:',cadence.value,'from',start.value].join(' ')
+            }));
+            paint();CUI.announce(pt('Billing schedule saved. Next payment {date}.',{date:billingDayLabel(state.schedule.next_payment_day)}));
+          }catch(error){
+            submit.disabled=false;
+            errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'The schedule could not be saved.'))}</div>`;
+          }
+        };
+      }
+      host.querySelectorAll('[data-module-scope]').forEach(button=>button.onclick=async()=>{
+        const scope=button.dataset.moduleScope||'';
+        if(scope===state.scope)return;
+        button.disabled=true;
+        try{state.effective=await readEffective(scope);state.scope=scope;paint()}
+        catch(error){button.disabled=false;announceError(error,'Branch modules could not be loaded.')}
+      });
+      const lock=()=>host.querySelectorAll('[data-module-switch],[data-module-scope],[data-module-reset]').forEach(node=>{node.disabled=true});
+      const writeModules=async(changes,reason)=>{
+        await rpc(sb,'platform_set_module_overrides_v105',{
+          p_business:businessId,p_branch:state.scope||null,p_reason:reason,p_changes:changes
+        });
+        state.effective=await readEffective(state.scope);
+        paint();
+      };
+      host.querySelectorAll('[data-module-switch]').forEach(button=>button.onclick=async()=>{
+        const key=button.dataset.moduleSwitch,on=button.getAttribute('aria-checked')==='true';
+        const current=asArray(state.effective?.modules).find(module=>module.module_key===key);
+        const prior=moduleOverrideState(current,state.scope||null);
+        lock();
+        button.classList.toggle('on',!on);button.setAttribute('aria-checked',String(!on));
+        try{
+          await writeModules(
+            [{module:key,mode:on?'disabled':'rw',expected_version:prior.version}],
+            [moduleLabel(key),'switched',on?'off':'on','for',state.scope?'one branch':'the whole firm','from the firm record'].join(' ')
+          );
+          CUI.announce(pt('{module} is now {state}.',{module:moduleLabel(key),state:pt(on?'off':'on')}));
+        }catch(error){paint();announceError(error,'The module could not be changed.')}
+      });
+      const reset=host.querySelector('[data-module-reset]');
+      if(reset)reset.onclick=async()=>{
+        const changes=asArray(state.effective?.modules)
+          .filter(module=>String(module.override_mode||'inherit')!=='inherit')
+          .map(module=>({module:module.module_key,mode:'inherit',expected_version:module.override_version??null}));
+        if(!changes.length)return;
+        lock();
+        try{
+          await writeModules(changes,'Reset to inherited module settings from the firm record');
+          CUI.announce(pt('{count} module settings now follow the default.',{count:changes.length}));
+        }catch(error){paint();announceError(error,'Module settings could not be reset.')}
+      };
+    };
+    paint();
   }
   function wireProspectDetail(detail,context) {
     const {overlay}=context,prospect=asObject(detail.prospect);
@@ -10214,7 +10416,7 @@
           const item=items.find(entry=>String(entry.id||entry.prospect_id)===card.dataset.prospect);
           if(!item)return;
           if(scopedReader)openScopedProspect(item,context,[],{onClose:()=>renderCrm(context,active)});
-          else openProspectDetail(item,{...context,prospectCloseHash:crmHash(active)});
+          else openProspectDetail(item,{...context,prospectCloseHash:crmHash(active),onBoardDirty:()=>renderCrm(context,active)});
         };
         card.onclick=open;
         card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}};
@@ -15908,7 +16110,7 @@
       });
       on('[data-pipeline-full-record]',()=>{
         if(context.access?.role==='sales_staff')openScopedProspect({...item,prospect_id:item.id},drawerContext,[],{onClose:()=>{}});
-        else openProspectDetail({...item,prospect_id:item.id},{...drawerContext,prospectCloseHash:null});
+        else openProspectDetail({...item,prospect_id:item.id},{...drawerContext,prospectCloseHash:null,onBoardDirty:()=>{dirty=true;load()}});
       });
       const laneSelect=overlay.querySelector('[data-pipeline-lane-select]');
       if(laneSelect)laneSelect.onchange=()=>{
@@ -16365,7 +16567,7 @@
     localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
     firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,prospectCompactCardHtml,prospectListTableHtml,prospectPrimaryBadge,laneMoveStages,modulePickerHtml,
     reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
-    importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
+    importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingNextPaymentDay,billingScheduleCardHtml,moduleSwitchesHtml,prospectSubtitleText,billingCatalogueRows,billingFirmRows,
     commissionRosterRows,commissionAccrualRows,automationRunRows,
     subscriptionDurationHtml,subscriptionOperationsTable,
     companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,
@@ -16410,7 +16612,7 @@
       localizedEmptyHtml,localizedRouteNoteHtml,enterpriseLoadMoreCustomersHtml,importMappingSummaryHtml,importDecisionSummaryHtml,committedImportSummaryText,billingFirmCardHtml,prospectLifecycleActionsHtml,
       firmsHtml,enterpriseHtml,enterpriseDetailTable,reportsPageHtml,prospectCardHtml,prospectCompactCardHtml,prospectListTableHtml,prospectPrimaryBadge,laneMoveStages,modulePickerHtml,
       reportHtml,consultativeIntelligenceHtml,crossDomainReportHtml,onboardingPanelHtml,oneTimeInvitationBodyHtml,
-      importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingCatalogueRows,billingFirmRows,
+      importReviewRowHtml,prospectDetailHtml,typedDetailHtml,billingNextPaymentDay,billingScheduleCardHtml,moduleSwitchesHtml,prospectSubtitleText,billingCatalogueRows,billingFirmRows,
       commissionRosterRows,commissionAccrualRows,automationRunRows,
       subscriptionDurationHtml,subscriptionOperationsTable,
       companyRows,companyDueLabel,companyDetailHtml,companyPaymentRows,companyDetailContactRows,companyPaymentProofLabel,

@@ -368,11 +368,11 @@ test('runtime state, validation and announcement inventory cannot bypass localiz
   // KPI footnote template '{count} internal or QA firm(s) excluded from these totals.', and the
   // workspace-mirror 'Paused programmes still owed' label. All three shipped with no zh-CN or ms
   // dictionary entry at all; both dictionaries carry them now.
-  assert.equal(explicit.length,1254,'update the audited explicit-copy inventory when adding runtime UI'); // F130 + v734 + v779 payments by branch + v785 Pipeline + v793 due-day buckets (+5) + v797 card on the branch line (+5) + v860-v878 internal/QA firm exclusion (+3)
+  assert.equal(explicit.length,1274,'update the audited explicit-copy inventory when adding runtime UI'); // + v883 firm controls on the record (+20: billing schedule card, module switches, subtitle) // F130 + v734 + v779 payments by branch + v785 Pipeline + v793 due-day buckets (+5) + v797 card on the branch line (+5) + v860-v878 internal/QA firm exclusion (+3)
   // F130: +1 distinct metadata string — 'Extend trial' is also the extendTrialModal's
   // literal title/submitLabel object-literal value (Pause/Unpause workspace's title and
   // submitLabel are a ternary expression, not a literal, so they are not metadata matches).
-  assert.equal(metadata.length,880,'update the audited CUI metadata inventory when adding UI metadata'); // v785 Pipeline (+14) + v779 payments by branch (+4) + F130 (+1) + v727 (+2), merged 2026-09-03
+  assert.equal(metadata.length,886,'update the audited CUI metadata inventory when adding UI metadata'); // + v883 firm controls (+6: card titles, error/loading states) // v785 Pipeline (+14) + v779 payments by branch (+4) + F130 (+1) + v727 (+2), merged 2026-09-03
   assert.equal(announcements.length,48,'update the audited static announcement inventory when adding announcements'); // V503
   // nestly_v727 (consultant brief evidence gating, check 93): +5 distinct explicit pt() strings
   // (Average order, the insufficient-evidence note template, Identified customers, With a

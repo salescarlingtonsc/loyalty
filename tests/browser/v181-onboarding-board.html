@@ -951,6 +951,29 @@
   .platform-pipeline-composer form{grid-template-columns:1fr auto}
 }
 
+/* nestly_v883 — Firm controls on the firm record: billing schedule + module switches. */
+.platform-firm-controls-grid{align-items:start}
+.platform-billing-next{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 4px;padding:10px 12px;border-radius:11px;background:var(--tint)}
+.platform-billing-next b{font-size:17px}
+.platform-billing-actions{justify-content:space-between;align-items:center;margin-top:12px}
+.platform-scope-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.platform-scope-chip{border:1px solid var(--hair);background:#fff;border-radius:999px;padding:7px 13px;font-weight:650;font-size:13px;cursor:pointer;min-height:36px}
+.platform-scope-chip.active{background:var(--coral);color:#fff;border-color:var(--coral)}
+.platform-scope-chip:disabled{opacity:.55;cursor:wait}
+.platform-module-switch-list{display:grid;gap:12px}
+.platform-module-switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid var(--hair);border-radius:11px;background:#FBFAF8}
+.platform-module-switch-actions{margin-top:12px;align-items:center;justify-content:space-between}
+.platform-switch{display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;cursor:pointer;padding:4px;min-height:40px;color:var(--muted)}
+.platform-switch.on{color:var(--green)}
+.platform-switch-knob{width:44px;height:26px;border-radius:999px;background:#C9C4BC;position:relative;transition:background .15s;flex:none}
+.platform-switch-knob::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.platform-switch.on .platform-switch-knob{background:var(--green)}
+.platform-switch.on .platform-switch-knob::after{transform:translateX(18px)}
+.platform-switch-text{font-weight:700;font-size:12px;min-width:24px;text-align:left}
+.platform-switch:disabled{opacity:.55;cursor:wait}
+.platform-switch:focus-visible{outline:2px solid rgba(194,65,53,.55);outline-offset:2px;border-radius:999px}
+@media (max-width:720px){.platform-firm-controls-grid{grid-template-columns:1fr}}
+
 :root{--line:#DEDAD2;--hair:#E7E3DC;--muted:#6B6560;--ink:#1B1A18;--tint:#FBEDEB;--coral:#C24135;--shadow:0 1px 2px rgba(0,0,0,.05);--shadow-lg:0 6px 18px rgba(0,0,0,.09)}
 body{margin:0;padding:20px;background:#F4F2EE;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
 h1{font-size:17px;margin:0 0 4px}h3{margin:26px 0 8px;font-size:14px}
