@@ -4318,6 +4318,12 @@
       "version": "20261010180000",
       "name": "nestly_v883_firm_billing_schedule",
       "sourcePath": "db/migrations/20261010_nestly_v883_firm_billing_schedule.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010190000",
+      "name": "nestly_v884_bundles_are_services_everywhere",
+      "sourcePath": "db/migrations/20261010_nestly_v884_bundles_are_services_everywhere.sql"
     }
   ]
 }

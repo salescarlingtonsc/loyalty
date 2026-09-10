@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ba12d7224fb8e72662b8292ba7a7ba0479b7f391124a339d3fa5029ba485dd7b"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="325e36c7649b718131f12ddf24649b5c5d6f59dfb271129de4eaea3bae5d81c5"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5797,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ba12d7224fb8e72662b8292ba7a7ba0479b7f391124a339d3fa5029ba485dd7b</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 325e36c7649b718131f12ddf24649b5c5d6f59dfb271129de4eaea3bae5d81c5</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6920,7 +6920,8 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
       p_business:S.biz.id,p_client:id
     }).order('redeemed_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
-    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     (canReadSales||canReadAppointments)?fetchAllRowsResult(()=>sb.from('staff').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_definitions').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('created_at').order('id')):Promise.resolve({data:[]}),
     /* V172: this table has NO id column (key: business_id, client_id, field_definition_id).
@@ -7051,7 +7052,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
   /* V252: the STAFF column is read from the appointment's own staff_id through the same roster
      map the sale rows already use \u2014 the name is never recovered from a display sentence.
      An appointment with no assigned team member keeps a null here and prints an em dash. */
-  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status,
+  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:appointmentServiceNameV884(a),status:a.status,
     staff:staffName[a.staff_id]||null,
     upcoming:(a.starts_at||'')>nowIso&&a.status!=='cancelled'&&a.status!=='completed'}));
   const histRedemptions=(redemptionRows||[]).map(redemption=>({
@@ -12659,8 +12660,11 @@ function focusNotifiedBookingV206(list){
 /* nestly_v882: a booking request is FOR a service or a bundle; every surface that prints the
    service name goes through here so a bundle request never reads as a "General visit". */
 function bookingRequestForNameV882(row){
-  return row?.services?.name||(row?.bundles?.name?`Bundle · ${row.bundles.name}`:null);
+  /* nestly_v884: a bundle is sold and booked like a service, so it prints its own plain name. */
+  return row?.services?.name||row?.bundles?.name||null;
 }
+/* nestly_v884: same rule for an appointment row — service name, else bundle name. */
+function appointmentServiceNameV884(row){return row?.services?.name||row?.bundles?.name||null;}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -12927,7 +12931,7 @@ async function bookingsPage(){
       return `<tr data-booking-row="${esc(b.id)}"${rowClassV594?` class="${rowClassV594}"`:''}${b.appointment_id?` data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
-        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||(b.bundles?.name?`Bundle · ${b.bundles.name}`:'')||'—')}</td>
+        : esc(b.email||'—')}</td><td data-label="For">${esc(bookingRequestForNameV882(b)||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}${staleV880?' <span class="pill no" data-booking-stale-v880>Time has passed</span>':''}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
       ${/* nestly_v584 (owner photo 13: Confirm and Decline struck out, a green tick and a red cross
@@ -30723,7 +30727,9 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
     const amendableBooked=item.status==='booked'&&canWrite;
     const completeTabAvailableV375=item.status==='booked'&&canWrite&&outcomeIsDue&&canComplete;
     const amendTabsAvailableV375=amendableBooked||completeTabAvailableV375;
-    const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
+    /* nestly_v884: a bundle booking has no services row — keep the service's own price/duration
+       fields when there is one, but let the name fall through to the bundle. */
+    const local=sgInput(item.starts_at),service={...(item.services||{}),name:appointmentServiceNameV884(item)||item.services?.name},client=item.clients||{};
     const itemBranch=visibleBranches.find(branch=>branch.id===item.branch_id);
     const branchName=itemBranch?.name||'Branch';
     /* V330 (owner: verified the confirmed-appointment "Message on WhatsApp" button was still
@@ -30985,6 +30991,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ba12d7224fb8e72662b8292ba7a7ba0479b7f391124a339d3fa5029ba485dd7b',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'325e36c7649b718131f12ddf24649b5c5d6f59dfb271129de4eaea3bae5d81c5',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -522,15 +522,15 @@
     {
       "id": "db.fn:app.on_appointment_completed/0",
       "surface": "db_trigger_function",
-      "latest_file": "20260722130000_frenly_v47_smart_staff_scheduling.sql",
-      "rows_written": "sales:INSERT, stock_batches:UPDATE",
+      "latest_file": "20261010190000_nestly_v884_bundles_are_services_everywhere.sql",
+      "rows_written": "sale_items:INSERT, sales:INSERT, stock_batches:UPDATE",
       "detected_signals": "idem-signal",
       "entry_point": "trigger app.on_appointment_completed (AFTER UPDATE on appointments, status→completed)",
       "callers": "set_appointment_status_v47 / appointment status change",
       "idempotency": "guarded so completion inserts exactly one sale per appointment (idempotent on appointment_id)",
       "payment": "inserts a sales row for the completed service (accrual); no tender",
       "loyalty": "INDIRECT via the sales insert trigger chain",
-      "inventory": "stock_batches UPDATE observed (service-linked product deduction)",
+      "inventory": "stock_batches UPDATE observed (service-linked product deduction; nestly_v884: every member service of a bundle appointment, and product members deduct through the v455 sale_items trigger)",
       "reversal": "the completion sale is reversible via reverse_sale",
       "ui": "Appointments → mark completed",
       "kernel": "NEEDS-WORK — completion is the universal earn event and must route its sale through the kernel; today it inserts sales directly (still gets the trigger chain, but bypasses record_quick_sale idempotency/tender path)"

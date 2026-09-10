@@ -9924,7 +9924,9 @@ async function renderPortal(slug){
   const bundles=Array.isArray(biz.bundles)?biz.bundles.filter(b=>b&&b.id&&Number(b.duration_min)>0):[];
   const hasServices=services.length>0||bundles.length>0;
   const repeatService=repeatServiceParam?services.find(service=>service.id===repeatServiceParam)||null:null;
-  const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
+  /* nestly_v884: Book again may name a bundle — the same parameter, resolved against the same page. */
+  const repeatBundle=repeatServiceParam&&!repeatService?bundles.find(b=>b.id===repeatServiceParam)||null:null;
+  const repeatPreference=(repeatService||repeatBundle)?customerRepeatBookingPreferencesV167.get(`${slug}:${(repeatService||repeatBundle).id}`)||null:null;
   const usesTables=!!biz.uses_tables;
   /* v192 (owner: "pressing booking will lead me to this page — but there's no way to back").
      The portal is also a public page a stranger opens from a QR, and that visitor has nothing to
@@ -9950,8 +9952,8 @@ async function renderPortal(slug){
   const steps=['service',branchChoice?'branch':'',middleStep,'time','details'].filter(Boolean);
   const stepMeta={service:{label:'Service'},branch:{label:'Branch'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
   let selSvc=repeatService?.id||null;     // null = general reservation, or a validated public service uuid
-  let selBundle=null;                     // nestly_v882: a validated public bundle uuid, exclusive with selSvc
-  let serviceChosen=!!repeatService||!hasServices;
+  let selBundle=repeatBundle?.id||null;   // nestly_v882/v884: a validated public bundle uuid, exclusive with selSvc
+  let serviceChosen=!!repeatService||!!repeatBundle||!hasServices;
   let selTable=null;                     // reservation table type uuid (null = any/general)
   // The server lists branches with the shop default first — preselecting it keeps a
   // multi-branch booking to the same tap count as before for the common case, while still
@@ -10036,7 +10038,7 @@ async function renderPortal(slug){
           <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
           <b>${esc(currency)} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
         ${bundles.map(b=>`<button class="svc${selBundle===b.id?' sel':''}" type="button" aria-pressed="${selBundle===b.id}" data-bundle="${esc(b.id)}">
-          <span><b>${esc(b.name)}</b> <span class="muted small">· Bundle · ${b.duration_min} min${Array.isArray(b.items)&&b.items.length?` · ${esc(b.items.join(' + '))}`:''}</span></span>
+          <span><b>${esc(b.name)}</b> <span class="muted small">· ${b.duration_min} min${Array.isArray(b.items)&&b.items.length?` · ${esc(b.items.join(' + '))}`:''}</span></span>
           <b>${esc(currency)} ${(b.price_cents/100).toFixed(2)}</b></button>`).join('')}
         ${usesTables?`<button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>`:''}
       </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}

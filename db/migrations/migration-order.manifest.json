@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 718,
-  "executableCount": 704,
+  "itemCount": 719,
+  "executableCount": 705,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -1011,7 +1011,7 @@
     },
     {
       "sourceDeployVersion": "20261010",
-      "count": 17,
+      "count": 18,
       "paths": [
         "db/migrations/20261010_nestly_v865_one_visit_definition_on_the_dashboard.sql",
         "db/migrations/20261010_nestly_v866_stamp_liability_deducts_closed_cycles.sql",
@@ -1029,7 +1029,8 @@
         "db/migrations/20261010_nestly_v878_platform_console_prices_from_the_live_catalogue_and_names_synthetic_firms.sql",
         "db/migrations/20261010_nestly_v879_paid_means_the_contract_was_paid.sql",
         "db/migrations/20261010_nestly_v882_booking_past_start_expiry_and_bookable_bundles.sql",
-        "db/migrations/20261010_nestly_v883_firm_billing_schedule.sql"
+        "db/migrations/20261010_nestly_v883_firm_billing_schedule.sql",
+        "db/migrations/20261010_nestly_v884_bundles_are_services_everywhere.sql"
       ]
     }
   ],
@@ -6777,6 +6778,14 @@
       "semanticVersion": "v883",
       "proposedDeployVersion": "20261010180000",
       "sha256": "0703d36193c8dbdf0e902c97c1b4180aba6830935eb8e591fdbaa242d155d507"
+    },
+    {
+      "order": 719,
+      "kind": "executable",
+      "path": "db/migrations/20261010_nestly_v884_bundles_are_services_everywhere.sql",
+      "semanticVersion": "v884",
+      "proposedDeployVersion": "20261010190000",
+      "sha256": "878568c12b0e39a312444c0759fe68f5202b703a637e504d94de8022e1b924f2"
     }
   ]
 }

@@ -13,10 +13,10 @@
 
 | | |
 |---|---|
-| HEAD SHA | `de0d20bde1c23206cddd746afab2a7a0706fe17d` |
-| Branch | `firm-controls-v883` |
-| Commit date | 2026-09-10T17:52:48+08:00 |
-| Record generated | 2026-09-10T10:05:51.672Z |
+| HEAD SHA | `9a7241be98752cb0569df48abddaff7c5d8aa46d` |
+| Branch | `main` |
+| Commit date | 2026-09-10T18:07:25+08:00 |
+| Record generated | 2026-09-10T10:11:37.821Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
 | Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |
@@ -29,8 +29,8 @@ echoed) so a stale or hand-edited `.sha256` file is caught rather than trusted b
 
 | Manifest | `.sha256` file contents | Independently recomputed SHA-256 | Match |
 |---|---|---|---|
-| `db/migrations/migration-order.manifest.json` | `88e1c7512e6a83bb72e7657dfd3d78b4f1cdf72d48bce54774160c9b33f74dba  migration-order.manifest.json` | `88e1c7512e6a83bb72e7657dfd3d78b4f1cdf72d48bce54774160c9b33f74dba` | MATCH |
-| `supabase/canonical-migration-order.manifest.json` | `524889e17935a3f807d21f02aa861b644f506b41fc126edef96222d0f5d596a4  canonical-migration-order.manifest.json` | `524889e17935a3f807d21f02aa861b644f506b41fc126edef96222d0f5d596a4` | MATCH |
+| `db/migrations/migration-order.manifest.json` | `ae9bc7e51bff784e6e1c4dd840c8bd3ed3b37d505a4fdebd1c26586c747e027f  migration-order.manifest.json` | `ae9bc7e51bff784e6e1c4dd840c8bd3ed3b37d505a4fdebd1c26586c747e027f` | MATCH |
+| `supabase/canonical-migration-order.manifest.json` | `c1f0d82725607133085f2b98fe573e2029a00a85603b53561f2f88e28afb843f  canonical-migration-order.manifest.json` | `c1f0d82725607133085f2b98fe573e2029a00a85603b53561f2f88e28afb843f` | MATCH |
 
 ## Migrations dated 2026-09-02
 

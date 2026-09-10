@@ -21489,7 +21489,7 @@ function openBookingRequestPopupV329(row){
   deactivate=CUI.activateDialog($('bookingRequestPopupV329'),{onClose:close,initialFocus:'#bookingRequestPopupConfirmV329'});
   $('bookingRequestPopupCloseV329').onclick=close;
   $('bookingRequestPopupConfirmV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'confirm',{
-    customerName:row.name,phone:row.phone,serviceName:row.services?.name,staffName:row.staff?.full_name,
+    customerName:row.name,phone:row.phone,serviceName:bookingRequestForNameV882(row),staffName:row.staff?.full_name,
     startsAt:row.preferred_at,location:row.branches?.address
   });};
   $('bookingRequestPopupDeclineV329').onclick=()=>{close();decideBookingRequestGlobalV329(row.id,'decline');};
@@ -23796,7 +23796,8 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
     :`<p class="muted small">Loading the schedule for ${esc(dayLabelV252)}\u2026</p>`;
   const from=sgDateBoundary(day),to=sgDateBoundary(day,1);
   let query=sb.from('appointments')
-    .select('id,starts_at,status,clients(full_name),services!appointments_service_id_fkey(name)')
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+    .select('id,starts_at,status,clients(full_name),services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)')
     .eq('business_id',S.biz.id).gte('starts_at',from).lt('starts_at',to)
     .order('starts_at').order('id').limit(50);
   /* The applied branch scope is a closure variable inside dashboard(), so it is PASSED IN
@@ -23827,7 +23828,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   host.innerHTML=`<ol class="dashboard-schedule-chips">${shown.map(row=>{
     const time=(sgt(row.starts_at)||'').slice(11,16);
     const who=row.clients?.full_name||'Walk-in';
-    const what=row.services?.name||'';
+    const what=appointmentServiceNameV884(row)||''; // nestly_v884
     /* V375 (owner, photo 15: the 11:30 row ringed — "clickable to pop-up see details & to
        complete & checkout"). The chip links to the Appointments page carrying this appointment's
        id, which that page opens in its existing detail dialog. Deliberately a link to the one
@@ -25256,7 +25257,8 @@ async function clientDetail(id){
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
       p_business:S.biz.id,p_client:id
     }).order('redeemed_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
-    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     (canReadSales||canReadAppointments)?fetchAllRowsResult(()=>sb.from('staff').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_definitions').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('created_at').order('id')):Promise.resolve({data:[]}),
     /* V172: this table has NO id column (key: business_id, client_id, field_definition_id).
@@ -25387,7 +25389,7 @@ async function clientDetail(id){
   /* V252: the STAFF column is read from the appointment's own staff_id through the same roster
      map the sale rows already use \u2014 the name is never recovered from a display sentence.
      An appointment with no assigned team member keeps a null here and prints an em dash. */
-  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status,
+  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:appointmentServiceNameV884(a),status:a.status,
     staff:staffName[a.staff_id]||null,
     upcoming:(a.starts_at||'')>nowIso&&a.status!=='cancelled'&&a.status!=='completed'}));
   const histRedemptions=(redemptionRows||[]).map(redemption=>({
@@ -30995,8 +30997,11 @@ function focusNotifiedBookingV206(list){
 /* nestly_v882: a booking request is FOR a service or a bundle; every surface that prints the
    service name goes through here so a bundle request never reads as a "General visit". */
 function bookingRequestForNameV882(row){
-  return row?.services?.name||(row?.bundles?.name?`Bundle · ${row.bundles.name}`:null);
+  /* nestly_v884: a bundle is sold and booked like a service, so it prints its own plain name. */
+  return row?.services?.name||row?.bundles?.name||null;
 }
+/* nestly_v884: same rule for an appointment row — service name, else bundle name. */
+function appointmentServiceNameV884(row){return row?.services?.name||row?.bundles?.name||null;}
 function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
@@ -31263,7 +31268,7 @@ async function bookingsPage(){
       return `<tr data-booking-row="${esc(b.id)}"${rowClassV594?` class="${rowClassV594}"`:''}${b.appointment_id?` data-booking-appointment-v378="${esc(b.appointment_id)}" tabindex="0" role="link" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:b.name||'—'})}`:''}><td data-label="Received">${sgt(b.created_at)||'—'}</td><td data-label="Name"><b>${esc(b.name)}</b></td>
       <td class="small" data-label="Contact">${b.phone
         ? `<a class="btn ghost sm" href="tel:${esc(String(b.phone).replace(/[^\d+]/g,''))}" ${workspaceTemplateAttributeV97('aria-label','callBookingCustomer',{customer:b.name||'this customer',phone:b.phone})}>${CUI.icon('till',{size:16})} ${esc(b.phone)}</a>`
-        : esc(b.email||'—')}</td><td data-label="For">${esc(b.services?.name||(b.bundles?.name?`Bundle · ${b.bundles.name}`:'')||'—')}</td>
+        : esc(b.email||'—')}</td><td data-label="For">${esc(bookingRequestForNameV882(b)||'—')}</td>
       <td data-label="Preferred">${sgt(b.preferred_at)||'—'}${staleV880?' <span class="pill no" data-booking-stale-v880>Time has passed</span>':''}</td><td data-label="Party">${b.party_size||'—'}</td>
       <td data-label="Status"><span class="pill ${STAFF_BOOKING_DECISION_STATUSES.has(b.status)?'new':b.status==='confirmed'?'ok':'no'}"><span data-workspace-i18n>${esc(statusLabelV288(b.status))}</span></span></td>
       ${/* nestly_v584 (owner photo 13: Confirm and Decline struck out, a green tick and a red cross
@@ -46665,7 +46670,9 @@ async function appointmentsPage(){
     {data:serviceBranches,error:serviceBranchError},{data:staffHours,error:staffHoursError},
     {data:staffOffDays,error:staffOffDaysError},{data:branchHours,error:branchHoursError},
     {data:branchBreaks,error:branchBreaksError},{data:staffWeeklyOffLoaded,error:staffWeeklyOffError},
-    {data:staffWeeklyBreaksLoaded,error:staffWeeklyBreaksError}
+    {data:staffWeeklyBreaksLoaded,error:staffWeeklyBreaksError},
+    /* nestly_v884: a bundle is bookable exactly like a service, so the picker loads them too. */
+    {data:bundleRows,error:bundleError}
   ]=await Promise.all([
     fetchAllRowsResult(()=>sb.from('clients').select('id,full_name,phone,phone_norm,email',{count:'exact'}).eq('business_id',S.biz.id).order('full_name').order('id')),
     fetchAllRowsResult(()=>sb.from('services').select('id,name,variant_label,price_cents,duration_min,buffer_before_min,buffer_after_min',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id')),
@@ -46684,7 +46691,9 @@ async function appointmentsPage(){
     /* nestly_v759: a repeating break inside a working day (lunch, a standing class). One row per
        weekday, so the calendar and the public slot list ask the same question of the same shape
        branch_breaks already uses. */
-    fetchAllRowsResult(()=>sb.from('staff_recurring_breaks').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday').order('starts_at'))
+    fetchAllRowsResult(()=>sb.from('staff_recurring_breaks').select('staff_id,weekday,starts_at,ends_at',{count:'exact'}).eq('business_id',S.biz.id).order('staff_id').order('weekday').order('starts_at')),
+    /* nestly_v884: non-fatal — a business with no bundles, or no read on them, still books services. */
+    fetchAllRowsResult(()=>sb.from('bundles').select('id,name,price_cents,active,bundle_items(service_id,services(duration_min,buffer_before_min,buffer_after_min))',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('name').order('id'))
   ]);
   if(!isCurrent())return;
   const loadError=clientError||serviceError||staffError||branchError||staffBranchError||serviceBranchError||
@@ -46806,6 +46815,16 @@ async function appointmentsPage(){
   if(requestedStaffV329&&staff.some(s=>s.id===requestedStaffV329))staffFilter=requestedStaffV329;
   highlightRequestId=routeParamV288('highlight');
   const branchStaff=id=>staff.filter(s=>(staffBranches||[]).some(x=>x.branch_id===id&&x.staff_id===s.id));
+  /* nestly_v884: one bookable row per active bundle — its duration and buffers are the sum of its
+     member services, so the existing slot arithmetic needs no special case. */
+  const bookableBundlesV884=(bundleError?[]:(bundleRows||[])).map(b=>{
+    const members=(b.bundle_items||[]).filter(m=>m.service_id&&m.services);
+    return {id:b.id,name:b.name,price_cents:b.price_cents,
+      duration_min:members.reduce((n,m)=>n+Number(m.services.duration_min||60),0),
+      buffer_before_min:members.reduce((n,m)=>n+Number(m.services.buffer_before_min||0),0),
+      buffer_after_min:members.reduce((n,m)=>n+Number(m.services.buffer_after_min||0),0),
+      member_service_ids:members.map(m=>m.service_id)};
+  }).filter(b=>b.duration_min>0);
   const branchServices=id=>(sv||[]).filter(service=>{
     const configured=(serviceBranches||[]).some(x=>x.service_id===service.id);
     return !configured||(serviceBranches||[]).some(x=>x.service_id===service.id&&x.branch_id===id);
@@ -47355,6 +47374,9 @@ async function appointmentsPage(){
   function syncFormOptions(){
     if(!canWrite)return;
     const services=branchServices(branchId),people=branchStaff(branchId);
+    /* nestly_v884: a bundle is offered at a branch only when every member service is bookable there. */
+    const branchServiceIdsV884=new Set(services.map(s=>s.id));
+    const bundlesV884=bookableBundlesV884.filter(b=>b.member_service_ids.every(id=>branchServiceIdsV884.has(id)));
     /* V217. Owner, on this dropdown: "instead of general visit, put ...". A business that has
        real services was still offered "General visit" first and by default, so the common case —
        booking an actual service, with its own duration and buffers — took an extra step, and an
@@ -47362,7 +47384,7 @@ async function appointmentsPage(){
        services now lead and the first one is preselected. "General visit" stays, last and named
        for what it is, because a walk-in with no service chosen is a real thing to book. */
     const previousServiceV217=$('as').value;
-    $('as').innerHTML=`${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}" data-buffer-before="${s.buffer_before_min||0}" data-buffer-after="${s.buffer_after_min||0}">${esc(serviceDisplayName(s))}</option>`).join('')}<option value="">${services.length?'No specific service · general visit':'General visit'}</option>`;
+    $('as').innerHTML=`${services.map(s=>`<option value="${s.id}" data-duration="${s.duration_min}" data-buffer-before="${s.buffer_before_min||0}" data-buffer-after="${s.buffer_after_min||0}">${esc(serviceDisplayName(s))}</option>`).join('')}${/* nestly_v884 */''}${bundlesV884.map(b=>`<option value="${b.id}" data-duration="${b.duration_min}" data-buffer-before="${b.buffer_before_min||0}" data-buffer-after="${b.buffer_after_min||0}">${esc(b.name)} · ${b.duration_min} min</option>`).join('')}<option value="">${services.length?'No specific service · general visit':'General visit'}</option>`;
     $('as').value=[...$('as').options].some(option=>option.value===previousServiceV217)
       ?previousServiceV217
       :(services[0]?.id||'');
@@ -47650,7 +47672,7 @@ async function appointmentsPage(){
   $('apPrint').onclick=()=>window.print();
   $('apCsv').onclick=()=>{
     const rows=[['when_sgt','customer','service','staff','status'],...calendarItems.map(a=>[
-      sgt(a.starts_at),a.clients?.full_name||'',a.services?.name||'',staffName[a.staff_id]||'',a.status])];
+      sgt(a.starts_at),a.clients?.full_name||'',appointmentServiceNameV884(a)||'',staffName[a.staff_id]||'',a.status])]; // nestly_v884
     const blob=new Blob([csvRows(rows)],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`${BRAND.downloadPrefix}-appointments.csv`;link.click();URL.revokeObjectURL(url);toast('Calendar CSV downloaded');
   };
@@ -47756,7 +47778,8 @@ async function appointmentsPage(){
     // already scope this to the tenant's own row via RLS, so only filter on branch_id when the
     // caller actually supplied one — an unconditional filter here silently returns no row for
     // any appointment outside whichever branch happened to be resolved.
-    let appointmentQueryV071=sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents,buffer_before_min,buffer_after_min)')
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+    let appointmentQueryV071=sb.from('appointments').select('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients(full_name,phone,phone_norm,email,birth_date,notes),services!appointments_service_id_fkey(name,duration_min,price_cents,buffer_before_min,buffer_after_min),bundles!appointments_bundle_id_fkey(name)')
       .eq('business_id',S.biz.id);
     if(summary.branch_id)appointmentQueryV071=appointmentQueryV071.eq('branch_id',summary.branch_id);
     const {data,error}=await appointmentQueryV071.eq('id',summary.id).maybeSingle();
@@ -47784,7 +47807,9 @@ async function appointmentsPage(){
     const amendableBooked=item.status==='booked'&&canWrite;
     const completeTabAvailableV375=item.status==='booked'&&canWrite&&outcomeIsDue&&canComplete;
     const amendTabsAvailableV375=amendableBooked||completeTabAvailableV375;
-    const local=sgInput(item.starts_at),service=item.services||{},client=item.clients||{};
+    /* nestly_v884: a bundle booking has no services row — keep the service's own price/duration
+       fields when there is one, but let the name fall through to the bundle. */
+    const local=sgInput(item.starts_at),service={...(item.services||{}),name:appointmentServiceNameV884(item)||item.services?.name},client=item.clients||{};
     const itemBranch=visibleBranches.find(branch=>branch.id===item.branch_id);
     const branchName=itemBranch?.name||'Branch';
     /* V330 (owner: verified the confirmed-appointment "Message on WhatsApp" button was still
@@ -48127,7 +48152,8 @@ async function appointmentsPage(){
        records a branch when there is a real multi-branch choice to make, per v327), so the
        filter is "this branch OR no branch on file" rather than an exact match. */
     const [appointmentResult,blockResult,pendingResult]=await Promise.all([
-      fetchAllRowsResult(()=>staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+      fetchAllRowsResult(()=>staffQ(sb.from('appointments').select('id,branch_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min),bundles!appointments_bundle_id_fkey(name)',{count:'exact'})
         .eq('business_id',S.biz.id).eq('branch_id',branchId).gte('starts_at',sgDateBoundary(start)).lt('starts_at',sgDateBoundary(end)).order('starts_at').order('id'))),
       fetchAllRowsResult(()=>sb.rpc('list_staff_blocked_times_v120',{p_business:S.biz.id,p_branch:branchId,
         p_from:sgDateBoundary(start),p_to:sgDateBoundary(end)}).order('starts_at').order('staff_id')),
@@ -48165,7 +48191,8 @@ async function appointmentsPage(){
   async function loadList(){
     const stillCurrent=calendarGate.begin();
     const APPOINTMENT_LIST_PAGE_SIZE=100;
-    let query=staffQ(sb.from('appointments').select('id,branch_id,client_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)',{count:'exact'})
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+    let query=staffQ(sb.from('appointments').select('id,branch_id,client_id,service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min),bundles!appointments_bundle_id_fkey(name)',{count:'exact'})
       .eq('business_id',S.biz.id).eq('branch_id',branchId));
     const from=$('appointmentListFrom')?.value,to=$('appointmentListTo')?.value,status=$('appointmentListStatus')?.value;
     if(from)query=query.gte('starts_at',sgDateBoundary(from));
@@ -48227,7 +48254,7 @@ async function appointmentsPage(){
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadAppointmentsGuardedV288();return}
     $('alist').innerHTML=pendingRequestsBannerHtml()+(calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(a.services?.name||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}"><span data-workspace-i18n>${esc(statusLabelV288(a.status))}</span></span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
+      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(appointmentServiceNameV884(a)||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}"><span data-workspace-i18n>${esc(statusLabelV288(a.status))}</span></span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:32})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`);
     wireAppointmentActions();
     wirePendingRequestActionsV329();
@@ -48518,7 +48545,7 @@ async function appointmentsPage(){
     const close=()=>{if(deactivate)deactivate();else $('pendingTileModalV330')?.remove();};
     deactivate=CUI.activateDialog($('pendingTileModalV330'),{onClose:close,initialFocus:'#pendingTileConfirmV330'});
     $('pendingTileModalCloseV330').onclick=close;
-    const contact={customerName:row.name,phone:row.phone,serviceName:row.services?.name,
+    const contact={customerName:row.name,phone:row.phone,serviceName:bookingRequestForNameV882(row),
       staffName:row.staff_id?staffName[row.staff_id]:null,startsAt:row.preferred_at,
       location:visibleBranches.find(b=>b.id===branchId)?.address};
     $('pendingTileConfirmV330').onclick=async()=>{
@@ -48635,7 +48662,7 @@ async function appointmentsPage(){
        900px; the Day view now carries the same fallback, built from the same columns so it can
        never disagree with the grid, and it keeps the appointment and blocked-time controls. */
     const dayAgendaRowsV291=columns.flatMap(column=>[
-      ...column.items.map(item=>({sort:eventParts(item.starts_at).minutes,html:`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${item.id}" data-appointment-branch="${esc(item.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:item.services?.name||'—',customer:item.clients?.full_name||'—',time:appointmentTimeRange(item),duration:appointmentDuration(item),staff:column.label})}><span class="calendar-agenda-time"><b>${esc(appointmentTimeRange(item))}</b><br><span class="muted small">${appointmentDuration(item)} <span data-workspace-i18n>min</span></span></span><span><b>${esc(item.clients?.full_name||'Walk-in')}</b><br><span class="muted small">${esc(item.services?.name||'General visit')} · <span data-merchant-content>${esc(column.label)}</span></span></span></button></div>`})),
+      ...column.items.map(item=>({sort:eventParts(item.starts_at).minutes,html:`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${item.id}" data-appointment-branch="${esc(item.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:appointmentServiceNameV884(item)||'—',customer:item.clients?.full_name||'—',time:appointmentTimeRange(item),duration:appointmentDuration(item),staff:column.label})}><span class="calendar-agenda-time"><b>${esc(appointmentTimeRange(item))}</b><br><span class="muted small">${appointmentDuration(item)} <span data-workspace-i18n>min</span></span></span><span><b>${esc(item.clients?.full_name||'Walk-in')}</b><br><span class="muted small">${esc(appointmentServiceNameV884(item)||'General visit')} · <span data-merchant-content>${esc(column.label)}</span></span></span></button></div>`})),
       ...column.blocks.map(block=>{
         const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
         const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
@@ -48647,7 +48674,7 @@ async function appointmentsPage(){
          same two inline decisions. */
       ...column.pending.map(r=>{
         const from=eventParts(r.preferred_at).minutes;
-        return {sort:from,html:`<div class="calendar-agenda-row calendar-agenda-pending-v468"><button type="button" class="calendar-agenda-item" data-pending-tile="${esc(r.id)}" style="width:100%;background:transparent;text-align:left"><span class="calendar-agenda-time"><b>${esc(minuteClock(from))}</b><br><span class="muted small">Pending</span></span><span><b>${esc(r.name||'Customer')}</b><br><span class="muted small">${esc(r.services?.name||'General visit')} · <span data-merchant-content>${esc(column.label)}</span></span></span></button>${canWrite?`<button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}">Reject</button>`:''}</div>`};
+        return {sort:from,html:`<div class="calendar-agenda-row calendar-agenda-pending-v468"><button type="button" class="calendar-agenda-item" data-pending-tile="${esc(r.id)}" style="width:100%;background:transparent;text-align:left"><span class="calendar-agenda-time"><b>${esc(minuteClock(from))}</b><br><span class="muted small">Pending</span></span><span><b>${esc(r.name||'Customer')}</b><br><span class="muted small">${esc(bookingRequestForNameV882(r)||'General visit')} · <span data-merchant-content>${esc(column.label)}</span></span></span></button>${canWrite?`<button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}">Reject</button>`:''}</div>`};
       })
     ]).sort((a,b)=>a.sort-b.sort);
     const dayAgendaV291=dayAgendaRowsV291.length
@@ -48683,7 +48710,7 @@ async function appointmentsPage(){
           const workingHeight=schedule.state==='working'?(schedule.end-schedule.start)/60*hourHeight:bodyHeight;
           const events=layoutCalendarDay(column.items).map(({item,from,to,lane,laneCount,inactiveV288})=>{
             const top=(from-rangeStart)/60*hourHeight,height=Math.max(44,(to-from)/60*hourHeight),left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);
-            return `<button type="button" class="day-timeline-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${item.id}" data-appointment-branch="${esc(item.branch_id||'')}" style="--event-color:${esc(column.color)};top:${top}px;height:${height}px;left:calc(${left}% + 4px);width:calc(${width}% - 8px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:item.services?.name||'—',customer:item.clients?.full_name||'—',time:appointmentTimeRange(item),duration:appointmentDuration(item),staff:column.label})}><span>${esc(appointmentTimeRange(item))}</span><b>${esc(item.clients?.full_name||'Walk-in')}</b><small>${esc(item.services?.name||'General visit')}</small></button>`;
+            return `<button type="button" class="day-timeline-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${item.id}" data-appointment-branch="${esc(item.branch_id||'')}" style="--event-color:${esc(column.color)};top:${top}px;height:${height}px;left:calc(${left}% + 4px);width:calc(${width}% - 8px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:appointmentServiceNameV884(item)||'—',customer:item.clients?.full_name||'—',time:appointmentTimeRange(item),duration:appointmentDuration(item),staff:column.label})}><span>${esc(appointmentTimeRange(item))}</span><b>${esc(item.clients?.full_name||'Walk-in')}</b><small>${esc(appointmentServiceNameV884(item)||'General visit')}</small></button>`;
           }).join('');
           const breaks=schedule.breaks.map(row=>`<div class="day-break-window" style="top:${(row.start-rangeStart)/60*hourHeight}px;height:${(row.end-row.start)/60*hourHeight}px"><span>Branch break</span></div>`).join('');
           const blocks=column.blocks.map(block=>{
@@ -48725,7 +48752,7 @@ async function appointmentsPage(){
             const from=eventParts(r.preferred_at).minutes,to=from+(r.services?.duration_min||60);
             const top=(from-rangeStart)/60*hourHeight,height=Math.max(canWrite?88:44,(to-from)/60*hourHeight);
             return `<div class="day-pending-wrap-v468" id="pendingTileV468-${esc(r.id)}" style="top:${top}px;height:${height}px">
-              <button type="button" class="day-timeline-pending-v330" data-pending-tile="${esc(r.id)}" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:r.services?.name||'—',customer:r.name||'—',time:bookingRequestBigWhenV330(r.preferred_at),staff:column.label})}><span>${esc(bookingRequestBigWhenV330(r.preferred_at))}</span><b>${esc(r.name||'Customer')}</b><small>Pending · ${esc(r.services?.name||'General visit')}</small></button>
+              <button type="button" class="day-timeline-pending-v330" data-pending-tile="${esc(r.id)}" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:bookingRequestForNameV882(r)||'—',customer:r.name||'—',time:bookingRequestBigWhenV330(r.preferred_at),staff:column.label})}><span>${esc(bookingRequestBigWhenV330(r.preferred_at))}</span><b>${esc(r.name||'Customer')}</b><small>Pending · ${esc(bookingRequestForNameV882(r)||'General visit')}</small></button>
               ${canWrite?`<div class="day-pending-actions-v468"><button type="button" class="btn sm" data-pending-tile-confirm="${esc(r.id)}" data-merchant-content aria-label="Confirm booking request from ${esc(r.name||'this customer')}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(r.id)}" data-merchant-content aria-label="Reject booking request from ${esc(r.name||'this customer')}">Reject</button></div>`:''}
             </div>`;
           }).join('');
@@ -48790,7 +48817,7 @@ async function appointmentsPage(){
        repeated in a week cell: a seventh of the width is not a place for two buttons — the tap
        goes to the modal, which carries both. */
     const dayPendingV468=days.map(day=>pendingRequests.filter(request=>eventParts(request.preferred_at).date===day));
-    const agenda=calendarItems.map(a=>`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentAgenda',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',day:calendarDayLabel(a.starts_at),time:appointmentTimeRange(a),duration:appointmentDuration(a)})}><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(a.services?.name||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>${a.status==='booked'&&canWrite?`<button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}</div>`).join('');
+    const agenda=calendarItems.map(a=>`<div class="calendar-agenda-row"><button type="button" class="calendar-agenda-item" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="width:100%;background:transparent;text-align:left" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentAgenda',{service:appointmentServiceNameV884(a)||'—',customer:a.clients?.full_name||'—',day:calendarDayLabel(a.starts_at),time:appointmentTimeRange(a),duration:appointmentDuration(a)})}><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(a.starts_at))}</b><br><span>${esc(appointmentTimeRange(a))}</span><br><span class="muted small">${appointmentDuration(a)} min</span></span><span><b>${esc(a.clients?.full_name||'—')}</b><br><span class="muted small">${esc(appointmentServiceNameV884(a)||'General visit')} · ${esc(staffName[a.staff_id]||'Unassigned')}</span></span></button>${a.status==='booked'&&canWrite?`<button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}</div>`).join('');
     /* V291 (audit A2 leftover): below 900px the week grid is hidden and .calendar-agenda IS the
        week view, so blocked time — drawn in the grid since V185 — was invisible on a phone. The
        same rows now appear in the agenda, with the same Edit and Remove controls the Day view
@@ -48799,7 +48826,7 @@ async function appointmentsPage(){
        need a row here for exactly the reason V291 gave blocked time one. */
     const pendingAgendaV468=pendingRequests.map(request=>{
       const at=eventParts(request.preferred_at);
-      return `<div class="calendar-agenda-row calendar-agenda-pending-v468"><button type="button" class="calendar-agenda-item" data-pending-tile="${esc(request.id)}" style="width:100%;background:transparent;text-align:left"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(request.preferred_at))}</b><br><span>${esc(minuteClock(at.minutes))}</span><br><span class="muted small">Pending</span></span><span><b>${esc(request.name||'Customer')}</b><br><span class="muted small">${esc(request.services?.name||'General visit')} · <span data-merchant-content>${esc(request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available')}</span></span></span></button>${canWrite?`<button type="button" class="btn sm" data-pending-tile-confirm="${esc(request.id)}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(request.id)}">Reject</button>`:''}</div>`;
+      return `<div class="calendar-agenda-row calendar-agenda-pending-v468"><button type="button" class="calendar-agenda-item" data-pending-tile="${esc(request.id)}" style="width:100%;background:transparent;text-align:left"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(request.preferred_at))}</b><br><span>${esc(minuteClock(at.minutes))}</span><br><span class="muted small">Pending</span></span><span><b>${esc(request.name||'Customer')}</b><br><span class="muted small">${esc(bookingRequestForNameV882(request)||'General visit')} · <span data-merchant-content>${esc(request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available')}</span></span></span></button>${canWrite?`<button type="button" class="btn sm" data-pending-tile-confirm="${esc(request.id)}">Confirm</button><button type="button" class="btn ghost sm danger" data-pending-tile-reject="${esc(request.id)}">Reject</button>`:''}</div>`;
     }).join('');
     const blockedAgendaV291=canWrite?calendarBlocks.map(block=>{
       const from=eventParts(block.starts_at),to=eventParts(block.ends_at);
@@ -48809,7 +48836,7 @@ async function appointmentsPage(){
     $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
       <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>
-      ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayPendingV468[index].map(request=>{const from=eventParts(request.preferred_at).minutes,to=from+(request.services?.duration_min||60);return `<button type="button" class="day-timeline-pending-v330 week-pending-v468" data-pending-tile="${esc(request.id)}" style="top:${Math.max(0,(from-startHour*60)/60*hourHeight)}px;height:${Math.max(28,(to-from)/60*hourHeight)}px" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:request.services?.name||'—',customer:request.name||'—',time:bookingRequestBigWhenV330(request.preferred_at),staff:request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available'})}><span>${esc(minuteClock(from))}</span><b>${esc(request.name||'Customer')}</b><small>Pending</small></button>`}).join('')}${dayBlocks[index].map(block=>{const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');const clampedFromV468=Math.max(startHour*60,from),clampedToV468=Math.min(endHour*60,to);return `<div class="day-blocked-window week-blocked-window" style="top:${(clampedFromV468-startHour*60)/60*hourHeight}px;height:${Math.max(24,(clampedToV468-clampedFromV468)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span></div>`;}).join('')}${dayEvents[index].map(({item:a,from,to,lane,laneCount,inactiveV288})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:a.services?.name||'—',customer:a.clients?.full_name||'—',time:appointmentTimeRange(a),duration:appointmentDuration(a),staff:staffName[a.staff_id]||'—'})}><b>${esc(a.services?.name||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
+      ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayPendingV468[index].map(request=>{const from=eventParts(request.preferred_at).minutes,to=from+(request.services?.duration_min||60);return `<button type="button" class="day-timeline-pending-v330 week-pending-v468" data-pending-tile="${esc(request.id)}" style="top:${Math.max(0,(from-startHour*60)/60*hourHeight)}px;height:${Math.max(28,(to-from)/60*hourHeight)}px" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:bookingRequestForNameV882(request)||'—',customer:request.name||'—',time:bookingRequestBigWhenV330(request.preferred_at),staff:request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available'})}><span>${esc(minuteClock(from))}</span><b>${esc(request.name||'Customer')}</b><small>Pending</small></button>`}).join('')}${dayBlocks[index].map(block=>{const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');const clampedFromV468=Math.max(startHour*60,from),clampedToV468=Math.min(endHour*60,to);return `<div class="day-blocked-window week-blocked-window" style="top:${(clampedFromV468-startHour*60)/60*hourHeight}px;height:${Math.max(24,(clampedToV468-clampedFromV468)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span></div>`;}).join('')}${dayEvents[index].map(({item:a,from,to,lane,laneCount,inactiveV288})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:appointmentServiceNameV884(a)||'—',customer:a.clients?.full_name||'—',time:appointmentTimeRange(a),duration:appointmentDuration(a),staff:staffName[a.staff_id]||'—'})}><b>${esc(appointmentServiceNameV884(a)||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
       <div class="calendar-agenda">${agenda||(blockedAgendaV291||pendingAgendaV468?'':`<div class="cui-empty">${CUI.icon('appointments',{size:32})}<h2>No appointments this week</h2></div>`)}${pendingAgendaV468}${blockedAgendaV291}</div>`;
     wireAppointmentActions();
     wireBlockedTimeActions();
@@ -56296,9 +56323,10 @@ async function dailyReportPage(){
         /* nestly_v663: the sale's own lines ride along, exactly as the Sales & refunds ledger
            embeds them — one round trip, and the report already reads a row per sale. */
         const lineColumnsV663='sale_items(description,qty,unit_cents,line_cents,created_at)';
+        /* nestly_v884: a sale's appointment may be for a bundle — carry its name too. */
         const columns=clientsAvailable
-          ?`*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name)), ${lineColumnsV663}`
-          :`*, staff(full_name), appointments(services!appointments_service_id_fkey(name)), ${lineColumnsV663}`;
+          ?`*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)), ${lineColumnsV663}`
+          :`*, staff(full_name), appointments(services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)), ${lineColumnsV663}`;
         let q=sb.from('sales').select(columns,{count:'exact'})
           .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
         if(scope.branchId)q=q.eq('branch_id',scope.branchId);
@@ -56330,7 +56358,7 @@ async function dailyReportPage(){
         :(s.client_id?'Customer details unavailable':'Walk-in'),
       custPhone:clientsAvailable?(s.clients?.phone||''):'',
       /* nestly_v663: what was sold, then the note, then the kind — never the kind first. */
-      label:saleItemSummaryTextV663(s,s.appointments?.services?.name||(s.kind||'').replace('_',' ')),
+      label:saleItemSummaryTextV663(s,appointmentServiceNameV884(s.appointments)||(s.kind||'').replace('_',' ')),
       amount_cents:s.amount_cents,staffName:s.staff?.full_name||'Unattributed',
       id:s.id,reversal_of:s.reversal_of,reversal_reason:s.reversal_reason,
       kind:s.kind,counts_as_revenue:s.counts_as_revenue,counts_as_visit:s.counts_as_visit,client_id:s.client_id}));
@@ -61456,7 +61484,9 @@ async function renderPortal(slug){
   const bundles=Array.isArray(biz.bundles)?biz.bundles.filter(b=>b&&b.id&&Number(b.duration_min)>0):[];
   const hasServices=services.length>0||bundles.length>0;
   const repeatService=repeatServiceParam?services.find(service=>service.id===repeatServiceParam)||null:null;
-  const repeatPreference=repeatService?customerRepeatBookingPreferencesV167.get(`${slug}:${repeatService.id}`)||null:null;
+  /* nestly_v884: Book again may name a bundle — the same parameter, resolved against the same page. */
+  const repeatBundle=repeatServiceParam&&!repeatService?bundles.find(b=>b.id===repeatServiceParam)||null:null;
+  const repeatPreference=(repeatService||repeatBundle)?customerRepeatBookingPreferencesV167.get(`${slug}:${(repeatService||repeatBundle).id}`)||null:null;
   const usesTables=!!biz.uses_tables;
   /* v192 (owner: "pressing booking will lead me to this page — but there's no way to back").
      The portal is also a public page a stranger opens from a QR, and that visitor has nothing to
@@ -61482,8 +61512,8 @@ async function renderPortal(slug){
   const steps=['service',branchChoice?'branch':'',middleStep,'time','details'].filter(Boolean);
   const stepMeta={service:{label:'Service'},branch:{label:'Branch'},table:{label:'Table'},team:{label:'Team'},time:{label:'Time'},details:{label:'Details'}};
   let selSvc=repeatService?.id||null;     // null = general reservation, or a validated public service uuid
-  let selBundle=null;                     // nestly_v882: a validated public bundle uuid, exclusive with selSvc
-  let serviceChosen=!!repeatService||!hasServices;
+  let selBundle=repeatBundle?.id||null;   // nestly_v882/v884: a validated public bundle uuid, exclusive with selSvc
+  let serviceChosen=!!repeatService||!!repeatBundle||!hasServices;
   let selTable=null;                     // reservation table type uuid (null = any/general)
   // The server lists branches with the shop default first — preselecting it keeps a
   // multi-branch booking to the same tap count as before for the common case, while still
@@ -61568,7 +61598,7 @@ async function renderPortal(slug){
           <span><b>${esc(s.name)}</b> <span class="muted small">· ${s.duration_min} min</span></span>
           <b>${esc(currency)} ${(s.price_cents/100).toFixed(2)}</b></button>`).join('')}
         ${bundles.map(b=>`<button class="svc${selBundle===b.id?' sel':''}" type="button" aria-pressed="${selBundle===b.id}" data-bundle="${esc(b.id)}">
-          <span><b>${esc(b.name)}</b> <span class="muted small">· Bundle · ${b.duration_min} min${Array.isArray(b.items)&&b.items.length?` · ${esc(b.items.join(' + '))}`:''}</span></span>
+          <span><b>${esc(b.name)}</b> <span class="muted small">· ${b.duration_min} min${Array.isArray(b.items)&&b.items.length?` · ${esc(b.items.join(' + '))}`:''}</span></span>
           <b>${esc(currency)} ${(b.price_cents/100).toFixed(2)}</b></button>`).join('')}
         ${usesTables?`<button class="svc${(serviceChosen&&selSvc===null)?' sel':''}" type="button" aria-pressed="${serviceChosen&&selSvc===null}" data-svc=""><span><b>Just a reservation</b> <span class="muted small">· table / general visit</span></span></button>`:''}
       </div>`:`<p class="muted small">We'll note this as a general visit — pick your time on the next step.</p>`}

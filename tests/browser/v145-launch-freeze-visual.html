@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="3d0781022089c89234ced2825bae09319d93838b7cb2fdf18119149aae52ca78"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="6b31444127845999ba5335acd5882a23fb01bc2e1bae55b3dd37fc49a63be97d"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5797,7 +5797,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 3d0781022089c89234ced2825bae09319d93838b7cb2fdf18119149aae52ca78</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 6b31444127845999ba5335acd5882a23fb01bc2e1bae55b3dd37fc49a63be97d</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -7205,7 +7205,8 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     canReadLoyalty?fetchAllRowsResult(()=>sb.rpc('list_customer_redemption_history_v145',{
       p_business:S.biz.id,p_client:id
     }).order('redeemed_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
-    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
+    /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
+    canReadAppointments?fetchAllRowsResult(()=>sb.from('appointments').select('*, services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)',{count:'exact'}).eq('client_id',id).order('starts_at',{ascending:false}).order('id')):Promise.resolve({data:[]}),
     (canReadSales||canReadAppointments)?fetchAllRowsResult(()=>sb.from('staff').select('id,full_name',{count:'exact'}).eq('business_id',S.biz.id).order('id')):Promise.resolve({data:[]}),
     S.myRole==='owner'?fetchAllRowsResult(()=>sb.from('client_field_definitions').select('*',{count:'exact'}).eq('business_id',S.biz.id).eq('active',true).order('created_at').order('id')):Promise.resolve({data:[]}),
     /* V172: this table has NO id column (key: business_id, client_id, field_definition_id).
@@ -7336,7 +7337,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   /* V252: the STAFF column is read from the appointment's own staff_id through the same roster
      map the sale rows already use \u2014 the name is never recovered from a display sentence.
      An appointment with no assigned team member keeps a null here and prints an em dash. */
-  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:a.services?.name,status:a.status,
+  const histAppts=(allAp||[]).map(a=>({t:a.starts_at,kind:'appointment',service:appointmentServiceNameV884(a),status:a.status,
     staff:staffName[a.staff_id]||null,
     upcoming:(a.starts_at||'')>nowIso&&a.status!=='cancelled'&&a.status!=='completed'}));
   const histRedemptions=(redemptionRows||[]).map(redemption=>({
@@ -9425,9 +9426,10 @@ function renderHistPage(history,n,offsetV468=0){
         /* nestly_v663: the sale's own lines ride along, exactly as the Sales & refunds ledger
            embeds them — one round trip, and the report already reads a row per sale. */
         const lineColumnsV663='sale_items(description,qty,unit_cents,line_cents,created_at)';
+        /* nestly_v884: a sale's appointment may be for a bundle — carry its name too. */
         const columns=clientsAvailable
-          ?`*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name)), ${lineColumnsV663}`
-          :`*, staff(full_name), appointments(services!appointments_service_id_fkey(name)), ${lineColumnsV663}`;
+          ?`*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)), ${lineColumnsV663}`
+          :`*, staff(full_name), appointments(services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)), ${lineColumnsV663}`;
         let q=sb.from('sales').select(columns,{count:'exact'})
           .eq('business_id',S.biz.id).gte('occurred_at',from).lt('occurred_at',toExclusive);
         if(scope.branchId)q=q.eq('branch_id',scope.branchId);
@@ -9459,7 +9461,7 @@ function renderHistPage(history,n,offsetV468=0){
         :(s.client_id?'Customer details unavailable':'Walk-in'),
       custPhone:clientsAvailable?(s.clients?.phone||''):'',
       /* nestly_v663: what was sold, then the note, then the kind — never the kind first. */
-      label:saleItemSummaryTextV663(s,s.appointments?.services?.name||(s.kind||'').replace('_',' ')),
+      label:saleItemSummaryTextV663(s,appointmentServiceNameV884(s.appointments)||(s.kind||'').replace('_',' ')),
       amount_cents:s.amount_cents,staffName:s.staff?.full_name||'Unattributed',
       id:s.id,reversal_of:s.reversal_of,reversal_reason:s.reversal_reason,
       kind:s.kind,counts_as_revenue:s.counts_as_revenue,counts_as_visit:s.counts_as_visit,client_id:s.client_id}));
@@ -10283,7 +10285,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'3d0781022089c89234ced2825bae09319d93838b7cb2fdf18119149aae52ca78',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'6b31444127845999ba5335acd5882a23fb01bc2e1bae55b3dd37fc49a63be97d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

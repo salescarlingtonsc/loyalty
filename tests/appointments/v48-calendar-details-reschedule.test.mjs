@@ -73,8 +73,8 @@ test('week and mobile calendar expose unambiguous duration-aware appointment but
   assert.match(calendar,/aria-current="date"/);
   assert.match(calendar,/calendarDayLabel\(a\.starts_at\)/);
   assert.match(calendar,/appointmentDuration\(a\)\} min/);
-  assert.match(calendar,/workspaceTemplateAttributeV97\('aria-label','viewAppointmentAgenda',\{service:a\.services\?\.name\|\|'—',customer:a\.clients\?\.full_name\|\|'—',day:calendarDayLabel\(a\.starts_at\),time:appointmentTimeRange\(a\),duration:appointmentDuration\(a\)\}\)/);
-  assert.match(calendar,/workspaceTemplateAttributeV97\('aria-label','calendarAppointment',\{service:a\.services\?\.name\|\|'—',customer:a\.clients\?\.full_name\|\|'—',time:appointmentTimeRange\(a\),duration:appointmentDuration\(a\),staff:staffName\[a\.staff_id\]\|\|'—'\}\)/);
+  assert.match(calendar,/workspaceTemplateAttributeV97\('aria-label','viewAppointmentAgenda',\{service:appointmentServiceNameV884\(a\)\|\|'—',customer:a\.clients\?\.full_name\|\|'—',day:calendarDayLabel\(a\.starts_at\),time:appointmentTimeRange\(a\),duration:appointmentDuration\(a\)\}\)/);
+  assert.match(calendar,/workspaceTemplateAttributeV97\('aria-label','calendarAppointment',\{service:appointmentServiceNameV884\(a\)\|\|'—',customer:a\.clients\?\.full_name\|\|'—',time:appointmentTimeRange\(a\),duration:appointmentDuration\(a\),staff:staffName\[a\.staff_id\]\|\|'—'\}\)/);
 });
 
 test('appointment detail sheet exposes authorized particulars and safe call/edit controls',()=>{
@@ -105,7 +105,8 @@ test('calendar rows minimize PII and fetch one branch-scoped detail record on de
      which needs the join key. client_id is an opaque internal id, not personal data, and it
      replaces a second query rather than adding one — so the invariant this line protects is
      re-stated as what it actually guards: NEITHER calendar query may pull contact PII. */
-  const tail="service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min)";
+  // nestly_v884: the bundle name embed rides along on both calendar projections.
+  const tail="service_id,starts_at,ends_at,status,staff_id,clients(full_name),services!appointments_service_id_fkey(name,duration_min,buffer_before_min,buffer_after_min),bundles!appointments_bundle_id_fkey(name)";
   assert.equal(calendar.split("id,branch_id,"+tail).length-1,1,'the week query keeps the minimal projection');
   assert.equal(calendar.split("id,branch_id,client_id,"+tail).length-1,1,'the list query adds only the join key');
   for(const projection of [ "id,branch_id,"+tail, "id,branch_id,client_id,"+tail ]){
@@ -113,7 +114,7 @@ test('calendar rows minimize PII and fetch one branch-scoped detail record on de
       'a calendar row must never carry contact PII — that stays in the on-demand detail record');
   }
   assert.match(calendar,/async function openAppointmentDetails\(summary,\{startEditing=false\}=\{\}\)[\s\S]*Loading customer and service information/);
-  assert.match(calendar,/select\('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients\(full_name,phone,phone_norm,email,birth_date,notes\),services!appointments_service_id_fkey\(name,duration_min,price_cents,buffer_before_min,buffer_after_min\)'\)[\s\S]*eq\('branch_id',summary\.branch_id\)[\s\S]*eq\('id',summary\.id\)\.maybeSingle\(\)/);
+  assert.match(calendar,/select\('id,branch_id,service_id,client_id,starts_at,ends_at,status,staff_id,note,total_cents,clients\(full_name,phone,phone_norm,email,birth_date,notes\),services!appointments_service_id_fkey\(name,duration_min,price_cents,buffer_before_min,buffer_after_min\),bundles!appointments_bundle_id_fkey\(name\)'\)[\s\S]*eq\('branch_id',summary\.branch_id\)[\s\S]*eq\('id',summary\.id\)\.maybeSingle\(\)/);
   assert.match(calendar,/const stillCurrent=detailGate\.begin\(\)[\s\S]*if\(!stillCurrent\(\)\|\|!loading\.isConnected\)\{removeLoading\(\{restoreFocus:false\}\);return\}/);
   assert.match(calendar,/Unable to load details[\s\S]*appointmentDetailRetry/);
   assert.match(calendar,/appointmentDetailRetry'\)\?\.focus\(\)/);

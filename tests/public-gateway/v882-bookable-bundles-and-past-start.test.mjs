@@ -90,8 +90,9 @@ test('v882 team choice for a bundle keeps only people assigned to every member s
   assert.deepEqual(run(null, 's1', null, staff), ['anyone', 'both', 'only-s1'], 'single-service rule unchanged');
 });
 
-test('v882 the business reads a bundle request as "Bundle · name" everywhere the service name was printed', () => {
-  assert.match(appJs, /function bookingRequestForNameV882\(row\)\{\n\s+return row\?\.services\?\.name\|\|\(row\?\.bundles\?\.name\?`Bundle · \$\{row\.bundles\.name\}`:null\);/);
+test('v882 the business reads a bundle request by its own name everywhere the service name was printed', () => {
+  /* nestly_v884 (owner: no differentiation): the helper returns the plain name, no prefix. */
+  assert.match(appJs, /function bookingRequestForNameV882\(row\)\{\n(?:\s*\/\*[^\n]*\*\/\n)?\s+return row\?\.services\?\.name\|\|row\?\.bundles\?\.name\|\|null;/);
   const embeds = appJs.match(/bundles!booking_requests_bundle_id_fkey\(name\)/g) || [];
   assert.equal(embeds.length, 4, 'the Bookings list, the popup, and both pending-request reads embed the bundle name');
   assert.match(appJs, /if\(outcome==='past_start'\)return \{ok:false,text:'This time has already passed\./);
