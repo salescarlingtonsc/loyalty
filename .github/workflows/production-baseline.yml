@@ -135,6 +135,11 @@ jobs:
         run: npm run test:db:snapshot -- --check
 
       - name: Executed SQL suite
+        # v682's whole-corpus timing tripwire is 60 s on a developer Mac; this runner takes ~80 s
+        # for the same loop, so it gets 150 s through the GUC the fixture reads. psql forwards
+        # PGOPTIONS to the server, and the runner spawns psql with process.env.
+        env:
+          PGOPTIONS: -c peekaa.corpus_budget_ms=150000
         run: npm run test:db
 
   # ---------------------------------------------------------------------------

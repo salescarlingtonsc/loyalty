@@ -833,7 +833,7 @@
       ],
       "businesses_seeded": 5,
       "clients_seeded": 5,
-      "sha256": "afc7f8fea53cd1ec5429e5c188c6fd83745a60ed73206ffcb0c48a3aa790046f",
+      "sha256": "b5f8eec61f6674c7f0e0c02b82e5d647ad14e19c4a9c358bad8f2de7e630c405",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v743_corpus_synthetic_scanner --migrated-only"
     },
     {

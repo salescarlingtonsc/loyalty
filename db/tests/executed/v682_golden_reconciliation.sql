@@ -37,7 +37,10 @@
 --     (index mod 2) respectively) -- they exist to prove the exclusion holds at scale across many
 --     businesses, not to dominate the population.
 --   * Runtime budget: 60000 ms for the whole 100+-business loop (bulk insert + 3 RPC calls per
---     business, no per-row RPCs) -- a regression tripwire, not a production SLA.
+--     business, no per-row RPCs) -- a regression tripwire, not a production SLA. A slower machine
+--     may widen it through the GUC peekaa.corpus_budget_ms (psql picks it up from PGOPTIONS,
+--     e.g. PGOPTIONS='-c peekaa.corpus_budget_ms=150000'); the GitHub runner takes ~80 s for a
+--     loop this Mac finishes in ~55 s, and the workflow sets exactly that. Unset = 60000.
 --
 -- One transaction, rolled back. No production access.
 
@@ -56,7 +59,7 @@ declare
   v_n_biz       int := 104;   -- >=100, exact multiple of 8 so every sector appears >=13 times
   v_t0          timestamptz;
   v_ms          numeric;
-  v_budget_ms   numeric := 60000;
+  v_budget_ms   numeric := coalesce(nullif(current_setting('peekaa.corpus_budget_ms', true), '')::numeric, 60000);
 
   i             int;
   v_sector      text;
