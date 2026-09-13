@@ -1,5 +1,27 @@
 apply plugin: 'com.android.application'
 
+/* Play will not accept an unsigned bundle, and the upload key must never enter git. The keystore
+   is located through an untracked android/keystore.properties (the Android Studio convention) or,
+   for CI, the four PEEKAA_UPLOAD_* environment variables. When neither is present the release
+   build type simply carries no signingConfig — a debug-signed local build still works, and the
+   failure at upload time is Play's clear "not signed" message rather than a silent one. */
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+def uploadSigning = { String key, String env ->
+    def value = keystoreProperties.getProperty(key) ?: System.getenv(env)
+    return value?.trim() ? value.trim() : null
+}
+def uploadStorePath = uploadSigning('storeFile', 'PEEKAA_UPLOAD_STORE_FILE')
+def uploadStoreFile = uploadStorePath ? rootProject.file(uploadStorePath) : null
+boolean hasUploadKey = uploadStoreFile != null &&
+    uploadStoreFile.exists() &&
+    uploadSigning('storePassword', 'PEEKAA_UPLOAD_STORE_PASSWORD') != null &&
+    uploadSigning('keyAlias', 'PEEKAA_UPLOAD_KEY_ALIAS') != null &&
+    uploadSigning('keyPassword', 'PEEKAA_UPLOAD_KEY_PASSWORD') != null
+
 android {
     namespace = "asia.peekaa.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +29,12 @@ android {
         applicationId "asia.peekaa.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
+        /* versionName tracks the iOS MARKETING_VERSION (ios/App/App.xcodeproj, currently 1.2) so a
+           single release is one number on both stores; store-readiness.mjs fails closed if they
+           drift. versionCode is Play's own monotonic counter and shares nothing with iOS: it only
+           ever increases, once per uploaded bundle. */
         versionCode 1
-        versionName "1.0"
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +42,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasUploadKey) {
+            release {
+                storeFile uploadStoreFile
+                storePassword uploadSigning('storePassword', 'PEEKAA_UPLOAD_STORE_PASSWORD')
+                keyAlias uploadSigning('keyAlias', 'PEEKAA_UPLOAD_KEY_ALIAS')
+                keyPassword uploadSigning('keyPassword', 'PEEKAA_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasUploadKey) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

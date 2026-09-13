@@ -161,3 +161,68 @@ test('the App Store icon is a 1024px PNG without an alpha-bearing colour type',(
     'store validator must reject a tRNS-bearing PNG'
   );
 });
+
+/* Play readiness. The Android half of store-readiness.mjs is only worth having if it fails
+   closed, so this builds a throwaway tree out of the REAL repository files and then breaks one
+   thing at a time. Copying rather than mutating the working tree keeps the suite safe to run in
+   parallel — an in-place edit of android/app/build.gradle would race every other test. */
+function playSandbox(){
+  const sandbox=mkdtempSync(join(tmpdir(),'nestly-play-'));
+  const files=[
+    'capacitor.config.ts',
+    'scripts/mobile/store-readiness.mjs',
+    'android/app/build.gradle',
+    'android/variables.gradle',
+    'android/app/src/main/AndroidManifest.xml',
+    'android/app/src/main/res/values/strings.xml',
+    'app/icons/peekaa-512.png',
+    'ios/App/App.xcodeproj/project.pbxproj',
+    'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png',
+    'node_modules/@capacitor/ios/Capacitor/Capacitor/PrivacyInfo.xcprivacy',
+    'node_modules/@capacitor/ios/CapacitorCordova/CapacitorCordova/PrivacyInfo.xcprivacy',
+    ...['mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi'].map(d=>`android/app/src/main/res/mipmap-${d}/ic_launcher.png`)
+  ];
+  for(const file of files){
+    const target=join(sandbox,file);
+    mkdirSync(resolve(target,'..'),{recursive:true});
+    copyFileSync(join(root,file),target);
+  }
+  return sandbox;
+}
+function runPlayValidator(sandbox){
+  return execFileSync(process.execPath,[join(sandbox,'scripts/mobile/store-readiness.mjs')],{cwd:sandbox,stdio:'pipe'});
+}
+
+test('the Play bundle carries one version, a modern target SDK and no cleartext', ()=>{
+  const gradle=readFileSync(join(root,'android/app/build.gradle'),'utf8');
+  const pbxproj=readFileSync(join(root,'ios/App/App.xcodeproj/project.pbxproj'),'utf8');
+  const iosVersion=(pbxproj.match(/MARKETING_VERSION = ([^;]+);/)||[])[1].trim();
+  assert.equal((gradle.match(/versionName\s+"([^"]+)"/)||[])[1],iosVersion,
+    'one release is one number on both stores');
+  assert.match(gradle,/applicationId "asia\.peekaa\.app"/);
+  /* The upload key is located, never committed: the build must read it from an untracked file or
+     the environment, and .gitignore must refuse the keystore itself. */
+  assert.match(gradle,/rootProject\.file\('keystore\.properties'\)/);
+  assert.match(gradle,/PEEKAA_UPLOAD_STORE_PASSWORD/);
+  const ignored=readFileSync(join(root,'android/.gitignore'),'utf8');
+  for(const pattern of ['*.jks','*.keystore','keystore.properties']){
+    assert.ok(ignored.split(/\r?\n/).includes(pattern),`android/.gitignore must ignore ${pattern}`);
+  }
+  assert.ok(Number((readFileSync(join(root,'android/variables.gradle'),'utf8').match(/targetSdkVersion\s*=\s*(\d+)/)||[])[1])>=35);
+  assert.match(readFileSync(join(root,'android/app/src/main/AndroidManifest.xml'),'utf8'),/android:usesCleartextTraffic="false"/);
+  runPlayValidator(playSandbox());
+});
+
+test('store readiness refuses a drifted Android version and a stale target SDK', ()=>{
+  const drifted=playSandbox();
+  const gradlePath=join(drifted,'android/app/build.gradle');
+  writeFileSync(gradlePath,readFileSync(gradlePath,'utf8').replace(/versionName\s+"[^"]+"/,'versionName "9.9"'));
+  assert.throws(()=>runPlayValidator(drifted),
+    error=>String(error.stderr).includes('must match the iOS MARKETING_VERSION'));
+
+  const stale=playSandbox();
+  const variablesPath=join(stale,'android/variables.gradle');
+  writeFileSync(variablesPath,readFileSync(variablesPath,'utf8').replace(/targetSdkVersion\s*=\s*\d+/,'targetSdkVersion = 34'));
+  assert.throws(()=>runPlayValidator(stale),
+    error=>String(error.stderr).includes('below the API 35 floor'));
+});

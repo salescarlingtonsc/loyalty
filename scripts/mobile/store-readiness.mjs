@@ -37,6 +37,42 @@ if(icon.subarray(1,4).toString()!=='PNG'||icon.readUInt32BE(16)!==1024||icon.rea
   refuse('the iOS marketing icon contains an alpha channel.');
 }
 
+/* Android / Play. The same fail-closed spirit as the iOS block above: each of these is a thing
+   Play rejects a bundle for, and each is cheap to check locally. targetSdk is the one with a
+   moving deadline — Play has required API 35 for new submissions since 31 August 2025 — so it is
+   asserted as a floor, not an equality. */
+const gradle=await readFile(join(root,'android/app/build.gradle'),'utf8');
+const manifest=await readFile(join(root,'android/app/src/main/AndroidManifest.xml'),'utf8');
+const strings=await readFile(join(root,'android/app/src/main/res/values/strings.xml'),'utf8');
+const variables=await readFile(join(root,'android/variables.gradle'),'utf8');
+const pbxproj=await readFile(join(root,'ios/App/App.xcodeproj/project.pbxproj'),'utf8');
+
+if(!new RegExp(`applicationId\\s+["']${packageName.replaceAll('.','\\.')}["']`).test(gradle)){
+  refuse(`the Android applicationId must remain ${packageName}.`);
+}
+const marketingVersions=[...pbxproj.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map(match=>match[1].trim());
+const iosVersion=marketingVersions[0];
+const androidVersionName=(gradle.match(/versionName\s+"([^"]+)"/)||[])[1];
+if(!iosVersion||marketingVersions.some(version=>version!==iosVersion)){
+  refuse('the iOS MARKETING_VERSION must be one single value across build configurations.');
+}else if(androidVersionName!==iosVersion){
+  refuse(`versionName ${androidVersionName} must match the iOS MARKETING_VERSION ${iosVersion}.`);
+}
+const versionCode=Number((gradle.match(/versionCode\s+(\d+)/)||[])[1]);
+if(!Number.isInteger(versionCode)||versionCode<1)refuse('versionCode must be a positive integer.');
+const targetSdk=Number((variables.match(/targetSdkVersion\s*=\s*(\d+)/)||[])[1]);
+if(!(targetSdk>=35))refuse(`targetSdkVersion ${targetSdk} is below the API 35 floor Play requires.`);
+if(!/android:usesCleartextTraffic="false"/.test(manifest))refuse('the Android manifest must keep cleartext traffic disabled.');
+if(!/<string name="app_name">Peekaa<\/string>/.test(strings))refuse('the Android launcher label must remain Peekaa.');
+for(const density of ['mdpi','hdpi','xhdpi','xxhdpi','xxxhdpi']){
+  const launcher=join(root,`android/app/src/main/res/mipmap-${density}/ic_launcher.png`);
+  if(!existsSync(launcher))refuse(`missing Android launcher icon: mipmap-${density}/ic_launcher.png`);
+}
+const playIcon=await readFile(join(root,'app/icons/peekaa-512.png'));
+if(playIcon.subarray(1,4).toString()!=='PNG'||playIcon.readUInt32BE(16)!==512||playIcon.readUInt32BE(20)!==512){
+  refuse("Play's hi-res listing icon (app/icons/peekaa-512.png) must be a 512 × 512 PNG.");
+}
+
 const privacyManifests=[
   'node_modules/@capacitor/ios/Capacitor/Capacitor/PrivacyInfo.xcprivacy',
   'node_modules/@capacitor/ios/CapacitorCordova/CapacitorCordova/PrivacyInfo.xcprivacy'

@@ -1,5 +1,8 @@
 # Publishing Peekaa to the iOS App Store — the owner's runbook
 
+> Google Play is its own runbook: `docs/release/PLAY-STORE-RUNBOOK.md`. Same bundle, same
+> database; different signing model, toolchain and account rules.
+
 Everything on the code side is done and verified. What remains needs **your** Apple identity, so
 this is written as steps you perform, with the exact commands where a command exists.
 
