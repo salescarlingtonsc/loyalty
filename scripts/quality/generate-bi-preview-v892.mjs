@@ -74,12 +74,15 @@ const REAL = {
     outstanding_by_customer: [{ client_id: 'c7', client_name: 'Gil Tan', sales: 1, outstanding_cents: 200000 }],
     names_visible: true
   },
+  /* nestly_v894: the first row is an identity erased under PDPA — erase_client_v290's own
+     placeholder, verbatim — so the preview demonstrates that the card DESCRIBES the customer
+     rather than heading itself "Erased customer usually visits every 19 days". */
   attention: {
     rows: [
-      { client_id: 'c1', full_name: 'Siti Rahman', phone: '81863833', status: 'overdue', last_visit_days: 62, cadence_days: 21.4 },
+      { client_id: 'c9', full_name: 'Erased customer', phone: null, status: 'slipping', last_visit_days: 48, cadence_days: 19.2 },
       { client_id: 'c2', full_name: 'Wei Ling', phone: null, status: 'due', last_visit_days: 18, cadence_days: 17.6 }
     ],
-    summary: { due: 1, overdue: 1, slipping: 1, considered: 9, one_time_count: 2, monthly_at_risk_cents: 12000 }
+    summary: { due: 1, overdue: 0, slipping: 1, considered: 9, one_time_count: 2, monthly_at_risk_cents: 145700 }
   },
   packages: [
     { client_id: 'c1', remaining: 3, status: 'active', plan_name_snapshot: '4x Facial', list_unit_cents_snapshot: 9000 },
@@ -101,22 +104,39 @@ const REAL = {
         impact: { cents: null }, confidence: { n: 24, floor: 5, status: 'ok' },
         limitation: 'Coverage is not accuracy.'
       },
+      /* nestly_v894: the third card the owner marked up. Its `pattern` is the analyst sentence
+         production really emits, cents and all — the preview proves none of it reaches the
+         screen, and that the heading is built from evidence.refs instead. */
       {
-        id: 'package_leakage:plan_small', rank: 2, rank_class: 'quantified', domain: 'packages',
+        id: 'category_concentration', rank: 2, rank_class: 'unquantified', domain: 'category_mix',
+        pattern: '141000 cents of 168000 cents of classified revenue — 83.9% — comes from a single '
+          + 'category (Facial), bought by 6 customers. Its top customer alone accounts for 39.8% of the category.',
+        action: { what: 'Treat Facial as a single point of failure.' },
+        impact: { cents: null }, confidence: { n: 6, floor: 5, status: 'ok' },
+        concentration: { top1_share_bps: 3980, mean_excl_top1: 16000 },
+        evidence: {
+          source_rpc: 'public.get_ci_category_mix_v1',
+          refs: {
+            top_category: { node_key: 'facial', label: 'Facial', revenue_cents: 141000, customer_count: 6 },
+            classified_revenue_cents: 168000, top_share_bps: 8393, coverage: { classified_pct_bps: 5680 }
+          }
+        },
+        evidence_class: 'DIRECT_FACT',
+        limitation: 'A concentrated mix is not automatically a fault.',
+        reversal_condition: 'Reconsider if the share falls below the bar.'
+      },
+      {
+        id: 'package_leakage:plan_small', rank: 4, rank_class: 'quantified', domain: 'packages',
         pattern: 'Six prepaid facial packages have sessions left that nobody has booked.',
         action: { what: 'Call the six holders and book their remaining sessions.' },
         impact: { cents: 54000 }, confidence: { n: 9, floor: 5, status: 'ok' },
+        evidence: { refs: { plan_name: '4x Facial', unused_sessions: 6, per_session_cents: 9000 } },
+        evidence_class: 'DIRECT_FACT',
         limitation: 'It cannot see a session booked outside Peekaa.',
         reversal_condition: 'Peekaa drops this once the remaining sessions are booked.'
-      },
-      {
-        id: 'strength:category:facial', rank: 3, rank_class: 'strength', domain: 'category_mix',
-        pattern: 'Facials bring in more revenue per customer than anything else you sell.',
-        action: { what: '' }, impact: { cents: null }, confidence: { n: 12, floor: 5, status: 'ok' },
-        limitation: 'It says nothing about why.'
       }
     ],
-    report_sections: { strengths: ['strength:category:facial'], leakage: ['package_leakage:plan_small'], failures: [] }
+    report_sections: { strengths: [], leakage: ['package_leakage:plan_small'], failures: [] }
   },
   rhythm: {
     weekdays: [{ dow: 2, label: 'Tuesday', visits: 5, occurrences: 4, per_occurrence: 1.3, revenue_cents: 116900 }],
@@ -187,7 +207,7 @@ const page = `<!doctype html>
 </style>
 </head>
 <body>
-${pane('1 · A real month', 'Everything present: a comparison against the previous 30 days, three things to know, a full pulse and every health row.', renderReal(REAL, { data_status: 'ok', as_of: '2026-09-14', brief: { week: {} } }))}
+${pane('1 · A real month', 'Everything present: a comparison against the previous 30 days, three things to know (money not collected, a customer whose identity was erased, and the concentration exposure), a full pulse and every health row.', renderReal(REAL, { data_status: 'ok', as_of: '2026-09-14', brief: { week: {} } }))}
 ${pane('2 · A thin month, one branch selected', 'No earlier window to compare against, no payments reader, one customer, nothing ranked yet — and Peekaa says which of those it is.', renderBare(THIN, null))}
 ${pane('3 · A brand-new business', 'No sales, no customers, no readers. Every figure is a dash and nothing is invented as a zero.', renderBare(EMPTY, null))}
 </body>

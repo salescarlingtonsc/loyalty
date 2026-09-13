@@ -134,10 +134,43 @@ const LEAKAGE_ITEM = {
 };
 const STRENGTH_ITEM = {
   id: 'strength:category:facial', rank: 3, rank_class: 'strength', domain: 'category_mix',
-  pattern: 'Facials bring in more revenue per customer than anything else you sell.',
+  pattern: 'Facials bring in 141000 cents, more revenue per customer than anything else you sell.',
   action: { who: 'nobody', what: '', when: '', channel: '' },
   impact: { cents: null }, confidence: { n: 12, floor: 5, status: 'ok' },
+  evidence: {
+    source_rpc: 'public.get_ci_category_mix_v1',
+    refs: { node_key: 'facial', label: 'Facial', revenue_cents: 141000, customer_count: 6 }
+  },
   evidence_class: 'ASSOCIATION', limitation: 'It says nothing about why.'
+};
+/* nestly_v894 — the shape v744 actually emits for the third card the owner reviewed: an
+   analyst's `pattern` in cents, and alongside it every structured field the owner wording is
+   built from (evidence.refs.top_share_bps / top_category, and the `concentration` block). */
+const CONCENTRATION_ITEM = {
+  id: 'category_concentration', rank: 4, rank_class: 'unquantified', domain: 'category_mix',
+  pattern: '141000 cents of 168000 cents of classified revenue — 83.9% — comes from a single '
+    + 'category (Facial), bought by 6 customers. Its top customer alone accounts for 39.8% of the category.',
+  action: { who: 'the owner', what: 'Treat Facial as a single point of failure.' },
+  impact: { cents: null }, confidence: { n: 6, floor: 5, status: 'ok' },
+  concentration: { top1_share_bps: 3980, mean_excl_top1: 16000, skew_note: 'one customer carries it' },
+  evidence: {
+    source_rpc: 'public.get_ci_category_mix_v1',
+    refs: {
+      top_category: { node_key: 'facial', label: 'Facial', revenue_cents: 141000, customer_count: 6 },
+      classified_revenue_cents: 168000, top_share_bps: 8393, coverage: { classified_pct_bps: 5680 }
+    }
+  },
+  evidence_class: 'DIRECT_FACT',
+  limitation: 'A concentrated mix is not automatically a fault.',
+  reversal_condition: 'Reconsider if the share falls below the bar.'
+};
+/* An attention row whose identity was erased under PDPA: the placeholder erase_client_v290
+   writes, verbatim. */
+const ATTENTION_ERASED = {
+  rows: [
+    { client_id: 'c9', full_name: 'Erased customer', phone: null, status: 'slipping', last_visit_days: 48, cadence_days: 19.2 }
+  ],
+  summary: { due: 0, overdue: 0, slipping: 1, considered: 9, monthly_at_risk_cents: 145700 }
 };
 const OPPORTUNITIES = {
   scope: { currency: 'SGD' },
@@ -202,7 +235,10 @@ test('v892 snapshot: every KPI is the server\'s own field, formatted as grouped 
   assert.ok(html.includes('SGD 6,683.30'), `grouped revenue, got: ${html}`);
   assert.ok(html.includes('SGD 4,214.29'), 'grouped collected');
   assert.ok(html.includes('63% collected'), 'the collected share comes from collected_share.pct');
-  assert.ok(html.includes('3 new'), 'the customers tile carries new_customers as its second line');
+  /* nestly_v894: the Customers tile no longer repeats new_customers — the very next tile IS
+     New customers, and saying it twice made the row read as five figures, not four. */
+  assert.ok(!/\d+ new\b/.test(html), `no "N new" secondary line on the Customers tile, got: ${html}`);
+  assert.ok(html.includes('New customers 3'), 'the New customers tile still carries it');
   assert.ok(html.includes('Last 30 days · All branches'), 'the scope caption names period and branch');
 });
 
@@ -246,6 +282,9 @@ test('v892 selector: money first, then the customer at risk, then the server\'s 
   assert.ok(spaced(cards[0].finding).includes('SGD 2,445.00'), 'the outstanding total leads the card');
   assert.equal(cards[0].why, '8 sales are not recorded as fully paid.',
     'sales_unpaid + sales_partly_paid, combined for the owner and split in the evidence');
+  assert.equal(cards[0].action, 'Review the open sales and record any payments already received.');
+  assert.equal(cards[0].cta.label, 'Review payments');
+  assert.equal(cards[0].cta.section, 'money', 'the same destination the old label pointed at');
   assert.match(cards[0].evidence.fact, /6 with no payment recorded and 2 part paid/);
 });
 
@@ -254,6 +293,8 @@ test('v892 selector: the customer-risk card uses the server\'s own rhythm and it
   const risk = cards.find((card) => card.topic === 'bringback');
   assert.equal(risk.finding, 'Siti Rahman usually visits every 21 days. Last seen 62 days ago.');
   assert.equal(risk.cta.href, '#/grow/bringback', 'the CTA is a route that exists');
+  assert.equal(risk.type, 'customer_risk', 'a slipping regular is customer risk, not a red alarm');
+  assert.equal(risk.action, '', 'no "call or message them": lawful contact is not this page to assume');
 });
 
 test('v892 selector: an executable action outranks advisory advice, and is never manufactured', () => {
@@ -279,8 +320,9 @@ test('v892 selector: a coverage defect never takes one of the three slots', () =
     'the promoted, non-foundation candidates are what is left');
 });
 
-test('v892 selector: a card\'s type is read from the server\'s own buckets, not judged here', () => {
-  const failure = { ...LEAKAGE_ITEM, id: 'no_discount_reminder', domain: 'discount_dependency' };
+test('v894 selector: the owner\'s six card types, mapped from the server\'s own classes', () => {
+  const failure = { ...LEAKAGE_ITEM, id: 'no_discount_reminder', domain: 'discount_dependency',
+    evidence: { refs: { reminder_only_candidates_n: 4 } } };
   const cards = BI.select(model({
     cashGap: null, attention: null, packages: [],
     opportunities: {
@@ -289,9 +331,25 @@ test('v892 selector: a card\'s type is read from the server\'s own buckets, not 
     }
   }));
   const byTopic = Object.fromEntries(cards.map((card) => [card.topic, card.type]));
-  assert.equal(byTopic.discounts, 'needs_attention', 'the failures bucket is something to fix');
+  assert.equal(byTopic.discounts, 'opportunity', 'promoted advisory that is not exposure-shaped');
   assert.equal(byTopic.packages, 'opportunity', 'leakage is money already paid for, not an alarm');
   assert.equal(byTopic.services, 'doing_well', 'the strengths bucket is something going well');
+  /* Money not collected is the only 🔴 on this surface; an exposure is 🟠 Business risk; a
+     customer about to be lost is 🟠 Customer risk. */
+  assert.equal(BI.select(model())[0].type, 'needs_attention', 'cash outstanding');
+  const exposure = BI.select(model({
+    cashGap: null, attention: null, packages: [],
+    opportunities: { ...OPPORTUNITIES, ranked: [CONCENTRATION_ITEM], report_sections: {} }
+  }));
+  assert.equal(exposure[0].type, 'business_risk', 'category concentration is an exposure');
+  const atRisk = BI.select(model({ cashGap: null }));
+  assert.equal(atRisk.find((card) => card.topic === 'bringback').type, 'customer_risk');
+  const kinds = BI.wording.types;
+  assert.equal(Object.keys(kinds).join(' '),
+    'needs_attention customer_risk business_risk opportunity doing_well still_learning');
+  assert.equal(kinds.customer_risk.label, 'Customer risk');
+  assert.equal(kinds.business_risk.label, 'Business risk');
+  assert.equal(kinds.opportunity.mark, '\u{1F7E1}', 'Opportunity is warm yellow, not the risk orange');
 });
 
 test('v892 selector: a strength reads as a strength, never as a task', () => {
@@ -363,7 +421,7 @@ test('v892 evidence: the sample size is translated into a sentence an owner can 
     opportunities: { ...OPPORTUNITIES, ranked: [LEAKAGE_ITEM], report_sections: { leakage: ['package_leakage:plan_small'] } }
   }));
   const evidence = plain(BI.evidence(cards[0]));
-  assert.ok(evidence.includes('Based on 9 observations. Peekaa requires at least 5 before showing this finding.'),
+  assert.ok(evidence.includes('Based on 9 observations. Peekaa needs at least 5 before showing this finding.'),
     `confidence.n and confidence.floor become one sentence, got: ${evidence}`);
   assert.ok(evidence.includes('Peekaa drops this once the remaining sessions are booked.'),
     'reversal_condition is printed as when Peekaa would change its mind');
@@ -471,6 +529,10 @@ test('v892 explore: a native, keyboard-usable accordion that drops a section wit
   assert.ok(!html.includes(' open>'), 'every group starts closed, so the page opens short');
   assert.match(html, /data-bi-section-v892="money"/);
   assert.ok(html.includes('<section id="a">rows</section>'), 'the existing renderers are carried verbatim');
+  /* nestly_v894: exactly ONE esc() on a title, at render time. A title pre-escaped by its caller
+     was escaped twice and reached the owner as a literal "&amp;". */
+  assert.ok(html.includes('Revenue &amp; payments'), 'the ampersand is escaped once');
+  assert.ok(!html.includes('&amp;amp;'), 'and never twice');
   assert.equal(BI.explore([]), '');
 });
 
@@ -513,4 +575,190 @@ test('v892: every empty and refused state renders without throwing and without a
   }
   const branch = plain(BI.snapshot(model({ scope: { branchId: 'b1', branchCode: 'TMP', branchName: 'Tampines' } })));
   assert.ok(branch.includes('Last 30 days · TMP · Tampines'), `a selected branch is named, got: ${branch}`);
+});
+
+/* ==================================================================================================
+   8. nestly_v894 — the owner-facing polish pass.
+
+   The rule this section pins: the primary surface is written for the owner. The server's
+   analytical `pattern` prose — cents, basis points, generator vocabulary — never reaches it,
+   whatever the payload says; an erased identity is described rather than named; and a finding
+   with no approved owner wording says where to read it instead of printing the analysis.
+   ================================================================================================== */
+const CONCENTRATION_ONLY = {
+  ...OPPORTUNITIES, ranked: [CONCENTRATION_ITEM], report_sections: { strengths: [], failures: [] }
+};
+
+test('v894 card: category concentration is worded from its structured evidence, never from the prose', () => {
+  const cards = BI.select(model({
+    cashGap: null, attention: null, packages: [], opportunities: CONCENTRATION_ONLY
+  }));
+  const card = cards.find((entry) => entry.topic === 'concentration');
+  assert.ok(card, 'the concentration finding takes a slot of its own');
+  /* 8393 bps → 84%, the one conversion this surface performs. Nothing is hardcoded: the label,
+     the share, the buyer count and the top-customer share all come out of the payload. */
+  assert.equal(card.finding, 'Facial makes up 84% of your categorised revenue');
+  assert.equal(card.why,
+    '6 customers bought Facial, and your biggest Facial customer contributes about 40% of that category.');
+  assert.equal(card.action, 'Your revenue is heavily concentrated in one service.');
+  assert.equal(card.cta.kind, 'section');
+  assert.equal(card.cta.section, 'services');
+  assert.equal(card.cta.label, 'View services');
+  const html = BI.insights(cards);
+  assert.ok(!/cents/i.test(html), `the pattern's cents never reach the owner, got: ${plain(html)}`);
+  assert.ok(!/83\.9|168000|141000/.test(html), 'nor its raw figures');
+  assert.match(html, /bi-card--business-risk/);
+});
+
+test('v894 card: a generator with no approved owner wording prints no server prose at all', () => {
+  const unknown = {
+    id: 'some_future_generator', rank: 1, rank_class: 'quantified', domain: 'mystery',
+    pattern: 'Segment X converts at 1420 bps against a 900 bps baseline, worth 41000 cents.',
+    action: { what: 'Do the analyst thing.' }, impact: { cents: 41000 },
+    confidence: { n: 11, floor: 5 }, evidence_class: 'ASSOCIATION'
+  };
+  const cards = BI.select(model({
+    cashGap: null, attention: null, packages: [],
+    opportunities: { ...OPPORTUNITIES, ranked: [unknown], report_sections: {} }
+  }));
+  const card = cards.find((entry) => entry.finding === 'View this insight in detailed analysis');
+  assert.ok(card, 'the untemplated finding falls back to a pointer, not to the prose');
+  assert.equal(card.cta.section, 'evidence', 'and the pointer opens Evidence & methodology');
+  const html = BI.insights(cards);
+  assert.ok(!html.includes('Segment X'), 'the analyst sentence is not on the primary screen');
+  for (const banned of ['cents', 'bps', 'ASSOCIATION']) {
+    assert.ok(!html.includes(banned), `the primary surface must not say "${banned}"`);
+  }
+});
+
+test('v894 ⚖️: an erased identity is described, never named, and never asked to be contacted', () => {
+  const cards = BI.select(model({ cashGap: null, attention: ATTENTION_ERASED }));
+  const card = cards.find((entry) => entry.topic === 'bringback');
+  assert.equal(card.finding, 'A regular customer is slipping away');
+  assert.equal(card.why, 'Usually visits every 19 days · last seen 48 days ago.');
+  assert.ok(spaced(card.why2).includes('SGD 1,457.00'), `the money uses the grouped formatter, got: ${card.why2}`);
+  assert.match(card.why2, /of regular spend may be at risk\.$/);
+  assert.equal(card.action, '', 'no instruction to contact anyone');
+  assert.equal(card.cta.label, 'Open bring-back list');
+  const html = BI.insights(cards);
+  assert.ok(!/Erased/i.test(html), 'the deletion-state placeholder is not a heading');
+  for (const card2 of cards) {
+    assert.ok(!/^(erased|deleted|anonymous|withheld|customer\b)/i.test(card2.finding),
+      `no card heading starts with a deletion-state word, got: ${card2.finding}`);
+  }
+  /* An overdue erased row says overdue; the rhythm still comes from the server's own fields. */
+  const overdue = BI.select(model({
+    cashGap: null,
+    attention: { ...ATTENTION_ERASED, rows: [{ ...ATTENTION_ERASED.rows[0], status: 'overdue' }] }
+  })).find((entry) => entry.topic === 'bringback');
+  assert.equal(overdue.finding, 'A regular customer is overdue');
+  /* A name that IS legitimately visible keeps the existing form. */
+  assert.equal(BI.select(model({ cashGap: null })).find((entry) => entry.topic === 'bringback').finding,
+    'Siti Rahman usually visits every 21 days. Last seen 62 days ago.');
+});
+
+test('v894 evidence: the evidence class is translated, and the sample floor reads as a sentence', () => {
+  const direct = plain(BI.evidence(BI.select(model({
+    cashGap: null, attention: null, packages: [], opportunities: CONCENTRATION_ONLY
+  }))[0]));
+  assert.ok(direct.includes('Based directly on your recorded business data.'), `DIRECT_FACT, got: ${direct}`);
+  assert.ok(!direct.includes('DIRECT_FACT'), 'and never the token');
+  const association = plain(BI.evidence(BI.select(model({
+    cashGap: null, attention: null, packages: [],
+    opportunities: { ...OPPORTUNITIES, ranked: [STRENGTH_ITEM], report_sections: { strengths: ['strength:category:facial'] } }
+  }))[0]));
+  assert.ok(association.includes('Based on a pattern in your data, not a proven cause.'));
+  assert.ok(!association.includes('ASSOCIATION'));
+});
+
+test('v894 pulse: exactly two chips carry emphasis', () => {
+  const html = BI.pulse(model());
+  assert.match(html, /<span class="bi-chip is-due">1 due back<\/span>/);
+  assert.match(html, /<span class="bi-chip is-slipping">1 slipping away<\/span>/);
+  assert.match(html, /<span class="bi-chip">9 customers<\/span>/);
+  assert.match(html, /<span class="bi-chip">1 overdue<\/span>/, 'overdue is not one of the two');
+  assert.equal((html.match(/bi-chip is-/g) || []).length, 2, 'and nothing else is toned');
+});
+
+test('v894 health: "Who you may contact" is a consent fact, not a health row', () => {
+  const html = plain(BI.health(model()));
+  assert.ok(!html.includes('Who you may contact'), 'it renders under Explore → Acquisition instead');
+  assert.ok(!html.includes('by text message'), 'and none of its figures are duplicated here');
+  /* Everything health keeps is still here. */
+  assert.ok(html.includes('Top 3 customers'), 'concentration stays, with its ≥3 earning rule');
+  assert.ok(html.includes('sorted into categories'), 'category coverage stays');
+  assert.match(BI.health(model()), /Map services/, 'with its own route');
+  assert.ok(html.includes('Age known for 33%'), 'profile completeness stays');
+});
+
+test('v894 overnight: the strip names the window it describes', () => {
+  const strip = sandbox({
+    ownerBriefLinesV826: () => [
+      { kind: 'plain', text: 'Last 7 days: SGD 1,240.00 from 14 visits.' },
+      { kind: 'warn', text: '2 regulars are overdue their usual visit.' },
+      { kind: 'plain', text: 'Most redeemed reward: Free scalp massage.' }
+    ]
+  }).overnight({ data_status: 'ok', brief: { week: {} } });
+  assert.ok(plain(strip).includes('Last night’s brief · Last 7 days'));
+  assert.match(strip, /<details class="bi-overnight-more"><summary>Show more<\/summary>/);
+});
+
+test('v894: the banned-token scan, with a payload that carries every one of them', () => {
+  const loaded = model({
+    attention: ATTENTION_ERASED,
+    opportunities: {
+      ...OPPORTUNITIES,
+      ranked: [FOUNDATION_ITEM, CONCENTRATION_ITEM, LEAKAGE_ITEM, STRENGTH_ITEM],
+      report_sections: { strengths: ['strength:category:facial'], failures: [], leakage: ['package_leakage:plan_small'] }
+    }
+  });
+  const primary = [
+    BI.snapshot(loaded), BI.insights(BI.select(loaded)), BI.pulse(loaded), BI.health(loaded),
+    sandbox({ ownerBriefLinesV826: () => [{ kind: 'plain', text: 'Last 7 days: SGD 1,240.00.' }] })
+      .overnight({ data_status: 'ok', brief: { week: {} } })
+  ].join('\n');
+  for (const banned of ['cents', 'bps', 'DIRECT_FACT', 'ASSOCIATION', 'sale_occurred_at', 'data_as_of',
+    'Unquantified', 'unquantified', 'category_concentration', 'package_leakage', 'strength:',
+    'coverage_defect', 'node_key', 'top_share', '&amp;amp;', 'undefined', 'NaN', 'Erased']) {
+    assert.ok(!primary.includes(banned), `the primary surface must not say "${banned}"`);
+  }
+  assert.ok(!/>\s*null\s*</.test(primary), 'no null rendered as a value');
+  assert.ok(!/\bnull\b/.test(plain(primary)), 'and none in the text either');
+});
+
+test('v894 explore: the section labels an owner reads, each escaped exactly once', () => {
+  const html = BI.explore([
+    { key: 'money', title: 'Revenue & payments', hint: 'What was recorded, collected, and still owed', body: '<i>x</i>' },
+    { key: 'behaviour', title: 'Weekday & time-of-day behaviour', hint: 'When customers come in', body: '<i>x</i>' },
+    { key: 'evidence', title: 'Evidence & methodology', hint: 'Why Peekaa reached its findings', body: '<i>x</i>' }
+  ]);
+  /* What the BROWSER shows: tags stripped, then the one entity decoded. A correctly escaped
+     "&amp;" in the markup renders as "&"; the double escape rendered as the literal "&amp;". */
+  const text = plain(html).split('&amp;').join('&');
+  for (const label of ['Revenue & payments', 'Weekday & time-of-day behaviour', 'Evidence & methodology']) {
+    assert.ok(text.includes(label), `"${label}" reads with a literal ampersand, got: ${text}`);
+  }
+  assert.ok(!text.includes('&amp;'), 'no escaped entity survives into the rendered text');
+  assert.ok(!html.includes('&amp;amp;'), 'and the markup is escaped once, not twice');
+  assert.equal((html.match(/&amp;/g) || []).length, 3, 'one escape per ampersand, in the markup');
+});
+
+/* The page's own Explore wiring: the labels and the one place contactability renders. Source-level
+   on purpose — this is the caller, not a function, and what must be pinned is that the titles are
+   PLAIN TEXT (so the single esc() above is the only escape) and that the contactability panel is
+   mounted exactly once, under Acquisition. */
+test('v894 page: Explore titles are plain text, and contactability renders once', () => {
+  const start = app.indexOf('const biExplore=biExploreHtmlV892([');
+  assert.ok(start > -1, 'the Explore wiring must exist');
+  const wiring = app.slice(start, app.indexOf('body.innerHTML=`${biSnapshotHtmlV892', start));
+  assert.ok(!wiring.includes('&amp;'), 'no title is pre-escaped in the data');
+  for (const title of ["title:'Revenue & payments'", "title:'Weekday & time-of-day behaviour'",
+    "title:'Evidence & methodology'"]) {
+    assert.ok(wiring.includes(title), `${title} is carried as plain text`);
+  }
+  assert.equal((wiring.match(/contactabilityMarkupV650\(\)/g) || []).length, 1,
+    'the contactability panel is mounted exactly once');
+  assert.ok(/key:'acquisition'[^}]*contactabilityMarkupV650/s.test(wiring)
+    || wiring.indexOf('contactabilityMarkupV650') > wiring.indexOf("key:'acquisition'"),
+    'and it is the Acquisition group that mounts it');
 });

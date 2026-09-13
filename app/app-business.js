@@ -34091,34 +34091,38 @@ async function customerIntelligencePage(){
        bindCategoryMixSectionV650, #ciMore and the CSV export status are all still found from the
        same body node immediately below. */
     const biModel=biModelV892(biBundlesV892(truthView));
+    /* nestly_v894: every title and hint below is PLAIN TEXT. biExploreHtmlV892 escapes each of
+       them exactly once at render time, so a title pre-escaped here ("Revenue &amp; payments")
+       was escaped twice and reached the owner as "Revenue &amp;amp; payments" — rendering the
+       literal "&amp;". One esc(), at the render boundary, and never in the data. */
     const biExplore=biExploreHtmlV892([
       {key:'customers',title:'Customers',hint:'Who to call, who matters most, and who they are',
         body:`${ownerBriefMarkupV771({blocks:['bringback','top']})}${customerRecordsMarkup(data)}${ciDemographicsMarkupV679()}${ownerBriefMarkupV771({blocks:['who']})}`},
-      {key:'money',title:'Revenue &amp; payments',hint:'What was recorded, what was collected, what is still owed',
+      {key:'money',title:'Revenue & payments',hint:'What was recorded, collected, and still owed',
         body:`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${ownerBriefMarkupV771({blocks:['cash']})}`},
-      {key:'retention',title:'Retention',hint:'How many customers come back, and where they stop',
+      {key:'retention',title:'Retention',hint:'Who comes back and where customers drop off',
         body:ciFunnelConversionMarkupV679()},
-      {key:'services',title:'Services',hint:'What sells, what brings people back, what they buy',
+      {key:'services',title:'Services',hint:'What sells and what brings people back',
         body:`${ownerBriefMarkupV771({blocks:['services']})}${ciCategoryMixWrapV650()}`},
       {key:'staff',title:'Staff',hint:'Who brings customers back',
         body:ownerBriefMarkupV771({blocks:['staff']})},
-      {key:'acquisition',title:'Acquisition',hint:'Where customers come from, and who you may contact',
+      {key:'acquisition',title:'Acquisition',hint:'Where customers come from',
         body:`${acquisitionMarkupV650()}${contactabilityMarkupV650()}`},
-      {key:'booking',title:'Booking funnel',hint:'Sign-up and booking, step by step',
+      {key:'booking',title:'Booking funnel',hint:'How customers move from viewing to booking',
         body:funnelMarkupV650()},
-      {key:'rewards',title:'Rewards',hint:'Which rewards people actually use',
+      {key:'rewards',title:'Rewards',hint:'Which rewards customers actually use',
         body:ownerBriefMarkupV771({blocks:['rewards']})},
-      {key:'behaviour',title:'Weekday &amp; time-of-day behaviour',hint:'When customers come in',
+      {key:'behaviour',title:'Weekday & time-of-day behaviour',hint:'When customers come in',
         body:ownerBriefMarkupV771({blocks:['when']})},
       {key:'packages',title:'Packages',hint:'Prepaid sessions still unused',
         body:ownerBriefMarkupV771({blocks:['unused']})},
-      {key:'branches',title:'Branches',hint:'The same period, one row for each branch',
+      {key:'branches',title:'Branches',hint:'Compare performance across branches',
         body:ownerBriefMarkupV771({blocks:['branches']})},
-      {key:'coverage',title:'Improve your insights',hint:'What Peekaa cannot tell you yet',
+      {key:'coverage',title:'Improve your insights',hint:'Missing data that limits Peekaa’s analysis',
         body:ownerBriefMarkupV771({blocks:['limits']})},
-      {key:'evidence',title:'Evidence &amp; methodology',hint:'The full ranked list and the measured behaviour behind it',
+      {key:'evidence',title:'Evidence & methodology',hint:'Why Peekaa reached its findings',
         body:`${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}${economicsMarkupV522}`},
-      {key:'ask',title:'Ask my business',hint:'Every answer prepared last night',
+      {key:'ask',title:'Ask my business',hint:'Answers prepared from last night’s data',
         body:nightlyBriefAnswersMarkupV892()}
     ]);
     body.innerHTML=`${biSnapshotHtmlV892(biModel)}${biInsightsHtmlV892(biSelectInsightsV892(biModel))}${biPulseHtmlV892(biModel)}${biHealthHtmlV892(biModel)}${nightlyBriefStripMarkupV892()}${biExplore}`;
@@ -35731,18 +35735,311 @@ const BI_WORDING_V892=Object.freeze({
   pulse:'Customer pulse',
   health:'Business health',
   explore:'Explore your business',
-  overnight:'Last night’s brief',
+  /* nestly_v894: the strip always describes the same window, so it says so in its own heading
+     rather than leaving the owner to infer it from the sentences. */
+  overnight:'Last night’s brief · Last 7 days',
   showMore:'Show more',
   evidenceSummary:'Why am I seeing this?',
   noComparison:'No earlier period to compare yet.',
   noInsight:'No reliable recommendation yet — Peekaa will surface one once there is enough evidence.',
+  /* nestly_v894: the heading a finding gets when this page has no approved owner wording for it.
+     The server's own analytical prose is NEVER promoted to the primary screen — it is written for
+     an analyst, in cents and basis points — so an untemplated finding says where to read it
+     instead, and the verbatim wording stays where it already lives, under Explore → Evidence &
+     methodology. */
+  noTemplate:'View this insight in detailed analysis',
+  /* nestly_v894 (owner ruling): six OWNER-facing card types. These are presentation labels only —
+     the engine's own classes (rank_class, report_sections) are untouched and are still what the
+     mapping below reads. Peekaa red stays for the brand and for a primary call to action, so
+     "needs attention" is a pale warm wash with a red edge, never a solid red block. */
   types:Object.freeze({
     needs_attention:Object.freeze({label:'Needs attention',mark:'🔴'}),
-    opportunity:Object.freeze({label:'Opportunity',mark:'🟠'}),
+    customer_risk:Object.freeze({label:'Customer risk',mark:'🟠'}),
+    business_risk:Object.freeze({label:'Business risk',mark:'🟠'}),
+    opportunity:Object.freeze({label:'Opportunity',mark:'🟡'}),
     doing_well:Object.freeze({label:'Doing well',mark:'🟢'}),
     still_learning:Object.freeze({label:'Still learning',mark:'⚪'})
   })
 });
+
+/* nestly_v894 — the evidence class, translated. The payload's own token is analyst vocabulary;
+   the owner gets the sentence it means and never the token. An unknown class contributes nothing
+   rather than a guess. */
+const BI_EVIDENCE_CLASS_V894=Object.freeze({
+  DIRECT_FACT:'Based directly on your recorded business data.',
+  ASSOCIATION:'Based on a pattern in your data, not a proven cause.'
+});
+
+/* nestly_v894 — the consent channels, in words an owner uses. A channel this map does not know
+   contributes no sentence at all rather than leaking its machine name. */
+const BI_CHANNEL_WORDS_V894=Object.freeze({
+  sms:'text message',email:'email',push:'app notification',in_app:'the app',call:'a phone call'
+});
+
+/* nestly_v894 — an exposure-shaped finding is about the business's own concentration, not about
+   a customer and not about money sitting uncollected, so it reads as "Business risk". */
+const BI_EXPOSURE_GENERATORS_V894=Object.freeze(['category_concentration','contactability_gap']);
+
+/* nestly_v894 — the display names an erased or withheld identity carries. Matching any of them
+   means this page must NOT print the name as if it were a person: it describes the customer's
+   behaviour instead. The list is deliberately generous (a genuine customer literally called
+   "Customer" is described rather than named), because the safe direction is never to assert an
+   identity Peekaa cannot stand behind. Nothing here recovers or infers who the person is. */
+const BI_WITHHELD_NAMES_V894=Object.freeze([
+  'erased customer','deleted customer','anonymous customer','anonymous','customer',
+  'withheld','name withheld','hidden customer'
+]);
+function biWithheldIdentityV894(value){
+  const name=String(value===null||value===undefined?'':value).trim().toLowerCase();
+  if(!name)return true;
+  return BI_WITHHELD_NAMES_V894.indexOf(name)>-1;
+}
+
+/* nestly_v894 — basis points to whole percent, the one conversion this surface performs on a
+   server figure. It never derives a percentage from anything else. */
+function biPctFromBpsV894(bps){
+  const value=biFiniteV892(bps);
+  return value===null?null:Math.round(value/100);
+}
+function biSentenceV894(text){
+  const trimmed=biTextV892(text);
+  return trimmed?`${trimmed.charAt(0).toUpperCase()}${trimmed.slice(1)}.`:'';
+}
+
+/* -------------------------------------------------------------------------------------------
+   nestly_v894 — OWNER WORDING TEMPLATES, one per generator that can reach the top three.
+   ===========================================================================================
+   Each template is a pure function of the STRUCTURED fields the payload already carries —
+   `evidence.refs`, `confidence`, `impact.cents`, and for category_mix the `concentration` block
+   v744 attaches. None of them parses, trims or re-prints the server's `pattern` prose: that
+   prose is written for an analyst, in cents and basis points, and reprinting it on the primary
+   screen is exactly the defect this pass closes. Where a template cannot produce a heading from
+   the fields it needs, it returns null and the card falls back to BI_WORDING_V892.noTemplate
+   with a control that opens Evidence & methodology, where the verbatim wording already lives.
+
+   NO METRIC IS COMPUTED HERE. The only arithmetic is basis points → whole percent
+   (biPctFromBpsV894), the same divide-by-100 every other bps value on this page already gets.
+
+   `data_quality_coverage` has no template on purpose: it is a coverage defect, filed as Business
+   health by the model, and never one of the three things to know.
+   ------------------------------------------------------------------------------------------- */
+const BI_TEMPLATES_V894=Object.freeze({
+  category_concentration(item){
+    const refs=biObjectV892(item.refs)||{};
+    const top=biObjectV892(refs.top_category)||{};
+    const label=biTextV892(top.label,biTextV892(top.node_key));
+    const share=biPctFromBpsV894(refs.top_share_bps);
+    if(!label||share===null)return null;
+    const buyers=biWholeV892(top.customer_count);
+    const topOne=biPctFromBpsV894(biObjectV892(item.concentration)?.top1_share_bps);
+    const bought=buyers===null?'':`${biPluralV892(buyers,'customer','customers')} bought ${label}`;
+    const biggest=topOne===null?'':`your biggest ${label} customer contributes about ${topOne}% of that category`;
+    return {
+      finding:`${label} makes up ${share}% of your categorised revenue`,
+      why:biSentenceV894([bought,biggest].filter(Boolean).join(', and ')),
+      action:'Your revenue is heavily concentrated in one service.',
+      cta:{kind:'section',section:'services',label:'View services'}
+    };
+  },
+  lapsed_regulars(item,ctx){
+    const refs=biObjectV892(item.refs)||{};
+    const count=biWholeV892(refs.overdue_regulars);
+    const worth=biMoneyV892(refs.recoverable_cents,ctx.currency);
+    return {
+      finding:count===null
+        ?'Some regulars are past their usual visit gap'
+        :`${biPluralV892(count,'regular is','regulars are')} past their usual visit gap`,
+      why:worth?`About ${worth} of their usual spend is at stake.`:'',
+      action:'',
+      cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
+    };
+  },
+  daypart_shift(item){
+    const refs=biObjectV892(item.refs)||{};
+    const gold=biTextV892(biObjectV892(refs.gold_weekday)?.label);
+    const dead=biTextV892(biObjectV892(refs.dead_weekday)?.label);
+    const busy=biObjectV892(refs.busiest_weekday)||{};
+    const busyLabel=biTextV892(busy.label),busyVisits=biWholeV892(busy.visits);
+    if(!gold||!dead)return null;
+    return {
+      finding:`${gold} earns more per visit than ${dead}`,
+      why:busyLabel
+        ?`${busyLabel} is your busiest day${busyVisits===null?'':` (${biPluralV892(busyVisits,'visit','visits')})`}.`
+        :'',
+      action:'Check whether your staffing follows the days that earn most.',
+      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'}
+    };
+  },
+  contactability_gap(item){
+    const refs=biObjectV892(item.refs)||{};
+    const offers=biObjectV892(refs.business_offers)||{};
+    const total=biWholeV892(offers.customers);
+    const best=biWholeV892(refs.best_channel_allowed);
+    const channel=BI_CHANNEL_WORDS_V894[biTextV892(refs.best_channel).toLowerCase()]||'';
+    if(total===null||best===null)return null;
+    return {
+      finding:`Only ${best} of ${biPluralV892(total,'customer','customers')} may be sent an offer`,
+      why:channel?`Your widest permission today is ${channel}.`:'',
+      action:'Ask for permission at checkout so more customers can hear from you.',
+      cta:{kind:'section',section:'acquisition',label:'See who you may contact'}
+    };
+  },
+  package_leakage(item,ctx){
+    const refs=biObjectV892(item.refs)||{};
+    const plan=biTextV892(refs.plan_name);
+    const unused=biWholeV892(refs.unused_sessions);
+    const worth=biMoneyV892(item.impactMinor,ctx.currency);
+    return {
+      finding:unused===null
+        ?(plan?`Prepaid sessions on ${plan} are sitting unused`:'Prepaid sessions are sitting unused')
+        :`${biPluralV892(unused,'prepaid session is','prepaid sessions are')} unused${plan?` on ${plan}`:''}`,
+      why:worth?`Worth about ${worth} of work already paid for.`:'',
+      action:'Book these customers in before the sessions expire.',
+      cta:{kind:'route',href:'#/custpackages',label:'View packages'}
+    };
+  },
+  funnel_bottleneck(item){
+    const refs=biObjectV892(item.refs)||{};
+    const first=biObjectV892(refs.stage_1_to_2)||{};
+    const returned=biWholeV892(first.numerator),outOf=biWholeV892(first.denominator);
+    const window=biWholeV892(refs.window_days);
+    if(returned===null||outOf===null)return null;
+    return {
+      finding:`${returned} of ${outOf} first-time customers came back for a second visit`,
+      why:window===null?'':`Counted within ${window} days of their first visit.`,
+      action:'Look at what happens right after a first visit.',
+      cta:{kind:'section',section:'retention',label:'See retention'}
+    };
+  },
+  gateway_followthrough(item){
+    const refs=biObjectV892(item.refs)||{};
+    const service=biTextV892(refs.service_name);
+    if(!service)return null;
+    const buyers=biWholeV892(refs.buyers);
+    const repeat=biWholeV892(biObjectV892(refs.repeat_rate)?.pct);
+    return {
+      finding:`${service} brings people in, but few of them buy it again`,
+      why:(buyers!==null&&repeat!==null)
+        ?`${repeat}% of its ${biPluralV892(buyers,'buyer','buyers')} bought it a second time.`
+        :'',
+      action:'Look at what you offer these customers next.',
+      cta:{kind:'section',section:'services',label:'View services'}
+    };
+  },
+  no_discount_reminder(item){
+    const count=biWholeV892(biObjectV892(item.refs)?.reminder_only_candidates_n);
+    if(count===null)return null;
+    return {
+      finding:`${biPluralV892(count,'regular has','regulars have')} gone quiet without ever needing a discount`,
+      why:'They have always come back at full price.',
+      action:'A plain reminder is enough here — no offer needed.',
+      cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
+    };
+  },
+  loyalty_cannibalisation_gap(item){
+    const refs=biObjectV892(item.refs)||{};
+    const programme=biTextV892(refs.programme);
+    const share=biWholeV892(refs.within_cycle_pct);
+    if(!programme||share===null)return null;
+    return {
+      finding:`${share}% of ${programme} rewards land on visits that were already due`,
+      why:'The reward is arriving on visits the customer’s own rhythm predicted.',
+      action:'Check whether this reward changes behaviour or pays for it.',
+      cta:{kind:'section',section:'rewards',label:'See rewards'}
+    };
+  },
+  staff_mix_underperformance(item){
+    const name=biTextV892(biObjectV892(item.refs)?.full_name);
+    if(!name)return null;
+    return {
+      finding:`${name} earns less than your own average on the same services`,
+      why:'Measured against your own price list, not an outside target.',
+      action:'Worth a conversation about how these services are sold.',
+      cta:{kind:'section',section:'staff',label:'See staff performance'}
+    };
+  },
+  campaigns(item){
+    const rate=biObjectV892(biObjectV892(item.refs)?.rate)||{};
+    const bought=biWholeV892(rate.numerator),sent=biWholeV892(rate.denominator);
+    if(bought===null||sent===null)return null;
+    return {
+      finding:`${bought} of ${sent} customers sent a campaign bought something afterwards`,
+      why:'A purchase after a send is not proof the send caused it.',
+      action:'Review who this went to and what it said.',
+      cta:{kind:'section',section:'evidence',label:'See the full evidence'}
+    };
+  },
+  discovery(item){
+    const group=biTextV892(biObjectV892(item.refs)?.group);
+    if(!group)return null;
+    return {
+      finding:`One group of customers — ${group} — behaves differently from the rest`,
+      why:'The difference held up on a later slice of the same period.',
+      action:'Worth a closer look at what this group has in common.',
+      cta:{kind:'section',section:'evidence',label:'See the full evidence'}
+    };
+  },
+  change(item){
+    const group=biTextV892(biObjectV892(item.refs)?.group);
+    if(!group)return null;
+    return {
+      finding:`${group} did worse in the second half of the period than the first`,
+      why:'',
+      action:'Worth checking what changed for this group.',
+      cta:{kind:'section',section:'evidence',label:'See the full evidence'}
+    };
+  },
+  'strength:weekday'(item){
+    const label=biTextV892(biObjectV892(item.refs)?.label);
+    if(!label)return null;
+    return {
+      finding:`${label} is your strongest day`,why:'',action:'',
+      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'}
+    };
+  },
+  'strength:category'(item){
+    const refs=biObjectV892(item.refs)||{};
+    const label=biTextV892(refs.label,biTextV892(refs.node_key));
+    if(!label)return null;
+    const buyers=biWholeV892(refs.customer_count);
+    return {
+      finding:`${label} leads everything else you sell`,
+      why:buyers===null?'':`Bought by ${biPluralV892(buyers,'customer','customers')} in this period.`,
+      action:'',
+      cta:{kind:'section',section:'services',label:'View services'}
+    };
+  },
+  'strength:service'(item){
+    const refs=biObjectV892(item.refs)||{};
+    const name=biTextV892(refs.service_name);
+    if(!name)return null;
+    const buyers=biWholeV892(refs.buyers);
+    return {
+      finding:`${name} is your best-selling service`,
+      why:buyers===null?'':`Bought by ${biPluralV892(buyers,'customer','customers')} in this period.`,
+      action:'',
+      cta:{kind:'section',section:'services',label:'View services'}
+    };
+  }
+});
+function biTemplateV894(item,ctx){
+  const entry=biObjectV892(item)||{};
+  const build=Object.prototype.hasOwnProperty.call(BI_TEMPLATES_V894,entry.generator)
+    ?BI_TEMPLATES_V894[entry.generator]:null;
+  if(typeof build!=='function')return null;
+  const made=biObjectV892(build(entry,biObjectV892(ctx)||{}));
+  return (made&&biTextV892(made.finding))?made:null;
+}
+/* The owner-facing type of a ranked finding. The engine's own classes are what this reads —
+   nothing is re-judged, only re-labelled. */
+function biCardTypeV894(item){
+  const entry=biObjectV892(item)||{};
+  if(entry.strength)return 'doing_well';
+  if(entry.generator==='category_concentration')return 'business_risk';
+  if(entry.failure&&BI_EXPOSURE_GENERATORS_V894.indexOf(entry.generator)>-1)return 'business_risk';
+  if(entry.topic==='bringback')return 'customer_risk';
+  return 'opportunity';
+}
 
 /* One card per underlying insight, so a finding the server ranked and a finding this page
    derived from the same facts cannot both take a slot. The map is presentation only: it says
@@ -35752,8 +36049,21 @@ const BI_ADVISORY_TOPICS_V892=Object.freeze({
   gateway_followthrough:'services',no_discount_reminder:'discounts',
   loyalty_cannibalisation_gap:'loyalty',staff_mix_underperformance:'staff',
   campaigns:'campaigns',discovery:'discovery',
+  /* nestly_v894: concentration is its own insight, not the same fact as "this category leads" —
+     one is an exposure, the other a strength — so it keeps its own slot. daypart_shift and the
+     derived weekday strength ARE the same fact, so they share one. */
+  category_concentration:'concentration',daypart_shift:'weekday',
+  contactability_gap:'contactability',change:'change',data_quality_coverage:'coverage',
   'strength:category':'services','strength:service':'services','strength:weekday':'weekday'
 });
+/* nestly_v894: the generator behind an id, which is what the owner wording templates are keyed
+   on. `package_leakage:plan_small` is the package_leakage generator; `strength:category:facial`
+   is the category strength. Same parsing rule as the topic map above, one level finer. */
+function biGeneratorV894(id){
+  const parts=String(id===null||id===undefined?'':id).split(':');
+  const head=parts[0]||'';
+  return head==='strength'?`strength:${parts[1]||''}`:head;
+}
 function biAdvisoryTopicV892(id){
   const parts=String(id===null||id===undefined?'':id).split(':');
   const head=parts[0]||'item';
@@ -35885,6 +36195,14 @@ function biModelV892(bundles){
       return {
         id,
         topic:biAdvisoryTopicV892(id),
+        /* nestly_v894: the generator, and the STRUCTURED evidence it already carries. These are
+           what the owner wording templates read; `pattern` below stays in the model only so the
+           model keeps describing the payload faithfully, and is deliberately never rendered on
+           the primary surface. */
+        generator:biGeneratorV894(id),
+        refs:biObjectV892(biObjectV892(item.evidence)?.refs),
+        concentration:biObjectV892(item.concentration),
+        evidenceClass:biTextV892(item.evidence_class),
         rankClass:biTextV892(item.rank_class),
         strength:item.rank_class==='strength'||strengthIds.has(id),
         failure:failureIds.has(id),
@@ -35909,9 +36227,6 @@ function biModelV892(bundles){
   const demographics=biObjectV892(input.demographics);
   const demographicCoverage=biObjectV892(demographics?.coverage)||{};
   const categoryCoverage=biObjectV892(biObjectV892(input.categoryMix)?.coverage)||{};
-  const contactability=biObjectV892(input.contactability);
-  const offers=biObjectV892(contactability?.business_offers);
-  const offerChannels=biObjectV892(offers?.allowed_by_channel)||{};
   const action=biObjectV892(input.action)||{};
 
   return {
@@ -35946,6 +36261,10 @@ function biModelV892(bundles){
       urgent:urgentRow&&{
         clientId:biTextV892(urgentRow.client_id),
         name:biTextV892(urgentRow.full_name,'Customer'),
+        /* nestly_v894 ⚖️: an erased or withheld identity must never head a card as though it
+           were a person — "Erased customer usually visits every 21 days" reads as a name. The
+           card describes the behaviour instead; nothing here recovers or infers who it is. */
+        withheld:biWithheldIdentityV894(urgentRow.full_name)||attention?.names_visible===false,
         status:biTextV892(urgentRow.status),
         cadenceDays:biWholeV892(urgentRow.cadence_days),
         lastVisitDays:biWholeV892(urgentRow.last_visit_days)
@@ -35974,11 +36293,6 @@ function biModelV892(bundles){
       age:biObjectV892(demographicCoverage.age_known),
       gender:biObjectV892(demographicCoverage.gender_known)
     },
-    contactable:offers?{
-      customers:biWholeV892(offers.customers)||0,
-      sms:biWholeV892(offerChannels.sms)||0,
-      email:biWholeV892(offerChannels.email)||0
-    }:null,
     weekday:(busiest&&weekdayRow)?{
       label:biTextV892(busiest.label),
       visits:biWholeV892(weekdayRow.visits),
@@ -36030,7 +36344,7 @@ function biSnapshotHtmlV892(model){
     <div class="bi-kpis">
       ${tile('Revenue',revenueText,'',revenue.change)}
       ${tile('Collected',collectedText,collected.sharePct===null||collected.sharePct===undefined?'':`${collected.sharePct}% collected`,null)}
-      ${tile('Customers',buyers===null?null:String(buyers),joined===null?'':`${joined} new`,customers.change)}
+      ${tile('Customers',buyers===null?null:String(buyers),'',customers.change)}
       ${tile('New customers',joined===null?null:String(joined),'',joiners.change)}
     </div>
     ${anyComparison?'':`<p class="muted small bi-no-compare">${esc(BI_WORDING_V892.noComparison)}</p>`}
@@ -36062,8 +36376,8 @@ function biSelectInsightsV892(model){
       type:'needs_attention',topic:'cash',
       finding:`${biMoneyV892(outstanding,currency)} not yet collected`,
       why:`${biPluralV892(openSales,'sale is','sales are')} not recorded as fully paid.`,
-      action:'Check the open bills and record the payments you have already taken.',
-      cta:{kind:'section',section:'money',label:'See money recorded vs collected'},
+      action:'Review the open sales and record any payments already received.',
+      cta:{kind:'section',section:'money',label:'Review payments'},
       evidence:{
         fact:`${biWholeV892(cash.unpaid)||0} with no payment recorded and ${biWholeV892(cash.partlyPaid)||0} part paid, out of ${biWholeV892(cash.salesCount)||0} sales.`,
         period,
@@ -36081,16 +36395,28 @@ function biSelectInsightsV892(model){
     const cadence=biWholeV892(urgent.cadenceDays),lastSeen=biWholeV892(urgent.lastVisitDays);
     const fading=(biWholeV892(bringBack.overdue)||0)+(biWholeV892(bringBack.slipping)||0);
     const stake=biMoneyV892(bringBack.atRiskMinor,currency);
+    /* nestly_v894 ⚖️: a withheld identity is described, never named, and the advice line
+       ("call or message them") is gone entirely — this page cannot know whether contacting a
+       given customer is lawful, and the bring-back list itself is where that is decided. */
+    const withheld=urgent.withheld===true;
+    const overdue=biTextV892(urgent.status)==='overdue';
+    const rhythm=(cadence!==null&&lastSeen!==null)
+      ?`Usually visits every ${cadence} days · last seen ${lastSeen} days ago.`:'';
     push({
-      type:'needs_attention',topic:'bringback',
-      finding:cadence!==null&&lastSeen!==null
-        ?`${urgent.name} usually visits every ${cadence} days. Last seen ${lastSeen} days ago.`
-        :`${urgent.name} is overdue against their own visit rhythm.`,
-      why:fading>0
-        ? (stake?`${biPluralV892(fading,'regular is','regulars are')} overdue · about ${stake} a month of regular spend at stake.`
-          :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
-        :'This customer is overdue against their own visit rhythm.',
-      action:'Call or message them while the gap is still short.',
+      type:'customer_risk',topic:'bringback',
+      finding:withheld
+        ?(overdue?'A regular customer is overdue':'A regular customer is slipping away')
+        :(cadence!==null&&lastSeen!==null
+          ?`${urgent.name} usually visits every ${cadence} days. Last seen ${lastSeen} days ago.`
+          :`${urgent.name} is overdue against their own visit rhythm.`),
+      why:withheld
+        ?rhythm
+        :(fading>0
+          ? (stake?`${biPluralV892(fading,'regular is','regulars are')} overdue · about ${stake} a month of regular spend at stake.`
+            :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
+          :'This customer is overdue against their own visit rhythm.'),
+      why2:(withheld&&stake)?`About ${stake}/month of regular spend may be at risk.`:'',
+      action:'',
       cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'},
       evidence:{
         fact:'Each person is judged against their own visit rhythm, not against a fixed rule.',
@@ -36129,24 +36455,27 @@ function biSelectInsightsV892(model){
         money walking away reads as something to fix. */
   biListV892(view.advisory).forEach(item=>{
     const sample=(item.sampleSize!==null&&item.sampleSize!==undefined&&item.sampleFloor)
-      ?`Based on ${biPluralV892(item.sampleSize,'observation','observations')}. Peekaa requires at least ${item.sampleFloor} before showing this finding.`
+      ?`Based on ${biPluralV892(item.sampleSize,'observation','observations')}. Peekaa needs at least ${item.sampleFloor} before showing this finding.`
       :'';
-    const impact=biMoneyV892(item.impactMinor,currency);
+    /* nestly_v894: the approved owner wording for this generator, built from the payload's own
+       structured fields. A generator with no template prints NO server prose here — it offers
+       the detailed analysis instead, where the verbatim wording already renders. */
+    const template=biTemplateV894(item,{currency,days});
     push({
-      type:item.strength?'doing_well':item.failure?'needs_attention':'opportunity',
+      type:biCardTypeV894(item),
       topic:item.topic,
-      finding:biTextV892(item.pattern,'Peekaa found something worth a look.'),
-      why:impact?`Worth about ${impact} over the period measured.`:'',
-      action:item.strength?'':biTextV892(item.actionWhat),
+      finding:template?template.finding:BI_WORDING_V892.noTemplate,
+      why:template?biTextV892(template.why):'',
+      why2:template?biTextV892(template.why2):'',
+      action:(template&&!item.strength)?biTextV892(template.action):'',
       /* nestly_v892 (owner acceptance): a finding about prepaid sessions is acted on in Packages,
-         so its control goes there. "See the full evidence" is a destination for a finding whose
-         only next step is to read the working — the ranked panel under Explore — and the evidence
-         disclosure on the card carries the detail either way. */
+         so its control goes there whichever wording produced the card. */
       cta:item.topic==='packages'
         ?{kind:'route',href:'#/custpackages',label:'View packages'}
-        :{kind:'section',section:'evidence',label:'See the full evidence'},
+        :(template&&biObjectV892(template.cta))||{kind:'section',section:'evidence',label:'See the full evidence'},
       evidence:{
         fact:item.strength?'Ranked by Peekaa as something this business is doing well.':'Ranked by Peekaa against every other finding it could measure.',
+        basis:BI_EVIDENCE_CLASS_V894[item.evidenceClass]||'',
         period,sample,
         limitation:biTextV892(item.limitation),
         reconsider:biTextV892(item.reversal)
@@ -36229,6 +36558,8 @@ function biEvidenceHtmlV892(card){
   const evidence=biObjectV892(entry.evidence)||{};
   const rows=[
     ['What Peekaa saw',biTextV892(evidence.fact)],
+    /* nestly_v894: the payload's evidence class, translated. The token itself never renders. */
+    ['How Peekaa knows',biTextV892(evidence.basis)],
     ['Period',biTextV892(evidence.period)],
     ['How much this is based on',biTextV892(evidence.sample)],
     ['What this cannot see',biTextV892(evidence.limitation)],
@@ -36256,6 +36587,7 @@ function biInsightCardHtmlV892(card){
     <p class="bi-card-kind"><span aria-hidden="true">${kind.mark}</span> ${esc(kind.label)}</p>
     <h3 class="bi-card-finding">${esc(biTextV892(entry.finding))}</h3>
     ${biTextV892(entry.why)?`<p class="bi-card-why">${esc(biTextV892(entry.why))}</p>`:''}
+    ${biTextV892(entry.why2)?`<p class="bi-card-why">${esc(biTextV892(entry.why2))}</p>`:''}
     ${biTextV892(entry.action)?`<p class="bi-card-action">${esc(biTextV892(entry.action))}</p>`:''}
     ${ctaHtml}
     ${biEvidenceHtmlV892(entry)}
@@ -36283,18 +36615,22 @@ function biPulseHtmlV892(model){
   const joined=biWholeV892(biObjectV892(view.newCustomers)?.now);
   const due=biWholeV892(bringBack.due),slipping=biWholeV892(bringBack.slipping),overdue=biWholeV892(bringBack.overdue);
   const sessions=biWholeV892(packages.sessions);
+  /* nestly_v894: two chips carry a tone, and only two — "due back" is a soft amber prompt and
+     "slipping away" is the one that has already started costing something. Everything else stays
+     a plain count, so the emphasis means something when it appears. */
   const chips=[
-    known===null?'':biPluralV892(known,'customer','customers'),
-    joined===null?'':`${joined} new`,
-    !due?'':`${due} due back`,
-    !overdue?'':`${overdue} overdue`,
-    !slipping?'':`${slipping} slipping away`,
-    !sessions?'':biPluralV892(sessions,'unused session','unused sessions')
+    known===null?null:{text:biPluralV892(known,'customer','customers')},
+    joined===null?null:{text:`${joined} new`},
+    !due?null:{text:`${due} due back`,tone:'due'},
+    !overdue?null:{text:`${overdue} overdue`},
+    !slipping?null:{text:`${slipping} slipping away`,tone:'slipping'},
+    !sessions?null:{text:biPluralV892(sessions,'unused session','unused sessions')}
   ].filter(Boolean);
   if(!chips.length)return '';
   return `<section class="card bi-pulse" aria-labelledby="biPulseTitleV892">
     <h2 class="bi-pulse-title" id="biPulseTitleV892">${esc(BI_WORDING_V892.pulse)}</h2>
-    <p class="bi-pulse-line">${chips.map(chip=>`<span class="bi-chip">${esc(chip)}</span>`).join('')}</p>
+    <p class="bi-pulse-line">${chips.map(chip=>
+      `<span class="bi-chip${chip.tone?` is-${esc(chip.tone)}`:''}">${esc(chip.text)}</span>`).join('')}</p>
   </section>`;
 }
 
@@ -36334,14 +36670,9 @@ function biHealthHtmlV892(model){
       cta:null
     });
   }
-  const contactable=biObjectV892(view.contactable);
-  if(contactable){
-    rows.push({
-      label:'Who you may contact',
-      value:`${contactable.sms} by text message and ${contactable.email} by email, out of ${biPluralV892(contactable.customers,'customer','customers')}`,
-      cta:null
-    });
-  }
+  /* nestly_v894 (owner ruling): "Who you may contact" is not a measure of business health — it
+     is a consent fact, and it already renders under Explore → Acquisition, where the
+     contactability panel lives. It is NOT duplicated here; one authority per fact. */
   /* The server's own coverage sentence covers the same two facts the two rows above were built
      from, so it is printed only when neither of them could be: one fact, one row, and the
      server's wording wherever this page has none of its own. */
@@ -36389,7 +36720,11 @@ function biOvernightStripHtmlV892(response){
    this is safe — a closed one KEEPS its subtree in the document, so every mount the page binds
    after paint (RevenueTruthUI.bind, the growth mounts, bindCategoryMixSectionV650, #ciMore, the
    CSV export status, the category drill-down) is still found from the same body node. A section
-   whose renderers all returned nothing is dropped rather than opened onto an empty shell. */
+   whose renderers all returned nothing is dropped rather than opened onto an empty shell.
+
+   nestly_v894: `title` and `hint` are PLAIN TEXT and are escaped here, once. A caller must never
+   pass pre-escaped HTML — the second escape is what put a literal "&amp;" on the owner's screen.
+   `body` is the opposite: already-rendered markup from the existing renderers, carried verbatim. */
 function biExploreHtmlV892(sections){
   const list=(Array.isArray(sections)?sections:[])
     .map(section=>biObjectV892(section))
