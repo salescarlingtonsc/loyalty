@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="4294f3d63cf9327a3da381abda00ed74e22b5064d472e752b74759cc94ad30b2"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="270ee674f02d17dce4b7a68f3de1fb9357a989e82ee2af04bb1fc00580ab5fe6"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5870,7 +5870,10 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .bi-kpi{min-width:0;display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow)}
 .bi-kpi-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
-.bi-kpi-value{font-size:clamp(22px,4.6vw,28px);line-height:1.15;font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+/* The number never breaks mid-figure — "SGD 6,6 / 83.30" reads as two numbers. It shrinks with
+   the viewport instead, and the two-column phone layout is sized so the longest realistic
+   amount still fits on one line. */
+.bi-kpi-value{font-size:clamp(17px,4.4vw,28px);line-height:1.2;font-weight:800;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow-wrap:normal}
 .bi-kpi-second{font-size:12.5px;color:var(--ink2)}
 .bi-kpi-change{margin-top:2px;font-size:12.5px;font-weight:650;color:var(--muted)}
 .bi-kpi-change.is-up{color:var(--success)}
@@ -5928,7 +5931,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 4294f3d63cf9327a3da381abda00ed74e22b5064d472e752b74759cc94ad30b2</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 270ee674f02d17dce4b7a68f3de1fb9357a989e82ee2af04bb1fc00580ab5fe6</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -16922,7 +16925,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'4294f3d63cf9327a3da381abda00ed74e22b5064d472e752b74759cc94ad30b2',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'270ee674f02d17dce4b7a68f3de1fb9357a989e82ee2af04bb1fc00580ab5fe6',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

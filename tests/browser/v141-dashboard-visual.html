@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="3652cf5fde8b2065bcc290de33eaeba414684f7bcad69803ae27840f4431ddb3"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="5c585c9ad8e2fcb605dd900f2741890b4fbf1f1073cff3395b64f3a315264c48"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -5871,7 +5871,10 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .bi-kpi{min-width:0;display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow)}
 .bi-kpi-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
-.bi-kpi-value{font-size:clamp(22px,4.6vw,28px);line-height:1.15;font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+/* The number never breaks mid-figure — "SGD 6,6 / 83.30" reads as two numbers. It shrinks with
+   the viewport instead, and the two-column phone layout is sized so the longest realistic
+   amount still fits on one line. */
+.bi-kpi-value{font-size:clamp(17px,4.4vw,28px);line-height:1.2;font-weight:800;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow-wrap:normal}
 .bi-kpi-second{font-size:12.5px;color:var(--ink2)}
 .bi-kpi-change{margin-top:2px;font-size:12.5px;font-weight:650;color:var(--muted)}
 .bi-kpi-change.is-up{color:var(--success)}
@@ -7158,6 +7161,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'3652cf5fde8b2065bcc290de33eaeba414684f7bcad69803ae27840f4431ddb3',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'5c585c9ad8e2fcb605dd900f2741890b4fbf1f1073cff3395b64f3a315264c48',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

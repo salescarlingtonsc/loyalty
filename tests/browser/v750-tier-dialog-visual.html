@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="8dce068a94b23293875e088efacf4e73684ba9e6b269bca290f368932a168e31"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="4d04a2a5280f408a98ca179af3ea54e0bebb899d1fece8b8dfc3fb1105528d61"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5870,7 +5870,10 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .bi-kpi{min-width:0;display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow)}
 .bi-kpi-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
-.bi-kpi-value{font-size:clamp(22px,4.6vw,28px);line-height:1.15;font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+/* The number never breaks mid-figure — "SGD 6,6 / 83.30" reads as two numbers. It shrinks with
+   the viewport instead, and the two-column phone layout is sized so the longest realistic
+   amount still fits on one line. */
+.bi-kpi-value{font-size:clamp(17px,4.4vw,28px);line-height:1.2;font-weight:800;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;overflow-wrap:normal}
 .bi-kpi-second{font-size:12.5px;color:var(--ink2)}
 .bi-kpi-change{margin-top:2px;font-size:12.5px;font-weight:650;color:var(--muted)}
 .bi-kpi-change.is-up{color:var(--success)}
@@ -5928,7 +5931,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 8dce068a94b23293875e088efacf4e73684ba9e6b269bca290f368932a168e31</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 4d04a2a5280f408a98ca179af3ea54e0bebb899d1fece8b8dfc3fb1105528d61</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
