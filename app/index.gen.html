@@ -363,7 +363,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
     var drop=function(){if(loop.parentNode)loop.parentNode.removeChild(loop)};
     loop.addEventListener('playing',function(){loop.setAttribute('data-playing','1')});
     loop.addEventListener('error',drop);
-    loop.src='/media/peekaa-loading.mp4';
+    loop.src='/media/peekaa-loading.mp4?v=2'; /* nestly_v892: v2 = seamless ping-pong 48fps loop; the 4h media cache would hold the old snap-back file */
     wrap.appendChild(loop);
     var started=loop.play();
     if(started&&typeof started.catch==='function')started.catch(drop);
