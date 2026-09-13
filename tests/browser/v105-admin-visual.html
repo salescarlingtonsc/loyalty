@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="af166ca5cc37f6fa85d35d69bd96a567dc3936b1accc80157d8e44e523f394c2">
+<meta name="v105-production-component-sha256" content="d782177a6232392565c40a13b9af85bb4cc69fd7c771c73d47f7b9853a6a6530">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -870,9 +870,20 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    route waits in, which is why the mark is added there rather than to a hundred call sites.
    aria-hidden: the state already announces itself through its own role="status" line, and a
    decorative mark repeating it would only make a screen reader say it twice. */
-.cui-loading-mark-v888{display:block;width:76px;height:76px;margin:2px auto 14px;
+.peekaa-mark-wrap-v889{position:relative}
+/* nestly_v889: the loop itself. Layered over the still, invisible until the browser says it is
+   PLAYING, and removed outright if it will not. See the script that creates it. */
+.peekaa-loop-v889{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  filter:brightness(.985)}
+.peekaa-loop-v889[data-playing="1"]{opacity:1}
+@media (prefers-reduced-motion:reduce){.peekaa-loop-v889{display:none}}
+.cui-loading-mark-wrap-v889{display:block;width:76px;height:76px;margin:2px auto 14px}
+.cui-loading-mark-v888{display:block;width:100%;height:100%;
   animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
-  transform-origin:50% 62%;
+  transform-origin:50% 62%;margin:0;
   -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
   mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
   filter:brightness(.985)}
@@ -5625,7 +5636,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   48%{transform:translateY(1.2%) scale(.992)}
   72%{transform:translateY(-1.8%) scale(1.004)}
 }
-.boot-mark-wrap-v888{display:block;width:min(210px,56vw);margin:2px auto 10px}
+.boot-mark-wrap-v888{display:block;position:relative;width:min(210px,56vw);margin:2px auto 10px}
 .boot-mark-wrap-v888 .boot-mark-v577{width:100%;margin:0;
   animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
   transform-origin:50% 62%;will-change:transform}
@@ -6849,7 +6860,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · af166ca5cc37</span>
+<span class="v105-provenance">v105 production-component harness · d782177a6232</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6974,7 +6985,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'af166ca5cc37f6fa85d35d69bd96a567dc3936b1accc80157d8e44e523f394c2',
+  sourceHash:'d782177a6232392565c40a13b9af85bb4cc69fd7c771c73d47f7b9853a6a6530',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

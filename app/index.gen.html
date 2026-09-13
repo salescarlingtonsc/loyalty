@@ -286,13 +286,13 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
   48%{transform:translateY(1.2%) scale(.992)}
   72%{transform:translateY(-1.8%) scale(1.004)}
 }
-.boot-mark-wrap-v888{display:block;width:min(210px,56vw);margin:2px auto 10px}
+.boot-mark-wrap-v888{display:block;position:relative;width:min(210px,56vw);margin:2px auto 10px}
 .boot-mark-wrap-v888 .boot-mark-v577{width:100%;margin:0;
   animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
   transform-origin:50% 62%;will-change:transform}
 @media (prefers-reduced-motion:reduce){.boot-mark-wrap-v888 .boot-mark-v577{animation:none}}
 @keyframes customerJoinPopV587{from{transform:scale(.82) translateY(6px);opacity:0}to{transform:none;opacity:1}}
-@keyframes customerJoinGlowV587{from{transform:scale(.6);opacity:0}to{transform:none;opacity:.85}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=e0ec40dc8a9d">
+@keyframes customerJoinGlowV587{from{transform:scale(.6);opacity:0}to{transform:none;opacity:.85}}</style><link rel="preload" as="style" href="/pwa.css"><link rel="preload" as="style" href="/app.css?b=91f6cbe42018">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -319,7 +319,7 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
          than the 67KB loop it replaces. The animation is a nicety; a control the customer has to
          press before the app appears is a broken front door. The poster is the loop's own first
          frame, so the mark on screen is unchanged for everyone who could see it before. -->
-    <span class="boot-mark-wrap-v888"><img class="boot-mark-v577" src="/media/peekaa-loading-poster.png" width="540" height="540"
+    <span class="boot-mark-wrap-v888 peekaa-mark-wrap-v889"><img class="boot-mark-v577" src="/media/peekaa-loading-poster.png" width="540" height="540"
          alt="" aria-hidden="true" decoding="async" fetchpriority="high"></span>
     <!-- nestly_v583 (owner, photo 13: the loading word ringed, "remove this"). v578 added
          "peekaaaaaa......." at the owner's request; this photo withdraws it. The logo animation
@@ -327,11 +327,51 @@ html[data-customer-theme="dark"] .customer-surface .customer-points-hero-v337{
          the announcing. The v577 marks that came with it are unaffected: the shimmer bars are
          still gone, and the mask that removes the video's colour seam is still on .boot-mark. -->
   </div></div></div></div>
+<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=91f6cbe42018">
+<script>
+/* nestly_v889 — THE LOOP IS BACK, and this time it cannot ask to be pressed.
+   Owner, twice: "i need to make my peekaa move", then "i still dont see the peekaa eyes move from
+   left to right". Both were right, and v888's first answer was built on a bad measurement of mine:
+   I sampled /media/peekaa-loading.mp4 by SEEKING frame to frame, Chrome handed back the same
+   decoded picture every time, and I concluded the file was a still. Sampled during real playback
+   through requestVideoFrameCallback it is 118 presented frames, 118 DISTINCT pictures, and the
+   left pupil sweeps 64px across its eye. The eyes move. v666 removed a working animation.
+
+   v666's reason was real too: in Low Power Mode iOS refuses muted inline autoplay and Safari draws
+   its OWN tap-to-play overlay, which no attribute suppresses. The missing piece was the signal —
+   play() returns a promise that rejects on exactly that refusal, and 'playing' fires only when
+   frames are actually moving. So the loop is created here rather than sitting in the HTML, is
+   invisible until it reports itself playing, and is removed the moment it is refused. An element
+   at opacity 0 cannot show a play button, and a removed one has nothing to draw on.
+   The still poster underneath is the loop's own first frame, so there is nothing to cross-fade,
+   and the v888 CSS peek keeps that still moving for anyone who never gets the video. */
+(function(){
+  try{
+    var wrap=document.querySelector('.peekaa-mark-wrap-v889');
+    if(!wrap||wrap.dataset.loopV889)return;
+    wrap.dataset.loopV889='1';
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var loop=document.createElement('video');
+    if(typeof loop.canPlayType!=='function'||!loop.canPlayType('video/mp4'))return;
+    loop.className='peekaa-loop-v889';
+    loop.muted=true;loop.defaultMuted=true;loop.loop=true;loop.autoplay=true;loop.controls=false;
+    loop.playsInline=true;loop.disablePictureInPicture=true;loop.preload='auto';
+    loop.setAttribute('playsinline','');loop.setAttribute('webkit-playsinline','');
+    loop.setAttribute('aria-hidden','true');loop.setAttribute('tabindex','-1');
+    var drop=function(){if(loop.parentNode)loop.parentNode.removeChild(loop)};
+    loop.addEventListener('playing',function(){loop.setAttribute('data-playing','1')});
+    loop.addEventListener('error',drop);
+    loop.src='/media/peekaa-loading.mp4';
+    wrap.appendChild(loop);
+    var started=loop.play();
+    if(started&&typeof started.catch==='function')started.catch(drop);
+  }catch(e){}
+})();
+</script>
 <div id="toast" class="toast" aria-hidden="true"></div>
 <div id="appStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="appAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-<link rel="stylesheet" href="/pwa.css"><link rel="stylesheet" href="/app.css?b=e0ec40dc8a9d">
 <script src="/brand-config.js"></script>
 <script src="/runtime-config.js?v=2"></script>
 <script src="/runtime-config-loader.js?v=2"></script>

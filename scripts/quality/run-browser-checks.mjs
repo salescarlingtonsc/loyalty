@@ -75,6 +75,14 @@ const CHECKS = [
     script: 'tests/browser/verify-v441-preview-dock-scope.mjs',
     standalone: true,
   },
+  /* nestly_v889: the boot loop. It needs the real app/index.html, which asks for its assets the
+     way production serves them (/media/…) — this runner's server resolves those through its app/
+     docroot fallback, so the boot screen loads here exactly as it does deployed. */
+  {
+    script: 'tests/browser/verify-v889-boot-loop.mjs',
+    urlEnv: 'V889_BOOT_URL',
+    fixture: '/index.html',
+  },
 ];
 
 function resolvePlaywright() {

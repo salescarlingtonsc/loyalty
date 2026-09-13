@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="a8c06f17001dc1541d22996ba4bf2c9f68fabc87b56b3524923691f5f143e860"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="52e4a4e0ed109ab469fd443c5d9be5078f228530e83feaf7ec51484952a4f92d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -864,9 +864,20 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    route waits in, which is why the mark is added there rather than to a hundred call sites.
    aria-hidden: the state already announces itself through its own role="status" line, and a
    decorative mark repeating it would only make a screen reader say it twice. */
-.cui-loading-mark-v888{display:block;width:76px;height:76px;margin:2px auto 14px;
+.peekaa-mark-wrap-v889{position:relative}
+/* nestly_v889: the loop itself. Layered over the still, invisible until the browser says it is
+   PLAYING, and removed outright if it will not. See the script that creates it. */
+.peekaa-loop-v889{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  filter:brightness(.985)}
+.peekaa-loop-v889[data-playing="1"]{opacity:1}
+@media (prefers-reduced-motion:reduce){.peekaa-loop-v889{display:none}}
+.cui-loading-mark-wrap-v889{display:block;width:76px;height:76px;margin:2px auto 14px}
+.cui-loading-mark-v888{display:block;width:100%;height:100%;
   animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
-  transform-origin:50% 62%;
+  transform-origin:50% 62%;margin:0;
   -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
   mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
   filter:brightness(.985)}
@@ -5619,7 +5630,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   48%{transform:translateY(1.2%) scale(.992)}
   72%{transform:translateY(-1.8%) scale(1.004)}
 }
-.boot-mark-wrap-v888{display:block;width:min(210px,56vw);margin:2px auto 10px}
+.boot-mark-wrap-v888{display:block;position:relative;width:min(210px,56vw);margin:2px auto 10px}
 .boot-mark-wrap-v888 .boot-mark-v577{width:100%;margin:0;
   animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
   transform-origin:50% 62%;will-change:transform}
@@ -5843,7 +5854,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · a8c06f17001dc1541d22996ba4bf2c9f68fabc87b56b3524923691f5f143e860</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 52e4a4e0ed109ab469fd443c5d9be5078f228530e83feaf7ec51484952a4f92d</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6041,7 +6052,9 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
        driven by CSS, never a <video>: a video can be refused (Low Power Mode) and the browser then
        draws its own tap-to-play control over it — the defect v666 was written to remove — and a
        loading state is the last place that may ask to be pressed. */
-    const markV888='<img class="cui-loading-mark-v888" src="/media/peekaa-loading-poster.png" width="540" height="540" alt="" aria-hidden="true" decoding="async">';
+    const markV888='<span class="peekaa-mark-wrap-v889 cui-loading-mark-wrap-v889">'
+      +'<img class="cui-loading-mark-v888" src="/media/peekaa-loading-poster.png" width="540" height="540" alt="" aria-hidden="true" decoding="async">'
+      +'</span>';
     return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${markV888}${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
   }
 
@@ -6177,7 +6190,37 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
     });
   }
 
-  function enhance(root){associateLabels(root);enhanceTables(root)}
+  /* nestly_v889 — the same contract as the boot screen's inline copy in app/index.html: build the
+     loop FROM SCRIPT, reveal it only when the browser reports it is playing, remove it the moment
+     it is refused. Two copies exist because the boot screen runs before this file loads and must
+     be static HTML; they are kept honest by tests/quality/v889-peekaa-loop.test.mjs, which asserts
+     both carry the same four rules. Never put a <video> straight into loading markup: one that
+     will not autoplay makes the BROWSER draw a tap-to-play control, and a loading state is the
+     last place that may ask to be pressed (nestly_v666). */
+  function upgradePeekaaLoopV889(wrap){
+    if(!wrap||wrap.dataset.loopV889)return;
+    wrap.dataset.loopV889='1';
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const loop=document.createElement('video');
+    if(typeof loop.canPlayType!=='function'||!loop.canPlayType('video/mp4'))return;
+    loop.className='peekaa-loop-v889';
+    loop.muted=true;loop.defaultMuted=true;loop.loop=true;loop.autoplay=true;loop.controls=false;
+    loop.playsInline=true;loop.disablePictureInPicture=true;loop.preload='auto';
+    loop.setAttribute('playsinline','');loop.setAttribute('webkit-playsinline','');
+    loop.setAttribute('aria-hidden','true');loop.setAttribute('tabindex','-1');
+    const drop=()=>{if(loop.parentNode)loop.parentNode.removeChild(loop)};
+    loop.addEventListener('playing',()=>loop.setAttribute('data-playing','1'));
+    loop.addEventListener('error',drop);
+    loop.src='/media/peekaa-loading.mp4';
+    wrap.appendChild(loop);
+    const started=loop.play();
+    if(started&&typeof started.catch==='function')started.catch(drop);
+  }
+  function upgradePeekaaLoopsV889(root){
+    if(!root||typeof root.querySelectorAll!=='function')return;
+    root.querySelectorAll('.peekaa-mark-wrap-v889').forEach(upgradePeekaaLoopV889);
+  }
+  function enhance(root){associateLabels(root);enhanceTables(root);upgradePeekaaLoopsV889(root)}
 
   function mountMain(root){
     enhance(root);
@@ -6316,7 +6359,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
-    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    associateLabels,enhanceTables,enhance,upgradePeekaaLoopsV889,mountMain,focusRoute,announce,activateDialog,
     dedupeTableCaptionsV298,observeTableCaptionsV298,
     currentDialogHistoryId
   });
@@ -31043,6 +31086,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'a8c06f17001dc1541d22996ba4bf2c9f68fabc87b56b3524923691f5f143e860',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'52e4a4e0ed109ab469fd443c5d9be5078f228530e83feaf7ec51484952a4f92d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

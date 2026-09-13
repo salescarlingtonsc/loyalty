@@ -58,10 +58,11 @@ test('every shared loading state shows the same moving mark', () => {
   const cui = readFileSync(new URL('../../app/customer-ui.js', import.meta.url), 'utf8');
   const fn = cui.slice(cui.indexOf('function loadingState('), cui.indexOf('function errorState('));
   assert.match(fn, /cui-loading-mark-v888/, 'CUI.loadingState is the one component every route waits in');
-  /* The mark is an <img> driven by CSS. A <video> can be refused and the browser then draws its
-     own tap-to-play control over it — and a loading state is the last place that may ask to be
-     pressed. Asserted on the emitted element, not on the function text, which discusses <video>. */
-  assert.match(fn, /const markV888='<img class="cui-loading-mark-v888"/);
+  /* The still is an <img>; v889's loop is added to this wrapper from script under the same rules
+     as the boot screen, never by putting a media element into loading markup. */
+  assert.match(fn, /const markV888='<span class="peekaa-mark-wrap-v889 cui-loading-mark-wrap-v889">'/);
+  assert.doesNotMatch(fn.slice(fn.indexOf("const markV888")), /<video/,
+    'the loop is created from script, never emitted as markup');
   assert.match(css, /\.cui-loading-mark-v888\{[^}]*animation:bootPeek-v888/,
     'and it reuses the boot keyframes, so waiting looks the same wherever it happens');
 });
@@ -85,24 +86,26 @@ test('a customer who asked for less motion gets none', () => {
   assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{[^}]*\.boot-mark-wrap-v888 \.boot-mark-v577\{animation:none\}/);
 });
 
-test('nothing on the boot screen can ask to be pressed', () => {
+test('no media element sits in the boot MARKUP', () => {
   /* v666's defect: a <video> that will not autoplay makes the BROWSER draw a tap-to-play overlay,
-     which no attribute suppresses. The guarantee is structural — there is no media element on the
-     boot screen at all, in either the authored or the shipped document. */
+     which no attribute suppresses. v889 brings the loop back, so the guarantee moves from "no
+     video anywhere" to the two things that actually stop the overlay: it is never in the static
+     markup (so it cannot paint while loading), and it is created, revealed and removed by rules
+     v889-peekaa-loop.test.mjs pins. This is the markup half. */
   for (const [name, doc] of [['index.html', shipped], ['index.gen.html', generated]]) {
     /* The LAST occurrence: the first ones are the stylesheet's own [data-boot-skeleton] rules,
        and slicing from there swallows most of the document — which is how this assertion first
        "failed" against markup that was already correct. */
-    const boot = doc.slice(doc.lastIndexOf('data-boot-skeleton'), doc.indexOf('id="toast"'));
-    assert.doesNotMatch(boot, /<video|<audio/, `${name} put a media element back on the boot screen`);
-    assert.doesNotMatch(boot, /controls/, `${name} boot screen gained a control`);
+    const markup = doc.slice(doc.lastIndexOf('data-boot-skeleton'), doc.indexOf('<script>', doc.lastIndexOf('data-boot-skeleton')));
+    assert.doesNotMatch(markup, /<video|<audio/, `${name} put a media element into the boot markup`);
+    assert.doesNotMatch(markup, /controls/, `${name} boot markup gained a control`);
   }
 });
 
 test('the still mark is still what paints, so the first frame needs no JavaScript', () => {
   const boot = shipped.slice(shipped.lastIndexOf('data-boot-skeleton'), shipped.indexOf('id="toast"'));
   assert.match(boot, /<img class="boot-mark-v577" src="\/media\/peekaa-loading-poster\.png"/);
-  assert.match(boot, /<span class="boot-mark-wrap-v888">/);
+  assert.match(boot, /<span class="boot-mark-wrap-v888 peekaa-mark-wrap-v889">/);
 });
 
 test('the measurement that produced this decision is recorded next to it', () => {

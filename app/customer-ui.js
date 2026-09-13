@@ -193,7 +193,9 @@
        driven by CSS, never a <video>: a video can be refused (Low Power Mode) and the browser then
        draws its own tap-to-play control over it — the defect v666 was written to remove — and a
        loading state is the last place that may ask to be pressed. */
-    const markV888='<img class="cui-loading-mark-v888" src="/media/peekaa-loading-poster.png" width="540" height="540" alt="" aria-hidden="true" decoding="async">';
+    const markV888='<span class="peekaa-mark-wrap-v889 cui-loading-mark-wrap-v889">'
+      +'<img class="cui-loading-mark-v888" src="/media/peekaa-loading-poster.png" width="540" height="540" alt="" aria-hidden="true" decoding="async">'
+      +'</span>';
     return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${markV888}${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
   }
 
@@ -329,7 +331,37 @@
     });
   }
 
-  function enhance(root){associateLabels(root);enhanceTables(root)}
+  /* nestly_v889 — the same contract as the boot screen's inline copy in app/index.html: build the
+     loop FROM SCRIPT, reveal it only when the browser reports it is playing, remove it the moment
+     it is refused. Two copies exist because the boot screen runs before this file loads and must
+     be static HTML; they are kept honest by tests/quality/v889-peekaa-loop.test.mjs, which asserts
+     both carry the same four rules. Never put a <video> straight into loading markup: one that
+     will not autoplay makes the BROWSER draw a tap-to-play control, and a loading state is the
+     last place that may ask to be pressed (nestly_v666). */
+  function upgradePeekaaLoopV889(wrap){
+    if(!wrap||wrap.dataset.loopV889)return;
+    wrap.dataset.loopV889='1';
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const loop=document.createElement('video');
+    if(typeof loop.canPlayType!=='function'||!loop.canPlayType('video/mp4'))return;
+    loop.className='peekaa-loop-v889';
+    loop.muted=true;loop.defaultMuted=true;loop.loop=true;loop.autoplay=true;loop.controls=false;
+    loop.playsInline=true;loop.disablePictureInPicture=true;loop.preload='auto';
+    loop.setAttribute('playsinline','');loop.setAttribute('webkit-playsinline','');
+    loop.setAttribute('aria-hidden','true');loop.setAttribute('tabindex','-1');
+    const drop=()=>{if(loop.parentNode)loop.parentNode.removeChild(loop)};
+    loop.addEventListener('playing',()=>loop.setAttribute('data-playing','1'));
+    loop.addEventListener('error',drop);
+    loop.src='/media/peekaa-loading.mp4';
+    wrap.appendChild(loop);
+    const started=loop.play();
+    if(started&&typeof started.catch==='function')started.catch(drop);
+  }
+  function upgradePeekaaLoopsV889(root){
+    if(!root||typeof root.querySelectorAll!=='function')return;
+    root.querySelectorAll('.peekaa-mark-wrap-v889').forEach(upgradePeekaaLoopV889);
+  }
+  function enhance(root){associateLabels(root);enhanceTables(root);upgradePeekaaLoopsV889(root)}
 
   function mountMain(root){
     enhance(root);
@@ -468,7 +500,7 @@
   global.FrenlyCustomerUI=Object.freeze({
     icon,action,status,permissionBanner,pageHeader,card,field,emptyState,loadingState,errorState,table,
     skeletonLine,skeletonCard,skeletonGrid,tableSkeleton,chartSkeleton,formSkeleton,setButtonBusy,
-    associateLabels,enhanceTables,enhance,mountMain,focusRoute,announce,activateDialog,
+    associateLabels,enhanceTables,enhance,upgradePeekaaLoopsV889,mountMain,focusRoute,announce,activateDialog,
     dedupeTableCaptionsV298,observeTableCaptionsV298,
     currentDialogHistoryId
   });
