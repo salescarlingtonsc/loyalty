@@ -5425,6 +5425,24 @@ async function grantAllCommunicationsV265(){
     return !error;
   }catch{return false}
 }
+/* nestly_v886 (owner ruling 2026-09-13: "make OFF symmetric"). v265 made the tick a promise in
+   one direction only — a grant left every switch on, a withdrawal left all eighteen of them
+   ticked. So a customer who turned marketing off on the Marketing choices card opened
+   Communications and saw a fully ticked screen, and the two gates that actually read the v263
+   matrix rather than the platform consent event — business_offers x whatsapp on the bring-back
+   sends, business_offers x in_app on promotion alerts — kept letting sends through. The card's own
+   sentence is "Peekaa stops sending straight away", so OFF now means off everywhere.
+   Order, and why it differs from the grant: a grant records consent FIRST so delivery never
+   starts before the evidence exists. A withdrawal has no such hazard in either order — the event
+   being written is itself a refusal — so it keeps the same shape as the grant for one code path,
+   and delivery stops the moment this call lands. A failure is reported, never papered over: the
+   Communications screen still shows exactly what is stored. */
+async function withdrawAllCommunicationsV886(){
+  try{
+    const {error}=await sb.rpc('customer_set_all_communications_v263',{p_enabled:false});
+    return !error;
+  }catch{return false}
+}
 function customerSignupConsentRecorded(){
   if(customerRegistrationState.legalAccepted)return true;
   try{return String(sessionStorage.getItem('peekaa-customer-signup-consent-v163')||'').startsWith('accepted')}catch{return false}
@@ -9756,8 +9774,25 @@ async function renderCustomerProfile(requestedView){
       </div>
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Update password</span></button>
     </section>
-    ${NestlyNativeBridge.isNative?`<section class="card" id="customerAppLockV860" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Lock this app</h2><p class="muted small">Use this phone’s own biometrics to keep your Peekaa closed to anyone else holding it.</p></div></div><div id="customerAppLockBodyV860" style="margin-top:12px"><p class="muted small">Checking this phone…</p></div><p id="customerAppLockStatusV860" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`:''}
-    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Face ID, Touch ID &amp; passkeys</h2><p class="muted small">Register this device for quicker passwordless sign-in. Your face or fingerprint stays on your device.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div><div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div><p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>
+    ${/* nestly_v886 (owner ruling 2026-09-13: "merge the two biometric cards"). Settings carried
+         two cards a phone-length apart that both said Face ID and both said your face never
+         leaves the device, and nothing on either explained that they guard different doors. They
+         still do — signing IN without a password is not the same as gating the app OPEN once you
+         are signed in, and turning on only one leaves the other door as it was — so neither
+         control is dropped. What changes is that they are now two named rows of one card, and the
+         card says in one line which door each of them is. Every id survives the move on purpose:
+         loadPasskeys() binds #customerPasskeys / #customerPasskeyAdd / #customerPasskeyList /
+         #customerPasskeyManageStatus and hydrateCustomerAppLockSettingV860 binds
+         #customerAppLockV860 / ...Body / ...Status, all by id and all after this innerHTML, so
+         the merge is markup only and no wiring moved with it. The app-lock half stays native-only
+         (there is no owner check to perform on the web, and a switch that cannot do anything is
+         worse than no switch) — so on the web this card is exactly the old passkeys card. */''}
+    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><h2>Face ID &amp; Touch ID</h2><p class="muted small" style="margin-top:5px">Two separate things, both using this phone’s own biometrics: one replaces your password when you sign in, the other keeps Peekaa shut while you are already signed in. Your face or fingerprint never leaves your device.</p>
+      <div class="wallet-section-head" style="margin-top:18px"><div><h3 style="font-size:1rem;margin:0">Sign in with Face ID</h3><p class="muted small" style="margin-top:4px">Register this device so you do not have to type your number and password.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div>
+      <div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div>
+      <p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
+      ${NestlyNativeBridge.isNative?`<div id="customerAppLockV860" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--line)" aria-busy="true"><h3 style="font-size:1rem;margin:0">Lock the app with Face ID</h3><p class="muted small" style="margin-top:4px">Keeps your Peekaa closed to anyone else holding this phone, even though you are signed in.</p><div id="customerAppLockBodyV860" style="margin-top:12px"><p class="muted small">Checking this phone…</p></div><p id="customerAppLockStatusV860" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></div>`:''}
+    </section>
     ${customerAccountDeletionCardHtmlV749()}
     <!-- v296 (owner, annotated: "Sign out put here"). Sign out left the header menu and became
          the last thing on the page it acts on — deliberately after account & privacy, so it is
@@ -9858,10 +9893,18 @@ async function renderCustomerProfile(requestedView){
         CUI.announce(reasonV4C,{assertive:true});return;
       }
       marketingAttempt=null;
-      if(optedIn&&!await grantAllCommunicationsV265()){
+      /* nestly_v886: the switches follow the tick in BOTH directions. */
+      const switchesFollowedV886=optedIn
+        ?await grantAllCommunicationsV265()
+        :await withdrawAllCommunicationsV886();
+      if(!switchesFollowedV886){
         if(!isCurrent()||!marketingSave.isConnected)return;
-        status.innerHTML='<div class="err">Marketing consent saved, but some communication switches could not be turned back on. Open <a href="#/customer/communications">Communications</a> to check them.</div>';
-        CUI.announce('Marketing consent saved. Some communication switches could not be turned back on.');return;
+        status.innerHTML=optedIn
+          ?'<div class="err">Marketing consent saved, but some communication switches could not be turned back on. Open <a href="#/customer/communications">Communications</a> to check them.</div>'
+          :'<div class="err">Marketing consent withdrawn, but some communication switches could not be turned off. Open <a href="#/customer/communications">Communications</a> and turn them off there.</div>';
+        CUI.announce(optedIn
+          ?'Marketing consent saved. Some communication switches could not be turned back on.'
+          :'Marketing consent withdrawn. Some communication switches could not be turned off.',{assertive:true});return;
       }
       if(!isCurrent()||!marketingSave.isConnected)return;
       status.innerHTML=`<p class="muted small" style="margin-top:10px;color:var(--green)">${optedIn?'Marketing consent saved.':'Marketing consent withdrawn.'}</p>`;
