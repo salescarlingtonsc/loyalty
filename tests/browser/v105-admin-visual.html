@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="cadfa4c27f046e256ec1fec566e185fa5a22d19a40d02302ed55234807cd3438">
+<meta name="v105-production-component-sha256" content="71229313c7f051152cf75e9b3454b4fe832b7850565328b7ecce6c21d49d304e">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -5587,6 +5587,40 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   filter:brightness(.985)}
 /* nestly_v583: the boot wordmark and its wave were removed at the owner's request (photo 13).
    .boot-mark-v577 above keeps the logo animation and its seam-removing mask. */
+/* nestly_v888 (owner 2026-09-13: "i need to make my peekaa move — it should auto play and does
+   not require anyone to press play").
+
+   MEASURED FIRST, and the measurement changed the answer. /media/peekaa-loading.mp4 — the v462
+   "Kling render" that v666 removed and that this request asks for back — does not animate. Nine
+   timestamps spread across its 5.04s were decoded to a canvas at full 540x540 and differenced
+   against each other: ZERO pixels differ, at any threshold. It is a still image encoded as a
+   five-second video. Restoring it could not have made anything move; it would only have cost
+   every customer a 67KB download to watch the same picture the 61KB poster already shows, and
+   re-exposed the tap-to-play overlay v666 was written to remove.
+
+   So the motion is CSS on the mark we already ship. It cannot be refused by a power mode, needs
+   no codec, no gesture and no new bytes, and it runs identically on the boot screen of every
+   browser — which is the actual requirement: "does not require anyone to press play".
+
+   If a genuinely animated file ever arrives, do NOT simply drop it back into an <img>/<video> in
+   this markup: v666's overlay is real. The safe pattern is to create the <video> from script at
+   opacity 0, reveal it only on its own 'playing' event, and remove it on a play() rejection or
+   error — proven working in this session, including the refusal branch, before the asset was
+   measured and found static. */
+@keyframes bootPeek-v888{
+  0%,100%{transform:translateY(0) scale(1)}
+  22%{transform:translateY(-5.5%) scale(1.015)}
+  48%{transform:translateY(1.2%) scale(.992)}
+  72%{transform:translateY(-1.8%) scale(1.004)}
+}
+.boot-mark-wrap-v888{display:block;width:min(210px,56vw);margin:2px auto 10px}
+.boot-mark-wrap-v888 .boot-mark-v577{width:100%;margin:0;
+  animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
+  transform-origin:50% 62%;will-change:transform}
+/* Someone who has asked their device for less motion is not asking for a bouncing logo. */
+@media (prefers-reduced-motion:reduce){
+  .boot-mark-wrap-v888 .boot-mark-v577{animation:none}
+}
 
 
 /* ===================== nestly_v584 — the filter bars, fixed structurally ====================
@@ -6803,7 +6837,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · cadfa4c27f04</span>
+<span class="v105-provenance">v105 production-component harness · 71229313c7f0</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -6928,7 +6962,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'cadfa4c27f046e256ec1fec566e185fa5a22d19a40d02302ed55234807cd3438',
+  sourceHash:'71229313c7f051152cf75e9b3454b4fe832b7850565328b7ecce6c21d49d304e',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

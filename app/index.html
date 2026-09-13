@@ -5694,6 +5694,40 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   filter:brightness(.985)}
 /* nestly_v583: the boot wordmark and its wave were removed at the owner's request (photo 13).
    .boot-mark-v577 above keeps the logo animation and its seam-removing mask. */
+/* nestly_v888 (owner 2026-09-13: "i need to make my peekaa move — it should auto play and does
+   not require anyone to press play").
+
+   MEASURED FIRST, and the measurement changed the answer. /media/peekaa-loading.mp4 — the v462
+   "Kling render" that v666 removed and that this request asks for back — does not animate. Nine
+   timestamps spread across its 5.04s were decoded to a canvas at full 540x540 and differenced
+   against each other: ZERO pixels differ, at any threshold. It is a still image encoded as a
+   five-second video. Restoring it could not have made anything move; it would only have cost
+   every customer a 67KB download to watch the same picture the 61KB poster already shows, and
+   re-exposed the tap-to-play overlay v666 was written to remove.
+
+   So the motion is CSS on the mark we already ship. It cannot be refused by a power mode, needs
+   no codec, no gesture and no new bytes, and it runs identically on the boot screen of every
+   browser — which is the actual requirement: "does not require anyone to press play".
+
+   If a genuinely animated file ever arrives, do NOT simply drop it back into an <img>/<video> in
+   this markup: v666's overlay is real. The safe pattern is to create the <video> from script at
+   opacity 0, reveal it only on its own 'playing' event, and remove it on a play() rejection or
+   error — proven working in this session, including the refusal branch, before the asset was
+   measured and found static. */
+@keyframes bootPeek-v888{
+  0%,100%{transform:translateY(0) scale(1)}
+  22%{transform:translateY(-5.5%) scale(1.015)}
+  48%{transform:translateY(1.2%) scale(.992)}
+  72%{transform:translateY(-1.8%) scale(1.004)}
+}
+.boot-mark-wrap-v888{display:block;width:min(210px,56vw);margin:2px auto 10px}
+.boot-mark-wrap-v888 .boot-mark-v577{width:100%;margin:0;
+  animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
+  transform-origin:50% 62%;will-change:transform}
+/* Someone who has asked their device for less motion is not asking for a bouncing logo. */
+@media (prefers-reduced-motion:reduce){
+  .boot-mark-wrap-v888 .boot-mark-v577{animation:none}
+}
 
 
 /* ===================== nestly_v584 — the filter bars, fixed structurally ====================
@@ -5934,8 +5968,8 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
          than the 67KB loop it replaces. The animation is a nicety; a control the customer has to
          press before the app appears is a broken front door. The poster is the loop's own first
          frame, so the mark on screen is unchanged for everyone who could see it before. -->
-    <img class="boot-mark-v577" src="/media/peekaa-loading-poster.png" width="540" height="540"
-         alt="" aria-hidden="true" decoding="async" fetchpriority="high">
+    <span class="boot-mark-wrap-v888"><img class="boot-mark-v577" src="/media/peekaa-loading-poster.png" width="540" height="540"
+         alt="" aria-hidden="true" decoding="async" fetchpriority="high"></span>
     <!-- nestly_v583 (owner, photo 13: the loading word ringed, "remove this"). v578 added
          "peekaaaaaa......." at the owner's request; this photo withdraws it. The logo animation
          above stays and is now the whole boot screen, with the sr-only status line still doing

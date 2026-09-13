@@ -3410,6 +3410,19 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
   mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
   filter:brightness(.985)}
+@keyframes bootPeek-v888{
+  0%,100%{transform:translateY(0) scale(1)}
+  22%{transform:translateY(-5.5%) scale(1.015)}
+  48%{transform:translateY(1.2%) scale(.992)}
+  72%{transform:translateY(-1.8%) scale(1.004)}
+}
+.boot-mark-wrap-v888{display:block;width:min(210px,56vw);margin:2px auto 10px}
+.boot-mark-wrap-v888 .boot-mark-v577{width:100%;margin:0;
+  animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
+  transform-origin:50% 62%;will-change:transform}
+@media (prefers-reduced-motion:reduce){
+  .boot-mark-wrap-v888 .boot-mark-v577{animation:none}
+}
 .appointment-list-filters,.v150-filterbar,.wl-period-v571{
   display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 12px}
 .appointment-list-filters>div,.v150-filterbar>div,.wl-period-v571>label{
