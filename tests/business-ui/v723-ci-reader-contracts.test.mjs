@@ -508,7 +508,10 @@ test('v723 CONTRACT: demographicsPanelHtmlV679 reads only contract-declared path
 });
 
 test('v723 CONTRACT: behaviourPanelHtmlV679 reads only contract-declared paths', () => {
-  const src = extractBlock('function behaviourPanelHtmlV679(payload){', '\n\n/* nestly_v650: Service mapping board');
+  /* nestly_v892: ends at the next top-level function rather than at the service mapping board,
+     so the Owner brief and the Business Intelligence layer that now sit between the two are not
+     harvested as reads this renderer made. */
+  const src = extractBlock('function behaviourPanelHtmlV679(payload){', '\nfunction ownerBriefHtmlV771(');
   assertAccessesDeclared('public.get_ci_daypart_v1', src, {payload:'', p:''});
 });
 

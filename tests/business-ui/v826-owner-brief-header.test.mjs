@@ -325,9 +325,15 @@ test('v828 → v890: the "All answers" disclosure lives on Customer intelligence
   const dash = app.slice(app.indexOf('async function dashboard(){'));
   assert.ok(!dash.includes('id="dashboardBriefMore"') && !dash.includes('id="dashboardBriefList"'), 'no list or disclosure mount on the Dashboard');
   const ci = app.slice(app.indexOf('async function customerIntelligencePage(){'), app.indexOf('function ownerBriefHtmlV771('));
-  assert.match(ci, /function nightlyBriefMarkupV890\(\)/);
+  /* nestly_v892: the two halves of the brief now have two composers on this page — a strip for
+     the sentences and a disclosure for the grouped answers. The sentences are still worded by
+     ownerBriefLinesV826, which biOvernightStripHtmlV892 calls; neither wording function changed. */
+  assert.match(ci, /function nightlyBriefStripMarkupV892\(\)/);
+  assert.match(ci, /function nightlyBriefAnswersMarkupV892\(\)/);
   assert.match(ci, /ownerBriefAnswersV828\(response\.brief\)/);
-  assert.match(ci, /ownerBriefLinesV826\(response\.brief\)/);
-  assert.match(ci, /dashboard-brief-more/, 'the disclosure is built on Customer intelligence');
+  const strip = app.slice(app.indexOf('function biOvernightStripHtmlV892('));
+  assert.match(strip.slice(0, strip.indexOf('\n}')), /ownerBriefLinesV826\(brief\)/,
+    'the sentences are still the v826 authority\'s');
+  assert.match(ci, /dashboard-brief-more/, 'the disclosure is built on Business Intelligence');
   assert.ok(index.includes('.dashboard-brief-more{'), 'the disclosure keeps its style block');
 });

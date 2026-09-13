@@ -27,7 +27,10 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
-const START = 'function ownerBriefHtmlV771(brief){';
+/* nestly_v892 added an additive second parameter (the {blocks:[...]} option Business
+   Intelligence files these same blocks under), so the anchor stops at the first parameter. A
+   caller passing no options still gets byte-identical output, which is what this file proves. */
+const START = 'function ownerBriefHtmlV771(brief';
 const fnStart = app.indexOf(START);
 assert.ok(fnStart > -1, 'ownerBriefHtmlV771 must be a top-level function in app/app.js');
 const fnEnd = app.indexOf('\n}', fnStart) + 2;
@@ -524,17 +527,26 @@ test('V771 the brief renders from nothing at all rather than throwing', () => {
    8. Composition — the one thing that cannot be executed from here.
    ================================================================================================== */
 
-test('V771 paint puts the brief first and files the old page behind one closed disclosure', () => {
-  const paint = app.slice(app.indexOf('body.innerHTML=`${ownerBriefMarkupV771()}'));
-  const line = paint.slice(0, paint.indexOf('`;') + 2);
-  assert.ok(line.indexOf('${ownerBriefMarkupV771()}') < line.indexOf('${activeExecutionMarkup}'),
-    'the brief is composed before anything that used to open this page');
-  assert.ok(line.includes('<details class="card ci-detailed-analysis-v771" id="ciDetailedAnalysisV771">'));
-  assert.ok(!line.includes(' open>'), 'the disclosure is closed by default');
-  const detail = line.slice(line.indexOf('ci-detailed-analysis-body-v771'));
-  assert.ok(detail.includes('${activeExecutionMarkup}'),
-    'everything that followed the brief is inside the disclosure');
-  assert.ok(detail.includes('${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}'),
+test('V771 paint puts the answer first and files the old page behind closed disclosures', () => {
+  /* nestly_v892 superseded the SHAPE of this ruling, not the ruling: the owner still meets the
+     answer before the archive. What was one disclosure titled "Detailed analysis" is now an
+     accordion of grouped ones under "Explore your business", and what was the Owner brief card is
+     now the snapshot + the three things to know — built from the same bundles, and reusing these
+     very blocks through ownerBriefHtmlV771's additive {blocks:[...]} option rather than a second
+     implementation of any of them. */
+  const explore = app.slice(app.indexOf('const biExplore=biExploreHtmlV892(['));
+  const line = explore.slice(0, explore.indexOf('RevenueTruthUI.bind(body,'));
+  assert.ok(line.indexOf('${biSnapshotHtmlV892(biModel)}') < line.indexOf('${biExplore}'),
+    'the answer is composed before the archive');
+  assert.ok(line.includes("ownerBriefMarkupV771({blocks:['bringback','top']})"),
+    'the brief blocks are reused, not reimplemented');
+  assert.ok(!line.includes('<details class="bi-explore-group" open'), 'the groups are closed by default');
+  assert.ok(line.includes('${activeExecutionMarkup}'),
+    'everything that used to open this page is still composed, inside Explore');
+  assert.ok(line.includes('${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}'),
     'the existing section concatenation is carried inside byte-identically');
-  assert.ok(detail.includes('</div></details>'));
+  const blocks = ['bringback', 'top', 'who', 'cash', 'services', 'staff', 'rewards', 'when', 'unused', 'branches', 'limits'];
+  for (const key of blocks) {
+    assert.ok(line.includes(`'${key}'`), `the ${key} block still reaches the page`);
+  }
 });

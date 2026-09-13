@@ -279,6 +279,21 @@ test('v892 selector: a coverage defect never takes one of the three slots', () =
     'the promoted, non-foundation candidates are what is left');
 });
 
+test('v892 selector: a card\'s type is read from the server\'s own buckets, not judged here', () => {
+  const failure = { ...LEAKAGE_ITEM, id: 'no_discount_reminder', domain: 'discount_dependency' };
+  const cards = BI.select(model({
+    cashGap: null, attention: null, packages: [],
+    opportunities: {
+      ...OPPORTUNITIES, ranked: [failure, LEAKAGE_ITEM, STRENGTH_ITEM],
+      report_sections: { strengths: ['strength:category:facial'], failures: ['no_discount_reminder'], leakage: ['package_leakage:plan_small'] }
+    }
+  }));
+  const byTopic = Object.fromEntries(cards.map((card) => [card.topic, card.type]));
+  assert.equal(byTopic.discounts, 'needs_attention', 'the failures bucket is something to fix');
+  assert.equal(byTopic.packages, 'opportunity', 'leakage is money already paid for, not an alarm');
+  assert.equal(byTopic.services, 'doing_well', 'the strengths bucket is something going well');
+});
+
 test('v892 selector: a strength reads as a strength, never as a task', () => {
   const cards = BI.select(model({
     cashGap: null, attention: null, packages: [],
@@ -397,6 +412,11 @@ test('v892 health: coverage is a status row with its own route, never an alarm',
   assert.ok(html.includes('Age known for 33%'), 'profile coverage from the demographic totals');
   assert.match(BI.health(model()), /href="#\/servicemapping"/);
   assert.ok(!/bps/.test(html), 'the reader\'s basis points never reach the owner');
+  assert.equal((html.match(/56\.8%/g) || []).length, 1,
+    'the server\'s own coverage sentence is not printed alongside the rows built from the same facts');
+  const bare = plain(BI.health(model({ categoryMix: null, demographics: null })));
+  assert.ok(bare.includes('sorted into categories'),
+    'with neither row available the server\'s own sentence is what the owner gets');
 });
 
 /* ==================================================================================================

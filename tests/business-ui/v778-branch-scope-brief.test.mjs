@@ -27,7 +27,10 @@ import vm from 'node:vm';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
-const START = 'function ownerBriefHtmlV771(brief){';
+/* nestly_v892 added an additive second parameter (the {blocks:[...]} option Business
+   Intelligence files these same blocks under), so the anchor stops at the first parameter. A
+   caller passing no options still gets byte-identical output, which is what this file proves. */
+const START = 'function ownerBriefHtmlV771(brief';
 const fnStart = app.indexOf(START);
 assert.ok(fnStart > -1, 'ownerBriefHtmlV771 must be a top-level function in app/app.js');
 const fnEnd = app.indexOf('\n}', fnStart) + 2;

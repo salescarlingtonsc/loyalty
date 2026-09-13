@@ -51,17 +51,22 @@ test('v890: absent facts render a dash, never a zero; no overdue is good news', 
 });
 test('v890: the Dashboard card links to Customer intelligence and carries no list', () => {
   const renderer = extractFunction(app, 'ownerBriefRenderV826');
-  assert.match(renderer, /href="#\/customerintel">Full brief in Customer intelligence</);
+  assert.match(renderer, /href="#\/customerintel">Full brief in Business Intelligence</);
   assert.match(renderer, /canReadModule\('customerintel'\)/, 'the link is gated on the module');
   assert.match(renderer, /ownerBriefOverviewV890\(response\?\.brief\)/);
   const dash = app.slice(app.indexOf('async function dashboard(){'), app.indexOf('async function dashboard(){') + 6000);
   assert.match(dash, /id="dashboardBriefTiles"/);
   assert.match(dash, /<h2 class="eyebrow" id="dashboardBriefTitle">This week<\/h2>/);
 });
-test('v890: Customer intelligence composes the nightly brief between the Owner brief and Detailed analysis', () => {
+test('v890: Business Intelligence composes the nightly brief above Explore, still from one cached read', () => {
   const ci = app.slice(app.indexOf('async function customerIntelligencePage(){'));
-  const paint = ci.indexOf('${ownerBriefMarkupV771()}${nightlyBriefMarkupV890()}<details class="card ci-detailed-analysis-v771"');
-  assert.ok(paint > 0, 'nightly brief sits after the Owner brief and before the disclosure');
+  /* nestly_v892: the brief's six sentences collapse into one strip above Explore, and the grouped
+     answers move down into Explore → "Ask my business". Both halves still come from the same
+     cached response, and neither ownerBriefLinesV826 nor ownerBriefAnswersV828 changed. */
+  const paint = ci.indexOf('${nightlyBriefStripMarkupV892()}${biExplore}');
+  assert.ok(paint > 0, 'the strip sits immediately above Explore');
+  assert.ok(ci.indexOf('${biSnapshotHtmlV892(biModel)}') < paint, 'and below the snapshot and the cards');
+  assert.match(ci, /nightlyBriefAnswersMarkupV892\(\)/, 'the grouped answers are filed under Explore');
   assert.match(ci, /ownerBriefFetchV826\(\)\.catch\(\(\)=>null\)/, 'read through the shared, cached fetch');
   assert.equal((app.match(/sb\.rpc\('get_owner_brief_v1'/g) || []).length, 1, 'still exactly one call site');
 });

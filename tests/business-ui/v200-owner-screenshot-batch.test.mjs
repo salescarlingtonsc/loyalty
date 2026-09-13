@@ -17,7 +17,15 @@ const indexHtml = readFileSync(resolve(repoRoot, 'app/index.html'), 'utf8');
    the per-tile delta chips. */
 test('the dashboard headline that restated the tiles is gone', () => {
   assert.doesNotMatch(appJs, /taken across/);
-  assert.doesNotMatch(appJs, /No earlier period to compare yet/);
+  /* nestly_v892: Business Intelligence says this sentence ONCE, about its own four-KPI snapshot,
+     where it is the owner's own wording for "there is no earlier window to compare against". The
+     V200 ruling was about the Dashboard headline that restated the tiles beneath it, so the
+     tripwire now scans everything except that layer rather than the whole file. */
+  const v892From = appJs.indexOf('/* nestly_v892 — BUSINESS INTELLIGENCE');
+  const v892To = appJs.indexOf('/* nestly_v892 END —', v892From);
+  assert.ok(v892From > -1 && v892To > v892From, 'the v892 layer must be findable');
+  const outsideV892 = appJs.slice(0, v892From) + appJs.slice(v892To);
+  assert.doesNotMatch(outsideV892, /No earlier period to compare yet/);
   assert.doesNotMatch(appJs, /dashboardHeadline/);
   assert.doesNotMatch(indexHtml, /dashboard-headline/);
 });

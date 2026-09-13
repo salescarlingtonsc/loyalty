@@ -129,17 +129,22 @@ test('the customer intelligence caption reads a branch name that exists', () => 
 
 test('the customer intelligence heading matches the name the rail opened it by', () => {
   const body = app.match(/async function customerIntelligencePage\([\s\S]*?\n\}\n/)[0];
-  assert.match(body, /<h1>Customer intelligence<\/h1>/);
-  assert.match(app, /customerintel:\['customers','Customer intelligence'\]/,
-    'the rail label this page is opened by must still be "Customer intelligence"');
+  /* nestly_v892 (owner ruling): the module is "Business Intelligence" and the heading is read
+     from the one wording map, so the rail and the h1 cannot drift apart by construction. The
+     V285 invariant is unchanged — the heading is the name the rail opened the page by. */
+  assert.match(body, /<h1>\$\{esc\(BI_WORDING_V892\.title\)\}<\/h1>/);
+  assert.match(app, /customerintel:\['customers','Business Intelligence'\]/,
+    'the rail label this page is opened by must still be the module name');
+  assert.match(app, /title:'Business Intelligence',/, 'and that name comes from BI_WORDING_V892');
   /* nestly_v771 supersedes the second half of the V285 ruling, not the first. V285's point was
      that the h1 must be the name the rail opened the page by, and that a one-line description must
      survive underneath it — the description at the time being the page's own former title, "a
      defensible revenue picture". The owner has since ruled that this page must read plainly for an
      SME owner, so that line now names what the page answers. The invariant under test is unchanged:
      the heading is the rail's name, and a subtitle still says what the page produces. */
-  assert.match(body, /Who to call, what is unused, who matters most, and what Peekaa can prove\./,
+  assert.match(body, /<p class="muted small">\$\{esc\(BI_WORDING_V892\.subtitle\)\}<\/p>/,
     'a one-line description of what the page produces still sits under the heading');
+  assert.match(app, /subtitle:'Know what happened\. See what to do next\.',/);
 });
 
 test('the top bar is the only branch picker on P&L and customer intelligence', () => {

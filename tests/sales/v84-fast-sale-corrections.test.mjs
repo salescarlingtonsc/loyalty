@@ -124,7 +124,7 @@ test('customer UI uses QR-authorized joining and exposes paginated transaction t
 });
 
 test('customer intelligence is implemented and reachable again from the business workspace',()=>{
-  assert.match(app,/customerintel:\['customers','Customer intelligence'\]/);
+  assert.match(app,/customerintel:\['customers','Business Intelligence'\]/);/* nestly_v892 rename */
   assert.match(app,/const HIDDEN_BUSINESS_SURFACES=new Set\(\[\]\)/);
   assert.match(app,/if\(HIDDEN_BUSINESS_SURFACES\.has\(pageKey\)\)/);
   assert.match(app,/filter\(module=>!HIDDEN_BUSINESS_SURFACES\.has\(module\)\)/);

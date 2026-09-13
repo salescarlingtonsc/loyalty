@@ -21,8 +21,8 @@ test('Staff performance is hidden from roles without the finance capability',()=
     `${required} must stay finance-gated`);
   const settings=section('async function settingsPage(){','/* ---------- billing (read-only) ---------- */');
   /* The copy has to name every module the role actually loses, or it under-reports the change. */
-  assert.match(settings,/Expenses, P&amp;L, Staff commission and Customer intelligence require a finance-capable role/);
-  assert.match(settings,/Expenses, P&amp;L, Staff commission and Customer intelligence were removed because/);
+  assert.match(settings,/Expenses, P&amp;L, Staff commission and Business Intelligence require a finance-capable role/);
+  assert.match(settings,/Expenses, P&amp;L, Staff commission and Business Intelligence were removed because/);
 });
 
 test('Staff performance uses Singapore calendar boundaries and an exclusive end instant',()=>{

@@ -278,8 +278,18 @@ test('V679 wiring: each panel withholds itself on error using the page’s own c
   assert.ok(app.includes("if(lastFunnelConversionError)return ciQuietErrorV650('Retention funnel could not load.',lastFunnelConversionError);"));
   assert.ok(app.includes("if(lastDemographicsError)return ciQuietErrorV650('Demographics could not load.',lastDemographicsError);"));
   assert.ok(app.includes("if(lastBehaviourError)return ciQuietErrorV650('When customers come in could not load.',lastBehaviourError);"));
-  assert.ok(app.includes('${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}'),
-    'the three panels must actually be spliced into the page body');
+  /* nestly_v892: the three panels are still spliced into the page body and still rendered exactly
+     once each — but they are no longer adjacent, because Explore groups sections by the question
+     an owner is asking (retention, customers, evidence) rather than by the release that shipped
+     them. What matters is unchanged: each one is composed, and composed once. */
+  const composition = app.slice(
+    app.indexOf('const biExplore=biExploreHtmlV892(['),
+    app.indexOf('RevenueTruthUI.bind(body,'));
+  assert.ok(composition.length > 0, 'the page composition must be findable');
+  for (const name of ['ciFunnelConversionMarkupV679', 'ciDemographicsMarkupV679', 'ciBehaviourMarkupV679']) {
+    assert.equal(composition.split(`${name}()`).length - 1, 1,
+      `${name} must be composed into the page exactly once`);
+  }
 });
 
 /* ==================================================================================================
@@ -305,7 +315,12 @@ test('V679 CONTRACT: every payload key each renderer reads is one the LIVE SQL e
   const helpers = sliceFn('helpers', 'function ciMeasuredSinceInlineV679(', 'function funnelConversionPanelHtmlV679(');
   const funnelCode = sliceFn('funnel', 'function funnelConversionPanelHtmlV679(', 'function demographicsPanelHtmlV679(');
   const demographicsCode = sliceFn('demographics', 'function demographicsPanelHtmlV679(', 'function behaviourPanelHtmlV679(');
-  const behaviourCode = sliceFn('behaviour', 'function behaviourPanelHtmlV679(', null);
+  /* nestly_v892: this slice used to run to the end of `block`, which meant it also swallowed
+     every function defined after behaviourPanelHtmlV679 — harmless while that was only the Owner
+     brief, wrong once the Business Intelligence layer landed there and its own reads started
+     being harvested as if this renderer had made them. The window now ends where the renderer
+     ends. */
+  const behaviourCode = sliceFn('behaviour', 'function behaviourPanelHtmlV679(', '\nfunction ownerBriefHtmlV771(');
 
   /* The shared v672 rate-block/evidence vocabulary (numerator/denominator/pct via local var `b`;
      n/floor/status via local var `ev`) is read the same way in all three renderers, always via
