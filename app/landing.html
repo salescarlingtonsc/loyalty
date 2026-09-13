@@ -644,13 +644,11 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 #heroDolly{transform-origin:50% 32%;will-change:transform,opacity}
 @media(prefers-reduced-motion:reduce){#heroDolly{transform:none!important;opacity:1!important}}
 
-/* V462: first-visit loader — the living logo on brand cream, gone in ≤1.4s. Session-once,
-   painted before any scripting via inline markup; removed entirely under reduced motion. */
-#pageLoader{position:fixed;inset:0;z-index:400;background:var(--bg);display:grid;place-items:center;
-  transition:opacity .45s var(--ease);pointer-events:none}
-#pageLoader.gone{opacity:0}
-#pageLoader img{width:min(200px,52vw);height:auto;border-radius:20px}
-@media(prefers-reduced-motion:reduce){#pageLoader{display:none}}
+/* nestly_v893: the V462 first-visit loader is GONE. It existed to showcase the moving logo;
+   v666 rightly made it a still image (iOS Low Power Mode paints tap-to-play over autoplay),
+   which left a static full-screen interstitial delaying the page by up to 1.4s — the owner
+   read it as "two pages, one static then one moving". The page's own reveal system is the
+   entrance now, and the living logo still plays in the hero hub badge. */
 .tilt3d{transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.2,1);will-change:transform}
 .tilt-dash{transform:rotateY(-6deg) rotateX(2deg)}
 .tilt-phone{transform:rotateY(7deg) rotateX(-2deg)}
@@ -704,37 +702,6 @@ html.js .reveal[data-delay="3"]{transition-delay:.18s}
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
-
-<!-- V462 · first-visit loader: the living logo, once per session, gone in ≤1.4s. -->
-<div id="pageLoader" aria-hidden="true">
-  <!-- nestly_v666: the same Low Power Mode defect the app's boot mark had — iOS refuses the
-       autoplay and paints its tap-to-play overlay over the poster. This loader is
-       pointer-events:none and removes itself in under 1.4s, so the button was unpressable as
-       well as wrong. The still logo is the loader now. -->
-  <img src="/media/peekaa-loading-poster.png" alt="" aria-hidden="true" decoding="async">
-</div>
-<script>
-(function pageLoaderV462(){
-  try{
-    var el=document.getElementById('pageLoader');
-    if(!el) return;
-    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(reduce||window.sessionStorage.getItem('peekaaLoaderShown')){el.remove();return}
-    window.sessionStorage.setItem('peekaaLoaderShown','1');
-    var done=false;
-    function dismiss(){
-      if(done)return;done=true;
-      el.classList.add('gone');
-      window.setTimeout(function(){el.remove()},500);
-    }
-    window.setTimeout(dismiss,1400);
-    window.addEventListener('load',function(){window.setTimeout(dismiss,600)});
-  }catch(error){
-    var node=document.getElementById('pageLoader');
-    if(node)node.remove();
-  }
-})();
-</script>
 
 <!-- ══════════════════ V283 DEPTH FIELD ══════════════════
      One fixed field behind the whole document. Because it is fixed rather than
