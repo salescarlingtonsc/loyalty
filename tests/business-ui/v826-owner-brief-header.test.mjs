@@ -127,9 +127,12 @@ test('v826: the card is wired — markup under the title bar, one read per sessi
   const dash = app.slice(app.indexOf('async function dashboard(){'));
   assert.ok(dash.indexOf('id="dashboardBrief"') < dash.indexOf('dashboard-schedule-glance'), 'the brief sits above the schedule glance');
   assert.ok(/loadOwnerBriefV826\(dashboardRoot\)/.test(dash), 'the dashboard loads the brief on first paint');
-  const loader = extractFunction(app, 'loadOwnerBriefV826');
+  /* nestly_v890: the read moved into ownerBriefFetchV826 so Customer intelligence can share the
+     same cached response; loadOwnerBriefV826 is now the Dashboard's thin caller of it. */
+  const loader = extractFunction(app, 'ownerBriefFetchV826');
   assert.match(loader, /sb\.rpc\('get_owner_brief_v1',\{p_business:S\.biz\.id\}\)/);
   assert.match(loader, /ownerBriefCacheV826\.key===key/, 'the response is cached per business per Singapore day');
+  assert.match(extractFunction(app, 'loadOwnerBriefV826'), /await ownerBriefFetchV826\(\)/, 'the Dashboard reads through the shared fetch');
   assert.equal((app.match(/sb\.rpc\('get_owner_brief_v1'/g) || []).length, 1, 'exactly one call site');
   assert.ok(index.includes('.dashboard-brief-v826{'), 'the card has its style');
   assert.ok(registry.allowlist.some((w) => w.id === 'browser.rpc:app/app.js:get_owner_brief_v1'), 'registered in the writer-registry allowlist, beside get_reports_summary');
@@ -314,11 +317,17 @@ test('v828: no answer ever prints undefined, null or NaN', () => {
   }
 });
 
-test('v828: the dashboard markup wires the "All answers" disclosure', () => {
+test('v828 → v890: the "All answers" disclosure lives on Customer intelligence, not the Dashboard', () => {
+  /* Owner ruling 2026-09-13: "i dont need so many questions and answer over here … those data
+     analytics should be inside customer intelligence. dashboard supposed to be clean". */
   const renderer = extractFunction(app, 'ownerBriefRenderV826');
-  assert.match(renderer, /dashboard-brief-more/, 'the render path builds the disclosure');
-  assert.match(renderer, /ownerBriefAnswersV828\(response\?\.brief\)/);
+  assert.doesNotMatch(renderer, /dashboard-brief-more|ownerBriefAnswersV828|ownerBriefLinesV826/, 'the Dashboard renders tiles only');
   const dash = app.slice(app.indexOf('async function dashboard(){'));
-  assert.ok(dash.includes('id="dashboardBriefMore"'), 'the markup carries a mount point for it');
-  assert.ok(index.includes('.dashboard-brief-more{'), 'the disclosure has its own style block');
+  assert.ok(!dash.includes('id="dashboardBriefMore"') && !dash.includes('id="dashboardBriefList"'), 'no list or disclosure mount on the Dashboard');
+  const ci = app.slice(app.indexOf('async function customerIntelligencePage(){'), app.indexOf('function ownerBriefHtmlV771('));
+  assert.match(ci, /function nightlyBriefMarkupV890\(\)/);
+  assert.match(ci, /ownerBriefAnswersV828\(response\.brief\)/);
+  assert.match(ci, /ownerBriefLinesV826\(response\.brief\)/);
+  assert.match(ci, /dashboard-brief-more/, 'the disclosure is built on Customer intelligence');
+  assert.ok(index.includes('.dashboard-brief-more{'), 'the disclosure keeps its style block');
 });

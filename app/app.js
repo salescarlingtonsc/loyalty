@@ -24372,50 +24372,79 @@ function ownerBriefAnswersV828(brief){
 
   return groups;
 }
+/* nestly_v890 (owner, 2026-09-13: "i dont need so many questions and answer over here — i just need
+   a simple overview and those data analytics should be inside customer intelligence. dashboard
+   supposed to be clean and easy to understand"). The Dashboard card is three tiles and one link.
+   The six sentences and the grouped "All answers" moved to Customer intelligence
+   (nightlyBriefMarkupV890), read from the SAME cached response — one call site, one authority. */
+function ownerBriefTileV890(label,value,hint,kind){
+  return `<div class="dashboard-metric kpi dashboard-brief-tile-v890${kind?' is-'+esc(kind):''}"><span class="metric-top"><span class="l">${esc(label)}</span></span><div class="v">${esc(value)}</div><p class="hint">${esc(hint)}</p></div>`;
+}
+function ownerBriefOverviewV890(brief){
+  const b=brief&&typeof brief==='object'?brief:{};
+  const plural=(n,one,many)=>Number(n)===1?one:many;
+  const tiles=[];
+  const w=b.week||{};
+  if(w.status==='ok'){
+    const hint=w.revenue_delta_pct==null
+      ?`${w.visits||0} ${plural(w.visits,'visit','visits')} · no normal week to compare yet`
+      :`${ownerBriefPctV826(Number(w.revenue_delta_pct))} a normal week (${money(w.baseline?.revenue_cents||0)})`;
+    const d=Number(w.revenue_delta_pct);
+    tiles.push(ownerBriefTileV890('Last 7 days',money(w.revenue_cents||0),hint,w.revenue_delta_pct==null?'':d<-5?'warn':d>5?'good':''));
+  }else{
+    tiles.push(ownerBriefTileV890('Last 7 days','—','Could not be prepared',''));
+  }
+  const c=b.customers||{};
+  if(c.status==='ok'){
+    const n=Number(c.new_customers)||0,r=Number(c.returning_customers)||0;
+    tiles.push(ownerBriefTileV890('Customers this week',String(n+r),`${n} new · ${r} returning`,''));
+  }else{
+    tiles.push(ownerBriefTileV890('Customers this week','—','Could not be prepared',''));
+  }
+  const at=b.at_risk||{};
+  if(at.status==='ok'){
+    const n=(Number(at.overdue)||0)+(Number(at.slipping)||0);
+    const stake=Number(at.monthly_at_risk_cents)||0;
+    tiles.push(ownerBriefTileV890('Regulars overdue',String(n),n>0?(stake>0?`${money(stake)} a month at stake`:'Worth a call this week'):'Nobody is overdue',n>0?'warn':'good'));
+  }else{
+    tiles.push(ownerBriefTileV890('Regulars overdue','—','Could not be prepared',''));
+  }
+  return tiles.join('');
+}
 function ownerBriefRenderV826(host,response){
   if(!host)return;
-  const list=host.querySelector('#dashboardBriefList'),when=host.querySelector('#dashboardBriefWhen'),foot=host.querySelector('#dashboardBriefFoot');
+  const tiles=host.querySelector('#dashboardBriefTiles'),when=host.querySelector('#dashboardBriefWhen'),foot=host.querySelector('#dashboardBriefFoot');
   host.removeAttribute('aria-busy');
   const status=response?.data_status;
+  const link=canReadModule('customerintel')?'<a class="btn ghost sm" href="#/customerintel">Full brief in Customer intelligence</a>':'';
   if(status==='not_computed'){
-    when.textContent='Your first brief will be ready tomorrow morning.';list.innerHTML='';foot.textContent='It is prepared every night from the same figures as Performance and Insights.';return;
+    when.textContent='Your first overview will be ready tomorrow morning.';tiles.innerHTML='';foot.innerHTML=link;return;
   }
   if(status==='error'){
-    when.textContent='Your brief could not be prepared last night.';list.innerHTML='';foot.textContent='We will try again tonight.';return;
+    when.textContent='Your overview could not be prepared last night.';tiles.innerHTML='';foot.innerHTML=link;return;
   }
-  const lines=ownerBriefLinesV826(response?.brief);
-  when.textContent=response?.as_of?`Up to ${dashboardScheduleDayLabelV252(response.as_of)}`:'';
-  list.innerHTML=lines.length?lines.map(line=>`<li class="${esc(line.kind)}">${esc(line.text)}</li>`).join(''):'<li class="muted">Nothing to report yet.</li>';
-  const preparedAt=response?.computed_at?sgt(response.computed_at):'';
-  foot.textContent=status==='stale'
-    ?`Prepared ${preparedAt}. Last night’s update did not run, so these figures are older than a day.`
-    :`Prepared ${preparedAt}, from the same figures as Performance and Insights.`;
-  /* nestly_v828: every owner question the brief can answer today, grouped by the worry it
-     belongs to (see ownerBriefAnswersV828). Collapsed by default — a curious owner opens it,
-     nobody else pays the scroll. */
-  const more=host.querySelector('#dashboardBriefMore');
-  if(more){
-    const groups=ownerBriefAnswersV828(response?.brief);
-    more.innerHTML=groups.length?`<details class="dashboard-brief-more"><summary>All answers</summary>${groups.map(group=>
-      `<h3>${esc(group.worry)}</h3><dl>${group.items.map(item=>`<dt>${esc(item.question)}</dt><dd class="brief-${esc(item.kind)}">${esc(item.answer)}</dd>`).join('')}</dl>`
-    ).join('')}</details>`:'';
-  }
+  when.textContent=response?.as_of?`Up to ${dashboardScheduleDayLabelV252(response.as_of)}${status==='stale'?' · older than a day':''}`:'';
+  tiles.innerHTML=ownerBriefOverviewV890(response?.brief);
+  foot.innerHTML=link;
+}
+
+/* nestly_v890: the ONE place the nightly brief is read. Cached per business per Singapore day;
+   a refusal (no sales access, dashboard module off) yields null and both callers hide the card. */
+async function ownerBriefFetchV826(){
+  if(!S.biz?.id)return null;
+  const key=`${S.biz.id}:${sgDateInputValue()}`;
+  if(ownerBriefCacheV826.key===key)return ownerBriefCacheV826.response;
+  const {data,error}=await sb.rpc('get_owner_brief_v1',{p_business:S.biz.id});
+  if(error)return null;
+  ownerBriefCacheV826={key,response:data};
+  return data;
 }
 async function loadOwnerBriefV826(root){
   const host=root?.querySelector('#dashboardBrief');
-  if(!host||!S.biz?.id)return;
-  const key=`${S.biz.id}:${sgDateInputValue()}`;
-  let response=ownerBriefCacheV826.key===key?ownerBriefCacheV826.response:null;
-  if(!response){
-    const {data,error}=await sb.rpc('get_owner_brief_v1',{p_business:S.biz.id});
-    if(error){
-      /* A login without sales access (or a business with the dashboard module off) is refused by
-         the server; the card simply does not appear for them. */
-      host.hidden=true;host.style.display='none';return;
-    }
-    response=data;ownerBriefCacheV826={key,response};
-  }
+  if(!host)return;
+  const response=await ownerBriefFetchV826();
   if(!root.isConnected)return;
+  if(!response){host.hidden=true;host.style.display='none';return;}
   ownerBriefRenderV826(host,response);
 }
 async function dashboard(){
@@ -24441,10 +24470,9 @@ async function dashboard(){
          from the same readers Performance and Insights use; read here by get_owner_brief_v1 once
          per session. Nothing on this card is computed in the browser. -->
     <section class="card dashboard-brief-v826" id="dashboardBrief" aria-labelledby="dashboardBriefTitle" aria-busy="true">
-      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Your brief</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
-      <ul class="dashboard-brief-list" id="dashboardBriefList" aria-live="polite"></ul>
-      <p class="muted small dashboard-brief-foot" id="dashboardBriefFoot"></p>
-      <div id="dashboardBriefMore"></div>
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">This week</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
+      <div class="kpis dashboard-brief-tiles-v890" id="dashboardBriefTiles" aria-live="polite"></div>
+      <p class="dashboard-brief-foot" id="dashboardBriefFoot"></p>
     </section>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
@@ -52828,6 +52856,9 @@ async function customerIntelligencePage(){
      captured independently, same discipline as the v771/v774 bundles above. */
   let lastBranchDirectoryBundleV778=null,lastBranchDirectoryErrorV778='',
     lastBranchComparisonBundleV778=null,lastBranchComparisonErrorV778='';
+  /* nestly_v890: the nightly brief (sentences + every grouped answer) lives here now, not on the
+     Dashboard. Same cached read as the Dashboard's three tiles — ownerBriefFetchV826. */
+  let lastNightlyBriefV890=null;
   /* V285: the heading now says what the rail says. Every other route in the workspace answers to
      the name it was opened by; this one was reached under "Customer intelligence" and then titled
      itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
@@ -53069,6 +53100,23 @@ async function customerIntelligencePage(){
       companyName:S.biz?.name||lastBranchDirectoryBundleV778?.business?.name||null
     };
   }
+  /* nestly_v890: the nightly brief card — the six sentences the Dashboard used to carry, and
+     every grouped answer behind one closed disclosure. Pure read of the cached server response;
+     nothing is computed here (ownerBriefLinesV826 / ownerBriefAnswersV828 own the wording). */
+  function nightlyBriefMarkupV890(){
+    const response=lastNightlyBriefV890;
+    if(!response||!response.brief||response.data_status==='not_computed'||response.data_status==='error')return '';
+    const lines=ownerBriefLinesV826(response.brief);
+    const groups=ownerBriefAnswersV828(response.brief);
+    const when=response.as_of?`Up to ${dashboardScheduleDayLabelV252(response.as_of)}`:'';
+    return `<section class="card dashboard-brief-v826 ci-nightly-brief-v890" aria-labelledby="ciNightlyBriefTitleV890">
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="ciNightlyBriefTitleV890">Last night's brief</h2><p class="muted small">${esc(when)}${response.data_status==='stale'?' · older than a day':''}</p></div></div>
+      <ul class="dashboard-brief-list">${lines.length?lines.map(line=>`<li class="${esc(line.kind)}">${esc(line.text)}</li>`).join(''):'<li class="muted">Nothing to report yet.</li>'}</ul>
+      <div>${groups.length?`<details class="dashboard-brief-more"><summary>All answers</summary>${groups.map(group=>
+        `<h3>${esc(group.worry)}</h3><dl>${group.items.map(item=>`<dt>${esc(item.question)}</dt><dd class="brief-${esc(item.kind)}">${esc(item.answer)}</dd>`).join('')}</dl>`
+      ).join('')}</details>`:''}</div>
+    </section>`;
+  }
   function ownerBriefMarkupV771(){
     return ownerBriefHtmlV771({
       currency:S.biz?.currency||'SGD',
@@ -53164,7 +53212,7 @@ async function customerIntelligencePage(){
        disclosure is byte-identical to what it was: every mount those sections bind afterwards
        (RevenueTruthUI.bind, the growth mounts, bindCategoryMixSectionV650, #ciMore) is still
        queried from the same body node, and a closed <details> keeps its subtree in the document. */
-    body.innerHTML=`${ownerBriefMarkupV771()}<details class="card ci-detailed-analysis-v771" id="ciDetailedAnalysisV771"><summary><b>Detailed analysis</b> <span class="muted small">Evidence, coverage, forecast and the full ranked list</span></summary><div class="ci-detailed-analysis-body-v771">${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}</div></details>`;
+    body.innerHTML=`${ownerBriefMarkupV771()}${nightlyBriefMarkupV890()}<details class="card ci-detailed-analysis-v771" id="ciDetailedAnalysisV771"><summary><b>Detailed analysis</b> <span class="muted small">Evidence, coverage, forecast and the full ranked list</span></summary><div class="ci-detailed-analysis-body-v771">${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}</div></details>`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -53285,7 +53333,7 @@ async function customerIntelligencePage(){
       serviceIntelResponseV771,packagesResponseV771,
       cashGapResponseV774,staffRebookingResponseV774,rewardPopularityResponseV774,
       visitRhythmResponseV774,demographicTotalsResponseV774,
-      branchDirectoryResponseV778,branchComparisonResponseV778
+      branchDirectoryResponseV778,branchComparisonResponseV778,nightlyBriefResponseV890
     ]=await Promise.all([
       sb.rpc('get_revenue_truth_v106',truthRequest),
       sb.rpc('get_customer_lifecycle_v107',truthRequest),
@@ -53404,7 +53452,9 @@ async function customerIntelligencePage(){
       sb.rpc('get_ci_branch_directory_v1',{p_business:S.biz.id}),
       selectedBranchId
         ?Promise.resolve({data:null,error:null})
-        :sb.rpc('get_ci_branch_comparison_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate})
+        :sb.rpc('get_ci_branch_comparison_v1',{p_business:S.biz.id,p_from:fromDate,p_to:toDate}),
+      /* nestly_v890: read once per day, shared with the Dashboard's overview tiles. */
+      ownerBriefFetchV826().catch(()=>null)
     ]);
     if(!isCurrent())return;
     $('ciRun').disabled=false;
@@ -53495,6 +53545,7 @@ async function customerIntelligencePage(){
     lastBranchDirectoryBundleV778=branchDirectoryResponseV778.data||null;
     lastBranchComparisonErrorV778=branchComparisonResponseV778.error?.message||'';
     lastBranchComparisonBundleV778=branchComparisonResponseV778.data||null;
+    lastNightlyBriefV890=nightlyBriefResponseV890||null;
     if(!lastCustomerError)await loadRemainingCustomerPagesV771();
     if(!isCurrent())return;
     paint(lastPayload);

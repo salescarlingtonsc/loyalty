@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="f4b141247bd804c42b507e8f5498159a6cf87cb842b2fe84ee3f68a6699c5215"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="577f13963bce6042eaed05a4e6d69ca488113195d8138ca654f3e3d25308c985"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -537,6 +537,10 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .dashboard-brief-list li.warn::before{background:var(--amber)}
 .dashboard-brief-list li.muted{color:var(--muted)}
 .dashboard-brief-foot{margin:10px 0 0}
+.dashboard-brief-tiles-v890{margin-top:12px}
+.dashboard-brief-tile-v890.is-warn{border-left-color:var(--amber)}
+.dashboard-brief-tile-v890.is-good{border-left-color:var(--green)}
+.dashboard-brief-tile-v890 .hint{margin:4px 0 0;font-size:12px;color:var(--muted)}
 /* nestly_v828: the "All answers" disclosure inside the owner brief card — every owner question
    grouped by worry, collapsed by default. Reuses the same coloured-dot convention as the list
    above (var(--muted)/--green/--amber) rather than inventing new colours. */
@@ -5854,7 +5858,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f4b141247bd804c42b507e8f5498159a6cf87cb842b2fe84ee3f68a6699c5215</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 577f13963bce6042eaed05a4e6d69ca488113195d8138ca654f3e3d25308c985</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6777,10 +6781,9 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
          from the same readers Performance and Insights use; read here by get_owner_brief_v1 once
          per session. Nothing on this card is computed in the browser. -->
     <section class="card dashboard-brief-v826" id="dashboardBrief" aria-labelledby="dashboardBriefTitle" aria-busy="true">
-      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Your brief</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
-      <ul class="dashboard-brief-list" id="dashboardBriefList" aria-live="polite"></ul>
-      <p class="muted small dashboard-brief-foot" id="dashboardBriefFoot"></p>
-      <div id="dashboardBriefMore"></div>
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">This week</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
+      <div class="kpis dashboard-brief-tiles-v890" id="dashboardBriefTiles" aria-live="polite"></div>
+      <p class="dashboard-brief-foot" id="dashboardBriefFoot"></p>
     </section>
     <section class="card dashboard-schedule-glance" aria-label="Schedule glance">
       <div class="dashboard-schedule-top">
@@ -10342,7 +10345,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'f4b141247bd804c42b507e8f5498159a6cf87cb842b2fe84ee3f68a6699c5215',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'577f13963bce6042eaed05a4e6d69ca488113195d8138ca654f3e3d25308c985',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),
