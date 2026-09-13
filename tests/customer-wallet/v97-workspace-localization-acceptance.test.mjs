@@ -178,7 +178,11 @@ test('v97 catalog covers every signed-in workspace route plus dialogs, states an
   const required=[
     'Dashboard','Customers','Record sale','Appointments','Bookings','Waitlist','Sales',
     'Rewards & bring-backs','Referrals','Memberships','Gift cards','Reports',
-    'Customer intelligence','Staff commission','Daily report','Expenses','P&L',
+    /* nestly_v892 renamed the module; the old label stays in the catalogue because a translated
+       string is never removed, and the new one is pinned here so the rename cannot ship a rail
+       label that only a reader of English can use. */
+    'Customer intelligence','Business Intelligence','Know what happened. See what to do next.',
+    'Staff commission','Daily report','Expenses','P&L',
     'Inventory','Packages','Branches','Services','Settings','Get started',
     'Notifications','Stored value','Program Studio',
     'Loading…','No customers yet','Something went wrong. Please try again.',
@@ -213,7 +217,13 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        the bytes get there. */
     /* 1475 -> 1476: nestly_v825 adds "Staff commission" (the retired Staff performance page's
        successor), through the same ledger and generator. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,1476,`${locale} valid visible-literal inventory changed without catalog review`);
+    /* 1476 -> 1478: nestly_v892 renames the Customer intelligence module to "Business
+       Intelligence" and gives its page the subtitle "Know what happened. See what to do next."
+       Both are rendered from BI_WORDING_V892 into the rail, the Dashboard's link and the page
+       header, so both go in — through the same ledger and the same generator. The old label is
+       NOT removed: a translated string that some older surface may still render is never
+       withdrawn from the catalogue. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,1478,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

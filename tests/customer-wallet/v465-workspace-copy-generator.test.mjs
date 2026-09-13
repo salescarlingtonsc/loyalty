@@ -64,8 +64,10 @@ test('they are the twins of the points rows the app already translated, not new 
 
 test('the strings came from the reviewed ledger, and the ledger demands a reason', () => {
   const entries = readAdditions(additionsSource);
-  /* nestly_v825 adds 'Staff commission' through the same ledger. */
-  assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823, 'Staff commission'].sort());
+  /* nestly_v825 adds 'Staff commission' through the same ledger; nestly_v892 adds the renamed
+     module's label and its page subtitle through it too. */
+  assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
+    'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.'].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -93,13 +95,13 @@ test('the generator is idempotent, and app.js already equals what it produces', 
   assert.equal(once.changed, false, 'app/app.js is out of date — run npm run workspace-copy');
   const twice = generate({appSource: once.next, additionsSource});
   assert.equal(twice.next, once.next, 'a second run must produce identical bytes');
-  assert.equal(once.keyCount, 1476); /* + 'Staff commission' (nestly_v825) */
+  assert.equal(once.keyCount, 1478); /* + 'Staff commission' (v825) + the two v892 rename strings */
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 1476 strings per locale/);
+  assert.match(clean, /up to date: 1478 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

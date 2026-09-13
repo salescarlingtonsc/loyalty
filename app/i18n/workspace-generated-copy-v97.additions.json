@@ -56,6 +56,18 @@
       "reason": "2026-08-23 correction flagged during the v462-v466 ruling wave: the v97 machine pass rendered loyalty 'stamp' as 邮票 (a POSTAGE stamp) in four entries, while every string translated since (v437/v461: 赚取印花, 印花已过期) correctly uses 印花. zh-CN merchants read a mixed vocabulary for one concept. Minimal fix: the same string with 邮票 replaced by 印花; the ms strings were already correct (setem) and are restated unchanged because an entry must carry both locales."
     },
     {
+      "source": "Business Intelligence",
+      "zh-CN": "\u5546\u4e1a\u667a\u80fd",
+      "ms": "Kecerdasan Perniagaan",
+      "reason": "nestly_v892 (owner ruling, 2026-09-14): the Customer intelligence module is renamed Business Intelligence, and its page subtitle now says what the page is for rather than what it contains. Both strings are read from BI_WORDING_V892 and rendered in the rail, the Dashboard link and the page header, so a zh-CN or ms merchant would otherwise meet the renamed module in English on every screen that names it."
+    },
+    {
+      "source": "Know what happened. See what to do next.",
+      "zh-CN": "\u4e86\u89e3\u53d1\u751f\u4e86\u4ec0\u4e48\u3002\u770b\u770b\u63a5\u4e0b\u6765\u8be5\u505a\u4ec0\u4e48\u3002",
+      "ms": "Ketahui apa yang berlaku. Lihat apa yang perlu dilakukan seterusnya.",
+      "reason": "nestly_v892 (owner ruling, 2026-09-14): the Customer intelligence module is renamed Business Intelligence, and its page subtitle now says what the page is for rather than what it contains. Both strings are read from BI_WORDING_V892 and rendered in the rail, the Dashboard link and the page header, so a zh-CN or ms merchant would otherwise meet the renamed module in English on every screen that names it. Same rename, the page's one-line description."
+    },
+    {
       "source": "Staff commission",
       "zh-CN": "员工佣金",
       "ms": "Komisen kakitangan",

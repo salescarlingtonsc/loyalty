@@ -35957,7 +35957,11 @@ function biModelV892(bundles){
         ?holders.reduce((total,holder)=>total+holder.valueMinor,0):null,
       longestUnseen:holders[0]||null
     },
-    concentration:(leadCount>0&&revenueBase!==null)
+    /* nestly_v892 (owner acceptance): concentration is only a fact about concentration when
+       there is something to concentrate. "Top 1 customer = 100% of known revenue" is arithmetic,
+       not a finding, so the row is absent below three earning customers rather than trivially
+       true. Presentation only — no threshold, rank or metric meaning changes. */
+    concentration:(leadCount>=3&&revenueBase!==null)
       ?{count:leadCount,pct:Math.round(leadMinor/revenueBase*100)}
       :null,
     advisory,
@@ -36134,7 +36138,13 @@ function biSelectInsightsV892(model){
       finding:biTextV892(item.pattern,'Peekaa found something worth a look.'),
       why:impact?`Worth about ${impact} over the period measured.`:'',
       action:item.strength?'':biTextV892(item.actionWhat),
-      cta:{kind:'section',section:'evidence',label:'See the full evidence'},
+      /* nestly_v892 (owner acceptance): a finding about prepaid sessions is acted on in Packages,
+         so its control goes there. "See the full evidence" is a destination for a finding whose
+         only next step is to read the working — the ranked panel under Explore — and the evidence
+         disclosure on the card carries the detail either way. */
+      cta:item.topic==='packages'
+        ?{kind:'route',href:'#/custpackages',label:'View packages'}
+        :{kind:'section',section:'evidence',label:'See the full evidence'},
       evidence:{
         fact:item.strength?'Ranked by Peekaa as something this business is doing well.':'Ranked by Peekaa against every other finding it could measure.',
         period,sample,
@@ -36153,7 +36163,7 @@ function biSelectInsightsV892(model){
       finding:`${biPluralV892(biWholeV892(packages.holders)||0,'customer holds','customers hold')} ${biPluralV892(biWholeV892(packages.sessions)||0,'unused session','unused sessions')}`,
       why:value?`Worth about ${value} of work already paid for.`:'Work already paid for and not yet taken.',
       action:'Book them in before the sessions expire.',
-      cta:{kind:'route',href:'#/custpackages',label:'Open customer packages'},
+      cta:{kind:'route',href:'#/custpackages',label:'View packages'},
       evidence:{
         fact:'Counted from packages that are still active with sessions left.',
         period:'As things stand today',sample:'',

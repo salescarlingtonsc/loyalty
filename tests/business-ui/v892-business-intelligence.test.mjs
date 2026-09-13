@@ -388,6 +388,18 @@ test('v892 card: a CTA is either a route that exists or a control that opens a s
   }
   const html = BI.card(BI.select(model())[0]);
   assert.ok(!/href="#[a-zA-Z]/.test(html), 'no bare in-page anchor: the hash router would treat it as a route');
+  /* Owner acceptance: a prepaid-sessions finding is acted on in Packages, not read in the ranked
+     evidence panel — whichever of the two cards about it took the slot. */
+  const prepaid = cards.find((card) => card.topic === 'packages');
+  assert.equal(prepaid.cta.kind, 'route');
+  assert.equal(prepaid.cta.href, '#/custpackages');
+  assert.equal(prepaid.cta.label, 'View packages');
+  const derived = BI.select(model({
+    cashGap: null, attention: null,
+    opportunities: { ...OPPORTUNITIES, ranked: [], report_sections: {} }
+  })).find((card) => card.topic === 'packages');
+  assert.equal(derived.cta.href, '#/custpackages', 'the derived card names the same destination');
+  assert.equal(derived.cta.label, 'View packages');
 });
 
 /* ==================================================================================================
@@ -408,6 +420,13 @@ test('v892 pulse: one line of counts, and a figure Peekaa does not have is left 
 test('v892 health: coverage is a status row with its own route, never an alarm', () => {
   const html = plain(BI.health(model()));
   assert.ok(html.includes('Top 3 customers = 87% of known revenue'), `concentration, got: ${html}`);
+  /* Owner acceptance: below three earning customers the row states arithmetic, not concentration. */
+  const one = plain(BI.health(model({ customers: [CUSTOMERS[0]], summary: { net_revenue_cents: 357030 } })));
+  assert.ok(!one.includes('Customer concentration'), 'one earning customer is not a concentration');
+  const two = plain(BI.health(model({ customers: CUSTOMERS.slice(0, 2) })));
+  assert.ok(!two.includes('Customer concentration'), 'nor are two');
+  const three = plain(BI.health(model({ customers: CUSTOMERS.slice(0, 3) })));
+  assert.ok(three.includes('Top 3 customers'), 'three earning customers is');
   assert.ok(html.includes('56.8% of revenue is sorted into categories'), 'category coverage as percent');
   assert.ok(html.includes('Age known for 33%'), 'profile coverage from the demographic totals');
   assert.match(BI.health(model()), /href="#\/servicemapping"/);
