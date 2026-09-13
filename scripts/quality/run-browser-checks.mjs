@@ -26,6 +26,19 @@
  * gaps visible instead of silent. CI installs the driver and gets the real run; the skip banner
  * is loud enough that "it skipped" cannot be mistaken for "it passed".
  *
+ * SECOND PHASE (nestly_v888): the node:test files that need a driver.
+ * `npm test` runs these too, but each one SKIPS ITSELF when no driver resolves — which is how CI
+ * runs them, so they report green while verifying nothing. tests/business-ui/v750-tier-dialog-
+ * alignment.test.mjs sat in that state through three separate harness drifts: with a browser
+ * attached it had been timing out after 30s on an empty page, and without one it skipped, so the
+ * suite stayed green either way. This runner now executes them WITH the driver in the
+ * environment, which is the only condition under which they actually measure anything.
+ *
+ * The list is DISCOVERED, never hardcoded: a fixed list is the same failure mode one level up —
+ * the next browser-dependent test would be added, skip forever, and nobody would notice. Any
+ * tests/ **.test.mjs that mentions a driver is picked up, and a discovery that finds NOTHING is
+ * treated as a failure rather than as "all passed".
+ *
  * The fixture is served over http (not file://) because the page fetches its own assets. The
  * server binds an EPHEMERAL port rather than 4173: that port is used by
  * scripts/quality/regen-visual-fixtures.mjs and by other checkouts of this repo, and a
@@ -34,7 +47,7 @@
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -84,8 +97,10 @@ function skip(reason) {
     line,
     `  ${reason}`,
     '',
-    '  These are the only checks that render the Rewards owner page in a real browser.',
-    '  Skipping them means nothing was verified about how that page actually paints.',
+    '  These are the only checks that render real pages in a real browser — the walkthroughs',
+    '  above, AND the node:test files that skip themselves when no driver resolves. Skipping',
+    '  them means nothing was verified about how any of those pages actually paints, and a',
+    '  green `npm test` does not cover it: those files report green by not running at all.',
     '',
     '  To run them, point the runner at a driver and a browser binary:',
     '',
@@ -125,21 +140,53 @@ const MIME = {
   '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json',
 };
 
+/* nestly_v888: two docroots, in production's order. Fixtures live under tests/ and are addressed
+   from the repo root, but the page they embed asks for its assets the way PRODUCTION serves them —
+   app/ is the docroot there, so the boot and loading marks are at /media/…. Serving only the repo
+   root 404s those, which surfaces as a console error and fails the reward-overview check's
+   zero-console-errors assertion for a reason that has nothing to do with the page. Falling back to
+   app/ makes the harness resolve absolute asset paths exactly as the deployed site does. */
+const DOCROOTS = [repoRoot, join(repoRoot, 'app')];
+
 const server = createServer(async (req, res) => {
-  try {
-    const path = normalize(decodeURIComponent(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
-    const file = join(repoRoot, path);
-    if (!file.startsWith(repoRoot)) { res.writeHead(403); return res.end(); }
-    const body = await readFile(file);
-    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream' });
-    res.end(body);
-  } catch { res.writeHead(404); res.end('not found'); }
+  const path = normalize(decodeURIComponent(req.url.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
+  for (const docroot of DOCROOTS) {
+    const file = join(docroot, path);
+    if (!file.startsWith(docroot)) continue;
+    try {
+      const body = await readFile(file);
+      res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream' });
+      return res.end(body);
+    } catch { /* try the next docroot */ }
+  }
+  res.writeHead(404); res.end('not found');
 });
 
 const run = (script, env) => new Promise((ok, fail) => {
   const child = spawn(process.execPath, [script], { cwd: repoRoot, stdio: 'inherit', env });
   child.on('error', fail);
   child.on('exit', code => (code === 0 ? ok() : fail(new Error(`${script} exited ${code}`))));
+});
+
+/* nestly_v888. Discovery, not a list: any node:test file that consults a browser driver is one
+   that silently skips without one, and so is one this runner must execute. */
+async function discoverDriverDependentTests() {
+  const testsRoot = join(repoRoot, 'tests');
+  const entries = await readdir(testsRoot, { recursive: true });
+  const found = [];
+  for (const entry of entries) {
+    if (!entry.endsWith('.test.mjs')) continue;
+    const relative = join('tests', entry);
+    const source = await readFile(join(repoRoot, relative), 'utf8');
+    if (/PLAYWRIGHT_MODULE|playwright-core/.test(source)) found.push(relative);
+  }
+  return found.sort();
+}
+
+const runNodeTest = (files, env) => new Promise((ok, fail) => {
+  const child = spawn(process.execPath, ['--test', ...files], { cwd: repoRoot, stdio: 'inherit', env });
+  child.on('error', fail);
+  child.on('exit', code => (code === 0 ? ok() : fail(new Error(`node --test exited ${code}`))));
 });
 
 let failed = 0;
@@ -165,6 +212,26 @@ try {
   }
 } finally {
   server.close();
+}
+
+/* Phase two: the node:test files that would otherwise skip themselves. */
+const driverTests = await discoverDriverDependentTests();
+process.stdout.write(`\n── node:test files that need a driver (${driverTests.length} found)\n`);
+if (!driverTests.length) {
+  /* Not "nothing to do". Either the scan broke or the tests moved; both mean this runner has
+     stopped covering the thing it exists to cover, and saying "all passed" would be the lie
+     this whole phase was added to prevent. */
+  failed += 1;
+  process.stdout.write('   FAILED: none discovered — the scan or the layout of tests/ has changed.\n');
+} else {
+  for (const file of driverTests) process.stdout.write(`   · ${file}\n`);
+  try {
+    await runNodeTest(driverTests, { ...process.env, PLAYWRIGHT_MODULE: driver.specifier });
+    process.stdout.write('   ok\n');
+  } catch (error) {
+    failed += 1;
+    process.stdout.write(`   FAILED: ${error.message}\n`);
+  }
 }
 
 if (failed) {
