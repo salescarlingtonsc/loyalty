@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="ad2c4042465599014a4a30e05551aacc62199f8e91cc7668a8cbffa5c397bf17"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="97089bd9bd2a35ef7862b9dccec8cade4a081da78a944621920e90604db21411"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5842,7 +5842,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ad2c4042465599014a4a30e05551aacc62199f8e91cc7668a8cbffa5c397bf17</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 97089bd9bd2a35ef7862b9dccec8cade4a081da78a944621920e90604db21411</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6560,7 +6560,23 @@ function pruneRewardSiblingsV139(root){
        runs that bootstrap, so it is set directly here — a live 'tiers' row, matching the shape
        programmeSpineRowV428 produces (kind/active), which is what programmeSpineOnV314('tiers')
        and liveLoyaltyModelKeysV240 both key off. */
-    S.programmes=[{kind:'tiers',active:true},{kind:'points',active:false},{kind:'stamps',active:false},{kind:'referral',active:true}];
+    /* nestly_v888: ONE definition of the spine, read by the seed here AND by the
+       business_programmes case in fixtureQuery below. Until v888 the production
+       refreshProgrammeSpineV314 was never extracted into this harness, so it threw and the seed
+       was never challenged. Now it runs for real — and with no stub for its table it replaced this
+       seed with an empty list, which is why the fixture rendered "Tier membership is not set up
+       yet" instead of the tiers page the test measures. Two copies of this list would drift the
+       same way, silently, so there is one.
+       Shaped like the real row (id/kind/active/deactivated_at). The seed is NOT mapped through
+       production's programmeSpineRowV428: that is a const injected further down this script, so
+       reading it here is a temporal dead zone. refreshProgrammeSpineV314 maps these same rows
+       through it moments later anyway, which is the read that ends up mattering. */
+    const FIXTURE_PROGRAMME_ROWS_V888=[
+      {id:'spine-tiers',kind:'tiers',active:true,deactivated_at:null},
+      {id:'spine-points',kind:'points',active:false,deactivated_at:null},
+      {id:'spine-stamps',kind:'stamps',active:false,deactivated_at:null},
+      {id:'spine-referral',kind:'referral',active:true,deactivated_at:null}];
+    S.programmes=FIXTURE_PROGRAMME_ROWS_V888.map(row=>({...row,active:row.active===true}));
     S.programmesBusinessId=S.biz.id;
     /* Real production value (app/app.js): gates Memberships out of growTopicDefsV229. Declared,
        not extracted, because it is a one-line literal with nothing else worth pulling in around
@@ -6614,6 +6630,7 @@ function pruneRewardSiblingsV139(root){
       const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},not(){return query},gte(){return query},lte(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
         then(resolve,reject){window.__tableReads.push(table);let data=[];
           if(table==='businesses')data={active_config_version_id:'published-v1'};
+          else if(table==='business_programmes')data=FIXTURE_PROGRAMME_ROWS_V888;
           else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
           else if(table==='loyalty_rewards')data=fixture.rewards;
           else if(table==='loyalty_tiers')data=fixture.tiers;
@@ -8145,6 +8162,15 @@ let growBbDraftV361={name:'',reward:'',away:'',expiry:''};
 let growBbErrorV361='';
 let growBbBusyV361=false;
 let growBbDeletePendingV361='';
+    /* F039: quiet growPage() re-renders write into the SAME outerMain node (a hard route change is
+   the only thing that ever replaces <main>), so isGrowCurrent()'s outerMain.isConnected/M()===
+   outerMain checks stay true across two overlapping quiet renders regardless of which one
+   started first — a pre-write quiet snapshot fetch that resolves after the post-write one can
+   paint stale data over a fresh "Saved" toast. This counter is bumped on every growPage() entry
+   (quiet or not) and folded into isGrowCurrent so a call whose epoch has been superseded by a
+   newer growPage() invocation always loses, independent of resolution order — the same pattern
+   dashboardRenderEpoch/routeRenderEpoch/portalRenderEpoch already use. */
+let growPageRenderEpoch=0;
     const STATUS_WORDS=Object.freeze({
   on:'On',off:'Off',
   draft:'Draft',scheduled:'Scheduled',live:'Live',ended:'Ended'
@@ -8371,6 +8397,43 @@ function programmeScopeSwitchesV322(scope,{paused=false}={}){
    "never turned off" — the same thing an unread breadcrumb has always meant. */
 const programmeSpineRowV428=row=>({id:row?.id||null,kind:row?.kind||null,active:row?.active===true,
   deactivatedAt:row?.deactivated_at||row?.paused_since||null});
+function rememberProgrammeSpineV314(programmes){
+  if(!Array.isArray(programmes))return false;
+  S.programmes=programmes.map(programmeSpineRowV428);
+  S.programmesBusinessId=S.biz?.id||null;
+  return true;
+}
+async function refreshProgrammeSpineV314(){
+  if(!S.biz?.id)return null;
+  const {data,error}=await sb.from('business_programmes').select('id,kind,active,deactivated_at').eq('business_id',S.biz.id);
+  if(error)return null;
+  S.programmes=(data||[]).map(programmeSpineRowV428);
+  S.programmesBusinessId=S.biz.id;
+  return S.programmes;
+}
+/* The one client-side call site of public.set_programmes_v314. Returns {ok,error,skipped,data} and
+   never throws, because every caller has already done something the owner can see (a draft save,
+   a publish) and must report the switch separately from it.
+   nestly_v429 (B5): `data` is carried out now. v425 added referral_reward_kind_now_unpayable to
+   the reply — "the referral is on, its reward is points or stamps, and that pot is not running" —
+   which is a fact only this reply knows, so swallowing the payload here would lose it. */
+async function writeProgrammeSwitchesV314(businessId,selection,{paused=false,key=null}={}){
+  const switches=programmeSwitchSetV314(selection,{paused});
+  if(!switches||!businessId)return {ok:true,skipped:true,error:null,data:null};
+  const {data,error}=await sb.rpc('set_programmes_v314',{
+    p_business:businessId,p_switches:switches,p_idempotency_key:key||crypto.randomUUID()});
+  if(error)return {ok:false,skipped:false,error,data:null};
+  rememberProgrammeSpineV314(data?.programmes);
+  return {ok:true,skipped:false,error:null,data};
+}
+/* The publish routes' shared rule: apply the switch set IFF the draft being published actually
+   carries a loyalty programme row. A rules-only Studio publish leaves loyalty_programs untouched,
+   so it must leave the spine untouched too. */
+async function applyPublishedProgrammeSwitchesV314({active=null,loyaltyModel=null}={}){
+  if(active===null||active===undefined)return {ok:true,skipped:true,error:null};
+  return writeProgrammeSwitchesV314(S.biz?.id,programmeSwitchesForPublishV314(loyaltyModel),
+    {paused:active!==true});
+}
     function promotionEditorItemV104(raw={}){
   const metadata=raw.metadata||{},cta=metadata.cta||{},
     media=raw.media||raw.media_asset||{};

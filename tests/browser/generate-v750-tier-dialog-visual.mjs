@@ -43,14 +43,24 @@ export function buildTierDialogVisualFixture(app,componentLibrary=''){
   const grow=sourceBetween(app,'const GROW_PROGRAMME_VIEWS_V371=','/* ---------- Bring-back playbooks');
   const statusWords=sourceBetween(app,'const STATUS_WORDS=Object.freeze({','const ROLE_LABELS=');
   const growState=sourceBetween(app,"let growTopicV229='';","let settingsActiveTab='modules';");
+  /* nestly_v888: growPage's F039 render epoch. It is declared BELOW settingsActiveTab, so the
+     growState slice above has never contained it — and growPage reads it on its very first line,
+     so every render in this fixture threw `growPageRenderEpoch is not defined` and the harness
+     painted nothing. Extracted from production rather than restated as `let x=0` here, so if the
+     declaration moves again this throws at build time instead of drifting back into silence. */
+  const growRenderEpoch=sourceBetween(app,'/* F039: quiet growPage() re-renders','\n\n/* V314 (W6 increment 1)');
   const dateFormatters=sourceBetween(app,'function promotionDateTextV104(','function promotionBoundaryV104(');
   const dateShift=sourceBetween(app,'const shiftSgDateInput=(date,days)=>{','/* Calendar helpers must not inherit');
   const usageRanges=sourceBetween(app,'function growUsageShiftMonthsV392(','const REPORT_SHARE_COLOURS_V297=');
   const mediaUrl=sourceBetween(app,'function customerMediaUrlV95(','let customerNavCountsV194=');
-  const programmeSpine=sourceBetween(app,'const normaliseLoyaltyModelV375=','function rememberProgrammeSpineV314(');
+  /* nestly_v888: this slice used to STOP at rememberProgrammeSpineV314, so growPage's call to
+     refreshProgrammeSpineV314 — two functions further down — was undefined and the render threw.
+     It now runs to the end of the spine helpers, which is where the boundary always belonged:
+     they are one unit and growPage uses more than the first of them. */
+  const programmeSpine=sourceBetween(app,'const normaliseLoyaltyModelV375=','const PRODUCT_INTERACTION_EVENTS_V100=new Set([');
   const promotionItem=sourceBetween(app,'function promotionEditorItemV104(','function promotionScopeMediaV104(');
   const pendingChanges=sourceBetween(app,'function growRewardDiffFieldsV291(','function growPublishFieldRowsV170(');
-  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${componentLibrary}\n${grow}\n${growState}\n${dateFormatters}\n${dateShift}\n${usageRanges}\n${mediaUrl}\n${statusWords}\n${programmeSpine}\n${promotionItem}\n${pendingChanges}`).digest('hex');
+  const sourceHash=createHash('sha256').update(`${style}\n${growBack}\n${loyaltyAuthority}\n${loyaltyIsolation}\n${snapshotAdapter}\n${journey}\n${status}\n${retention}\n${componentLibrary}\n${grow}\n${growState}\n${dateFormatters}\n${dateShift}\n${usageRanges}\n${mediaUrl}\n${statusWords}\n${growRenderEpoch}\n${programmeSpine}\n${promotionItem}\n${pendingChanges}`).digest('hex');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
     <meta name="production-source-sha256" content="${sourceHash}"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>${style}
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -98,7 +108,23 @@ export function buildTierDialogVisualFixture(app,componentLibrary=''){
        runs that bootstrap, so it is set directly here — a live 'tiers' row, matching the shape
        programmeSpineRowV428 produces (kind/active), which is what programmeSpineOnV314('tiers')
        and liveLoyaltyModelKeysV240 both key off. */
-    S.programmes=[{kind:'tiers',active:true},{kind:'points',active:false},{kind:'stamps',active:false},{kind:'referral',active:true}];
+    /* nestly_v888: ONE definition of the spine, read by the seed here AND by the
+       business_programmes case in fixtureQuery below. Until v888 the production
+       refreshProgrammeSpineV314 was never extracted into this harness, so it threw and the seed
+       was never challenged. Now it runs for real — and with no stub for its table it replaced this
+       seed with an empty list, which is why the fixture rendered "Tier membership is not set up
+       yet" instead of the tiers page the test measures. Two copies of this list would drift the
+       same way, silently, so there is one.
+       Shaped like the real row (id/kind/active/deactivated_at). The seed is NOT mapped through
+       production's programmeSpineRowV428: that is a const injected further down this script, so
+       reading it here is a temporal dead zone. refreshProgrammeSpineV314 maps these same rows
+       through it moments later anyway, which is the read that ends up mattering. */
+    const FIXTURE_PROGRAMME_ROWS_V888=[
+      {id:'spine-tiers',kind:'tiers',active:true,deactivated_at:null},
+      {id:'spine-points',kind:'points',active:false,deactivated_at:null},
+      {id:'spine-stamps',kind:'stamps',active:false,deactivated_at:null},
+      {id:'spine-referral',kind:'referral',active:true,deactivated_at:null}];
+    S.programmes=FIXTURE_PROGRAMME_ROWS_V888.map(row=>({...row,active:row.active===true}));
     S.programmesBusinessId=S.biz.id;
     /* Real production value (app/app.js): gates Memberships out of growTopicDefsV229. Declared,
        not extracted, because it is a one-line literal with nothing else worth pulling in around
@@ -152,6 +178,7 @@ export function buildTierDialogVisualFixture(app,componentLibrary=''){
       const query={select(){return query},eq(column,value){state.equals[column]=value;return query},is(){return query},in(){return query},not(){return query},gte(){return query},lte(){return query},order(){return query},limit(){return query},single(){state.single=true;return query},
         then(resolve,reject){window.__tableReads.push(table);let data=[];
           if(table==='businesses')data={active_config_version_id:'published-v1'};
+          else if(table==='business_programmes')data=FIXTURE_PROGRAMME_ROWS_V888;
           else if(table==='loyalty_programs')data=fixture.loyalty?[fixture.loyalty]:[];
           else if(table==='loyalty_rewards')data=fixture.rewards;
           else if(table==='loyalty_tiers')data=fixture.tiers;
@@ -184,6 +211,7 @@ export function buildTierDialogVisualFixture(app,componentLibrary=''){
     ${journey}
     ${status}
     ${growState}
+    ${growRenderEpoch}
     ${statusWords}
     ${programmeSpine}
     ${promotionItem}

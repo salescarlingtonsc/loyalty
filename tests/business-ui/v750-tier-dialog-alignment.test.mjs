@@ -66,6 +66,17 @@ test('nestly_v750 tier dialog alignment (executed browser measurement)', async (
     const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
     page.on('pageerror', (error) => consoleErrors.push(String(error)));
     await page.setContent(html, { waitUntil: 'load' });
+    /* nestly_v888. The fixture's renderFromHashV421 CATCHES growPage's failure, records it on
+       document.body.dataset.renderError and paints nothing — so a harness that has drifted behind
+       production used to show up here as a blind 30-second waitForSelector timeout with no reason
+       attached. It had been doing exactly that, through two missing extractions, for as long as
+       nobody ran this file with a browser present. Read the recorded error first: a drift now
+       reports "ReferenceError: growPageRenderEpoch is not defined" in about a second. */
+    const renderFailure = await page.evaluate(() => (document.body.dataset.renderError === 'true'
+      ? (window.__consoleErrors || ['(no detail recorded)']).join('\n') : null));
+    assert.equal(renderFailure, null,
+      'the fixture failed to render — this is harness drift in generate-v750-tier-dialog-visual.mjs, ' +
+      'not a production defect: extract whatever growPage now needs and regenerate');
     await page.waitForSelector('[data-grow-topic-v229="tiers"]');
 
     await t.test('Add a tier: padding, title, label-to-input rhythm, no right-edge overflow', async () => {
@@ -97,8 +108,14 @@ test('nestly_v750 tier dialog alignment (executed browser measurement)', async (
       // Consistent vertical rhythm: both field groups are the same shape (label + gap + input),
       // so they must report the same total height — a regression that only fixes one field would
       // leave them unequal.
-      assert.equal(metrics.paragraphs[0].rect.height, metrics.paragraphs[1].rect.height,
-        'every field group must keep the same vertical rhythm as its siblings');
+      /* nestly_v888: compared with a sub-pixel tolerance, not for exact equality. These are raw
+         getBoundingClientRect floats, and Chrome resolves the same layout to 66.875 or
+         66.87503051757812 depending on load — running this file alone passed while running it
+         inside the full suite failed, on identical markup. A rhythm regression is a whole pixel
+         or more; anything under half a pixel is the measuring instrument, not the layout. */
+      assert.ok(Math.abs(metrics.paragraphs[0].rect.height - metrics.paragraphs[1].rect.height) < 0.5,
+        `every field group must keep the same vertical rhythm as its siblings `
+        + `(${metrics.paragraphs[0].rect.height} vs ${metrics.paragraphs[1].rect.height})`);
       assert.ok(metrics.dialogRight <= metrics.viewportWidth,
         'the dialog itself must not overflow the viewport');
 
