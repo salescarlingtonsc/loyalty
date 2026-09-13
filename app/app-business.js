@@ -5568,8 +5568,9 @@ function ownerBriefAnswersV828(brief){
 /* nestly_v890 (owner, 2026-09-13: "i dont need so many questions and answer over here — i just need
    a simple overview and those data analytics should be inside customer intelligence. dashboard
    supposed to be clean and easy to understand"). The Dashboard card is three tiles and one link.
-   The six sentences and the grouped "All answers" moved to Customer intelligence
-   (nightlyBriefMarkupV890), read from the SAME cached response — one call site, one authority. */
+   The six sentences and the grouped "All answers" moved to Business Intelligence (nestly_v892:
+   nightlyBriefStripMarkupV892 and nightlyBriefAnswersMarkupV892), read from the SAME cached
+   response — one call site, one authority. */
 function ownerBriefTileV890(label,value,hint,kind){
   return `<div class="dashboard-metric kpi dashboard-brief-tile-v890${kind?' is-'+esc(kind):''}"><span class="metric-top"><span class="l">${esc(label)}</span></span><div class="v">${esc(value)}</div><p class="hint">${esc(hint)}</p></div>`;
 }
