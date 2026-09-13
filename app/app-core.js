@@ -2661,7 +2661,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.',
     'Open communications':'Open communications',
     'Your consent history':'Your consent history',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.',
     'Loading your consent history…':'Loading your consent history…',
     preferredLanguage:'Preferred language',
     languageHelp:'{product} follows this choice in English, 中文, Bahasa Melayu and தமிழ்.',
@@ -2921,7 +2921,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'选择你想了解的内容和方式——你关注商家的优惠、你的奖励和积分，以及 Peekaa 更新。',
     'Open communications':'打开通讯设置',
     'Your consent history':'你的同意记录',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'你做过的每一项营销选择，最新在前。这仅为记录——如需更改，请打开上方的通讯设置。',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'你做过的每一项营销选择，最新在前。这仅为记录——如需更改，请打开通讯设置。',
     'Loading your consent history…':'正在加载你的同意记录…',
     /* v310 (W4b) programme stack. */
     stampsCardTitle:'集章卡',
@@ -3165,7 +3165,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'Pilih apa yang anda mahu dengar dan bagaimana — tawaran daripada perniagaan yang anda ikuti, ganjaran dan mata anda, dan kemas kini Peekaa.',
     'Open communications':'Buka komunikasi',
     'Your consent history':'Sejarah kebenaran anda',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'Setiap pilihan pemasaran yang anda buat, terbaharu dahulu. Ini rekod sahaja — untuk mengubah sesuatu, buka Komunikasi di atas.',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'Setiap pilihan pemasaran yang anda buat, terbaharu dahulu. Ini rekod sahaja — untuk mengubah sesuatu, buka Komunikasi.',
     'Loading your consent history…':'Memuatkan sejarah kebenaran anda…',
     /* v310 (W4b) programme stack. */
     stampsCardTitle:'Kad cop',
@@ -3409,7 +3409,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'எதைப் பற்றி எப்படி அறிய வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும் — நீங்கள் பின்தொடரும் வணிகங்களின் சலுகைகள், உங்கள் வெகுமதிகள் மற்றும் புள்ளிகள், மற்றும் Peekaa புதுப்பிப்புகள்.',
     'Open communications':'தகவல் தொடர்புகளைத் திற',
     'Your consent history':'உங்கள் ஒப்புதல் வரலாறு',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'நீங்கள் செய்த ஒவ்வொரு விளம்பரத் தேர்வும், புதியது முதலில். இது ஒரு பதிவு மட்டுமே — ஏதேனும் மாற்ற, மேலே உள்ள தகவல் தொடர்புகளைத் திறக்கவும்.',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'நீங்கள் செய்த ஒவ்வொரு விளம்பரத் தேர்வும், புதியது முதலில். இது ஒரு பதிவு மட்டுமே — ஏதேனும் மாற்ற, தகவல் தொடர்புகளைத் திறக்கவும்.',
     'Loading your consent history…':'உங்கள் ஒப்புதல் வரலாறு ஏற்றப்படுகிறது…',
     /* v310 (W4b) programme stack. */
     stampsCardTitle:'முத்திரை அட்டை',

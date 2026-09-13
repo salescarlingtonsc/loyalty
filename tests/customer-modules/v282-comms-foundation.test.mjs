@@ -201,7 +201,9 @@ test('consent history resolves the caller from the session, never from an argume
 
 test('the profile renders consent history read-only and in plain language', () => {
   assert.match(app, /id="customerConsentHistory"/);
-  assert.match(app, /<h2>\$\{esc\(ct\('Your consent history'\)\)\}<\/h2>/);
+  /* nestly_v885 (owner item 4): the record folded into the Marketing choices card it records,
+     closed by default, so a disclosure summary rather than a card heading. */
+  assert.match(app, /<summary class="small">\$\{esc\(ct\('Your consent history'\)\)\}<\/summary>/);
   assert.match(app, /sb\.rpc\('customer_get_consent_history_v282',\{p_limit:100\}\)/);
   assert.match(app, /hydrateCustomerConsentHistoryV282\(isCurrent\)/);
   const section = app.slice(
@@ -211,7 +213,7 @@ test('the profile renders consent history read-only and in plain language', () =
   /* Read-only is the point: this is a record of what was decided, not a second place to decide it.
      Communications remains the single writer. */
   assert.doesNotMatch(section, /customer_set_communication_preference_v263|customer_set_all_communications_v263|<input|<button/);
-  assert.match(app, /to change something, open Communications above/);
+  assert.match(app, /to change something, open Communications\./);
 });
 
 test('every consent-history sentence is plain, escaped, and covers all three entry kinds', () => {

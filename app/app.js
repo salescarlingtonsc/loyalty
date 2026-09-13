@@ -5672,6 +5672,22 @@ function customerAuthErrorMessageV289(error,context='sign_in'){
   if(kind==='server')return 'Sign-in is temporarily unavailable. Nothing has changed — try again shortly.';
   return 'The mobile number or password is incorrect. Check both, or use Forgot password?';
 }
+/* nestly_v885: the errors of SENDING the code, which are not the errors of using it. */
+function customerPasswordReauthErrorMessageV885(error){
+  const code=String(error?.code||'').toLowerCase();
+  const message=String(error?.message||'').toLowerCase();
+  if(code==='over_email_send_rate_limit'||code==='over_sms_send_rate_limit'
+    ||code.includes('rate_limit')||message.includes('rate limit')||message.includes('too many')){
+    return 'Too many codes requested. Wait about a minute, then try again.';
+  }
+  if(code.includes('session')||code.includes('jwt')||message.includes('not authenticated')){
+    return 'Your session has expired. Sign in again, then change your password.';
+  }
+  if(message.includes('phone')||message.includes('email')){
+    return 'We could not send a code to the number on your account. Contact support to change your password.';
+  }
+  return 'We could not send a code just now. Nothing has been changed — try again shortly.';
+}
 function customerPasswordUpdateErrorMessage(error){
   const code=String(error?.code||'').toLowerCase();
   const message=String(error?.message||'').toLowerCase();
@@ -5682,8 +5698,16 @@ function customerPasswordUpdateErrorMessage(error){
     ||message.includes('password is known to be weak')||message.includes('password has been pwned')){
     return 'Choose a stronger, unique password that has not appeared in a known data breach.';
   }
+  /* nestly_v885: two different reauthentication answers, and they need opposite instructions.
+     `reauthentication_not_valid` means the 6-digit code just typed was wrong or stale — the
+     session is fine and a fresh code is one tap away. Only `reauthentication_needed` (no nonce
+     supplied at all) still means the session itself cannot authorise the change. */
+  if(code==='reauthentication_not_valid'||message.includes('nonce')
+    ||message.includes('reauthentication token')||message.includes('reauthentication has expired')){
+    return 'That code is wrong or has expired. Cancel, then tap Update password to send a new one.';
+  }
   if(code.includes('reauthentication')||message.includes('reauthentication')){
-    return 'For your protection, this reset session must be verified again. Return to sign in and request a new reset code.';
+    return 'For your protection, this change must be verified again. Cancel, then tap Update password to send a new code.';
   }
   if(code.includes('session')||code.includes('jwt')||message.includes('session')
     ||message.includes('jwt')||message.includes('not authenticated')){
@@ -6654,7 +6678,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.',
     'Open communications':'Open communications',
     'Your consent history':'Your consent history',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.',
     'Loading your consent history…':'Loading your consent history…',
     preferredLanguage:'Preferred language',
     languageHelp:'{product} follows this choice in English, 中文, Bahasa Melayu and தமிழ்.',
@@ -6914,7 +6938,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'选择你想了解的内容和方式——你关注商家的优惠、你的奖励和积分，以及 Peekaa 更新。',
     'Open communications':'打开通讯设置',
     'Your consent history':'你的同意记录',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'你做过的每一项营销选择，最新在前。这仅为记录——如需更改，请打开上方的通讯设置。',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'你做过的每一项营销选择，最新在前。这仅为记录——如需更改，请打开通讯设置。',
     'Loading your consent history…':'正在加载你的同意记录…',
     /* v310 (W4b) programme stack. */
     stampsCardTitle:'集章卡',
@@ -7158,7 +7182,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'Pilih apa yang anda mahu dengar dan bagaimana — tawaran daripada perniagaan yang anda ikuti, ganjaran dan mata anda, dan kemas kini Peekaa.',
     'Open communications':'Buka komunikasi',
     'Your consent history':'Sejarah kebenaran anda',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'Setiap pilihan pemasaran yang anda buat, terbaharu dahulu. Ini rekod sahaja — untuk mengubah sesuatu, buka Komunikasi di atas.',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'Setiap pilihan pemasaran yang anda buat, terbaharu dahulu. Ini rekod sahaja — untuk mengubah sesuatu, buka Komunikasi.',
     'Loading your consent history…':'Memuatkan sejarah kebenaran anda…',
     /* v310 (W4b) programme stack. */
     stampsCardTitle:'Kad cop',
@@ -7402,7 +7426,7 @@ const CUSTOMER_COPY=Object.freeze({
     'Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.':'எதைப் பற்றி எப்படி அறிய வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும் — நீங்கள் பின்தொடரும் வணிகங்களின் சலுகைகள், உங்கள் வெகுமதிகள் மற்றும் புள்ளிகள், மற்றும் Peekaa புதுப்பிப்புகள்.',
     'Open communications':'தகவல் தொடர்புகளைத் திற',
     'Your consent history':'உங்கள் ஒப்புதல் வரலாறு',
-    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.':'நீங்கள் செய்த ஒவ்வொரு விளம்பரத் தேர்வும், புதியது முதலில். இது ஒரு பதிவு மட்டுமே — ஏதேனும் மாற்ற, மேலே உள்ள தகவல் தொடர்புகளைத் திறக்கவும்.',
+    'Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.':'நீங்கள் செய்த ஒவ்வொரு விளம்பரத் தேர்வும், புதியது முதலில். இது ஒரு பதிவு மட்டுமே — ஏதேனும் மாற்ற, தகவல் தொடர்புகளைத் திறக்கவும்.',
     'Loading your consent history…':'உங்கள் ஒப்புதல் வரலாறு ஏற்றப்படுகிறது…',
     /* v310 (W4b) programme stack. */
     stampsCardTitle:'முத்திரை அட்டை',
@@ -9700,14 +9724,36 @@ async function renderCustomerProfile(requestedView){
          nothing to press. Withdrawing marketing consent is the one control here the customer can
          demand at any time, so the read is retryable instead of a dead end. */
       :`<p class="err" role="status" style="margin-top:12px">${esc(ct('Your marketing choice could not be loaded. No change has been made.'))}</p><button class="btn ghost" id="customerMarketingRetry" type="button" style="margin-top:14px">${esc(ct('retry'))}</button>`}
+      ${/* nestly_v885 (owner item 4: "can I hide the consent history inside the Marketing choice
+           — maybe add a link to view history"). It was a full-height card of its own between
+           Marketing choices and Security, so a record nobody needs day to day was the tallest
+           thing in Privacy & consent. Folded into the card whose decisions it records, closed by
+           default. The ids are unchanged on purpose: hydrateCustomerConsentHistoryV282 binds
+           #customerConsentHistoryBody after this render and still finds it. */''}
+      <details class="customer-profile-consent-v3" id="customerConsentHistory" style="margin-top:16px" aria-busy="true"><summary class="small">${esc(ct('Your consent history'))}</summary><p class="muted small" style="margin-top:5px">${esc(ct('Every marketing choice you have made, newest first. This is a record only — to change something, open Communications.'))}</p><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">${esc(ct('Loading your consent history…'))}</p></div></details>
     </section>
     <section class="card" id="customerCommunicationsEntry" style="margin-top:14px"><div class="wallet-section-head"><div><h2>${esc(ct('Communications'))}</h2><p class="muted small">${esc(ct('Choose what you hear about and how — offers from businesses you follow, your rewards and points, and Peekaa updates.'))}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/customer/communications">${CUI.icon('bell',{size:16})}<span>${esc(ct('Open communications'))}</span></a></div></section>
-    <section class="card" id="customerConsentHistory" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>${esc(ct('Your consent history'))}</h2><p class="muted small">${esc(ct('Every marketing choice you have made, newest first. This is a record only — to change something, open Communications above.'))}</p></div></div><div id="customerConsentHistoryBody" style="margin-top:12px"><p class="muted small">${esc(ct('Loading your consent history…'))}</p></div></section>
     <h2 class="customer-profile-group-v3">Security &amp; account</h2>
-    <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2><p class="muted small" style="margin-top:5px">Your password is used for normal sign-in and does not send an OTP.</p>
+    ${/* nestly_v885 (owner items 5 and 6). The struck-through line said this change "does not send
+       an OTP" — it was written when Supabase's secure password change was off. It has been ON in
+       this project since config.toml:84, so auth.updateUser({password}) answered
+       reauthentication_needed and the card could NOT change a password at all: every attempt ended
+       on "this reset session must be verified again", with nothing on the page able to verify it.
+       The owner's requested shape is Supabase's own reauthentication flow, so that is what runs:
+       type the new password, we send a 6-digit code to the mobile number on the account
+       (auth.reauthenticate), and the password only changes once that code is passed back as the
+       nonce. The sentence is gone because it is now the opposite of what happens. */''}
+    <section class="card" id="customerPasswordManage" style="margin-top:14px"><h2>Change password</h2>
       <label for="customerProfilePassword">New password</label>${passwordControlHtml('customerProfilePassword',{autocomplete:'new-password',minlength:'12'})}
       <label for="customerProfilePasswordConfirm">Confirm new password</label>${passwordControlHtml('customerProfilePasswordConfirm',{autocomplete:'new-password',minlength:'12'})}
       <div id="customerProfilePasswordStatus" role="status" aria-live="polite"></div>
+      <div id="customerPasswordOtpStepV885" hidden>
+        <label for="customerPasswordOtpV885">Code from your mobile</label>
+        <input id="customerPasswordOtpV885" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" aria-describedby="customerPasswordOtpHelpV885">
+        <p class="muted small" id="customerPasswordOtpHelpV885" style="margin-top:6px">The code is valid for a few minutes. Your password changes only after it is verified.</p>
+        <button class="btn" id="customerPasswordOtpConfirmV885" type="button" style="margin-top:14px;width:100%">${CUI.icon('check',{size:16})}<span>Verify and change password</span></button>
+        <button class="btn ghost" id="customerPasswordOtpCancelV885" type="button" style="margin-top:10px;width:100%"><span>Cancel</span></button>
+      </div>
       <button class="btn" id="customerProfilePasswordSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Update password</span></button>
     </section>
     ${NestlyNativeBridge.isNative?`<section class="card" id="customerAppLockV860" style="margin-top:14px" aria-busy="true"><div class="wallet-section-head"><div><h2>Lock this app</h2><p class="muted small">Use this phone’s own biometrics to keep your Peekaa closed to anyone else holding it.</p></div></div><div id="customerAppLockBodyV860" style="margin-top:12px"><p class="muted small">Checking this phone…</p></div><p id="customerAppLockStatusV860" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></section>`:''}
@@ -9832,25 +9878,71 @@ async function renderCustomerProfile(requestedView){
   if(marketingRetry)marketingRetry.onclick=()=>{
     marketingRetry.disabled=true;CUI.announce('Loading your marketing choice again.');renderCustomerProfile(requestedView);
   };
-  $('customerProfilePasswordSave').onclick=async()=>{
+  /* nestly_v885 (owner item 6). Two steps, one typed password. The password is never held in a
+     variable across the steps — it is re-read and re-validated at the moment of the write — so a
+     code that arrives minutes later can only ever commit what the boxes still say. */
+  const passwordStepV885=$('customerPasswordOtpStepV885');
+  const passwordOtpInputV885=$('customerPasswordOtpV885');
+  const passwordSaveButtonV885=$('customerProfilePasswordSave');
+  const passwordStatusV885=$('customerProfilePasswordStatus');
+  const readTypedPasswordV885=()=>{
     const password=$('customerProfilePassword').value;
     const confirmation=$('customerProfilePasswordConfirm').value;
-    const status=$('customerProfilePasswordStatus'),button=$('customerProfilePasswordSave');
-    if(!validNewPassword(password)){
-      status.innerHTML='<div class="err">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</div>';return;
-    }
-    if(password!==confirmation){
-      status.innerHTML='<div class="err">Passwords do not match.</div>';return;
-    }
-    button.disabled=true;
-    const {error}=await sb.auth.updateUser({password});
-    if(!isCurrent()||!button.isConnected)return;
-    button.disabled=false;
+    if(!validNewPassword(password))return {error:'Use at least 12 characters with uppercase, lowercase, a number, and a symbol.'};
+    if(password!==confirmation)return {error:'Passwords do not match.'};
+    return {password};
+  };
+  const showPasswordOtpStepV885=on=>{
+    passwordStepV885.hidden=!on;
+    passwordSaveButtonV885.hidden=on;
+    $('customerProfilePassword').disabled=on;
+    $('customerProfilePasswordConfirm').disabled=on;
+    if(on)passwordOtpInputV885.focus();
+  };
+  $('customerProfilePasswordSave').onclick=async()=>{
+    const typed=readTypedPasswordV885();
+    if(typed.error){passwordStatusV885.innerHTML=`<div class="err">${esc(typed.error)}</div>`;return}
+    passwordSaveButtonV885.disabled=true;
+    passwordStatusV885.innerHTML='<p class="muted small" style="margin-top:10px">Sending a code to your mobile number…</p>';
+    const {error}=await sb.auth.reauthenticate();
+    if(!isCurrent()||!passwordSaveButtonV885.isConnected)return;
+    passwordSaveButtonV885.disabled=false;
     if(error){
-      status.innerHTML=`<div class="err">${esc(customerPasswordUpdateErrorMessage(error))}</div>`;return;
+      passwordStatusV885.innerHTML=`<div class="err">${esc(customerPasswordReauthErrorMessageV885(error))}</div>`;
+      CUI.announce('We could not send a code.',{assertive:true});return;
     }
+    passwordOtpInputV885.value='';
+    showPasswordOtpStepV885(true);
+    passwordStatusV885.innerHTML='<p class="muted small" style="margin-top:10px">We sent a 6-digit code to the mobile number on your account. Enter it below to finish.</p>';
+    CUI.announce('We sent a 6-digit code to your mobile number.');
+  };
+  $('customerPasswordOtpCancelV885').onclick=()=>{
+    passwordOtpInputV885.value='';
+    showPasswordOtpStepV885(false);
+    passwordStatusV885.innerHTML='<p class="muted small" style="margin-top:10px">Password change cancelled. Nothing has been changed.</p>';
+    CUI.announce('Password change cancelled.');
+  };
+  $('customerPasswordOtpConfirmV885').onclick=async()=>{
+    const confirmButton=$('customerPasswordOtpConfirmV885');
+    const nonce=passwordOtpInputV885.value.replace(/\s/g,'');
+    if(!/^[0-9]{6}$/.test(nonce)){
+      passwordStatusV885.innerHTML='<div class="err">Enter the 6-digit code we sent to your mobile number.</div>';return;
+    }
+    const typed=readTypedPasswordV885();
+    if(typed.error){passwordStatusV885.innerHTML=`<div class="err">${esc(typed.error)}</div>`;return}
+    confirmButton.disabled=true;
+    passwordStatusV885.innerHTML='<p class="muted small" style="margin-top:10px">Checking your code…</p>';
+    const {error}=await sb.auth.updateUser({password:typed.password,nonce});
+    if(!isCurrent()||!confirmButton.isConnected)return;
+    confirmButton.disabled=false;
+    if(error){
+      passwordStatusV885.innerHTML=`<div class="err">${esc(customerPasswordUpdateErrorMessage(error))}</div>`;
+      CUI.announce('Your password was not changed.',{assertive:true});return;
+    }
+    passwordOtpInputV885.value='';
+    showPasswordOtpStepV885(false);
     $('customerProfilePassword').value='';$('customerProfilePasswordConfirm').value='';
-    status.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Password updated.</p>';
+    passwordStatusV885.innerHTML='<p class="muted small" style="margin-top:10px;color:var(--green)">Password updated.</p>';
     CUI.announce('Password updated.');
   };
   const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
@@ -18399,7 +18491,12 @@ async function renderCustomerCommunicationsV263(){
   const shell=body=>renderCustomerShell({
     active:'profile',staffWorkspaces:context.staffWorkspaces,
     messagesAvailable:context.features.customer_in_app_inbox===true,
-    backTo:'#/customer/profile',body
+    /* nestly_v885 (owner item 3): Communications is only ever opened from Settings — from the
+       Marketing choices sentence, the Device notifications help text, or the Communications card.
+       Back therefore returns to #/customer/settings. It used to land on #/customer/profile, which
+       is a different page (v585 split them), so every exit from this screen skipped the page the
+       reader came from and they had to re-enter Settings to carry on. */
+    backTo:'#/customer/settings',body
   });
   shell(CUI.loadingState({title:ct('Communications'),body:ct('Loading your communication choices…'),variant:'form'}));
   focusCustomerRoute();
