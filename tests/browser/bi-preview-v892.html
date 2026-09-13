@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Peekaa — Business Intelligence preview (nestly_v892)</title>
+<link rel="stylesheet" href="../../app/app.css">
+<link rel="stylesheet" href="../../app/revenue-truth.css">
+<style>
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,sans-serif}
+  .bi-preview-pane{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+  .bi-preview-head{padding:18px 0 10px;border-bottom:1px dashed var(--line);margin-bottom:16px}
+  .bi-preview-head h2{margin:0;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .bi-preview-head p{margin:4px 0 0;font-size:13px;color:var(--ink2)}
+</style>
+</head>
+<body>
+<section class="bi-preview-pane">
+  <header class="bi-preview-head"><h2>1 · A real month</h2><p>Everything present: a comparison against the previous 30 days, three things to know, a full pulse and every health row.</p></header>
+  <div class="main"><section class="card bi-snapshot" aria-labelledby="biSnapshotTitleV892">
+    <div class="bi-section-head"><h2 id="biSnapshotTitleV892">Business snapshot</h2>
+    <p class="muted small">Last 30 days · All branches</p></div>
+    <div class="bi-kpis">
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Revenue</span>
+      <strong class="bi-kpi-value">SGD 6,683.30</strong>
+      
+      <span class="bi-kpi-change is-up">↑ 12% vs previous 30 days</span>
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Collected</span>
+      <strong class="bi-kpi-value">SGD 4,214.29</strong>
+      <span class="bi-kpi-second">63% collected</span>
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Customers</span>
+      <strong class="bi-kpi-value">9</strong>
+      <span class="bi-kpi-second">3 new</span>
+      <span class="bi-kpi-change is-up">↑ 13% vs previous 30 days</span>
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">New customers</span>
+      <strong class="bi-kpi-value">3</strong>
+      
+      <span class="bi-kpi-change is-up">↑ 50% vs previous 30 days</span>
+    </article>
+    </div>
+    
+  </section><section class="card bi-insights" aria-labelledby="biInsightsTitleV892">
+    <div class="bi-section-head"><h2 id="biInsightsTitleV892">3 things to know</h2></div>
+    <div class="bi-cards"><article class="bi-card bi-card--needs-attention">
+    <p class="bi-card-kind"><span aria-hidden="true">🔴</span> Needs attention</p>
+    <h3 class="bi-card-finding">SGD 2,445.00 not yet collected</h3>
+    <p class="bi-card-why">8 sales are not recorded as fully paid.</p>
+    <p class="bi-card-action">Check the open bills and record the payments you have already taken.</p>
+    <button type="button" class="btn ghost sm bi-cta" data-bi-open-v892="money">See money recorded vs collected →</button>
+    <details class="bi-evidence"><summary>Why am I seeing this?</summary>
+    <dl class="bi-evidence-list"><dt>What Peekaa saw</dt><dd>6 with no payment recorded and 2 part paid, out of 24 sales.</dd><dt>Period</dt><dd>Last 30 days</dd><dt>What this cannot see</dt><dd>A sale with no payment recorded is either unpaid or was paid without being written down. Peekaa cannot tell the two apart.</dd><dt>When Peekaa would change its mind</dt><dd>This clears as soon as the missing payments are recorded against their sales.</dd></dl>
+  </details>
+  </article><article class="bi-card bi-card--needs-attention">
+    <p class="bi-card-kind"><span aria-hidden="true">🔴</span> Needs attention</p>
+    <h3 class="bi-card-finding">Siti Rahman usually visits every 21 days. Last seen 62 days ago.</h3>
+    <p class="bi-card-why">2 regulars are overdue · about SGD 120.00 a month of regular spend at stake.</p>
+    <p class="bi-card-action">Call or message them while the gap is still short.</p>
+    <a class="btn ghost sm bi-cta" href="#/grow/bringback">Open bring-back list →</a>
+    <details class="bi-evidence"><summary>Why am I seeing this?</summary>
+    <dl class="bi-evidence-list"><dt>What Peekaa saw</dt><dd>Each person is judged against their own visit rhythm, not against a fixed rule.</dd><dt>Period</dt><dd>Last 30 days</dd><dt>How much this is based on</dt><dd>Based on 9 customers with enough visit history to judge.</dd><dt>What this cannot see</dt><dd>A customer with too few visits to show a rhythm is not judged at all.</dd><dt>When Peekaa would change its mind</dt><dd>Peekaa drops the flag the moment they visit again.</dd></dl>
+  </details>
+  </article><article class="bi-card bi-card--opportunity">
+    <p class="bi-card-kind"><span aria-hidden="true">🟠</span> Opportunity</p>
+    <h3 class="bi-card-finding">Six prepaid facial packages have sessions left that nobody has booked.</h3>
+    <p class="bi-card-why">Worth about SGD 540.00 over the period measured.</p>
+    <p class="bi-card-action">Call the six holders and book their remaining sessions.</p>
+    <button type="button" class="btn ghost sm bi-cta" data-bi-open-v892="evidence">See the full evidence →</button>
+    <details class="bi-evidence"><summary>Why am I seeing this?</summary>
+    <dl class="bi-evidence-list"><dt>What Peekaa saw</dt><dd>Ranked by Peekaa against every other finding it could measure.</dd><dt>Period</dt><dd>Last 30 days</dd><dt>How much this is based on</dt><dd>Based on 9 observations. Peekaa requires at least 5 before showing this finding.</dd><dt>What this cannot see</dt><dd>It cannot see a session booked outside Peekaa.</dd><dt>When Peekaa would change its mind</dt><dd>Peekaa drops this once the remaining sessions are booked.</dd></dl>
+  </details>
+  </article></div>
+  </section><section class="card bi-pulse" aria-labelledby="biPulseTitleV892">
+    <h2 class="bi-pulse-title" id="biPulseTitleV892">Customer pulse</h2>
+    <p class="bi-pulse-line"><span class="bi-chip">9 customers</span><span class="bi-chip">3 new</span><span class="bi-chip">1 due back</span><span class="bi-chip">1 overdue</span><span class="bi-chip">1 slipping away</span><span class="bi-chip">6 unused sessions</span></p>
+  </section><section class="card bi-health" aria-labelledby="biHealthTitleV892">
+    <div class="bi-section-head"><h2 id="biHealthTitleV892">Business health</h2></div>
+    <ul class="bi-health-list"><li class="bi-health-row">
+      <span class="bi-health-label">Customer concentration</span>
+      <span class="bi-health-value">Top 3 customers = 87% of known revenue</span>
+      
+    </li><li class="bi-health-row">
+      <span class="bi-health-label">What you sell</span>
+      <span class="bi-health-value">56.8% of revenue is sorted into categories</span>
+      <a class="btn ghost sm" href="#/servicemapping">Map services →</a>
+    </li><li class="bi-health-row">
+      <span class="bi-health-label">Customer profiles</span>
+      <span class="bi-health-value">Age known for 33% · gender for 33% of 9 customers</span>
+      
+    </li><li class="bi-health-row">
+      <span class="bi-health-label">Who you may contact</span>
+      <span class="bi-health-value">6 by text message and 4 by email, out of 9 customers</span>
+      
+    </li></ul>
+  </section><section class="card bi-overnight" aria-labelledby="biOvernightTitleV892">
+    <p class="bi-overnight-line"><b id="biOvernightTitleV892">Last night’s brief</b>
+      <span class="bi-overnight-sentence plain">Last 7 days: SGD 1,240.00, 12% above a normal week (SGD 1,107.00). More people, not bigger orders.</span><span class="bi-overnight-sentence warn">2 regulars are overdue their usual visit (SGD 240.00 a month at stake).</span></p>
+    <details class="bi-overnight-more"><summary>Show more</summary>
+      <ul class="dashboard-brief-list"><li class="plain">Busiest day Tuesday, slowest Friday, quietest stretch 3pm–5pm (8% of visits).</li><li class="plain">3 new customers, 6 returning.</li><li class="plain">Most redeemed reward: Free scalp massage (7 in 8 weeks).</li></ul>
+    </details>
+  </section></div>
+</section>
+<section class="bi-preview-pane">
+  <header class="bi-preview-head"><h2>2 · A thin month, one branch selected</h2><p>No earlier window to compare against, no payments reader, one customer, nothing ranked yet — and Peekaa says which of those it is.</p></header>
+  <div class="main"><section class="card bi-snapshot" aria-labelledby="biSnapshotTitleV892">
+    <div class="bi-section-head"><h2 id="biSnapshotTitleV892">Business snapshot</h2>
+    <p class="muted small">Last 30 days · TMP · Tampines</p></div>
+    <div class="bi-kpis">
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Revenue</span>
+      <strong class="bi-kpi-value">SGD 45.00</strong>
+      
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Collected</span>
+      <strong class="bi-kpi-value">—</strong>
+      
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Customers</span>
+      <strong class="bi-kpi-value">1</strong>
+      <span class="bi-kpi-second">1 new</span>
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">New customers</span>
+      <strong class="bi-kpi-value">1</strong>
+      
+      
+    </article>
+    </div>
+    <p class="muted small bi-no-compare">No earlier period to compare yet.</p>
+  </section><section class="card bi-insights" aria-labelledby="biInsightsTitleV892">
+    <div class="bi-section-head"><h2 id="biInsightsTitleV892">3 things to know</h2></div>
+    <div class="bi-cards"><article class="bi-card bi-card--still-learning">
+    <p class="bi-card-kind"><span aria-hidden="true">⚪</span> Still learning</p>
+    <h3 class="bi-card-finding">Peekaa needs more customer history before it can reliably measure first-to-second visit retention.</h3>
+    
+    
+    
+    <details class="bi-evidence"><summary>Why am I seeing this?</summary>
+    <dl class="bi-evidence-list"><dt>What Peekaa saw</dt><dd>A return rate is only reported once enough customers have had the chance to come back.</dd><dt>Period</dt><dd>Last 30 days</dd><dt>What this cannot see</dt><dd>Customers who joined too recently to return yet are left out of the rate rather than counted as lost.</dd><dt>When Peekaa would change its mind</dt><dd>Peekaa reports the rate as soon as enough customers have matured.</dd></dl>
+  </details>
+  </article></div>
+  </section><section class="card bi-pulse" aria-labelledby="biPulseTitleV892">
+    <h2 class="bi-pulse-title" id="biPulseTitleV892">Customer pulse</h2>
+    <p class="bi-pulse-line"><span class="bi-chip">1 customer</span><span class="bi-chip">1 new</span></p>
+  </section><section class="card bi-health" aria-labelledby="biHealthTitleV892">
+    <div class="bi-section-head"><h2 id="biHealthTitleV892">Business health</h2></div>
+    <ul class="bi-health-list"><li class="bi-health-row">
+      <span class="bi-health-label">Customer concentration</span>
+      <span class="bi-health-value">Top 1 customer = 100% of known revenue</span>
+      
+    </li></ul>
+  </section></div>
+</section>
+<section class="bi-preview-pane">
+  <header class="bi-preview-head"><h2>3 · A brand-new business</h2><p>No sales, no customers, no readers. Every figure is a dash and nothing is invented as a zero.</p></header>
+  <div class="main"><section class="card bi-snapshot" aria-labelledby="biSnapshotTitleV892">
+    <div class="bi-section-head"><h2 id="biSnapshotTitleV892">Business snapshot</h2>
+    <p class="muted small">Last 30 days · All branches</p></div>
+    <div class="bi-kpis">
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Revenue</span>
+      <strong class="bi-kpi-value">—</strong>
+      
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Collected</span>
+      <strong class="bi-kpi-value">—</strong>
+      
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">Customers</span>
+      <strong class="bi-kpi-value">—</strong>
+      
+      
+    </article>
+      <article class="bi-kpi">
+      <span class="bi-kpi-label">New customers</span>
+      <strong class="bi-kpi-value">—</strong>
+      
+      
+    </article>
+    </div>
+    <p class="muted small bi-no-compare">No earlier period to compare yet.</p>
+  </section><section class="card bi-insights" aria-labelledby="biInsightsTitleV892">
+    <div class="bi-section-head"><h2 id="biInsightsTitleV892">3 things to know</h2></div>
+    <p class="bi-empty">No reliable recommendation yet — Peekaa will surface one once there is enough evidence.</p>
+  </section></div>
+</section>
+</body>
+</html>

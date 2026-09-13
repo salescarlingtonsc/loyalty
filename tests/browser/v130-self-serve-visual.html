@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="e49d3a7a3da9daf5abe4373f85e5e64a69b974308c7a2d4fcd95c6f8d3b3321a"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="a979b185bd4df652b0f5be0452a02acf30e5cbc950db580b729a0dbf69ba0754"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5854,6 +5854,77 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-head-v628{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .subscription-company-head-v628>.spacer{flex:1 1 auto}
 .subscription-company-v628{margin:0;min-width:0}
+/* nestly_v892 — BUSINESS INTELLIGENCE. The page answers before it archives, so the styling has
+   one job: make four numbers and three cards readable at a glance, and keep everything else quiet
+   underneath. Semantic tint per card type, from the tokens that already exist (--brand-red-faint,
+   --warn-bg, --success-bg, --shell) so dark mode is inherited rather than re-specified. Peekaa red
+   is reserved for the brand and for a primary call to action; a finding that needs attention is a
+   pale warm wash with a red edge, never a solid red block. Nothing here restyles a shared
+   component: every selector is .bi-*. */
+.bi-section-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:12px}
+.bi-section-head h2{margin:0;font-size:17px;line-height:1.25}
+.bi-section-head p{margin:0}
+.bi-snapshot,.bi-insights,.bi-pulse,.bi-health,.bi-overnight,.bi-explore{display:block;margin-bottom:14px}
+/* Four white KPI cards: two columns on a phone, four from the compact threshold up. */
+.bi-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.bi-kpi{min-width:0;display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow)}
+.bi-kpi-label{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.bi-kpi-value{font-size:clamp(22px,4.6vw,28px);line-height:1.15;font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+.bi-kpi-second{font-size:12.5px;color:var(--ink2)}
+.bi-kpi-change{margin-top:2px;font-size:12.5px;font-weight:650;color:var(--muted)}
+.bi-kpi-change.is-up{color:var(--success)}
+.bi-kpi-change.is-down{color:var(--brand-red-dark)}
+.bi-no-compare{margin:10px 0 0}
+/* The three things to know. */
+.bi-cards{display:grid;grid-template-columns:1fr;gap:12px}
+.bi-card{min-width:0;padding:14px 16px;border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:var(--r-sm);background:var(--shell)}
+.bi-card--needs-attention{background:var(--brand-red-faint);border-left-color:var(--brand-red)}
+.bi-card--opportunity{background:var(--warn-bg);border-left-color:var(--warn)}
+.bi-card--doing-well{background:var(--success-bg);border-left-color:var(--success)}
+.bi-card--still-learning{background:var(--shell);border-left-color:var(--line)}
+.bi-card-kind{margin:0;font-size:12px;font-weight:750;letter-spacing:.02em;text-transform:uppercase;color:var(--ink2)}
+.bi-card-finding{margin:6px 0 0;font-size:15.5px;line-height:1.35;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.bi-card-why{margin:6px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink2)}
+.bi-card-action{margin:6px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+.bi-cta{margin-top:10px}
+.bi-empty{margin:0;color:var(--muted)}
+/* Evidence, folded. */
+.bi-evidence{margin-top:10px;border-top:1px solid var(--hair);padding-top:6px}
+.bi-evidence>summary{cursor:pointer;min-height:32px;display:flex;align-items:center;font-size:12.5px;font-weight:650;color:var(--muted)}
+.bi-evidence>summary:hover{color:var(--coral)}
+.bi-evidence-list{margin:6px 0 0;display:grid;gap:6px}
+.bi-evidence-list dt{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.bi-evidence-list dd{margin:1px 0 0;font-size:13px;line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+/* Pulse — one wrapping line of chips. */
+.bi-pulse-title{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
+.bi-pulse-line{margin:0;display:flex;flex-wrap:wrap;gap:6px 8px}
+.bi-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:13px;font-weight:650;color:var(--ink)}
+/* Health — status rows, not alerts. */
+.bi-health-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.bi-health-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding-bottom:8px;border-bottom:1px solid var(--hair)}
+.bi-health-row:last-child{padding-bottom:0;border-bottom:0}
+.bi-health-label{flex:0 0 auto;min-width:150px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.bi-health-value{flex:1 1 200px;min-width:0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
+/* Overnight strip. */
+.bi-overnight-line{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink2)}
+.bi-overnight-sentence{display:block;margin-top:2px}
+.bi-overnight-sentence.warn{color:var(--warn)}
+.bi-overnight-sentence.good{color:var(--success)}
+.bi-overnight-more{margin-top:8px}
+.bi-overnight-more>summary{cursor:pointer;min-height:32px;display:flex;align-items:center;font-size:12.5px;font-weight:650;color:var(--muted)}
+.bi-overnight-more>summary:hover{color:var(--coral)}
+/* Explore — a plain accordion. Wide content scrolls inside its own wrapper, never the page. */
+.bi-explore-group{border-bottom:1px solid var(--line)}
+.bi-explore-group:last-of-type{border-bottom:0}
+.bi-explore-group>summary{cursor:pointer;min-height:48px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:10px 2px;font-size:14.5px;color:var(--ink)}
+.bi-explore-group>summary:hover{color:var(--coral)}
+.bi-explore-group[open]>summary{border-bottom:1px solid var(--hair)}
+.bi-explore-body{min-width:0;padding:4px 0 16px}
+.bi-explore-body>.card{box-shadow:none}
+@media (min-width:769px){
+  .bi-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .bi-cards{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+}
 body{padding:16px}.v130-nav{position:fixed;z-index:300;top:8px;right:8px;display:flex;gap:6px}.v130-nav .btn{padding:8px 12px}.center-wrap{padding-top:68px}@media(max-width:600px){body{padding:0}.v130-nav{position:relative;top:auto;right:auto;padding:8px;overflow:auto}.center-wrap{padding:12px}.grid2{grid-template-columns:1fr}}</style></head><body><nav class="v130-nav" aria-label="V130 acceptance views"><button class="btn" data-view="signup">Signup</button><button class="btn ghost" data-view="login">Login</button><button class="btn ghost" data-view="setup">Setup</button><button class="btn ghost" data-view="pending">Pending</button><button class="btn ghost" data-view="control">Control</button></nav><div id="root"></div><script>
   const root=document.getElementById('root'),$=id=>document.getElementById(id);
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

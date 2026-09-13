@@ -5609,7 +5609,7 @@ function ownerBriefRenderV826(host,response){
   const tiles=host.querySelector('#dashboardBriefTiles'),when=host.querySelector('#dashboardBriefWhen'),foot=host.querySelector('#dashboardBriefFoot');
   host.removeAttribute('aria-busy');
   const status=response?.data_status;
-  const link=canReadModule('customerintel')?'<a class="btn ghost sm" href="#/customerintel">Full brief in Customer intelligence</a>':'';
+  const link=canReadModule('customerintel')?'<a class="btn ghost sm" href="#/customerintel">Full brief in Business Intelligence</a>':'';
   if(status==='not_computed'){
     when.textContent='Your first overview will be ready tomorrow morning.';tiles.innerHTML='';foot.innerHTML=link;return;
   }
@@ -33627,7 +33627,13 @@ async function customerIntelligencePage(){
   const routeMain=M(),isCurrent=()=>routeMain.isConnected&&M()===routeMain;
   const singaporeIsoDate=sgDateInputValue;
   const shiftSingaporeDate=shiftSgDateInput;
-  const today=singaporeIsoDate(),from=shiftSingaporeDate(today,-364);
+  /* nestly_v892 (owner ruling): the page opens on the last 30 days, computed the way the
+     Dashboard computes its own 30-day window — today-29..today. A year was the wrong first
+     answer for an owner asking "how are we doing": it flattens a bad month into a good year and
+     makes every comparison a year-on-year one. The date inputs are untouched, every reader still
+     takes whatever they say, and no metric hard-codes 30 (tests/business-ui/
+     v892-request-parity.test.mjs pins both halves of that). */
+  const today=singaporeIsoDate(),from=shiftSingaporeDate(today,-29);
   let lastPayload=null,lastRequest=null,lastTruthBundle=null,lastEconomicsBundle=null,lastCustomerError='';
   /* nestly_v650 (owner batch: acquisition mix, join/booking funnel, contactability and category
      mix land on this same page, fed by their own business-scope-only RPCs — see
@@ -33686,17 +33692,17 @@ async function customerIntelligencePage(){
   /* nestly_v890: the nightly brief (sentences + every grouped answer) lives here now, not on the
      Dashboard. Same cached read as the Dashboard's three tiles — ownerBriefFetchV826. */
   let lastNightlyBriefV890=null;
-  /* V285: the heading now says what the rail says. Every other route in the workspace answers to
-     the name it was opened by; this one was reached under "Customer intelligence" and then titled
-     itself "Revenue truth", which reads as the wrong page. The old title survives as the subtitle
-     because it is an accurate description of what the page produces. The per-page branch picker is
-     gone for the V260/V272 reason — the top bar owns branch scope. */
-  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>Customer intelligence</h1><p class="muted small">Who to call, what is unused, who matters most, and what Peekaa can prove.</p></div></div>
+  /* V285: the heading says what the rail says — every other route in the workspace answers to
+     the name it was opened by. nestly_v892 renames both: the rail now reads "Business
+     Intelligence" and the subtitle says what the page is for rather than what it contains, from
+     the one wording map (BI_WORDING_V892) so the two can never drift apart. The per-page branch
+     picker is still gone for the V260/V272 reason — the top bar owns branch scope. */
+  routeMain.innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('customers',{size:24})}<div><h1>${esc(BI_WORDING_V892.title)}</h1><p class="muted small">${esc(BI_WORDING_V892.subtitle)}</p></div></div>
     <div class="range"><label class="small">From <input type="date" id="cif" value="${from}"></label>
       <span class="muted" aria-hidden="true">→</span><label class="small">To <input type="date" id="cit" value="${today}"></label>
       <button class="btn sm" id="ciRun">Run report</button><button class="btn ghost sm" id="ciCsv" disabled>Export customers CSV</button></div></div>
     <div style="margin:-4px 0 14px"><p class="muted small" id="reportScopeNoteV272" role="status" aria-live="polite">Checking which branches these figures cover…</p></div>
-    <div id="customerIntelBody"><div class="card"><div class="empty">Loading customer intelligence…</div></div></div>`;
+    <div id="customerIntelBody"><div class="card"><div class="empty">Loading business intelligence…</div></div></div>`;
   const body=$('customerIntelBody');
   const scopeMoney=(cents,currency=S.biz.currency||'SGD')=>`${currency} ${(Number(cents||0)/100).toFixed(2)}`;
   const percent=value=>Number.isFinite(Number(value))?`${Number(value).toFixed(1)}%`:'—';
@@ -33927,24 +33933,62 @@ async function customerIntelligencePage(){
       companyName:S.biz?.name||lastBranchDirectoryBundleV778?.business?.name||null
     };
   }
-  /* nestly_v890: the nightly brief card — the six sentences the Dashboard used to carry, and
-     every grouped answer behind one closed disclosure. Pure read of the cached server response;
-     nothing is computed here (ownerBriefLinesV826 / ownerBriefAnswersV828 own the wording). */
-  function nightlyBriefMarkupV890(){
+  /* nestly_v890 → nestly_v892: the nightly brief is still ONE cached read (ownerBriefFetchV826,
+     shared with the Dashboard) and still worded entirely by ownerBriefLinesV826 /
+     ownerBriefAnswersV828 — neither of which changed. What changed is where the two halves sit.
+     The sentences collapse into one strip at the top of the page (biOvernightStripHtmlV892 picks
+     which two lead and folds the rest behind "Show more"), and the grouped answers move down into
+     Explore → "Ask my business", because an owner opening this page wants an answer before a
+     questionnaire. Nothing is computed in either function here. */
+  function nightlyBriefStripMarkupV892(){
+    return biOvernightStripHtmlV892(lastNightlyBriefV890);
+  }
+  function nightlyBriefAnswersMarkupV892(){
     const response=lastNightlyBriefV890;
     if(!response||!response.brief||response.data_status==='not_computed'||response.data_status==='error')return '';
-    const lines=ownerBriefLinesV826(response.brief);
     const groups=ownerBriefAnswersV828(response.brief);
+    if(!groups.length)return '';
     const when=response.as_of?`Up to ${dashboardScheduleDayLabelV252(response.as_of)}`:'';
     return `<section class="card dashboard-brief-v826 ci-nightly-brief-v890" aria-labelledby="ciNightlyBriefTitleV890">
       <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="ciNightlyBriefTitleV890">Last night's brief</h2><p class="muted small">${esc(when)}${response.data_status==='stale'?' · older than a day':''}</p></div></div>
-      <ul class="dashboard-brief-list">${lines.length?lines.map(line=>`<li class="${esc(line.kind)}">${esc(line.text)}</li>`).join(''):'<li class="muted">Nothing to report yet.</li>'}</ul>
-      <div>${groups.length?`<details class="dashboard-brief-more"><summary>All answers</summary>${groups.map(group=>
+      <div><details class="dashboard-brief-more" open><summary>All answers</summary>${groups.map(group=>
         `<h3>${esc(group.worry)}</h3><dl>${group.items.map(item=>`<dt>${esc(item.question)}</dt><dd class="brief-${esc(item.kind)}">${esc(item.answer)}</dd>`).join('')}</dl>`
-      ).join('')}</details>`:''}</div>
+      ).join('')}</details></div>
     </section>`;
   }
-  function ownerBriefMarkupV771(){
+  /* nestly_v892: the one place the already-fetched bundles are handed to the model. Every field
+     is a bundle this page already holds — no reader is added, re-scoped or asked twice. */
+  function biBundlesV892(truthView){
+    const actionV892=truthView&&truthView.briefing?truthView.briefing.action:null;
+    return {
+      currency:S.biz?.currency||'SGD',
+      periodDays:lastBriefPeriodDaysV771,from:lastBriefFromV771,to:lastBriefToV771,
+      scope:ownerBriefScopeV778(),
+      truth:lastTruthBundle?.truth||null,truthPrev:lastTruthPrevBundleV771,
+      lifecycle:lastTruthBundle?.lifecycle||null,lifecyclePrev:lastLifecyclePrevBundleV771,
+      cashGap:lastCashGapBundleV774,
+      attention:lastAttentionBundleV771,
+      packages:lastPackagesBundleV771,
+      customers:Array.isArray(lastPayload?.customers)?lastPayload.customers:[],
+      summary:lastPayload?.summary||null,
+      opportunities:lastOpportunitiesBundle,
+      rhythm:lastVisitRhythmBundleV774,
+      demographics:lastDemographicTotalsBundleV774,
+      categoryMix:lastCategoryMixBundle,
+      contactability:lastContactabilityBundle,
+      funnelConversion:lastFunnelConversionBundle,
+      /* The v108 action is FRONTED, never re-decided: allowed only when the growth engine allowed
+         it AND the briefing actually carries one. Approve, dismiss, hold-out, eligibility and
+         permission all stay on RevenueTruthUI's own control under Explore. */
+      action:{
+        allowed:truthView?.actionAllowed===true&&!!lastTruthBundle?.briefing?.top_action,
+        title:actionV892?.title||'',
+        finding:actionV892?.finding||'',
+        costMinor:actionV892?.estimatedCostCents??null
+      }
+    };
+  }
+  function ownerBriefMarkupV771(options){
     return ownerBriefHtmlV771({
       currency:S.biz?.currency||'SGD',
       scope:ownerBriefScopeV778(),
@@ -33964,7 +34008,7 @@ async function customerIntelligencePage(){
       rhythm:lastVisitRhythmBundleV774,rhythmError:lastVisitRhythmErrorV774,
       demographics:lastDemographicTotalsBundleV774,demographicsError:lastDemographicTotalsErrorV774,
       canOpenCustomers:S.myRole==='owner'||canReadModule('clients')
-    });
+    },options);
   }
   const forecastMarkup=(forecast,currency)=>{
     if(forecast?.status!=='available'){
@@ -34033,13 +34077,50 @@ async function customerIntelligencePage(){
     const economicsMarkupV522=economicsGatedOffV522
       ?''
       :window.NestlySectorEconomics.render(economicsView);
-    /* nestly_v771 (owner ruling: this page must be straightforward for an SME owner). The brief
-       comes first and everything that used to BE the page — evidence, coverage, forecast, the
-       full ranked list — moves behind one closed disclosure. The concatenation inside the
-       disclosure is byte-identical to what it was: every mount those sections bind afterwards
-       (RevenueTruthUI.bind, the growth mounts, bindCategoryMixSectionV650, #ciMore) is still
-       queried from the same body node, and a closed <details> keeps its subtree in the document. */
-    body.innerHTML=`${ownerBriefMarkupV771()}${nightlyBriefMarkupV890()}<details class="card ci-detailed-analysis-v771" id="ciDetailedAnalysisV771"><summary><b>Detailed analysis</b> <span class="muted small">Evidence, coverage, forecast and the full ranked list</span></summary><div class="ci-detailed-analysis-body-v771">${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${economicsMarkupV522}${customerRecordsMarkup(data)}${acquisitionMarkupV650()}${funnelMarkupV650()}${contactabilityMarkupV650()}${ciCategoryMixWrapV650()}${ciFunnelConversionMarkupV679()}${ciDemographicsMarkupV679()}${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}</div></details>`;
+    /* nestly_v771 → nestly_v892 (owner ruling: this page must ANSWER, not archive). The order is
+       the order an owner reads in: four numbers, at most three things to know, the pulse, the
+       health of what Peekaa can see, last night's brief in one strip, and only then everything
+       the page has always rendered — now grouped into an accordion instead of one long scroll,
+       with no table at all above it.
+
+       Every renderer below is the SAME renderer, called once, with the same arguments; the v771
+       blocks come through ownerBriefHtmlV771's additive {blocks:[...]} option rather than a
+       second implementation. The binding rule is unchanged and is why this is safe: a closed
+       <details> keeps its subtree in the document, so RevenueTruthUI.bind, the two growth mounts,
+       bindCategoryMixSectionV650, #ciMore and the CSV export status are all still found from the
+       same body node immediately below. */
+    const biModel=biModelV892(biBundlesV892(truthView));
+    const biExplore=biExploreHtmlV892([
+      {key:'customers',title:'Customers',hint:'Who to call, who matters most, and who they are',
+        body:`${ownerBriefMarkupV771({blocks:['bringback','top']})}${customerRecordsMarkup(data)}${ciDemographicsMarkupV679()}${ownerBriefMarkupV771({blocks:['who']})}`},
+      {key:'money',title:'Revenue &amp; payments',hint:'What was recorded, what was collected, what is still owed',
+        body:`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${ownerBriefMarkupV771({blocks:['cash']})}`},
+      {key:'retention',title:'Retention',hint:'How many customers come back, and where they stop',
+        body:ciFunnelConversionMarkupV679()},
+      {key:'services',title:'Services',hint:'What sells, what brings people back, what they buy',
+        body:`${ownerBriefMarkupV771({blocks:['services']})}${ciCategoryMixWrapV650()}`},
+      {key:'staff',title:'Staff',hint:'Who brings customers back',
+        body:ownerBriefMarkupV771({blocks:['staff']})},
+      {key:'acquisition',title:'Acquisition',hint:'Where customers come from, and who you may contact',
+        body:`${acquisitionMarkupV650()}${contactabilityMarkupV650()}`},
+      {key:'booking',title:'Booking funnel',hint:'Sign-up and booking, step by step',
+        body:funnelMarkupV650()},
+      {key:'rewards',title:'Rewards',hint:'Which rewards people actually use',
+        body:ownerBriefMarkupV771({blocks:['rewards']})},
+      {key:'behaviour',title:'Weekday &amp; time-of-day behaviour',hint:'When customers come in',
+        body:ownerBriefMarkupV771({blocks:['when']})},
+      {key:'packages',title:'Packages',hint:'Prepaid sessions still unused',
+        body:ownerBriefMarkupV771({blocks:['unused']})},
+      {key:'branches',title:'Branches',hint:'The same period, one row for each branch',
+        body:ownerBriefMarkupV771({blocks:['branches']})},
+      {key:'coverage',title:'Improve your insights',hint:'What Peekaa cannot tell you yet',
+        body:ownerBriefMarkupV771({blocks:['limits']})},
+      {key:'evidence',title:'Evidence &amp; methodology',hint:'The full ranked list and the measured behaviour behind it',
+        body:`${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}${economicsMarkupV522}`},
+      {key:'ask',title:'Ask my business',hint:'Every answer prepared last night',
+        body:nightlyBriefAnswersMarkupV892()}
+    ]);
+    body.innerHTML=`${biSnapshotHtmlV892(biModel)}${biInsightsHtmlV892(biSelectInsightsV892(biModel))}${biPulseHtmlV892(biModel)}${biHealthHtmlV892(biModel)}${nightlyBriefStripMarkupV892()}${biExplore}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -34068,6 +34149,16 @@ async function customerIntelligencePage(){
     }else recommendationRefreshMount?.remove();
     CUI.enhance(body);
     bindCategoryMixSectionV650();
+    /* nestly_v892: a card's "see this" control opens the Explore group it points at. It is a
+       button rather than an anchor on purpose — a bare "#name" href is a ROUTE to this app's hash
+       router, which would answer "That page has moved." A control whose group is absent (its
+       readers returned nothing, so the group was dropped) is REMOVED rather than left dead. */
+    body.querySelectorAll('[data-bi-open-v892]').forEach(button=>{
+      const key=button.getAttribute('data-bi-open-v892')||'';
+      const group=key?body.querySelector(`[data-bi-section-v892="${key}"]`):null;
+      if(!group){button.remove();return;}
+      button.onclick=()=>{group.open=true;group.scrollIntoView({behavior:'smooth',block:'start'});};
+    });
     $('ciCsv').disabled=!!lastCustomerError||!customers.length;
     const more=$('ciMore');if(more)more.onclick=loadMore;
   };
@@ -34853,7 +34944,7 @@ function behaviourPanelHtmlV679(payload){
    stubs — because the closure slice that feeds it is extracted and executed by other test files.
    The two status vocabularies it inlines (bring-back tones, limit sentences) are local copies for
    that reason; ATTENTION_STATUS_V548 remains the authority the Bring-back module itself reads. */
-function ownerBriefHtmlV771(brief){
+function ownerBriefHtmlV771(brief,options){
   const briefV771=(brief&&typeof brief==='object')?brief:{};
   /* Number(null) is 0 and Number('') is 0, so a bare Number.isFinite check would silently turn
      "this business has never recorded that" into a confident zero — a null per-session price would
@@ -35592,11 +35683,716 @@ function ownerBriefHtmlV771(brief){
      Peekaa still refuses to guess at. Every block above keeps the markup it already had; only
      this line changed. A block whose reader returned nothing and raised nothing is an empty
      string here, so an absent permission removes it rather than showing an empty shell. */
+  /* nestly_v892: an ADDITIVE option, so Business Intelligence can file these same blocks under
+     its own Explore accordion without a second implementation of any of them existing anywhere.
+     A caller that passes no options gets exactly what it always got, byte for byte — the card,
+     its heading, its scope line and every block in the v774 reading order. A caller that passes
+     {blocks:[...]} gets those blocks, in the order it asked for them, and nothing else: no card
+     wrapper, because the caller is supplying its own. An unknown key contributes nothing rather
+     than throwing, for the same reason a reader that returned nothing contributes nothing. */
+  const partsV892={
+    glance:glanceV771,branches:branchesV778,when:whenV774,bringback:bringBackV771,
+    cash:cashGapV774,unused:unusedV771,top:topCustomersV771,services:servicesV771,
+    staff:staffBlockV774,rewards:rewardsBlockV774,who:whoV774,limits:limitsV771
+  };
+  const requestedV892=(options&&Array.isArray(options.blocks))?options.blocks:null;
+  if(requestedV892)return requestedV892.map(key=>partsV892[key]||'').join('');
   return `<section class="card ci-owner-brief-v771" aria-labelledby="ciOwnerBriefTitleV771">
     <div class="cui-card-head" style="display:flex;gap:10px;align-items:flex-start">${CUI.icon('customers',{size:24})}<div><h2 id="ciOwnerBriefTitleV771">Owner brief</h2><p>The short version: what happened, who to call, and what is already paid for.</p>${scopeLineV778}</div></div>
     ${glanceV771}${branchesV778}${whenV774}${bringBackV771}${cashGapV774}${unusedV771}${topCustomersV771}${servicesV771}${staffBlockV774}${rewardsBlockV774}${whoV774}${limitsV771}
   </section>`;
 }
+
+/* nestly_v892 — BUSINESS INTELLIGENCE (the presentation layer of #/customerintel).
+   =================================================================================================
+   Owner ruling 2026-09-14: the module is renamed "Business Intelligence" and the page is rebuilt
+   as an answer, not as an archive. The owner opens it and sees, without scrolling past a table:
+   four numbers, at most three things to know, a one-line customer pulse, a short health list, last
+   night's brief in one strip, and then everything the page has always rendered, filed behind
+   "Explore your business".
+
+   NOTHING BELOW ASKS THE BACKEND ANYTHING. Every function here is a pure function of bundles the
+   page has already fetched — same readers, same arguments, same order (tests/business-ui/
+   v892-request-parity.test.mjs pins that). No threshold, rank, formula, suppression or metric
+   meaning is re-decided in the browser: the selector re-ORDERS what the server already ranked and
+   the renderers re-WORD what the server already said. Where a fact is absent it stays absent; a
+   zero is only ever printed when the server sent a zero.
+
+   Same posture as ownerBriefHtmlV771 / funnelConversionPanelHtmlV679 above: top-level functions
+   returning HTML, so every judgement can be executed against a fixture in a test rather than
+   grepped for in source. ================================================================= */
+
+const BI_WORDING_V892=Object.freeze({
+  title:'Business Intelligence',
+  subtitle:'Know what happened. See what to do next.',
+  snapshot:'Business snapshot',
+  insights:'3 things to know',
+  pulse:'Customer pulse',
+  health:'Business health',
+  explore:'Explore your business',
+  overnight:'Last night’s brief',
+  showMore:'Show more',
+  evidenceSummary:'Why am I seeing this?',
+  noComparison:'No earlier period to compare yet.',
+  noInsight:'No reliable recommendation yet — Peekaa will surface one once there is enough evidence.',
+  types:Object.freeze({
+    needs_attention:Object.freeze({label:'Needs attention',mark:'🔴'}),
+    opportunity:Object.freeze({label:'Opportunity',mark:'🟠'}),
+    doing_well:Object.freeze({label:'Doing well',mark:'🟢'}),
+    still_learning:Object.freeze({label:'Still learning',mark:'⚪'})
+  })
+});
+
+/* One card per underlying insight, so a finding the server ranked and a finding this page
+   derived from the same facts cannot both take a slot. The map is presentation only: it says
+   which candidates are ABOUT the same thing, never which of them is true. */
+const BI_ADVISORY_TOPICS_V892=Object.freeze({
+  lapsed_regulars:'bringback',package_leakage:'packages',funnel_bottleneck:'retention',
+  gateway_followthrough:'services',no_discount_reminder:'discounts',
+  loyalty_cannibalisation_gap:'loyalty',staff_mix_underperformance:'staff',
+  campaigns:'campaigns',discovery:'discovery',
+  'strength:category':'services','strength:service':'services','strength:weekday':'weekday'
+});
+function biAdvisoryTopicV892(id){
+  const parts=String(id===null||id===undefined?'':id).split(':');
+  const head=parts[0]||'item';
+  const pair=head==='strength'?`strength:${parts[1]||''}`:head;
+  return BI_ADVISORY_TOPICS_V892[pair]||BI_ADVISORY_TOPICS_V892[head]||`advisory:${head}`;
+}
+
+/* Absence has to survive all the way to the markup, so this is the v771 rule again: Number(null)
+   is 0 and Number('') is 0, and either would turn "never recorded" into a confident zero. */
+function biFiniteV892(value){
+  if(value===null||value===undefined||typeof value==='boolean')return null;
+  if(typeof value==='string'&&!value.trim())return null;
+  const parsed=Number(value);
+  return Number.isFinite(parsed)?parsed:null;
+}
+function biObjectV892(value){return (value&&typeof value==='object'&&!Array.isArray(value))?value:null;}
+function biListV892(value){return Array.isArray(value)?value.filter(row=>row&&typeof row==='object'):[];}
+function biTextV892(value,fallback=''){const text=String(value===null||value===undefined?'':value).trim();return text||fallback;}
+/* Grouped money on the primary surface, from the formatter the Revenue Truth module already owns
+   (en-SG, currency code, two decimals — "SGD 6,683.30"). Nothing here invents a second format;
+   the blocks reused under Explore keep whatever formatting they were already pinned to. */
+function biMoneyV892(value,currency){
+  const amount=biFiniteV892(value);
+  if(amount===null)return null;
+  const code=biTextV892(currency,'SGD').toUpperCase();
+  try{return RevenueTruthUI.money(amount,code);}catch(_error){return `${code} ${(amount/100).toFixed(2)}`;}
+}
+function biWholeV892(value){const parsed=biFiniteV892(value);return parsed===null?null:Math.round(parsed);}
+function biPluralV892(count,one,many){return `${count} ${count===1?one:many}`;}
+/* The ONLY arithmetic on a comparison, and it is the one compareV771 already does: a percentage
+   change between two totals the server computed. A missing or non-positive earlier total means
+   there is nothing to compare, never a growth figure out of nothing. */
+function biChangePctV892(now,before){
+  if(now===null||before===null||before<=0)return null;
+  const change=Math.round((now-before)/before*100);
+  return Number.isFinite(change)?change:null;
+}
+function biChangeLineV892(change,periodDays){
+  if(change===null)return '';
+  if(change===0)return `No change vs previous ${periodDays} days`;
+  return `${change>0?'↑':'↓'} ${Math.abs(change)}% vs previous ${periodDays} days`;
+}
+
+/* -------------------------------------------------------------------------------------------
+   THE MODEL. One plain object, built from bundles the page already holds. Every field is either
+   a named server field or an absence; the selector and the renderers below read nothing else.
+   ------------------------------------------------------------------------------------------- */
+function biModelV892(bundles){
+  const input=biObjectV892(bundles)||{};
+  const currency=biTextV892(input.currency,'SGD').toUpperCase();
+  const periodDays=Math.max(1,biWholeV892(input.periodDays)||1);
+  const scope=biObjectV892(input.scope)||{};
+  const branchId=biTextV892(scope.branchId);
+  const branchLabel=branchId
+    ?[biTextV892(scope.branchCode),biTextV892(scope.branchName)].filter(Boolean).join(' · ')||'One branch'
+    :'All branches';
+
+  const truthTotals=biObjectV892(biObjectV892(input.truth)?.totals)||{};
+  const truthPrevTotals=biObjectV892(biObjectV892(input.truthPrev)?.totals)||{};
+  const lifeMetrics=biObjectV892(biObjectV892(input.lifecycle)?.metrics)||{};
+  const lifePrevMetrics=biObjectV892(biObjectV892(input.lifecyclePrev)?.metrics)||{};
+  const cash=biObjectV892(input.cashGap);
+  const cashTotals=biObjectV892(cash?.totals)||{};
+
+  const revenueNow=biFiniteV892(truthTotals.known_revenue_minor);
+  const revenuePrev=biFiniteV892(truthPrevTotals.known_revenue_minor);
+  const buyersNow=biFiniteV892(lifeMetrics.transacting_identified_customers);
+  const buyersPrev=biFiniteV892(lifePrevMetrics.transacting_identified_customers);
+  const joinersNow=biFiniteV892(lifeMetrics.new_customers);
+  const joinersPrev=biFiniteV892(lifePrevMetrics.new_customers);
+
+  /* Attention (bring-back) — the server's own statuses and its own summary counts. */
+  const attention=biObjectV892(input.attention);
+  const attentionSummary=biObjectV892(attention?.summary)||{};
+  const attentionRows=biListV892(attention?.rows);
+  const urgentRow=attentionRows.find(row=>row.status==='overdue')
+    ||attentionRows.find(row=>row.status==='slipping')
+    ||null;
+
+  /* Prepaid sessions — the same roll-up the brief's own block does: sum what is left, per holder,
+     and only claim a value when every row behind it carries a per-session list price. */
+  const people=biListV892(input.customers);
+  const peopleById=new Map();
+  people.forEach(record=>{if(record.client_id!==null&&record.client_id!==undefined)peopleById.set(String(record.client_id),record);});
+  const held=new Map();
+  biListV892(input.packages).forEach(row=>{
+    const key=biTextV892(row.client_id);
+    const left=biWholeV892(row.remaining)||0;
+    if(!key||left<=0)return;
+    let holder=held.get(key);
+    if(!holder){
+      const record=peopleById.get(key)||null;
+      holder={key,name:biTextV892(record?.full_name,'Customer'),lastVisit:biFiniteV892(record?.days_since_last_purchase),sessions:0,valueMinor:0,valueKnown:true};
+      held.set(key,holder);
+    }
+    holder.sessions+=left;
+    const unit=biFiniteV892(row.list_unit_cents_snapshot);
+    if(unit===null)holder.valueKnown=false;else holder.valueMinor+=left*unit;
+  });
+  const holders=[...held.values()].sort((first,second)=>
+    (second.lastVisit===null?Infinity:second.lastVisit)-(first.lastVisit===null?Infinity:first.lastVisit));
+  const unusedSessions=holders.reduce((total,holder)=>total+holder.sessions,0);
+
+  /* Top-customer concentration — the brief's own derivation: the largest earners against the
+     identified-revenue total the same payload reports, and nothing at all without that base. */
+  const revenueBase=(()=>{const total=biFiniteV892(biObjectV892(input.summary)?.net_revenue_cents);return total!==null&&total>0?total:null;})();
+  const earners=people
+    .filter(record=>{const earned=biFiniteV892(record.net_revenue_cents);return earned!==null&&earned>0;})
+    .sort((first,second)=>Number(second.net_revenue_cents)-Number(first.net_revenue_cents));
+  const leadCount=Math.min(3,earners.length);
+  const leadMinor=earners.slice(0,leadCount).reduce((total,record)=>total+Number(record.net_revenue_cents||0),0);
+
+  /* Ranked advisory items, server order preserved. 'foundation' (a coverage defect) and
+     'do_nothing' are filed as health, never as one of the three things to know — the payload
+     does not claim they block the rest, and this page will not claim it for them. */
+  const opportunities=biObjectV892(input.opportunities);
+  const sections=biObjectV892(opportunities?.report_sections)||{};
+  const sectionIds=key=>new Set((Array.isArray(sections[key])?sections[key]:[]).map(id=>String(id)));
+  /* The server buckets its own ranked ids, so the card type is read from ITS buckets rather
+     than judged here: 'strengths' is something going well, 'failures' is something to fix, and
+     everything else it promoted (leakage, discovery, change, segments) is an opportunity —
+     money already paid for or a pattern worth using, not an alarm. */
+  const strengthIds=sectionIds('strengths'),failureIds=sectionIds('failures');
+  const advisory=biListV892(opportunities?.ranked)
+    .filter(item=>item.rank_class!=='foundation'&&item.rank_class!=='do_nothing')
+    .map(item=>{
+      const id=biTextV892(item.id);
+      const confidence=biObjectV892(item.confidence)||{};
+      return {
+        id,
+        topic:biAdvisoryTopicV892(id),
+        rankClass:biTextV892(item.rank_class),
+        strength:item.rank_class==='strength'||strengthIds.has(id),
+        failure:failureIds.has(id),
+        pattern:biTextV892(item.pattern),
+        actionWhat:biTextV892(biObjectV892(item.action)?.what),
+        impactMinor:biFiniteV892(biObjectV892(item.impact)?.cents),
+        sampleSize:biWholeV892(confidence.n),
+        sampleFloor:biWholeV892(confidence.floor),
+        limitation:biTextV892(item.limitation),
+        reversal:biTextV892(item.reversal_condition)
+      };
+    });
+  const foundation=biListV892(opportunities?.ranked).find(item=>item.rank_class==='foundation')||null;
+
+  /* Weekday strength — the server's own busiest weekday, and the row it already measured. */
+  const rhythm=biObjectV892(input.rhythm);
+  const busiest=biListV892(rhythm?.busiest_weekdays)[0]||null;
+  const weekdayRow=busiest?biListV892(rhythm?.weekdays).find(row=>String(row.dow)===String(busiest.dow))||null:null;
+
+  const funnel=biObjectV892(input.funnelConversion);
+  const stageOne=biObjectV892(funnel?.stage_1_to_2)||{};
+  const demographics=biObjectV892(input.demographics);
+  const demographicCoverage=biObjectV892(demographics?.coverage)||{};
+  const categoryCoverage=biObjectV892(biObjectV892(input.categoryMix)?.coverage)||{};
+  const contactability=biObjectV892(input.contactability);
+  const offers=biObjectV892(contactability?.business_offers);
+  const offerChannels=biObjectV892(offers?.allowed_by_channel)||{};
+  const action=biObjectV892(input.action)||{};
+
+  return {
+    currency,periodDays,
+    from:biTextV892(input.from),to:biTextV892(input.to),
+    scopeLine:`Last ${periodDays} days · ${branchLabel}`,
+    revenue:{now:revenueNow,change:biChangePctV892(revenueNow,revenuePrev)},
+    collected:{
+      now:biFiniteV892(cashTotals.collected_cents),
+      sharePct:biWholeV892(biObjectV892(cashTotals.collected_share)?.pct)
+    },
+    customers:{now:buyersNow,change:biChangePctV892(buyersNow,buyersPrev)},
+    newCustomers:{now:joinersNow,change:biChangePctV892(joinersNow,joinersPrev)},
+    cash:{
+      outstanding:biFiniteV892(cashTotals.outstanding_cents),
+      openSales:(biWholeV892(cashTotals.sales_unpaid)||0)+(biWholeV892(cashTotals.sales_partly_paid)||0),
+      unpaid:biWholeV892(cashTotals.sales_unpaid)||0,
+      partlyPaid:biWholeV892(cashTotals.sales_partly_paid)||0,
+      salesCount:biWholeV892(cashTotals.sales_count)||0,
+      unlinkedCount:biWholeV892(biObjectV892(cash?.unlinked_payments)?.count)||0,
+      unlinkedMinor:biFiniteV892(biObjectV892(cash?.unlinked_payments)?.cents),
+      refundsMinor:biFiniteV892(cash?.refunds_cents),
+      namesVisible:cash?.names_visible!==false,
+      topDebtor:biListV892(cash?.outstanding_by_customer)[0]||null
+    },
+    bringBack:{
+      due:biWholeV892(attentionSummary.due),
+      overdue:biWholeV892(attentionSummary.overdue),
+      slipping:biWholeV892(attentionSummary.slipping),
+      atRiskMinor:biFiniteV892(attentionSummary.monthly_at_risk_cents),
+      considered:biWholeV892(attentionSummary.considered),
+      urgent:urgentRow&&{
+        clientId:biTextV892(urgentRow.client_id),
+        name:biTextV892(urgentRow.full_name,'Customer'),
+        status:biTextV892(urgentRow.status),
+        cadenceDays:biWholeV892(urgentRow.cadence_days),
+        lastVisitDays:biWholeV892(urgentRow.last_visit_days)
+      }||null
+    },
+    packages:{
+      holders:holders.length,sessions:unusedSessions,
+      valueMinor:holders.length&&holders.every(holder=>holder.valueKnown)
+        ?holders.reduce((total,holder)=>total+holder.valueMinor,0):null,
+      longestUnseen:holders[0]||null
+    },
+    concentration:(leadCount>0&&revenueBase!==null)
+      ?{count:leadCount,pct:Math.round(leadMinor/revenueBase*100)}
+      :null,
+    advisory,
+    foundation:foundation?{
+      pattern:biTextV892(foundation.pattern),
+      actionWhat:biTextV892(biObjectV892(foundation.action)?.what)
+    }:null,
+    categoryCoveragePct:(()=>{const bars=biFiniteV892(categoryCoverage.classified_pct_bps);return bars===null?null:Math.round(bars/100*10)/10;})(),
+    profileCoverage:{
+      age:biObjectV892(demographicCoverage.age_known),
+      gender:biObjectV892(demographicCoverage.gender_known)
+    },
+    contactable:offers?{
+      customers:biWholeV892(offers.customers)||0,
+      sms:biWholeV892(offerChannels.sms)||0,
+      email:biWholeV892(offerChannels.email)||0
+    }:null,
+    weekday:(busiest&&weekdayRow)?{
+      label:biTextV892(busiest.label),
+      visits:biWholeV892(weekdayRow.visits),
+      revenueMinor:biFiniteV892(weekdayRow.revenue_cents)
+    }:null,
+    retention:{
+      present:!!funnel,
+      measurable:biFiniteV892(stageOne.pct)!==null,
+      returned:biWholeV892(stageOne.numerator),
+      outOf:biWholeV892(stageOne.denominator),
+      pct:biWholeV892(stageOne.pct)
+    },
+    action:{
+      allowed:action.allowed===true,
+      title:biTextV892(action.title),
+      finding:biTextV892(action.finding),
+      costMinor:biFiniteV892(action.costMinor)
+    }
+  };
+}
+
+/* -------------------------------------------------------------------------------------------
+   THE SNAPSHOT. Four numbers, each from one named server field, each with its own comparison —
+   or, when there is no earlier window at all, one quiet line for the whole row rather than the
+   same apology four times.
+   ------------------------------------------------------------------------------------------- */
+function biSnapshotHtmlV892(model){
+  const view=biObjectV892(model)||{};
+  const currency=biTextV892(view.currency,'SGD');
+  const days=Math.max(1,biWholeV892(view.periodDays)||1);
+  const revenue=biObjectV892(view.revenue)||{},collected=biObjectV892(view.collected)||{};
+  const customers=biObjectV892(view.customers)||{},joiners=biObjectV892(view.newCustomers)||{};
+  const changes=[revenue.change,customers.change,joiners.change];
+  const anyComparison=changes.some(change=>change!==null&&change!==undefined);
+  const tile=(label,value,second,change)=>`<article class="bi-kpi">
+      <span class="bi-kpi-label">${esc(label)}</span>
+      <strong class="bi-kpi-value">${esc(value===null||value===undefined?'—':value)}</strong>
+      ${second?`<span class="bi-kpi-second">${esc(second)}</span>`:''}
+      ${anyComparison&&change!==null&&change!==undefined
+        ?`<span class="bi-kpi-change ${change>0?'is-up':change<0?'is-down':'is-flat'}">${esc(biChangeLineV892(change,days))}</span>`
+        :''}
+    </article>`;
+  const revenueText=biMoneyV892(revenue.now,currency);
+  const collectedText=biMoneyV892(collected.now,currency);
+  const buyers=biWholeV892(customers.now),joined=biWholeV892(joiners.now);
+  return `<section class="card bi-snapshot" aria-labelledby="biSnapshotTitleV892">
+    <div class="bi-section-head"><h2 id="biSnapshotTitleV892">${esc(BI_WORDING_V892.snapshot)}</h2>
+    <p class="muted small">${esc(biTextV892(view.scopeLine))}</p></div>
+    <div class="bi-kpis">
+      ${tile('Revenue',revenueText,'',revenue.change)}
+      ${tile('Collected',collectedText,collected.sharePct===null||collected.sharePct===undefined?'':`${collected.sharePct}% collected`,null)}
+      ${tile('Customers',buyers===null?null:String(buyers),joined===null?'':`${joined} new`,customers.change)}
+      ${tile('New customers',joined===null?null:String(joined),'',joiners.change)}
+    </div>
+    ${anyComparison?'':`<p class="muted small bi-no-compare">${esc(BI_WORDING_V892.noComparison)}</p>`}
+  </section>`;
+}
+
+/* -------------------------------------------------------------------------------------------
+   THE SELECTOR. Presentation only: it re-orders findings the server already made, by how much
+   an owner's day depends on them. It never re-ranks the server's own list within a class, never
+   invents a finding, and never pads to three.
+   Order: money that has not arrived · a customer about to be lost · the executable action the
+   growth engine already approved · the server's ranked advice, in the server's order · work
+   already paid for and untaken · what is going well.
+   ------------------------------------------------------------------------------------------- */
+function biSelectInsightsV892(model){
+  const view=biObjectV892(model)||{};
+  const currency=biTextV892(view.currency,'SGD');
+  const days=Math.max(1,biWholeV892(view.periodDays)||1);
+  const period=`Last ${days} days`;
+  const cards=[];
+  const push=card=>{if(card)cards.push(card);};
+
+  /* 1. Money already earned and not yet in the till. */
+  const cash=biObjectV892(view.cash)||{};
+  const outstanding=biFiniteV892(cash.outstanding);
+  if(outstanding!==null&&outstanding>0){
+    const openSales=biWholeV892(cash.openSales)||0;
+    push({
+      type:'needs_attention',topic:'cash',
+      finding:`${biMoneyV892(outstanding,currency)} not yet collected`,
+      why:`${biPluralV892(openSales,'sale is','sales are')} not recorded as fully paid.`,
+      action:'Check the open bills and record the payments you have already taken.',
+      cta:{kind:'section',section:'money',label:'See money recorded vs collected'},
+      evidence:{
+        fact:`${biWholeV892(cash.unpaid)||0} with no payment recorded and ${biWholeV892(cash.partlyPaid)||0} part paid, out of ${biWholeV892(cash.salesCount)||0} sales.`,
+        period,
+        sample:'',
+        limitation:'A sale with no payment recorded is either unpaid or was paid without being written down. Peekaa cannot tell the two apart.',
+        reconsider:'This clears as soon as the missing payments are recorded against their sales.'
+      }
+    });
+  }
+
+  /* 2. A regular who is about to stop being one. The rhythm and the verdict are the server's. */
+  const bringBack=biObjectV892(view.bringBack)||{};
+  const urgent=biObjectV892(bringBack.urgent);
+  if(urgent){
+    const cadence=biWholeV892(urgent.cadenceDays),lastSeen=biWholeV892(urgent.lastVisitDays);
+    const fading=(biWholeV892(bringBack.overdue)||0)+(biWholeV892(bringBack.slipping)||0);
+    const stake=biMoneyV892(bringBack.atRiskMinor,currency);
+    push({
+      type:'needs_attention',topic:'bringback',
+      finding:cadence!==null&&lastSeen!==null
+        ?`${urgent.name} usually visits every ${cadence} days. Last seen ${lastSeen} days ago.`
+        :`${urgent.name} is overdue against their own visit rhythm.`,
+      why:fading>0
+        ? (stake?`${biPluralV892(fading,'regular is','regulars are')} overdue · about ${stake} a month of regular spend at stake.`
+          :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
+        :'This customer is overdue against their own visit rhythm.',
+      action:'Call or message them while the gap is still short.',
+      cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'},
+      evidence:{
+        fact:'Each person is judged against their own visit rhythm, not against a fixed rule.',
+        period,
+        sample:biWholeV892(bringBack.considered)
+          ?`Based on ${biPluralV892(biWholeV892(bringBack.considered),'customer','customers')} with enough visit history to judge.`
+          :'',
+        limitation:'A customer with too few visits to show a rhythm is not judged at all.',
+        reconsider:'Peekaa drops the flag the moment they visit again.'
+      }
+    });
+  }
+
+  /* 3. The v108 action, when the growth engine allows it. The card only FRONTS it — approve,
+        dismiss, hold-out, eligibility and permission all stay where they already live, on the
+        Revenue Truth control under Explore. Nothing is manufactured when it is withheld. */
+  const action=biObjectV892(view.action)||{};
+  if(action.allowed===true&&biTextV892(action.title)){
+    push({
+      type:'opportunity',topic:'action',
+      finding:biTextV892(action.title),
+      why:biTextV892(action.finding,'Peekaa ranked this ahead of everything else it can measure today.'),
+      action:'Review it and approve it from the daily action control.',
+      cta:{kind:'section',section:'money',label:'Open today’s best action'},
+      evidence:{
+        fact:'Prepared by the daily growth briefing for this business and branch.',
+        period,sample:'',
+        limitation:'Peekaa withholds this suggestion entirely when the evidence behind it is thin, rather than guessing.',
+        reconsider:'It is re-prepared each day from what has happened since.'
+      }
+    });
+  }
+
+  /* 4. The server's ranked advice, in the server's order. Coverage defects were already filtered
+        out in the model; what is left keeps its own class — a strength reads as a strength and
+        money walking away reads as something to fix. */
+  biListV892(view.advisory).forEach(item=>{
+    const sample=(item.sampleSize!==null&&item.sampleSize!==undefined&&item.sampleFloor)
+      ?`Based on ${biPluralV892(item.sampleSize,'observation','observations')}. Peekaa requires at least ${item.sampleFloor} before showing this finding.`
+      :'';
+    const impact=biMoneyV892(item.impactMinor,currency);
+    push({
+      type:item.strength?'doing_well':item.failure?'needs_attention':'opportunity',
+      topic:item.topic,
+      finding:biTextV892(item.pattern,'Peekaa found something worth a look.'),
+      why:impact?`Worth about ${impact} over the period measured.`:'',
+      action:item.strength?'':biTextV892(item.actionWhat),
+      cta:{kind:'section',section:'evidence',label:'See the full evidence'},
+      evidence:{
+        fact:item.strength?'Ranked by Peekaa as something this business is doing well.':'Ranked by Peekaa against every other finding it could measure.',
+        period,sample,
+        limitation:biTextV892(item.limitation),
+        reconsider:biTextV892(item.reversal)
+      }
+    });
+  });
+
+  /* 5. Work already paid for and not yet taken. */
+  const packages=biObjectV892(view.packages)||{};
+  if((biWholeV892(packages.sessions)||0)>0){
+    const value=biMoneyV892(packages.valueMinor,currency);
+    push({
+      type:'opportunity',topic:'packages',
+      finding:`${biPluralV892(biWholeV892(packages.holders)||0,'customer holds','customers hold')} ${biPluralV892(biWholeV892(packages.sessions)||0,'unused session','unused sessions')}`,
+      why:value?`Worth about ${value} of work already paid for.`:'Work already paid for and not yet taken.',
+      action:'Book them in before the sessions expire.',
+      cta:{kind:'route',href:'#/custpackages',label:'Open customer packages'},
+      evidence:{
+        fact:'Counted from packages that are still active with sessions left.',
+        period:'As things stand today',sample:'',
+        limitation:'A value is shown only when every package behind it recorded a price per session.',
+        reconsider:'Each session booked removes itself from this count.'
+      }
+    });
+  }
+
+  /* 6. What is going well. A strength is never dressed up as a task. */
+  const weekday=biObjectV892(view.weekday);
+  if(weekday&&biTextV892(weekday.label)){
+    const takings=biMoneyV892(weekday.revenueMinor,currency);
+    const visits=biWholeV892(weekday.visits);
+    push({
+      type:'doing_well',topic:'weekday',
+      finding:`${biTextV892(weekday.label)} performs best`,
+      why:[visits===null?'':biPluralV892(visits,'visit','visits'),takings||''].filter(Boolean).join(' · '),
+      action:'',
+      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'},
+      evidence:{
+        fact:'The busiest weekday Peekaa measured, counted per day the business was open.',
+        period,sample:'',
+        limitation:'A weekday with too few occurrences in the period is not ranked.',
+        reconsider:'Peekaa re-checks this every time the report is run.'
+      }
+    });
+  }
+
+  /* One card per underlying topic, then at most three. */
+  const seen=new Set();
+  const chosen=[];
+  cards.forEach(card=>{
+    if(chosen.length>=3||seen.has(card.topic))return;
+    seen.add(card.topic);chosen.push(card);
+  });
+  if(chosen.length)return chosen;
+
+  /* Nothing real to show. Say which of the two it is: still learning, or nothing at all. */
+  const retention=biObjectV892(view.retention)||{};
+  if(retention.present===true&&retention.measurable===false){
+    return [{
+      type:'still_learning',topic:'retention',
+      finding:'Peekaa needs more customer history before it can reliably measure first-to-second visit retention.',
+      why:'',action:'',cta:null,
+      evidence:{
+        fact:'A return rate is only reported once enough customers have had the chance to come back.',
+        period,sample:'',
+        limitation:'Customers who joined too recently to return yet are left out of the rate rather than counted as lost.',
+        reconsider:'Peekaa reports the rate as soon as enough customers have matured.'
+      }
+    }];
+  }
+  return [];
+}
+
+/* The translated half of a finding: what was seen, over what period, on how many observations,
+   what it cannot see, and what would make Peekaa change its mind. Collapsed, because an owner who
+   trusts the finding should not have to read it, and an owner who does not should not have to ask.
+   The verbatim analytical output stays under Explore → Evidence & methodology. */
+function biEvidenceHtmlV892(card){
+  const entry=biObjectV892(card)||{};
+  const evidence=biObjectV892(entry.evidence)||{};
+  const rows=[
+    ['What Peekaa saw',biTextV892(evidence.fact)],
+    ['Period',biTextV892(evidence.period)],
+    ['How much this is based on',biTextV892(evidence.sample)],
+    ['What this cannot see',biTextV892(evidence.limitation)],
+    ['When Peekaa would change its mind',biTextV892(evidence.reconsider)]
+  ].filter(row=>row[1]);
+  if(!rows.length)return '';
+  return `<details class="bi-evidence"><summary>${esc(BI_WORDING_V892.evidenceSummary)}</summary>
+    <dl class="bi-evidence-list">${rows.map(row=>`<dt>${esc(row[0])}</dt><dd>${esc(row[1])}</dd>`).join('')}</dl>
+  </details>`;
+}
+
+function biInsightCardHtmlV892(card){
+  const entry=biObjectV892(card);
+  if(!entry)return '';
+  const type=BI_WORDING_V892.types[entry.type]?entry.type:'still_learning';
+  const kind=BI_WORDING_V892.types[type];
+  const cta=biObjectV892(entry.cta);
+  const ctaHtml=!cta?''
+    :cta.kind==='route'&&biTextV892(cta.href)
+      ?`<a class="btn ghost sm bi-cta" href="${esc(cta.href)}">${esc(biTextV892(cta.label,'Open'))} →</a>`
+      :cta.kind==='section'&&biTextV892(cta.section)
+        ?`<button type="button" class="btn ghost sm bi-cta" data-bi-open-v892="${esc(cta.section)}">${esc(biTextV892(cta.label,'Open'))} →</button>`
+        :'';
+  return `<article class="bi-card bi-card--${esc(type.replace('_','-'))}">
+    <p class="bi-card-kind"><span aria-hidden="true">${kind.mark}</span> ${esc(kind.label)}</p>
+    <h3 class="bi-card-finding">${esc(biTextV892(entry.finding))}</h3>
+    ${biTextV892(entry.why)?`<p class="bi-card-why">${esc(biTextV892(entry.why))}</p>`:''}
+    ${biTextV892(entry.action)?`<p class="bi-card-action">${esc(biTextV892(entry.action))}</p>`:''}
+    ${ctaHtml}
+    ${biEvidenceHtmlV892(entry)}
+  </article>`;
+}
+
+function biInsightsHtmlV892(cards){
+  const list=Array.isArray(cards)?cards.filter(card=>biObjectV892(card)):[];
+  return `<section class="card bi-insights" aria-labelledby="biInsightsTitleV892">
+    <div class="bi-section-head"><h2 id="biInsightsTitleV892">${esc(BI_WORDING_V892.insights)}</h2></div>
+    ${list.length
+      ?`<div class="bi-cards">${list.map(biInsightCardHtmlV892).join('')}</div>`
+      :`<p class="bi-empty">${esc(BI_WORDING_V892.noInsight)}</p>`}
+  </section>`;
+}
+
+/* One line of the things an owner counts on their fingers. A figure the readers did not supply is
+   left out; it is never shown as a zero. A zero the reader DID supply for a count of problems is
+   also left out, because "0 slipping away" is not news. */
+function biPulseHtmlV892(model){
+  const view=biObjectV892(model)||{};
+  const bringBack=biObjectV892(view.bringBack)||{};
+  const packages=biObjectV892(view.packages)||{};
+  const known=biWholeV892(biObjectV892(view.customers)?.now);
+  const joined=biWholeV892(biObjectV892(view.newCustomers)?.now);
+  const due=biWholeV892(bringBack.due),slipping=biWholeV892(bringBack.slipping),overdue=biWholeV892(bringBack.overdue);
+  const sessions=biWholeV892(packages.sessions);
+  const chips=[
+    known===null?'':biPluralV892(known,'customer','customers'),
+    joined===null?'':`${joined} new`,
+    !due?'':`${due} due back`,
+    !overdue?'':`${overdue} overdue`,
+    !slipping?'':`${slipping} slipping away`,
+    !sessions?'':biPluralV892(sessions,'unused session','unused sessions')
+  ].filter(Boolean);
+  if(!chips.length)return '';
+  return `<section class="card bi-pulse" aria-labelledby="biPulseTitleV892">
+    <h2 class="bi-pulse-title" id="biPulseTitleV892">${esc(BI_WORDING_V892.pulse)}</h2>
+    <p class="bi-pulse-line">${chips.map(chip=>`<span class="bi-chip">${esc(chip)}</span>`).join('')}</p>
+  </section>`;
+}
+
+/* Status rows, not alarms. These say how much of the business Peekaa can currently see; they are
+   deliberately never promoted into the three things to know. */
+function biHealthHtmlV892(model){
+  const view=biObjectV892(model)||{};
+  const rows=[];
+  const concentration=biObjectV892(view.concentration);
+  if(concentration){
+    rows.push({
+      label:'Customer concentration',
+      value:`Top ${concentration.count} ${concentration.count===1?'customer':'customers'} = ${concentration.pct}% of known revenue`,
+      cta:null
+    });
+  }
+  let coverageSaidV892=false;
+  const coverage=biFiniteV892(view.categoryCoveragePct);
+  if(coverage!==null){
+    coverageSaidV892=true;
+    rows.push({
+      label:'What you sell',
+      value:`${coverage.toFixed(1)}% of revenue is sorted into categories`,
+      cta:coverage<100?{href:'#/servicemapping',label:'Map services'}:null
+    });
+  }
+  const profile=biObjectV892(view.profileCoverage)||{};
+  const age=biObjectV892(profile.age),gender=biObjectV892(profile.gender);
+  const agePct=biWholeV892(age?.pct),genderPct=biWholeV892(gender?.pct);
+  const profileBase=biWholeV892(age?.denominator)??biWholeV892(gender?.denominator);
+  if(agePct!==null||genderPct!==null){
+    coverageSaidV892=true;
+    const parts=[agePct===null?'':`Age known for ${agePct}%`,genderPct===null?'':`gender for ${genderPct}%`].filter(Boolean);
+    rows.push({
+      label:'Customer profiles',
+      value:`${parts.join(' · ')}${profileBase===null||profileBase===undefined?'':` of ${biPluralV892(profileBase,'customer','customers')}`}`,
+      cta:null
+    });
+  }
+  const contactable=biObjectV892(view.contactable);
+  if(contactable){
+    rows.push({
+      label:'Who you may contact',
+      value:`${contactable.sms} by text message and ${contactable.email} by email, out of ${biPluralV892(contactable.customers,'customer','customers')}`,
+      cta:null
+    });
+  }
+  /* The server's own coverage sentence covers the same two facts the two rows above were built
+     from, so it is printed only when neither of them could be: one fact, one row, and the
+     server's wording wherever this page has none of its own. */
+  const foundation=biObjectV892(view.foundation);
+  if(foundation&&biTextV892(foundation.pattern)&&!coverageSaidV892){
+    rows.push({label:'Coverage',value:biTextV892(foundation.pattern),cta:null});
+  }
+  if(!rows.length)return '';
+  return `<section class="card bi-health" aria-labelledby="biHealthTitleV892">
+    <div class="bi-section-head"><h2 id="biHealthTitleV892">${esc(BI_WORDING_V892.health)}</h2></div>
+    <ul class="bi-health-list">${rows.map(row=>`<li class="bi-health-row">
+      <span class="bi-health-label">${esc(row.label)}</span>
+      <span class="bi-health-value">${esc(row.value)}</span>
+      ${row.cta?`<a class="btn ghost sm" href="${esc(row.cta.href)}">${esc(row.cta.label)} →</a>`:''}
+    </li>`).join('')}</ul>
+  </section>`;
+}
+
+/* Last night's brief in one strip: the first sentence, the one about regulars, and everything
+   else behind "Show more". The sentences themselves are still ownerBriefLinesV826's, unchanged —
+   this only decides which two lead. */
+function biOvernightStripHtmlV892(response){
+  const payload=biObjectV892(response);
+  const brief=biObjectV892(payload?.brief);
+  if(!brief||payload.data_status==='not_computed'||payload.data_status==='error')return '';
+  const lines=(ownerBriefLinesV826(brief)||[]).filter(line=>biObjectV892(line)&&biTextV892(line.text));
+  if(!lines.length)return '';
+  /* The regulars sentence is the one an owner acts on, wherever it lands in the list. Both of the
+     forms ownerBriefLinesV826 can write for it contain the same six words. */
+  const riskIndex=lines.findIndex(line=>line.text.indexOf('overdue their usual visit')>-1);
+  const lead=[lines[0],riskIndex>0?lines[riskIndex]:null].filter(Boolean);
+  const rest=lines.filter(line=>lead.indexOf(line)<0);
+  const stale=payload.data_status==='stale'?' · older than a day':'';
+  return `<section class="card bi-overnight" aria-labelledby="biOvernightTitleV892">
+    <p class="bi-overnight-line"><b id="biOvernightTitleV892">${esc(BI_WORDING_V892.overnight)}</b>${esc(stale)}
+      ${lead.map(line=>`<span class="bi-overnight-sentence ${esc(biTextV892(line.kind,'plain'))}">${esc(line.text)}</span>`).join('')}</p>
+    ${rest.length?`<details class="bi-overnight-more"><summary>${esc(BI_WORDING_V892.showMore)}</summary>
+      <ul class="dashboard-brief-list">${rest.map(line=>`<li class="${esc(biTextV892(line.kind,'plain'))}">${esc(line.text)}</li>`).join('')}</ul>
+    </details>`:''}
+  </section>`;
+}
+
+/* Explore: one accordion of the renderers this page has always had, grouped the way an owner
+   would look for them. Native <details>, so it is keyboard-operable for free and — the reason
+   this is safe — a closed one KEEPS its subtree in the document, so every mount the page binds
+   after paint (RevenueTruthUI.bind, the growth mounts, bindCategoryMixSectionV650, #ciMore, the
+   CSV export status, the category drill-down) is still found from the same body node. A section
+   whose renderers all returned nothing is dropped rather than opened onto an empty shell. */
+function biExploreHtmlV892(sections){
+  const list=(Array.isArray(sections)?sections:[])
+    .map(section=>biObjectV892(section))
+    .filter(section=>section&&biTextV892(section.body));
+  if(!list.length)return '';
+  return `<section class="card bi-explore" aria-labelledby="biExploreTitleV892">
+    <div class="bi-section-head"><h2 id="biExploreTitleV892">${esc(BI_WORDING_V892.explore)}</h2></div>
+    ${list.map(section=>`<details class="bi-explore-group" data-bi-section-v892="${esc(biTextV892(section.key))}">
+      <summary><b>${esc(biTextV892(section.title,'Section'))}</b>${biTextV892(section.hint)?` <span class="muted small">${esc(biTextV892(section.hint))}</span>`:''}</summary>
+      <div class="bi-explore-body">${section.body}</div>
+    </details>`).join('')}
+  </section>`;
+}
+/* nestly_v892 END — everything above is the Business Intelligence presentation layer. */
 
 /* nestly_v650: Service mapping board. Reached from Customer Intelligence's "What they buy"
    withhold state (#/servicemapping) and, when writable, a small link from Services. There is no
@@ -38481,7 +39277,7 @@ async function settingsPage(){
         <span class="spacer"></span><select id="modulePerm-${s.id}-${module}" data-staff-module="${module}" data-perm-state-v382="${value==='off'?'off':'on'}" class="module-perm-select-v382" onchange="setModulePermissionV74('${s.id}','${module}',this.value)" ${sel.mode==='inherit'||financeDisabled?'disabled':''} style="width:auto;min-width:105px;padding:7px 30px 7px 10px">
           <option value="off" ${value==='off'?'selected':''}>Off</option><option value="r" ${value==='r'?'selected':''}>Read</option><option value="rw" ${value==='rw'?'selected':''}>Edit</option>
         </select>
-        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L, Staff commission and Customer intelligence require a finance-capable role.</span>`:''}
+        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L, Staff commission and Business Intelligence require a finance-capable role.</span>`:''}
       </div>`;
     }).join('');
   }
@@ -39068,7 +39864,7 @@ async function settingsPage(){
     if(error){fail(error);await loadTeam();return}
     const removedFinance=priorHadFinance&&['expenses','pnl'].filter(module=>!Object.hasOwn(data?.module_perms||{},module));
     permissionStatusByStaff[id]=removedFinance.length&&['staff','frontdesk'].includes(role)
-      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff commission and Customer intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
+      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff commission and Business Intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
       :'<div class="imp-note small">Role updated and effective module access refreshed.</div>';
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();
