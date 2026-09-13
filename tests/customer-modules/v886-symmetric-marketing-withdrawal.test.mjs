@@ -109,7 +109,9 @@ test('the two writers reuse the one RPC rather than re-implementing it', () => {
 
 test('the two biometric controls are one card, and every binding id survives the merge', () => {
   const card = slice('<section class="card" id="customerPasskeys"', '${customerAccountDeletionCardHtmlV749()}');
-  for (const id of ['customerPasskeyAdd', 'customerPasskeyList', 'customerPasskeyManageStatus',
+  /* nestly_v887 withdrew the passkey half, so #customerPasskeyAdd is gone with it — see
+     v887-phone-biometrics-only.test.mjs. Everything else still binds by id. */
+  for (const id of ['customerPasskeyList', 'customerPasskeyManageStatus',
     'customerAppLockV860', 'customerAppLockBodyV860', 'customerAppLockStatusV860'])
     assert.ok(card.includes(`id="${id}"`), `${id} did not survive the merge`);
   /* Both doors are still named, and named differently — that was the whole confusion. */

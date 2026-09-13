@@ -1014,7 +1014,7 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
   const passkeyButton=$('customerPasskeySignIn'),passkeyStatus=$('customerPasskeyStatus');
   /* nestly_v669: one capability answer for every surface — this inline check used to duplicate
      customerPasskeySupported() and so missed its native-shell gate. */
-  const passkeySupported=customerPasskeySupported()&&typeof sb.auth.signInWithPasskey==='function';
+  const passkeySupported=customerPasskeySupported()&&typeof sb.auth.signInWithPasskey==='function'&&CUSTOMER_PASSKEYS_OFFERED_V887;
   const nativeShell=globalThis.Capacitor?.isNativePlatform?.()===true;
   const installedApp=globalThis.navigator?.standalone===true
     ||globalThis.matchMedia?.('(display-mode: standalone)')?.matches===true;
@@ -1097,8 +1097,14 @@ function renderCustomerPasswordSignIn(isRouteCurrent=()=>true,{notice='',noticeT
       };
     });
   };
+  /* nestly_v887: with passkeys withdrawn this branch is EVERY web browser, not only the ones
+     without WebAuthn — so the Face ID icon is hidden rather than left sitting in the password
+     field permanently disabled, and the sentence names where Face ID sign-in actually lives. */
   if(!passkeySupported&&!nativeShell){
-    passkeyStatus.textContent='Passkeys are not supported in this browser. Sign in with your password.';
+    passkeyButton.hidden=true;
+    passkeyStatus.textContent=CUSTOMER_PASSKEYS_OFFERED_V887
+      ?'Passkeys are not supported in this browser. Sign in with your password.'
+      :'Sign in with your mobile number and password. Face ID sign-in is in the Peekaa app on your phone.';
   }
   if(nativeShell){passkeyButton.hidden=true;refreshBiometricUi()}
   /* V286: renderCustomerOtpStart awaits the phone-OTP capability RPC before it paints anything,
@@ -1698,6 +1704,22 @@ function applyCustomerNavCountsV194(counts={}){
   if(scan)scan.onclick=openCustomerJoinScanner;
   return customerNavCountsV194;
 }
+/* nestly_v887 (owner ruling 2026-09-13: "i just want the biometrics from phone (not the +add
+   passkey)"). A passkey is NOT the phone's own biometrics, and the difference is the whole reason
+   it goes. Your face unlocks a passkey, but the CREDENTIAL syncs through iCloud Keychain or Google
+   Password Manager — it can land on the customer's other devices and inside a password manager. It
+   is "a credential your face unlocks", not "biometrics that stay on this phone". The phone's own
+   biometrics are the native Keychain credential behind NestlyNativeBridge.biometricSignIn, which
+   never leaves the handset — and inside the shell that has always been the only one of the two
+   that could work at all (v669: WebAuthn cannot complete in a WKWebView).
+
+   This is a PRODUCT gate, deliberately separate from customerPasskeySupported()'s CAPABILITY
+   answer below: a desktop browser can still do WebAuthn; we have chosen not to offer it. Nothing
+   was deleted — every passkey code path is intact behind this one constant, so flipping it back to
+   true restores the feature whole. Two credentials existed in production when this shipped, both
+   from launch week and one of them the Supabase test number; neither holder is stranded, because
+   password sign-in is untouched and the native biometric sign-in is unaffected. */
+const CUSTOMER_PASSKEYS_OFFERED_V887=false;
 function customerPasskeySupported({management=false}={}){
   /* nestly_v669: the iOS shell is NOT a passkey surface, and saying so beats failing. Inside the
      Capacitor WKWebView the WebAuthn ceremony can never complete, for two independent reasons:
@@ -3270,8 +3292,10 @@ async function renderCustomerProfile(requestedView){
          the merge is markup only and no wiring moved with it. The app-lock half stays native-only
          (there is no owner check to perform on the web, and a switch that cannot do anything is
          worse than no switch) — so on the web this card is exactly the old passkeys card. */''}
-    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><h2>Face ID &amp; Touch ID</h2><p class="muted small" style="margin-top:5px">Two separate things, both using this phone’s own biometrics: one replaces your password when you sign in, the other keeps Peekaa shut while you are already signed in. Your face or fingerprint never leaves your device.</p>
-      <div class="wallet-section-head" style="margin-top:18px"><div><h3 style="font-size:1rem;margin:0">Sign in with Face ID</h3><p class="muted small" style="margin-top:4px">Register this device so you do not have to type your number and password.</p></div><span class="spacer"></span><button class="btn sm" id="customerPasskeyAdd" type="button">${CUI.icon('add',{size:16})}<span>Add passkey</span></button></div>
+    <section class="card" id="customerPasskeys" style="margin-top:14px" aria-busy="true"><h2>Face ID &amp; Touch ID</h2><p class="muted small" style="margin-top:5px">Two separate things, both using this phone’s own biometrics: one replaces your password when you sign in, the other keeps Peekaa shut while you are already signed in. Your face or fingerprint never leaves this phone, and neither does the sign-in it unlocks.</p>
+      ${/* nestly_v887: the Add passkey button is gone with the feature. loadPasskeys still binds
+           #customerPasskeyAdd, so it guards for the missing node rather than assuming it. */''}
+      <div class="wallet-section-head" style="margin-top:18px"><div><h3 style="font-size:1rem;margin:0">Sign in with Face ID</h3><p class="muted small" style="margin-top:4px">Use this phone’s own face or fingerprint instead of typing your number and password.</p></div></div>
       <div id="customerPasskeyList"><p class="muted small">Checking registered passkeys…</p></div>
       <p id="customerPasskeyManageStatus" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p>
       ${NestlyNativeBridge.isNative?`<div id="customerAppLockV860" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--line)" aria-busy="true"><h3 style="font-size:1rem;margin:0">Lock the app with Face ID</h3><p class="muted small" style="margin-top:4px">Keeps your Peekaa closed to anyone else holding this phone, even though you are signed in.</p><div id="customerAppLockBodyV860" style="margin-top:12px"><p class="muted small">Checking this phone…</p></div><p id="customerAppLockStatusV860" class="muted small" role="status" aria-live="polite" style="margin-top:8px"></p></div>`:''}
@@ -3473,17 +3497,17 @@ async function renderCustomerProfile(requestedView){
   };
   const passkeyHost=$('customerPasskeys'),passkeyList=$('customerPasskeyList'),passkeyStatus=$('customerPasskeyManageStatus');
   const passkeyAdd=$('customerPasskeyAdd');
-  const passkeySupported=customerPasskeySupported({management:true});
+  const passkeySupported=customerPasskeySupported({management:true})&&CUSTOMER_PASSKEYS_OFFERED_V887;
   const formatPasskeyDate=value=>walletDate(value)||'Date unavailable';
   const loadPasskeys=async()=>{
     if(!passkeySupported){
-      passkeyHost.setAttribute('aria-busy','false');passkeyAdd.disabled=true;
+      passkeyHost.setAttribute('aria-busy','false');if(passkeyAdd)passkeyAdd.disabled=true;
       /* nestly_v669/v670: the shell is not a WebAuthn surface — its Face ID sign-in is the
          native Keychain credential, managed here. Passkeys added on peekaa.asia in Safari are a
          separate, coexisting thing and keep working there. */
       const biometric=globalThis.NestlyNativeBridge?.biometricSignIn;
       if(!globalThis.Capacitor?.isNativePlatform?.()||!biometric){
-        passkeyList.innerHTML='<p class="muted small">Passkeys are not supported in this browser. Sign in with your mobile number and password.</p>';return;
+        passkeyList.innerHTML='<p class="muted small">Face ID sign-in uses your phone’s own biometrics, so it is set up in the Peekaa app on your phone. Here, sign in with your mobile number and password.</p>';return;
       }
       const [{available},enrolled]=await Promise.all([biometric.availability(),biometric.enrolled()]);
       if(!isCurrent()||!passkeyHost.isConnected)return;
@@ -3507,7 +3531,7 @@ async function renderCustomerProfile(requestedView){
     if(!isCurrent()||!passkeyHost.isConnected)return;
     passkeyHost.setAttribute('aria-busy','false');
     if(error){
-      passkeyAdd.disabled=error.code==='passkey_disabled';
+      if(passkeyAdd)passkeyAdd.disabled=error.code==='passkey_disabled';
       passkeyList.innerHTML=`<p class="muted small">${error.code==='passkey_disabled'?'Face ID and passkeys aren’t available yet. Use your password.':'Registered passkeys could not be loaded.'}</p>`;return;
     }
     const passkeys=Array.isArray(data)?data:(Array.isArray(data?.passkeys)?data.passkeys:[]);
@@ -3540,7 +3564,7 @@ async function renderCustomerProfile(requestedView){
       passkeyStatus.textContent='Passkey removed.';loadPasskeys();
     });
   };
-  passkeyAdd.onclick=async()=>{
+  if(passkeyAdd)passkeyAdd.onclick=async()=>{
     if(!passkeySupported)return;
     passkeyAdd.disabled=true;passkeyStatus.textContent='Follow your device prompt to add a passkey…';
     /* V468: see the prompt above — a browser-side WebAuthn rejection THROWS rather than resolving
