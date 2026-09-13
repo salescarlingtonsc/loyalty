@@ -46,11 +46,13 @@ test('V527 the shipped document links the stylesheet instead of carrying it', ()
 test('V527 the shipped document is a fraction of the source it came from', () => {
   assert.ok(source.length > 400_000, 'the source still holds the stylesheet and its comments');
   /* v530 puts ~10 KB of critical CSS back into the head on purpose, so the ceiling moves up by
-     about that much. The ratio is what matters: the document is still a small fraction of a
-     source that carries the whole 504 KB stylesheet. */
+     about that much; nestly_v891 adds ~0.4 KB of head script (the favicon animation must drive
+     every rel=icon link, not just #favicon), which nudged the ratio from 20x to 19x. The ratio
+     is what matters: the document is still a small fraction of a source that carries the whole
+     504 KB stylesheet. */
   assert.ok(shippedHtml.length < 32_000,
     `the shipped document should stay small; it is ${shippedHtml.length} bytes`);
-  assert.ok(shippedHtml.length * 20 < source.length,
+  assert.ok(shippedHtml.length * 19 < source.length,
     'the whole point is that the document no longer carries the full stylesheet');
 });
 

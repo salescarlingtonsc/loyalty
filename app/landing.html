@@ -63,6 +63,10 @@
     var link=document.getElementById('favicon');
     if(!link) return;
     var staticHref=link.getAttribute('href');
+    /* nestly_v891: v549 added a larger rel=icon the browser prefers; animate ALL icon links. */
+    function icons(){return document.querySelectorAll('link[rel~="icon"]')}
+    function apply(h){icons().forEach(function(l){if(!l.dataset.fav)l.dataset.fav=l.getAttribute('href');l.setAttribute('href',h)})}
+    function undoAll(){icons().forEach(function(l){if(l.dataset.fav){l.setAttribute('href',l.dataset.fav);delete l.dataset.fav}})}
     var img=new Image();
     img.onload=function(){
       var size=64,canvas=document.createElement('canvas');
@@ -78,10 +82,10 @@
         ctx.scale(frames[i],frames[i]);
         ctx.drawImage(img,-size/2,-size/2,size,size);
         ctx.restore();
-        link.setAttribute('href',canvas.toDataURL());
+        apply(canvas.toDataURL());
         i+=1;
         if(i<frames.length){window.setTimeout(drawFrame,55);}
-        else{window.setTimeout(function(){link.setAttribute('href',staticHref);},260);}
+        else{window.setTimeout(undoAll,260);}
       }
       drawFrame();
     };
