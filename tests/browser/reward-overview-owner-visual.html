@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="f036fb3f72111168704e41faf0fbec957b53c06f3bd2625f80f7baac66b8b3d0"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="f6bc5d1a29085e31b054d0c09d5d31bf300040ffd6afda896d64301c1df59062"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -858,6 +858,19 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-form-skeleton{display:grid;gap:16px}.cui-form-skeleton-field{display:grid;gap:8px}
 @keyframes cui-skeleton{to{background-position:-220% 0}}
 .cui-route-state .cui-skeleton-grid{margin-top:4px}
+/* nestly_v888 (owner: "i need the video to be everywhere when loading"). The same mark and the
+   same keyframes as the boot screen, smaller, above every shared loading state — so waiting looks
+   like the same thing wherever it happens. CUI.loadingState is the one component every customer
+   route waits in, which is why the mark is added there rather than to a hundred call sites.
+   aria-hidden: the state already announces itself through its own role="status" line, and a
+   decorative mark repeating it would only make a screen reader say it twice. */
+.cui-loading-mark-v888{display:block;width:76px;height:76px;margin:2px auto 14px;
+  animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
+  transform-origin:50% 62%;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  filter:brightness(.985)}
+@media (prefers-reduced-motion:reduce){.cui-loading-mark-v888{animation:none}}
 .cui-refreshing{opacity:.72;transition:opacity var(--motion-fast) var(--ease)}
 /* Toast: frosted, springs up from the bottom like a native banner */
 .toast{position:fixed;bottom:26px;left:50%;background:rgba(23,22,26,.9);
@@ -5386,7 +5399,6 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .sales-filter-panel input[type=date],.sales-filter-panel input[type=search],
   .sales-filter-panel select{width:100%}
 }
-}
 
 /* ============================ nestly_v577 — customer display titles ==========================
    Owner, photo 22: "Nice to see you again.", "40 rewards ready", "Limited offers" and "View all ›"
@@ -5830,7 +5842,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .subscription-company-v628{margin:0;min-width:0}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · f036fb3f72111168704e41faf0fbec957b53c06f3bd2625f80f7baac66b8b3d0</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · f6bc5d1a29085e31b054d0c09d5d31bf300040ffd6afda896d64301c1df59062</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -6021,7 +6033,13 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   function loadingState({title='Loading',iconName='info',body='Loading the latest information…',variant='route'}={}){
     const skeleton=variant==='table'?tableSkeleton():variant==='chart'?chartSkeleton({title}):variant==='form'?formSkeleton():skeletonGrid({cards:variant==='compact'?2:4,lines:3});
-    return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
+    /* nestly_v888 (owner: "i need the video to be everywhere when loading"). The animated Peekaa
+       mark leads every shared loading state, the same one the boot screen shows. It is an <img>
+       driven by CSS, never a <video>: a video can be refused (Low Power Mode) and the browser then
+       draws its own tap-to-play control over it — the defect v666 was written to remove — and a
+       loading state is the last place that may ask to be pressed. */
+    const markV888='<img class="cui-loading-mark-v888" src="/media/peekaa-loading-poster.png" width="540" height="540" alt="" aria-hidden="true" decoding="async">';
+    return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${markV888}${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
   }
 
   function errorState({title='Unable to load this page',message='Try again.',retryId='routeRetry'}={}){
@@ -16786,7 +16804,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'f036fb3f72111168704e41faf0fbec957b53c06f3bd2625f80f7baac66b8b3d0',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'f6bc5d1a29085e31b054d0c09d5d31bf300040ffd6afda896d64301c1df59062',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

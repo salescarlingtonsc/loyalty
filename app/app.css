@@ -536,6 +536,13 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-form-skeleton{display:grid;gap:16px}.cui-form-skeleton-field{display:grid;gap:8px}
 @keyframes cui-skeleton{to{background-position:-220% 0}}
 .cui-route-state .cui-skeleton-grid{margin-top:4px}
+.cui-loading-mark-v888{display:block;width:76px;height:76px;margin:2px auto 14px;
+  animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
+  transform-origin:50% 62%;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  filter:brightness(.985)}
+@media (prefers-reduced-motion:reduce){.cui-loading-mark-v888{animation:none}}
 .cui-refreshing{opacity:.72;transition:opacity var(--motion-fast) var(--ease)}
 .toast{position:fixed;bottom:26px;left:50%;background:rgba(23,22,26,.9);
   -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
@@ -3336,7 +3343,6 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .sales-filter-panel>.sales-filter-row>.btn{flex:1 0 100%}
   .sales-filter-panel input[type=date],.sales-filter-panel input[type=search],
   .sales-filter-panel select{width:100%}
-}
 }
 :root{--peekaa-display:'Baloo 2',-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif}
 :root{--peekaa-body:'Nunito',-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,'Segoe UI',sans-serif}

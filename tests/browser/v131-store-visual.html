@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="6774031059f53b3ee167f2820363ac8d31383cbcf08069b43445613522d47dcd"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="94d122c734b6b95fb49a67766e917f97841d98aafeccb3c9c8f0fb40c6109cb9"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -857,6 +857,19 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .cui-form-skeleton{display:grid;gap:16px}.cui-form-skeleton-field{display:grid;gap:8px}
 @keyframes cui-skeleton{to{background-position:-220% 0}}
 .cui-route-state .cui-skeleton-grid{margin-top:4px}
+/* nestly_v888 (owner: "i need the video to be everywhere when loading"). The same mark and the
+   same keyframes as the boot screen, smaller, above every shared loading state — so waiting looks
+   like the same thing wherever it happens. CUI.loadingState is the one component every customer
+   route waits in, which is why the mark is added there rather than to a hundred call sites.
+   aria-hidden: the state already announces itself through its own role="status" line, and a
+   decorative mark repeating it would only make a screen reader say it twice. */
+.cui-loading-mark-v888{display:block;width:76px;height:76px;margin:2px auto 14px;
+  animation:bootPeek-v888 2.6s cubic-bezier(.37,0,.29,1) infinite;
+  transform-origin:50% 62%;
+  -webkit-mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  mask-image:radial-gradient(circle closest-side,#000 0 88%,transparent 100%);
+  filter:brightness(.985)}
+@media (prefers-reduced-motion:reduce){.cui-loading-mark-v888{animation:none}}
 .cui-refreshing{opacity:.72;transition:opacity var(--motion-fast) var(--ease)}
 /* Toast: frosted, springs up from the bottom like a native banner */
 .toast{position:fixed;bottom:26px;left:50%;background:rgba(23,22,26,.9);
@@ -5384,7 +5397,6 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .sales-filter-panel>.sales-filter-row>.btn{flex:1 0 100%}
   .sales-filter-panel input[type=date],.sales-filter-panel input[type=search],
   .sales-filter-panel select{width:100%}
-}
 }
 
 /* ============================ nestly_v577 — customer display titles ==========================

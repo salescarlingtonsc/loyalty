@@ -96,7 +96,10 @@ export const SKELETON_TOKENS = new Set([
      to prevent. `[data-boot-panel]` is listed because it is the second compound of
      `…[data-boot-skeleton] [data-boot-panel]`, and selectorCanMatchSkeleton requires EVERY
      compound to be a known token. */
-  '[data-boot-panel]', '.boot-mark-v577',
+  /* nestly_v888: the mark's wrapper. Its rules carry the boot animation, and a boot animation
+     that only starts once app.css lands is an animation nobody sees — the boot screen is often
+     gone by then. That is exactly the flash this subset exists to prevent. */
+  '[data-boot-panel]', '.boot-mark-v577', '.boot-mark-wrap-v888',
   '#root', '#toast', '#appStatus', '#appAlert'
 ]);
 

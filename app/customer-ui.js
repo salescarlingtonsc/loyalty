@@ -188,7 +188,13 @@
 
   function loadingState({title='Loading',iconName='info',body='Loading the latest information…',variant='route'}={}){
     const skeleton=variant==='table'?tableSkeleton():variant==='chart'?chartSkeleton({title}):variant==='form'?formSkeleton():skeletonGrid({cards:variant==='compact'?2:4,lines:3});
-    return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
+    /* nestly_v888 (owner: "i need the video to be everywhere when loading"). The animated Peekaa
+       mark leads every shared loading state, the same one the boot screen shows. It is an <img>
+       driven by CSS, never a <video>: a video can be refused (Low Power Mode) and the browser then
+       draws its own tap-to-play control over it — the defect v666 was written to remove — and a
+       loading state is the last place that may ask to be pressed. */
+    const markV888='<img class="cui-loading-mark-v888" src="/media/peekaa-loading-poster.png" width="540" height="540" alt="" aria-hidden="true" decoding="async">';
+    return `<section class="cui-route-state cui-fade-in" aria-busy="true" aria-labelledby="route-loading-title">${markV888}${pageHeader({title,subtitle:body,iconName})}<div role="status" class="sr-only" id="route-loading-title">Loading ${escapeHtml(title)}</div>${skeleton}</section>`;
   }
 
   function errorState({title='Unable to load this page',message='Try again.',retryId='routeRetry'}={}){
