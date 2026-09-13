@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="125fd5359140fbd41883263c0e279276a1219e0e5584bcfae1ce7a48e390f218"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="08e455e541c39d1593d1b8e4be51b3fdbe9bd023fcb0625832548a315f060f15"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5880,10 +5880,18 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-kpi-change.is-down{color:var(--brand-red-dark)}
 .bi-no-compare{margin:10px 0 0}
 /* The three things to know. */
-.bi-cards{display:grid;grid-template-columns:1fr;gap:12px}
+/* nestly_v894: align-items:start so each card is its own height. Grid stretches its items by
+   default, which padded a two-line card out to the height of a five-line one and left a band of
+   empty tint under the short one. Nothing is given a min-height to line the cards up. */
+.bi-cards{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
 .bi-card{min-width:0;padding:14px 16px;border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:var(--r-sm);background:var(--shell)}
+/* nestly_v894 — six owner-facing types, six subtle tints, all mixed from tokens that already
+   exist so dark mode is inherited rather than re-specified. Peekaa red is still reserved for the
+   brand and the primary call to action: "needs attention" is a pale warm wash with a red edge. */
 .bi-card--needs-attention{background:var(--brand-red-faint);border-left-color:var(--brand-red)}
-.bi-card--opportunity{background:var(--warn-bg);border-left-color:var(--warn)}
+.bi-card--customer-risk{background:color-mix(in srgb,var(--warn-bg) 68%,var(--brand-red-faint));border-left-color:var(--warn)}
+.bi-card--business-risk{background:color-mix(in srgb,var(--warn-bg) 68%,var(--brand-red-faint));border-left-color:var(--warn)}
+.bi-card--opportunity{background:var(--warn-bg);border-left-color:var(--gold)}
 .bi-card--doing-well{background:var(--success-bg);border-left-color:var(--success)}
 .bi-card--still-learning{background:var(--shell);border-left-color:var(--line)}
 .bi-card-kind{margin:0;font-size:12px;font-weight:750;letter-spacing:.02em;text-transform:uppercase;color:var(--ink2)}
@@ -5903,6 +5911,9 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-pulse-title{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
 .bi-pulse-line{margin:0;display:flex;flex-wrap:wrap;gap:6px 8px}
 .bi-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:13px;font-weight:650;color:var(--ink)}
+/* nestly_v894: emphasis on exactly two chips, so it still reads as emphasis when it appears. */
+.bi-chip.is-due{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 30%,var(--line));color:var(--warn)}
+.bi-chip.is-slipping{background:var(--brand-red-faint);border-color:color-mix(in srgb,var(--brand-red) 28%,var(--line));color:var(--brand-red-dark)}
 /* Health — status rows, not alerts. */
 .bi-health-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .bi-health-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding-bottom:8px;border-bottom:1px solid var(--hair)}
@@ -5922,6 +5933,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-explore-group:last-of-type{border-bottom:0}
 .bi-explore-group>summary{cursor:pointer;min-height:48px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:10px 2px;font-size:14.5px;color:var(--ink)}
 .bi-explore-group>summary:hover{color:var(--coral)}
+/* nestly_v894: a right-side chevron so the row reads as openable at a glance. Decoration only —
+   the native <details> marker, keyboard behaviour and hit area are untouched, and the chevron is
+   aria-hidden by virtue of being generated content. */
+.bi-explore-group>summary::after{content:'\203A';display:inline-block;margin-left:auto;padding-left:12px;font-size:19px;line-height:1;color:var(--muted);transition:transform .15s ease}
+.bi-explore-group[open]>summary::after{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.bi-explore-group>summary::after{transition:none}}
 .bi-explore-group[open]>summary{border-bottom:1px solid var(--hair)}
 .bi-explore-body{min-width:0;padding:4px 0 16px}
 .bi-explore-body>.card{box-shadow:none}
@@ -5932,7 +5949,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 125fd5359140fbd41883263c0e279276a1219e0e5584bcfae1ce7a48e390f218</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 08e455e541c39d1593d1b8e4be51b3fdbe9bd023fcb0625832548a315f060f15</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -31164,6 +31181,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'125fd5359140fbd41883263c0e279276a1219e0e5584bcfae1ce7a48e390f218',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'08e455e541c39d1593d1b8e4be51b3fdbe9bd023fcb0625832548a315f060f15',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
