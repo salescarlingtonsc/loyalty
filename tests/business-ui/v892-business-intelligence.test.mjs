@@ -64,6 +64,9 @@ function sandbox(overrides = {}) {
 const BI = sandbox();
 const textOf = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 const plain = (html) => textOf(html).split(NBSP).join(' ');
+/* Intl's currency formatter separates the code from the amount with a non-breaking space, which
+   is right on screen and invisible in an assertion. Normalise it rather than pinning the byte. */
+const spaced = (value) => String(value).split(NBSP).join(' ');
 
 /* ==================================================================================================
    Fixtures.
@@ -235,9 +238,12 @@ test('v892 snapshot: an unknown figure is a dash, never a zero', () => {
 test('v892 selector: money first, then the customer at risk, then the server\'s ranked advice', () => {
   const cards = BI.select(model());
   assert.equal(cards.length, 3, 'at most three, and here there are three real ones');
-  assert.deepEqual(cards.map((card) => card.topic), ['cash', 'bringback', 'packages']);
+  /* Joined, not deepEqual: these objects are built inside the vm realm, so an Array from there
+     is not reference-equal to an Array from here even when it holds the same strings. */
+  assert.equal(cards.map((card) => card.topic).join(' → '), 'cash → bringback → packages',
+    'the ranked leakage item takes the third slot and de-duplicates the derived packages card');
   assert.equal(cards[0].type, 'needs_attention');
-  assert.ok(cards[0].finding.includes('SGD 2,445.00'), 'the outstanding total leads the card');
+  assert.ok(spaced(cards[0].finding).includes('SGD 2,445.00'), 'the outstanding total leads the card');
   assert.equal(cards[0].why, '8 sales are not recorded as fully paid.',
     'sales_unpaid + sales_partly_paid, combined for the owner and split in the evidence');
   assert.match(cards[0].evidence.fact, /6 with no payment recorded and 2 part paid/);
@@ -322,7 +328,7 @@ test('v892 selector: a weekday strength names the day and its measured facts, an
   assert.equal(weekday.type, 'doing_well');
   assert.equal(weekday.finding, 'Tuesday performs best');
   assert.ok(weekday.why.includes('5 visits'));
-  assert.ok(weekday.why.includes('SGD') && weekday.why.includes('1,169.00'));
+  assert.ok(spaced(weekday.why).includes('SGD 1,169.00'));
   assert.equal(weekday.action, '');
 });
 

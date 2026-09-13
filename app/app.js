@@ -54771,6 +54771,687 @@ function ownerBriefHtmlV771(brief){
   </section>`;
 }
 
+/* nestly_v892 — BUSINESS INTELLIGENCE (the presentation layer of #/customerintel).
+   =================================================================================================
+   Owner ruling 2026-09-14: the module is renamed "Business Intelligence" and the page is rebuilt
+   as an answer, not as an archive. The owner opens it and sees, without scrolling past a table:
+   four numbers, at most three things to know, a one-line customer pulse, a short health list, last
+   night's brief in one strip, and then everything the page has always rendered, filed behind
+   "Explore your business".
+
+   NOTHING BELOW ASKS THE BACKEND ANYTHING. Every function here is a pure function of bundles the
+   page has already fetched — same readers, same arguments, same order (tests/business-ui/
+   v892-request-parity.test.mjs pins that). No threshold, rank, formula, suppression or metric
+   meaning is re-decided in the browser: the selector re-ORDERS what the server already ranked and
+   the renderers re-WORD what the server already said. Where a fact is absent it stays absent; a
+   zero is only ever printed when the server sent a zero.
+
+   Same posture as ownerBriefHtmlV771 / funnelConversionPanelHtmlV679 above: top-level functions
+   returning HTML, so every judgement can be executed against a fixture in a test rather than
+   grepped for in source. ================================================================= */
+
+const BI_WORDING_V892=Object.freeze({
+  title:'Business Intelligence',
+  subtitle:'Know what happened. See what to do next.',
+  snapshot:'Business snapshot',
+  insights:'3 things to know',
+  pulse:'Customer pulse',
+  health:'Business health',
+  explore:'Explore your business',
+  overnight:'Last night’s brief',
+  showMore:'Show more',
+  evidenceSummary:'Why am I seeing this?',
+  noComparison:'No earlier period to compare yet.',
+  noInsight:'No reliable recommendation yet — Peekaa will surface one once there is enough evidence.',
+  types:Object.freeze({
+    needs_attention:Object.freeze({label:'Needs attention',mark:'🔴'}),
+    opportunity:Object.freeze({label:'Opportunity',mark:'🟠'}),
+    doing_well:Object.freeze({label:'Doing well',mark:'🟢'}),
+    still_learning:Object.freeze({label:'Still learning',mark:'⚪'})
+  })
+});
+
+/* One card per underlying insight, so a finding the server ranked and a finding this page
+   derived from the same facts cannot both take a slot. The map is presentation only: it says
+   which candidates are ABOUT the same thing, never which of them is true. */
+const BI_ADVISORY_TOPICS_V892=Object.freeze({
+  lapsed_regulars:'bringback',package_leakage:'packages',funnel_bottleneck:'retention',
+  gateway_followthrough:'services',no_discount_reminder:'discounts',
+  loyalty_cannibalisation_gap:'loyalty',staff_mix_underperformance:'staff',
+  campaigns:'campaigns',discovery:'discovery',
+  'strength:category':'services','strength:service':'services','strength:weekday':'weekday'
+});
+function biAdvisoryTopicV892(id){
+  const parts=String(id===null||id===undefined?'':id).split(':');
+  const head=parts[0]||'item';
+  const pair=head==='strength'?`strength:${parts[1]||''}`:head;
+  return BI_ADVISORY_TOPICS_V892[pair]||BI_ADVISORY_TOPICS_V892[head]||`advisory:${head}`;
+}
+
+/* Absence has to survive all the way to the markup, so this is the v771 rule again: Number(null)
+   is 0 and Number('') is 0, and either would turn "never recorded" into a confident zero. */
+function biFiniteV892(value){
+  if(value===null||value===undefined||typeof value==='boolean')return null;
+  if(typeof value==='string'&&!value.trim())return null;
+  const parsed=Number(value);
+  return Number.isFinite(parsed)?parsed:null;
+}
+function biObjectV892(value){return (value&&typeof value==='object'&&!Array.isArray(value))?value:null;}
+function biListV892(value){return Array.isArray(value)?value.filter(row=>row&&typeof row==='object'):[];}
+function biTextV892(value,fallback=''){const text=String(value===null||value===undefined?'':value).trim();return text||fallback;}
+/* Grouped money on the primary surface, from the formatter the Revenue Truth module already owns
+   (en-SG, currency code, two decimals — "SGD 6,683.30"). Nothing here invents a second format;
+   the blocks reused under Explore keep whatever formatting they were already pinned to. */
+function biMoneyV892(value,currency){
+  const amount=biFiniteV892(value);
+  if(amount===null)return null;
+  const code=biTextV892(currency,'SGD').toUpperCase();
+  try{return RevenueTruthUI.money(amount,code);}catch(_error){return `${code} ${(amount/100).toFixed(2)}`;}
+}
+function biWholeV892(value){const parsed=biFiniteV892(value);return parsed===null?null:Math.round(parsed);}
+function biPluralV892(count,one,many){return `${count} ${count===1?one:many}`;}
+/* The ONLY arithmetic on a comparison, and it is the one compareV771 already does: a percentage
+   change between two totals the server computed. A missing or non-positive earlier total means
+   there is nothing to compare, never a growth figure out of nothing. */
+function biChangePctV892(now,before){
+  if(now===null||before===null||before<=0)return null;
+  const change=Math.round((now-before)/before*100);
+  return Number.isFinite(change)?change:null;
+}
+function biChangeLineV892(change,periodDays){
+  if(change===null)return '';
+  if(change===0)return `No change vs previous ${periodDays} days`;
+  return `${change>0?'↑':'↓'} ${Math.abs(change)}% vs previous ${periodDays} days`;
+}
+
+/* -------------------------------------------------------------------------------------------
+   THE MODEL. One plain object, built from bundles the page already holds. Every field is either
+   a named server field or an absence; the selector and the renderers below read nothing else.
+   ------------------------------------------------------------------------------------------- */
+function biModelV892(bundles){
+  const input=biObjectV892(bundles)||{};
+  const currency=biTextV892(input.currency,'SGD').toUpperCase();
+  const periodDays=Math.max(1,biWholeV892(input.periodDays)||1);
+  const scope=biObjectV892(input.scope)||{};
+  const branchId=biTextV892(scope.branchId);
+  const branchLabel=branchId
+    ?[biTextV892(scope.branchCode),biTextV892(scope.branchName)].filter(Boolean).join(' · ')||'One branch'
+    :'All branches';
+
+  const truthTotals=biObjectV892(biObjectV892(input.truth)?.totals)||{};
+  const truthPrevTotals=biObjectV892(biObjectV892(input.truthPrev)?.totals)||{};
+  const lifeMetrics=biObjectV892(biObjectV892(input.lifecycle)?.metrics)||{};
+  const lifePrevMetrics=biObjectV892(biObjectV892(input.lifecyclePrev)?.metrics)||{};
+  const cash=biObjectV892(input.cashGap);
+  const cashTotals=biObjectV892(cash?.totals)||{};
+
+  const revenueNow=biFiniteV892(truthTotals.known_revenue_minor);
+  const revenuePrev=biFiniteV892(truthPrevTotals.known_revenue_minor);
+  const buyersNow=biFiniteV892(lifeMetrics.transacting_identified_customers);
+  const buyersPrev=biFiniteV892(lifePrevMetrics.transacting_identified_customers);
+  const joinersNow=biFiniteV892(lifeMetrics.new_customers);
+  const joinersPrev=biFiniteV892(lifePrevMetrics.new_customers);
+
+  /* Attention (bring-back) — the server's own statuses and its own summary counts. */
+  const attention=biObjectV892(input.attention);
+  const attentionSummary=biObjectV892(attention?.summary)||{};
+  const attentionRows=biListV892(attention?.rows);
+  const urgentRow=attentionRows.find(row=>row.status==='overdue')
+    ||attentionRows.find(row=>row.status==='slipping')
+    ||null;
+
+  /* Prepaid sessions — the same roll-up the brief's own block does: sum what is left, per holder,
+     and only claim a value when every row behind it carries a per-session list price. */
+  const people=biListV892(input.customers);
+  const peopleById=new Map();
+  people.forEach(record=>{if(record.client_id!==null&&record.client_id!==undefined)peopleById.set(String(record.client_id),record);});
+  const held=new Map();
+  biListV892(input.packages).forEach(row=>{
+    const key=biTextV892(row.client_id);
+    const left=biWholeV892(row.remaining)||0;
+    if(!key||left<=0)return;
+    let holder=held.get(key);
+    if(!holder){
+      const record=peopleById.get(key)||null;
+      holder={key,name:biTextV892(record?.full_name,'Customer'),lastVisit:biFiniteV892(record?.days_since_last_purchase),sessions:0,valueMinor:0,valueKnown:true};
+      held.set(key,holder);
+    }
+    holder.sessions+=left;
+    const unit=biFiniteV892(row.list_unit_cents_snapshot);
+    if(unit===null)holder.valueKnown=false;else holder.valueMinor+=left*unit;
+  });
+  const holders=[...held.values()].sort((first,second)=>
+    (second.lastVisit===null?Infinity:second.lastVisit)-(first.lastVisit===null?Infinity:first.lastVisit));
+  const unusedSessions=holders.reduce((total,holder)=>total+holder.sessions,0);
+
+  /* Top-customer concentration — the brief's own derivation: the largest earners against the
+     identified-revenue total the same payload reports, and nothing at all without that base. */
+  const revenueBase=(()=>{const total=biFiniteV892(biObjectV892(input.summary)?.net_revenue_cents);return total!==null&&total>0?total:null;})();
+  const earners=people
+    .filter(record=>{const earned=biFiniteV892(record.net_revenue_cents);return earned!==null&&earned>0;})
+    .sort((first,second)=>Number(second.net_revenue_cents)-Number(first.net_revenue_cents));
+  const leadCount=Math.min(3,earners.length);
+  const leadMinor=earners.slice(0,leadCount).reduce((total,record)=>total+Number(record.net_revenue_cents||0),0);
+
+  /* Ranked advisory items, server order preserved. 'foundation' (a coverage defect) and
+     'do_nothing' are filed as health, never as one of the three things to know — the payload
+     does not claim they block the rest, and this page will not claim it for them. */
+  const opportunities=biObjectV892(input.opportunities);
+  const sections=biObjectV892(opportunities?.report_sections)||{};
+  const sectionIds=key=>new Set((Array.isArray(sections[key])?sections[key]:[]).map(id=>String(id)));
+  const strengthIds=sectionIds('strengths'),leakageIds=sectionIds('leakage');
+  const advisory=biListV892(opportunities?.ranked)
+    .filter(item=>item.rank_class!=='foundation'&&item.rank_class!=='do_nothing')
+    .map(item=>{
+      const id=biTextV892(item.id);
+      const confidence=biObjectV892(item.confidence)||{};
+      return {
+        id,
+        topic:biAdvisoryTopicV892(id),
+        rankClass:biTextV892(item.rank_class),
+        strength:item.rank_class==='strength'||strengthIds.has(id),
+        leakage:leakageIds.has(id),
+        pattern:biTextV892(item.pattern),
+        actionWhat:biTextV892(biObjectV892(item.action)?.what),
+        impactMinor:biFiniteV892(biObjectV892(item.impact)?.cents),
+        sampleSize:biWholeV892(confidence.n),
+        sampleFloor:biWholeV892(confidence.floor),
+        limitation:biTextV892(item.limitation),
+        reversal:biTextV892(item.reversal_condition)
+      };
+    });
+  const foundation=biListV892(opportunities?.ranked).find(item=>item.rank_class==='foundation')||null;
+
+  /* Weekday strength — the server's own busiest weekday, and the row it already measured. */
+  const rhythm=biObjectV892(input.rhythm);
+  const busiest=biListV892(rhythm?.busiest_weekdays)[0]||null;
+  const weekdayRow=busiest?biListV892(rhythm?.weekdays).find(row=>String(row.dow)===String(busiest.dow))||null:null;
+
+  const funnel=biObjectV892(input.funnelConversion);
+  const stageOne=biObjectV892(funnel?.stage_1_to_2)||{};
+  const demographics=biObjectV892(input.demographics);
+  const demographicCoverage=biObjectV892(demographics?.coverage)||{};
+  const categoryCoverage=biObjectV892(biObjectV892(input.categoryMix)?.coverage)||{};
+  const contactability=biObjectV892(input.contactability);
+  const offers=biObjectV892(contactability?.business_offers);
+  const offerChannels=biObjectV892(offers?.allowed_by_channel)||{};
+  const action=biObjectV892(input.action)||{};
+
+  return {
+    currency,periodDays,
+    from:biTextV892(input.from),to:biTextV892(input.to),
+    scopeLine:`Last ${periodDays} days · ${branchLabel}`,
+    revenue:{now:revenueNow,change:biChangePctV892(revenueNow,revenuePrev)},
+    collected:{
+      now:biFiniteV892(cashTotals.collected_cents),
+      sharePct:biWholeV892(biObjectV892(cashTotals.collected_share)?.pct)
+    },
+    customers:{now:buyersNow,change:biChangePctV892(buyersNow,buyersPrev)},
+    newCustomers:{now:joinersNow,change:biChangePctV892(joinersNow,joinersPrev)},
+    cash:{
+      outstanding:biFiniteV892(cashTotals.outstanding_cents),
+      openSales:(biWholeV892(cashTotals.sales_unpaid)||0)+(biWholeV892(cashTotals.sales_partly_paid)||0),
+      unpaid:biWholeV892(cashTotals.sales_unpaid)||0,
+      partlyPaid:biWholeV892(cashTotals.sales_partly_paid)||0,
+      salesCount:biWholeV892(cashTotals.sales_count)||0,
+      unlinkedCount:biWholeV892(biObjectV892(cash?.unlinked_payments)?.count)||0,
+      unlinkedMinor:biFiniteV892(biObjectV892(cash?.unlinked_payments)?.cents),
+      refundsMinor:biFiniteV892(cash?.refunds_cents),
+      namesVisible:cash?.names_visible!==false,
+      topDebtor:biListV892(cash?.outstanding_by_customer)[0]||null
+    },
+    bringBack:{
+      due:biWholeV892(attentionSummary.due),
+      overdue:biWholeV892(attentionSummary.overdue),
+      slipping:biWholeV892(attentionSummary.slipping),
+      atRiskMinor:biFiniteV892(attentionSummary.monthly_at_risk_cents),
+      considered:biWholeV892(attentionSummary.considered),
+      urgent:urgentRow&&{
+        clientId:biTextV892(urgentRow.client_id),
+        name:biTextV892(urgentRow.full_name,'Customer'),
+        status:biTextV892(urgentRow.status),
+        cadenceDays:biWholeV892(urgentRow.cadence_days),
+        lastVisitDays:biWholeV892(urgentRow.last_visit_days)
+      }||null
+    },
+    packages:{
+      holders:holders.length,sessions:unusedSessions,
+      valueMinor:holders.length&&holders.every(holder=>holder.valueKnown)
+        ?holders.reduce((total,holder)=>total+holder.valueMinor,0):null,
+      longestUnseen:holders[0]||null
+    },
+    concentration:(leadCount>0&&revenueBase!==null)
+      ?{count:leadCount,pct:Math.round(leadMinor/revenueBase*100)}
+      :null,
+    advisory,
+    foundation:foundation?{
+      pattern:biTextV892(foundation.pattern),
+      actionWhat:biTextV892(biObjectV892(foundation.action)?.what)
+    }:null,
+    categoryCoveragePct:(()=>{const bars=biFiniteV892(categoryCoverage.classified_pct_bps);return bars===null?null:Math.round(bars/100*10)/10;})(),
+    profileCoverage:{
+      age:biObjectV892(demographicCoverage.age_known),
+      gender:biObjectV892(demographicCoverage.gender_known)
+    },
+    contactable:offers?{
+      customers:biWholeV892(offers.customers)||0,
+      sms:biWholeV892(offerChannels.sms)||0,
+      email:biWholeV892(offerChannels.email)||0
+    }:null,
+    weekday:(busiest&&weekdayRow)?{
+      label:biTextV892(busiest.label),
+      visits:biWholeV892(weekdayRow.visits),
+      revenueMinor:biFiniteV892(weekdayRow.revenue_cents)
+    }:null,
+    retention:{
+      present:!!funnel,
+      measurable:biFiniteV892(stageOne.pct)!==null,
+      returned:biWholeV892(stageOne.numerator),
+      outOf:biWholeV892(stageOne.denominator),
+      pct:biWholeV892(stageOne.pct)
+    },
+    action:{
+      allowed:action.allowed===true,
+      title:biTextV892(action.title),
+      finding:biTextV892(action.finding),
+      costMinor:biFiniteV892(action.costMinor)
+    }
+  };
+}
+
+/* -------------------------------------------------------------------------------------------
+   THE SNAPSHOT. Four numbers, each from one named server field, each with its own comparison —
+   or, when there is no earlier window at all, one quiet line for the whole row rather than the
+   same apology four times.
+   ------------------------------------------------------------------------------------------- */
+function biSnapshotHtmlV892(model){
+  const view=biObjectV892(model)||{};
+  const currency=biTextV892(view.currency,'SGD');
+  const days=Math.max(1,biWholeV892(view.periodDays)||1);
+  const revenue=biObjectV892(view.revenue)||{},collected=biObjectV892(view.collected)||{};
+  const customers=biObjectV892(view.customers)||{},joiners=biObjectV892(view.newCustomers)||{};
+  const changes=[revenue.change,customers.change,joiners.change];
+  const anyComparison=changes.some(change=>change!==null&&change!==undefined);
+  const tile=(label,value,second,change)=>`<article class="bi-kpi">
+      <span class="bi-kpi-label">${esc(label)}</span>
+      <strong class="bi-kpi-value">${esc(value===null||value===undefined?'—':value)}</strong>
+      ${second?`<span class="bi-kpi-second">${esc(second)}</span>`:''}
+      ${anyComparison&&change!==null&&change!==undefined
+        ?`<span class="bi-kpi-change ${change>0?'is-up':change<0?'is-down':'is-flat'}">${esc(biChangeLineV892(change,days))}</span>`
+        :''}
+    </article>`;
+  const revenueText=biMoneyV892(revenue.now,currency);
+  const collectedText=biMoneyV892(collected.now,currency);
+  const buyers=biWholeV892(customers.now),joined=biWholeV892(joiners.now);
+  return `<section class="card bi-snapshot" aria-labelledby="biSnapshotTitleV892">
+    <div class="bi-section-head"><h2 id="biSnapshotTitleV892">${esc(BI_WORDING_V892.snapshot)}</h2>
+    <p class="muted small">${esc(biTextV892(view.scopeLine))}</p></div>
+    <div class="bi-kpis">
+      ${tile('Revenue',revenueText,'',revenue.change)}
+      ${tile('Collected',collectedText,collected.sharePct===null||collected.sharePct===undefined?'':`${collected.sharePct}% collected`,null)}
+      ${tile('Customers',buyers===null?null:String(buyers),joined===null?'':`${joined} new`,customers.change)}
+      ${tile('New customers',joined===null?null:String(joined),'',joiners.change)}
+    </div>
+    ${anyComparison?'':`<p class="muted small bi-no-compare">${esc(BI_WORDING_V892.noComparison)}</p>`}
+  </section>`;
+}
+
+/* -------------------------------------------------------------------------------------------
+   THE SELECTOR. Presentation only: it re-orders findings the server already made, by how much
+   an owner's day depends on them. It never re-ranks the server's own list within a class, never
+   invents a finding, and never pads to three.
+   Order: money that has not arrived · a customer about to be lost · the executable action the
+   growth engine already approved · the server's ranked advice, in the server's order · work
+   already paid for and untaken · what is going well.
+   ------------------------------------------------------------------------------------------- */
+function biSelectInsightsV892(model){
+  const view=biObjectV892(model)||{};
+  const currency=biTextV892(view.currency,'SGD');
+  const days=Math.max(1,biWholeV892(view.periodDays)||1);
+  const period=`Last ${days} days`;
+  const cards=[];
+  const push=card=>{if(card)cards.push(card);};
+
+  /* 1. Money already earned and not yet in the till. */
+  const cash=biObjectV892(view.cash)||{};
+  const outstanding=biFiniteV892(cash.outstanding);
+  if(outstanding!==null&&outstanding>0){
+    const openSales=biWholeV892(cash.openSales)||0;
+    push({
+      type:'needs_attention',topic:'cash',
+      finding:`${biMoneyV892(outstanding,currency)} not yet collected`,
+      why:`${biPluralV892(openSales,'sale is','sales are')} not recorded as fully paid.`,
+      action:'Check the open bills and record the payments you have already taken.',
+      cta:{kind:'section',section:'money',label:'See money recorded vs collected'},
+      evidence:{
+        fact:`${biWholeV892(cash.unpaid)||0} with no payment recorded and ${biWholeV892(cash.partlyPaid)||0} part paid, out of ${biWholeV892(cash.salesCount)||0} sales.`,
+        period,
+        sample:'',
+        limitation:'A sale with no payment recorded is either unpaid or was paid without being written down. Peekaa cannot tell the two apart.',
+        reconsider:'This clears as soon as the missing payments are recorded against their sales.'
+      }
+    });
+  }
+
+  /* 2. A regular who is about to stop being one. The rhythm and the verdict are the server's. */
+  const bringBack=biObjectV892(view.bringBack)||{};
+  const urgent=biObjectV892(bringBack.urgent);
+  if(urgent){
+    const cadence=biWholeV892(urgent.cadenceDays),lastSeen=biWholeV892(urgent.lastVisitDays);
+    const fading=(biWholeV892(bringBack.overdue)||0)+(biWholeV892(bringBack.slipping)||0);
+    const stake=biMoneyV892(bringBack.atRiskMinor,currency);
+    push({
+      type:'needs_attention',topic:'bringback',
+      finding:cadence!==null&&lastSeen!==null
+        ?`${urgent.name} usually visits every ${cadence} days. Last seen ${lastSeen} days ago.`
+        :`${urgent.name} is overdue against their own visit rhythm.`,
+      why:fading>0
+        ? (stake?`${biPluralV892(fading,'regular is','regulars are')} overdue · about ${stake} a month of regular spend at stake.`
+          :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
+        :'This customer is overdue against their own visit rhythm.',
+      action:'Call or message them while the gap is still short.',
+      cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'},
+      evidence:{
+        fact:'Each person is judged against their own visit rhythm, not against a fixed rule.',
+        period,
+        sample:biWholeV892(bringBack.considered)
+          ?`Based on ${biPluralV892(biWholeV892(bringBack.considered),'customer','customers')} with enough visit history to judge.`
+          :'',
+        limitation:'A customer with too few visits to show a rhythm is not judged at all.',
+        reconsider:'Peekaa drops the flag the moment they visit again.'
+      }
+    });
+  }
+
+  /* 3. The v108 action, when the growth engine allows it. The card only FRONTS it — approve,
+        dismiss, hold-out, eligibility and permission all stay where they already live, on the
+        Revenue Truth control under Explore. Nothing is manufactured when it is withheld. */
+  const action=biObjectV892(view.action)||{};
+  if(action.allowed===true&&biTextV892(action.title)){
+    push({
+      type:'opportunity',topic:'action',
+      finding:biTextV892(action.title),
+      why:biTextV892(action.finding,'Peekaa ranked this ahead of everything else it can measure today.'),
+      action:'Review it and approve it from the daily action control.',
+      cta:{kind:'section',section:'money',label:'Open today’s best action'},
+      evidence:{
+        fact:'Prepared by the daily growth briefing for this business and branch.',
+        period,sample:'',
+        limitation:'Peekaa withholds this suggestion entirely when the evidence behind it is thin, rather than guessing.',
+        reconsider:'It is re-prepared each day from what has happened since.'
+      }
+    });
+  }
+
+  /* 4. The server's ranked advice, in the server's order. Coverage defects were already filtered
+        out in the model; what is left keeps its own class — a strength reads as a strength and
+        money walking away reads as something to fix. */
+  biListV892(view.advisory).forEach(item=>{
+    const sample=(item.sampleSize!==null&&item.sampleSize!==undefined&&item.sampleFloor)
+      ?`Based on ${biPluralV892(item.sampleSize,'observation','observations')}. Peekaa requires at least ${item.sampleFloor} before showing this finding.`
+      :'';
+    const impact=biMoneyV892(item.impactMinor,currency);
+    push({
+      type:item.strength?'doing_well':item.leakage?'needs_attention':'opportunity',
+      topic:item.topic,
+      finding:biTextV892(item.pattern,'Peekaa found something worth a look.'),
+      why:impact?`Worth about ${impact} over the period measured.`:'',
+      action:item.strength?'':biTextV892(item.actionWhat),
+      cta:{kind:'section',section:'evidence',label:'See the full evidence'},
+      evidence:{
+        fact:item.strength?'Ranked by Peekaa as something this business is doing well.':'Ranked by Peekaa against every other finding it could measure.',
+        period,sample,
+        limitation:biTextV892(item.limitation),
+        reconsider:biTextV892(item.reversal)
+      }
+    });
+  });
+
+  /* 5. Work already paid for and not yet taken. */
+  const packages=biObjectV892(view.packages)||{};
+  if((biWholeV892(packages.sessions)||0)>0){
+    const value=biMoneyV892(packages.valueMinor,currency);
+    push({
+      type:'opportunity',topic:'packages',
+      finding:`${biPluralV892(biWholeV892(packages.holders)||0,'customer holds','customers hold')} ${biPluralV892(biWholeV892(packages.sessions)||0,'unused session','unused sessions')}`,
+      why:value?`Worth about ${value} of work already paid for.`:'Work already paid for and not yet taken.',
+      action:'Book them in before the sessions expire.',
+      cta:{kind:'route',href:'#/custpackages',label:'Open customer packages'},
+      evidence:{
+        fact:'Counted from packages that are still active with sessions left.',
+        period:'As things stand today',sample:'',
+        limitation:'A value is shown only when every package behind it recorded a price per session.',
+        reconsider:'Each session booked removes itself from this count.'
+      }
+    });
+  }
+
+  /* 6. What is going well. A strength is never dressed up as a task. */
+  const weekday=biObjectV892(view.weekday);
+  if(weekday&&biTextV892(weekday.label)){
+    const takings=biMoneyV892(weekday.revenueMinor,currency);
+    const visits=biWholeV892(weekday.visits);
+    push({
+      type:'doing_well',topic:'weekday',
+      finding:`${biTextV892(weekday.label)} performs best`,
+      why:[visits===null?'':biPluralV892(visits,'visit','visits'),takings||''].filter(Boolean).join(' · '),
+      action:'',
+      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'},
+      evidence:{
+        fact:'The busiest weekday Peekaa measured, counted per day the business was open.',
+        period,sample:'',
+        limitation:'A weekday with too few occurrences in the period is not ranked.',
+        reconsider:'Peekaa re-checks this every time the report is run.'
+      }
+    });
+  }
+
+  /* One card per underlying topic, then at most three. */
+  const seen=new Set();
+  const chosen=[];
+  cards.forEach(card=>{
+    if(chosen.length>=3||seen.has(card.topic))return;
+    seen.add(card.topic);chosen.push(card);
+  });
+  if(chosen.length)return chosen;
+
+  /* Nothing real to show. Say which of the two it is: still learning, or nothing at all. */
+  const retention=biObjectV892(view.retention)||{};
+  if(retention.present===true&&retention.measurable===false){
+    return [{
+      type:'still_learning',topic:'retention',
+      finding:'Peekaa needs more customer history before it can reliably measure first-to-second visit retention.',
+      why:'',action:'',cta:null,
+      evidence:{
+        fact:'A return rate is only reported once enough customers have had the chance to come back.',
+        period,sample:'',
+        limitation:'Customers who joined too recently to return yet are left out of the rate rather than counted as lost.',
+        reconsider:'Peekaa reports the rate as soon as enough customers have matured.'
+      }
+    }];
+  }
+  return [];
+}
+
+/* The translated half of a finding: what was seen, over what period, on how many observations,
+   what it cannot see, and what would make Peekaa change its mind. Collapsed, because an owner who
+   trusts the finding should not have to read it, and an owner who does not should not have to ask.
+   The verbatim analytical output stays under Explore → Evidence & methodology. */
+function biEvidenceHtmlV892(card){
+  const entry=biObjectV892(card)||{};
+  const evidence=biObjectV892(entry.evidence)||{};
+  const rows=[
+    ['What Peekaa saw',biTextV892(evidence.fact)],
+    ['Period',biTextV892(evidence.period)],
+    ['How much this is based on',biTextV892(evidence.sample)],
+    ['What this cannot see',biTextV892(evidence.limitation)],
+    ['When Peekaa would change its mind',biTextV892(evidence.reconsider)]
+  ].filter(row=>row[1]);
+  if(!rows.length)return '';
+  return `<details class="bi-evidence"><summary>${esc(BI_WORDING_V892.evidenceSummary)}</summary>
+    <dl class="bi-evidence-list">${rows.map(row=>`<dt>${esc(row[0])}</dt><dd>${esc(row[1])}</dd>`).join('')}</dl>
+  </details>`;
+}
+
+function biInsightCardHtmlV892(card){
+  const entry=biObjectV892(card);
+  if(!entry)return '';
+  const type=BI_WORDING_V892.types[entry.type]?entry.type:'still_learning';
+  const kind=BI_WORDING_V892.types[type];
+  const cta=biObjectV892(entry.cta);
+  const ctaHtml=!cta?''
+    :cta.kind==='route'&&biTextV892(cta.href)
+      ?`<a class="btn ghost sm bi-cta" href="${esc(cta.href)}">${esc(biTextV892(cta.label,'Open'))} →</a>`
+      :cta.kind==='section'&&biTextV892(cta.section)
+        ?`<button type="button" class="btn ghost sm bi-cta" data-bi-open-v892="${esc(cta.section)}">${esc(biTextV892(cta.label,'Open'))} →</button>`
+        :'';
+  return `<article class="bi-card bi-card--${esc(type.replace('_','-'))}">
+    <p class="bi-card-kind"><span aria-hidden="true">${kind.mark}</span> ${esc(kind.label)}</p>
+    <h3 class="bi-card-finding">${esc(biTextV892(entry.finding))}</h3>
+    ${biTextV892(entry.why)?`<p class="bi-card-why">${esc(biTextV892(entry.why))}</p>`:''}
+    ${biTextV892(entry.action)?`<p class="bi-card-action">${esc(biTextV892(entry.action))}</p>`:''}
+    ${ctaHtml}
+    ${biEvidenceHtmlV892(entry)}
+  </article>`;
+}
+
+function biInsightsHtmlV892(cards){
+  const list=Array.isArray(cards)?cards.filter(card=>biObjectV892(card)):[];
+  return `<section class="card bi-insights" aria-labelledby="biInsightsTitleV892">
+    <div class="bi-section-head"><h2 id="biInsightsTitleV892">${esc(BI_WORDING_V892.insights)}</h2></div>
+    ${list.length
+      ?`<div class="bi-cards">${list.map(biInsightCardHtmlV892).join('')}</div>`
+      :`<p class="bi-empty">${esc(BI_WORDING_V892.noInsight)}</p>`}
+  </section>`;
+}
+
+/* One line of the things an owner counts on their fingers. A figure the readers did not supply is
+   left out; it is never shown as a zero. A zero the reader DID supply for a count of problems is
+   also left out, because "0 slipping away" is not news. */
+function biPulseHtmlV892(model){
+  const view=biObjectV892(model)||{};
+  const bringBack=biObjectV892(view.bringBack)||{};
+  const packages=biObjectV892(view.packages)||{};
+  const known=biWholeV892(biObjectV892(view.customers)?.now);
+  const joined=biWholeV892(biObjectV892(view.newCustomers)?.now);
+  const due=biWholeV892(bringBack.due),slipping=biWholeV892(bringBack.slipping),overdue=biWholeV892(bringBack.overdue);
+  const sessions=biWholeV892(packages.sessions);
+  const chips=[
+    known===null?'':biPluralV892(known,'customer','customers'),
+    joined===null?'':`${joined} new`,
+    !due?'':`${due} due back`,
+    !overdue?'':`${overdue} overdue`,
+    !slipping?'':`${slipping} slipping away`,
+    !sessions?'':biPluralV892(sessions,'unused session','unused sessions')
+  ].filter(Boolean);
+  if(!chips.length)return '';
+  return `<section class="card bi-pulse" aria-labelledby="biPulseTitleV892">
+    <h2 class="bi-pulse-title" id="biPulseTitleV892">${esc(BI_WORDING_V892.pulse)}</h2>
+    <p class="bi-pulse-line">${chips.map(chip=>`<span class="bi-chip">${esc(chip)}</span>`).join('')}</p>
+  </section>`;
+}
+
+/* Status rows, not alarms. These say how much of the business Peekaa can currently see; they are
+   deliberately never promoted into the three things to know. */
+function biHealthHtmlV892(model){
+  const view=biObjectV892(model)||{};
+  const rows=[];
+  const concentration=biObjectV892(view.concentration);
+  if(concentration){
+    rows.push({
+      label:'Customer concentration',
+      value:`Top ${concentration.count} ${concentration.count===1?'customer':'customers'} = ${concentration.pct}% of known revenue`,
+      cta:null
+    });
+  }
+  const coverage=biFiniteV892(view.categoryCoveragePct);
+  if(coverage!==null){
+    rows.push({
+      label:'What you sell',
+      value:`${coverage.toFixed(1)}% of revenue is sorted into categories`,
+      cta:coverage<100?{href:'#/servicemapping',label:'Map services'}:null
+    });
+  }
+  const profile=biObjectV892(view.profileCoverage)||{};
+  const age=biObjectV892(profile.age),gender=biObjectV892(profile.gender);
+  const agePct=biWholeV892(age?.pct),genderPct=biWholeV892(gender?.pct);
+  const profileBase=biWholeV892(age?.denominator)??biWholeV892(gender?.denominator);
+  if(agePct!==null||genderPct!==null){
+    const parts=[agePct===null?'':`Age known for ${agePct}%`,genderPct===null?'':`gender for ${genderPct}%`].filter(Boolean);
+    rows.push({
+      label:'Customer profiles',
+      value:`${parts.join(' · ')}${profileBase===null||profileBase===undefined?'':` of ${biPluralV892(profileBase,'customer','customers')}`}`,
+      cta:null
+    });
+  }
+  const contactable=biObjectV892(view.contactable);
+  if(contactable){
+    rows.push({
+      label:'Who you may contact',
+      value:`${contactable.sms} by text message and ${contactable.email} by email, out of ${biPluralV892(contactable.customers,'customer','customers')}`,
+      cta:null
+    });
+  }
+  const foundation=biObjectV892(view.foundation);
+  if(foundation&&biTextV892(foundation.pattern)){
+    rows.push({label:'Coverage',value:biTextV892(foundation.pattern),cta:null});
+  }
+  if(!rows.length)return '';
+  return `<section class="card bi-health" aria-labelledby="biHealthTitleV892">
+    <div class="bi-section-head"><h2 id="biHealthTitleV892">${esc(BI_WORDING_V892.health)}</h2></div>
+    <ul class="bi-health-list">${rows.map(row=>`<li class="bi-health-row">
+      <span class="bi-health-label">${esc(row.label)}</span>
+      <span class="bi-health-value">${esc(row.value)}</span>
+      ${row.cta?`<a class="btn ghost sm" href="${esc(row.cta.href)}">${esc(row.cta.label)} →</a>`:''}
+    </li>`).join('')}</ul>
+  </section>`;
+}
+
+/* Last night's brief in one strip: the first sentence, the one about regulars, and everything
+   else behind "Show more". The sentences themselves are still ownerBriefLinesV826's, unchanged —
+   this only decides which two lead. */
+function biOvernightStripHtmlV892(response){
+  const payload=biObjectV892(response);
+  const brief=biObjectV892(payload?.brief);
+  if(!brief||payload.data_status==='not_computed'||payload.data_status==='error')return '';
+  const lines=(ownerBriefLinesV826(brief)||[]).filter(line=>biObjectV892(line)&&biTextV892(line.text));
+  if(!lines.length)return '';
+  /* The regulars sentence is the one an owner acts on, wherever it lands in the list. Both of the
+     forms ownerBriefLinesV826 can write for it contain the same six words. */
+  const riskIndex=lines.findIndex(line=>line.text.indexOf('overdue their usual visit')>-1);
+  const lead=[lines[0],riskIndex>0?lines[riskIndex]:null].filter(Boolean);
+  const rest=lines.filter(line=>lead.indexOf(line)<0);
+  const stale=payload.data_status==='stale'?' · older than a day':'';
+  return `<section class="card bi-overnight" aria-labelledby="biOvernightTitleV892">
+    <p class="bi-overnight-line"><b id="biOvernightTitleV892">${esc(BI_WORDING_V892.overnight)}</b>${esc(stale)}
+      ${lead.map(line=>`<span class="bi-overnight-sentence ${esc(biTextV892(line.kind,'plain'))}">${esc(line.text)}</span>`).join('')}</p>
+    ${rest.length?`<details class="bi-overnight-more"><summary>${esc(BI_WORDING_V892.showMore)}</summary>
+      <ul class="dashboard-brief-list">${rest.map(line=>`<li class="${esc(biTextV892(line.kind,'plain'))}">${esc(line.text)}</li>`).join('')}</ul>
+    </details>`:''}
+  </section>`;
+}
+
+/* Explore: one accordion of the renderers this page has always had, grouped the way an owner
+   would look for them. Native <details>, so it is keyboard-operable for free and — the reason
+   this is safe — a closed one KEEPS its subtree in the document, so every mount the page binds
+   after paint (RevenueTruthUI.bind, the growth mounts, bindCategoryMixSectionV650, #ciMore, the
+   CSV export status, the category drill-down) is still found from the same body node. A section
+   whose renderers all returned nothing is dropped rather than opened onto an empty shell. */
+function biExploreHtmlV892(sections){
+  const list=(Array.isArray(sections)?sections:[])
+    .map(section=>biObjectV892(section))
+    .filter(section=>section&&biTextV892(section.body));
+  if(!list.length)return '';
+  return `<section class="card bi-explore" aria-labelledby="biExploreTitleV892">
+    <div class="bi-section-head"><h2 id="biExploreTitleV892">${esc(BI_WORDING_V892.explore)}</h2></div>
+    ${list.map(section=>`<details class="bi-explore-group" data-bi-section-v892="${esc(biTextV892(section.key))}">
+      <summary><b>${esc(biTextV892(section.title,'Section'))}</b>${biTextV892(section.hint)?` <span class="muted small">${esc(biTextV892(section.hint))}</span>`:''}</summary>
+      <div class="bi-explore-body">${section.body}</div>
+    </details>`).join('')}
+  </section>`;
+}
+/* nestly_v892 END — everything above is the Business Intelligence presentation layer. */
+
 /* nestly_v650: Service mapping board. Reached from Customer Intelligence's "What they buy"
    withhold state (#/servicemapping) and, when writable, a small link from Services. There is no
    MODULES entry and no route guard for this token — the same shape as #/studio's owner-only
