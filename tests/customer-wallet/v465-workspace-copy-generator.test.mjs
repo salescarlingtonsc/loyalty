@@ -36,6 +36,80 @@ const COPY_FIXES_20260823 = [
   'Customers collect stamps automatically as they spend. Define what each milestone is worth — a free item to hand over, or store credit.',
 ];
 
+/* nestly_v906 wave 1 — the workspace chrome and the Help Centre's structural labels. The
+   generated table was machine-translated in ONE pass at v97 and never regenerated, so every
+   label the product gained after that rendered English to a zh-CN or ms reader while the
+   mechanism itself was working perfectly. This is the register of that first wave: the rail,
+   the app bar, the account menu and the Help Centre's own furniture. Help ARTICLE PROSE is
+   deliberately absent — a mistranslated counter instruction is worse than an English one. */
+const WAVE1_CHROME_20260915 = [
+  "Rewards & Offer",
+  "Rewards Programme",
+  "Limited Offer",
+  "History",
+  "Customer Interface",
+  "Business Insights",
+  "Sales & refunds",
+  "Staff Members",
+  "Reminder & Notification",
+  "Retention",
+  "Bottles",
+  "Bottle keep",
+  "Business Profile",
+  "Appointment Setting",
+  "Customer Permission",
+  "Customer Sign-up",
+  "Done",
+  "Owner",
+  "Manager",
+  "Front desk",
+  "Bookkeeper",
+  "Find a customer  ( / )",
+  "Find a customer by name or phone",
+  "Search customers",
+  "Scan redemption QR",
+  "Staff quick actions",
+  "More workspace modules",
+  "Workspace settings",
+  "Account links",
+  "Current workspace",
+  "Signed in as",
+  "Your display name",
+  "Viewing data for",
+  "Language",
+  "Help",
+  "Help Centre",
+  "Help home",
+  "Help sections",
+  "How can we help you?",
+  "Search for anything…",
+  "Search guides, features or questions",
+  "Clear search",
+  "Getting started",
+  "More help",
+  "Common tasks",
+  "See all common tasks",
+  "Troubleshooting",
+  "Frequently asked questions",
+  "Glossary",
+  "On this page",
+  "What is this?",
+  "What can I do here?",
+  "Understanding this screen",
+  "Things to know",
+  "Common problems",
+  "Common questions",
+  "Related guides",
+  "Where to go",
+  "Steps",
+  "Possible reasons",
+  "What to do",
+  "Still not working?",
+  "Across the workspace",
+  "We couldn't find a guide for that",
+  "Open this guide on its own page",
+];
+
 test('the three stamps rows are translated in both locales', () => {
   for (const locale of ['zh-CN', 'ms']) {
     for (const source of STAMP_ROWS) {
@@ -67,7 +141,8 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
   /* nestly_v825 adds 'Staff commission' through the same ledger; nestly_v892 adds the renamed
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
-    'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.'].sort());
+    'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
+    ...WAVE1_CHROME_20260915].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -95,13 +170,17 @@ test('the generator is idempotent, and app.js already equals what it produces', 
   assert.equal(once.changed, false, 'app/app.js is out of date — run npm run workspace-copy');
   const twice = generate({appSource: once.next, additionsSource});
   assert.equal(twice.next, once.next, 'a second run must produce identical bytes');
-  assert.equal(once.keyCount, 1478); /* + 'Staff commission' (v825) + the two v892 rename strings */
+  /* nestly_v906 wave 1 adds the 65 chrome strings in WAVE1_CHROME_20260915: 1478 -> 1543. The wave
+     ADDS only — 'How it works' and 'How to use it' were drafted into it and then taken back out on
+     finding they were already translated at v97, because re-wording reviewed copy is a separate
+     decision from filling a gap. */
+  assert.equal(once.keyCount, 1543);
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 1478 strings per locale/);
+  assert.match(clean, /up to date: 1543 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

@@ -57,13 +57,13 @@
     },
     {
       "source": "Business Intelligence",
-      "zh-CN": "\u5546\u4e1a\u667a\u80fd",
+      "zh-CN": "商业智能",
       "ms": "Kecerdasan Perniagaan",
       "reason": "nestly_v892 (owner ruling, 2026-09-14): the Customer intelligence module is renamed Business Intelligence, and its page subtitle now says what the page is for rather than what it contains. Both strings are read from BI_WORDING_V892 and rendered in the rail, the Dashboard link and the page header, so a zh-CN or ms merchant would otherwise meet the renamed module in English on every screen that names it."
     },
     {
       "source": "Know what happened. See what to do next.",
-      "zh-CN": "\u4e86\u89e3\u53d1\u751f\u4e86\u4ec0\u4e48\u3002\u770b\u770b\u63a5\u4e0b\u6765\u8be5\u505a\u4ec0\u4e48\u3002",
+      "zh-CN": "了解发生了什么。看看接下来该做什么。",
       "ms": "Ketahui apa yang berlaku. Lihat apa yang perlu dilakukan seterusnya.",
       "reason": "nestly_v892 (owner ruling, 2026-09-14): the Customer intelligence module is renamed Business Intelligence, and its page subtitle now says what the page is for rather than what it contains. Both strings are read from BI_WORDING_V892 and rendered in the rail, the Dashboard link and the page header, so a zh-CN or ms merchant would otherwise meet the renamed module in English on every screen that names it. Same rename, the page's one-line description."
     },
@@ -72,6 +72,396 @@
       "zh-CN": "员工佣金",
       "ms": "Komisen kakitangan",
       "reason": "nestly_v825 (owner, 2026-09-08): the Staff performance ranking page is retired into a Staff commission module under Reports; the rail label, the Business Insights card and the Settings role copy all say Staff commission now, so the generated table carries it beside the curated WORKSPACE_COPY_V97 entry."
+    },
+    {
+      "source": "Rewards & Offer",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "奖励与优惠",
+      "ms": "Ganjaran & Tawaran"
+    },
+    {
+      "source": "Rewards Programme",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "奖励方案",
+      "ms": "Program Ganjaran"
+    },
+    {
+      "source": "Limited Offer",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "限时优惠",
+      "ms": "Tawaran Terhad"
+    },
+    {
+      "source": "History",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "历史记录",
+      "ms": "Sejarah"
+    },
+    {
+      "source": "Customer Interface",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "顾客界面",
+      "ms": "Antara Muka Pelanggan"
+    },
+    {
+      "source": "Business Insights",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "业务洞察",
+      "ms": "Wawasan Perniagaan"
+    },
+    {
+      "source": "Sales & refunds",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "销售与退款",
+      "ms": "Jualan & bayaran balik"
+    },
+    {
+      "source": "Staff Members",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "员工",
+      "ms": "Ahli Kakitangan"
+    },
+    {
+      "source": "Reminder & Notification",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "提醒与通知",
+      "ms": "Peringatan & Pemberitahuan"
+    },
+    {
+      "source": "Retention",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "挽回顾客",
+      "ms": "Pengekalan"
+    },
+    {
+      "source": "Bottles",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "存酒",
+      "ms": "Botol"
+    },
+    {
+      "source": "Bottle keep",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "存酒服务",
+      "ms": "Simpanan botol"
+    },
+    {
+      "source": "Business Profile",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "商家资料",
+      "ms": "Profil Perniagaan"
+    },
+    {
+      "source": "Appointment Setting",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "预约设置",
+      "ms": "Tetapan Janji Temu"
+    },
+    {
+      "source": "Customer Permission",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "顾客权限",
+      "ms": "Kebenaran Pelanggan"
+    },
+    {
+      "source": "Customer Sign-up",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "顾客注册",
+      "ms": "Pendaftaran Pelanggan"
+    },
+    {
+      "source": "Done",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "完成",
+      "ms": "Selesai"
+    },
+    {
+      "source": "Owner",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "店主",
+      "ms": "Pemilik"
+    },
+    {
+      "source": "Manager",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "经理",
+      "ms": "Pengurus"
+    },
+    {
+      "source": "Front desk",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "前台",
+      "ms": "Kaunter depan"
+    },
+    {
+      "source": "Bookkeeper",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "记账员",
+      "ms": "Kerani akaun"
+    },
+    {
+      "source": "Find a customer  ( / )",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "查找顾客  ( / )",
+      "ms": "Cari pelanggan  ( / )"
+    },
+    {
+      "source": "Find a customer by name or phone",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "按姓名或电话查找顾客",
+      "ms": "Cari pelanggan mengikut nama atau telefon"
+    },
+    {
+      "source": "Search customers",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "搜索顾客",
+      "ms": "Cari pelanggan"
+    },
+    {
+      "source": "Scan redemption QR",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "扫描兑换二维码",
+      "ms": "Imbas QR penebusan"
+    },
+    {
+      "source": "Staff quick actions",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "员工快捷操作",
+      "ms": "Tindakan pantas kakitangan"
+    },
+    {
+      "source": "More workspace modules",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "更多工作区模块",
+      "ms": "Lagi modul ruang kerja"
+    },
+    {
+      "source": "Workspace settings",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "工作区设置",
+      "ms": "Tetapan ruang kerja"
+    },
+    {
+      "source": "Account links",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "账户链接",
+      "ms": "Pautan akaun"
+    },
+    {
+      "source": "Current workspace",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "当前工作区",
+      "ms": "Ruang kerja semasa"
+    },
+    {
+      "source": "Signed in as",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "当前登录",
+      "ms": "Log masuk sebagai"
+    },
+    {
+      "source": "Your display name",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "您的显示名称",
+      "ms": "Nama paparan anda"
+    },
+    {
+      "source": "Viewing data for",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "正在查看",
+      "ms": "Melihat data untuk"
+    },
+    {
+      "source": "Language",
+      "reason": "nestly_v906 wave 1 — workspace chrome. The generated table was machine-translated in ONE pass at v97 and never regenerated, so every label added to the product since then rendered English to a zh-CN or ms reader even though the mechanism was working. This is the navigation rail, the app bar and the account menu: the strings on screen before the owner opens anything.",
+      "zh-CN": "语言",
+      "ms": "Bahasa"
+    },
+    {
+      "source": "Help",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "帮助",
+      "ms": "Bantuan"
+    },
+    {
+      "source": "Help Centre",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "帮助中心",
+      "ms": "Pusat Bantuan"
+    },
+    {
+      "source": "Help home",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "帮助首页",
+      "ms": "Laman bantuan"
+    },
+    {
+      "source": "Help sections",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "帮助分类",
+      "ms": "Bahagian bantuan"
+    },
+    {
+      "source": "How can we help you?",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "需要什么帮助？",
+      "ms": "Bagaimana kami boleh membantu?"
+    },
+    {
+      "source": "Search for anything…",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "搜索任何内容…",
+      "ms": "Cari apa sahaja…"
+    },
+    {
+      "source": "Search guides, features or questions",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "搜索指南、功能或问题",
+      "ms": "Cari panduan, ciri atau soalan"
+    },
+    {
+      "source": "Clear search",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "清除搜索",
+      "ms": "Kosongkan carian"
+    },
+    {
+      "source": "Getting started",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "快速入门",
+      "ms": "Permulaan"
+    },
+    {
+      "source": "More help",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "更多帮助",
+      "ms": "Bantuan lanjut"
+    },
+    {
+      "source": "Common tasks",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "常用操作",
+      "ms": "Tugas lazim"
+    },
+    {
+      "source": "See all common tasks",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "查看全部常用操作",
+      "ms": "Lihat semua tugas lazim"
+    },
+    {
+      "source": "Troubleshooting",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "疑难排解",
+      "ms": "Penyelesaian masalah"
+    },
+    {
+      "source": "Frequently asked questions",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "常见问答",
+      "ms": "Soalan lazim"
+    },
+    {
+      "source": "Glossary",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "术语表",
+      "ms": "Glosari"
+    },
+    {
+      "source": "On this page",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "本页内容",
+      "ms": "Pada halaman ini"
+    },
+    {
+      "source": "What is this?",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "这是什么？",
+      "ms": "Apakah ini?"
+    },
+    {
+      "source": "What can I do here?",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "这里可以做什么？",
+      "ms": "Apa yang boleh saya buat di sini?"
+    },
+    {
+      "source": "Understanding this screen",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "认识此页面",
+      "ms": "Memahami skrin ini"
+    },
+    {
+      "source": "Things to know",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "注意事项",
+      "ms": "Perkara yang perlu diketahui"
+    },
+    {
+      "source": "Common problems",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "常见问题",
+      "ms": "Masalah lazim"
+    },
+    {
+      "source": "Common questions",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "常见疑问",
+      "ms": "Soalan lazim ditanya"
+    },
+    {
+      "source": "Related guides",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "相关指南",
+      "ms": "Panduan berkaitan"
+    },
+    {
+      "source": "Where to go",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "操作路径",
+      "ms": "Ke mana hendak pergi"
+    },
+    {
+      "source": "Steps",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "步骤",
+      "ms": "Langkah"
+    },
+    {
+      "source": "Possible reasons",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "可能的原因",
+      "ms": "Kemungkinan sebab"
+    },
+    {
+      "source": "What to do",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "处理方法",
+      "ms": "Apa yang perlu dilakukan"
+    },
+    {
+      "source": "Still not working?",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "仍未解决？",
+      "ms": "Masih tidak berjaya?"
+    },
+    {
+      "source": "Across the workspace",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "整个工作区",
+      "ms": "Merentas ruang kerja"
+    },
+    {
+      "source": "We couldn't find a guide for that",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "未找到相关指南",
+      "ms": "Kami tidak menemui panduan untuk itu"
+    },
+    {
+      "source": "Open this guide on its own page",
+      "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
+      "zh-CN": "单独打开本指南",
+      "ms": "Buka panduan ini pada halamannya sendiri"
     }
   ]
 }
