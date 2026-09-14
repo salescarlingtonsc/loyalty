@@ -230,8 +230,10 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        reader while the localizer itself was working correctly. This wave is the workspace CHROME
        and the Help Centre's structural labels, all 65 through the same ledger and generator.
        Help ARTICLE PROSE is deliberately NOT here: a mistranslated counter instruction is worse
-       than an English one, so it is reviewed on its own rather than machine-translated in bulk. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,1543,`${locale} valid visible-literal inventory changed without catalog review`);
+       than an English one, so it is reviewed on its own rather than machine-translated in bulk.
+       1543 -> 1656: nestly_v907 wave 2 begins that review, a COMPLETE GUIDE at a time — the
+       Getting Started section and the Dashboard guide. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,1656,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

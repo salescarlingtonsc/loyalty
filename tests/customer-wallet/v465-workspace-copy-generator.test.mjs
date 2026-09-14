@@ -42,6 +42,126 @@ const COPY_FIXES_20260823 = [
    mechanism itself was working perfectly. This is the register of that first wave: the rail,
    the app bar, the account menu and the Help Centre's own furniture. Help ARTICLE PROSE is
    deliberately absent — a mistranslated counter instruction is worse than an English one. */
+/* nestly_v907 wave 2 — Help Centre ARTICLE PROSE, shipped a complete guide at a time. The
+   Getting Started section (Start here, Finding your way around, Roles and access, Your first
+   week) and the Dashboard guide. A guide with English steps under Chinese headings reads worse
+   than an English one, so a guide is never half-done. */
+const WAVE2_HELP_PROSE_20260915 = [
+  "Start here",
+  "What Peekaa does, and the first few things to set up.",
+  "Peekaa records what your customers buy and turns it into loyalty they can spend with you again. You run the counter, your customers see their own rewards in their phone, and both sides read the same records.",
+  "How the whole thing fits together",
+  "You set up what you sell — services, products, packages.",
+  "You decide what customers earn — points, stamps, tiers, a welcome gift, a birthday treat.",
+  "Your staff record every sale at Record sale.",
+  "Peekaa works out the earning and shows it to the customer in their own app.",
+  "The customer comes back, shows a reward QR, and your staff scan it at the counter.",
+  "Two apps, one set of records",
+  "The workspace you are in now is for you and your team. Your customers use a separate Peekaa app on their phone: they join by scanning your business QR, and they see their own points, rewards and visit history. Both read the same records, so nothing has to be kept in step by hand.",
+  "Your first hour",
+  "Open Get started from the account menu in the top right. It checks what is set up and what is not.",
+  "Add at least one service or product. Nothing else works until there is something to sell.",
+  "Set up one reward programme in Rewards & Offer, and publish it.",
+  "Print or display your business QR so customers can join.",
+  "Record one real sale at Record sale, and check that the points appear.",
+  "Who this workspace is for",
+  "Everyone on your team signs in to the same workspace, but each person sees only the parts you have given them. If a screen described in this guide is not in your sidebar, your account does not have it — ask the owner.",
+  "Get started never disappears. If you press \"Don't show this again\", it is still in the account menu under Get started.",
+  "Only the owner can open Get started, Branches, Staff Members, Customer Interface, Reminder & Notification and Subscription.",
+  "Do I have to finish setup in order?",
+  "No. Get started lists what is missing and you can do it in any order — but add something to sell first, because sales, packages and rewards all reference it.",
+  "Do my customers need to download an app?",
+  "They open Peekaa in their phone browser after scanning your QR. They can add it to their home screen; there is nothing to install first.",
+  "Finding your way around",
+  "What the sidebar groups mean and where things live.",
+  "The sidebar is grouped by what you do across a day, not by how the data is stored. Each group opens to show the screens inside it.",
+  "On a phone or tablet",
+  "Below about 960 pixels wide the sidebar is replaced by a bar along the bottom: Record sale, Scan QR, Appointments, and More. More opens the full menu, including Help.",
+  "Today and this week at a glance: money in, visits, what is scheduled.",
+  "Everyone who has joined your programme, and each customer's full history.",
+  "The counter: Record sale, Appointments, Bookings, Waitlist, Customer packages.",
+  "Everything customers earn or claim: Overview, Rewards Programme, Limited Offer, History.",
+  "What your customers see — your business profile, booking rules and permissions. Owner only.",
+  "Daily report, Sales, Staff commission, Business Insights, Business Intelligence.",
+  "The things you set once: Staff Members, Branches, Services, Products, Packages, Reminder & Notification.",
+  "Top right",
+  "Find a customer, Record sale, the notifications bell, Help, and your account menu.",
+  "The sidebar only shows what your account can open. A missing group is a permission or an entitlement, not a fault.",
+  "The branch selector in the top bar decides what every number on the screen means. Change it and the figures change with it.",
+  "A module I was told about is not in my sidebar",
+  "Your role does not include it — Branches, Staff Members, Subscription, Customer Interface and Reminder & Notification are owner-only.",
+  "The owner has switched that module off for your account in Staff Members.",
+  "Your business type does not use it. F&B and bars take table Bookings and a Waitlist instead of Appointments.",
+  "Peekaa has not included that module in your plan.",
+  "Ask the owner to check your access in Staff Members.",
+  "If the owner cannot switch it on either, the module is not part of your plan — contact Peekaa.",
+  "Roles and access",
+  "Who can do what, and why a button may not appear.",
+  "Every person on your team has one role, and the owner can additionally switch individual modules on or off for them. The role decides broad authority; the module switches decide which screens they open.",
+  "On top of the role: module access",
+  "In Staff Members the owner sets each teammate's modules to Off, Read or Edit. Read means they can open the screen but not change anything; the screen says so at the top. Owners always have every module the business has.",
+  "Two reasons a screen can be closed to you",
+  "Your role — for example, Staff commission needs finance access, which only Owner, Manager and Bookkeeper have.",
+  "Your module switches — the owner has set that module to Off for you.",
+  "Full access to everything the business has, including Branches, Staff Members, Subscription and Customer Interface. There is exactly one owner role and it cannot be given out by invite.",
+  "Can record sales and see money figures. Cannot open owner-only screens.",
+  "Can record sales. Cannot see money figures such as Staff commission or Business Intelligence.",
+  "Same as Staff: can record sales, cannot see money figures.",
+  "Can see money figures. Cannot record sales.",
+  "Typing a screen's address does not get around either check. The screen refuses and sends you back with a short message.",
+  "A read-only screen shows a \"Read-only access\" note at the top rather than hiding the information.",
+  "Changing someone's role or module access takes effect the next time they load the workspace.",
+  "A teammate says a button is missing that I can see",
+  "Their role cannot perform it — only Owner and Manager see money figures; Bookkeepers cannot record sales.",
+  "You set that module to Read rather than Edit.",
+  "The module is switched off for them entirely.",
+  "Open Staff Members, find the person, and check the role and the module list.",
+  "Set the module they need to Edit, then ask them to reload the workspace.",
+  "Can I have two owners?",
+  "No. The owner role is not invitable. Give a trusted teammate the Manager role instead — it covers everything except Branches, Staff Members, Subscription and Customer Interface.",
+  "What is the difference between Staff and Front desk?",
+  "Nothing in what they are allowed to do — both can record sales and neither sees money figures. They exist so your roster reads correctly.",
+  "Your first week, step by step",
+  "A short path from an empty workspace to a running programme.",
+  "Do these in order. Each step depends on the one before it, and each links to the guide for that screen.",
+  "The order that works",
+  "Set up your branch details. Operations setup -> Branches. Your address and phone appear on the customer's business page.",
+  "Add what you sell. Operations setup -> Services and Products. At least one is required before anything else works.",
+  "Add your team. Operations setup -> Staff Members. Invite anyone who needs to sign in; add roster-only people for scheduling.",
+  "Choose your reward programme. Rewards & Offer -> Rewards Programme. Set up Point system or Stamp card, then publish it.",
+  "Add at least one reward customers can claim. A programme that earns with nothing to claim gives customers nothing to aim at.",
+  "Turn on your extras. Welcome gift for new sign-ups, Birthday benefit, Referrals, Bring-back rewards.",
+  "Set what your customers see. Customer Interface -> Business Profile, then Customer Permission for booking rules.",
+  "Display your business QR. Account menu -> My Business QR. Print it for the counter.",
+  "Record your first real sale and check the customer's points moved.",
+  "You are running when",
+  "A customer can scan your QR and see your programme.",
+  "A sale at the counter changes their points.",
+  "A reward they claim can be scanned and given at the counter.",
+  "Today and this week, for the branch you are viewing.",
+  "The first screen of the workspace. It shows what happened today and this week for the branch selected in the top bar, plus what is scheduled next.",
+  "See money in, visits and members joined for the period",
+  "See what is scheduled today",
+  "Open the screen behind any figure",
+  "This week",
+  "Money recorded, visits and joins for the current week.",
+  "Today schedule",
+  "Appointments or bookings due today.",
+  "How the period compares, with the date range you choose.",
+  "Branch selector (top bar)",
+  "Which branch every figure on the screen is for.",
+  "Every figure is for the branch shown in the top bar. Switch branch and the whole screen changes.",
+  "Only an owner or manager can view all branches at once. Other roles see the branch they are assigned to.",
+  "When a figure cannot be read, Peekaa says so rather than showing a zero.",
+  "The numbers look wrong or too low",
+  "A single branch is selected and you expected the whole business.",
+  "The date range is not the one you think it is.",
+  "Sales recorded as a walk-in are not linked to a customer, so they do not appear in member figures.",
+  "Check the branch selector in the top bar.",
+  "Check the date range on the Performance card.",
+  "Open Sales for the same range to see the individual records behind the total.",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -142,7 +262,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -173,14 +293,16 @@ test('the generator is idempotent, and app.js already equals what it produces', 
   /* nestly_v906 wave 1 adds the 65 chrome strings in WAVE1_CHROME_20260915: 1478 -> 1543. The wave
      ADDS only — 'How it works' and 'How to use it' were drafted into it and then taken back out on
      finding they were already translated at v97, because re-wording reviewed copy is a separate
-     decision from filling a gap. */
-  assert.equal(once.keyCount, 1543);
+     decision from filling a gap.
+     nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
+     1656. */
+  assert.equal(once.keyCount, 1656);
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 1543 strings per locale/);
+  assert.match(clean, /up to date: 1656 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

@@ -462,6 +462,684 @@
       "reason": "nestly_v906 wave 1 — Help Centre chrome. The structural labels of the Help Centre (nestly_v904): section headings, breadcrumb and card titles, search furniture. Article PROSE is deliberately not in this wave — a mistranslated instruction at the counter is worse than an English one, so it is reviewed separately rather than machine-translated in bulk.",
       "zh-CN": "单独打开本指南",
       "ms": "Buka panduan ini pada halamannya sendiri"
+    },
+    {
+      "source": "Start here",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "从这里开始",
+      "ms": "Mula di sini"
+    },
+    {
+      "source": "What Peekaa does, and the first few things to set up.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "Peekaa 的用途，以及最先要设置的几件事。",
+      "ms": "Apa yang Peekaa lakukan, dan beberapa perkara pertama untuk disediakan."
+    },
+    {
+      "source": "Peekaa records what your customers buy and turns it into loyalty they can spend with you again. You run the counter, your customers see their own rewards in their phone, and both sides read the same records.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "Peekaa 记录顾客购买的内容，并转化为他们可再次在您店内使用的忠诚奖励。您负责柜台，顾客在手机上查看自己的奖励，双方读取的是同一份记录。",
+      "ms": "Peekaa merekodkan apa yang pelanggan anda beli dan menukarkannya menjadi kesetiaan yang boleh mereka guna semula dengan anda. Anda menguruskan kaunter, pelanggan melihat ganjaran mereka sendiri dalam telefon, dan kedua-dua pihak membaca rekod yang sama."
+    },
+    {
+      "source": "How the whole thing fits together",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "整体运作方式",
+      "ms": "Bagaimana semuanya bergabung"
+    },
+    {
+      "source": "You set up what you sell — services, products, packages.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您设置要销售的内容 — 服务、产品、配套。",
+      "ms": "Anda menyediakan apa yang anda jual — perkhidmatan, produk, pakej."
+    },
+    {
+      "source": "You decide what customers earn — points, stamps, tiers, a welcome gift, a birthday treat.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您决定顾客能获得什么 — 积分、印花、等级、迎新礼物、生日优惠。",
+      "ms": "Anda menentukan apa yang pelanggan peroleh — mata, setem, peringkat, hadiah selamat datang, hadiah hari jadi."
+    },
+    {
+      "source": "Your staff record every sale at Record sale.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您的员工在「记录销售」中记录每一笔交易。",
+      "ms": "Kakitangan anda merekodkan setiap jualan di Rekod jualan."
+    },
+    {
+      "source": "Peekaa works out the earning and shows it to the customer in their own app.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "Peekaa 计算所得奖励，并在顾客自己的应用中显示。",
+      "ms": "Peekaa mengira perolehan itu dan menunjukkannya kepada pelanggan dalam aplikasi mereka sendiri."
+    },
+    {
+      "source": "The customer comes back, shows a reward QR, and your staff scan it at the counter.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "顾客再次光顾，出示奖励二维码，您的员工在柜台扫描。",
+      "ms": "Pelanggan datang semula, menunjukkan QR ganjaran, dan kakitangan anda mengimbasnya di kaunter."
+    },
+    {
+      "source": "Two apps, one set of records",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "两个应用，一份记录",
+      "ms": "Dua aplikasi, satu set rekod"
+    },
+    {
+      "source": "The workspace you are in now is for you and your team. Your customers use a separate Peekaa app on their phone: they join by scanning your business QR, and they see their own points, rewards and visit history. Both read the same records, so nothing has to be kept in step by hand.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您现在所在的工作区供您和团队使用。顾客在手机上使用另一个 Peekaa 应用：扫描您的商家二维码即可加入，并可查看自己的积分、奖励和到访记录。双方读取同一份记录，无需人工同步。",
+      "ms": "Ruang kerja yang anda berada sekarang adalah untuk anda dan pasukan anda. Pelanggan anda menggunakan aplikasi Peekaa yang berasingan pada telefon mereka: mereka menyertai dengan mengimbas QR perniagaan anda, dan melihat mata, ganjaran dan sejarah kunjungan mereka sendiri. Kedua-duanya membaca rekod yang sama, jadi tiada apa yang perlu diselaraskan secara manual."
+    },
+    {
+      "source": "Your first hour",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "最初一小时",
+      "ms": "Jam pertama anda"
+    },
+    {
+      "source": "Open Get started from the account menu in the top right. It checks what is set up and what is not.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "从右上角的账户菜单打开「开始设置」。它会检查哪些已设置、哪些尚未设置。",
+      "ms": "Buka Mula daripada menu akaun di penjuru kanan atas. Ia menyemak apa yang sudah disediakan dan apa yang belum."
+    },
+    {
+      "source": "Add at least one service or product. Nothing else works until there is something to sell.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "至少添加一项服务或产品。在有可售内容之前，其他功能都无法运作。",
+      "ms": "Tambah sekurang-kurangnya satu perkhidmatan atau produk. Tiada apa-apa lain berfungsi sehingga ada sesuatu untuk dijual."
+    },
+    {
+      "source": "Set up one reward programme in Rewards & Offer, and publish it.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "在「奖励与优惠」中设置一个奖励方案并发布。",
+      "ms": "Sediakan satu program ganjaran dalam Ganjaran & Tawaran, dan terbitkannya."
+    },
+    {
+      "source": "Print or display your business QR so customers can join.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "打印或展示您的商家二维码，让顾客可以加入。",
+      "ms": "Cetak atau paparkan QR perniagaan anda supaya pelanggan boleh menyertai."
+    },
+    {
+      "source": "Record one real sale at Record sale, and check that the points appear.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "在「记录销售」中记录一笔真实交易，并确认积分已出现。",
+      "ms": "Rekodkan satu jualan sebenar di Rekod jualan, dan semak bahawa mata itu muncul."
+    },
+    {
+      "source": "Who this workspace is for",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "工作区的使用对象",
+      "ms": "Untuk siapa ruang kerja ini"
+    },
+    {
+      "source": "Everyone on your team signs in to the same workspace, but each person sees only the parts you have given them. If a screen described in this guide is not in your sidebar, your account does not have it — ask the owner.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "团队所有人登录同一个工作区，但每个人只能看到您授予的部分。如果本指南提到的页面不在您的侧边栏中，说明您的账户没有该权限 — 请询问店主。",
+      "ms": "Semua orang dalam pasukan anda log masuk ke ruang kerja yang sama, tetapi setiap orang hanya melihat bahagian yang anda berikan kepada mereka. Jika skrin yang diterangkan dalam panduan ini tiada dalam bar sisi anda, akaun anda tidak memilikinya — tanya pemilik."
+    },
+    {
+      "source": "Get started never disappears. If you press \"Don't show this again\", it is still in the account menu under Get started.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "「开始设置」不会消失。即使您按下「不再显示」，它仍在账户菜单的「开始设置」中。",
+      "ms": "Mula tidak pernah hilang. Jika anda menekan \"Jangan tunjuk lagi\", ia masih berada dalam menu akaun di bawah Mula."
+    },
+    {
+      "source": "Only the owner can open Get started, Branches, Staff Members, Customer Interface, Reminder & Notification and Subscription.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "只有店主可以打开「开始设置」、「分店」、「员工」、「顾客界面」、「提醒与通知」和「订阅」。",
+      "ms": "Hanya pemilik boleh membuka Mula, Cawangan, Ahli Kakitangan, Antara Muka Pelanggan, Peringatan & Pemberitahuan dan Langganan."
+    },
+    {
+      "source": "Do I have to finish setup in order?",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "设置必须按顺序完成吗？",
+      "ms": "Adakah saya perlu menyiapkan persediaan mengikut turutan?"
+    },
+    {
+      "source": "No. Get started lists what is missing and you can do it in any order — but add something to sell first, because sales, packages and rewards all reference it.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "不必。「开始设置」会列出缺少的项目，您可以按任意顺序完成 — 但请先添加可售内容，因为销售、配套和奖励都依赖它。",
+      "ms": "Tidak. Mula menyenaraikan apa yang belum ada dan anda boleh melakukannya dalam apa-apa turutan — tetapi tambah sesuatu untuk dijual dahulu, kerana jualan, pakej dan ganjaran semuanya merujuk kepadanya."
+    },
+    {
+      "source": "Do my customers need to download an app?",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "顾客需要下载应用吗？",
+      "ms": "Adakah pelanggan saya perlu memuat turun aplikasi?"
+    },
+    {
+      "source": "They open Peekaa in their phone browser after scanning your QR. They can add it to their home screen; there is nothing to install first.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "扫描您的二维码后，他们在手机浏览器中打开 Peekaa。可将其添加到主屏幕；无需事先安装任何东西。",
+      "ms": "Mereka membuka Peekaa dalam pelayar telefon selepas mengimbas QR anda. Mereka boleh menambahnya ke skrin utama; tiada apa-apa perlu dipasang dahulu."
+    },
+    {
+      "source": "Finding your way around",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "熟悉界面布局",
+      "ms": "Mencari jalan anda"
+    },
+    {
+      "source": "What the sidebar groups mean and where things live.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "侧边栏各分组的含义，以及各功能的位置。",
+      "ms": "Maksud kumpulan bar sisi dan di mana sesuatu berada."
+    },
+    {
+      "source": "The sidebar is grouped by what you do across a day, not by how the data is stored. Each group opens to show the screens inside it.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "侧边栏按您一天中的工作内容分组，而非按数据存储方式分组。展开每个分组即可看到其中的页面。",
+      "ms": "Bar sisi dikumpulkan mengikut apa yang anda lakukan sepanjang hari, bukan mengikut cara data disimpan. Setiap kumpulan dibuka untuk menunjukkan skrin di dalamnya."
+    },
+    {
+      "source": "On a phone or tablet",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "在手机或平板上",
+      "ms": "Pada telefon atau tablet"
+    },
+    {
+      "source": "Below about 960 pixels wide the sidebar is replaced by a bar along the bottom: Record sale, Scan QR, Appointments, and More. More opens the full menu, including Help.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "在宽度约 960 像素以下，侧边栏会替换为底部工具栏：记录销售、扫描二维码、预约和更多。「更多」会打开完整菜单，其中包括「帮助」。",
+      "ms": "Di bawah kira-kira 960 piksel lebar, bar sisi digantikan dengan bar di bahagian bawah: Rekod jualan, Imbas QR, Janji temu, dan Lagi. Lagi membuka menu penuh, termasuk Bantuan."
+    },
+    {
+      "source": "Today and this week at a glance: money in, visits, what is scheduled.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "一览今日与本周：收入、到访、已排定的安排。",
+      "ms": "Sekilas pandang hari ini dan minggu ini: wang masuk, kunjungan, apa yang dijadualkan."
+    },
+    {
+      "source": "Everyone who has joined your programme, and each customer's full history.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "所有已加入您方案的顾客，以及每位顾客的完整记录。",
+      "ms": "Semua orang yang telah menyertai program anda, dan sejarah penuh setiap pelanggan."
+    },
+    {
+      "source": "The counter: Record sale, Appointments, Bookings, Waitlist, Customer packages.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "柜台相关：记录销售、预约、预订、候补名单、顾客配套。",
+      "ms": "Kaunter: Rekod jualan, Janji temu, Tempahan, Senarai menunggu, Pakej pelanggan."
+    },
+    {
+      "source": "Everything customers earn or claim: Overview, Rewards Programme, Limited Offer, History.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "顾客获得或兑换的一切：简介、奖励方案、限时优惠、历史记录。",
+      "ms": "Semua yang pelanggan peroleh atau tuntut: Gambaran keseluruhan, Program Ganjaran, Tawaran Terhad, Sejarah."
+    },
+    {
+      "source": "What your customers see — your business profile, booking rules and permissions. Owner only.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "顾客所见的内容 — 您的商家资料、预订规则和权限。仅限店主。",
+      "ms": "Apa yang pelanggan anda lihat — profil perniagaan, peraturan tempahan dan kebenaran anda. Pemilik sahaja."
+    },
+    {
+      "source": "Daily report, Sales, Staff commission, Business Insights, Business Intelligence.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "每日报告、销售、员工佣金、业务洞察、商业智能。",
+      "ms": "Laporan harian, Jualan, Komisen kakitangan, Wawasan Perniagaan, Business Intelligence."
+    },
+    {
+      "source": "The things you set once: Staff Members, Branches, Services, Products, Packages, Reminder & Notification.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "只需设置一次的内容：员工、分店、服务、产品、配套、提醒与通知。",
+      "ms": "Perkara yang anda tetapkan sekali sahaja: Ahli Kakitangan, Cawangan, Perkhidmatan, Produk, Pakej, Peringatan & Pemberitahuan."
+    },
+    {
+      "source": "Top right",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "右上角",
+      "ms": "Kanan atas"
+    },
+    {
+      "source": "Find a customer, Record sale, the notifications bell, Help, and your account menu.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "查找顾客、记录销售、通知铃、帮助，以及您的账户菜单。",
+      "ms": "Cari pelanggan, Rekod jualan, loceng pemberitahuan, Bantuan, dan menu akaun anda."
+    },
+    {
+      "source": "The sidebar only shows what your account can open. A missing group is a permission or an entitlement, not a fault.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "侧边栏只显示您的账户可以打开的内容。缺少某个分组是权限或套餐问题，而非故障。",
+      "ms": "Bar sisi hanya menunjukkan apa yang akaun anda boleh buka. Kumpulan yang tiada ialah soal kebenaran atau kelayakan, bukan kerosakan."
+    },
+    {
+      "source": "The branch selector in the top bar decides what every number on the screen means. Change it and the figures change with it.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "顶部栏的分店选择器决定屏幕上每个数字的含义。更改它，数字也会随之变化。",
+      "ms": "Pemilih cawangan di bar atas menentukan maksud setiap nombor pada skrin. Tukar ia dan angka akan berubah bersamanya."
+    },
+    {
+      "source": "A module I was told about is not in my sidebar",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "我被告知的某个模块不在侧边栏中",
+      "ms": "Modul yang diberitahu kepada saya tiada dalam bar sisi"
+    },
+    {
+      "source": "Your role does not include it — Branches, Staff Members, Subscription, Customer Interface and Reminder & Notification are owner-only.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您的角色不包含该模块 — 分店、员工、订阅、顾客界面和提醒与通知仅限店主。",
+      "ms": "Peranan anda tidak merangkuminya — Cawangan, Ahli Kakitangan, Langganan, Antara Muka Pelanggan dan Peringatan & Pemberitahuan adalah untuk pemilik sahaja."
+    },
+    {
+      "source": "The owner has switched that module off for your account in Staff Members.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "店主已在「员工」中为您的账户关闭该模块。",
+      "ms": "Pemilik telah mematikan modul itu untuk akaun anda dalam Ahli Kakitangan."
+    },
+    {
+      "source": "Your business type does not use it. F&B and bars take table Bookings and a Waitlist instead of Appointments.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您的行业类型不使用该模块。餐饮和酒吧使用餐桌预订和候补名单，而非预约。",
+      "ms": "Jenis perniagaan anda tidak menggunakannya. F&B dan bar menggunakan Tempahan meja dan Senarai menunggu, bukan Janji temu."
+    },
+    {
+      "source": "Peekaa has not included that module in your plan.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "Peekaa 未将该模块纳入您的套餐。",
+      "ms": "Peekaa tidak memasukkan modul itu dalam pelan anda."
+    },
+    {
+      "source": "Ask the owner to check your access in Staff Members.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "请店主在「员工」中检查您的权限。",
+      "ms": "Minta pemilik menyemak akses anda dalam Ahli Kakitangan."
+    },
+    {
+      "source": "If the owner cannot switch it on either, the module is not part of your plan — contact Peekaa.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "如果店主也无法开启，说明该模块不在您的套餐内 — 请联系 Peekaa。",
+      "ms": "Jika pemilik juga tidak dapat menghidupkannya, modul itu bukan sebahagian daripada pelan anda — hubungi Peekaa."
+    },
+    {
+      "source": "Roles and access",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "角色与权限",
+      "ms": "Peranan dan akses"
+    },
+    {
+      "source": "Who can do what, and why a button may not appear.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "谁可以做什么，以及某个按钮为何可能不显示。",
+      "ms": "Siapa boleh buat apa, dan mengapa sesuatu butang mungkin tidak muncul."
+    },
+    {
+      "source": "Every person on your team has one role, and the owner can additionally switch individual modules on or off for them. The role decides broad authority; the module switches decide which screens they open.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "团队中每个人有一个角色，店主还可为其单独开启或关闭各模块。角色决定总体权限；模块开关决定他们能打开哪些页面。",
+      "ms": "Setiap orang dalam pasukan anda mempunyai satu peranan, dan pemilik boleh menghidupkan atau mematikan modul tertentu untuk mereka. Peranan menentukan kuasa umum; suis modul menentukan skrin yang boleh mereka buka."
+    },
+    {
+      "source": "On top of the role: module access",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "角色之外：模块权限",
+      "ms": "Selain peranan: akses modul"
+    },
+    {
+      "source": "In Staff Members the owner sets each teammate's modules to Off, Read or Edit. Read means they can open the screen but not change anything; the screen says so at the top. Owners always have every module the business has.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "在「员工」中，店主将每位同事的模块设为「关闭」、「只读」或「可编辑」。「只读」表示可以打开页面但不能更改；页面顶部会注明。店主始终拥有商家的全部模块。",
+      "ms": "Dalam Ahli Kakitangan, pemilik menetapkan modul setiap rakan sepasukan kepada Off, Read atau Edit. Read bermaksud mereka boleh membuka skrin tetapi tidak boleh mengubah apa-apa; skrin menyatakannya di bahagian atas. Pemilik sentiasa mempunyai setiap modul yang dimiliki perniagaan."
+    },
+    {
+      "source": "Two reasons a screen can be closed to you",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "页面无法打开的两种原因",
+      "ms": "Dua sebab skrin boleh ditutup daripada anda"
+    },
+    {
+      "source": "Your role — for example, Staff commission needs finance access, which only Owner, Manager and Bookkeeper have.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您的角色 — 例如「员工佣金」需要财务权限，只有店主、经理和记账员拥有。",
+      "ms": "Peranan anda — contohnya, Komisen kakitangan memerlukan akses kewangan, yang hanya dimiliki Pemilik, Pengurus dan Kerani akaun."
+    },
+    {
+      "source": "Your module switches — the owner has set that module to Off for you.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您的模块开关 — 店主已为您将该模块设为「关闭」。",
+      "ms": "Suis modul anda — pemilik telah menetapkan modul itu kepada Off untuk anda."
+    },
+    {
+      "source": "Full access to everything the business has, including Branches, Staff Members, Subscription and Customer Interface. There is exactly one owner role and it cannot be given out by invite.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "可完全访问商家拥有的一切，包括分店、员工、订阅和顾客界面。店主角色只有一个，且无法通过邀请授予。",
+      "ms": "Akses penuh kepada segala yang dimiliki perniagaan, termasuk Cawangan, Ahli Kakitangan, Langganan dan Antara Muka Pelanggan. Hanya ada satu peranan pemilik dan ia tidak boleh diberikan melalui jemputan."
+    },
+    {
+      "source": "Can record sales and see money figures. Cannot open owner-only screens.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "可记录销售并查看金额数据。无法打开仅限店主的页面。",
+      "ms": "Boleh merekod jualan dan melihat angka wang. Tidak boleh membuka skrin khusus pemilik."
+    },
+    {
+      "source": "Can record sales. Cannot see money figures such as Staff commission or Business Intelligence.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "可记录销售。无法查看「员工佣金」或「商业智能」等金额数据。",
+      "ms": "Boleh merekod jualan. Tidak boleh melihat angka wang seperti Komisen kakitangan atau Business Intelligence."
+    },
+    {
+      "source": "Same as Staff: can record sales, cannot see money figures.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "与「员工」相同：可记录销售，无法查看金额数据。",
+      "ms": "Sama seperti Kakitangan: boleh merekod jualan, tidak boleh melihat angka wang."
+    },
+    {
+      "source": "Can see money figures. Cannot record sales.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "可查看金额数据。无法记录销售。",
+      "ms": "Boleh melihat angka wang. Tidak boleh merekod jualan."
+    },
+    {
+      "source": "Typing a screen's address does not get around either check. The screen refuses and sends you back with a short message.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "直接输入页面地址无法绕过这两项检查。页面会拒绝并附一条简短提示将您送回。",
+      "ms": "Menaip alamat skrin tidak memintas mana-mana semakan itu. Skrin akan menolak dan menghantar anda kembali dengan mesej ringkas."
+    },
+    {
+      "source": "A read-only screen shows a \"Read-only access\" note at the top rather than hiding the information.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "只读页面会在顶部显示「只读权限」提示，而不是隐藏信息。",
+      "ms": "Skrin baca sahaja menunjukkan nota \"Read-only access\" di bahagian atas dan bukannya menyembunyikan maklumat."
+    },
+    {
+      "source": "Changing someone's role or module access takes effect the next time they load the workspace.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "更改某人的角色或模块权限后，将在其下次加载工作区时生效。",
+      "ms": "Menukar peranan atau akses modul seseorang berkuat kuasa pada kali berikutnya mereka memuatkan ruang kerja."
+    },
+    {
+      "source": "A teammate says a button is missing that I can see",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "同事说某个我能看到的按钮不见了",
+      "ms": "Rakan sepasukan berkata satu butang yang saya nampak telah hilang"
+    },
+    {
+      "source": "Their role cannot perform it — only Owner and Manager see money figures; Bookkeepers cannot record sales.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "他们的角色无法执行该操作 — 只有店主和经理能看到金额数据；记账员无法记录销售。",
+      "ms": "Peranan mereka tidak boleh melakukannya — hanya Pemilik dan Pengurus melihat angka wang; Kerani akaun tidak boleh merekod jualan."
+    },
+    {
+      "source": "You set that module to Read rather than Edit.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您将该模块设为了「只读」而非「可编辑」。",
+      "ms": "Anda menetapkan modul itu kepada Read dan bukannya Edit."
+    },
+    {
+      "source": "The module is switched off for them entirely.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "该模块对他们完全关闭。",
+      "ms": "Modul itu dimatikan sepenuhnya untuk mereka."
+    },
+    {
+      "source": "Open Staff Members, find the person, and check the role and the module list.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "打开「员工」，找到该人员，检查其角色和模块列表。",
+      "ms": "Buka Ahli Kakitangan, cari orang itu, dan semak peranan serta senarai modul."
+    },
+    {
+      "source": "Set the module they need to Edit, then ask them to reload the workspace.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "将他们需要的模块设为「可编辑」，然后请他们重新加载工作区。",
+      "ms": "Tetapkan modul yang mereka perlukan kepada Edit, kemudian minta mereka memuatkan semula ruang kerja."
+    },
+    {
+      "source": "Can I have two owners?",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "可以有两位店主吗？",
+      "ms": "Bolehkah saya mempunyai dua pemilik?"
+    },
+    {
+      "source": "No. The owner role is not invitable. Give a trusted teammate the Manager role instead — it covers everything except Branches, Staff Members, Subscription and Customer Interface.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "不可以。店主角色无法通过邀请授予。请改为给信任的同事「经理」角色 — 除分店、员工、订阅和顾客界面外，其余均涵盖。",
+      "ms": "Tidak. Peranan pemilik tidak boleh dijemput. Berikan rakan sepasukan yang dipercayai peranan Pengurus sebaliknya — ia merangkumi segalanya kecuali Cawangan, Ahli Kakitangan, Langganan dan Antara Muka Pelanggan."
+    },
+    {
+      "source": "What is the difference between Staff and Front desk?",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "「员工」和「前台」有什么区别？",
+      "ms": "Apakah perbezaan antara Kakitangan dan Kaunter depan?"
+    },
+    {
+      "source": "Nothing in what they are allowed to do — both can record sales and neither sees money figures. They exist so your roster reads correctly.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "权限上没有区别 — 两者都可记录销售，且都看不到金额数据。它们的存在是为了让您的人员名单更准确。",
+      "ms": "Tiada perbezaan dalam apa yang mereka dibenarkan lakukan — kedua-duanya boleh merekod jualan dan kedua-duanya tidak melihat angka wang. Ia wujud supaya senarai kakitangan anda dibaca dengan betul."
+    },
+    {
+      "source": "Your first week, step by step",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "第一周，逐步指引",
+      "ms": "Minggu pertama anda, langkah demi langkah"
+    },
+    {
+      "source": "A short path from an empty workspace to a running programme.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "从空工作区到方案正式运行的简短路径。",
+      "ms": "Laluan ringkas daripada ruang kerja kosong kepada program yang berjalan."
+    },
+    {
+      "source": "Do these in order. Each step depends on the one before it, and each links to the guide for that screen.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "请按顺序完成。每一步都依赖前一步，且都链接到该页面的指南。",
+      "ms": "Lakukan mengikut turutan. Setiap langkah bergantung pada langkah sebelumnya, dan setiap satu memaut ke panduan skrin itu."
+    },
+    {
+      "source": "The order that works",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "有效的顺序",
+      "ms": "Turutan yang berkesan"
+    },
+    {
+      "source": "Set up your branch details. Operations setup -> Branches. Your address and phone appear on the customer's business page.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "设置分店信息。运营设置 -> 分店。您的地址和电话会显示在顾客看到的商家页面上。",
+      "ms": "Sediakan butiran cawangan anda. Tetapan operasi -> Cawangan. Alamat dan telefon anda muncul pada halaman perniagaan pelanggan."
+    },
+    {
+      "source": "Add what you sell. Operations setup -> Services and Products. At least one is required before anything else works.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "添加可售内容。运营设置 -> 服务和产品。至少需要一项，其他功能才能运作。",
+      "ms": "Tambah apa yang anda jual. Tetapan operasi -> Perkhidmatan dan Produk. Sekurang-kurangnya satu diperlukan sebelum apa-apa lain berfungsi."
+    },
+    {
+      "source": "Add your team. Operations setup -> Staff Members. Invite anyone who needs to sign in; add roster-only people for scheduling.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "添加团队成员。运营设置 -> 员工。需要登录的人请发送邀请；仅用于排班的人员可只加入名单。",
+      "ms": "Tambah pasukan anda. Tetapan operasi -> Ahli Kakitangan. Jemput sesiapa yang perlu log masuk; tambah orang senarai sahaja untuk penjadualan."
+    },
+    {
+      "source": "Choose your reward programme. Rewards & Offer -> Rewards Programme. Set up Point system or Stamp card, then publish it.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "选择奖励方案。奖励与优惠 -> 奖励方案。设置积分制或印花卡，然后发布。",
+      "ms": "Pilih program ganjaran anda. Ganjaran & Tawaran -> Program Ganjaran. Sediakan Sistem mata atau Kad setem, kemudian terbitkannya."
+    },
+    {
+      "source": "Add at least one reward customers can claim. A programme that earns with nothing to claim gives customers nothing to aim at.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "至少添加一项顾客可兑换的奖励。只能累积却无法兑换的方案，让顾客没有目标。",
+      "ms": "Tambah sekurang-kurangnya satu ganjaran yang boleh dituntut pelanggan. Program yang memberi perolehan tanpa apa-apa untuk dituntut tidak memberi pelanggan sasaran."
+    },
+    {
+      "source": "Turn on your extras. Welcome gift for new sign-ups, Birthday benefit, Referrals, Bring-back rewards.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "开启附加功能。新注册迎新礼物、生日优惠、推荐好友、挽回奖励。",
+      "ms": "Hidupkan tambahan anda. Hadiah selamat datang untuk pendaftaran baharu, Faedah hari jadi, Rujukan, Ganjaran bawa kembali."
+    },
+    {
+      "source": "Set what your customers see. Customer Interface -> Business Profile, then Customer Permission for booking rules.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "设置顾客所见内容。顾客界面 -> 商家资料，然后在「顾客权限」中设置预订规则。",
+      "ms": "Tetapkan apa yang pelanggan anda lihat. Antara Muka Pelanggan -> Profil Perniagaan, kemudian Kebenaran Pelanggan untuk peraturan tempahan."
+    },
+    {
+      "source": "Display your business QR. Account menu -> My Business QR. Print it for the counter.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "展示您的商家二维码。账户菜单 -> 我的商家二维码。打印后放在柜台。",
+      "ms": "Paparkan QR perniagaan anda. Menu akaun -> QR Perniagaan Saya. Cetaknya untuk kaunter."
+    },
+    {
+      "source": "Record your first real sale and check the customer's points moved.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "记录第一笔真实交易，并检查顾客的积分是否变动。",
+      "ms": "Rekodkan jualan sebenar pertama anda dan semak sama ada mata pelanggan berubah."
+    },
+    {
+      "source": "You are running when",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "以下情况表示已正式运行",
+      "ms": "Anda sudah berjalan apabila"
+    },
+    {
+      "source": "A customer can scan your QR and see your programme.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "顾客可以扫描您的二维码并看到您的方案。",
+      "ms": "Pelanggan boleh mengimbas QR anda dan melihat program anda."
+    },
+    {
+      "source": "A sale at the counter changes their points.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "柜台的一笔交易会改变他们的积分。",
+      "ms": "Jualan di kaunter mengubah mata mereka."
+    },
+    {
+      "source": "A reward they claim can be scanned and given at the counter.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "他们兑换的奖励可以在柜台扫描并发放。",
+      "ms": "Ganjaran yang mereka tuntut boleh diimbas dan diberikan di kaunter."
+    },
+    {
+      "source": "Today and this week, for the branch you are viewing.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "您正在查看的分店的今日与本周数据。",
+      "ms": "Hari ini dan minggu ini, untuk cawangan yang anda sedang lihat."
+    },
+    {
+      "source": "The first screen of the workspace. It shows what happened today and this week for the branch selected in the top bar, plus what is scheduled next.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "工作区的首个页面。显示顶部栏所选分店的今日与本周情况，以及接下来的安排。",
+      "ms": "Skrin pertama ruang kerja. Ia menunjukkan apa yang berlaku hari ini dan minggu ini bagi cawangan yang dipilih di bar atas, serta apa yang dijadualkan seterusnya."
+    },
+    {
+      "source": "See money in, visits and members joined for the period",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "查看该期间的收入、到访和新加入会员",
+      "ms": "Lihat wang masuk, kunjungan dan ahli yang menyertai bagi tempoh itu"
+    },
+    {
+      "source": "See what is scheduled today",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "查看今日的安排",
+      "ms": "Lihat apa yang dijadualkan hari ini"
+    },
+    {
+      "source": "Open the screen behind any figure",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "打开任一数字背后的页面",
+      "ms": "Buka skrin di sebalik mana-mana angka"
+    },
+    {
+      "source": "This week",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "本周",
+      "ms": "Minggu ini"
+    },
+    {
+      "source": "Money recorded, visits and joins for the current week.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "本周记录的收入、到访和新加入人数。",
+      "ms": "Wang yang direkodkan, kunjungan dan penyertaan bagi minggu semasa."
+    },
+    {
+      "source": "Today schedule",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "今日安排",
+      "ms": "Jadual hari ini"
+    },
+    {
+      "source": "Appointments or bookings due today.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "今日到期的预约或预订。",
+      "ms": "Janji temu atau tempahan yang perlu dilaksanakan hari ini."
+    },
+    {
+      "source": "How the period compares, with the date range you choose.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "该期间的对比情况，按您选择的日期范围显示。",
+      "ms": "Bagaimana tempoh itu dibandingkan, dengan julat tarikh yang anda pilih."
+    },
+    {
+      "source": "Branch selector (top bar)",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "分店选择器（顶部栏）",
+      "ms": "Pemilih cawangan (bar atas)"
+    },
+    {
+      "source": "Which branch every figure on the screen is for.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "屏幕上每个数字所对应的分店。",
+      "ms": "Cawangan yang mana setiap angka pada skrin itu mewakili."
+    },
+    {
+      "source": "Every figure is for the branch shown in the top bar. Switch branch and the whole screen changes.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "每个数字都对应顶部栏显示的分店。切换分店，整个页面都会随之变化。",
+      "ms": "Setiap angka adalah untuk cawangan yang ditunjukkan di bar atas. Tukar cawangan dan keseluruhan skrin berubah."
+    },
+    {
+      "source": "Only an owner or manager can view all branches at once. Other roles see the branch they are assigned to.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "只有店主或经理可以同时查看所有分店。其他角色只能看到自己被分配的分店。",
+      "ms": "Hanya pemilik atau pengurus boleh melihat semua cawangan sekali gus. Peranan lain melihat cawangan yang ditugaskan kepada mereka."
+    },
+    {
+      "source": "When a figure cannot be read, Peekaa says so rather than showing a zero.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "当某个数字无法读取时，Peekaa 会明确说明，而不是显示为零。",
+      "ms": "Apabila sesuatu angka tidak dapat dibaca, Peekaa menyatakannya dan bukannya menunjukkan sifar."
+    },
+    {
+      "source": "The numbers look wrong or too low",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "数字看起来不对或偏低",
+      "ms": "Angka kelihatan salah atau terlalu rendah"
+    },
+    {
+      "source": "A single branch is selected and you expected the whole business.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "选择了单个分店，而您预期的是整个商家。",
+      "ms": "Satu cawangan sahaja dipilih sedangkan anda menjangkakan keseluruhan perniagaan."
+    },
+    {
+      "source": "The date range is not the one you think it is.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "日期范围与您以为的不同。",
+      "ms": "Julat tarikh bukan seperti yang anda sangkakan."
+    },
+    {
+      "source": "Sales recorded as a walk-in are not linked to a customer, so they do not appear in member figures.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "以散客方式记录的交易未关联顾客，因此不会出现在会员数据中。",
+      "ms": "Jualan yang direkodkan sebagai pelanggan datang terus tidak dipautkan kepada pelanggan, jadi ia tidak muncul dalam angka ahli."
+    },
+    {
+      "source": "Check the branch selector in the top bar.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "检查顶部栏的分店选择器。",
+      "ms": "Semak pemilih cawangan di bar atas."
+    },
+    {
+      "source": "Check the date range on the Performance card.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "检查「表现」卡片上的日期范围。",
+      "ms": "Semak julat tarikh pada kad Prestasi."
+    },
+    {
+      "source": "Open Sales for the same range to see the individual records behind the total.",
+      "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
+      "zh-CN": "打开同一日期范围的「销售」，查看总数背后的每一条记录。",
+      "ms": "Buka Jualan untuk julat yang sama bagi melihat rekod individu di sebalik jumlah itu."
     }
   ]
 }
