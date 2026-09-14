@@ -4078,6 +4078,10 @@
       "reason": "Service mapping board Accept/select action (nestly_v650). SECURITY DEFINER, business-membership + services-module-WRITE gated. Writer-adjacent, allowlisted rather than curated into \"writers\": it writes only public.service_canonical_map / services.node_key (nestly_v648), a mapping REFERENCE column used to classify revenue for reporting — it moves no ledger/credit/points value, mints nothing, and cannot change what a sale charges or what an appointment does."
     },
     {
+      "id": "browser.rpc:app/app.js:accept_service_mapping_suggestions_v1",
+      "reason": "Service mapping board \"Accept all suggestions\" header action (nestly_v896, over the nestly_v895 auto-mapping). A WRITER, with the same gate and the same blast radius as set_service_canonical_node_v1 beside it: SECURITY DEFINER, business-membership + services-module-WRITE gated, and it writes only the mapping REFERENCE surface (public.service_canonical_map / services.node_key, nestly_v648) for the services that currently carry a suggestion and no mapping. Allowlisted rather than curated into \"writers\" for exactly the reason its single-row sibling is: it moves no ledger/credit/points value, mints nothing, and cannot change what a sale charges, what a reward costs or what an appointment does — it only changes which category a past or future sale is REPORTED under. Called with p_only_confident:false from one call site, the board's header button, which is drawn only when the payload's suggestions block is non-empty and the actor may write services; every row it touches is listed back in the response and every one of them stays one select away from being corrected by hand."
+    },
+    {
       "id": "browser.rpc:app/app.js:staff_gift_reversal_workflows_v665",
       "surface": "browser_rpc_binding",
       "rpc": "staff_gift_reversal_workflows_v665",

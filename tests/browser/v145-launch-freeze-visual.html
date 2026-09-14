@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="9ecc6877998d21449ca7be63099891d7ce6d470347949abbb38d461b9c6d4907"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="7349e7a5f39a2c5870e4b3898fd0319ce3db204da99fe65c8e1f57cb4482d9fb"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5946,10 +5946,20 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .bi-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
   .bi-cards{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 }
+/* nestly_v896 — Map services marks, and the Services catalogue's category chip. Scoped names
+   only; nothing here touches .pill, .btn or any other shared shape. */
+.svcmap-pill-v896{display:inline-block;vertical-align:middle;margin-left:6px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--neutral-bg);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.svcmap-pill-v896.is-likely{background:var(--success-bg);border-color:color-mix(in srgb,var(--green) 30%,var(--line));color:var(--green)}
+.svcmap-pill-v896.is-possible{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 30%,var(--line));color:var(--warn)}
+.svcmap-pill-v896.is-auto{background:transparent;color:var(--muted);font-weight:600;text-transform:lowercase}
+.svc-cat-chip-v896{display:inline-block;vertical-align:middle;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--neutral-bg);color:var(--ink2);font-size:11.5px;font-weight:650;white-space:nowrap}
+.svc-cat-chip-v896.is-none{color:var(--muted);font-weight:600}
+.svc-cat-change-v896{margin-left:6px;font-size:11.5px;font-weight:650;color:var(--muted);text-decoration:underline}
+.svc-cat-change-v896:hover{color:var(--coral)}
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 9ecc6877998d21449ca7be63099891d7ce6d470347949abbb38d461b9c6d4907</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 7349e7a5f39a2c5870e4b3898fd0319ce3db204da99fe65c8e1f57cb4482d9fb</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -10436,7 +10446,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'9ecc6877998d21449ca7be63099891d7ce6d470347949abbb38d461b9c6d4907',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'7349e7a5f39a2c5870e4b3898fd0319ce3db204da99fe65c8e1f57cb4482d9fb',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

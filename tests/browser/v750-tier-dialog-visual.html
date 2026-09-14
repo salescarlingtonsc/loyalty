@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="0746bfaa3c0c3890ace5a5e0b29b75c7f43bc874d9f34b42b95b6554c286026c"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="251e78d91ca2848e5a7b19a46feff6bc4e8fe509ce19860168dcdb16d1338d95"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5946,9 +5946,19 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .bi-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
   .bi-cards{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 }
+/* nestly_v896 — Map services marks, and the Services catalogue's category chip. Scoped names
+   only; nothing here touches .pill, .btn or any other shared shape. */
+.svcmap-pill-v896{display:inline-block;vertical-align:middle;margin-left:6px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--neutral-bg);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.svcmap-pill-v896.is-likely{background:var(--success-bg);border-color:color-mix(in srgb,var(--green) 30%,var(--line));color:var(--green)}
+.svcmap-pill-v896.is-possible{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 30%,var(--line));color:var(--warn)}
+.svcmap-pill-v896.is-auto{background:transparent;color:var(--muted);font-weight:600;text-transform:lowercase}
+.svc-cat-chip-v896{display:inline-block;vertical-align:middle;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--neutral-bg);color:var(--ink2);font-size:11.5px;font-weight:650;white-space:nowrap}
+.svc-cat-chip-v896.is-none{color:var(--muted);font-weight:600}
+.svc-cat-change-v896{margin-left:6px;font-size:11.5px;font-weight:650;color:var(--muted);text-decoration:underline}
+.svc-cat-change-v896:hover{color:var(--coral)}
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 0746bfaa3c0c3890ace5a5e0b29b75c7f43bc874d9f34b42b95b6554c286026c</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 251e78d91ca2848e5a7b19a46feff6bc4e8fe509ce19860168dcdb16d1338d95</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 

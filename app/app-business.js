@@ -11828,6 +11828,32 @@ async function servicesPage(){
      means "offered everywhere", and any rows mean "only these". */
   let branchListV613=[],serviceBranchMapV613=new Map(),branchLoadFailedV613=false;
   const serviceBranchIdsV613=serviceId=>serviceBranchMapV613.get(serviceId)||new Set();
+  /* nestly_v896 (with the nestly_v895 auto-mapping). A service's reporting category was invisible
+     from the catalogue — the owner had to open Map services to find out whether anything was
+     mapped at all, which mattered little while every mapping was hand-made and matters a great
+     deal now that Peekaa makes some of them on its own. One extra read of the board RPC alongside
+     the page's existing loads answers it for every row at once.
+
+     serviceCategoryReadyV896 is the whole degradation rule: FALSE means "we do not know", and a
+     page that does not know draws no chips at all rather than labelling every service "Not
+     mapped". An older server, a denied read, a network failure and a services-module-read refusal
+     all land in that same state, and none of them may block or alter the catalogue itself. */
+  let serviceCategoryMapV896=new Map(),serviceCategoryReadyV896=false;
+  function applyServiceCategoriesV896(result){
+    const board=result&&!result.error?result.data:null;
+    if(!board||!Array.isArray(board.services)){serviceCategoryMapV896=new Map();serviceCategoryReadyV896=false;return false}
+    const labels=new Map((Array.isArray(board.nodes)?board.nodes:[]).map(node=>[node.node_key,node.label||node.node_key]));
+    const next=new Map();
+    board.services.forEach(row=>{
+      next.set(row.service_id,row.node_key?(labels.get(row.node_key)||row.node_key):'');
+    });
+    serviceCategoryMapV896=next;serviceCategoryReadyV896=true;
+    return true;
+  }
+  async function readServiceCategoriesV896(){
+    try{return await sb.rpc('get_service_mapping_board_v1',{p_business:S.biz.id})}
+    catch(error){return {error}}
+  }
   function renderSvc(){
     const sv=svCache;
     /* nestly_v584 (owner photo 17). Three marks on one screen, all pulling the same way:
@@ -11844,7 +11870,8 @@ async function servicesPage(){
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
-        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
+        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${/* nestly_v896: the reporting category, and one way to change it. Drawn only when the
+             board read succeeded — see serviceCategoryReadyV896. */''}${serviceCategoryReadyV896?`${servicesCategoryChipV896(serviceCategoryMapV896.get(s.id))}${canWrite?` <a class="svc-cat-change-v896" href="#/servicemapping">Change</a>`:''}`:''}${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
       <td class="num">${s.commission_flat_cents!=null?`${esc(money(s.commission_flat_cents))} fixed`:s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
       ${/* nestly_v658 (owner photo 7: "once fixed will be the model that other modules follow
            (status / edit / delete) will be the same for products & services"). The Packages row
@@ -11918,9 +11945,17 @@ async function servicesPage(){
     if(error) return fail(error);
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
-    toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';
+    $('sn').value='';$('sv').value='';$('sp').value='';
     if($('sbb'))$('sbb').value='0';if($('sba'))$('sba').value='0';$('sn').focus();
     dismissFormModalV658($('serviceFormCard')); // nestly_v658
+    /* nestly_v896: nestly_v895 maps a new service on the way in, so the answer to "did it get a
+       category?" only exists AFTER the insert. One re-read of the board tells the owner which of
+       the two things just happened, instead of leaving them to discover a category they never
+       chose. A failed re-read says nothing new rather than guessing — the plain toast stands. */
+    const mappingReReadV896=applyServiceCategoriesV896(await readServiceCategoriesV896());
+    if(!isCurrent())return;
+    if(mappingReReadV896)renderSvc();
+    toast(mappingReReadV896&&serviceCategoryMapV896.get(data&&data.id)?'Service added and mapped automatically':'Service added');
   };
   if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{
     $('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';
@@ -12053,12 +12088,17 @@ async function servicesPage(){
     const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
   };
   async function load(){
-    const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613]=await Promise.all([
+    const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613,mappingResultV896]=await Promise.all([
       sb.from('services').select('*').eq('business_id',S.biz.id).order('name'),
       canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map()),
       sb.from('branches').select('id,name,code').eq('business_id',S.biz.id).eq('active',true).order('name'),
-      sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
+      sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id),
+      /* nestly_v896: the mapping board, read alongside everything else rather than after it. It is
+         gated on the same services module this page is, so it adds no permission surface — and its
+         failure is swallowed on purpose, because a category chip is never worth an empty catalogue. */
+      readServiceCategoriesV896()
     ]);
+    applyServiceCategoriesV896(mappingResultV896);
     /* nestly_v613: a failed branch read must not be drawn as "this service is offered everywhere"
        — that is a real setting, and inventing it would be the same class of lie v584 removed from
        the staff roster. The picker says it could not be loaded instead, and refuses to save. */
@@ -36740,6 +36780,64 @@ function biExploreHtmlV892(sections){
 }
 /* nestly_v892 END — everything above is the Business Intelligence presentation layer. */
 
+/* nestly_v896 — the four pure markup helpers the auto-mapping UI needs, kept at the top level so
+   the board's row markup stays readable AND so each one can be executed by a test rather than
+   grepped for. nestly_v895 teaches the server to map a new service to a category by itself when
+   the name is unambiguous; these say so on screen, because a category the owner never chose has
+   to be visible as such or the first wrong guess looks like a bug in their own typing.
+
+   Every one of them degrades to the pre-v895 screen when the field it reads is missing: a server
+   that has not been migrated sends no `suggested_confident`, no `mapped_method` and no
+   `suggestions` block, and each helper returns an empty string for that case rather than
+   inventing a "Possible" or an "auto" that nothing on the server actually claimed. That is why
+   the confidence test is `typeof === 'boolean'` and not a truthiness check. */
+function serviceMappingSuggestionCountV896(board){
+  const block=board&&typeof board==='object'?board.suggestions:null;
+  if(!block||typeof block!=='object')return null;
+  const confident=Number(block.confident),possible=Number(block.possible);
+  const total=(Number.isFinite(confident)?Math.max(0,confident):0)+(Number.isFinite(possible)?Math.max(0,possible):0);
+  return total;
+}
+/* The header button's label. An empty string means "draw no button": either the payload carries no
+   suggestions block at all (old server) or there is nothing left to accept. */
+function serviceMappingAcceptAllLabelV896(board){
+  const total=serviceMappingSuggestionCountV896(board);
+  if(!total)return '';
+  return total===1?'Accept 1 suggestion':`Accept ${total} suggestions`;
+}
+/* "Likely" vs "Possible" beside a suggested category, with the matched word as the hover hint. The
+   pill is only drawn for a row that HAS a suggestion and whose confidence the server stated. */
+function serviceMappingSuggestPillV896(service){
+  const row=service&&typeof service==='object'?service:{};
+  if(!row.suggested_node_key)return '';
+  if(typeof row.suggested_confident!=='boolean')return '';
+  const keyword=typeof row.suggested_keyword==='string'?row.suggested_keyword.trim():'';
+  const pillClass=`svcmap-pill-v896 ${row.suggested_confident?'is-likely':'is-possible'}`;
+  const label=row.suggested_confident?'Likely':'Possible';
+  /* The hover hint QUOTES the merchant's own word — the term nestly_v895 matched inside a service
+     name this business typed — so the pill carrying it is marked data-merchant-content and the
+     v97 localizer leaves the whole element alone. Translating "matched 'spa'" would translate the
+     evidence, and evidence in a language the owner did not write is no longer evidence. A
+     suggestion that arrives without a keyword simply has no hint: an empty or invented title is
+     worse than none, and the pill still says Likely or Possible on its own. */
+  if(!keyword)return ` <span class="${pillClass}">${label}</span>`;
+  return ` <span class="${pillClass}" data-merchant-content title="${esc(`matched '${keyword}'`)}">${label}</span>`;
+}
+/* The "auto" mark on a category Peekaa chose. mapped_method is 'manual' for anything a person
+   picked, so only the auto_* methods earn the pill. */
+function serviceMappingAutoPillV896(service){
+  const method=service&&typeof service.mapped_method==='string'?service.mapped_method:'';
+  if(method.slice(0,5)!=='auto_')return '';
+  return ` <span class="svcmap-pill-v896 is-auto" title="Peekaa chose this category from the service name. Change it here if it is wrong.">auto</span>`;
+}
+/* The Services list chip. An empty label is a real answer — the service is not mapped — so it is
+   drawn, in the muted shape. The CALLER decides whether to draw a chip at all: when the board read
+   failed there is no answer and the list is left exactly as it was. */
+function servicesCategoryChipV896(label){
+  const text=typeof label==='string'?label.trim():'';
+  return ` <span class="svc-cat-chip-v896${text?'':' is-none'}">${esc(text||'Not mapped')}</span>`;
+}
+
 /* nestly_v650: Service mapping board. Reached from Customer Intelligence's "What they buy"
    withhold state (#/servicemapping) and, when writable, a small link from Services. There is no
    MODULES entry and no route guard for this token — the same shape as #/studio's owner-only
@@ -36783,15 +36881,20 @@ async function serviceMappingBoardPage(){
       return;
     }
     const services=Array.isArray(board?.services)?board.services:[];
-    routeMain.innerHTML=`${CUI.pageHeader({title:'Map services',subtitle:'Match each service to a category so What they buy can report on it.',iconName:'services',canWrite,moduleLabel:'Map services'})}
+    /* nestly_v896: one button for the whole list. It sends p_only_confident:false deliberately —
+       the owner is looking at the board, every suggestion is visible with its Likely/Possible mark
+       beside it, and a button that silently skipped the uncertain half would leave the page saying
+       "4 suggestions" after applying 4 of them. Anything wrong is one select away from corrected. */
+    const acceptAllLabelV896=canWrite?serviceMappingAcceptAllLabelV896(board):'';
+    routeMain.innerHTML=`${CUI.pageHeader({title:'Map services',subtitle:'Peekaa maps new services automatically when the name is clear. Check the rest here.',iconName:'services',canWrite,moduleLabel:'Map services',actions:acceptAllLabelV896?`<button type="button" class="btn sm" id="svcMapAcceptAllV896">${esc(acceptAllLabelV896)}</button>`:''})}
       <div class="card">${services.length?`<div class="cui-table-wrap" role="region" aria-label="Service category map"><table class="cui-table" data-responsive="true"><thead><tr><th>Service</th><th>Old category</th><th>Mapped to</th><th>Suggested</th><th>Choose</th></tr></thead><tbody>${services.map(service=>{
         const current=nodeLabelV650(service.node_key);
         const suggestedLabel=service.suggested_node_key&&!service.node_key?nodeLabelV650(service.suggested_node_key):'';
         return `<tr>
           <td data-label="Service"><b>${esc(service.name||'Service')}</b></td>
           <td data-label="Old category" class="muted small">${esc(service.legacy_category||'—')}</td>
-          <td data-label="Mapped to">${current?esc(current):'<span class="muted">—</span>'}</td>
-          <td data-label="Suggested">${suggestedLabel?`${esc(suggestedLabel)}${canWrite?` <button class="btn ghost sm" type="button" data-accept-suggestion="${esc(service.service_id)}" data-suggested-node="${esc(service.suggested_node_key)}">Accept</button>`:''}`:'<span class="muted">—</span>'}</td>
+          <td data-label="Mapped to">${current?`${esc(current)}${serviceMappingAutoPillV896(service)}`:'<span class="muted">—</span>'}</td>
+          <td data-label="Suggested">${suggestedLabel?`${esc(suggestedLabel)}${serviceMappingSuggestPillV896(service)}${canWrite?` <button class="btn ghost sm" type="button" data-accept-suggestion="${esc(service.service_id)}" data-suggested-node="${esc(service.suggested_node_key)}">Accept</button>`:''}`:'<span class="muted">—</span>'}</td>
           <td data-label="Choose">${canWrite?`<select data-service-select="${esc(service.service_id)}" style="min-height:44px">${nodeOptionsHtmlV650(service.node_key)}</select>`:'<span class="muted small">View only</span>'}</td>
         </tr>`;
       }).join('')}</tbody></table></div>`
@@ -36799,6 +36902,17 @@ async function serviceMappingBoardPage(){
       </div>`;
     CUI.enhance(routeMain);
     if(!canWrite)return;
+    /* nestly_v896: the bulk accept. One RPC, then the ordinary reload — the board it paints is the
+       server's answer, not an optimistic guess about which rows moved. */
+    const acceptAllV896=$('svcMapAcceptAllV896');
+    if(acceptAllV896)acceptAllV896.onclick=async()=>{
+      CUI.setButtonBusy(acceptAllV896,{busy:true,label:'Applying…'});
+      const {error}=await sb.rpc('accept_service_mapping_suggestions_v1',{p_business:S.biz.id,p_only_confident:false});
+      if(!isCurrent())return;
+      if(error){CUI.setButtonBusy(acceptAllV896,{busy:false});return toast('Those suggestions could not be applied.')}
+      toast('Suggestions applied');
+      await loadBoard();
+    };
     routeMain.querySelectorAll('[data-accept-suggestion]').forEach(button=>{
       button.onclick=async()=>{
         const serviceId=button.getAttribute('data-accept-suggestion'),nodeKey=button.getAttribute('data-suggested-node');

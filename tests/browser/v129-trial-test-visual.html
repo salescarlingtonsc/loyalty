@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="08e455e541c39d1593d1b8e4be51b3fdbe9bd023fcb0625832548a315f060f15"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="2c02f24a3e12bfba742ea975421593cd3616c244f9d9292f1959ffcb089aeba9"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5946,10 +5946,20 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   .bi-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
   .bi-cards{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 }
+/* nestly_v896 — Map services marks, and the Services catalogue's category chip. Scoped names
+   only; nothing here touches .pill, .btn or any other shared shape. */
+.svcmap-pill-v896{display:inline-block;vertical-align:middle;margin-left:6px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--neutral-bg);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.svcmap-pill-v896.is-likely{background:var(--success-bg);border-color:color-mix(in srgb,var(--green) 30%,var(--line));color:var(--green)}
+.svcmap-pill-v896.is-possible{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 30%,var(--line));color:var(--warn)}
+.svcmap-pill-v896.is-auto{background:transparent;color:var(--muted);font-weight:600;text-transform:lowercase}
+.svc-cat-chip-v896{display:inline-block;vertical-align:middle;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--neutral-bg);color:var(--ink2);font-size:11.5px;font-weight:650;white-space:nowrap}
+.svc-cat-chip-v896.is-none{color:var(--muted);font-weight:600}
+.svc-cat-change-v896{margin-left:6px;font-size:11.5px;font-weight:650;color:var(--muted);text-decoration:underline}
+.svc-cat-change-v896:hover{color:var(--coral)}
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 08e455e541c39d1593d1b8e4be51b3fdbe9bd023fcb0625832548a315f060f15</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2c02f24a3e12bfba742ea975421593cd3616c244f9d9292f1959ffcb089aeba9</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -12301,6 +12311,32 @@ async function servicesPage(){
      means "offered everywhere", and any rows mean "only these". */
   let branchListV613=[],serviceBranchMapV613=new Map(),branchLoadFailedV613=false;
   const serviceBranchIdsV613=serviceId=>serviceBranchMapV613.get(serviceId)||new Set();
+  /* nestly_v896 (with the nestly_v895 auto-mapping). A service's reporting category was invisible
+     from the catalogue — the owner had to open Map services to find out whether anything was
+     mapped at all, which mattered little while every mapping was hand-made and matters a great
+     deal now that Peekaa makes some of them on its own. One extra read of the board RPC alongside
+     the page's existing loads answers it for every row at once.
+
+     serviceCategoryReadyV896 is the whole degradation rule: FALSE means "we do not know", and a
+     page that does not know draws no chips at all rather than labelling every service "Not
+     mapped". An older server, a denied read, a network failure and a services-module-read refusal
+     all land in that same state, and none of them may block or alter the catalogue itself. */
+  let serviceCategoryMapV896=new Map(),serviceCategoryReadyV896=false;
+  function applyServiceCategoriesV896(result){
+    const board=result&&!result.error?result.data:null;
+    if(!board||!Array.isArray(board.services)){serviceCategoryMapV896=new Map();serviceCategoryReadyV896=false;return false}
+    const labels=new Map((Array.isArray(board.nodes)?board.nodes:[]).map(node=>[node.node_key,node.label||node.node_key]));
+    const next=new Map();
+    board.services.forEach(row=>{
+      next.set(row.service_id,row.node_key?(labels.get(row.node_key)||row.node_key):'');
+    });
+    serviceCategoryMapV896=next;serviceCategoryReadyV896=true;
+    return true;
+  }
+  async function readServiceCategoriesV896(){
+    try{return await sb.rpc('get_service_mapping_board_v1',{p_business:S.biz.id})}
+    catch(error){return {error}}
+  }
   function renderSvc(){
     const sv=svCache;
     /* nestly_v584 (owner photo 17). Three marks on one screen, all pulling the same way:
@@ -12317,7 +12353,8 @@ async function servicesPage(){
       ${sv.map(s=>{
         const image=catalogueImageUrlV158(s);
         const photoAction=canUploadCatalogueMedia?cataloguePhotoInputHtmlV158({assetKind:'service',entityId:s.id,label:image?'Change photo':'Attach photo'}):'';
-        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
+        return `<tr><td><div class="service-media-cell">${image?`<img class="catalogue-thumb" src="${esc(image)}" alt="" loading="lazy">`:`<span class="catalogue-thumb" aria-hidden="true">${CUI.icon('services',{size:20})}</span>`}<div><b>${esc(serviceDisplayName(s))}</b>${/* nestly_v896: the reporting category, and one way to change it. Drawn only when the
+             board read succeeded — see serviceCategoryReadyV896. */''}${serviceCategoryReadyV896?`${servicesCategoryChipV896(serviceCategoryMapV896.get(s.id))}${canWrite?` <a class="svc-cat-change-v896" href="#/servicemapping">Change</a>`:''}`:''}${photoAction?`<div style="margin-top:6px">${photoAction}</div>`:''}</div></div></td><td class="num">${money(s.price_cents)}</td><td class="num">${s.duration_min}</td>
       <td class="num">${s.commission_flat_cents!=null?`${esc(money(s.commission_flat_cents))} fixed`:s.commission_bps===null||s.commission_bps===undefined?'<span class="muted">\u2014</span>':`${esc(commissionPctV584(s.commission_bps))}%`}</td>
       ${/* nestly_v658 (owner photo 7: "once fixed will be the model that other modules follow
            (status / edit / delete) will be the same for products & services"). The Packages row
@@ -12391,9 +12428,17 @@ async function servicesPage(){
     if(error) return fail(error);
     svCache=[...svCache,data].sort((a,b)=>a.name.localeCompare(b.name));
     renderSvc();
-    toast('Service added');$('sn').value='';$('sv').value='';$('sp').value='';
+    $('sn').value='';$('sv').value='';$('sp').value='';
     if($('sbb'))$('sbb').value='0';if($('sba'))$('sba').value='0';$('sn').focus();
     dismissFormModalV658($('serviceFormCard')); // nestly_v658
+    /* nestly_v896: nestly_v895 maps a new service on the way in, so the answer to "did it get a
+       category?" only exists AFTER the insert. One re-read of the board tells the owner which of
+       the two things just happened, instead of leaving them to discover a category they never
+       chose. A failed re-read says nothing new rather than guessing — the plain toast stands. */
+    const mappingReReadV896=applyServiceCategoriesV896(await readServiceCategoriesV896());
+    if(!isCurrent())return;
+    if(mappingReReadV896)renderSvc();
+    toast(mappingReReadV896&&serviceCategoryMapV896.get(data&&data.id)?'Service added and mapped automatically':'Service added');
   };
   if(canWrite&&$('openServiceForm'))$('openServiceForm').onclick=()=>{
     $('serviceSegmentBody').style.display='block';$('bundleSegmentBody').style.display='none';
@@ -12526,12 +12571,17 @@ async function servicesPage(){
     const s=svCache.find(x=>x.id===id);if(s)s.active=to;renderSvc();
   };
   async function load(){
-    const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613]=await Promise.all([
+    const [servicesResult,mediaMap,branchesResultV613,serviceBranchesResultV613,mappingResultV896]=await Promise.all([
       sb.from('services').select('*').eq('business_id',S.biz.id).order('name'),
       canUploadCatalogueMedia?loadCatalogueMediaVersionsV158().catch(error=>{console.warn('Catalogue media versions unavailable',error);return new Map()}):Promise.resolve(new Map()),
       sb.from('branches').select('id,name,code').eq('business_id',S.biz.id).eq('active',true).order('name'),
-      sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id)
+      sb.from('service_branches').select('service_id,branch_id').eq('business_id',S.biz.id),
+      /* nestly_v896: the mapping board, read alongside everything else rather than after it. It is
+         gated on the same services module this page is, so it adds no permission surface — and its
+         failure is swallowed on purpose, because a category chip is never worth an empty catalogue. */
+      readServiceCategoriesV896()
     ]);
+    applyServiceCategoriesV896(mappingResultV896);
     /* nestly_v613: a failed branch read must not be drawn as "this service is offered everywhere"
        — that is a real setting, and inventing it would be the same class of lie v584 removed from
        the staff roster. The picker says it could not be loaded instead, and refuses to save. */
@@ -31181,6 +31231,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'08e455e541c39d1593d1b8e4be51b3fdbe9bd023fcb0625832548a315f060f15',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'2c02f24a3e12bfba742ea975421593cd3616c244f9d9292f1959ffcb089aeba9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>
