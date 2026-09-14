@@ -59,6 +59,7 @@ function sandbox(overrides = {}) {
     __exports.card=biInsightCardHtmlV892;__exports.evidence=biEvidenceHtmlV892;__exports.insights=biInsightsHtmlV892;
     __exports.explain=biExplainHtmlV892;
     __exports.pulse=biPulseHtmlV892;__exports.health=biHealthHtmlV892;__exports.overnight=biOvernightStripHtmlV892;
+    __exports.buys=biWhoBuysHtmlV902;__exports.ideas=biIdeasHtmlV902;
     __exports.explore=biExploreHtmlV892;__exports.wording=BI_WORDING_V892;`, context);
   return context.__exports;
 }
@@ -740,7 +741,8 @@ test('v894: the banned-token scan, with a payload that carries every one of them
     }
   });
   const primary = [
-    BI.snapshot(loaded), BI.insights(BI.select(loaded)), BI.pulse(loaded), BI.health(loaded),
+    BI.snapshot(loaded), BI.insights(BI.select(loaded)), BI.buys(loaded), BI.pulse(loaded),
+    BI.health(loaded), BI.ideas(loaded),
     sandbox({ ownerBriefLinesV826: () => [{ kind: 'plain', text: 'Last 7 days: SGD 1,240.00.' }] })
       .overnight({ data_status: 'ok', brief: { week: {} } })
   ].join('\n');
@@ -748,6 +750,16 @@ test('v894: the banned-token scan, with a payload that carries every one of them
     'Unquantified', 'unquantified', 'category_concentration', 'package_leakage', 'strength:',
     'coverage_defect', 'node_key', 'top_share', '&amp;amp;', 'undefined', 'NaN', 'Erased']) {
     assert.ok(!primary.includes(banned), `the primary surface must not say "${banned}"`);
+  }
+  /* nestly_v902 (owner ruling 2026-09-15): ten analyst nouns join the scan. These are checked on
+     the rendered TEXT rather than on the markup — an Explore group key inside a data- attribute
+     is machinery, not something an owner reads — and as STANDALONE words, because the ban is on
+     the noun: "concentrated" is not "concentration". */
+  const read = plain(primary);
+  for (const banned of ['categorised', 'concentration', 'acquisition', 'retention', 'funnel',
+    'methodology', 'evidence class', 'observations', 'cohort', 'attribution']) {
+    assert.ok(!new RegExp(`\\b${banned}\\b`, 'i').test(read),
+      `the primary surface must not say "${banned}": ${read.slice(0, 300)}`);
   }
   assert.ok(!/>\s*null\s*</.test(primary), 'no null rendered as a value');
   assert.ok(!/\bnull\b/.test(plain(primary)), 'and none in the text either');
