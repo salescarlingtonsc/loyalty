@@ -53446,7 +53446,8 @@ async function customerIntelligencePage(){
       {key:'ask',title:'Ask my business',hint:'Answers prepared from last night’s data',
         body:nightlyBriefAnswersMarkupV892()}
     ]);
-    body.innerHTML=`${biSnapshotHtmlV892(biModel)}${biInsightsHtmlV892(biSelectInsightsV892(biModel))}${biPulseHtmlV892(biModel)}${biHealthHtmlV892(biModel)}${nightlyBriefStripMarkupV892()}${biExplore}`;
+    const biCardsV901=biSelectInsightsV892(biModel);
+    body.innerHTML=`${biSnapshotHtmlV892(biModel)}${biInsightsHtmlV892(biCardsV901)}${biPulseHtmlV892(biModel)}${biHealthHtmlV892(biModel)}${nightlyBriefStripMarkupV892()}${biExplore}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -53475,15 +53476,16 @@ async function customerIntelligencePage(){
     }else recommendationRefreshMount?.remove();
     CUI.enhance(body);
     bindCategoryMixSectionV650();
-    /* nestly_v892: a card's "see this" control opens the Explore group it points at. It is a
-       button rather than an anchor on purpose — a bare "#name" href is a ROUTE to this app's hash
-       router, which would answer "That page has moved." A control whose group is absent (its
-       readers returned nothing, so the group was dropped) is REMOVED rather than left dead. */
-    body.querySelectorAll('[data-bi-open-v892]').forEach(button=>{
-      const key=button.getAttribute('data-bi-open-v892')||'';
-      const group=key?body.querySelector(`[data-bi-section-v892="${key}"]`):null;
-      if(!group){button.remove();return;}
-      button.onclick=()=>{group.open=true;group.scrollIntoView({behavior:'smooth',block:'start'});};
+    /* nestly_v901: a card's one control opens the explain pop-up; the CTA lives inside it. A
+       section CTA opens the Explore group it points at — a button, never a bare "#name" anchor,
+       which the hash router would treat as a route. When that group is absent (its readers
+       returned nothing) the pop-up simply shows no CTA rather than a dead one. */
+    body.querySelectorAll('[data-bi-explain-v892]').forEach(button=>{
+      const card=biCardsV901[Number(button.getAttribute('data-bi-explain-v892'))];
+      if(!card){button.remove();return;}
+      button.onclick=()=>biOpenExplainV892(card,{
+        findSection:key=>key&&body.isConnected?body.querySelector(`[data-bi-section-v892="${key}"]`):null
+      });
     });
     $('ciCsv').disabled=!!lastCustomerError||!customers.length;
     const more=$('ciMore');if(more)more.onclick=loadMore;
@@ -55061,6 +55063,9 @@ const BI_WORDING_V892=Object.freeze({
   overnight:'Last night’s brief · Last 7 days',
   showMore:'Show more',
   evidenceSummary:'Why am I seeing this?',
+  /* nestly_v901: the two headings inside the explain pop-up. */
+  explainNumbers:'Where these numbers come from',
+  explainNext:'What to do next',
   noComparison:'No earlier period to compare yet.',
   noInsight:'No reliable recommendation yet — Peekaa will surface one once there is enough evidence.',
   /* nestly_v894: the heading a finding gets when this page has no approved owner wording for it.
@@ -55871,9 +55876,11 @@ function biSelectInsightsV892(model){
 }
 
 /* The translated half of a finding: what was seen, over what period, on how many observations,
-   what it cannot see, and what would make Peekaa change its mind. Collapsed, because an owner who
-   trusts the finding should not have to read it, and an owner who does not should not have to ask.
-   The verbatim analytical output stays under Explore → Evidence & methodology. */
+   what it cannot see, and what would make Peekaa change its mind. nestly_v901 (owner, 2026-09-14:
+   "just need to be a pop up to explain the numbers and there's a CTA inside the pop up"): these
+   rows no longer sit collapsed under the card. They are the body of the explain pop-up, and the
+   card's only control opens it. The verbatim analytical output stays under Explore → Evidence &
+   methodology. */
 function biEvidenceHtmlV892(card){
   const entry=biObjectV892(card)||{};
   const evidence=biObjectV892(entry.evidence)||{};
@@ -55887,32 +55894,81 @@ function biEvidenceHtmlV892(card){
     ['When Peekaa would change its mind',biTextV892(evidence.reconsider)]
   ].filter(row=>row[1]);
   if(!rows.length)return '';
-  return `<details class="bi-evidence"><summary>${esc(BI_WORDING_V892.evidenceSummary)}</summary>
-    <dl class="bi-evidence-list">${rows.map(row=>`<dt>${esc(row[0])}</dt><dd>${esc(row[1])}</dd>`).join('')}</dl>
-  </details>`;
+  return `<dl class="bi-evidence-list">${rows.map(row=>`<dt>${esc(row[0])}</dt><dd>${esc(row[1])}</dd>`).join('')}</dl>`;
 }
 
-function biInsightCardHtmlV892(card){
+/* nestly_v901: the card is the headline only — kind, finding, the one or two lines of why — and a
+   single control that opens the explanation. The action sentence and the CTA moved INTO the pop-up
+   (biExplainHtmlV892), so an owner reads "where does this number come from" and "what do I do
+   about it" in one place, and the button that does it is right under the answer. `index` is the
+   card's position in the selected list; the opener looks the card up by it. */
+function biInsightCardHtmlV892(card,index){
   const entry=biObjectV892(card);
   if(!entry)return '';
   const type=BI_WORDING_V892.types[entry.type]?entry.type:'still_learning';
   const kind=BI_WORDING_V892.types[type];
-  const cta=biObjectV892(entry.cta);
-  const ctaHtml=!cta?''
-    :cta.kind==='route'&&biTextV892(cta.href)
-      ?`<a class="btn ghost sm bi-cta" href="${esc(cta.href)}">${esc(biTextV892(cta.label,'Open'))} →</a>`
-      :cta.kind==='section'&&biTextV892(cta.section)
-        ?`<button type="button" class="btn ghost sm bi-cta" data-bi-open-v892="${esc(cta.section)}">${esc(biTextV892(cta.label,'Open'))} →</button>`
-        :'';
+  const position=Number.isInteger(index)?index:0;
   return `<article class="bi-card bi-card--${esc(type.replace('_','-'))}">
     <p class="bi-card-kind"><span aria-hidden="true">${kind.mark}</span> ${esc(kind.label)}</p>
     <h3 class="bi-card-finding">${esc(biTextV892(entry.finding))}</h3>
     ${biTextV892(entry.why)?`<p class="bi-card-why">${esc(biTextV892(entry.why))}</p>`:''}
     ${biTextV892(entry.why2)?`<p class="bi-card-why">${esc(biTextV892(entry.why2))}</p>`:''}
-    ${biTextV892(entry.action)?`<p class="bi-card-action">${esc(biTextV892(entry.action))}</p>`:''}
-    ${ctaHtml}
-    ${biEvidenceHtmlV892(entry)}
+    <button type="button" class="btn ghost sm bi-cta" data-bi-explain-v892="${position}">${esc(BI_WORDING_V892.evidenceSummary)} →</button>
   </article>`;
+}
+
+/* nestly_v901: the inside of the explain pop-up. Pure — it renders from the card alone. The CTA
+   is a button in both cases (route or section) so the opener can close the dialog first and then
+   go; a bare anchor would leave the dialog's history entry behind. Whether a section CTA is shown
+   is decided by the opener, which can see whether that Explore group exists on the page. */
+function biExplainHtmlV892(card,{showCta=true}={}){
+  const entry=biObjectV892(card)||{};
+  const type=BI_WORDING_V892.types[entry.type]?entry.type:'still_learning';
+  const kind=BI_WORDING_V892.types[type];
+  const cta=biObjectV892(entry.cta);
+  const ctaLabel=cta&&showCta?biTextV892(cta.label,'Open'):'';
+  const evidence=biEvidenceHtmlV892(entry);
+  const action=biTextV892(entry.action);
+  return `<div class="modal-card bi-explain bi-card--${esc(type.replace('_','-'))}">
+    <div class="row"><p class="bi-card-kind"><span aria-hidden="true">${kind.mark}</span> ${esc(kind.label)}</p><span class="spacer"></span>
+      <button type="button" class="btn ghost sm" data-bi-explain-close="1" aria-label="Close">Close</button></div>
+    <h2 class="bi-explain-title" id="biExplainTitleV901">${esc(biTextV892(entry.finding))}</h2>
+    ${biTextV892(entry.why)?`<p class="bi-card-why">${esc(biTextV892(entry.why))}</p>`:''}
+    ${biTextV892(entry.why2)?`<p class="bi-card-why">${esc(biTextV892(entry.why2))}</p>`:''}
+    ${evidence?`<section class="bi-explain-block"><h3 class="bi-explain-heading">${esc(BI_WORDING_V892.explainNumbers)}</h3>${evidence}</section>`:''}
+    ${(action||ctaLabel)?`<section class="bi-explain-block bi-explain-next"><h3 class="bi-explain-heading">${esc(BI_WORDING_V892.explainNext)}</h3>
+      ${action?`<p class="bi-card-action">${esc(action)}</p>`:''}
+      ${ctaLabel?`<button type="button" class="btn bi-explain-cta" data-bi-explain-cta="1">${esc(ctaLabel)} →</button>`:''}
+    </section>`:''}
+  </div>`;
+}
+
+/* nestly_v901: opens the explain pop-up for one card. `findSection` answers whether a section CTA
+   has somewhere to go on this page; it returns the Explore group element or null. A route CTA
+   closes the dialog and navigates; a section CTA closes the dialog, then opens and scrolls to the
+   group. Escape, Back, the Close button and a backdrop click all leave through activateDialog. */
+function biOpenExplainV892(card,{findSection}={}){
+  const entry=biObjectV892(card);
+  if(!entry||typeof document==='undefined')return null;
+  const cta=biObjectV892(entry.cta);
+  const group=cta&&cta.kind==='section'&&typeof findSection==='function'?findSection(biTextV892(cta.section)):null;
+  const showCta=!!cta&&((cta.kind==='route'&&!!biTextV892(cta.href))||(cta.kind==='section'&&!!group));
+  const dialog=document.createElement('div');
+  dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+  dialog.setAttribute('aria-labelledby','biExplainTitleV901');dialog.tabIndex=-1;
+  dialog.innerHTML=biExplainHtmlV892(entry,{showCta});
+  document.body.append(dialog);
+  let deactivate=null;
+  const close=()=>{const fn=deactivate;deactivate=null;if(fn)fn({restoreFocus:true});else dialog.remove();};
+  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'[data-bi-explain-cta],[data-bi-explain-close]'});
+  dialog.querySelector('[data-bi-explain-close]').onclick=close;
+  const go=dialog.querySelector('[data-bi-explain-cta]');
+  if(go)go.onclick=()=>{
+    close();
+    if(cta.kind==='route')nav(biTextV892(cta.href));
+    else if(group){group.open=true;group.scrollIntoView({behavior:'smooth',block:'start'});}
+  };
+  return dialog;
 }
 
 function biInsightsHtmlV892(cards){
@@ -55920,7 +55976,7 @@ function biInsightsHtmlV892(cards){
   return `<section class="card bi-insights" aria-labelledby="biInsightsTitleV892">
     <div class="bi-section-head"><h2 id="biInsightsTitleV892">${esc(BI_WORDING_V892.insights)}</h2></div>
     ${list.length
-      ?`<div class="bi-cards">${list.map(biInsightCardHtmlV892).join('')}</div>`
+      ?`<div class="bi-cards">${list.map((card,index)=>biInsightCardHtmlV892(card,index)).join('')}</div>`
       :`<p class="bi-empty">${esc(BI_WORDING_V892.noInsight)}</p>`}
   </section>`;
 }

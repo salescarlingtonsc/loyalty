@@ -57,6 +57,7 @@ function sandbox(overrides = {}) {
   vm.runInContext(`${block}
     __exports.model=biModelV892;__exports.snapshot=biSnapshotHtmlV892;__exports.select=biSelectInsightsV892;
     __exports.card=biInsightCardHtmlV892;__exports.evidence=biEvidenceHtmlV892;__exports.insights=biInsightsHtmlV892;
+    __exports.explain=biExplainHtmlV892;
     __exports.pulse=biPulseHtmlV892;__exports.health=biHealthHtmlV892;__exports.overnight=biOvernightStripHtmlV892;
     __exports.explore=biExploreHtmlV892;__exports.wording=BI_WORDING_V892;`, context);
   return context.__exports;
@@ -408,11 +409,30 @@ test('v892 selector: a weekday strength names the day and its measured facts, an
 /* ==================================================================================================
    3. Cards and evidence.
    ================================================================================================== */
-test('v892 card: each card carries its type, its finding, and its evidence behind one disclosure', () => {
-  const html = BI.card(BI.select(model())[0]);
+test('v892 card: each card carries its type, its finding, and ONE control that opens the explanation', () => {
+  const html = BI.card(BI.select(model())[0], 0);
   assert.match(html, /bi-card--needs-attention/);
   assert.match(plain(html), /Needs attention/);
-  assert.match(html, /<details class="bi-evidence"><summary>Why am I seeing this\?<\/summary>/);
+  /* nestly_v901: the evidence is no longer inline; the card's only control opens the pop-up. */
+  assert.match(html, /<button type="button" class="btn ghost sm bi-cta" data-bi-explain-v892="0">Why am I seeing this\? →<\/button>/);
+  assert.ok(!html.includes('bi-evidence'), 'no inline evidence on the card');
+  assert.ok(!html.includes('data-bi-open-v892'), 'no CTA on the card: it lives in the pop-up');
+});
+
+test('v901 explain pop-up: the numbers, then what to do next, then the CTA — from the card alone', () => {
+  const card = BI.select(model())[0];
+  const html = BI.explain(card);
+  const text = plain(html);
+  assert.match(html, /bi-explain bi-card--needs-attention/, 'the pop-up carries the card tone');
+  assert.ok(text.includes('Where these numbers come from'), `numbers heading, got: ${text}`);
+  assert.ok(text.includes('6 with no payment recorded and 2 part paid'), 'the evidence rows are inside the pop-up');
+  assert.ok(text.includes('What to do next'), 'next-step heading');
+  assert.ok(text.includes('Review the open sales and record any payments already received.'), 'the action sentence moved in');
+  assert.match(html, /<button type="button" class="btn bi-explain-cta" data-bi-explain-cta="1">Review payments →<\/button>/);
+  assert.ok(!/href="#/.test(html), 'the CTA is a button, so the dialog can close before navigating');
+  const hidden = BI.explain(card, { showCta: false });
+  assert.ok(!hidden.includes('data-bi-explain-cta'), 'a CTA with nowhere to go is left out, not left dead');
+  assert.ok(plain(hidden).includes('What to do next'), 'the action sentence still stands on its own');
 });
 
 test('v892 evidence: the sample size is translated into a sentence an owner can read', () => {

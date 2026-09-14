@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2c02f24a3e12bfba742ea975421593cd3616c244f9d9292f1959ffcb089aeba9"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ba710e12e645578341a64829f34a2b93732fc1d9c4718af0c25546af198890f5"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -5901,12 +5901,18 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-cta{margin-top:10px}
 .bi-empty{margin:0;color:var(--muted)}
 /* Evidence, folded. */
-.bi-evidence{margin-top:10px;border-top:1px solid var(--hair);padding-top:6px}
-.bi-evidence>summary{cursor:pointer;min-height:32px;display:flex;align-items:center;font-size:12.5px;font-weight:650;color:var(--muted)}
-.bi-evidence>summary:hover{color:var(--coral)}
 .bi-evidence-list{margin:6px 0 0;display:grid;gap:6px}
 .bi-evidence-list dt{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
 .bi-evidence-list dd{margin:1px 0 0;font-size:13px;line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+/* nestly_v901: the explain pop-up. It borrows the card's tone (the bi-card-- modifier sets the
+   left rule and tint) so the owner sees the same colour they clicked. */
+.bi-explain{width:min(560px,100%);border-left:4px solid var(--muted);max-height:min(88vh,860px);overflow:auto}
+.bi-explain .bi-card-kind{margin:0}
+.bi-explain-title{margin:8px 0 0;font-size:19px;line-height:1.3;font-weight:750;color:var(--ink);overflow-wrap:anywhere}
+.bi-explain-block{margin-top:16px;padding-top:12px;border-top:1px solid var(--hair)}
+.bi-explain-heading{margin:0 0 8px;font-size:12.5px;font-weight:750;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2)}
+.bi-explain-next .bi-card-action{margin:0;font-size:14px}
+.bi-explain-cta{margin-top:12px;width:100%;justify-content:center}
 /* Pulse — one wrapping line of chips. */
 .bi-pulse-title{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
 .bi-pulse-line{margin:0;display:flex;flex-wrap:wrap;gap:6px 8px}
@@ -5959,7 +5965,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 2c02f24a3e12bfba742ea975421593cd3616c244f9d9292f1959ffcb089aeba9</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ba710e12e645578341a64829f34a2b93732fc1d9c4718af0c25546af198890f5</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -31231,6 +31237,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'2c02f24a3e12bfba742ea975421593cd3616c244f9d9292f1959ffcb089aeba9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ba710e12e645578341a64829f34a2b93732fc1d9c4718af0c25546af198890f5',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

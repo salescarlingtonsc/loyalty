@@ -6016,12 +6016,18 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-cta{margin-top:10px}
 .bi-empty{margin:0;color:var(--muted)}
 /* Evidence, folded. */
-.bi-evidence{margin-top:10px;border-top:1px solid var(--hair);padding-top:6px}
-.bi-evidence>summary{cursor:pointer;min-height:32px;display:flex;align-items:center;font-size:12.5px;font-weight:650;color:var(--muted)}
-.bi-evidence>summary:hover{color:var(--coral)}
 .bi-evidence-list{margin:6px 0 0;display:grid;gap:6px}
 .bi-evidence-list dt{font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
 .bi-evidence-list dd{margin:1px 0 0;font-size:13px;line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+/* nestly_v901: the explain pop-up. It borrows the card's tone (the bi-card-- modifier sets the
+   left rule and tint) so the owner sees the same colour they clicked. */
+.bi-explain{width:min(560px,100%);border-left:4px solid var(--muted);max-height:min(88vh,860px);overflow:auto}
+.bi-explain .bi-card-kind{margin:0}
+.bi-explain-title{margin:8px 0 0;font-size:19px;line-height:1.3;font-weight:750;color:var(--ink);overflow-wrap:anywhere}
+.bi-explain-block{margin-top:16px;padding-top:12px;border-top:1px solid var(--hair)}
+.bi-explain-heading{margin:0 0 8px;font-size:12.5px;font-weight:750;letter-spacing:.03em;text-transform:uppercase;color:var(--ink2)}
+.bi-explain-next .bi-card-action{margin:0;font-size:14px}
+.bi-explain-cta{margin-top:12px;width:100%;justify-content:center}
 /* Pulse — one wrapping line of chips. */
 .bi-pulse-title{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--muted)}
 .bi-pulse-line{margin:0;display:flex;flex-wrap:wrap;gap:6px 8px}
@@ -6179,7 +6185,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=426cc2cc23f0","customer":"/app-customer.js?b=f37a8a0801e5","business":"/app-business.js?b=08e24e1198c2","i18n":"/app-i18n.js?b=1d2067afb261"}
+{"auth":"/app-auth.js?b=426cc2cc23f0","customer":"/app-customer.js?b=f37a8a0801e5","business":"/app-business.js?b=b5dee9242605","i18n":"/app-i18n.js?b=1d2067afb261"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —
