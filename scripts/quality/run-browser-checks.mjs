@@ -83,6 +83,16 @@ const CHECKS = [
     urlEnv: 'V889_BOOT_URL',
     fixture: '/index.html',
   },
+  /* nestly_v912: the shell is reused across navigations instead of being rebuilt, and the
+     invariants that depended on the rebuild have to be proved by CLICKING, not by grepping.
+     Every existing test that touches renderShell asserts on its source text and stayed green
+     through a build that reintroduced the V452 open-menu-survives-navigation defect — this one
+     fails on it. Standalone for the same reason verify-v441 is: it boots the real app, so it
+     needs app/ as its own docroot rather than this runner's repo-root server. */
+  {
+    script: 'tests/browser/verify-v912-shell-reuse.mjs',
+    standalone: true,
+  },
 ];
 
 function resolvePlaywright() {

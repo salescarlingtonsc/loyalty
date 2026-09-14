@@ -3032,7 +3032,14 @@ function profileBranchScopeLabelV158(){
 async function hydrateProfileBranchSelectorV158(page){
   const mount=$('profileBranchScopeV158');
   if(!mount)return;
-  mount.innerHTML='<span class="branch-loading-pill" aria-live="polite">Branch scope</span>';
+  /* nestly_v912: the top bar is no longer thrown away on every navigation, so this no longer may
+     blank itself back to a loading pill on every navigation either — that flash, twice a minute
+     whenever the 120s branch cache had expired, was one of the things that read as a page load.
+     The READ below still happens every time it is wired, so the list cannot go stale; only the
+     DOM WRITE is now conditional, and only on the markup being identical to what is already
+     there. branchScopeMarkupV912 is cleared by a full shell rebuild, so a fresh top bar always
+     paints. */
+  if(!branchScopeMarkupV912)mount.innerHTML='<span class="branch-loading-pill" aria-live="polite">Branch scope</span>';
   try{
     const {isAdmin,branches}=await visibleBranchesForCurrentUser();
     if(!$('profileBranchScopeV158'))return;
@@ -3044,7 +3051,7 @@ async function hydrateProfileBranchSelectorV158(page){
     if(selectedBranchId&&!allowed.some(branch=>branch.id===selectedBranchId)){
       selectedBranchId=isAdmin?null:(allowed[0]?.id||null);
     }
-    mount.innerHTML=(allowed.length||isAdmin)
+    const branchScopeHtmlV912=(allowed.length||isAdmin)
       ?`<span class="topbar-branch-label-v210" aria-hidden="true">Viewing</span>
         <select id="profileBranchScopeSelectV158" aria-label="View data for branch" title="This changes the workspace view. Operational actions still use one selected branch.">
           ${isAdmin?'<option value="">All branches</option>':''}
@@ -3052,19 +3059,31 @@ async function hydrateProfileBranchSelectorV158(page){
         </select>
         `
       :'<span class="muted small">No branch assigned</span>';
+    /* Compared against what this function last WROTE, never against mount.innerHTML — reading it
+       back returns the browser's re-serialisation, which never equals the string that was set. */
+    if(branchScopeMarkupV912!==branchScopeHtmlV912||!$('profileBranchScopeSelectV158')){
+      mount.innerHTML=branchScopeHtmlV912;
+      branchScopeMarkupV912=branchScopeHtmlV912;
+    }
     const select=$('profileBranchScopeSelectV158');
     if(select){
       select.value=selectedBranchId||'';
       select.onchange=()=>{
         selectedBranchId=select.value||null;
         profileOpen=false;
-        renderShell(page);
+        /* nestly_v912: currentPage, not the `page` this closure was created with. The top bar can
+           now outlive the render that wired it, so a captured page would repaint the module the
+           owner was on when they last opened this menu rather than the one they are on now. */
+        renderShell(currentPage);
         route();
       };
     }
   }catch(error){
     console.error(error);
-    if($('profileBranchScopeV158'))$('profileBranchScopeV158').innerHTML='<span class="err small">Branch list unavailable.</span>';
+    if($('profileBranchScopeV158')){
+      $('profileBranchScopeV158').innerHTML='<span class="err small">Branch list unavailable.</span>';
+      branchScopeMarkupV912='';
+    }
   }
 }
 /* Owner ruling 2026-07-18: the firm profile lives TOP-RIGHT, not bottom-left.
@@ -3934,6 +3953,44 @@ function wireWorkspaceLanguageV97(){
   wirePicker($('workspaceLanguageMobileV151'));
 }
 
+/* nestly_v912 — a navigation moves the PAGE, not the room it is in.
+
+   Every hash change used to run `root.innerHTML=` over the whole shell: the sidebar, the logo,
+   the nav rail, the app bar, the global search, the branch scope, the bell, the profile menu and
+   the mobile dock were all destroyed and rebuilt to show the same thing again, and every wire*
+   function re-ran against brand new nodes. The owner's report was that clicking a module "feels
+   like a website" — a page load is exactly what rebuilding the entire interface imitates.
+
+   The shell is now rebuilt only when the CHROME would actually differ. That question is answered
+   by comparing the rendered markup of the page-independent chrome as a STRING, deliberately, and
+   not by a hand-written key of S.biz.id / S.myRole / S.myModules / workspaceLocale / ... : a key
+   made of variables is only ever as complete as the person who wrote it, and this chrome reads a
+   dozen of them. Building the markup and diffing it IS the completeness check — if any input the
+   chrome reads has moved, the string has moved, and the shell is rebuilt exactly as it always
+   was. The failure mode is therefore "rebuilt when it did not strictly have to be", which is
+   today's behaviour, and never "stale chrome".
+
+   What a reuse still refreshes is only what is a function of `page`: the nav rail, the mobile
+   page title, the help trigger and the mobile dock. */
+let shellChromeSignatureV912='';
+/* The markup hydrateProfileBranchSelectorV158 last wrote into the top bar. Cleared whenever the
+   shell is rebuilt, because the node it described no longer exists. */
+let branchScopeMarkupV912='';
+function shellStaticChromeSignatureV912(){
+  /* bellHtml() and profileHtml() are deliberately NOT part of this signature. Both are
+     regenerated on every render by the reuse branch below, so they are not static chrome; folding
+     them in would move the signature every time the unread count changed — forcing a full rebuild
+     after every notification — and would fold a DOM READ into a cache key, because profileHtml()
+     calls profileBranchScopeLabelV158(), which queries the live <select>. A signature must be a
+     pure function of state. */
+  return [brandWordmark(),buildIdentityHtml(),globalActionsHtml(),mobileSearchShellHtml()].join('\u0000');
+}
+function replaceShellRegionV912(selector,html){
+  const node=root.querySelector(selector);
+  if(!node)return false;
+  node.outerHTML=html;
+  return true;
+}
 function renderShell(page){
   disposeCurrentRoute();
   const priorSide=root.querySelector('.side');
@@ -3943,6 +4000,49 @@ function renderShell(page){
   const renderEpoch=++shellRenderEpoch;
   if(customerUiObserver)customerUiObserver.disconnect();
   currentPage=page; // used by the realtime handlers below to know what to auto-refresh
+  const chromeSignatureV912=shellStaticChromeSignatureV912();
+  /* Every region a reuse has to touch is required to be present before one is attempted, so a
+     shell left half-built by an earlier failure falls back to the full rebuild rather than
+     painting into holes. */
+  const reuseShellV912=preserveWorkspaceScroll
+    &&chromeSignatureV912===shellChromeSignatureV912
+    &&Boolean($('main')&&$('navwrap')&&$('helpTriggerV904')&&$('profwrap')&&$('bellwrap')
+      &&root.querySelector('.mobile-page-title')&&root.querySelector('.staff-mobile-dock'));
+  if(reuseShellV912){
+    /* A NEW <main> node, never a cleared one. Thirty-two page functions capture
+       `const routeMain=M()` (or outerMain) and guard their in-flight work with
+       `routeMain.isConnected&&M()===routeMain`; emptying the element leaves both halves true for
+       a page the owner has already left, so a slow read from the previous screen would paint into
+       this one. Replacing the node keeps that guard behaving exactly as the full rebuild does —
+       app/app.js already records the invariant in prose: a hard route change is the only thing
+       that ever replaces <main>.
+       It is installed FIRST so that every selector below resolves against a shell whose content
+       area is already empty. `.staff-mobile-dock` is the last child of .shell — after <main> in
+       document order — so a page that ever rendered a node of that class would otherwise be found
+       by the query instead of the dock. */
+    const freshMainV912=document.createElement('main');
+    freshMainV912.className='main';
+    freshMainV912.id='main';
+    freshMainV912.tabIndex=-1;
+    $('main').replaceWith(freshMainV912);
+    $('navwrap').innerHTML=navHtml(page);
+    replaceShellRegionV912('.mobile-page-title',mobileWorkspaceTitleHtml(page));
+    replaceShellRegionV912('#helpTriggerV904',helpTriggerHtmlV904(page));
+    /* The dock carries its own copy of the rail (navHtml(page,'mobile-nav')) and the mobile
+       language picker, so replacing it keeps both current — and hands wireStaffMobileActions and
+       wireWorkspaceLanguageV97 fresh nodes, which is what makes re-running them safe. */
+    replaceShellRegionV912('.staff-mobile-dock',staffMobileActionsHtml(page));
+    /* V452, restored for this path. route() calls resetPopoverStateV452(), which sets
+       profileOpen and bellOpen to false and NOTHING ELSE — its own comment says why: "The shell
+       is about to be rebuilt, so only the STATE has to change here." On a reuse the shell is not
+       rebuilt, so the flags would never reach the screen and an account menu or notification
+       panel left open would still be hanging open on the page you navigated to. That is the exact
+       defect V452 was written to remove, and the owner reported it. Regenerating both roots from
+       the already-reset flags is what the rebuild used to do implicitly; wireBell/wireProfile
+       below then wire the fresh nodes, as they always have. */
+    replaceShellRegionV912('#bellwrap',bellHtml());
+    replaceShellRegionV912('#profwrap',profileHtml());
+  }else{
   root.innerHTML=`<div class="shell">
     <aside class="side" aria-label="Workspace navigation">
       <a href="#/dashboard" class="logo" style="display:block">${brandWordmark()}</a>
@@ -3973,6 +4073,9 @@ function renderShell(page){
     </div>
     ${staffMobileActionsHtml(page)}
   </div>`;
+    shellChromeSignatureV912=chromeSignatureV912;
+    branchScopeMarkupV912='';
+  }
   const main=$('main');
   const side=root.querySelector('.side');
   if(side)side.scrollTop=priorSideScroll;
@@ -3991,7 +4094,12 @@ function renderShell(page){
   customerUiObserver=CUI.mountMain(main);
   wireNav();
   wireGlobalActions();
-  wireMobileSearchShell();
+  /* nestly_v912: the only wire* function that is NOT safe to re-run over nodes it has already
+     wired — it binds the sheet's backdrop with addEventListener rather than an .on* property, so
+     a second run would stack a second handler. Its markup is page-independent and a reuse never
+     touches it, so skipping it leaves the sheet wired exactly once. Every other function here
+     assigns .onclick/.onchange, which overwrite, and each is handed fresh nodes anyway. */
+  if(!reuseShellV912)wireMobileSearchShell();
   wireStaffMobileActions();
   wireWorkspaceLanguageV97();
   wireBell(page);

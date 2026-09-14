@@ -1772,9 +1772,13 @@ async function route(){
      switcher nested inside it, whose own links are what navigated) reappeared open on the next
      page — the owner saw exactly that. It sits AFTER disposeCurrentRoute() deliberately: seven
      tests pin `disposeCurrentRoute()` to within 320 characters of `async function route(){`,
-     and inserting a commented call above it pushed dispose out of that window. The shell is
-     about to be rebuilt, so only the STATE has to change here; see resetPopoverStateV452 for
-     why route() must not reach a renderer. */
+     and inserting a commented call above it pushed dispose out of that window. Only the STATE
+     changes here; see resetPopoverStateV452 for why route() must not reach a renderer.
+     nestly_v912: this used to say "the shell is about to be rebuilt, so only the STATE has to
+     change here". That is no longer true — renderShell reuses the shell when the chrome has not
+     changed — and relying on it is exactly how the first cut of v906 left an open account menu
+     painted over the page you navigated to. The reuse branch now regenerates #bellwrap and
+     #profwrap from these flags itself, which is what the rebuild used to do implicitly. */
   resetPopoverStateV452();
   /* Boot/nav must never leave a blank page behind — a transient network blip or a Supabase
      hiccup used to throw straight out of this async function with nothing rendered, which
