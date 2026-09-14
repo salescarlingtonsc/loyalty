@@ -48,6 +48,14 @@
     {
       "source": "/admin",
       "destination": "/index.gen.html"
+    },
+    {
+      "source": "/help",
+      "destination": "/index.gen.html"
+    },
+    {
+      "source": "/help/:path*",
+      "destination": "/index.gen.html"
     }
   ],
   "headers": [

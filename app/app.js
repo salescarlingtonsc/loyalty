@@ -4663,6 +4663,21 @@ function entryRouteForLocation(pathname=location.pathname,hash=location.hash){
   const cleanPath=(String(pathname||'/').replace(/\/+$/,'')||'/').toLowerCase();
   if(cleanPath==='/business')return '#/business';
   if(cleanPath==='/admin')return '#/platform';
+  /* nestly_v905: /help is a first-class entry, the same shape as /business and /admin above, so
+     the Help Centre can be SENT — www.peekaa.asia/help, and www.peekaa.asia/help/customers/
+     add-customer for one article. The SUB-PATH is carried through, which neither entry above ever
+     needed, because a help link that cannot name the article is worth very little.
+     The shape is whitelisted rather than passed through: cleanPath is lower-cased on the line
+     above and every topic and task slug is lower-case kebab, so anything outside that alphabet is
+     not a slug this app can resolve and is answered with the Help home instead of a hash nothing
+     will match. Two segments is the ceiling because helpPage takes exactly <topic>/<task>.
+     Signed out, route() answers with the workspace sign-in exactly as /business does, and the
+     path survives it: this resolves from the PATHNAME, not from a hash that sign-in would drop,
+     so the person lands on the guide they were sent once they are in. */
+  if(cleanPath==='/help')return '#/help';
+  if(cleanPath.startsWith('/help/')){
+    return /^\/help(?:\/[a-z0-9-]+){1,2}$/.test(cleanPath)?`#${cleanPath}`:'#/help';
+  }
   return '#/';
 }
 async function route(){

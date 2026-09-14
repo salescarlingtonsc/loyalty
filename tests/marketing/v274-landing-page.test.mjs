@@ -187,7 +187,12 @@ test('"/" is owned by edge middleware, and the rewrites cover only the app paths
   const rewrites = vercel.rewrites;
   /* v268 note: /o/:id is the server-rendered shared-offer page — a real function route, not an
      app path, and the one rewrite that must never fall through to the SPA shell. */
-  assert.deepEqual(rewrites.map((r) => r.source), ['/app', '/join', '/support', '/o/:id', '/business', '/admin'],
+  /* nestly_v905: /help and /help/:path* are app paths, the same shape as /business and /admin —
+     they serve the shell and entryRouteForLocation turns the path into the route, so the Help
+     Centre can be sent as www.peekaa.asia/help or as one article. The sub-path needs its own rule
+     because Vercel does not match /help/x against /help. */
+  assert.deepEqual(rewrites.map((r) => r.source),
+    ['/app', '/join', '/support', '/o/:id', '/business', '/admin', '/help', '/help/:path*'],
     'no "/" rewrite may exist — it cannot fire and would misleadingly imply it does');
   /* nestly_v527: /app now serves index.gen.html — the same document with its 512KB inline
      stylesheet swapped for a fingerprinted <link>. app/index.html is still the SOURCE. */

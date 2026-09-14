@@ -64,7 +64,13 @@ test('root is customer-first and business sign-in is a separate clean entry path
        and can only read tags a server actually sent. */
     {source:'/o/:id',destination:'/api/offer-share?id=:id'},
     {source:'/business',destination:'/index.gen.html'},
-    {source:'/admin',destination:'/index.gen.html'}
+    {source:'/admin',destination:'/index.gen.html'},
+    /* nestly_v905: the Help Centre is sendable as a link — www.peekaa.asia/help, or one article
+       at www.peekaa.asia/help/customers/add-customer. Both serve the shell; the path is resolved
+       into the route by entryRouteForLocation, exactly as /business and /admin are. The second
+       rule is not redundant: Vercel does not match /help/x against a /help source. */
+    {source:'/help',destination:'/index.gen.html'},
+    {source:'/help/:path*',destination:'/index.gen.html'}
   ];
   assert.deepEqual(vercel.rewrites,expectedRewrites);
   assert.deepEqual(vercelTemplate.rewrites,expectedRewrites);

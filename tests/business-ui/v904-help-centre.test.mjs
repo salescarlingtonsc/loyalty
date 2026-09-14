@@ -245,6 +245,51 @@ test('v904 an unknown or refused guide is answered, never 404ed', () => {
   assert.match(page, /built=task\?helpTaskHtmlV904\(topic,task\):helpTopicHtmlV904\(topic\)/);
 });
 
+test('v905 /help is a sendable link, and its sub-path survives the trip', () => {
+  /* The point of the path entry: an owner can send www.peekaa.asia/help, or one article at
+     www.peekaa.asia/help/customers/add-customer. Both halves have to hold — the rewrite that
+     serves the app shell at those paths, and the resolver that turns the path into the route —
+     so both are asserted here rather than trusted. */
+  const vercel = JSON.parse(readFileSync(new URL('../../app/vercel.json', import.meta.url), 'utf8'));
+  const rewrites = new Map(vercel.rewrites.map((rule) => [rule.source, rule.destination]));
+  assert.equal(rewrites.get('/help'), '/index.gen.html');
+  assert.equal(rewrites.get('/help/:path*'), '/index.gen.html',
+    'the sub-path needs its own rule — Vercel does not match /help/x against /help');
+  /* index.gen.html, not index.html: that is the shipped document every other app entry is
+     rewritten to (nestly_v527), and the one the stamper fingerprints. */
+  for (const entry of ['/app', '/business', '/admin']) {
+    assert.equal(rewrites.get(entry), '/index.gen.html', `${entry} must still serve the shell`);
+  }
+
+  /* Execute the real resolver. A grep would pass against a regex that never matches. */
+  const resolverSrc = section('function entryRouteForLocation', 'async function route(){');
+  const resolver = {};
+  vm.createContext(resolver);
+  vm.runInContext(resolverSrc, resolver);
+  const resolve = (pathname, hash = '') => vm.runInContext(
+    `entryRouteForLocation(${JSON.stringify(pathname)},${JSON.stringify(hash)})`, resolver);
+
+  assert.equal(resolve('/help'), '#/help');
+  assert.equal(resolve('/help/'), '#/help', 'a trailing slash is the same link');
+  assert.equal(resolve('/HELP'), '#/help');
+  assert.equal(resolve('/help/customers'), '#/help/customers');
+  assert.equal(resolve('/help/customers/add-customer'), '#/help/customers/add-customer');
+
+  /* Anything that is not a slug this app can resolve lands on the Help home rather than on a
+     hash nothing matches — including the shapes someone would try on purpose. */
+  for (const junk of ['/help/a/b/c', '/help/../admin', '/help/<script>', '/help/%2e%2e']) {
+    assert.equal(resolve(junk), '#/help', `${junk} must fall back to the Help home`);
+  }
+
+  /* An explicit hash still wins, so in-app navigation away from /help is untouched, and the
+     three entries that existed before this still resolve exactly as they did. */
+  assert.equal(resolve('/help', '#/clients'), '#/clients');
+  assert.equal(resolve('/business'), '#/business');
+  assert.equal(resolve('/admin'), '#/platform');
+  assert.equal(resolve('/app'), '#/');
+  assert.equal(resolve('/helpful'), '#/', 'the prefix must not swallow unrelated paths');
+});
+
 test('v904 Help analytics records what was searched, never what was typed', () => {
   const record = section('function helpRecordV904(surfaceKey,outcome,queryShape){', '\n}');
   assert.match(record, /'merchant\.surface_viewed'/,
