@@ -3540,6 +3540,756 @@
       "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
       "zh-CN": "顾客记录承载着销售和积分历史，因此不会从工作区中删除。如顾客希望删除其数据，请让他们在自己的应用中使用隐私请求页面。",
       "ms": "Rekod pelanggan membawa sejarah jualan dan mata, jadi ia tidak dibuang daripada ruang kerja. Minta pelanggan menggunakan halaman permintaan privasi dalam aplikasi mereka sendiri jika mereka mahu data mereka dibuang."
+    },
+    {
+      "source": "Your team, what they can open, and how they sign in.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "您的团队、他们能打开的内容，以及如何登录。",
+      "ms": "Pasukan anda, apa yang boleh mereka buka, dan cara mereka log masuk."
+    },
+    {
+      "source": "Your roster. Add someone for scheduling and reporting only, or invite them to sign in. Each person has one role, and you choose which modules they can open.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "您的人员名单。可仅为排班和报表添加人员，也可邀请其登录。每人有一个角色，由您决定他们能打开哪些模块。",
+      "ms": "Senarai kakitangan anda. Tambah seseorang untuk penjadualan dan pelaporan sahaja, atau jemput mereka log masuk. Setiap orang mempunyai satu peranan, dan anda memilih modul yang boleh mereka buka."
+    },
+    {
+      "source": "Operations setup → Staff Members",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 员工",
+      "ms": "Tetapan operasi → Ahli Kakitangan"
+    },
+    {
+      "source": "Add a team member",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "添加团队成员",
+      "ms": "Tambah ahli pasukan"
+    },
+    {
+      "source": "Create an invite so someone can sign in",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "创建邀请，让某人可以登录",
+      "ms": "Cipta jemputan supaya seseorang boleh log masuk"
+    },
+    {
+      "source": "Change someone's role",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "更改某人的角色",
+      "ms": "Tukar peranan seseorang"
+    },
+    {
+      "source": "Set module access to Off, Read or Edit per person",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "为每人设置模块权限：关闭、只读或可编辑",
+      "ms": "Tetapkan akses modul kepada Off, Read atau Edit bagi setiap orang"
+    },
+    {
+      "source": "Save and apply a module template",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "保存并应用模块模板",
+      "ms": "Simpan dan gunakan templat modul"
+    },
+    {
+      "source": "Set commission rates",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置佣金比例",
+      "ms": "Tetapkan kadar komisen"
+    },
+    {
+      "source": "Import your team from a spreadsheet",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "从电子表格导入团队成员",
+      "ms": "Import pasukan anda daripada hamparan"
+    },
+    {
+      "source": "Everyone on your roster.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "名单上的所有人员。",
+      "ms": "Semua orang dalam senarai kakitangan anda."
+    },
+    {
+      "source": "Role",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "角色",
+      "ms": "Peranan"
+    },
+    {
+      "source": "Owner, Manager, Staff, Front desk or Bookkeeper.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "店主、经理、员工、前台或记账员。",
+      "ms": "Pemilik, Pengurus, Kakitangan, Kaunter depan atau Kerani akaun."
+    },
+    {
+      "source": "Off, Read or Edit per module, for this person.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "针对此人的每个模块设为：关闭、只读或可编辑。",
+      "ms": "Off, Read atau Edit bagi setiap modul, untuk orang ini."
+    },
+    {
+      "source": "Create company invite",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "创建公司邀请",
+      "ms": "Cipta jemputan syarikat"
+    },
+    {
+      "source": "Makes a link and a code. The role is fixed when the invite is created.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "生成一个链接和一个代码。角色在创建邀请时即已固定。",
+      "ms": "Menghasilkan pautan dan kod. Peranan ditetapkan semasa jemputan dicipta."
+    },
+    {
+      "source": "A saved set of module access you can apply to other people.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "已保存的一组模块权限，可应用于其他人员。",
+      "ms": "Set akses modul yang disimpan dan boleh anda gunakan pada orang lain."
+    },
+    {
+      "source": "The rate this person earns. Peekaa provides the mechanism; the rate is yours.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "此人的佣金比例。Peekaa 只提供机制；比例由您决定。",
+      "ms": "Kadar yang diperoleh orang ini. Peekaa menyediakan mekanismenya; kadarnya milik anda."
+    },
+    {
+      "source": "Operations setup → Staff Members → Add staff",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 员工 → 添加员工",
+      "ms": "Tetapan operasi → Ahli Kakitangan → Tambah kakitangan"
+    },
+    {
+      "source": "Someone added this way is on the roster for scheduling and reporting but cannot sign in. Create an invite if they need a login.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "以此方式添加的人员会出现在排班和报表名单中，但无法登录。如需登录，请创建邀请。",
+      "ms": "Seseorang yang ditambah cara ini berada dalam senarai untuk penjadualan dan pelaporan tetapi tidak boleh log masuk. Cipta jemputan jika mereka memerlukan log masuk."
+    },
+    {
+      "source": "Open Staff Members.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开「员工」。",
+      "ms": "Buka Ahli Kakitangan."
+    },
+    {
+      "source": "Press Add staff.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按「添加员工」。",
+      "ms": "Tekan Tambah kakitangan."
+    },
+    {
+      "source": "Enter their name and role.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "输入其姓名和角色。",
+      "ms": "Masukkan nama dan peranan mereka."
+    },
+    {
+      "source": "Set which branches they work at.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置他们工作的分店。",
+      "ms": "Tetapkan cawangan mana mereka bekerja."
+    },
+    {
+      "source": "Set their module access.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置其模块权限。",
+      "ms": "Tetapkan akses modul mereka."
+    },
+    {
+      "source": "Invite a teammate to sign in",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "邀请同事登录",
+      "ms": "Jemput rakan sepasukan log masuk"
+    },
+    {
+      "source": "Operations setup → Staff Members → Create company invite",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 员工 → 创建公司邀请",
+      "ms": "Tetapan operasi → Ahli Kakitangan → Cipta jemputan syarikat"
+    },
+    {
+      "source": "The role is fixed by the invite — it cannot be changed during sign-up. Owner cannot be given out by invite. You can revoke an invite that has not been used.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "角色由邀请决定 — 注册过程中无法更改。店主角色无法通过邀请授予。尚未使用的邀请可以撤销。",
+      "ms": "Peranan ditetapkan oleh jemputan — ia tidak boleh ditukar semasa pendaftaran. Pemilik tidak boleh diberikan melalui jemputan. Anda boleh membatalkan jemputan yang belum digunakan."
+    },
+    {
+      "source": "Scroll to Create company invite.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "滚动到「创建公司邀请」。",
+      "ms": "Tatal ke Cipta jemputan syarikat."
+    },
+    {
+      "source": "Choose the role the invite will grant.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "选择该邀请将授予的角色。",
+      "ms": "Pilih peranan yang akan diberikan oleh jemputan itu."
+    },
+    {
+      "source": "Add their email if you want it on the record.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "如需存档，可添加其电子邮件。",
+      "ms": "Tambah e-mel mereka jika anda mahu ia dalam rekod."
+    },
+    {
+      "source": "Press Create invite.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按「创建邀请」。",
+      "ms": "Tekan Cipta jemputan."
+    },
+    {
+      "source": "Send them the link or the code.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "将链接或代码发送给他们。",
+      "ms": "Hantar pautan atau kod itu kepada mereka."
+    },
+    {
+      "source": "They choose \"Join an existing business\" when they sign up.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "他们在注册时选择「加入现有商家」。",
+      "ms": "Mereka memilih \"Join an existing business\" semasa mendaftar."
+    },
+    {
+      "source": "Set what a teammate can open",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置同事可打开的内容",
+      "ms": "Tetapkan apa yang rakan sepasukan boleh buka"
+    },
+    {
+      "source": "Operations setup → Staff Members → select a person → Modules",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 员工 → 选择人员 → 模块",
+      "ms": "Tetapan operasi → Ahli Kakitangan → pilih seseorang → Modul"
+    },
+    {
+      "source": "Some modules depend on others. When you grant one that needs another, Peekaa adds the dependency as Read and tells you which.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "某些模块依赖其他模块。当您授予的模块需要另一个模块时，Peekaa 会自动以「只读」方式添加依赖项并告知您。",
+      "ms": "Sesetengah modul bergantung pada modul lain. Apabila anda memberikan satu yang memerlukan yang lain, Peekaa menambah kebergantungan itu sebagai Read dan memberitahu anda yang mana satu."
+    },
+    {
+      "source": "Open the person.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开该人员。",
+      "ms": "Buka orang itu."
+    },
+    {
+      "source": "Set each module to Off, Read or Edit.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "将每个模块设为「关闭」、「只读」或「可编辑」。",
+      "ms": "Tetapkan setiap modul kepada Off, Read atau Edit."
+    },
+    {
+      "source": "Give at least one module Read or Edit, or there is nothing for them to open.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "至少给一个模块「只读」或「可编辑」权限，否则他们无任何可打开的内容。",
+      "ms": "Berikan sekurang-kurangnya satu modul Read atau Edit, jika tidak tiada apa untuk mereka buka."
+    },
+    {
+      "source": "Reuse a set of permissions",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "重复使用一组权限",
+      "ms": "Guna semula satu set kebenaran"
+    },
+    {
+      "source": "Operations setup → Staff Members → Module templates",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 员工 → 模块模板",
+      "ms": "Tetapan operasi → Ahli Kakitangan → Templat modul"
+    },
+    {
+      "source": "Applying a template grants Edit access for the modules in it. Modules the business does not have are skipped, and Peekaa tells you which.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "应用模板会为其中的模块授予「可编辑」权限。商家没有的模块会被跳过，Peekaa 会告知您是哪些。",
+      "ms": "Menggunakan templat memberikan akses Edit untuk modul di dalamnya. Modul yang tiada pada perniagaan dilangkau, dan Peekaa memberitahu anda yang mana satu."
+    },
+    {
+      "source": "Set one person's modules the way you want them.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按您的需要设置某一人员的模块权限。",
+      "ms": "Tetapkan modul seseorang mengikut cara yang anda mahu."
+    },
+    {
+      "source": "Save that set as a template and name it.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "将该组设置保存为模板并命名。",
+      "ms": "Simpan set itu sebagai templat dan namakannya."
+    },
+    {
+      "source": "Open another person, pick the template, and apply it.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开另一位人员，选择该模板并应用。",
+      "ms": "Buka orang lain, pilih templat itu, dan gunakannya."
+    },
+    {
+      "source": "Set a commission rate",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置佣金比例",
+      "ms": "Tetapkan kadar komisen"
+    },
+    {
+      "source": "Operations setup → Staff Members → select a person",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 员工 → 选择人员",
+      "ms": "Tetapan operasi → Ahli Kakitangan → pilih seseorang"
+    },
+    {
+      "source": "The rate is recorded against each sale as it happens, so changing it later does not rewrite past commission.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "比例在每笔交易发生时即记录在案，因此日后更改不会改写过往佣金。",
+      "ms": "Kadar itu direkodkan terhadap setiap jualan semasa ia berlaku, jadi mengubahnya kemudian tidak menulis semula komisen lampau."
+    },
+    {
+      "source": "Set the commission rate as a percentage between 0 and 100.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "将佣金比例设为 0 到 100 之间的百分比。",
+      "ms": "Tetapkan kadar komisen sebagai peratusan antara 0 dan 100."
+    },
+    {
+      "source": "Only the owner can open this screen.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "只有店主可以打开此页面。",
+      "ms": "Hanya pemilik boleh membuka skrin ini."
+    },
+    {
+      "source": "The Owner role is not invitable.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "店主角色无法通过邀请授予。",
+      "ms": "Peranan Pemilik tidak boleh dijemput."
+    },
+    {
+      "source": "Deactivating someone frees their login seat. A roster-only person who cannot sign in does not use a seat.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "停用某人会释放其登录席位。仅列入名单、无法登录的人员不占用席位。",
+      "ms": "Menyahaktifkan seseorang membebaskan kerusi log masuk mereka. Orang senarai sahaja yang tidak boleh log masuk tidak menggunakan kerusi."
+    },
+    {
+      "source": "Access changes take effect the next time that person loads the workspace.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "权限更改在该人员下次加载工作区时生效。",
+      "ms": "Perubahan akses berkuat kuasa pada kali berikutnya orang itu memuatkan ruang kerja."
+    },
+    {
+      "source": "A person can only see customers, sales and appointments at the branches they are assigned to.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "每人只能看到自己被分配分店的顾客、销售和预约。",
+      "ms": "Seseorang hanya boleh melihat pelanggan, jualan dan janji temu di cawangan yang ditugaskan kepada mereka."
+    },
+    {
+      "source": "A teammate cannot sign in",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "同事无法登录",
+      "ms": "Rakan sepasukan tidak boleh log masuk"
+    },
+    {
+      "source": "The invite was never sent, or has been revoked.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "邀请从未发送，或已被撤销。",
+      "ms": "Jemputan tidak pernah dihantar, atau telah dibatalkan."
+    },
+    {
+      "source": "They signed up as a new business instead of joining an existing one.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "他们注册成了新商家，而不是加入现有商家。",
+      "ms": "Mereka mendaftar sebagai perniagaan baharu dan bukannya menyertai yang sedia ada."
+    },
+    {
+      "source": "They are a roster-only record with no login.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "他们只是名单记录，没有登录权限。",
+      "ms": "Mereka ialah rekod senarai sahaja tanpa log masuk."
+    },
+    {
+      "source": "Create a fresh invite and send them the link or code.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "重新创建邀请，并发送链接或代码给他们。",
+      "ms": "Cipta jemputan baharu dan hantar pautan atau kod itu kepada mereka."
+    },
+    {
+      "source": "Tell them to choose \"Join an existing business\" during sign-up, not \"Set up business\".",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "请他们在注册时选择「加入现有商家」，而非「创建商家」。",
+      "ms": "Beritahu mereka pilih \"Join an existing business\" semasa mendaftar, bukan \"Set up business\"."
+    },
+    {
+      "source": "A teammate sees the wrong things",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "同事看到的内容不对",
+      "ms": "Rakan sepasukan melihat perkara yang salah"
+    },
+    {
+      "source": "Their role is wrong.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "他们的角色设置有误。",
+      "ms": "Peranan mereka salah."
+    },
+    {
+      "source": "Their module access is wrong.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "他们的模块权限设置有误。",
+      "ms": "Akses modul mereka salah."
+    },
+    {
+      "source": "They are assigned to the wrong branches.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "他们被分配到了错误的分店。",
+      "ms": "Mereka ditugaskan ke cawangan yang salah."
+    },
+    {
+      "source": "Open their record and check the role, the module list and the branch assignment, in that order.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开其记录，按顺序检查角色、模块列表和分店分配。",
+      "ms": "Buka rekod mereka dan semak peranan, senarai modul dan penugasan cawangan, mengikut turutan itu."
+    },
+    {
+      "source": "What does a login cost?",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "一个登录账号的费用是多少？",
+      "ms": "Berapakah kos satu log masuk?"
+    },
+    {
+      "source": "Each active login is a seat on your subscription. A roster-only person with no login is free.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "每个启用的登录账号占用订阅中的一个席位。仅列入名单、无登录权限的人员免费。",
+      "ms": "Setiap log masuk aktif ialah satu kerusi pada langganan anda. Orang senarai sahaja tanpa log masuk adalah percuma."
+    },
+    {
+      "source": "Can I change someone's role later?",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "之后可以更改某人的角色吗？",
+      "ms": "Bolehkah saya menukar peranan seseorang kemudian?"
+    },
+    {
+      "source": "Yes, on their record in Staff Members. It takes effect when they next load the workspace.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "可以，在「员工」中其记录内更改。将在他们下次加载工作区时生效。",
+      "ms": "Boleh, pada rekod mereka dalam Ahli Kakitangan. Ia berkuat kuasa apabila mereka memuatkan ruang kerja pada kali berikutnya."
+    },
+    {
+      "source": "Your locations, their contact details, opening hours and billing.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "您的各个营业地点、联系方式、营业时间和账单。",
+      "ms": "Lokasi anda, butiran hubungan, waktu buka dan pengebilan mereka."
+    },
+    {
+      "source": "Every location you operate. A branch carries its own address and phone, its own opening hours, its own staff, and its own billing.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "您经营的每个地点。每家分店有自己的地址和电话、自己的营业时间、自己的员工，以及自己的账单。",
+      "ms": "Setiap lokasi yang anda kendalikan. Satu cawangan membawa alamat dan telefonnya sendiri, waktu bukanya sendiri, kakitangannya sendiri, dan pengebilannya sendiri."
+    },
+    {
+      "source": "Operations setup → Branches",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 分店",
+      "ms": "Tetapan operasi → Cawangan"
+    },
+    {
+      "source": "Add a branch",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "添加分店",
+      "ms": "Tambah cawangan"
+    },
+    {
+      "source": "Set a branch's address, phone and email",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置分店的地址、电话和电子邮件",
+      "ms": "Tetapkan alamat, telefon dan e-mel cawangan"
+    },
+    {
+      "source": "Set opening hours",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置营业时间",
+      "ms": "Tetapkan waktu buka"
+    },
+    {
+      "source": "Assign staff to a branch",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "将员工分配到分店",
+      "ms": "Tugaskan kakitangan ke cawangan"
+    },
+    {
+      "source": "Manage a branch's billing",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "管理分店的账单",
+      "ms": "Urus pengebilan cawangan"
+    },
+    {
+      "source": "Delete an empty branch",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "删除空分店",
+      "ms": "Padamkan cawangan kosong"
+    },
+    {
+      "source": "What staff and customers see. Required.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "员工和顾客看到的名称。必填。",
+      "ms": "Apa yang kakitangan dan pelanggan lihat. Diwajibkan."
+    },
+    {
+      "source": "Address / Phone / Email",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "地址 / 电话 / 电子邮件",
+      "ms": "Alamat / Telefon / E-mel"
+    },
+    {
+      "source": "What customers see on your business page.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "顾客在您的商家页面上看到的内容。",
+      "ms": "Apa yang pelanggan lihat pada halaman perniagaan anda."
+    },
+    {
+      "source": "Opening hours",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "营业时间",
+      "ms": "Waktu buka"
+    },
+    {
+      "source": "When this branch is open. The calendar will not book outside them.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "该分店的营业时间。日历不会在此范围之外安排预约。",
+      "ms": "Bila cawangan ini dibuka. Kalendar tidak akan menempah di luar waktu itu."
+    },
+    {
+      "source": "Copy settings from",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "从以下分店复制设置",
+      "ms": "Salin tetapan daripada"
+    },
+    {
+      "source": "Start a new branch from an existing one instead of empty.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "以现有分店为基础创建新分店，而非从空白开始。",
+      "ms": "Mulakan cawangan baharu daripada yang sedia ada dan bukannya kosong."
+    },
+    {
+      "source": "Billing cycle for this branch",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "该分店的账单周期",
+      "ms": "Kitaran pengebilan untuk cawangan ini"
+    },
+    {
+      "source": "Monthly or Annual. Each branch is billed separately.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按月或按年。每家分店分别计费。",
+      "ms": "Bulanan atau Tahunan. Setiap cawangan dibilkan secara berasingan."
+    },
+    {
+      "source": "Your main branch. It cannot be deleted.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "您的主分店。无法删除。",
+      "ms": "Cawangan utama anda. Ia tidak boleh dipadamkan."
+    },
+    {
+      "source": "Add or manage staff",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "添加或管理员工",
+      "ms": "Tambah atau urus kakitangan"
+    },
+    {
+      "source": "Who works at this branch.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "在该分店工作的人员。",
+      "ms": "Siapa yang bekerja di cawangan ini."
+    },
+    {
+      "source": "Operations setup → Branches → Add branch",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 分店 → 添加分店",
+      "ms": "Tetapan operasi → Cawangan → Tambah cawangan"
+    },
+    {
+      "source": "A new branch is billed in its own right. Until its payment is confirmed the branch shows Awaiting payment.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "新分店独立计费。在付款确认之前，该分店会显示「等待付款」。",
+      "ms": "Cawangan baharu dibilkan atas namanya sendiri. Sehingga bayarannya disahkan, cawangan itu menunjukkan Menunggu bayaran."
+    },
+    {
+      "source": "Open Branches.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开「分店」。",
+      "ms": "Buka Cawangan."
+    },
+    {
+      "source": "Press Add branch.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按「添加分店」。",
+      "ms": "Tekan Tambah cawangan."
+    },
+    {
+      "source": "Enter the name. This is required.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "输入名称。此项必填。",
+      "ms": "Masukkan nama. Ini diwajibkan."
+    },
+    {
+      "source": "Add the address, phone and email — these appear on your customers' business page.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "添加地址、电话和电子邮件 — 这些会显示在顾客看到的商家页面上。",
+      "ms": "Tambah alamat, telefon dan e-mel — ini muncul pada halaman perniagaan pelanggan anda."
+    },
+    {
+      "source": "Choose Copy settings from an existing branch, or Start empty.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "选择从现有分店复制设置，或从空白开始。",
+      "ms": "Pilih Salin tetapan daripada cawangan sedia ada, atau Mula kosong."
+    },
+    {
+      "source": "Choose the billing cycle for this branch and complete the payment.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "选择该分店的账单周期并完成付款。",
+      "ms": "Pilih kitaran pengebilan untuk cawangan ini dan selesaikan pembayaran."
+    },
+    {
+      "source": "Set the opening hours.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置营业时间。",
+      "ms": "Tetapkan waktu buka."
+    },
+    {
+      "source": "Assign the staff who work there.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "分配在该分店工作的员工。",
+      "ms": "Tugaskan kakitangan yang bekerja di situ."
+    },
+    {
+      "source": "Set a branch's opening hours",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置分店的营业时间",
+      "ms": "Tetapkan waktu buka cawangan"
+    },
+    {
+      "source": "Operations setup → Branches → Opening hours",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 分店 → 营业时间",
+      "ms": "Tetapan operasi → Cawangan → Waktu buka"
+    },
+    {
+      "source": "The calendar will not book a slot when the branch is closed — it says Branch closed instead.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "分店关闭时，日历不会安排该时段 — 而是显示「分店关闭」。",
+      "ms": "Kalendar tidak akan menempah slot apabila cawangan ditutup — ia menyatakan Cawangan tutup sebaliknya."
+    },
+    {
+      "source": "Open the branch.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开该分店。",
+      "ms": "Buka cawangan itu."
+    },
+    {
+      "source": "Open Opening hours.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "打开「营业时间」。",
+      "ms": "Buka Waktu buka."
+    },
+    {
+      "source": "Set the hours for each day.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "设置每天的营业时间。",
+      "ms": "Tetapkan waktu bagi setiap hari."
+    },
+    {
+      "source": "Operations setup → Branches → Add or manage staff",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "运营设置 → 分店 → 添加或管理员工",
+      "ms": "Tetapan operasi → Cawangan → Tambah atau urus kakitangan"
+    },
+    {
+      "source": "A staff member only sees customers, sales and appointments for the branches they are assigned to.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "员工只能看到自己被分配分店的顾客、销售和预约。",
+      "ms": "Ahli kakitangan hanya melihat pelanggan, jualan dan janji temu bagi cawangan yang ditugaskan kepada mereka."
+    },
+    {
+      "source": "Press Add or manage staff.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按「添加或管理员工」。",
+      "ms": "Tekan Tambah atau urus kakitangan."
+    },
+    {
+      "source": "Assign or unassign the team members.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "分配或取消分配团队成员。",
+      "ms": "Tugaskan atau batalkan penugasan ahli pasukan."
+    },
+    {
+      "source": "Your main branch cannot be deleted.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "主分店无法删除。",
+      "ms": "Cawangan utama anda tidak boleh dipadamkan."
+    },
+    {
+      "source": "A branch with recorded sales or appointments cannot be deleted — its history has to stay somewhere true.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "有销售或预约记录的分店无法删除 — 其历史记录必须保留在真实的位置。",
+      "ms": "Cawangan yang mempunyai jualan atau janji temu yang direkodkan tidak boleh dipadamkan — sejarahnya mesti kekal di tempat yang benar."
+    },
+    {
+      "source": "Deleting a branch asks you to type its name, so it cannot happen by accident.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "删除分店时需输入其名称，以免误操作。",
+      "ms": "Memadamkan cawangan meminta anda menaip namanya, supaya ia tidak berlaku secara tidak sengaja."
+    },
+    {
+      "source": "Every figure elsewhere in the workspace is for the branch selected in the top bar.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "工作区其他位置的每个数字都对应顶部栏所选的分店。",
+      "ms": "Setiap angka di tempat lain dalam ruang kerja adalah untuk cawangan yang dipilih di bar atas."
+    },
+    {
+      "source": "A new branch says Awaiting payment",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "新分店显示「等待付款」",
+      "ms": "Cawangan baharu menyatakan Menunggu bayaran"
+    },
+    {
+      "source": "The payment for that branch has not been confirmed yet.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "该分店的付款尚未确认。",
+      "ms": "Bayaran untuk cawangan itu belum disahkan."
+    },
+    {
+      "source": "The payment failed.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "付款失败。",
+      "ms": "Bayaran gagal."
+    },
+    {
+      "source": "Press Pay now, or Retry payment.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "按「立即付款」或「重试付款」。",
+      "ms": "Tekan Bayar sekarang, atau Cuba bayaran semula."
+    },
+    {
+      "source": "If it says the payment is still confirming, wait a moment and try again.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "如果显示付款仍在确认中，请稍候再试。",
+      "ms": "Jika ia menyatakan bayaran masih disahkan, tunggu sebentar dan cuba lagi."
+    },
+    {
+      "source": "I cannot delete a branch",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "我无法删除某家分店",
+      "ms": "Saya tidak dapat memadamkan cawangan"
+    },
+    {
+      "source": "It is your main branch.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "它是您的主分店。",
+      "ms": "Ia adalah cawangan utama anda."
+    },
+    {
+      "source": "It has recorded sales or appointments.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "它有销售或预约记录。",
+      "ms": "Ia mempunyai jualan atau janji temu yang direkodkan."
+    },
+    {
+      "source": "Make another branch the main one first, if that is what you want.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "如有需要，请先将另一家分店设为主分店。",
+      "ms": "Jadikan cawangan lain sebagai utama dahulu, jika itu yang anda mahu."
+    },
+    {
+      "source": "A branch with history stays. Unassign its staff instead, so it stops being used.",
+      "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
+      "zh-CN": "有历史记录的分店会保留。请改为取消其员工分配，使其停止使用。",
+      "ms": "Cawangan yang mempunyai sejarah akan kekal. Batalkan penugasan kakitangannya sebaliknya, supaya ia berhenti digunakan."
     }
   ]
 }
