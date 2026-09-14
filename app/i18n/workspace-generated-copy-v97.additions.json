@@ -1140,6 +1140,1440 @@
       "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
       "zh-CN": "打开同一日期范围的「销售」，查看总数背后的每一条记录。",
       "ms": "Buka Jualan untuk julat yang sama bagi melihat rekod individu di sebalik jumlah itu."
+    },
+    {
+      "source": "Everything customers earn or claim, in one place.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "顾客获得或兑换的一切，集中在一处。",
+      "ms": "Semua yang pelanggan peroleh atau tuntut, di satu tempat."
+    },
+    {
+      "source": "Peekaa runs several reward programmes and each one is independent — you can run any combination. Rewards Programme is the list of them, and each card opens its own setup.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "Peekaa 提供多种奖励方案，每种都独立运作 — 您可任意组合使用。「奖励方案」是它们的列表，每张卡片可打开各自的设置。",
+      "ms": "Peekaa menjalankan beberapa program ganjaran dan setiap satu adalah bebas — anda boleh menjalankan apa-apa gabungan. Program Ganjaran ialah senarainya, dan setiap kad membuka tetapannya sendiri."
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran"
+    },
+    {
+      "source": "Set up a Point system, a Stamp card or Tier membership",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置积分制、印花卡或等级会员",
+      "ms": "Sediakan Sistem mata, Kad setem atau Keahlian peringkat"
+    },
+    {
+      "source": "Give new sign-ups a Welcome gift",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "给新注册顾客迎新礼物",
+      "ms": "Beri pendaftar baharu Hadiah selamat datang"
+    },
+    {
+      "source": "Give a Birthday benefit",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "提供生日优惠",
+      "ms": "Beri Faedah hari jadi"
+    },
+    {
+      "source": "Win customers back with Bring-back rewards",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "用挽回奖励赢回顾客",
+      "ms": "Menangi semula pelanggan dengan Ganjaran bawa kembali"
+    },
+    {
+      "source": "Reward customers who introduce friends with Referrals",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "通过推荐好友奖励介绍新客的顾客",
+      "ms": "Ganjari pelanggan yang memperkenalkan rakan melalui Rujukan"
+    },
+    {
+      "source": "Publish a Limited Offer",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "发布限时优惠",
+      "ms": "Terbitkan Tawaran Terhad"
+    },
+    {
+      "source": "See what each programme has actually done",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "查看每个方案的实际成效",
+      "ms": "Lihat apa yang setiap program telah lakukan"
+    },
+    {
+      "source": "Every programme with its status in one table, plus how each has been used.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "一张表列出所有方案及其状态，以及各自的使用情况。",
+      "ms": "Setiap program dengan statusnya dalam satu jadual, serta cara setiap satu telah digunakan."
+    },
+    {
+      "source": "The cards. Each says On, Off or Not set up, and opens its own setup.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "方案卡片。每张显示「开启」、「关闭」或「未设置」，并可打开各自的设置。",
+      "ms": "Kad-kad itu. Setiap satu menyatakan On, Off atau Not set up, dan membuka tetapannya sendiri."
+    },
+    {
+      "source": "Short-lived offers you publish to customers, with a start and end date.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "向顾客发布的短期优惠，设有开始和结束日期。",
+      "ms": "Tawaran jangka pendek yang anda terbitkan kepada pelanggan, dengan tarikh mula dan tamat."
+    },
+    {
+      "source": "Programmes and offers that have ended.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "已结束的方案和优惠。",
+      "ms": "Program dan tawaran yang telah tamat."
+    },
+    {
+      "source": "Point system",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "积分制",
+      "ms": "Sistem mata"
+    },
+    {
+      "source": "Customers earn points on what they spend and redeem them for gifts you define.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "顾客按消费金额赚取积分，并可兑换您设定的礼物。",
+      "ms": "Pelanggan memperoleh mata atas perbelanjaan mereka dan menebusnya untuk hadiah yang anda tetapkan."
+    },
+    {
+      "source": "Stamp card",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "印花卡",
+      "ms": "Kad setem"
+    },
+    {
+      "source": "A stamp per qualifying spend; a gift when the card is full.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "每笔符合条件的消费获得一个印花；集满整卡即可获得礼物。",
+      "ms": "Satu setem bagi setiap perbelanjaan yang layak; satu hadiah apabila kad penuh."
+    },
+    {
+      "source": "Tier membership",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "等级会员",
+      "ms": "Keahlian peringkat"
+    },
+    {
+      "source": "Three tiers by default. Customers climb as they earn, and each tier can carry its own benefits.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "默认三个等级。顾客随累积而晋级，每个等级可设有专属权益。",
+      "ms": "Tiga peringkat secara lalai. Pelanggan naik apabila mereka memperoleh, dan setiap peringkat boleh membawa faedahnya sendiri."
+    },
+    {
+      "source": "Welcome gift",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "迎新礼物",
+      "ms": "Hadiah selamat datang"
+    },
+    {
+      "source": "One gift for a new sign-up, on their first visit.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "新注册顾客首次到访时获得一份礼物。",
+      "ms": "Satu hadiah untuk pendaftar baharu, pada kunjungan pertama mereka."
+    },
+    {
+      "source": "A treat in their birthday month, or a window around the day.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在顾客生日当月，或生日前后一段时间内的优惠。",
+      "ms": "Hadiah dalam bulan hari jadi mereka, atau tempoh di sekitar hari itu."
+    },
+    {
+      "source": "Bring-back rewards",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "挽回奖励",
+      "ms": "Ganjaran bawa kembali"
+    },
+    {
+      "source": "A voucher for customers who have not been in for a set number of days.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "发给超过设定天数未光顾顾客的优惠券。",
+      "ms": "Baucar untuk pelanggan yang tidak datang selama bilangan hari yang ditetapkan."
+    },
+    {
+      "source": "A reward for the customer who introduces someone, and for the friend.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "同时奖励介绍人和被介绍的朋友。",
+      "ms": "Ganjaran untuk pelanggan yang memperkenalkan seseorang, dan untuk rakan itu."
+    },
+    {
+      "source": "Set up the Point system",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置积分制",
+      "ms": "Sediakan Sistem mata"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Point system",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 积分制",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Sistem mata"
+    },
+    {
+      "source": "Earning without a reward to claim gives customers nothing to aim at. Add at least one reward before you publish.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "只能累积却无奖励可兑换，顾客就没有目标。发布前请至少添加一项奖励。",
+      "ms": "Perolehan tanpa ganjaran untuk dituntut tidak memberi pelanggan sasaran. Tambah sekurang-kurangnya satu ganjaran sebelum anda terbitkan."
+    },
+    {
+      "source": "Open Rewards & Offer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励与优惠」。",
+      "ms": "Buka Ganjaran & Tawaran."
+    },
+    {
+      "source": "On Rewards Programme, open Point system.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「积分制」。",
+      "ms": "Dalam Program Ganjaran, buka Sistem mata."
+    },
+    {
+      "source": "Set how many points a customer earns per dollar spent.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置顾客每消费一元可获得多少积分。",
+      "ms": "Tetapkan berapa mata yang diperoleh pelanggan bagi setiap ringgit dibelanjakan."
+    },
+    {
+      "source": "Add at least one reward: what it is, and how many points it costs.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "至少添加一项奖励：内容是什么，以及需要多少积分。",
+      "ms": "Tambah sekurang-kurangnya satu ganjaran: apa ia, dan berapa mata kosnya."
+    },
+    {
+      "source": "Set each reward On.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "将每项奖励设为「开启」。",
+      "ms": "Tetapkan setiap ganjaran kepada On."
+    },
+    {
+      "source": "Publish.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "发布。",
+      "ms": "Terbitkan."
+    },
+    {
+      "source": "Set up a Stamp card",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置印花卡",
+      "ms": "Sediakan Kad setem"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Stamp card",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 印花卡",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Kad setem"
+    },
+    {
+      "source": "A mid-card milestone unlocks without using up stamps. The card only resets when it is full.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "卡片中途的里程碑奖励不会消耗印花。只有集满整卡后才会重置。",
+      "ms": "Pencapaian pertengahan kad terbuka tanpa menggunakan setem. Kad hanya ditetapkan semula apabila ia penuh."
+    },
+    {
+      "source": "On Rewards Programme, open Stamp card.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「印花卡」。",
+      "ms": "Dalam Program Ganjaran, buka Kad setem."
+    },
+    {
+      "source": "Set the minimum spend that earns one stamp.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置获得一个印花所需的最低消费额。",
+      "ms": "Tetapkan perbelanjaan minimum yang memperoleh satu setem."
+    },
+    {
+      "source": "Set how many stamps fill a card.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置集满一张卡需要多少印花。",
+      "ms": "Tetapkan berapa setem yang memenuhi satu kad."
+    },
+    {
+      "source": "Add the gift the full card earns, and any mid-card milestones.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "添加集满整卡可得的礼物，以及任何中途里程碑奖励。",
+      "ms": "Tambah hadiah yang diperoleh kad penuh, dan mana-mana pencapaian pertengahan kad."
+    },
+    {
+      "source": "Set up Tier membership",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置等级会员",
+      "ms": "Sediakan Keahlian peringkat"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Tier membership",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 等级会员",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Keahlian peringkat"
+    },
+    {
+      "source": "Before publishing a raised threshold, Peekaa tells you how many existing members would move down. Spending and refunds never demote a customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在发布提高后的门槛前，Peekaa 会告知有多少现有会员会降级。消费和退款绝不会使顾客降级。",
+      "ms": "Sebelum menerbitkan ambang yang dinaikkan, Peekaa memberitahu anda berapa ramai ahli sedia ada akan turun. Perbelanjaan dan bayaran balik tidak pernah menurunkan pangkat pelanggan."
+    },
+    {
+      "source": "On Rewards Programme, open Tier membership.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「等级会员」。",
+      "ms": "Dalam Program Ganjaran, buka Keahlian peringkat."
+    },
+    {
+      "source": "Check the three default tiers and rename them if you want.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "检查三个默认等级，如需要可重命名。",
+      "ms": "Semak tiga peringkat lalai dan namakan semula jika anda mahu."
+    },
+    {
+      "source": "Set the threshold for each tier.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置每个等级的门槛。",
+      "ms": "Tetapkan ambang bagi setiap peringkat."
+    },
+    {
+      "source": "Add benefits to a tier if you want it to carry perks.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如希望某等级带有专属权益，请为其添加权益。",
+      "ms": "Tambah faedah pada sesuatu peringkat jika anda mahu ia membawa keistimewaan."
+    },
+    {
+      "source": "Set up the Welcome gift",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置迎新礼物",
+      "ms": "Sediakan Hadiah selamat datang"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Welcome gift",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 迎新礼物",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Hadiah selamat datang"
+    },
+    {
+      "source": "It is given once, on the customer's first visit after joining. A customer who arrived through a referral gets the referral reward rather than both.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "仅在顾客加入后首次到访时发放一次。通过推荐加入的顾客获得推荐奖励，而非两者兼得。",
+      "ms": "Ia diberikan sekali sahaja, pada kunjungan pertama pelanggan selepas menyertai. Pelanggan yang tiba melalui rujukan mendapat ganjaran rujukan dan bukan kedua-duanya."
+    },
+    {
+      "source": "On Rewards Programme, open Welcome gift.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「迎新礼物」。",
+      "ms": "Dalam Program Ganjaran, buka Hadiah selamat datang."
+    },
+    {
+      "source": "Choose the free item or benefit new members get.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择新会员可获得的免费商品或优惠。",
+      "ms": "Pilih item percuma atau faedah yang diterima ahli baharu."
+    },
+    {
+      "source": "Switch it On.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "将其设为「开启」。",
+      "ms": "Hidupkannya."
+    },
+    {
+      "source": "Set up the Birthday benefit",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置生日优惠",
+      "ms": "Sediakan Faedah hari jadi"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Birthday benefit",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 生日优惠",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Faedah hari jadi"
+    },
+    {
+      "source": "Only customers with a birth date on record are eligible. Add birth dates when you add customers, or in Edit customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "只有已记录出生日期的顾客符合条件。请在添加顾客时或在「编辑顾客」中填写出生日期。",
+      "ms": "Hanya pelanggan yang mempunyai tarikh lahir dalam rekod adalah layak. Tambah tarikh lahir semasa anda menambah pelanggan, atau dalam Edit pelanggan."
+    },
+    {
+      "source": "On Rewards Programme, open Birthday benefit.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「生日优惠」。",
+      "ms": "Dalam Program Ganjaran, buka Faedah hari jadi."
+    },
+    {
+      "source": "Choose the benefit: a percentage discount, or a free item.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择优惠形式：百分比折扣，或免费商品。",
+      "ms": "Pilih faedah: diskaun peratusan, atau item percuma."
+    },
+    {
+      "source": "Choose when it can be used — their whole birthday month, or a window of days around the date.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择可使用的时间 — 整个生日月，或生日前后若干天。",
+      "ms": "Pilih bila ia boleh digunakan — sepanjang bulan hari jadi mereka, atau tempoh beberapa hari di sekitar tarikh itu."
+    },
+    {
+      "source": "Write the terms. Peekaa can suggest wording from the benefit you chose.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "撰写条款。Peekaa 可根据您所选的优惠建议措辞。",
+      "ms": "Tulis terma. Peekaa boleh mencadangkan perkataan daripada faedah yang anda pilih."
+    },
+    {
+      "source": "Tick the box that enables it for eligible customers, then publish.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "勾选为符合条件顾客启用的选项，然后发布。",
+      "ms": "Tandakan kotak yang mengaktifkannya untuk pelanggan yang layak, kemudian terbitkan."
+    },
+    {
+      "source": "Set up Bring-back rewards",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置挽回奖励",
+      "ms": "Sediakan Ganjaran bawa kembali"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Bring-back rewards",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 挽回奖励",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Ganjaran bawa kembali"
+    },
+    {
+      "source": "Deleting a campaign does not take back vouchers already sent — those stay valid.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "删除活动不会收回已发出的优惠券 — 那些仍然有效。",
+      "ms": "Memadamkan kempen tidak menarik balik baucar yang telah dihantar — baucar itu kekal sah."
+    },
+    {
+      "source": "On Rewards Programme, open Bring-back rewards.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「挽回奖励」。",
+      "ms": "Dalam Program Ganjaran, buka Ganjaran bawa kembali."
+    },
+    {
+      "source": "Name the campaign.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "为活动命名。",
+      "ms": "Namakan kempen itu."
+    },
+    {
+      "source": "Set how many days away makes a customer eligible.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置顾客多少天未光顾即符合条件。",
+      "ms": "Tetapkan berapa hari tidak datang menjadikan pelanggan layak."
+    },
+    {
+      "source": "Set the reward they get for coming back.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置他们回头光顾可得的奖励。",
+      "ms": "Tetapkan ganjaran yang mereka dapat kerana datang semula."
+    },
+    {
+      "source": "Set how long the voucher lasts.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置优惠券的有效期。",
+      "ms": "Tetapkan berapa lama baucar itu sah."
+    },
+    {
+      "source": "Save and switch it on.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "保存并开启。",
+      "ms": "Simpan dan hidupkannya."
+    },
+    {
+      "source": "Set up Referrals",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置推荐好友",
+      "ms": "Sediakan Rujukan"
+    },
+    {
+      "source": "Rewards & Offer → Rewards Programme → Referrals",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 奖励方案 → 推荐好友",
+      "ms": "Ganjaran & Tawaran → Program Ganjaran → Rujukan"
+    },
+    {
+      "source": "Both sides are paid. A friend who arrives through a referral gets the referral reward rather than the welcome gift.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "双方都获得奖励。通过推荐前来的朋友获得推荐奖励，而非迎新礼物。",
+      "ms": "Kedua-dua pihak dibayar. Rakan yang tiba melalui rujukan mendapat ganjaran rujukan dan bukan hadiah selamat datang."
+    },
+    {
+      "source": "On Rewards Programme, open Referrals.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「奖励方案」中打开「推荐好友」。",
+      "ms": "Dalam Program Ganjaran, buka Rujukan."
+    },
+    {
+      "source": "Set the qualifying sale — what the friend has to do for it to count.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置符合条件的交易 — 朋友需要做什么才算数。",
+      "ms": "Tetapkan jualan yang layak — apa yang rakan itu perlu lakukan untuk ia dikira."
+    },
+    {
+      "source": "Set the reward for the customer who introduced them, and for the friend.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置介绍人和朋友各自可得的奖励。",
+      "ms": "Tetapkan ganjaran untuk pelanggan yang memperkenalkan mereka, dan untuk rakan itu."
+    },
+    {
+      "source": "Rewards & Offer → Limited Offer",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 限时优惠",
+      "ms": "Ganjaran & Tawaran → Tawaran Terhad"
+    },
+    {
+      "source": "Only the owner can publish offers. Published is not the same as live: an offer with a future start date is Scheduled until it begins.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "只有店主可以发布优惠。「已发布」不等于「进行中」：开始日期在未来的优惠会处于「已排定」状态，直至开始。",
+      "ms": "Hanya pemilik boleh menerbitkan tawaran. Diterbitkan tidak sama dengan langsung: tawaran dengan tarikh mula pada masa hadapan ialah Scheduled sehingga ia bermula."
+    },
+    {
+      "source": "Open Rewards & Offer -> Limited Offer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励与优惠」->「限时优惠」。",
+      "ms": "Buka Ganjaran & Tawaran -> Tawaran Terhad."
+    },
+    {
+      "source": "Start a new offer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "新建一项优惠。",
+      "ms": "Mulakan tawaran baharu."
+    },
+    {
+      "source": "Write the headline (2-70 characters) and the customer message (10-600 characters).",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "撰写标题（2-70 个字符）和顾客信息（10-600 个字符）。",
+      "ms": "Tulis tajuk utama (2-70 aksara) dan mesej pelanggan (10-600 aksara)."
+    },
+    {
+      "source": "Write the exact offer — what the customer actually gets.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "写明具体优惠内容 — 顾客实际能得到什么。",
+      "ms": "Tulis tawaran yang tepat — apa yang pelanggan benar-benar dapat."
+    },
+    {
+      "source": "Set a clear customer action label.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置清晰的顾客操作按钮文字。",
+      "ms": "Tetapkan label tindakan pelanggan yang jelas."
+    },
+    {
+      "source": "Set the start and end date and time. The end must be in the future.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置开始和结束的日期与时间。结束时间必须在未来。",
+      "ms": "Tetapkan tarikh dan masa mula serta tamat. Tamatnya mesti pada masa hadapan."
+    },
+    {
+      "source": "Choose which branches it applies to.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择适用的分店。",
+      "ms": "Pilih cawangan mana yang terpakai."
+    },
+    {
+      "source": "See what a programme has actually done",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "查看方案的实际成效",
+      "ms": "Lihat apa yang sesuatu program telah lakukan"
+    },
+    {
+      "source": "Rewards & Offer → Overview",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "奖励与优惠 → 简介",
+      "ms": "Ganjaran & Tawaran → Gambaran keseluruhan"
+    },
+    {
+      "source": "Redemption counts are real counts. A programme with none shows none rather than an invented zero.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "兑换次数是真实计数。没有兑换的方案会显示为无，而不是编造的零。",
+      "ms": "Kiraan penebusan ialah kiraan sebenar. Program tanpa penebusan menunjukkan tiada, bukan sifar yang direka."
+    },
+    {
+      "source": "Open Rewards & Offer -> Overview.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励与优惠」->「简介」。",
+      "ms": "Buka Ganjaran & Tawaran -> Gambaran keseluruhan."
+    },
+    {
+      "source": "Read the table: every programme with its status and how it has been used.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "阅读表格：每个方案及其状态和使用情况。",
+      "ms": "Baca jadual: setiap program dengan statusnya dan cara ia digunakan."
+    },
+    {
+      "source": "Set a date range to narrow it.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "设置日期范围以缩小查看范围。",
+      "ms": "Tetapkan julat tarikh untuk mempersempitkannya."
+    },
+    {
+      "source": "Open History for programmes and offers that have ended.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「历史记录」查看已结束的方案和优惠。",
+      "ms": "Buka Sejarah untuk program dan tawaran yang telah tamat."
+    },
+    {
+      "source": "The programmes are independent. Points, stamps, tiers and referrals can all run at the same time, and stamps never feed tiers.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "各方案相互独立。积分、印花、等级和推荐好友可同时运行，且印花绝不会计入等级。",
+      "ms": "Program-program itu bebas. Mata, setem, peringkat dan rujukan semuanya boleh berjalan serentak, dan setem tidak pernah menyumbang kepada peringkat."
+    },
+    {
+      "source": "A programme has to be published before customers see it. Saving a draft changes nothing for them.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "方案必须发布后顾客才能看到。保存草稿对他们没有任何影响。",
+      "ms": "Program mesti diterbitkan sebelum pelanggan melihatnya. Menyimpan draf tidak mengubah apa-apa bagi mereka."
+    },
+    {
+      "source": "Only the owner can set up or publish programmes. Other roles can see them and operate them at the counter.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "只有店主可以设置或发布方案。其他角色可以查看，并在柜台执行操作。",
+      "ms": "Hanya pemilik boleh menyediakan atau menerbitkan program. Peranan lain boleh melihatnya dan mengendalikannya di kaunter."
+    },
+    {
+      "source": "Turning a reward Off stops it being claimed. Vouchers already issued stay valid.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "将奖励设为「关闭」后即无法兑换。已发出的优惠券仍然有效。",
+      "ms": "Mematikan sesuatu ganjaran menghentikannya daripada dituntut. Baucar yang telah dikeluarkan kekal sah."
+    },
+    {
+      "source": "Tiers are measured by points earned by default. Spending points and refunds never move a customer down a tier.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "等级默认按累计所得积分计算。消费积分和退款绝不会使顾客降级。",
+      "ms": "Peringkat diukur mengikut mata yang diperoleh secara lalai. Membelanjakan mata dan bayaran balik tidak pernah menurunkan peringkat pelanggan."
+    },
+    {
+      "source": "A customer is not earning points",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "顾客没有获得积分",
+      "ms": "Pelanggan tidak memperoleh mata"
+    },
+    {
+      "source": "No programme is published and active.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "没有已发布并启用的方案。",
+      "ms": "Tiada program yang diterbitkan dan aktif."
+    },
+    {
+      "source": "The sale was a walk-in, so no customer was attached.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该交易是散客销售，未关联任何顾客。",
+      "ms": "Jualan itu adalah pelanggan datang terus, jadi tiada pelanggan dilampirkan."
+    },
+    {
+      "source": "What was sold does not earn under your settings.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "所售内容在您的设置下不产生积分。",
+      "ms": "Apa yang dijual tidak memperoleh di bawah tetapan anda."
+    },
+    {
+      "source": "The customer has not joined your programme.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该顾客尚未加入您的方案。",
+      "ms": "Pelanggan itu belum menyertai program anda."
+    },
+    {
+      "source": "Open Rewards & Offer -> Overview and check the programme reads On.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励与优惠」->「简介」，确认方案显示为「开启」。",
+      "ms": "Buka Ganjaran & Tawaran -> Gambaran keseluruhan dan semak program itu berbunyi On."
+    },
+    {
+      "source": "Open the customer's profile and check the sale is listed against them.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开顾客资料，确认该笔交易已列在其名下。",
+      "ms": "Buka profil pelanggan dan semak jualan itu disenaraikan terhadap mereka."
+    },
+    {
+      "source": "A reward is not showing for a customer who should have it",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "应有奖励的顾客却看不到奖励",
+      "ms": "Ganjaran tidak muncul untuk pelanggan yang sepatutnya memilikinya"
+    },
+    {
+      "source": "They do not have enough points yet.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "他们的积分还不够。",
+      "ms": "Mereka belum mempunyai mata yang mencukupi."
+    },
+    {
+      "source": "The reward is Off, paused, or has ended.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该奖励已关闭、暂停或结束。",
+      "ms": "Ganjaran itu Off, dijeda, atau telah tamat."
+    },
+    {
+      "source": "It has already been used within its limit period.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在限制周期内已经使用过。",
+      "ms": "Ia telah digunakan dalam tempoh hadnya."
+    },
+    {
+      "source": "It does not apply to what is in this sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "它不适用于本次交易的内容。",
+      "ms": "Ia tidak terpakai pada apa yang ada dalam jualan ini."
+    },
+    {
+      "source": "Check the exact balance on the customer's profile.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在顾客资料中查看确切余额。",
+      "ms": "Semak baki tepat pada profil pelanggan."
+    },
+    {
+      "source": "Open Rewards Programme and check the reward's status.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励方案」，检查该奖励的状态。",
+      "ms": "Buka Program Ganjaran dan semak status ganjaran itu."
+    },
+    {
+      "source": "I set something up but customers cannot see it",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "我设置好了，但顾客看不到",
+      "ms": "Saya menyediakan sesuatu tetapi pelanggan tidak dapat melihatnya"
+    },
+    {
+      "source": "It was saved as a draft and never published.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "它被保存为草稿，从未发布。",
+      "ms": "Ia disimpan sebagai draf dan tidak pernah diterbitkan."
+    },
+    {
+      "source": "The programme is set up but switched Off.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "方案已设置，但处于「关闭」状态。",
+      "ms": "Program itu disediakan tetapi dimatikan."
+    },
+    {
+      "source": "It is a Limited Offer whose start date has not arrived.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "这是一项开始日期尚未到来的限时优惠。",
+      "ms": "Ia adalah Tawaran Terhad yang tarikh mulanya belum tiba."
+    },
+    {
+      "source": "Open the programme and publish it.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开该方案并发布。",
+      "ms": "Buka program itu dan terbitkannya."
+    },
+    {
+      "source": "Check the card says On, not Off or Not set up.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "检查卡片显示为「开启」，而非「关闭」或「未设置」。",
+      "ms": "Semak kad itu menyatakan On, bukan Off atau Not set up."
+    },
+    {
+      "source": "Can I run points and stamps at the same time?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "可以同时运行积分和印花吗？",
+      "ms": "Bolehkah saya menjalankan mata dan setem serentak?"
+    },
+    {
+      "source": "Yes. Every programme is independent and you can run any combination.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "可以。每个方案都独立运作，您可任意组合。",
+      "ms": "Boleh. Setiap program adalah bebas dan anda boleh menjalankan apa-apa gabungan."
+    },
+    {
+      "source": "What happens if I raise a tier threshold?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如果我提高等级门槛会怎样？",
+      "ms": "Apa berlaku jika saya menaikkan ambang peringkat?"
+    },
+    {
+      "source": "Members are re-evaluated straight away. Before you publish, Peekaa tells you how many would move down.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "会员会立即重新评定。发布前，Peekaa 会告知有多少人会降级。",
+      "ms": "Ahli dinilai semula serta-merta. Sebelum anda terbitkan, Peekaa memberitahu anda berapa ramai akan turun."
+    },
+    {
+      "source": "Do I need a birth date for the birthday benefit?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "生日优惠需要出生日期吗？",
+      "ms": "Adakah saya perlukan tarikh lahir untuk faedah hari jadi?"
+    },
+    {
+      "source": "Yes. Only customers with a birth date on record are eligible.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "需要。只有已记录出生日期的顾客符合条件。",
+      "ms": "Ya. Hanya pelanggan yang mempunyai tarikh lahir dalam rekod adalah layak."
+    },
+    {
+      "source": "If I delete a bring-back campaign, do customers lose their vouchers?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如果删除挽回活动，顾客会失去优惠券吗？",
+      "ms": "Jika saya memadamkan kempen bawa kembali, adakah pelanggan kehilangan baucar mereka?"
+    },
+    {
+      "source": "No. Vouchers already sent stay valid.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "不会。已发出的优惠券仍然有效。",
+      "ms": "Tidak. Baucar yang telah dihantar kekal sah."
+    },
+    {
+      "source": "The counter. Record what a customer bought and give them what they have earned.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "柜台操作。记录顾客的购买内容，并发放其应得的奖励。",
+      "ms": "Kaunter. Rekodkan apa yang pelanggan beli dan berikan apa yang mereka peroleh."
+    },
+    {
+      "source": "The screen your staff live in. Look up the customer, add what they are buying, take payment, and Peekaa works out the points and shows what they can claim.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "员工最常使用的页面。查找顾客、添加购买内容、收款，Peekaa 会计算积分并显示可兑换的奖励。",
+      "ms": "Skrin yang kakitangan anda gunakan sepanjang hari. Cari pelanggan, tambah apa yang mereka beli, terima bayaran, dan Peekaa mengira mata serta menunjukkan apa yang boleh mereka tuntut."
+    },
+    {
+      "source": "Look up a customer by phone number",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按电话号码查找顾客",
+      "ms": "Cari pelanggan mengikut nombor telefon"
+    },
+    {
+      "source": "Record a sale with items, or as a single amount",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按项目或单一金额记录交易",
+      "ms": "Rekod jualan mengikut item, atau sebagai satu jumlah"
+    },
+    {
+      "source": "Start a walk-in sale with no customer",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "开始无顾客的散客交易",
+      "ms": "Mulakan jualan pelanggan datang terus tanpa pelanggan"
+    },
+    {
+      "source": "Scan a customer's reward QR and give the reward",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "扫描顾客的奖励二维码并发放奖励",
+      "ms": "Imbas QR ganjaran pelanggan dan berikan ganjaran itu"
+    },
+    {
+      "source": "Give a reward without a QR",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "无需二维码发放奖励",
+      "ms": "Beri ganjaran tanpa QR"
+    },
+    {
+      "source": "Sell a package or use a session from one",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "销售配套或使用其中一次服务",
+      "ms": "Jual pakej atau guna satu sesi daripadanya"
+    },
+    {
+      "source": "Print a receipt",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打印收据",
+      "ms": "Cetak resit"
+    },
+    {
+      "source": "Type the customer's 8-digit mobile number and press Next.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "输入顾客的 8 位手机号码，然后按「下一步」。",
+      "ms": "Taip nombor telefon bimbit 8 digit pelanggan dan tekan Seterusnya."
+    },
+    {
+      "source": "Walk-in sale",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "散客交易",
+      "ms": "Jualan pelanggan datang terus"
+    },
+    {
+      "source": "A sale with no customer attached. No points, rewards, packages or stored value.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "未关联顾客的交易。没有积分、奖励、配套或储值。",
+      "ms": "Jualan tanpa pelanggan dilampirkan. Tiada mata, ganjaran, pakej atau nilai tersimpan."
+    },
+    {
+      "source": "Scan",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "扫描",
+      "ms": "Imbas"
+    },
+    {
+      "source": "Opens the camera to read a customer's reward QR or member QR.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开相机以读取顾客的奖励二维码或会员二维码。",
+      "ms": "Membuka kamera untuk membaca QR ganjaran atau QR ahli pelanggan."
+    },
+    {
+      "source": "Items / Packages / Rewards tabs",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "「项目 / 配套 / 奖励」标签页",
+      "ms": "Tab Item / Pakej / Ganjaran"
+    },
+    {
+      "source": "What you are selling, the customer's own packages, and the rewards they can claim on this sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "您正在销售的内容、顾客自己的配套，以及本次交易可兑换的奖励。",
+      "ms": "Apa yang anda jual, pakej milik pelanggan sendiri, dan ganjaran yang boleh mereka tuntut pada jualan ini."
+    },
+    {
+      "source": "Add item",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "添加项目",
+      "ms": "Tambah item"
+    },
+    {
+      "source": "Everything else: services, products, use a package, sell a package, or a one-off amount.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "其余内容：服务、产品、使用配套、销售配套，或一次性金额。",
+      "ms": "Segala yang lain: perkhidmatan, produk, guna pakej, jual pakej, atau jumlah sekali sahaja."
+    },
+    {
+      "source": "How they paid. Required before the sale can be confirmed.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "付款方式。确认交易前必须选择。",
+      "ms": "Cara mereka membayar. Diperlukan sebelum jualan boleh disahkan."
+    },
+    {
+      "source": "Confirms the bill. This is the point at which points are earned.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "确认账单。积分在此刻产生。",
+      "ms": "Mengesahkan bil. Inilah titik di mana mata diperoleh."
+    },
+    {
+      "source": "Record a sale",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录一笔交易",
+      "ms": "Rekod satu jualan"
+    },
+    {
+      "source": "If your workspace does not use the item catalogue, step 4 is a single Amount paid box instead.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如果您的工作区不使用项目目录，第 4 步将改为单一的「已付金额」输入框。",
+      "ms": "Jika ruang kerja anda tidak menggunakan katalog item, langkah 4 ialah satu kotak Jumlah dibayar sebaliknya."
+    },
+    {
+      "source": "Open Record sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「记录销售」。",
+      "ms": "Buka Rekod jualan."
+    },
+    {
+      "source": "Type the customer's mobile number on the keypad and press Next.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在键盘上输入顾客的手机号码，然后按「下一步」。",
+      "ms": "Taip nombor telefon bimbit pelanggan pada papan kekunci dan tekan Seterusnya."
+    },
+    {
+      "source": "Check the name that appears is the right person.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "确认显示的姓名是正确的顾客。",
+      "ms": "Semak nama yang muncul ialah orang yang betul."
+    },
+    {
+      "source": "Add what they bought — tap items, or press Add item for the full catalogue.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "添加他们购买的内容 — 点击项目，或按「添加项目」查看完整目录。",
+      "ms": "Tambah apa yang mereka beli — ketik item, atau tekan Tambah item untuk katalog penuh."
+    },
+    {
+      "source": "Press Review.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按「查看」。",
+      "ms": "Tekan Semak."
+    },
+    {
+      "source": "Choose how they paid under Payment received.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在「已收款项」下选择付款方式。",
+      "ms": "Pilih cara mereka membayar di bawah Bayaran diterima."
+    },
+    {
+      "source": "Press Record sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按「记录销售」。",
+      "ms": "Tekan Rekod jualan."
+    },
+    {
+      "source": "Record a walk-in sale",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录散客交易",
+      "ms": "Rekod jualan pelanggan datang terus"
+    },
+    {
+      "source": "Record sale → Walk-in sale",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 散客交易",
+      "ms": "Rekod jualan → Jualan pelanggan datang terus"
+    },
+    {
+      "source": "A walk-in earns no points and can claim nothing, because there is no customer to attach it to. If the customer is a member, look them up instead.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "散客交易不产生积分，也无法兑换任何奖励，因为没有可关联的顾客。如果对方是会员，请改为查找该顾客。",
+      "ms": "Jualan pelanggan datang terus tidak memperoleh mata dan tidak boleh menuntut apa-apa, kerana tiada pelanggan untuk dilampirkan. Jika pelanggan itu ahli, cari mereka sebaliknya."
+    },
+    {
+      "source": "Press Walk-in sale under the keypad.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按键盘下方的「散客交易」。",
+      "ms": "Tekan Jualan pelanggan datang terus di bawah papan kekunci."
+    },
+    {
+      "source": "Add the items or the amount.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "添加项目或金额。",
+      "ms": "Tambah item atau jumlah."
+    },
+    {
+      "source": "Choose how they paid.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择付款方式。",
+      "ms": "Pilih cara mereka membayar."
+    },
+    {
+      "source": "Give a customer their reward",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "向顾客发放奖励",
+      "ms": "Beri pelanggan ganjaran mereka"
+    },
+    {
+      "source": "Record sale → Rewards",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 奖励",
+      "ms": "Rekod jualan → Ganjaran"
+    },
+    {
+      "source": "If nothing is listed, the customer has nothing claimable right now — not enough points, or the reward has already been used for this period.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如果列表为空，说明该顾客目前没有可兑换的奖励 — 积分不足，或该奖励本周期已使用过。",
+      "ms": "Jika tiada apa disenaraikan, pelanggan itu tiada apa-apa untuk dituntut sekarang — mata tidak mencukupi, atau ganjaran itu telah digunakan bagi tempoh ini."
+    },
+    {
+      "source": "Start the sale by looking up the customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "先查找顾客以开始交易。",
+      "ms": "Mulakan jualan dengan mencari pelanggan."
+    },
+    {
+      "source": "Open the Rewards tab. It lists only what this customer can claim on this sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励」标签页。它只列出该顾客在本次交易中可兑换的内容。",
+      "ms": "Buka tab Ganjaran. Ia hanya menyenaraikan apa yang pelanggan ini boleh tuntut pada jualan ini."
+    },
+    {
+      "source": "Press Give beside the reward.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按奖励旁边的「发放」。",
+      "ms": "Tekan Beri di sebelah ganjaran itu."
+    },
+    {
+      "source": "Finish the sale as usual.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "照常完成交易。",
+      "ms": "Selesaikan jualan seperti biasa."
+    },
+    {
+      "source": "Scan a reward the customer claimed in their app",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "扫描顾客在应用中兑换的奖励",
+      "ms": "Imbas ganjaran yang pelanggan tuntut dalam aplikasi mereka"
+    },
+    {
+      "source": "Record sale → Scan",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 扫描",
+      "ms": "Rekod jualan → Imbas"
+    },
+    {
+      "source": "The customer's QR is time-limited. If it has expired, ask them to press Redeem now again. Claiming in their app changes nothing until you scan it here.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "顾客的二维码有时效。如已过期，请他们再次按「立即兑换」。在应用中兑换本身不会改变任何内容，直到您在此扫描为止。",
+      "ms": "QR pelanggan adalah terhad masa. Jika ia telah tamat tempoh, minta mereka menekan Tebus sekarang sekali lagi. Menuntut dalam aplikasi mereka tidak mengubah apa-apa sehingga anda mengimbasnya di sini."
+    },
+    {
+      "source": "Ask the customer to open the reward in their Peekaa app and press Redeem now.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "请顾客在其 Peekaa 应用中打开该奖励并按「立即兑换」。",
+      "ms": "Minta pelanggan membuka ganjaran itu dalam aplikasi Peekaa mereka dan tekan Tebus sekarang."
+    },
+    {
+      "source": "Open Record sale and press Scan.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「记录销售」并按「扫描」。",
+      "ms": "Buka Rekod jualan dan tekan Imbas."
+    },
+    {
+      "source": "Point the camera at the QR on their phone.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "将相机对准他们手机上的二维码。",
+      "ms": "Halakan kamera ke QR pada telefon mereka."
+    },
+    {
+      "source": "Peekaa opens the sale on that customer with the reward ready.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "Peekaa 会以该顾客开启交易，并准备好该奖励。",
+      "ms": "Peekaa membuka jualan pada pelanggan itu dengan ganjaran sedia."
+    },
+    {
+      "source": "Finish the sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "完成交易。",
+      "ms": "Selesaikan jualan."
+    },
+    {
+      "source": "Give a reward when the customer has no QR",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "顾客没有二维码时发放奖励",
+      "ms": "Beri ganjaran apabila pelanggan tiada QR"
+    },
+    {
+      "source": "Record sale → Redeem without the customer's QR",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 无需顾客二维码兑换",
+      "ms": "Rekod jualan → Tebus tanpa QR pelanggan"
+    },
+    {
+      "source": "This needs Loyalty edit access. It leaves the same record as a scan, so the customer's history is identical either way.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "此操作需要「忠诚计划」的编辑权限。它留下的记录与扫描相同，因此顾客的历史记录完全一致。",
+      "ms": "Ini memerlukan akses Edit Kesetiaan. Ia meninggalkan rekod yang sama seperti imbasan, jadi sejarah pelanggan adalah sama sahaja."
+    },
+    {
+      "source": "Look the customer up by phone number.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按电话号码查找顾客。",
+      "ms": "Cari pelanggan mengikut nombor telefon."
+    },
+    {
+      "source": "Open the Rewards tab.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励」标签页。",
+      "ms": "Buka tab Ganjaran."
+    },
+    {
+      "source": "Choose Redeem without the customer's QR.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择「无需顾客二维码兑换」。",
+      "ms": "Pilih Tebus tanpa QR pelanggan."
+    },
+    {
+      "source": "Pick the reward and confirm.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择奖励并确认。",
+      "ms": "Pilih ganjaran dan sahkan."
+    },
+    {
+      "source": "Record sale → Add item → Sell package",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 添加项目 → 销售配套",
+      "ms": "Rekod jualan → Tambah item → Jual pakej"
+    },
+    {
+      "source": "The customer sees the package and its remaining sessions in their own app straight away.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "顾客会立即在自己的应用中看到该配套及剩余次数。",
+      "ms": "Pelanggan melihat pakej itu dan sesi yang tinggal dalam aplikasi mereka dengan serta-merta."
+    },
+    {
+      "source": "Start the sale with the customer looked up.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "先查找顾客，然后开始交易。",
+      "ms": "Mulakan jualan dengan pelanggan yang telah dicari."
+    },
+    {
+      "source": "Press Add item.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按「添加项目」。",
+      "ms": "Tekan Tambah item."
+    },
+    {
+      "source": "Open the Sell package tab.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「销售配套」标签页。",
+      "ms": "Buka tab Jual pakej."
+    },
+    {
+      "source": "Choose the package.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "选择配套。",
+      "ms": "Pilih pakej itu."
+    },
+    {
+      "source": "Press Review, choose how they paid, and press Record sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按「查看」，选择付款方式，然后按「记录销售」。",
+      "ms": "Tekan Semak, pilih cara mereka membayar, dan tekan Rekod jualan."
+    },
+    {
+      "source": "Use a session from a package",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "使用配套中的一次服务",
+      "ms": "Guna satu sesi daripada pakej"
+    },
+    {
+      "source": "Record sale → Packages",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 配套",
+      "ms": "Rekod jualan → Pakej"
+    },
+    {
+      "source": "Using a prepaid session does not charge the customer again. It is recorded as a visit, not as new takings, so today's revenue is not double-counted.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "使用预付次数不会再次向顾客收费。它记录为一次到访，而非新增收入，因此今日营业额不会重复计算。",
+      "ms": "Menggunakan sesi prabayar tidak mengenakan bayaran kepada pelanggan sekali lagi. Ia direkodkan sebagai kunjungan, bukan kutipan baharu, jadi hasil hari ini tidak dikira dua kali."
+    },
+    {
+      "source": "Look the customer up.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "查找顾客。",
+      "ms": "Cari pelanggan itu."
+    },
+    {
+      "source": "Open the Packages tab — it shows what they own and how many sessions are left.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「配套」标签页 — 显示他们拥有的配套及剩余次数。",
+      "ms": "Buka tab Pakej — ia menunjukkan apa yang mereka miliki dan berapa sesi yang tinggal."
+    },
+    {
+      "source": "Press Use package on the right one.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在正确的配套上按「使用配套」。",
+      "ms": "Tekan Guna pakej pada pakej yang betul."
+    },
+    {
+      "source": "Record sale → after confirming → Print receipt",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录销售 → 确认后 → 打印收据",
+      "ms": "Rekod jualan → selepas mengesahkan → Cetak resit"
+    },
+    {
+      "source": "The receipt shows what was bought, how it was paid and the points earned.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "收据显示购买内容、付款方式和所得积分。",
+      "ms": "Resit menunjukkan apa yang dibeli, cara ia dibayar dan mata yang diperoleh."
+    },
+    {
+      "source": "Confirm the sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "确认交易。",
+      "ms": "Sahkan jualan itu."
+    },
+    {
+      "source": "On the confirmation, press Print receipt.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "在确认页面按「打印收据」。",
+      "ms": "Pada pengesahan itu, tekan Cetak resit."
+    },
+    {
+      "source": "Points are worked out when the sale is recorded, not before. The figure on the confirmation is the real one.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "积分在交易记录时计算，而非事先计算。确认页面上的数字才是最终数字。",
+      "ms": "Mata dikira apabila jualan direkodkan, bukan sebelum itu. Angka pada pengesahan itulah yang sebenar."
+    },
+    {
+      "source": "Every sale is recorded against the branch shown on the screen. Change it before you confirm, not after.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "每笔交易都记录在屏幕所示的分店名下。请在确认前更改，而非确认后。",
+      "ms": "Setiap jualan direkodkan terhadap cawangan yang ditunjukkan pada skrin. Tukarnya sebelum anda sahkan, bukan selepas."
+    },
+    {
+      "source": "Pressing Record sale twice does not record two sales. Peekaa recognises the repeat and keeps one.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "按两次「记录销售」不会产生两笔交易。Peekaa 会识别重复并只保留一笔。",
+      "ms": "Menekan Rekod jualan dua kali tidak merekodkan dua jualan. Peekaa mengenali pengulangan itu dan menyimpan satu sahaja."
+    },
+    {
+      "source": "A walk-in sale can never earn points or claim a reward, because it has no customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "散客交易永远不会产生积分或兑换奖励，因为它没有关联顾客。",
+      "ms": "Jualan pelanggan datang terus tidak akan memperoleh mata atau menuntut ganjaran, kerana ia tiada pelanggan."
+    },
+    {
+      "source": "Recording a sale is not the same as being paid. Peekaa records the sale and the payment method you choose; it does not take the money.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "记录交易不等于已收款。Peekaa 记录交易和您选择的付款方式；它不会代收款项。",
+      "ms": "Merekod jualan bukan sama dengan menerima bayaran. Peekaa merekodkan jualan dan kaedah pembayaran yang anda pilih; ia tidak mengambil wang itu."
+    },
+    {
+      "source": "The customer's number is not found",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "找不到该顾客的号码",
+      "ms": "Nombor pelanggan tidak dijumpai"
+    },
+    {
+      "source": "They have never been added as a customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "他们从未被添加为顾客。",
+      "ms": "Mereka tidak pernah ditambah sebagai pelanggan."
+    },
+    {
+      "source": "The number was entered differently — with a country code, or a typo.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "号码输入方式不同 — 带了国家代码，或有拼写错误。",
+      "ms": "Nombor itu dimasukkan secara berbeza — dengan kod negara, atau tersalah taip."
+    },
+    {
+      "source": "They belong to a branch you are not assigned to.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "他们属于您未被分配的分店。",
+      "ms": "Mereka tergolong dalam cawangan yang anda tidak ditugaskan."
+    },
+    {
+      "source": "Peekaa offers to add them as a new customer from the same screen — take the name and continue.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "Peekaa 会在同一页面提示将其添加为新顾客 — 记下姓名并继续。",
+      "ms": "Peekaa menawarkan untuk menambah mereka sebagai pelanggan baharu dari skrin yang sama — ambil nama dan teruskan."
+    },
+    {
+      "source": "Try the last 8 digits only.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "只输入后 8 位数字试试。",
+      "ms": "Cuba 8 digit terakhir sahaja."
+    },
+    {
+      "source": "Ask the owner to check your branch assignment.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "请店主检查您的分店分配。",
+      "ms": "Minta pemilik menyemak penugasan cawangan anda."
+    },
+    {
+      "source": "No points were earned on a sale",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "某笔交易没有产生积分",
+      "ms": "Tiada mata diperoleh pada sesuatu jualan"
+    },
+    {
+      "source": "The sale was a walk-in, so there was no customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该交易是散客销售，因此没有顾客。",
+      "ms": "Jualan itu adalah pelanggan datang terus, jadi tiada pelanggan."
+    },
+    {
+      "source": "No reward programme is published and active.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "没有已发布并启用的奖励方案。",
+      "ms": "Tiada program ganjaran yang diterbitkan dan aktif."
+    },
+    {
+      "source": "What was sold does not earn under your current settings — for example a prepaid package session.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "所售内容在您当前设置下不产生积分 — 例如预付配套的一次服务。",
+      "ms": "Apa yang dijual tidak memperoleh di bawah tetapan semasa anda — contohnya sesi pakej prabayar."
+    },
+    {
+      "source": "The customer was not linked to the sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该交易未关联顾客。",
+      "ms": "Pelanggan itu tidak dipautkan kepada jualan."
+    },
+    {
+      "source": "Open Rewards & Offer and check the programme says On.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励与优惠」，确认方案显示为「开启」。",
+      "ms": "Buka Ganjaran & Tawaran dan semak program itu menyatakan On."
+    },
+    {
+      "source": "If the sale was recorded as a walk-in, record it again against the customer and reverse the walk-in from Sales.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如果该交易被记为散客销售，请重新以该顾客名义记录，并在「销售」中冲正原散客交易。",
+      "ms": "Jika jualan itu direkodkan sebagai pelanggan datang terus, rekodkannya semula terhadap pelanggan dan batalkan jualan datang terus itu dari Jualan."
+    },
+    {
+      "source": "The Rewards tab is empty for a customer who should have something",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "应有奖励的顾客，「奖励」标签页却是空的",
+      "ms": "Tab Ganjaran kosong untuk pelanggan yang sepatutnya ada sesuatu"
+    },
+    {
+      "source": "The reward has already been used within its limit period.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该奖励在限制周期内已使用过。",
+      "ms": "Ganjaran itu telah digunakan dalam tempoh hadnya."
+    },
+    {
+      "source": "The reward is paused or has ended.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该奖励已暂停或结束。",
+      "ms": "Ganjaran itu dijeda atau telah tamat."
+    },
+    {
+      "source": "The reward does not apply to what is in this sale.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "该奖励不适用于本次交易的内容。",
+      "ms": "Ganjaran itu tidak terpakai pada apa yang ada dalam jualan ini."
+    },
+    {
+      "source": "Open the customer's profile to see their exact balance.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开顾客资料查看其确切余额。",
+      "ms": "Buka profil pelanggan untuk melihat baki tepat mereka."
+    },
+    {
+      "source": "Open Rewards & Offer -> Rewards Programme and check the reward is On.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「奖励与优惠」->「奖励方案」，确认该奖励已开启。",
+      "ms": "Buka Ganjaran & Tawaran -> Program Ganjaran dan semak ganjaran itu On."
+    },
+    {
+      "source": "The scan will not read the customer's QR",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "扫描无法读取顾客的二维码",
+      "ms": "Imbasan tidak dapat membaca QR pelanggan"
+    },
+    {
+      "source": "The QR has expired — they are time-limited on purpose.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "二维码已过期 — 它们的时效性是刻意设计的。",
+      "ms": "QR itu telah tamat tempoh — ia sengaja dihadkan masa."
+    },
+    {
+      "source": "The camera does not have permission in this browser.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "相机在此浏览器中未获授权。",
+      "ms": "Kamera tidak mempunyai kebenaran dalam pelayar ini."
+    },
+    {
+      "source": "Screen brightness is too low.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "屏幕亮度过低。",
+      "ms": "Kecerahan skrin terlalu rendah."
+    },
+    {
+      "source": "Ask the customer to press Redeem now again to get a fresh code.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "请顾客再次按「立即兑换」以获取新的代码。",
+      "ms": "Minta pelanggan menekan Tebus sekarang sekali lagi untuk mendapatkan kod baharu."
+    },
+    {
+      "source": "Allow camera access when the browser asks.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "浏览器询问时请允许使用相机。",
+      "ms": "Benarkan akses kamera apabila pelayar bertanya."
+    },
+    {
+      "source": "Use Redeem without the customer's QR instead.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "改用「无需顾客二维码兑换」。",
+      "ms": "Gunakan Tebus tanpa QR pelanggan sebaliknya."
+    },
+    {
+      "source": "Does Peekaa take the payment?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "Peekaa 会代收款项吗？",
+      "ms": "Adakah Peekaa mengambil bayaran itu?"
+    },
+    {
+      "source": "No. You take payment your usual way. Peekaa records what was sold and which method you chose.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "不会。您照常自行收款。Peekaa 只记录所售内容和您选择的付款方式。",
+      "ms": "Tidak. Anda menerima bayaran seperti biasa. Peekaa merekodkan apa yang dijual dan kaedah yang anda pilih."
+    },
+    {
+      "source": "What if I record the wrong amount?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "如果我记录了错误的金额怎么办？",
+      "ms": "Bagaimana jika saya merekodkan jumlah yang salah?"
+    },
+    {
+      "source": "Open Sales, find the record, and reverse or correct it. The customer's points move with it.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "打开「销售」，找到该记录，进行冲正或修正。顾客的积分会随之调整。",
+      "ms": "Buka Jualan, cari rekod itu, dan batalkan atau betulkannya. Mata pelanggan berubah bersamanya."
+    },
+    {
+      "source": "Can a walk-in be attached to a customer afterwards?",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "散客交易事后可以关联到顾客吗？",
+      "ms": "Bolehkah jualan datang terus dilampirkan kepada pelanggan kemudian?"
+    },
+    {
+      "source": "No. Reverse the walk-in in Sales and record it again against the customer.",
+      "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
+      "zh-CN": "不可以。请在「销售」中冲正该散客交易，然后重新以该顾客名义记录。",
+      "ms": "Tidak. Batalkan jualan datang terus itu dalam Jualan dan rekodkannya semula terhadap pelanggan."
     }
   ]
 }

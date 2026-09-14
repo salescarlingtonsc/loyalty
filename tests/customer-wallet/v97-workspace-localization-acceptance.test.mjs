@@ -233,7 +233,9 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        than an English one, so it is reviewed on its own rather than machine-translated in bulk.
        1543 -> 1656: nestly_v907 wave 2 begins that review, a COMPLETE GUIDE at a time — the
        Getting Started section and the Dashboard guide. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,1656,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* 1656 -> 1895: nestly_v908 wave 3 — Rewards & Offer and Record sale, the two largest and
+       most operational guides, each translated end to end. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,1895,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
