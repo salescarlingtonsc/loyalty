@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 678,
-  "itemCount": 723,
+  "pendingCount": 679,
+  "itemCount": 724,
   "items": [
     {
       "order": 1,
@@ -7237,6 +7237,16 @@
       "path": "supabase/migrations/20261011000000_nestly_v894_whatsapp_otp_signup.sql",
       "octetLength": 14761,
       "sha256": "0ca43d9e49d5a5082cc8ccc250fe9c3aec89b59bc25fcb1ef759ff7a26cb93c9",
+      "provenance": "local-source"
+    },
+    {
+      "order": 724,
+      "kind": "pending",
+      "version": "20261011010000",
+      "name": "nestly_v898_template_registry_matches_meta",
+      "path": "supabase/migrations/20261011010000_nestly_v898_template_registry_matches_meta.sql",
+      "octetLength": 5578,
+      "sha256": "60fb4c3b116bf626273889cd9eccfa0517def0c24e22a1914b04ca11d6b00c04",
       "provenance": "local-source"
     }
   ]

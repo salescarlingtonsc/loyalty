@@ -4347,6 +4347,12 @@
       "path": "db/migrations/20261011_nestly_v894_whatsapp_otp_signup.sql",
       "semanticVersion": "v894",
       "proposedDeployVersion": "20261011000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261011_nestly_v898_template_registry_matches_meta.sql",
+      "semanticVersion": "v898",
+      "proposedDeployVersion": "20261011010000"
     }
   ]
 }
