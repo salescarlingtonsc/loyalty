@@ -34212,12 +34212,17 @@ async function customerIntelligencePage(){
     });
     /* nestly_v902: an idea's section CTA opens the Explore group it names. Same contract as the
        explain pop-up's: a group whose readers returned nothing is not on the page, and a control
-       pointing at one is removed rather than left dead. */
+       pointing at one is removed rather than left dead.
+
+       nestly_v903: it lands through biLandOnSectionV903 so the group's summary takes focus, which
+       the bare scroll never did — a keyboard user was left where they started. This opener is NOT
+       inside a dialog, so it needs neither of the two close flags the pop-up's CTA needs and no
+       deferral: nothing is going to unwind a history entry underneath it. */
     body.querySelectorAll('[data-bi-open-v892]').forEach(button=>{
       const key=button.getAttribute('data-bi-open-v892');
       const group=key&&body.isConnected?body.querySelector(`[data-bi-section-v892="${key}"]`):null;
       if(!group){button.remove();return;}
-      button.onclick=()=>{group.open=true;group.scrollIntoView({behavior:'smooth',block:'start'});};
+      button.onclick=()=>{group.open=true;biLandOnSectionV903(group);};
     });
     $('ciCsv').disabled=!!lastCustomerError||!customers.length;
     const more=$('ciMore');if(more)more.onclick=loadMore;
@@ -36462,7 +36467,12 @@ function biSelectInsightsV892(model){
       finding:`${biMoneyV892(outstanding,currency)} not yet collected`,
       why:`${biPluralV892(openSales,'sale is','sales are')} not recorded as fully paid.`,
       action:'Review the open sales and record any payments already received.',
-      cta:{kind:'section',section:'money',label:'Review payments'},
+      /* nestly_v903 (owner: "it does not work — i need it to lead me to immediate action"). This
+         CTA used to scroll to the money panel further down THIS page, which only restates the same
+         number in more detail. The thing the owner came to do — record a payment against an open
+         sale — happens on Sales & refunds, so that is where the control goes. #/sales is in the
+         router's own page map; the module gate on it is unchanged. */
+      cta:{kind:'route',href:'#/sales',label:'Review payments'},
       evidence:{
         fact:`${biWholeV892(cash.unpaid)||0} with no payment recorded and ${biWholeV892(cash.partlyPaid)||0} part paid, out of ${biWholeV892(cash.salesCount)||0} sales.`,
         period,
@@ -36702,6 +36712,23 @@ function biExplainHtmlV892(card,{showCta=true}={}){
   </div>`;
 }
 
+/* nestly_v903: land the owner on an Explore group they just asked to see. The scroll is only half
+   of it — the group's <summary> takes focus too, so a keyboard user arrives at the thing that just
+   opened instead of staying where they were, and so the browser's own focus scroll re-asserts the
+   position against anything that moves it afterwards. A <summary> is natively focusable, so no
+   tabindex is added here: adding tabindex="-1" would take it OUT of the tab order, which is the
+   opposite of what this fixes. `defer` is for the one caller that closes a dialog first — see
+   biOpenExplainV892 below for why that caller cannot scroll in the same tick. */
+function biLandOnSectionV903(group,{defer=false}={}){
+  if(!group)return;
+  const land=()=>{
+    group.scrollIntoView({behavior:'smooth',block:'start'});
+    group.querySelector('summary')?.focus();
+  };
+  if(defer&&typeof requestAnimationFrame==='function')requestAnimationFrame(land);
+  else land();
+}
+
 /* nestly_v901: opens the explain pop-up for one card. `findSection` answers whether a section CTA
    has somewhere to go on this page; it returns the Explore group element or null. A route CTA
    closes the dialog and navigates; a section CTA closes the dialog, then opens and scrolls to the
@@ -36718,14 +36745,48 @@ function biOpenExplainV892(card,{findSection}={}){
   dialog.innerHTML=biExplainHtmlV892(entry,{showCta});
   document.body.append(dialog);
   let deactivate=null;
-  const close=()=>{const fn=deactivate;deactivate=null;if(fn)fn({restoreFocus:true});else dialog.remove();};
-  deactivate=CUI.activateDialog(dialog,{onClose:close,initialFocus:'[data-bi-explain-cta],[data-bi-explain-close]'});
-  dialog.querySelector('[data-bi-explain-close]').onclick=close;
+  /* nestly_v903: DISMISSING the pop-up and ACTING on it are two different exits, and they must
+     close differently. This one is the dismissal — the Close button, Escape, the Android/browser
+     Back press and a backdrop click (nestly_v578) all arrive here — and it keeps both of
+     activateDialog's defaults: the v177 history entry is unwound, and focus returns to the "Why is
+     Peekaa telling me this?" button the owner opened the pop-up from. Unchanged. */
+  const close=(options)=>{const fn=deactivate;deactivate=null;if(fn)fn(options||{restoreFocus:true});else dialog.remove();};
+  deactivate=CUI.activateDialog(dialog,{onClose:()=>close(),initialFocus:'[data-bi-explain-cta],[data-bi-explain-close]'});
+  dialog.querySelector('[data-bi-explain-close]').onclick=()=>close();
   const go=dialog.querySelector('[data-bi-explain-cta]');
+  /* nestly_v903 (owner, three cards: "it does not work — i need it to lead me to immediate
+     action"). The CTA was not inert; it was being undone. Closing with the dismissal defaults did
+     two things that each cancelled the action the owner had just asked for:
+
+       · history.back() — queued by the deactivator, it landed AFTER nav() had set the hash and
+         took the owner straight back to this page, so "Open bring-back list" went nowhere;
+       · returnFocus.focus() — focus went back to the button that opened the pop-up and the
+         browser scrolled THAT button into view again, undoing the scrollIntoView that had just
+         run, so "Review payments" and "See busy and quiet times" also looked dead.
+
+     So the CTA closes with both escape hatches off. The history decision differs per kind, and
+     deliberately:
+
+       route — handOffHistory:true. No back() is queued, so nothing races nav(), and nav() pushes
+         its own entry. Back from the destination lands on the pop-up's entry, whose url is still
+         #/customerintel: hashchange fires and the router brings the owner back here. One Back =
+         back to Business Intelligence. (The entry underneath carries that same url, so a second
+         Back is silent. That is the price of not racing nav(), and it is cheaper than a CTA that
+         does nothing.)
+
+       section — handOffHistory is left FALSE. We stay on this page, so handing the entry off
+         would strand a genuinely dead one: Back would pop an entry with this very same url, fire
+         no hashchange, and do nothing at all — the owner would have to press Back twice to leave.
+         The entry is unwound as usual and only restoreFocus is dropped. Because history.back() is
+         asynchronous and the browser restores the outgoing entry's scroll position as part of that
+         traversal, the scroll is deferred one frame; running it in this tick would be undone in
+         exactly the way the focus return was. */
   if(go)go.onclick=()=>{
-    close();
-    if(cta.kind==='route')nav(biTextV892(cta.href));
-    else if(group){group.open=true;group.scrollIntoView({behavior:'smooth',block:'start'});}
+    if(cta.kind==='route'){close({restoreFocus:false,handOffHistory:true});nav(biTextV892(cta.href));return;}
+    if(!group)return close();
+    close({restoreFocus:false});
+    group.open=true;
+    biLandOnSectionV903(group,{defer:true});
   };
   return dialog;
 }

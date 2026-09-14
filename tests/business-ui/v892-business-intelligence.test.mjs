@@ -286,7 +286,14 @@ test('v892 selector: money first, then the customer at risk, then the server\'s 
     'sales_unpaid + sales_partly_paid, combined for the owner and split in the evidence');
   assert.equal(cards[0].action, 'Review the open sales and record any payments already received.');
   assert.equal(cards[0].cta.label, 'Review payments');
-  assert.equal(cards[0].cta.section, 'money', 'the same destination the old label pointed at');
+  /* nestly_v903 (owner, on this exact control: "it does not work — i need it to lead me to
+     immediate action"). The label is unchanged; the DESTINATION is not. It used to scroll to the
+     money panel further down the same page, which only restates this number — so the assertion
+     below used to read `cta.section === 'money'`. Recording a payment against an open sale
+     happens on Sales & refunds, so that is where it goes now. The route is proved against the
+     router's own page map in tests/business-ui/v903-cta-navigation.test.mjs. */
+  assert.equal(cards[0].cta.kind, 'route', 'the CTA now navigates rather than scrolling');
+  assert.equal(cards[0].cta.href, '#/sales', 'to the screen where a payment is actually recorded');
   assert.match(cards[0].evidence.fact, /6 with no payment recorded and 2 part paid/);
 });
 
@@ -456,8 +463,11 @@ test('v892 evidence: the sample size is translated into a sentence an owner can 
 });
 
 test('v892 card: a CTA is either a route that exists or a control that opens a section here', () => {
+  /* nestly_v903: '#/sales' joins the list because the money card's CTA became a route (see the
+     selector test above). This hand-kept set is only as good as whoever edits it, which is why
+     v903 parses the router's real page map instead — tests/business-ui/v903-cta-navigation.test.mjs. */
   const ROUTES = new Set(['#/customerintel', '#/clients', '#/servicemapping', '#/grow/bringback',
-    '#/reports', '#/staffperf', '#/custpackages', '#/bookings']);
+    '#/reports', '#/staffperf', '#/custpackages', '#/bookings', '#/sales']);
   const cards = [
     ...BI.select(model()),
     ...BI.select(model({ cashGap: null, attention: null, packages: [] }))
