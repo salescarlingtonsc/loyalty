@@ -13,8 +13,18 @@
  * whatsapp_template_registry_v551 row is not 'approved', and Meta — not this
  * function and not Peekaa — decides when that becomes true.
  *
+ * nestly_v899: and 'reconcile' is how that decision reaches the database. Until it
+ * existed, 'status' asked Meta and told the caller — a read with no writer — so an
+ * approval only landed in the registry if a human noticed and typed it in. Twice one
+ * did not, and v898 found two templates our own gate had been refusing for seventeen
+ * days. Reconcile writes what Meta said, updates only, never inserts, and never
+ * touches the body or the parameter contract.
+ *
  * NEVER LOGGED: the access token. Responses carry Meta's status fields only.
  */
+import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
+import { reconcileTemplateStatuses } from '../_shared/whatsapp-template-status-boundaries.mjs';
+
 const GRAPH = 'https://graph.facebook.com/v23.0';
 const WABA_ID = '1725929281961827';
 
@@ -179,5 +189,54 @@ Deno.serve(async (req) => {
   const rows = Array.isArray((body as { data?: unknown[] })?.data)
     ? (body as { data: Array<{ name?: string }> }).data.filter((d) => names.includes(String(d?.name || '')))
     : [];
-  return Response.json({ action, http: r.status, templates: rows, error: metaErr(body) });
+
+  if (action !== 'reconcile') {
+    return Response.json({ action, http: r.status, templates: rows, error: metaErr(body) });
+  }
+
+  /* nestly_v899. A reconcile that ran on a FAILED read would conclude that every template had
+     vanished from Meta and pause the lot, which is the one outcome worse than the drift it exists
+     to fix. So: refuse unless Meta actually answered. */
+  if (!r.ok) {
+    return Response.json(
+      { action, http: r.status, reconciled: false, reason: 'meta_read_failed', error: metaErr(body) },
+      { status: 502 },
+    );
+  }
+
+  const admin = createClient(
+    Deno.env.get('SUPABASE_URL') || '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const { data: registry, error: registryError } = await admin
+    .from('whatsapp_template_registry_v551')
+    .select('template_key, meta_name, status');
+  if (registryError || !Array.isArray(registry)) {
+    return Response.json({ action, reconciled: false, reason: 'registry_read_failed' }, { status: 503 });
+  }
+
+  const plan = reconcileTemplateStatuses(rows, registry);
+  const { data: result, error: writeError } = await admin.rpc(
+    'internal_whatsapp_template_reconcile_v899',
+    { p_observations: plan.observations },
+  );
+  if (writeError || !result?.ok) {
+    return Response.json({ action, reconciled: false, reason: 'reconcile_write_failed' }, { status: 503 });
+  }
+
+  /* absent_at_meta, unrecognised and ignored are reported rather than buried: each one is a
+     question for a human (a template deleted at Meta, a status Meta added since this was written,
+     a template created in Business Manager that Peekaa does not know about). */
+  return Response.json({
+    action,
+    http: r.status,
+    reconciled: true,
+    changed: result.changed,
+    changed_count: result.changed_count,
+    unmappable: result.unmappable,
+    absent_at_meta: plan.absentAtMeta,
+    unrecognised_meta_status: plan.unrecognised,
+    ignored_unregistered: plan.ignored,
+  });
 });

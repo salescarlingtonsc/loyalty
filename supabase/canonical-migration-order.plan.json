@@ -4348,6 +4348,12 @@
       "version": "20261011010000",
       "name": "nestly_v898_template_registry_matches_meta",
       "sourcePath": "db/migrations/20261011_nestly_v898_template_registry_matches_meta.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261011020000",
+      "name": "nestly_v899_template_status_reconcile",
+      "sourcePath": "db/migrations/20261011_nestly_v899_template_status_reconcile.sql"
     }
   ]
 }
