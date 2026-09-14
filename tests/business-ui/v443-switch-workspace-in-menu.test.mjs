@@ -145,6 +145,10 @@ test('V443 the header appbar no longer references businessWorkspaceSwitchHtml at
     mobileSearchShellHtml: () => '<div data-stub="mobile-search"></div>',
     canReadModule: () => true,
     bookingRequestsBadgeWrapHtml: () => '<span data-stub="bookings-badge"></span>',
+    /* nestly_v904: the contextual Help control is a new header child. It is stubbed for the same
+       reason every other header collaborator is — this test executes the real header template, so
+       an unstubbed name throws ReferenceError rather than silently passing a stale grep. */
+    helpTriggerHtmlV904: () => '<div data-stub="help-trigger"></div>',
     bellHtml: () => '<div data-stub="bell"></div>',
     profileHtml: () => '<div data-stub="profile"></div>',
   };

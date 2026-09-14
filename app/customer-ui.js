@@ -99,6 +99,15 @@
     insight:'M9 18h6M10 22h4M8.6 14.8A6 6 0 1 1 15.4 14.8C14.5 15.5 14 16.5 14 18h-4c0-1.5-.5-2.5-1.4-3.2ZM12 2v2M4.9 4.9l1.4 1.4M19.1 4.9l-1.4 1.4',
     empty:'M4 5h16v14H4zM8 9h8M8 13h5',
     close:'M6 6l12 12M18 6 6 18',
+    /* nestly_v904 — the Help Centre's mark, and a genuinely new meaning: nothing in this set said
+       "manual". The two candidates already here both say something else at the sizes the rail and
+       the app bar draw at — 'info' is the circled i this app already spends on inline callouts
+       (using it for the Help door would make the door look like a footnote), and 'card' is a
+       payment card. An open book is the conventional mark for a guide and shares no silhouette
+       with either: rasterised against all 52 at 16/20/24px, its nearest neighbour is 'card' at
+       71% different, for scale against the 21% loyalty/giftcard pair that caused a real bug.
+       Same 24-box, same 1.9 stroke, same single-path shape as every icon here. */
+    book:'M12 7C10.4 5.4 8.5 4.8 6 4.8H3.2v12.6H6c2.5 0 4.4.6 6 2.2M12 7c1.6-1.6 3.5-2.2 6-2.2h2.8v12.6H18c-2.5 0-4.4.6-6 2.2M12 7v12.6',
     copy:'M8 8h12v12H8zM4 16H3V4h12v1',
     scan:'M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4M7 12h10',
     eye:'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6ZM12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z',

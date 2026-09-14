@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX='nestly-shell-';
-const CACHE_VERSION='v23-20260829-v585';  /* nestly_v585: customer-ui.js's settings glyph became a legible cog (owner photo 3). This worker PRECACHES that file, so bumping its ?v= token alone would still serve the old copy from here — the two cache identities move together or the change never lands. */
+const CACHE_VERSION='v24-20260915-v904';  /* nestly_v585: customer-ui.js's settings glyph became a legible cog (owner photo 3). This worker PRECACHES that file, so bumping its ?v= token alone would still serve the old copy from here — the two cache identities move together or the change never lands. nestly_v904 bumps both again for the Help Centre's new 'book' glyph, for exactly the same reason. */
 const CACHE_NAME=`${CACHE_PREFIX}${CACHE_VERSION}`;
 /* V289 (audit A3, G3b): the app document itself is now part of the shell, so an offline
    navigation lands in Peekaa's own "you're offline" state instead of the standalone fallback

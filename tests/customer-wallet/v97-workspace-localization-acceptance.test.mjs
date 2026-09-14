@@ -414,8 +414,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nestly_v782 adds one more: cardUpdatedV782, the confirmation shown after a
      refresh_payment_method command settles. ea4a5262 wrote it as an interpolated template literal
      straight into .textContent, so it reached zh-CN and ms readers in English; it carries the
-     card description billingCardTextV758 derives, which is why it is a template. 145 + 1 = 146. */
-  assert.equal(keys.length,146,'mixed-interface interpolation inventory changed without review');
+     card description billingCardTextV758 derives, which is why it is a template. 145 + 1 = 146.
+     nestly_v904 adds one: helpForSurfaceV904, the accessible name of the app-bar Help control.
+     It is contextual — it names the module whose guide it opens — so it interpolates, and an
+     interpolated accessible name belongs here rather than in a template literal that would reach
+     zh-CN and ms readers in English. 146 + 1 = 147. */
+  assert.equal(keys.length,147,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
@@ -507,6 +511,9 @@ test('v97 exhaustively classifies signed-in workspace interpolated accessibility
        title AND the visible #joinQrStatus line it is aria-describedby, because a disabled button
        is not focusable and a title alone would reach neither keyboard nor screen reader. */
     'joinQrNothingToRevoke',
+    /* nestly_v904: the app-bar Help control. Its title and aria-label both name the guide it
+       opens, which is the module the reader is standing in, so both travel this way. */
+    'helpForSurfaceV904',
   ];
   assert.deepEqual([...interpolatedAttributeInventory].sort(),expected.sort());
   assert.equal(new Set(interpolatedAttributeInventory).size,interpolatedAttributeInventory.length);

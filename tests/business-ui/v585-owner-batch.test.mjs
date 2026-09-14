@@ -79,8 +79,8 @@ test('item 3 — the gear is a cog that survives being 20px', () => {
   assert.doesNotMatch(cui, /settings:'M12 15\.5a3\.5/);
   /* customer-ui.js is PRECACHED by the service worker, so its ?v= token and CACHE_VERSION move
      together or the old glyph keeps being served. */
-  assert.match(shell, /customer-ui\.js\?v=20260829-v585-settings-cog/);
-  assert.match(sw, /const CACHE_VERSION='v23-20260829-v585'/);
+  assert.match(shell, /customer-ui\.js\?v=20260915-v904-help-book/);
+  assert.match(sw, /const CACHE_VERSION='v24-20260915-v904'/);
 });
 
 test('photo 5 — the date chip stops eating the row, and the booking date is top right', () => {

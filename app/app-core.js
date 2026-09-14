@@ -885,15 +885,6 @@ function bindProductInteractionFlushV256(){
     },()=>{});
   }catch{}
 }
-/* Records the SHAPE of a search, never the words. Token count, a coarse length bucket and
-   whether anything matched are enough to say "customers keep asking for something nobody
-   sells"; the typed text, joined to auth.uid(), would be re-identifying and PDPA-sensitive. */
-function exploreQueryShapeV256(query,matched){
-  const text=String(query||'').trim();
-  const tokens=text?text.split(/\s+/).filter(Boolean).length:0;
-  const length=text.length===0?'empty':text.length<=12?'short':text.length<=30?'medium':'long';
-  return `t${Math.min(tokens,6)}:${length}:${matched?'matched':'unmatched'}`;
-}
 /* Interaction telemetry is deliberately fail-open. It records only that an allowed surface
    was opened or started; completed and economic outcomes remain database-authored. A missing
    migration, denied scope, or network failure must never delay or alter the user's action. */
@@ -7731,6 +7722,12 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
   explainHelpDotV385:Object.freeze({en:'What is {topic}?','zh-CN':'什么是{topic}？',ms:'Apakah itu {topic}?'}),
+  /* nestly_v904: the app-bar Help control names the guide it will open, so its label carries the
+     module's own title. Same shape and same reason as explainHelpDotV385 above — an interpolated
+     accessible name must travel through this mechanism rather than be built with a template
+     literal, or a zh-CN or ms reader gets an English label. The Help ARTICLES are English at this
+     stage; the control that opens them is workspace chrome, and chrome follows the locale. */
+  helpForSurfaceV904:Object.freeze({en:'Help with {surface}','zh-CN':'{surface}使用帮助',ms:'Bantuan untuk {surface}'}),
   growDraftReady:Object.freeze({en:'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.','zh-CN':'推荐草稿已就绪。您可编辑任何设置；发布前不会改变顾客体验。',ms:'Draf cadangan sedia. Edit mana-mana tetapan; tiada perubahan untuk pelanggan sehingga diterbitkan.'}),
   publishImpactAction:Object.freeze({en:'{live} action starts running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
   publishImpactActions:Object.freeze({en:'{live} actions start running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
@@ -7804,6 +7801,8 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'removeItem','deleteItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','confirmBookingFor','declineBookingFor','deleteTeammateNamed','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails','explainHelpDotV385',
+  /* nestly_v904: the app-bar Help control's accessible name. */
+  'helpForSurfaceV904',
   /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
      "How the programme fits together" block that was their only render path. */
   'growDraftReady','publishImpactAction',
@@ -7820,6 +7819,9 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
   'explainHelpDotV385',
+  /* nestly_v904: the app-bar Help control is contextual — its title and aria-label name the
+     guide it opens, so both go through the named template like every other one here. */
+  'helpForSurfaceV904',
   /* nestly_v456: the disabled "Revoke all QRs" carries its reason as a title, for the same reason
      the v453 steppers below do — and the same sentence is the visible status line it describes. */
   'joinQrNothingToRevoke',

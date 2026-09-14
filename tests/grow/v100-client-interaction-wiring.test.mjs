@@ -79,7 +79,12 @@ test('v100 interaction contexts remain short allowlisted dimensions with no cust
   // v393 retires Explore (owner decision), taking customer.explore_searched's ONE call site with
   // the page: 20 -> 19. The event name and exploreQueryShapeV256 stay in the registry, which is
   // asserted in tests/business-ui/v255-interaction-batching.
-  assert.equal(calls.length,19);
+  // nestly_v904 adds the Help Centre's ONE emit site (helpRecordV904): 19 -> 20. It re-emits the
+  // SAME merchant.surface_viewed event the shell already sends for every route — a new call site,
+  // not a new event name and not a new dimension, so no taxonomy migration is involved. Its
+  // query_shape is exploreQueryShapeV256's shape (word count, length band, matched or not) and
+  // never the typed text, because a Help search can easily contain a customer's name.
+  assert.equal(calls.length,20);
   for(const [,context] of calls){
     // V256: query_shape is deliberately allowed and deliberately NOT the typed text — the
     // shape helper is asserted separately in tests/business-ui/v255-interaction-batching.

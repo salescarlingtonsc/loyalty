@@ -20786,7 +20786,14 @@ function navHtml(page,idPrefix='nav'){
       <div class="navbody" id="${idPrefix}-${g.key}" data-body="${g.key}" style="display:${isOpen?'block':'none'}">
         ${childRowsV294}
       </div></div>`;
-  }).join('');
+  }).join('')
+  /* nestly_v904: Help sits BELOW the groups and outside NAVGROUPS, deliberately. It is not a
+     module — it has no entitlement, no MODULES entry and no per-staff switch — so putting it in
+     the groups array would make it the one row in that structure that is not gated by
+     navModuleVisible, and every filter over NAVGROUPS would have to learn about the exception.
+     It is appended here instead: one row, always present, for every role. The mobile "More"
+     drawer renders navHtml too, so the same row appears there without a second edit. */
+  +`<a href="#/help" class="nav-help-v904 ${activeKey==='help'?'act':''}"${activeKey==='help'?' aria-current="page"':''}><span class="ic">${CUI.icon('book',{size:20})}</span>Help</a>`;
 }
 function wireNav(){
   document.querySelectorAll('.navhead').forEach(el=>el.onclick=()=>{
@@ -20873,9 +20880,37 @@ function globalActionsHtml(){
     </div>
   </div>`;
 }
+/* nestly_v904 — CONTEXTUAL HELP, in one control rather than thirty.
+   The brief asked for help on complicated screens and, in the same breath, for the app NOT to
+   grow a question mark on every screen. One app-bar button that knows where you are standing
+   satisfies both: it reads HELP_CONTEXT_V904 and opens the guide FOR THIS SCREEN — pressing it
+   inside Business Intelligence opens the Business Intelligence guide, not the Help home — and it
+   is one insertion point in the shell instead of an edit to every page function, so no existing
+   screen's markup changes at all.
+   It is a direct child of .appbar, beside the bell, because .global-actions is display:none
+   below 960px and Help must not disappear on a phone. The title says which guide it will open,
+   so the destination is never a surprise.
+   These two live outside navHtml/globalActionsHtml on purpose: both of those are gated on module
+   entitlements, and Help has none — it is offered to every role, unconditionally. */
+function helpTriggerHtmlV904(page){
+  const key=String(page?.[0]||'');
+  const topic=key==='help'?null:helpTopicV904(HELP_CONTEXT_V904[key]||'');
+  const contextual=!!(topic&&helpAccessOkV904(topic));
+  const target=contextual?helpHrefV904(topic.slug):'#/help';
+  /* An interpolated accessible name goes through the named-template mechanism, never a template
+     literal — that is the v97 rule, and it is what keeps the label from reaching a zh-CN or ms
+     reader in English. The no-context case interpolates nothing, so it is a plain attribute. */
+  const labelAttrs=contextual
+    ?`${workspaceTemplateAttributeV97('aria-label','helpForSurfaceV904',{surface:topic.title})} ${workspaceTemplateAttributeV97('title','helpForSurfaceV904',{surface:topic.title})}`
+    :'aria-label="Help Centre" title="Help Centre"';
+  return `<a class="help-trigger-v904${key==='help'?' act':''}" id="helpTriggerV904" href="${esc(target)}" ${labelAttrs} data-workspace-i18n>${CUI.icon('book',{size:20})}</a>`;
+}
 function mobileWorkspaceTitleHtml(page){
   const key=page?.[0]||'dashboard';
-  const meta=MODULES[key]||['home',key==='till'?'Record sale':key==='clients'?'Customers':key==='dashboard'?'Dashboard':'Peekaa'];
+  /* nestly_v904: 'help' joins this fallback chain for the same reason it is absent from MODULES —
+     it is reachable by every role, so it must not be gated by a MODULES lookup. */
+  const meta=MODULES[key]||(key==='help'?['book','Help Centre']
+    :['home',key==='till'?'Record sale':key==='clients'?'Customers':key==='dashboard'?'Dashboard':'Peekaa']);
   return `<div class="mobile-page-title" aria-label="Current page">${CUI.icon(meta[0]||'home',{size:20})}<span>${esc(meta[1]||'Peekaa')}</span></div>`;
 }
 function mobileSearchShellHtml(){
@@ -21091,6 +21126,11 @@ function profileHtml(){
              store-readiness suite records against App Store 5.1.1(v). */''}
         ${/* nestly_v784: shown to owners again — v593 moved it to the foot of Subscription, and the owner
              has now dropped that foot, so this is the one door left to closing an account. */''}
+        ${/* nestly_v904: the third door to Help, for people who look for it in an account menu
+             rather than in the navigation. Every role sees it — it is documentation, not a
+             module — and it lands on the Help home rather than a contextual guide, because that
+             is what someone opening a menu looking for "Help Centre" is asking for. */''}
+        <a href="#/help" id="pmHelpV904">${CUI.icon('book',{size:20})}Help Centre</a>
         <a href="/data-request.html" id="pmDeleteAccount">${CUI.icon('back',{size:20})}Account &amp; privacy</a>
         <a href="#" id="pmSignout" style="color:var(--red)">${CUI.icon('back',{size:20})}Sign out</a>
       </div>`:''}
@@ -22480,6 +22520,12 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   joinedAt:Object.freeze({en:'Joined {date} SGT','zh-CN':'加入时间：{date}（新加坡时间）',ms:'Menyertai pada {date} SGT'}),
   viewDashboardMetricDetails:Object.freeze({en:'View details for {metric}','zh-CN':'查看 {metric} 的详细信息',ms:'Lihat butiran untuk {metric}'}),
   explainHelpDotV385:Object.freeze({en:'What is {topic}?','zh-CN':'什么是{topic}？',ms:'Apakah itu {topic}?'}),
+  /* nestly_v904: the app-bar Help control names the guide it will open, so its label carries the
+     module's own title. Same shape and same reason as explainHelpDotV385 above — an interpolated
+     accessible name must travel through this mechanism rather than be built with a template
+     literal, or a zh-CN or ms reader gets an English label. The Help ARTICLES are English at this
+     stage; the control that opens them is workspace chrome, and chrome follows the locale. */
+  helpForSurfaceV904:Object.freeze({en:'Help with {surface}','zh-CN':'{surface}使用帮助',ms:'Bantuan untuk {surface}'}),
   growDraftReady:Object.freeze({en:'Recommendation draft is ready. Edit any setting; nothing changes for customers until publication.','zh-CN':'推荐草稿已就绪。您可编辑任何设置；发布前不会改变顾客体验。',ms:'Draf cadangan sedia. Edit mana-mana tetapan; tiada perubahan untuk pelanggan sehingga diterbitkan.'}),
   publishImpactAction:Object.freeze({en:'{live} action starts running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
   publishImpactActions:Object.freeze({en:'{live} actions start running now · {shadow} shadow-test only · {unbuilt} stay off (not built yet)','zh-CN':'{live} 个操作立即运行 · {shadow} 个仅进行影子测试 · {unbuilt} 个保持关闭（尚未构建）',ms:'{live} tindakan mula berjalan sekarang · {shadow} ujian bayangan sahaja · {unbuilt} kekal dimatikan (belum dibina)'}),
@@ -22553,6 +22599,8 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'removeItem','deleteItem','adjustLoyalty','viewAppointmentDetails','amendAppointment',
   'viewAppointmentAgenda','calendarAppointment','calendarPendingRequest','callBookingCustomer','confirmBookingFor','declineBookingFor','deleteTeammateNamed','bookAppointmentSlot','removeFromWaitlist','joinedAt',
   'viewDashboardMetricDetails','explainHelpDotV385',
+  /* nestly_v904: the app-bar Help control's accessible name. */
+  'helpForSurfaceV904',
   /* V364: growPublishedReward/-Rewards/-BringBackRule/-BringBackRules retired with the
      "How the programme fits together" block that was their only render path. */
   'growDraftReady','publishImpactAction',
@@ -22569,6 +22617,9 @@ const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'adjustLoyalty','viewAppointmentDetails','amendAppointment','viewAppointmentAgenda',
   'calendarAppointment','calendarPendingRequest','bookAppointmentSlot','removeFromWaitlist','joinedAt','viewDashboardMetricDetails',
   'explainHelpDotV385',
+  /* nestly_v904: the app-bar Help control is contextual — its title and aria-label name the
+     guide it opens, so both go through the named template like every other one here. */
+  'helpForSurfaceV904',
   /* nestly_v456: the disabled "Revoke all QRs" carries its reason as a title, for the same reason
      the v453 steppers below do — and the same sentence is the visible status line it describes. */
   'joinQrNothingToRevoke',
@@ -22756,6 +22807,7 @@ function renderShell(page){
              pendingBookingRequestCountV329 still drives the Appointments rail badge the owner
              asked for in v375 and did not strike here, and refreshPendingBookingRequestCountNowV370
              still keeps that badge current; only this header button no longer renders. */''}
+        ${helpTriggerHtmlV904(page)}
         ${bellHtml()}
         ${profileHtml()}
       </header>
@@ -22822,6 +22874,13 @@ function renderShell(page){
     bottles:bottlesPage,bottlesetup:bottleSetupPageV275,
     staffperf:staffPerfPage,staffmembers:staffMembersPage,dailyreport:dailyReportPage,pnl:pnlPage,expenses:expensesPage,
     setup:setupPage,settings:settingsPage,branches:branchesPage,platform:platformPage,remindernotify:reminderNotificationPageV606,
+    /* nestly_v904: the Help Centre. Deliberately NOT a MODULES key — route()'s generic module
+       gate refuses any MODULES key the account cannot read, and documentation is the one surface
+       every signed-in account must be able to open, including a staff member whose only granted
+       module is Record sale. Access is filtered INSIDE the page, per guide, by helpAccessOkV904.
+       It takes the same two extra path segments every other route already gets from page.slice(1),
+       so #/help/customers/add-customer arrives as helpPage('customers','add-customer'). */
+    help:helpPage,
     'customer-interface':customerInterfacePageV243};
   /* V286: a hash with no page used to render the Dashboard while location.hash still read the
      route that was asked for — the one refusal in the router that answered silently. A staff
@@ -22836,7 +22895,9 @@ function renderShell(page){
   Promise.resolve(pageResult).catch(error=>{
     console.error(error);
     if(shellRenderEpoch!==renderEpoch||!main.isConnected)return;
-    const title=MODULES[page[0]]?.[1]||(page[0]==='client'?'Customer':'Workspace');
+    /* nestly_v904: 'help' has no MODULES entry on purpose (see the P table below), so name it
+       here rather than let a failed Help render call itself "Workspace unavailable". */
+    const title=MODULES[page[0]]?.[1]||(page[0]==='client'?'Customer':page[0]==='help'?'Help Centre':'Workspace');
     /* V172: route through the same owner-language mapper as fail() — this card previously
        printed raw browser TypeErrors ("undefined is not an object (evaluating ...)"). */
     main.innerHTML=CUI.errorState({title:`${title} unavailable`,message:ownerErrorText(error)||'Please try again.'});
@@ -63241,6 +63302,1572 @@ function buildPhone(ccId,phoneId){
   const ccDigits=cc.replace('+','');
   if(digits.startsWith(ccDigits)) digits=digits.slice(ccDigits.length);
   return cc+digits;
+}
+
+/* ============================================================================================
+   nestly_v904 — HELP CENTRE. The in-app operating manual.
+
+   ONE authoring surface. Everything a maintainer edits lives in HELP_TOPICS_V904 and
+   HELP_GLOSSARY_V904 below. The Common tasks index, the Troubleshooting page, the FAQ page and
+   the search index are all VIEWS over that same array — they are computed, never hand-written —
+   so a module guide and the FAQ about it can never drift apart. Adding a module to the product
+   is one new entry here; it appears in the home grid, in Browse by module, in search, and (if it
+   declares them) in Common tasks, Troubleshooting and the FAQ, with no other edit.
+
+   WHAT A TOPIC IS
+     slug        url segment:  #/help/<slug>          (a task adds  #/help/<slug>/<task.slug>)
+     group       'start' | 'module' | 'help'  — which home section it appears in
+     title       what the rail/the page calls it. Must MATCH the product's own wording.
+     icon        a CUI.icon name (app/customer-ui.js). No new glyphs are invented here.
+     summary     one line, used on cards and in search results
+     route       the workspace hash this guide is about, for the "Go to" button. Omit for topics
+                 that are not a destination (Getting started, Glossary).
+     routeLabel  the button's words. Defaults to 'Open ' + title.
+     path        the navigation path in the product's own words ('Customers -> Add customer')
+     modules     module keys the reader must be able to READ for this guide to be offered.
+                 EVERY key must pass — waitlist needs ['waitlist','bookings'], the same pair the
+                 rail requires. Omit for guides everyone may read.
+     roles       roles that may see it. Omit for everyone. Mirrors the route guards in route():
+                 Branches / Staff Members / Subscription / Customer Interface / Reminder &
+                 Notification / Limited Offer are owner-only THERE, so they are owner-only here.
+     sector      'bar' restricts to the bar sector, exactly as BOTTLE_SURFACES_V275 does.
+     hideWhenSeated  true for Appointments — SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276 hides the
+                 rail row for F&B and bars, so the guide must not advertise it there either.
+     what        2-3 sentences: what the module is for
+     can         the primary things you can do here. ONLY what exists in production.
+     sections    free-form blocks for guides that are prose rather than a module tour
+     screen      [label, meaning] pairs — "Understanding this screen"
+     tasks       numbered procedures. Each is its own addressable article.
+     know        "Things to know" — behaviour confirmed from the implementation
+     problems    "Common problems" — {q, causes[], fix[]}. Also feeds the Troubleshooting page.
+     faq         [question, answer] pairs. Also feeds the FAQ page, grouped under this title.
+     related     other topic slugs
+     keywords    words a real person would type. Search matches these, not just the title.
+
+   THE RULE THIS CONTENT IS HELD TO: it describes what the application does TODAY. Gift cards,
+   Memberships, WhatsApp Inbox and Stored value have no door in the business workspace (V303,
+   V466, nestly_v768, the storedvalue route refusal), so they are not documented as features —
+   they appear only where a reader would otherwise be confused about their absence. Expenses and
+   P&L left the rail in nestly_v518 and have no navigation door, so they are not documented
+   either. Nothing here promises a screen the reader cannot open.
+   ============================================================================================ */
+const HELP_TOPICS_V904=Object.freeze([
+
+/* ---------------------------------------------------------------- getting started ---------- */
+{slug:'start-here',group:'start',icon:'setup',title:'Start here',
+  summary:'What Peekaa does, and the first few things to set up.',
+  keywords:['start','begin','new','first time','introduction','basics','onboarding','what is peekaa','setup'],
+  what:'Peekaa records what your customers buy and turns it into loyalty they can spend with you again. You run the counter, your customers see their own rewards in their phone, and both sides read the same records.',
+  sections:[
+    {h:'How the whole thing fits together',
+      list:['You set up what you sell — services, products, packages.',
+        'You decide what customers earn — points, stamps, tiers, a welcome gift, a birthday treat.',
+        'Your staff record every sale at Record sale.',
+        'Peekaa works out the earning and shows it to the customer in their own app.',
+        'The customer comes back, shows a reward QR, and your staff scan it at the counter.']},
+    {h:'Two apps, one set of records',
+      p:'The workspace you are in now is for you and your team. Your customers use a separate Peekaa app on their phone: they join by scanning your business QR, and they see their own points, rewards and visit history. Both read the same records, so nothing has to be kept in step by hand.'},
+    {h:'Your first hour',
+      steps:['Open Get started from the account menu in the top right. It checks what is set up and what is not.',
+        'Add at least one service or product. Nothing else works until there is something to sell.',
+        'Set up one reward programme in Rewards & Offer, and publish it.',
+        'Print or display your business QR so customers can join.',
+        'Record one real sale at Record sale, and check that the points appear.']},
+    {h:'Who this workspace is for',
+      p:'Everyone on your team signs in to the same workspace, but each person sees only the parts you have given them. If a screen described in this guide is not in your sidebar, your account does not have it — ask the owner.'}],
+  know:['Get started never disappears. If you press "Don\'t show this again", it is still in the account menu under Get started.',
+    'Only the owner can open Get started, Branches, Staff Members, Customer Interface, Reminder & Notification and Subscription.'],
+  faq:[['Do I have to finish setup in order?','No. Get started lists what is missing and you can do it in any order — but add something to sell first, because sales, packages and rewards all reference it.'],
+    ['Do my customers need to download an app?','They open Peekaa in their phone browser after scanning your QR. They can add it to their home screen; there is nothing to install first.']],
+  related:['navigation','roles','what-customers-see','first-week']},
+
+{slug:'navigation',group:'start',icon:'menu',title:'Finding your way around',
+  summary:'What the sidebar groups mean and where things live.',
+  keywords:['navigation','menu','sidebar','where is','cannot find','missing module','layout','rail','tabs'],
+  what:'The sidebar is grouped by what you do across a day, not by how the data is stored. Each group opens to show the screens inside it.',
+  screen:[['Dashboard','Today and this week at a glance: money in, visits, what is scheduled.'],
+    ['Customers','Everyone who has joined your programme, and each customer\'s full history.'],
+    ['Serve & sell','The counter: Record sale, Appointments, Bookings, Waitlist, Customer packages.'],
+    ['Rewards & Offer','Everything customers earn or claim: Overview, Rewards Programme, Limited Offer, History.'],
+    ['Customer Interface','What your customers see — your business profile, booking rules and permissions. Owner only.'],
+    ['Reports','Daily report, Sales, Staff commission, Business Insights, Business Intelligence.'],
+    ['Operations setup','The things you set once: Staff Members, Branches, Services, Products, Packages, Reminder & Notification.'],
+    ['Top right','Find a customer, Record sale, the notifications bell, Help, and your account menu.']],
+  sections:[{h:'On a phone or tablet',
+    p:'Below about 960 pixels wide the sidebar is replaced by a bar along the bottom: Record sale, Scan QR, Appointments, and More. More opens the full menu, including Help.'}],
+  know:['The sidebar only shows what your account can open. A missing group is a permission or an entitlement, not a fault.',
+    'The branch selector in the top bar decides what every number on the screen means. Change it and the figures change with it.'],
+  problems:[{q:'A module I was told about is not in my sidebar',
+    causes:['Your role does not include it — Branches, Staff Members, Subscription, Customer Interface and Reminder & Notification are owner-only.',
+      'The owner has switched that module off for your account in Staff Members.',
+      'Your business type does not use it. F&B and bars take table Bookings and a Waitlist instead of Appointments.',
+      'Peekaa has not included that module in your plan.'],
+    fix:['Ask the owner to check your access in Staff Members.',
+      'If the owner cannot switch it on either, the module is not part of your plan — contact Peekaa.']}],
+  related:['roles','start-here']},
+
+{slug:'roles',group:'start',icon:'staff',title:'Roles and access',
+  summary:'Who can do what, and why a button may not appear.',
+  keywords:['role','permission','permissions','access','owner','manager','staff','front desk','bookkeeper','cannot see','denied','rights','privileges','who can see what','who sees what','who can do what','restrict'],
+  what:'Every person on your team has one role, and the owner can additionally switch individual modules on or off for them. The role decides broad authority; the module switches decide which screens they open.',
+  screen:[['Owner','Full access to everything the business has, including Branches, Staff Members, Subscription and Customer Interface. There is exactly one owner role and it cannot be given out by invite.'],
+    ['Manager','Can record sales and see money figures. Cannot open owner-only screens.'],
+    ['Staff','Can record sales. Cannot see money figures such as Staff commission or Business Intelligence.'],
+    ['Front desk','Same as Staff: can record sales, cannot see money figures.'],
+    ['Bookkeeper','Can see money figures. Cannot record sales.']],
+  sections:[{h:'On top of the role: module access',
+    p:'In Staff Members the owner sets each teammate\'s modules to Off, Read or Edit. Read means they can open the screen but not change anything; the screen says so at the top. Owners always have every module the business has.'},
+    {h:'Two reasons a screen can be closed to you',
+      list:['Your role — for example, Staff commission needs finance access, which only Owner, Manager and Bookkeeper have.',
+        'Your module switches — the owner has set that module to Off for you.']}],
+  know:['Typing a screen\'s address does not get around either check. The screen refuses and sends you back with a short message.',
+    'A read-only screen shows a "Read-only access" note at the top rather than hiding the information.',
+    'Changing someone\'s role or module access takes effect the next time they load the workspace.'],
+  problems:[{q:'A teammate says a button is missing that I can see',
+    causes:['Their role cannot perform it — only Owner and Manager see money figures; Bookkeepers cannot record sales.',
+      'You set that module to Read rather than Edit.',
+      'The module is switched off for them entirely.'],
+    fix:['Open Staff Members, find the person, and check the role and the module list.',
+      'Set the module they need to Edit, then ask them to reload the workspace.']}],
+  faq:[['Can I have two owners?','No. The owner role is not invitable. Give a trusted teammate the Manager role instead — it covers everything except Branches, Staff Members, Subscription and Customer Interface.'],
+    ['What is the difference between Staff and Front desk?','Nothing in what they are allowed to do — both can record sales and neither sees money figures. They exist so your roster reads correctly.']],
+  related:['staff','navigation']},
+
+{slug:'first-week',group:'start',icon:'check',title:'Your first week, step by step',
+  summary:'A short path from an empty workspace to a running programme.',
+  keywords:['checklist','first week','setup order','getting going','launch','go live','what next','plan'],
+  what:'Do these in order. Each step depends on the one before it, and each links to the guide for that screen.',
+  sections:[{h:'The order that works',
+    steps:['Set up your branch details. Operations setup -> Branches. Your address and phone appear on the customer\'s business page.',
+      'Add what you sell. Operations setup -> Services and Products. At least one is required before anything else works.',
+      'Add your team. Operations setup -> Staff Members. Invite anyone who needs to sign in; add roster-only people for scheduling.',
+      'Choose your reward programme. Rewards & Offer -> Rewards Programme. Set up Point system or Stamp card, then publish it.',
+      'Add at least one reward customers can claim. A programme that earns with nothing to claim gives customers nothing to aim at.',
+      'Turn on your extras. Welcome gift for new sign-ups, Birthday benefit, Referrals, Bring-back rewards.',
+      'Set what your customers see. Customer Interface -> Business Profile, then Customer Permission for booking rules.',
+      'Display your business QR. Account menu -> My Business QR. Print it for the counter.',
+      'Record your first real sale and check the customer\'s points moved.']},
+    {h:'You are running when',
+      list:['A customer can scan your QR and see your programme.',
+        'A sale at the counter changes their points.',
+        'A reward they claim can be scanned and given at the counter.']}],
+  related:['start-here','rewards','customer-app']},
+
+{slug:'what-customers-see',group:'start',icon:'wallet',title:'What your customers see',
+  summary:'The customer side of Peekaa, so you can answer their questions.',
+  keywords:['customer app','member app','wallet','what customers see','join','qr','my points','customer view','phone','customer sign in','customer login','cannot log in','customer password','forgot password','customer cannot login'],
+  what:'Customers use a separate Peekaa app on their phone. They join one business at a time by scanning that business\'s QR, then see their points, rewards, packages, visits and purchases for that business.',
+  sections:[{h:'How a customer joins you',
+    steps:['They scan your business QR, or open your join link.',
+      'They create an account with their mobile number and a password, or sign in if they already have one.',
+      'Your programme is added to their app automatically. They never have to scan the same code twice.']},
+    {h:'What they can do',
+      list:['See their points or stamps, and how far they are from the next reward.',
+        'Claim a reward, which produces a time-limited QR for your counter to scan.',
+        'See every purchase and points movement, with the date, amount and branch.',
+        'See packages they have bought and sessions they have left.',
+        'Request a booking, if you have turned customer booking on.',
+        'Share their referral code, if Referrals is running.']},
+    {h:'What they cannot do',
+      list:['Search for and join businesses on their own. A business-issued QR or link is the only way in.',
+        'Change their own points or claim a reward without your counter confirming it.']}],
+  know:['A customer only sees sections you have actually set up. If you have no birthday benefit, nothing about birthdays appears in their app.',
+    'The customer app is English only at this stage.',
+    'Claiming a reward does not spend it. Nothing changes until your staff scan the QR at Record sale.'],
+  problems:[{q:'A customer cannot sign in to their Peekaa account',
+    causes:['They are typing a different mobile number from the one they signed up with.',
+      'They have forgotten their password.',
+      'They have not created an account yet — scanning your QR is only the first step.'],
+    fix:['Ask them to use the mobile number they gave you, with no country code.',
+      'On the sign-in screen they can choose to recover the account; a one-time code is sent to that number.',
+      'If they have never signed up, ask them to scan your business QR and create the account.'],
+    },
+    {q:'A customer says they cannot find my business in their app',
+    causes:['They have not scanned your QR yet. Customers cannot search for businesses.',
+      'They scanned a different business\'s code.',
+      'Your sign-up QR has been replaced since they saved it.'],
+    fix:['Show them your business QR at the counter and ask them to scan it.',
+      'The owner can find it in the account menu under My Business QR.']}],
+  faq:[['Can a customer use one account at several businesses?','Yes. Each business they scan is added as a separate programme in the same account, with its own points and rewards.'],
+    ['Can I add points to a customer myself?','The owner can make a manual adjustment on the customer\'s profile. Ordinary earning happens automatically when a sale is recorded.']],
+  related:['customer-app','customers','record-sale']},
+
+/* ---------------------------------------------------------------------- modules ------------ */
+{slug:'dashboard',group:'module',icon:'home',title:'Dashboard',route:'#/dashboard',modules:['dashboard'],
+  summary:'Today and this week, for the branch you are viewing.',
+  keywords:['dashboard','home','today','overview','summary','kpi','numbers','revenue today'],
+  what:'The first screen of the workspace. It shows what happened today and this week for the branch selected in the top bar, plus what is scheduled next.',
+  can:['See money in, visits and members joined for the period','See what is scheduled today','Open the screen behind any figure'],
+  screen:[['This week','Money recorded, visits and joins for the current week.'],
+    ['Today schedule','Appointments or bookings due today.'],
+    ['Performance','How the period compares, with the date range you choose.'],
+    ['Branch selector (top bar)','Which branch every figure on the screen is for.']],
+  know:['Every figure is for the branch shown in the top bar. Switch branch and the whole screen changes.',
+    'Only an owner or manager can view all branches at once. Other roles see the branch they are assigned to.',
+    'When a figure cannot be read, Peekaa says so rather than showing a zero.'],
+  problems:[{q:'The numbers look wrong or too low',
+    causes:['A single branch is selected and you expected the whole business.',
+      'The date range is not the one you think it is.',
+      'Sales recorded as a walk-in are not linked to a customer, so they do not appear in member figures.'],
+    fix:['Check the branch selector in the top bar.','Check the date range on the Performance card.',
+      'Open Sales for the same range to see the individual records behind the total.']}],
+  related:['insights','daily-report','branches']},
+
+{slug:'customers',group:'module',icon:'customers',title:'Customers',route:'#/clients',modules:['clients'],
+  summary:'Everyone on your programme, and each person\'s full history.',
+  path:'Customers',
+  keywords:['customer','customers','client','clients','member','members','contact','people','crm','database','add customer','new customer','search customer','phone number'],
+  what:'Your customer list and, behind each name, everything Peekaa knows about that person: their visits, points, rewards, packages and purchases.',
+  can:['Search customers by name or phone number','Add a customer','Open a customer\'s full profile','Adjust a customer\'s details','Import customers from a spreadsheet','Export your list to CSV'],
+  screen:[['Name','The customer\'s registered name. Names repeat, so use the phone number to be sure.'],
+    ['Phone','The mobile number the customer is identified by. This is the number staff type at Record sale.'],
+    ['Visits','Recorded visits that count under your current sale policy.'],
+    ['Points / stamps','What they have to spend right now.'],
+    ['Tier','Their current tier, when tier membership is running.'],
+    ['Filters','Narrow the list — for example to customers who have not been in for a while.']],
+  tasks:[
+    {slug:'add-customer',title:'Add a customer',path:'Customers → Add customer',
+      keywords:['add customer','new customer','create customer','register customer','sign up a customer','add client'],
+      steps:['Open Customers.','Press Add customer.','Type the customer\'s name. This is the only required field.',
+        'Add the mobile number. Without it, staff cannot find this person at Record sale.',
+        'Add email and birth date if you have them. A birth date is what makes the Birthday benefit work.',
+        'Press Save customer.'],
+      note:'The customer appears in your list straight away. They will not see anything in their own phone until they scan your business QR and join.'},
+    {slug:'find-customer',title:'Find a customer',path:'Top bar → Find a customer',
+      keywords:['find customer','search customer','look up','lookup','cannot find customer','search by phone'],
+      steps:['Type a name or phone number in the Find a customer box at the top of any screen. On a phone, tap the magnifying glass.',
+        'Press Enter or the arrow.','A name opens Customers with that search applied; a phone number opens Record sale ready for that customer.',
+        'Select the customer from the results.'],
+      note:'Searching by the last digits of a phone number is the fastest way to tell two customers with the same name apart.'},
+    {slug:'customer-profile',title:'Open a customer profile',path:'Customers → select a customer',
+      keywords:['customer profile','customer 360','history','activity','what did they buy','visits','their points'],
+      steps:['Open Customers.','Search the name or phone number.','Select the customer.',
+        'The profile opens on their summary: visits, points, tier and packages.',
+        'Scroll for their purchase history, points movements and rewards.'],
+      note:'From the profile you can go straight to Record sale or a new appointment for that person.'},
+    {slug:'edit-customer',title:'Change a customer\'s details',path:'Customers → select a customer → Edit customer',
+      keywords:['edit customer','change phone','update customer','correct name','wrong number','change birthday'],
+      steps:['Open the customer\'s profile.','Press Edit customer.','Change the details.','Press Save changes.'],
+      note:'Adding a birth date to an existing customer makes them eligible for the Birthday benefit from then on.'},
+    {slug:'import-customers',title:'Import customers from a spreadsheet',path:'Customers → Import',
+      keywords:['import','csv','excel','spreadsheet','bulk add','upload customers','migrate'],
+      steps:['Open Customers.','Press Import.','Choose your CSV file.',
+        'Check the preview — name is required; phone, email and birth_date (as YYYY-MM-DD) are recognised.',
+        'Start the import and wait for it to finish. Peekaa reports how many were added and how many were skipped.'],
+      note:'Importing adds customers to your list. It does not send anything to them and does not join them to your programme — they still scan your QR to see it on their phone.'},
+    {slug:'export-customers',title:'Export your customer list',path:'Customers → Export CSV',
+      keywords:['export','csv','download customers','backup','spreadsheet'],
+      steps:['Open Customers.','Apply any filters you want the export to respect.','Press Export CSV.','The file downloads to your device.'],
+      note:'The export contains personal data. Handle it the way you would any customer list.'}],
+  know:['A customer must have a phone number for staff to find them at Record sale.',
+    'Names are not unique. Peekaa says so on screens where it matters and asks you to confirm with the phone number.',
+    'Customers you add here are your records. The customer only sees their points and rewards after they join with your QR.',
+    'What you can see is limited to the branches you are assigned to.'],
+  problems:[{q:'I cannot see a customer',
+    causes:['The branch selected in the top bar is not the branch this customer belongs to.',
+      'The name is spelled differently from how it was entered.',
+      'The customer was added at another branch you are not assigned to.',
+      'Your account does not have Customers access.'],
+    fix:['Search by the last digits of their phone number instead of their name.',
+      'Change the branch in the top bar, or select all branches if your role allows it.',
+      'Ask the owner to check your branch assignment in Staff Members.']},
+    {q:'The same customer appears twice',
+      causes:['They were once added without a phone number, then again with one.',
+        'Two different mobile numbers were used for the same person.'],
+      fix:['Open both profiles and decide which holds the history you want to keep.',
+        'Correct the phone number on the one you are keeping so staff always find the right record.']}],
+  faq:[['Does adding a customer send them anything?','No. Nothing is sent. They see your programme only after they scan your business QR.'],
+    ['Can I delete a customer?','Customer records carry sales and points history, so they are not removed from the workspace. Ask the customer to use the privacy request page in their own app if they want their data removed.']],
+  related:['record-sale','rewards','what-customers-see','customer-app']},
+
+{slug:'record-sale',group:'module',icon:'till',title:'Record sale',route:'#/till',modules:['till'],
+  summary:'The counter. Record what a customer bought and give them what they have earned.',
+  path:'Record sale',
+  keywords:['record sale','till','checkout','counter','pos','payment','scan','redeem','quick earn','sell','take payment','cashier','receipt'],
+  what:'The screen your staff live in. Look up the customer, add what they are buying, take payment, and Peekaa works out the points and shows what they can claim.',
+  can:['Look up a customer by phone number','Record a sale with items, or as a single amount','Start a walk-in sale with no customer',
+    'Scan a customer\'s reward QR and give the reward','Give a reward without a QR','Sell a package or use a session from one','Print a receipt'],
+  screen:[['Phone keypad','Type the customer\'s 8-digit mobile number and press Next.'],
+    ['Walk-in sale','A sale with no customer attached. No points, rewards, packages or stored value.'],
+    ['Scan','Opens the camera to read a customer\'s reward QR or member QR.'],
+    ['Items / Packages / Rewards tabs','What you are selling, the customer\'s own packages, and the rewards they can claim on this sale.'],
+    ['Add item','Everything else: services, products, use a package, sell a package, or a one-off amount.'],
+    ['Payment received','How they paid. Required before the sale can be confirmed.'],
+    ['Record sale','Confirms the bill. This is the point at which points are earned.']],
+  tasks:[
+    {slug:'record-a-sale',title:'Record a sale',path:'Record sale',
+      keywords:['record a sale','take payment','ring up','checkout','how to sell','new sale','charge'],
+      steps:['Open Record sale.','Type the customer\'s mobile number on the keypad and press Next.',
+        'Check the name that appears is the right person.',
+        'Add what they bought — tap items, or press Add item for the full catalogue.',
+        'Press Review.','Choose how they paid under Payment received.',
+        'Press Record sale.'],
+      note:'If your workspace does not use the item catalogue, step 4 is a single Amount paid box instead.'},
+    {slug:'walk-in-sale',title:'Record a walk-in sale',path:'Record sale → Walk-in sale',
+      keywords:['walk in','walkin','no customer','anonymous','not a member','guest'],
+      steps:['Open Record sale.','Press Walk-in sale under the keypad.','Add the items or the amount.',
+        'Choose how they paid.','Press Record sale.'],
+      note:'A walk-in earns no points and can claim nothing, because there is no customer to attach it to. If the customer is a member, look them up instead.'},
+    {slug:'give-a-reward',title:'Give a customer their reward',path:'Record sale → Rewards',
+      keywords:['redeem','give reward','claim','free item','discount','voucher','use points','reward'],
+      steps:['Start the sale by looking up the customer.','Open the Rewards tab. It lists only what this customer can claim on this sale.',
+        'Press Give beside the reward.','Finish the sale as usual.'],
+      note:'If nothing is listed, the customer has nothing claimable right now — not enough points, or the reward has already been used for this period.'},
+    {slug:'scan-redemption',title:'Scan a reward the customer claimed in their app',path:'Record sale → Scan',
+      keywords:['scan qr','scan','redemption qr','customer qr','camera','claim code','scan reward'],
+      steps:['Ask the customer to open the reward in their Peekaa app and press Redeem now.','Open Record sale and press Scan.',
+        'Point the camera at the QR on their phone.','Peekaa opens the sale on that customer with the reward ready.','Finish the sale.'],
+      note:'The customer\'s QR is time-limited. If it has expired, ask them to press Redeem now again. Claiming in their app changes nothing until you scan it here.'},
+    {slug:'redeem-without-qr',title:'Give a reward when the customer has no QR',path:'Record sale → Redeem without the customer\'s QR',
+      keywords:['no qr','phone flat','forgot phone','manual redeem','without scanning','cannot scan'],
+      steps:['Look the customer up by phone number.','Open the Rewards tab.','Choose Redeem without the customer\'s QR.',
+        'Pick the reward and confirm.'],
+      note:'This needs Loyalty edit access. It leaves the same record as a scan, so the customer\'s history is identical either way.'},
+    {slug:'sell-a-package',title:'Sell a package',path:'Record sale → Add item → Sell package',
+      keywords:['sell package','prepaid','bundle of sessions','buy sessions','package'],
+      steps:['Start the sale with the customer looked up.','Press Add item.','Open the Sell package tab.',
+        'Choose the package.','Press Review, choose how they paid, and press Record sale.'],
+      note:'The customer sees the package and its remaining sessions in their own app straight away.'},
+    {slug:'use-a-package-session',title:'Use a session from a package',path:'Record sale → Packages',
+      keywords:['use package','redeem session','prepaid session','deduct session','package session'],
+      steps:['Look the customer up.','Open the Packages tab — it shows what they own and how many sessions are left.',
+        'Press Use package on the right one.','Finish the sale.'],
+      note:'Using a prepaid session does not charge the customer again. It is recorded as a visit, not as new takings, so today\'s revenue is not double-counted.'},
+    {slug:'print-receipt',title:'Print a receipt',path:'Record sale → after confirming → Print receipt',
+      keywords:['receipt','print','invoice','proof of purchase'],
+      steps:['Confirm the sale.','On the confirmation, press Print receipt.'],
+      note:'The receipt shows what was bought, how it was paid and the points earned.'}],
+  know:['Points are worked out when the sale is recorded, not before. The figure on the confirmation is the real one.',
+    'Every sale is recorded against the branch shown on the screen. Change it before you confirm, not after.',
+    'Pressing Record sale twice does not record two sales. Peekaa recognises the repeat and keeps one.',
+    'A walk-in sale can never earn points or claim a reward, because it has no customer.',
+    'Recording a sale is not the same as being paid. Peekaa records the sale and the payment method you choose; it does not take the money.'],
+  problems:[{q:'The customer\'s number is not found',
+    causes:['They have never been added as a customer.','The number was entered differently — with a country code, or a typo.',
+      'They belong to a branch you are not assigned to.'],
+    fix:['Peekaa offers to add them as a new customer from the same screen — take the name and continue.',
+      'Try the last 8 digits only.','Ask the owner to check your branch assignment.']},
+    {q:'No points were earned on a sale',
+      causes:['The sale was a walk-in, so there was no customer.','No reward programme is published and active.',
+        'What was sold does not earn under your current settings — for example a prepaid package session.','The customer was not linked to the sale.'],
+      fix:['Open Rewards & Offer and check the programme says On.',
+        'Open the customer\'s profile and check the sale is listed against them.',
+        'If the sale was recorded as a walk-in, record it again against the customer and reverse the walk-in from Sales.']},
+    {q:'The Rewards tab is empty for a customer who should have something',
+      causes:['They do not have enough points yet.','The reward has already been used within its limit period.',
+        'The reward is paused or has ended.','The reward does not apply to what is in this sale.'],
+      fix:['Open the customer\'s profile to see their exact balance.',
+        'Open Rewards & Offer -> Rewards Programme and check the reward is On.']},
+    {q:'The scan will not read the customer\'s QR',
+      causes:['The QR has expired — they are time-limited on purpose.','The camera does not have permission in this browser.',
+        'Screen brightness is too low.'],
+      fix:['Ask the customer to press Redeem now again to get a fresh code.',
+        'Allow camera access when the browser asks.',
+        'Use Redeem without the customer\'s QR instead.']}],
+  faq:[['Does Peekaa take the payment?','No. You take payment your usual way. Peekaa records what was sold and which method you chose.'],
+    ['What if I record the wrong amount?','Open Sales, find the record, and reverse or correct it. The customer\'s points move with it.'],
+    ['Can a walk-in be attached to a customer afterwards?','No. Reverse the walk-in in Sales and record it again against the customer.']],
+  related:['customers','sales','packages','rewards']},
+
+{slug:'sales',group:'module',icon:'sales',title:'Sales & refunds',route:'#/sales',modules:['sales'],
+  summary:'Every sale you have recorded, and how to correct one.',
+  path:'Reports → Sales',
+  keywords:['sales','refund','reverse','correct','history','transactions','void','mistake','wrong amount','cancel sale','export sales'],
+  what:'The record of every sale, newest first. It is also where a mistake is put right — reversing or correcting a sale here moves the customer\'s points with it.',
+  can:['Search and filter sales','Reverse a sale','Amend the amount of a sale','Export the list to CSV'],
+  screen:[['Date','When the sale was recorded.'],['Customer','Who it was recorded against, or blank for a walk-in.'],
+    ['Amount','What was recorded.'],['Branch','Which branch it belongs to.'],
+    ['Status','Whether the sale still stands, or has been reversed.']],
+  tasks:[{slug:'reverse-a-sale',title:'Reverse a sale',path:'Reports → Sales → find the sale → Reverse',
+    keywords:['reverse','refund','undo sale','cancel sale','wrong sale','mistake','void'],
+    steps:['Open Sales.','Find the sale — filter by date, or search the customer.','Press Reverse on that row.',
+      'Read what it says will happen, then confirm.'],
+    note:'Reversing takes back the points that sale earned and anything given because of it. The original row stays in the list, marked as reversed, so your history is complete.'},
+    {slug:'amend-sale',title:'Correct the amount of a sale',path:'Reports → Sales → find the sale → Amend',
+      keywords:['correct','amend','change amount','wrong price','fix sale','adjust'],
+      steps:['Open Sales.','Find the sale.','Press Amend on that row.','Enter the right amount in Amend sale amount and confirm.'],
+      note:'Points are recalculated from the corrected amount. Use this rather than reversing and re-recording when only the figure was wrong.'},
+    {slug:'export-sales',title:'Export sales to CSV',path:'Reports → Sales → Export CSV',
+      keywords:['export sales','csv','download','accounting','bookkeeping','spreadsheet'],
+      steps:['Open Sales.','Set the date range and any filters you want.','Press Export CSV.'],
+      note:'The export follows exactly the filters on screen. If it says no sales match, widen the range or clear the filters.'}],
+  know:['Reversing is recorded, not hidden. The original sale stays visible and marked.',
+    'A reversed sale is left out of your revenue and visit totals, and out of staff commission.',
+    'Only roles that can record sales can reverse one.'],
+  problems:[{q:'I cannot find a sale I know was recorded',
+    causes:['The date filter does not cover it.','It was recorded at a different branch.','It was a walk-in, so searching the customer will not find it.'],
+    fix:['Widen the date range and clear the filters.','Change the branch in the top bar.','Sort by date and look around the time it happened.']}],
+  faq:[['Does reversing a sale give the customer their money back?','No. Peekaa corrects the record and the points. You refund the money your usual way.'],
+    ['Can I delete a sale completely?','No. Sales are reversed, never erased, so your figures and the customer\'s history stay explainable.']],
+  related:['record-sale','daily-report','insights']},
+{slug:'appointments',group:'module',icon:'appointments',title:'Appointments',route:'#/appointments',
+  modules:['appointments'],hideWhenSeated:true,
+  summary:'Book a customer with a team member, and record how it went.',
+  path:'Serve & sell → Appointments',
+  keywords:['appointment','appointments','calendar','booking','schedule','diary','book','reschedule','no show','cancel','slot','rota','blocked time','time off'],
+  what:'The calendar for work that takes a person\'s time. Book a customer with a team member, move or cancel it, and record the outcome when they arrive.',
+  can:['See the calendar by day, 3 days, week or month','Book a new appointment','Reschedule or cancel','Record the outcome and take payment',
+    'Block time out for a team member','Filter an Appointment List and export it'],
+  screen:[['Calendar / Appointment List / Block','Three ways to look at the same diary: the grid, a filterable list, and time blocked out.'],
+    ['Day / 3 days / week / month','How much of the calendar is in view.'],
+    ['Unassigned','An appointment with no team member on it yet.'],
+    ['Off / Branch closed / Working hours not set','Why a slot cannot be booked. Working hours are set per team member.'],
+    ['Badge on the sidebar row','How many booking requests from customers are waiting for a decision.']],
+  tasks:[
+    {slug:'book-appointment',title:'Book an appointment',path:'Serve & sell → Appointments → New appointment',
+      keywords:['book appointment','new appointment','make booking','schedule','add appointment','book a customer'],
+      steps:['Open Appointments.','Press New appointment.','Choose the branch if you work across more than one.',
+        'Search the customer by name or phone and select them. Names repeat — confirm with the phone number.',
+        'Choose the service. The duration fills in from the service and you can change it.',
+        'Choose who it is assigned to, or leave it unassigned.','Set the date and time.',
+        'Add a note if it helps the person doing the work.','Save.'],
+      note:'Peekaa can suggest a team member who is free. Slots marked Off, Branch closed or Working hours not set cannot be booked.'},
+    {slug:'reschedule-appointment',title:'Move or cancel an appointment',path:'Appointments → select the appointment → Change appointment',
+      keywords:['reschedule','move appointment','change time','cancel appointment','postpone','amend'],
+      steps:['Open Appointments and select the appointment.','Press Change appointment.','Pick the new date and time, or choose to cancel.',
+        'Press Confirm amendment.'],
+      note:'The new time must be in the future. Cancelling leaves the appointment in your history marked Cancelled — it is not erased.'},
+    {slug:'complete-appointment',title:'Record the outcome of an appointment',path:'Appointments → select the appointment',
+      keywords:['complete','finish appointment','checkout','no show','did not turn up','outcome','mark done'],
+      steps:['Open Appointments and select the appointment.',
+        'Choose the outcome: Complete & checkout when they came and were served, or No-show if they did not.',
+        'Complete & checkout carries you into Record sale with the customer and the service already filled in.',
+        'Finish the sale to record the money and the points.'],
+      note:'An outcome can only be recorded once the appointment has started. Completing needs an account that can record sales.'},
+    {slug:'block-time',title:'Block time out for a team member',path:'Appointments → Block',
+      keywords:['block time','time off','holiday','leave','busy','unavailable','lunch','break'],
+      steps:['Open Appointments.','Switch to Block.','Choose the team member and the period to block.','Save.'],
+      note:'Blocked time stops new bookings landing in it. It does not move appointments that are already there.'},
+    {slug:'export-calendar',title:'Export the calendar',path:'Appointments → Appointment List → Download CSV',
+      keywords:['export calendar','csv','download appointments','print schedule','rota'],
+      steps:['Open Appointments.','Switch to Appointment List.','Set From, To and the status filter, then Apply filters.','Press Download CSV, or Print.'],
+      note:'The export follows exactly the filters on screen.'}],
+  know:['Completing an appointment is what creates the sale and the points. Booking one does not.',
+    'Cancelled appointments stay in the record and are excluded from your figures.',
+    'Cafes and bars do not have this screen — they take table Bookings and run a Waitlist instead.',
+    'Time is Singapore time throughout.'],
+  problems:[{q:'The calendar is empty but I know there are appointments',
+    causes:['The branch in the top bar is not the one they were booked at.','The view is on a day or week with nothing in it.',
+      'A staff filter is still applied from an earlier look.'],
+    fix:['Check the branch selector.','Switch to month view to see the whole picture.','Clear the filters on Appointment List.']},
+    {q:'I cannot book a slot',
+      causes:['The team member has no working hours set.','The branch is closed at that time.','The time is blocked out.','The slot is already taken.'],
+      fix:['Set the team member\'s working hours in Staff Members.','Check Block for time blocked out.','Try a different team member or leave it unassigned.']},
+    {q:'Complete is not offered',
+      causes:['The appointment has not started yet — an outcome cannot be recorded in advance.','Your role cannot record sales.'],
+      fix:['Wait until the start time, or move the appointment earlier.','Ask someone who can record sales to complete it.']}],
+  faq:[['Does booking an appointment earn the customer points?','No. Points are earned when the appointment is completed and the sale is recorded.'],
+    ['Can a customer book themselves?','Yes, if you turn customer booking on in Customer Interface. Their request appears under Bookings for you to confirm.']],
+  related:['bookings','waitlist','services','staff','record-sale']},
+
+{slug:'bookings',group:'module',icon:'bookings',title:'Bookings',route:'#/bookings',modules:['bookings'],
+  summary:'Requests customers have sent you, waiting for a yes or no.',
+  path:'Serve & sell → Bookings',
+  keywords:['booking','bookings','request','requests','reservation','table','confirm','decline','approve','customer booking','portal'],
+  what:'When customers can book themselves, their requests land here. Nothing is held until you decide — approve it, decline it, or offer a different time.',
+  can:['See booking requests with what the customer asked for','Approve a request','Decline a request',
+    'Offer a different time and confirm in one step','See change requests on bookings already made','Copy your booking link'],
+  screen:[['Received','When the customer sent the request.'],['Requested / Preferred','The date and time they asked for.'],
+    ['Party','How many people, for table bookings.'],['Kind','What sort of request it is.'],
+    ['Status','Whether it is still waiting, approved or declined.'],['Change requests','Customers asking to move a booking they already have.'],
+    ['Copy portal link','Your public booking link, to put on your own page or send to a customer.']],
+  tasks:[{slug:'decide-request',title:'Approve or decline a booking request',path:'Serve & sell → Bookings',
+    keywords:['approve booking','confirm booking','decline','reject','accept request','answer request'],
+    steps:['Open Bookings.','Read what the customer asked for, and check you can do it.',
+      'Press Approve to confirm the time they asked for, or Decline if you cannot.',
+      'To offer a different time, set the new date and time and press Move & confirm.'],
+    note:'The customer sees the answer in their own app. A time that has already passed cannot be approved — offer a new one instead.'}],
+  know:['A request is not a booking. Nothing is held for the customer until you approve it.',
+    'Requests only appear if you have turned customer booking on in Customer Interface.',
+    'The number on the sidebar tells you how many are waiting.',
+    'A request that is past its time is marked Time has passed and can no longer be approved as-is.'],
+  problems:[{q:'No requests ever arrive',
+    causes:['Customer booking is switched off in Customer Interface.','Customers have not been given your booking link or QR.',
+      'You are looking at the wrong branch.'],
+    fix:['Open Customer Interface -> Appointment Setting and check booking is on.',
+      'Use Copy portal link and share it, or display your business QR.']}],
+  faq:[['What happens to the customer when I approve?','It becomes a real appointment or booking, and the customer sees it confirmed in their app.'],
+    ['Can I approve a request for a different time?','Yes. Set the time you can do and press Move & confirm — it moves and confirms in one step.']],
+  related:['appointments','waitlist','customer-app']},
+
+{slug:'waitlist',group:'module',icon:'waitlist',title:'Waitlist',route:'#/waitlist',modules:['waitlist','bookings'],
+  summary:'People waiting now, and what happens when a place comes free.',
+  path:'Serve & sell → Waitlist',
+  keywords:['waitlist','waiting','queue','walk in','walkin','seat','call','table','line','standby'],
+  what:'The queue of people waiting for a place. Add a walk-in, call them when you are ready, and seat or book them.',
+  can:['Add a walk-in to the queue','Mark someone as Called','Seat a walk-in now','Turn a walk-in into a booking','Remove someone from the queue'],
+  screen:[['Waiting now','How many people are in the queue.'],['Name / Phone','Who is waiting and how to reach them.'],
+    ['Wanted date & time','When they asked for, or No preference.'],['Party size','For table seating.'],
+    ['Called','You have called them; they have not been seated yet.'],['Linked booking','This entry came from a booking request.']],
+  tasks:[{slug:'add-walkin',title:'Add a walk-in to the waitlist',path:'Serve & sell → Waitlist → Add walk-in',
+    keywords:['add walk in','queue','waiting list','add to queue','someone waiting'],
+    steps:['Open Waitlist.','Press Add walk-in.','Enter the name. This is required.','Add the phone number so you can call them.',
+      'Set the party size or the service if it applies.','Press Add.'],
+    note:'A waitlist entry is not a sale and not an appointment. It only records that someone is waiting.'},
+    {slug:'seat-walkin',title:'Seat or book someone from the waitlist',path:'Serve & sell → Waitlist',
+      keywords:['seat','seat now','book from waitlist','call customer','their turn'],
+      steps:['Open Waitlist.','Press Call when you have called them.','Press Seat now when they sit down, or Book to put them in the calendar.',
+        'Book carries what you already know — the wanted time and the service — into a new appointment.'],
+      note:'An entry that came from a booking request must be answered with Confirm or Decline in Bookings, not seated here.'}],
+  know:['Waitlist works with Bookings. If Bookings is off for your business, the Waitlist screen is not available either.',
+    'Nothing on this screen records money. Record the sale at Record sale when they are served.'],
+  problems:[{q:'Waitlist is not in my sidebar',
+    causes:['Bookings is not switched on for your business, and the Waitlist depends on it.','Your account does not have either module.'],
+    fix:['Ask the owner to check Bookings is on.','If the owner cannot switch it on, Bookings is not in your plan.']}],
+  related:['bookings','appointments','record-sale']},
+
+{slug:'services',group:'module',icon:'services',title:'Services',route:'#/services',modules:['services'],
+  summary:'What you sell that takes time, and bundles of them.',
+  path:'Operations setup → Services',
+  keywords:['service','services','treatment','menu','price','duration','bundle','catalogue','what i sell','add service','pricing'],
+  what:'Your service list. A service has a name, a price and how long it takes, and that is what fills the counter, the calendar and the customer\'s app.',
+  can:['Add a service with its price and duration','Switch a service On or Off','Set which branches offer it','Create a bundle of two or more items','Edit or delete'],
+  screen:[['Name','What staff and customers see.'],['Price','What it is sold for.'],['Duration','How long it takes — this is what the calendar reserves.'],
+    ['On / Off','Whether it can be sold right now. Off keeps the record and its history.'],
+    ['Offered at','Which branches sell it.'],['Bundles','Two or more items sold together as one thing.']],
+  tasks:[{slug:'add-service',title:'Add a service',path:'Operations setup → Services → Add service',
+    keywords:['add service','new service','create service','set price','treatment','add to menu'],
+    steps:['Open Services.','Press Add service.','Enter the name. This is required.','Set the price.',
+      'Set the duration in minutes — the calendar uses this.','Choose which branches offer it.','Save.'],
+    note:'The service appears at Record sale and in the appointment form straight away.'},
+    {slug:'add-bundle',title:'Create a bundle',path:'Operations setup → Services → Add bundle',
+      keywords:['bundle','combo','package deal','two services','set menu','group items'],
+      steps:['Open Services.','Press Add bundle.','Name the bundle.','Pick at least two items to include.','Set the bundle price.','Save.'],
+      note:'A bundle needs at least two items. It behaves as one line at the counter.'}],
+  know:['Switching a service Off stops it being sold without removing anything already sold.',
+    'Deleting a service is not the same as switching it off. Switch it off unless you are sure.',
+    'Duration is what the calendar reserves, so a wrong duration makes the diary wrong.'],
+  problems:[{q:'A service does not appear at Record sale',
+    causes:['It is switched Off.','It is not offered at the branch you are on.','The counter catalogue is switched off for this business.'],
+    fix:['Open Services and check On and Offered at.','Change the branch in the top bar.']}],
+  related:['products','packages','appointments','record-sale']},
+
+{slug:'products',group:'module',icon:'inventory',title:'Products',route:'#/inventory',modules:['inventory'],
+  summary:'Physical things you sell over the counter.',
+  path:'Operations setup → Products',
+  keywords:['product','products','stock','inventory','retail','goods','item','sell product','add product','price'],
+  what:'Your product list. This is the only place a product is created, and it is what the counter offers under Products.',
+  can:['Add a product with its price','Switch a product On or Off','Set which branches sell it','Edit a product'],
+  screen:[['Name','What staff see at the counter.'],['Price','What it sells for.'],
+    ['On / Off','Whether it can be sold right now.'],['Sold at','Which branches sell it.']],
+  tasks:[{slug:'add-product',title:'Add a product',path:'Operations setup → Products → Add product',
+    keywords:['add product','new product','create product','stock item','retail item'],
+    steps:['Open Products.','Press Add product.','Enter the name. This is required.','Set the price.','Choose which branches sell it.','Save.'],
+    note:'It appears under the Products tab at Record sale straight away.'}],
+  know:['Products are the only catalogue a reward can point at when the reward is a free item.',
+    'Switching a product Off leaves everything already sold intact.'],
+  problems:[{q:'A product is missing at the counter',
+    causes:['It is Off.','It is not set to be sold at this branch.'],
+    fix:['Open Products and check On and Sold at.','Check the branch in the top bar.']}],
+  related:['services','record-sale','packages']},
+
+{slug:'packages',group:'module',icon:'packages',title:'Packages',route:'#/packages',modules:['packages'],
+  summary:'Prepaid sessions a customer buys once and uses over time.',
+  path:'Operations setup → Packages',
+  keywords:['package','packages','prepaid','sessions','bulk','course','10 sessions','credit','buy in advance','expiry'],
+  what:'A package is a number of sessions a customer pays for up front and uses later. You set them up here; they are sold and used at Record sale.',
+  can:['Create a package and price it','See the saving against buying each session separately','Choose whether buying it earns points',
+    'Set an expiry','Switch a package On or Off','See which customers hold packages and what is left'],
+  screen:[['Individual value','What the sessions would cost bought separately.'],['Selling price','What the customer pays for the package.'],
+    ['Savings','The difference, in money and as a percentage.'],['Offered at / Usable at','Which branches sell it, and which accept it.'],
+    ['Expiry','How long the customer has to use it. Leave blank for no expiry.'],
+    ['Customer packages','The sidebar row showing who holds what, and how many sessions are left.']],
+  tasks:[{slug:'create-package',title:'Create a package',path:'Operations setup → Packages → Add package',
+    keywords:['create package','new package','set up package','sessions','prepaid','bulk offer'],
+    steps:['Open Packages.','Press Add package.','Give the package a name.','Choose exactly which service or variant it covers.',
+      'Set how many sessions it contains.','Set the selling price — Peekaa shows the saving against the individual value.',
+      'Set an expiry in days, or leave it blank for no expiry.','Choose whether buying it earns points.','Save.'],
+    note:'Expiry must be between 1 and 3650 days, or blank. Eligibility must name the exact service, so the counter knows what a session may be used for.'},
+    {slug:'see-customer-packages',title:'See what a customer has left',path:'Serve & sell → Customer packages',
+      keywords:['customer packages','sessions left','how many left','remaining','who has packages','balance'],
+      steps:['Open Customer packages under Serve & sell.','Search the customer.','The list shows each package they hold and the sessions remaining.'],
+      note:'The same information is on the customer\'s profile, and the customer sees it in their own app.'}],
+  know:['Buying a package and using a session are two different records. The purchase is takings; using a session is a visit, not new takings, so revenue is never counted twice.',
+    'Whether buying a package earns points is your decision, set per package.',
+    'Switching a package Off stops new sales. Sessions customers already hold stay valid.'],
+  problems:[{q:'A session will not apply at the counter',
+    causes:['The package does not cover the service being sold.','It has expired.','There are no sessions left.',
+      'The branch is not one the package is usable at.'],
+    fix:['Open the customer\'s profile and check the package, its remaining sessions and its expiry.',
+      'Open Packages and check Usable at includes this branch.']}],
+  faq:[['Does selling a package count as revenue today?','The purchase is recorded when it is sold. Using a session later does not add revenue again — it is recorded as a visit.'],
+    ['Can I extend a package that expired?','Not from this screen. Sell a fresh package, or record the session as an ordinary sale.']],
+  related:['record-sale','services','customers']},
+
+{slug:'rewards',group:'module',icon:'star',title:'Rewards & Offer',route:'#/grow',modules:['loyalty'],
+  summary:'Everything customers earn or claim, in one place.',
+  path:'Rewards & Offer → Rewards Programme',
+  keywords:['reward','rewards','loyalty','points','stamp','stamps','tier','tiers','vip','offer','promotion','programme','program','birthday','welcome','bring back','win back','referral','earn','redeem','gift','discount','grow','create a reward','make a reward','new reward','add a reward','set up rewards','create a programme','start a programme'],
+  what:'Peekaa runs several reward programmes and each one is independent — you can run any combination. Rewards Programme is the list of them, and each card opens its own setup.',
+  can:['Set up a Point system, a Stamp card or Tier membership','Give new sign-ups a Welcome gift','Give a Birthday benefit',
+    'Win customers back with Bring-back rewards','Reward customers who introduce friends with Referrals',
+    'Publish a Limited Offer','See what each programme has actually done'],
+  screen:[['Overview','Every programme with its status in one table, plus how each has been used.'],
+    ['Rewards Programme','The cards. Each says On, Off or Not set up, and opens its own setup.'],
+    ['Limited Offer','Short-lived offers you publish to customers, with a start and end date.'],
+    ['History','Programmes and offers that have ended.'],
+    ['Point system','Customers earn points on what they spend and redeem them for gifts you define.'],
+    ['Stamp card','A stamp per qualifying spend; a gift when the card is full.'],
+    ['Tier membership','Three tiers by default. Customers climb as they earn, and each tier can carry its own benefits.'],
+    ['Welcome gift','One gift for a new sign-up, on their first visit.'],
+    ['Birthday benefit','A treat in their birthday month, or a window around the day.'],
+    ['Bring-back rewards','A voucher for customers who have not been in for a set number of days.'],
+    ['Referrals','A reward for the customer who introduces someone, and for the friend.']],
+  tasks:[
+    {slug:'set-up-points',title:'Set up the Point system',path:'Rewards & Offer → Rewards Programme → Point system',
+      roles:['owner'],keywords:['points','point system','earn rate','points per dollar','set up points','loyalty points','redeem points'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Point system.','Set how many points a customer earns per dollar spent.',
+        'Add at least one reward: what it is, and how many points it costs.','Set each reward On.','Publish.'],
+      note:'Earning without a reward to claim gives customers nothing to aim at. Add at least one reward before you publish.'},
+    {slug:'set-up-stamps',title:'Set up a Stamp card',path:'Rewards & Offer → Rewards Programme → Stamp card',
+      roles:['owner'],keywords:['stamp','stamp card','punch card','collect stamps','x visits free','loyalty card'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Stamp card.','Set the minimum spend that earns one stamp.',
+        'Set how many stamps fill a card.','Add the gift the full card earns, and any mid-card milestones.','Publish.'],
+      note:'A mid-card milestone unlocks without using up stamps. The card only resets when it is full.'},
+    {slug:'set-up-tiers',title:'Set up Tier membership',path:'Rewards & Offer → Rewards Programme → Tier membership',
+      roles:['owner'],keywords:['tier','tiers','vip','silver gold','levels','membership levels','status','ranks'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Tier membership.','Check the three default tiers and rename them if you want.',
+        'Set the threshold for each tier.','Add benefits to a tier if you want it to carry perks.','Publish.'],
+      note:'Before publishing a raised threshold, Peekaa tells you how many existing members would move down. Spending and refunds never demote a customer.'},
+    {slug:'set-up-welcome',title:'Set up the Welcome gift',path:'Rewards & Offer → Rewards Programme → Welcome gift',
+      roles:['owner'],keywords:['welcome','welcome gift','new member','first visit','sign up gift','joining gift'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Welcome gift.','Choose the free item or benefit new members get.',
+        'Switch it On.','Publish.'],
+      note:'It is given once, on the customer\'s first visit after joining. A customer who arrived through a referral gets the referral reward rather than both.'},
+    {slug:'set-up-birthday',title:'Set up the Birthday benefit',path:'Rewards & Offer → Rewards Programme → Birthday benefit',
+      roles:['owner'],keywords:['birthday','birthday gift','birthday treat','dob','date of birth','anniversary'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Birthday benefit.','Choose the benefit: a percentage discount, or a free item.',
+        'Choose when it can be used — their whole birthday month, or a window of days around the date.',
+        'Write the terms. Peekaa can suggest wording from the benefit you chose.',
+        'Tick the box that enables it for eligible customers, then publish.'],
+      note:'Only customers with a birth date on record are eligible. Add birth dates when you add customers, or in Edit customer.'},
+    {slug:'set-up-bringback',title:'Set up Bring-back rewards',path:'Rewards & Offer → Rewards Programme → Bring-back rewards',
+      roles:['owner'],keywords:['bring back','bringback','win back','lapsed','not been in','quiet customers','reactivate','retention','come back'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Bring-back rewards.','Name the campaign.',
+        'Set how many days away makes a customer eligible.','Set the reward they get for coming back.',
+        'Set how long the voucher lasts.','Save and switch it on.'],
+      note:'Deleting a campaign does not take back vouchers already sent — those stay valid.'},
+    {slug:'set-up-referrals',title:'Set up Referrals',path:'Rewards & Offer → Rewards Programme → Referrals',
+      roles:['owner'],modules:['referrals'],
+      keywords:['referral','referrals','refer a friend','introduce','word of mouth','share code','invite friend'],
+      steps:['Open Rewards & Offer.','On Rewards Programme, open Referrals.','Set the qualifying sale — what the friend has to do for it to count.',
+        'Set the reward for the customer who introduced them, and for the friend.','Save and switch it on.'],
+      note:'Both sides are paid. A friend who arrives through a referral gets the referral reward rather than the welcome gift.'},
+    {slug:'publish-offer',title:'Publish a Limited Offer',path:'Rewards & Offer → Limited Offer',
+      roles:['owner'],keywords:['promotion','offer','limited offer','discount','campaign','special','deal','publish','announce'],
+      steps:['Open Rewards & Offer -> Limited Offer.','Start a new offer.',
+        'Write the headline (2-70 characters) and the customer message (10-600 characters).',
+        'Write the exact offer — what the customer actually gets.','Set a clear customer action label.',
+        'Set the start and end date and time. The end must be in the future.','Choose which branches it applies to.','Publish.'],
+      note:'Only the owner can publish offers. Published is not the same as live: an offer with a future start date is Scheduled until it begins.'},
+    {slug:'check-programme-results',title:'See what a programme has actually done',path:'Rewards & Offer → Overview',
+      keywords:['results','how many redeemed','performance','used','analytics','did it work','uptake'],
+      steps:['Open Rewards & Offer -> Overview.','Read the table: every programme with its status and how it has been used.',
+        'Set a date range to narrow it.','Open History for programmes and offers that have ended.'],
+      note:'Redemption counts are real counts. A programme with none shows none rather than an invented zero.'}],
+  know:['The programmes are independent. Points, stamps, tiers and referrals can all run at the same time, and stamps never feed tiers.',
+    'A programme has to be published before customers see it. Saving a draft changes nothing for them.',
+    'Only the owner can set up or publish programmes. Other roles can see them and operate them at the counter.',
+    'Turning a reward Off stops it being claimed. Vouchers already issued stay valid.',
+    'Tiers are measured by points earned by default. Spending points and refunds never move a customer down a tier.'],
+  problems:[{q:'A customer is not earning points',
+    causes:['No programme is published and active.','The sale was a walk-in, so no customer was attached.',
+      'What was sold does not earn under your settings.','The customer has not joined your programme.'],
+    fix:['Open Rewards & Offer -> Overview and check the programme reads On.',
+      'Open the customer\'s profile and check the sale is listed against them.']},
+    {q:'A reward is not showing for a customer who should have it',
+      causes:['They do not have enough points yet.','The reward is Off, paused, or has ended.',
+        'It has already been used within its limit period.','It does not apply to what is in this sale.'],
+      fix:['Check the exact balance on the customer\'s profile.',
+        'Open Rewards Programme and check the reward\'s status.']},
+    {q:'I set something up but customers cannot see it',
+      causes:['It was saved as a draft and never published.','The programme is set up but switched Off.',
+        'It is a Limited Offer whose start date has not arrived.'],
+      fix:['Open the programme and publish it.','Check the card says On, not Off or Not set up.']}],
+  faq:[['Can I run points and stamps at the same time?','Yes. Every programme is independent and you can run any combination.'],
+    ['What happens if I raise a tier threshold?','Members are re-evaluated straight away. Before you publish, Peekaa tells you how many would move down.'],
+    ['Do I need a birth date for the birthday benefit?','Yes. Only customers with a birth date on record are eligible.'],
+    ['If I delete a bring-back campaign, do customers lose their vouchers?','No. Vouchers already sent stay valid.']],
+  related:['record-sale','customers','customer-app','insights']},
+
+{slug:'insights',group:'module',icon:'reports',title:'Business Insights',route:'#/reports',modules:['reports'],
+  summary:'Money in, work booked and customers returning, over a period you choose.',
+  path:'Reports → Business Insights',
+  keywords:['report','reports','insights','revenue','analytics','performance','trend','compare','period','money in','returning customers','export'],
+  what:'The period view of the business: what came in, what was booked, and how many customers came back. Choose the range and the branch, and compare against an earlier period.',
+  can:['See money in, booked work and returning customers for a period','Change the date range and compare with a baseline',
+    'Narrow to one branch','Export the sales behind a figure to CSV'],
+  screen:[['Money in','What was recorded as takings in the selected period.'],
+    ['Booked work','What was scheduled in the period.'],['Returning customers','Customers who came back within the period.'],
+    ['Compare with','An earlier period to read the current one against.'],
+    ['Branch','Which branch the whole screen is for.']],
+  know:['Every figure names the period, the branch and what it counts. Change any of them and the figures change.',
+    'When a figure cannot be read, Peekaa says so rather than showing a zero.',
+    'A projection is labelled as a projection, never presented as history.',
+    'Anyone whose account includes Business Insights can open it. Business Intelligence is the one that additionally needs finance access.'],
+  problems:[{q:'Business Insights and my Daily report disagree',
+    causes:['Different date ranges.','Different branches.','One includes reversed sales and the other does not.'],
+    fix:['Set both to the same range and the same branch.',
+      'Open Sales for that exact range and read the individual records — that is the underlying truth.']},
+    {q:'The export says there are no sales',
+      causes:['The filters on screen exclude everything.','The range has no sales at that branch.'],
+      fix:['Widen the range or clear the filters, then export again.']}],
+  related:['daily-report','sales','intelligence','dashboard']},
+
+{slug:'intelligence',group:'module',icon:'customers',title:'Business Intelligence',route:'#/customerintel',modules:['customerintel'],
+  summary:'Who your customers are, how they arrive, and what to do next.',
+  path:'Reports → Business Intelligence',
+  keywords:['intelligence','customer intelligence','bi','acquisition','funnel','segments','demographics','opportunities','who are my customers','analysis','export'],
+  what:'A deeper read of your customer base: where customers come from, how they move from sign-up to booking, which categories sell, and a ranked list of things worth doing.',
+  can:['See how customers arrive and where they drop off','See which categories and services carry the business',
+    'See which customers need attention','Compare branches','Export the full analysis to CSV'],
+  screen:[['Acquisition mix','How customers arrived.'],['How customers move through sign-up and booking','Where people drop out.'],
+    ['Contactable customers, by channel','How many you can actually reach.'],['Category mix','Which categories the takings come from.'],
+    ['Next 90 days','What is expected, labelled as an expectation rather than as history.'],
+    ['Identified customer records','How many records the analysis is based on.']],
+  know:['This screen needs finance access — Owner, Manager or Bookkeeper. Staff and Front desk cannot open it.',
+    'A section that does not have enough data to be reliable says so instead of showing a figure.',
+    'The export contains customer-level data. Handle it accordingly.'],
+  problems:[{q:'Business Intelligence is not in my sidebar',
+    causes:['Your role does not have finance access.','The module is not part of your plan.'],
+    fix:['Ask the owner. Only Owner, Manager and Bookkeeper can open it.']},
+    {q:'A section says the data is not reliable yet',
+      causes:['There are not enough customer records in the range for the figure to mean anything.'],
+      fix:['Widen the date range, or come back when you have more history.']}],
+  related:['insights','customers','rewards']},
+
+{slug:'daily-report',group:'module',icon:'daily',title:'Daily report',route:'#/dailyreport',modules:['dailyreport'],
+  summary:'One day, end to end — what was sold and what it came to.',
+  path:'Reports → Daily report',
+  keywords:['daily','daily report','end of day','cash up','close','today','yesterday','shift','takings','day total'],
+  what:'The day\'s sales for one branch, in one place. Run it at the end of a shift to see what was recorded.',
+  can:['Run the report for a chosen day and branch','See the sales behind the total','Export the day to CSV'],
+  screen:[['Date','The day being reported. Choose it before running.'],['Branch','Which branch the day is for.'],
+    ['Totals','What was recorded on that day.'],['Sales list','The individual records behind the total.']],
+  tasks:[{slug:'run-daily-report',title:'Run the daily report',path:'Reports → Daily report → Run report',
+    keywords:['run report','end of day','cash up','close the day','daily total'],
+    steps:['Open Daily report.','Choose the date.','Check the branch in the top bar is the one you want.',
+      'Press Run report.','Read the totals and the list underneath.','Export to CSV if you need it.'],
+    note:'The report has to be run before it can be exported.'}],
+  know:['One day, one branch. Switch branch for another site.',
+    'Reversed sales are excluded from the totals but the original rows stay visible in Sales.',
+    'Anyone whose account includes Daily report can run it.'],
+  problems:[{q:'The day shows no sales',
+    causes:['The wrong branch is selected.','The date is not the one you meant.','Nothing was recorded that day.'],
+    fix:['Check the branch and the date, then run the report again.','Open Sales for the same day to confirm.']}],
+  related:['sales','insights','dashboard']},
+
+{slug:'commission',group:'module',icon:'staff',title:'Staff commission',route:'#/staffperf',modules:['staffperf'],
+  summary:'What each team member sold, and the commission it earned.',
+  path:'Reports → Staff commission',
+  keywords:['commission','staff commission','payroll','who sold','staff performance','earnings','bonus','sales by staff','pay'],
+  what:'Every sale line, each paying exactly one team member, with the customer, the time, the rate and the commission. One commission per line — nothing overlaps.',
+  can:['See commission by team member for a period','Filter by day, week, month or year','Open a team member to see the exact sales'],
+  screen:[['All / a team member','Whose lines you are looking at.'],['Date filter','Daily by default; also this week, this month, this year.'],
+    ['Line','What was sold, to whom, and when.'],['Rate','The commission rate that applied at the time of the sale.'],
+    ['Reversed','A reversed sale is shown struck through and counted in no total.']],
+  know:['A line pays exactly one team member, so two people can never be paid for the same sale.',
+    'The rate shown is the rate that applied when the sale happened, not today\'s rate.',
+    'Every figure on the screen is worked out from the same lines the table shows.',
+    'Commission rates are set per team member in Staff Members. Peekaa provides the mechanism; the numbers are yours.',
+    'This screen needs finance access.'],
+  problems:[{q:'A team member\'s commission looks too low',
+    causes:['Sales were recorded without them assigned.','Some sales in the period were reversed.',
+      'Their commission rate was set after those sales happened.','The date filter is narrower than you think.'],
+    fix:['Open the team member to see the exact lines.','Check who was assigned on the sale in Sales.',
+      'Check the rate in Staff Members.']}],
+  related:['staff','sales','insights']},
+{slug:'branches',group:'module',icon:'branch',title:'Branches',route:'#/branches',roles:['owner'],
+  summary:'Your locations, their contact details, opening hours and billing.',
+  path:'Operations setup → Branches',
+  keywords:['branch','branches','location','outlet','shop','store','site','address','opening hours','second branch','new location','multi outlet','edit a branch','change a branch','branch details','delete a branch','branch billing'],
+  what:'Every location you operate. A branch carries its own address and phone, its own opening hours, its own staff, and its own billing.',
+  can:['Add a branch','Set a branch\'s address, phone and email','Set opening hours','Assign staff to a branch','Manage a branch\'s billing','Delete an empty branch'],
+  screen:[['Name','What staff and customers see. Required.'],['Address / Phone / Email','What customers see on your business page.'],
+    ['Opening hours','When this branch is open. The calendar will not book outside them.'],
+    ['Copy settings from','Start a new branch from an existing one instead of empty.'],
+    ['Billing cycle for this branch','Monthly or Annual. Each branch is billed separately.'],
+    ['Default','Your main branch. It cannot be deleted.'],
+    ['Add or manage staff','Who works at this branch.']],
+  tasks:[{slug:'add-branch',title:'Add a branch',path:'Operations setup → Branches → Add branch',
+    keywords:['add branch','new branch','second location','open a shop','new outlet','expand'],
+    steps:['Open Branches.','Press Add branch.','Enter the name. This is required.',
+      'Add the address, phone and email — these appear on your customers\' business page.',
+      'Choose Copy settings from an existing branch, or Start empty.',
+      'Choose the billing cycle for this branch and complete the payment.',
+      'Set the opening hours.','Assign the staff who work there.'],
+    note:'A new branch is billed in its own right. Until its payment is confirmed the branch shows Awaiting payment.'},
+    {slug:'branch-hours',title:'Set a branch\'s opening hours',path:'Operations setup → Branches → Opening hours',
+      keywords:['opening hours','hours','closed','open times','trading hours','schedule','shut'],
+      steps:['Open Branches.','Open the branch.','Open Opening hours.','Set the hours for each day.','Save.'],
+      note:'The calendar will not book a slot when the branch is closed — it says Branch closed instead.'},
+    {slug:'assign-staff-branch',title:'Assign staff to a branch',path:'Operations setup → Branches → Add or manage staff',
+      keywords:['assign staff','branch staff','who works where','staff branch','move staff'],
+      steps:['Open Branches.','Open the branch.','Press Add or manage staff.','Assign or unassign the team members.'],
+      note:'A staff member only sees customers, sales and appointments for the branches they are assigned to.'}],
+  know:['Your main branch cannot be deleted.',
+    'A branch with recorded sales or appointments cannot be deleted — its history has to stay somewhere true.',
+    'Deleting a branch asks you to type its name, so it cannot happen by accident.',
+    'Every figure elsewhere in the workspace is for the branch selected in the top bar.',
+    'Only the owner can open this screen.'],
+  problems:[{q:'A new branch says Awaiting payment',
+    causes:['The payment for that branch has not been confirmed yet.','The payment failed.'],
+    fix:['Press Pay now, or Retry payment.','If it says the payment is still confirming, wait a moment and try again.']},
+    {q:'I cannot delete a branch',
+      causes:['It is your main branch.','It has recorded sales or appointments.'],
+      fix:['Make another branch the main one first, if that is what you want.',
+        'A branch with history stays. Unassign its staff instead, so it stops being used.']}],
+  related:['staff','dashboard','customer-app','subscription']},
+
+{slug:'staff',group:'module',icon:'staff',title:'Staff Members',route:'#/staffmembers',roles:['owner'],
+  summary:'Your team, what they can open, and how they sign in.',
+  path:'Operations setup → Staff Members',
+  keywords:['staff','team','employee','members','invite','add staff','permission','access','role','commission','login','sign in','template','roster'],
+  what:'Your roster. Add someone for scheduling and reporting only, or invite them to sign in. Each person has one role, and you choose which modules they can open.',
+  can:['Add a team member','Create an invite so someone can sign in','Change someone\'s role',
+    'Set module access to Off, Read or Edit per person','Save and apply a module template','Set commission rates','Import your team from a spreadsheet'],
+  screen:[['Team','Everyone on your roster.'],['Role','Owner, Manager, Staff, Front desk or Bookkeeper.'],
+    ['Modules','Off, Read or Edit per module, for this person.'],
+    ['Create company invite','Makes a link and a code. The role is fixed when the invite is created.'],
+    ['Module templates','A saved set of module access you can apply to other people.'],
+    ['Commission','The rate this person earns. Peekaa provides the mechanism; the rate is yours.']],
+  tasks:[{slug:'add-staff',title:'Add a team member',path:'Operations setup → Staff Members → Add staff',
+    keywords:['add staff','new employee','add team member','hire','roster only','no login'],
+    steps:['Open Staff Members.','Press Add staff.','Enter their name and role.','Set which branches they work at.',
+      'Set their module access.','Save.'],
+    note:'Someone added this way is on the roster for scheduling and reporting but cannot sign in. Create an invite if they need a login.'},
+    {slug:'invite-staff',title:'Invite a teammate to sign in',path:'Operations setup → Staff Members → Create company invite',
+      keywords:['invite','invite staff','login for staff','join business','staff account','code','give access'],
+      steps:['Open Staff Members.','Scroll to Create company invite.','Choose the role the invite will grant.',
+        'Add their email if you want it on the record.','Press Create invite.',
+        'Send them the link or the code.','They choose "Join an existing business" when they sign up.'],
+      note:'The role is fixed by the invite — it cannot be changed during sign-up. Owner cannot be given out by invite. You can revoke an invite that has not been used.'},
+    {slug:'set-permissions',title:'Set what a teammate can open',path:'Operations setup → Staff Members → select a person → Modules',
+      keywords:['permission','access','modules','off read edit','restrict','limit access','what they can see'],
+      steps:['Open Staff Members.','Open the person.','Set each module to Off, Read or Edit.',
+        'Give at least one module Read or Edit, or there is nothing for them to open.','Save.'],
+      note:'Some modules depend on others. When you grant one that needs another, Peekaa adds the dependency as Read and tells you which.'},
+    {slug:'module-template',title:'Reuse a set of permissions',path:'Operations setup → Staff Members → Module templates',
+      keywords:['template','reuse permissions','same access','copy access','apply to others','bulk permission'],
+      steps:['Set one person\'s modules the way you want them.','Save that set as a template and name it.',
+        'Open another person, pick the template, and apply it.'],
+      note:'Applying a template grants Edit access for the modules in it. Modules the business does not have are skipped, and Peekaa tells you which.'},
+    {slug:'set-commission',title:'Set a commission rate',path:'Operations setup → Staff Members → select a person',
+      keywords:['commission','rate','percentage','pay','bonus','how much they earn'],
+      steps:['Open Staff Members.','Open the person.','Set the commission rate as a percentage between 0 and 100.','Save.'],
+      note:'The rate is recorded against each sale as it happens, so changing it later does not rewrite past commission.'}],
+  know:['Only the owner can open this screen.','The Owner role is not invitable.',
+    'Deactivating someone frees their login seat. A roster-only person who cannot sign in does not use a seat.',
+    'Access changes take effect the next time that person loads the workspace.',
+    'A person can only see customers, sales and appointments at the branches they are assigned to.'],
+  problems:[{q:'A teammate cannot sign in',
+    causes:['The invite was never sent, or has been revoked.','They signed up as a new business instead of joining an existing one.',
+      'They are a roster-only record with no login.'],
+    fix:['Create a fresh invite and send them the link or code.',
+      'Tell them to choose "Join an existing business" during sign-up, not "Set up business".']},
+    {q:'A teammate sees the wrong things',
+      causes:['Their role is wrong.','Their module access is wrong.','They are assigned to the wrong branches.'],
+      fix:['Open their record and check the role, the module list and the branch assignment, in that order.']}],
+  faq:[['What does a login cost?','Each active login is a seat on your subscription. A roster-only person with no login is free.'],
+    ['Can I change someone\'s role later?','Yes, on their record in Staff Members. It takes effect when they next load the workspace.']],
+  related:['roles','branches','commission','subscription']},
+
+{slug:'customer-app',group:'module',icon:'customers',title:'Customer Interface',route:'#/customer-interface',roles:['owner'],
+  summary:'Your business profile, your booking rules and your sign-up QR.',
+  path:'Customer Interface',
+  keywords:['customer interface','business profile','logo','brand','qr','sign up qr','join','booking rules','customer permission','what customers see','preview','colour'],
+  what:'Everything that decides what your customers see and what they are allowed to do. Change it here and it changes in their app.',
+  can:['Set your business profile — name, logo, colours and images','Preview what customers see',
+    'Set whether customers can book, and the rules for it','Set what customers are permitted to do','Get your business QR'],
+  screen:[['Business Profile','Your name, logo, images and colours, with a live preview of the customer\'s phone.'],
+    ['Customer Permission','What customers may do — including whether they can request bookings.'],
+    ['Appointment Setting','The rules for customer booking: what they may request and how far ahead.'],
+    ['Live preview','The customer\'s phone, beside the form, updating as you edit.'],
+    ['Branch contact details','The address and phone customers see, per branch.']],
+  tasks:[{slug:'business-profile',title:'Set your business profile',path:'Customer Interface → Business Profile',
+    keywords:['logo','brand','profile','colour','image','photo','business name','look','appearance'],
+    steps:['Open Customer Interface.','Open Business Profile.','Upload your logo and any programme images.',
+      'Set your colours.','Check the live preview beside the form.','Save.'],
+    note:'The preview is what your customers will actually see. Nothing is published to them until you save.'},
+    {slug:'business-qr',title:'Get your business QR',path:'Account menu → My Business QR',
+      keywords:['qr','business qr','sign up qr','join qr','print qr','code for customers','how customers join','poster'],
+      steps:['Open the account menu at the top right.','Choose My Business QR.','Print it, or display it on a screen at the counter.',
+        'Customers scan it, create an account, and your programme is added automatically.'],
+      note:'This is the only way a customer can join you. They cannot search for your business. You can replace the QR if it is ever misused — the old one then stops working.'},
+    {slug:'customer-booking',title:'Let customers book themselves',path:'Customer Interface → Appointment Setting',
+      keywords:['customer booking','self booking','online booking','let customers book','booking rules','requests'],
+      steps:['Open Customer Interface.','Open Appointment Setting.','Switch customer booking on.','Set the rules for what they may request.','Save.'],
+      note:'Customer requests arrive under Bookings for you to approve or decline. Nothing is held until you decide.'}],
+  know:['Only the owner can open this screen.',
+    'Customers never see a section you have not set up. If there is no birthday benefit, nothing about birthdays appears in their app.',
+    'A customer can only join through your QR or link. There is no public directory.'],
+  problems:[{q:'My logo or images are not showing for customers',
+    causes:['The change was not saved.','The customer\'s app is showing a cached copy.'],
+    fix:['Open Business Profile and check the preview shows what you expect, then save again.',
+      'Ask the customer to reload their Peekaa page.']}],
+  related:['what-customers-see','bookings','rewards','branches']},
+
+{slug:'subscription',group:'module',icon:'settings',title:'Subscription',route:'#/settings',roles:['owner'],
+  summary:'Your plan, your billing cycle and your next payment.',
+  path:'Account menu → Subscription',
+  keywords:['subscription','subscriptions','billing','plan','payment','invoice','pay','price','cost','capacity','renew','cancel','upgrade','money owed','check my subscription','what do I pay'],
+  what:'What you pay Peekaa, and when. Branch plans are managed here and on each branch.',
+  can:['See your plan and billing cycle','See your customer capacity','See the next payment date','Retry a failed payment'],
+  screen:[['Peekaa subscription','Your current plan.'],['Billing cycle','Monthly or annual.'],
+    ['Customer capacity','How many customers your plan covers.'],['Next payment date','When the next charge is due.'],
+    ['Retry billing','Try a failed payment again.']],
+  know:['Only the owner can open this screen.',
+    'Each branch is billed in its own right and has its own cycle — see Branches.',
+    'Your workspace only opens once a payment has actually been confirmed by the payment provider.',
+    'This is your subscription to Peekaa. It is separate from how your own customers pay you.'],
+  problems:[{q:'A payment failed',
+    causes:['The card was declined or has expired.','The payment is still being confirmed by the provider.'],
+    fix:['Press Retry billing.','If it says the payment is still confirming, wait a moment and try again.',
+      'If it keeps failing, contact Peekaa.']},
+    {q:'My workspace says it is locked or awaiting payment',
+      causes:['The first payment has not been confirmed yet.','A renewal failed.'],
+      fix:['Complete or retry the payment from this screen.','Access opens as soon as the provider confirms it.']}],
+  faq:[['Do extra staff logins cost more?','Each active login is a seat. Roster-only team members who do not sign in are free.'],
+    ['Does each branch cost separately?','Yes. Each branch carries its own plan and its own billing cycle.']],
+  related:['branches','staff','roles']},
+
+{slug:'bottles',group:'module',icon:'bottle',title:'Bottles',route:'#/bottles',modules:['bottles'],sector:'bar',
+  summary:'Customers\' own bottles, parked and kept for them.',
+  path:'Bottles',
+  keywords:['bottle','bottles','bottle keep','park','shelf','storage','whisky','keep','expiry','customer bottle','bar'],
+  what:'Bottle keep, for bars. Park a customer\'s bottle, record how full it is, and keep it until it expires. The customer sees it in their own app.',
+  can:['Park a bottle for a customer','Record how full a bottle is','Move a bottle between storage places',
+    'Extend or change the keep window','Transfer a bottle to another customer','Remove a bottle'],
+  screen:[['Park bottle','Start a new keep for a customer.'],['Storage place','Which shelf it is on.'],
+    ['Fill level','How much is left.'],['Expiry','When the keep runs out.'],
+    ['Status','Stored, Called, At table, Retrieved, Finished, Expired, Moved or Removed.']],
+  tasks:[{slug:'park-bottle',title:'Park a bottle',path:'Bottles → Park bottle',
+    keywords:['park bottle','keep bottle','store bottle','new bottle','customer left bottle'],
+    steps:['Open Bottles.','Press Park bottle.','Find the customer by phone, or scan their member QR.',
+      'Choose the bottle from your bottle catalogue.','Choose the storage place.','Confirm — the keep window is set from your settings.'],
+    note:'The customer sees the bottle and its expiry in their own app straight away.'},
+    {slug:'bottle-setup',title:'Set up bottle keep',path:'Operations setup → Bottle keep',roles:['owner'],
+      keywords:['bottle keep setup','shelves','storage places','keep days','bottle catalogue','tier keep'],
+      steps:['Open Bottle keep under Operations setup.','Add your storage places — the shelves you actually use.',
+        'Set the keep window in days.','Add the bottles you sell to the bottle catalogue.',
+        'Set longer keep windows for higher tiers if you want.','Save.'],
+      note:'Bottle keep is only available to bars.'}],
+  know:['Bottles is only available to businesses in the bar sector.',
+    'Only the owner can change the bottle keep settings; any team member with the module can park and retrieve.'],
+  related:['customers','record-sale']},
+]);
+
+/* nestly_v904 — cross-cutting problems: the ones that belong to no single module. Same shape as a
+   topic's `problems`, so the Troubleshooting page renders them beside the per-module ones without
+   a second renderer. Anything that IS about one module belongs in that module's own entry above,
+   where the person reading that guide will also find it. */
+const HELP_GENERAL_PROBLEMS_V904=Object.freeze([
+  {q:'The numbers on two screens do not agree',
+    causes:['The two screens are on different branches.','The two screens are on different date ranges.',
+      'One of them excludes reversed sales and you are comparing it with something that does not.',
+      'One figure is a projection and the other is history.'],
+    fix:['Put both on the same branch using the selector in the top bar.','Put both on the same date range.',
+      'Open Sales for that exact range — the individual records are the underlying truth.']},
+  {q:'A screen says something could not be loaded',
+    causes:['The connection dropped mid-read.','Your account does not have access to that information.'],
+    fix:['Press Try again.','If it keeps failing, reload the page.',
+      'Peekaa never fills an unreadable figure with a zero, so an "unavailable" message means the figure is genuinely unknown, not nil.']},
+  {q:'I pressed a button and nothing happened',
+    causes:['The action is still running — buttons stay busy until the answer comes back.',
+      'Your access to that module is Read, not Edit.'],
+    fix:['Wait for the button to finish before pressing again. Peekaa will not record the same thing twice.',
+      'Check the top of the screen for a "Read-only access" note.']},
+  {q:'I was sent back to another screen with a short message',
+    causes:['You opened an address your account is not allowed to open.',
+      'That screen is owner-only.','That module is switched off for your account.'],
+    fix:['Read the message — it says which rule stopped you.','Ask the owner to check your access in Staff Members.']},
+  {q:'Reminder & Notification is empty',
+    causes:['Automated customer messaging is not switched on for this workspace.'],
+    fix:['There is nothing to set there today. Peekaa is not sending automated messages on your behalf.',
+      'Customers still see everything in their own app; nothing depends on messaging.']},
+  {q:'I cannot find Gift cards, Memberships or the WhatsApp Inbox',
+    causes:['These are not part of the business workspace. They have been removed from it.'],
+    fix:['Nothing you have already recorded is lost — customers keep any value they already hold.',
+      'Use the reward programmes in Rewards & Offer instead.']}
+]);
+
+/* nestly_v904 — the glossary. Only words this product actually uses on screen. [term, meaning]. */
+const HELP_GLOSSARY_V904=Object.freeze([
+  ['Branch','One of your locations. Almost every figure in the workspace is for one branch at a time — the one selected in the top bar.'],
+  ['Bring-back reward','A voucher offered to a customer who has not been in for a set number of days.'],
+  ['Bundle','Two or more services or products sold together as one line.'],
+  ['Customer','Someone on your programme. They have a record here and, once they scan your QR, their own view on their phone.'],
+  ['Front desk','A role that can record sales but cannot see money figures.'],
+  ['Limited Offer','A short-lived offer published to customers, with a start and an end date. Owner only.'],
+  ['Live','A published offer whose start date has arrived and whose end date has not passed.'],
+  ['Module','One screen or area of the workspace — Customers, Record sale, Appointments and so on. What you have depends on your plan, and what each teammate can open depends on their access.'],
+  ['On / Off','Whether something can be sold or used right now. Switching something Off never deletes what has already been sold.'],
+  ['Package','A number of prepaid sessions a customer buys once and uses over time.'],
+  ['Points','What a customer earns on qualifying spend, and redeems for the rewards you define.'],
+  ['Programme','One reward mechanism — Point system, Stamp card, Tier membership, Welcome gift, Birthday benefit, Bring-back rewards or Referrals. Each runs independently.'],
+  ['Publish','Making a programme or an offer real for customers. Saving a draft changes nothing for them.'],
+  ['Read / Edit','A teammate\'s access to one module. Read can look; Edit can change.'],
+  ['Referral','A customer introducing a friend. Both sides can be rewarded when the friend\'s first qualifying sale happens.'],
+  ['Reversed','A sale that has been undone. It stays in the list marked as reversed, and is left out of every total.'],
+  ['Reward','Something a customer can claim — a free item, a discount or a benefit. Rewards belong to a programme.'],
+  ['Roster-only','A team member on your roster for scheduling and reporting who cannot sign in. They do not use a login seat.'],
+  ['Seat','An active login on your subscription. Each one beyond the first adds to what you pay.'],
+  ['Stamp','One mark on a stamp card, earned on a qualifying spend. A full card earns its gift.'],
+  ['Tier','A level a customer reaches as they earn. Tiers can carry their own benefits. Spending and refunds never move a customer down.'],
+  ['Visit','A recorded occasion a customer was served. What counts as a visit depends on your sale settings — a prepaid package session is a visit, not new takings.'],
+  ['Walk-in','A sale recorded with no customer attached. It earns nothing and can claim nothing.'],
+  ['Welcome gift','A one-off gift for a new member, on their first visit.'],
+  ['Workspace','Your business inside Peekaa — its customers, sales, staff, branches and programmes.']
+]);
+
+/* nestly_v904 — CONTEXTUAL HELP. Route key (the page[0] the router resolves) -> the help topic
+   that explains it. The one Help control in the app bar reads this and opens the RELEVANT guide
+   rather than the home page; an unmapped route falls through to the home page, which is the
+   honest answer for a screen with no guide. This is deliberately ONE mapping in ONE place rather
+   than a question mark added to thirty page functions. */
+const HELP_CONTEXT_V904=Object.freeze({
+  dashboard:'dashboard',till:'record-sale',clients:'customers',client:'customers',
+  sales:'sales',services:'services',inventory:'products',packages:'packages',custpackages:'packages',
+  appointments:'appointments',bookings:'bookings',waitlist:'waitlist',
+  grow:'rewards',loyalty:'rewards',retention:'rewards',referrals:'rewards',promotions:'rewards',studio:'rewards',
+  reports:'insights',customerintel:'intelligence',dailyreport:'daily-report',staffperf:'commission',
+  branches:'branches',staffmembers:'staff','customer-interface':'customer-app',settings:'subscription',
+  setup:'start-here',bottles:'bottles',bottlesetup:'bottles'
+});
+/* nestly_v904 — the four pages that are VIEWS over HELP_TOPICS_V904 rather than content of their
+   own. They are reserved first segments of #/help/<x>, so a topic may never take one of these
+   slugs; helpTopicV904 checks the reserved set before it looks a topic up. */
+const HELP_VIEWS_V904=Object.freeze({tasks:'Common tasks',troubleshooting:'Troubleshooting',faq:'Frequently asked questions',glossary:'Glossary'});
+
+/* Who may see a guide. It MIRRORS the workspace's own gates, and must stay mirrored: the router
+   refuses Branches / Staff Members / Subscription / Customer Interface / Limited Offer to anyone
+   but the owner, navModuleVisible hides a module the account cannot read, BOTTLE_SURFACES_V275
+   restricts bottles to the bar sector, and SEATED_SECTORS_WITHOUT_APPOINTMENTS_V276 hides
+   Appointments from cafes and bars. A Help Centre that told a front-desk account to open Staff
+   Members would be worse than no Help Centre, so every one of those rules is asked here too.
+   `modules` uses EVERY, not some: Waitlist declares ['waitlist','bookings'] exactly as the rail
+   requires both. */
+function helpAccessOkV904(rule){
+  if(!rule)return true;
+  if(Array.isArray(rule.roles)&&rule.roles.length&&!rule.roles.includes(S.myRole))return false;
+  if(Array.isArray(rule.modules)&&rule.modules.length
+    &&!rule.modules.every(module=>canReadModule(module)))return false;
+  if(rule.sector==='bar'&&!isBarSectorV275())return false;
+  if(rule.hideWhenSeated&&sectorHidesAppointmentsV276())return false;
+  return true;
+}
+/* A task may narrow its parent further — "Set up the Point system" is owner-only inside a guide
+   every role may read — but it can never widen it, because the parent is checked first. */
+const helpTaskVisibleV904=(topic,task)=>helpAccessOkV904(topic)&&helpAccessOkV904(task);
+const helpVisibleTopicsV904=()=>HELP_TOPICS_V904.filter(helpAccessOkV904);
+const helpTopicV904=slug=>Object.prototype.hasOwnProperty.call(HELP_VIEWS_V904,String(slug||''))
+  ?null:HELP_TOPICS_V904.find(topic=>topic.slug===String(slug||''))||null;
+const helpTopicTasksV904=topic=>(topic?.tasks||[]).filter(task=>helpTaskVisibleV904(topic,task));
+const helpHrefV904=(topicSlug,taskSlug)=>`#/help/${encodeURIComponent(topicSlug)}${taskSlug?`/${encodeURIComponent(taskSlug)}`:''}`;
+const helpGoLabelV904=topic=>topic.routeLabel||`Open ${topic.title}`;
+
+/* Search. The index is rebuilt per keystroke from the VISIBLE topics only, so a result can never
+   open a screen the reader is refused — a search hit for a guide they cannot read is the same
+   broken promise as a rail row they cannot click. Cheap enough to do inline: the whole corpus is
+   a few dozen entries, and building it fresh is what keeps it honest when a role or a branch
+   scope changes mid-session. */
+/* `weight` is the tie-break between kinds, not a relevance judgement: a bare "rewards" should
+   open the Rewards & Offer GUIDE, not the glossary entry for the word — the guide is where every
+   answer about rewards is, and the glossary is a definition. Guide > task > problem/question >
+   glossary term. It is deliberately small enough that a real title match still wins. */
+function helpSearchIndexV904(){
+  const index=[];
+  for(const topic of helpVisibleTopicsV904()){
+    index.push({kind:'Guide',weight:14,title:topic.title,summary:topic.summary,href:helpHrefV904(topic.slug),
+      terms:[topic.title,topic.summary,topic.what||'',(topic.keywords||[]).join(' '),
+        (topic.can||[]).join(' '),(topic.screen||[]).map(row=>row[0]).join(' ')].join(' ')});
+    for(const task of helpTopicTasksV904(topic)){
+      index.push({kind:topic.title,weight:10,title:task.title,summary:task.path||topic.summary,
+        href:helpHrefV904(topic.slug,task.slug),
+        terms:[task.title,task.path||'',(task.keywords||[]).join(' '),(task.steps||[]).join(' '),task.note||''].join(' ')});
+    }
+    for(const problem of (topic.problems||[])){
+      index.push({kind:`${topic.title} · problem`,weight:5,title:problem.q,summary:(problem.causes||[])[0]||'',
+        href:helpHrefV904(topic.slug),terms:[problem.q,(problem.causes||[]).join(' '),(problem.fix||[]).join(' ')].join(' ')});
+    }
+    for(const [question,answer] of (topic.faq||[])){
+      index.push({kind:`${topic.title} · question`,weight:5,title:question,summary:answer,
+        href:helpHrefV904(topic.slug),terms:`${question} ${answer}`});
+    }
+  }
+  for(const problem of HELP_GENERAL_PROBLEMS_V904){
+    index.push({kind:'Troubleshooting',weight:5,title:problem.q,summary:(problem.causes||[])[0]||'',
+      href:'#/help/troubleshooting',terms:[problem.q,(problem.causes||[]).join(' '),(problem.fix||[]).join(' ')].join(' ')});
+  }
+  for(const [term,meaning] of HELP_GLOSSARY_V904){
+    index.push({kind:'Glossary',weight:0,title:term,summary:meaning,href:'#/help/glossary',terms:`${term} ${meaning}`});
+  }
+  return index;
+}
+/* TWO PASSES, and the second one is the point.
+
+   Pass 1 requires every typed word to appear somewhere in the entry. That is what stops "add
+   branch" returning every guide that mentions a branch, and it is the right answer for the way
+   most people search: one or two words.
+
+   Pass 2 exists because the brief is explicit that people will type sentences — "customer cannot
+   login", "how do I check subscriptions" — and a strict AND answers a sentence with nothing,
+   which is the one outcome a help centre may not produce. So when the AND finds nothing and more
+   than one word was typed, the same scorer runs again requiring only the BEST-matching words: an
+   entry qualifies on at least half the words, or on one word that landed in its title. Ranking is
+   unchanged, so the relaxed pass returns the closest guides rather than everything.
+   Stop words are dropped first — "how do I add a customer" must search for "add customer". */
+const HELP_STOPWORDS_V904=new Set(['the','a','an','and','or','to','of','in','on','for','my','me',
+  'i','is','are','do','does','did','how','what','where','when','why','can','it','this','that',
+  'with','from','get','got','have','has','be','am','you','your','we','us','please','need','want']);
+/* A typed word is tried in three forms — as typed, without a trailing 's', and with one added —
+   because "subscriptions" must find the Subscription guide and "reward" must find "rewards".
+   Deliberately not a stemmer: three string forms cover the plural, which is the only inflection
+   that shows up in a help search, and a stemmer would start matching words nobody typed. */
+const helpWordFormsV904=word=>{
+  const forms=[word];
+  if(word.length>3&&word.endsWith('s'))forms.push(word.slice(0,-1));
+  else if(word.length>2)forms.push(`${word}s`);
+  return forms;
+};
+/* A word must land on a word BOUNDARY, and a word of three characters or fewer must be the whole
+   word. Without that rule "no show" scored its top hit on "A reward is not showing" — "no" inside
+   "not" and "show" inside "showing", both at full title weight — ahead of the appointment outcome
+   guide that actually has "no show" in its keywords. */
+const helpWordRegexV904=form=>{
+  const safe=form.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return new RegExp(`(^|[^a-z0-9])${safe}${form.length<=3?'([^a-z0-9]|$)':''}`);
+};
+function helpScoreEntryV904(entry,words,phrase=''){
+  const title=entry.title.toLowerCase(),terms=entry.terms.toLowerCase();
+  let score=0,hits=0,titleHit=false;
+  for(const word of words){
+    let best=0,inTitle=false;
+    for(const form of helpWordFormsV904(word)){
+      const boundary=helpWordRegexV904(form);
+      let value=0;
+      if(title===form){value=60;inTitle=true}
+      else if(boundary.test(title)){value=title.startsWith(form)?30:20;inTitle=true}
+      else if(boundary.test(terms))value=8;
+      else if(terms.includes(form))value=3;
+      if(value>best)best=value;
+    }
+    if(best){score+=best;hits++;if(inTitle)titleHit=true}
+  }
+  /* An exact phrase beats the same words scattered across an entry: someone typing "who can see
+     what" means the sentence, and a guide whose keywords carry that sentence is the answer. */
+  if(phrase&&phrase.length>4){
+    if(title.includes(phrase))score+=70;
+    else if(terms.includes(phrase))score+=40;
+  }
+  return {score,hits,titleHit};
+}
+function helpSearchV904(query){
+  const raw=String(query||'').toLowerCase().split(/[^a-z0-9]+/).filter(word=>word.length>1);
+  const stripped=raw.filter(word=>!HELP_STOPWORDS_V904.has(word));
+  const words=stripped.length?stripped:raw;
+  if(!words.length)return [];
+  const phrase=words.join(' ');
+  const index=helpSearchIndexV904();
+  const rank=list=>list.sort((a,b)=>b.score-a.score||a.title.localeCompare(b.title)).slice(0,24);
+  const strict=[];
+  for(const entry of index){
+    const {score,hits}=helpScoreEntryV904(entry,words,phrase);
+    if(hits===words.length)strict.push({...entry,score:score+(entry.weight||0)});
+  }
+  if(strict.length||words.length<2)return rank(strict);
+  const relaxed=[];
+  const floor=Math.max(1,Math.ceil(words.length/2));
+  for(const entry of index){
+    const {score,hits,titleHit}=helpScoreEntryV904(entry,words,phrase);
+    if(hits>=floor||(titleHit&&hits>=1))relaxed.push({...entry,score:score+(entry.weight||0)});
+  }
+  return rank(relaxed);
+}
+/* When nothing matches, the next-best thing is not "No results" — it is the guides this reader
+   actually has. Suggest the ones whose module they can open, most task-rich first, so the empty
+   state still gives them somewhere to go. */
+const helpSuggestionsV904=()=>helpVisibleTopicsV904()
+  .filter(topic=>topic.group==='module').slice(0,6);
+
+/* ---------- markup helpers. Every string goes through esc(); none of this content is markup. -- */
+const helpStepsHtmlV904=steps=>`<ol class="help-steps-v904">${(steps||[]).map(step=>`<li>${esc(step)}</li>`).join('')}</ol>`;
+const helpListHtmlV904=items=>`<ul class="help-list-v904">${(items||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul>`;
+const helpNoteHtmlV904=(text,tone='note')=>text?`<p class="help-note-v904 is-${esc(tone)}">${CUI.icon(tone==='warn'?'info':'info',{size:16})}<span>${esc(text)}</span></p>`:'';
+const helpPathHtmlV904=path=>path?`<p class="help-path-v904">${CUI.icon('forward',{size:15})}<span>${esc(path)}</span></p>`:'';
+const helpSectionHeadV904=(id,title)=>`<h2 class="help-h2-v904" id="${esc(id)}">${esc(title)}</h2>`;
+const helpDisclosureV904=(summary,body,className='')=>`<details class="help-disclosure-v904 ${esc(className)}"><summary>${esc(summary)}</summary><div class="help-disclosure-body-v904">${body}</div></details>`;
+/* V15 of the brief: an article must be able to CARRY a screenshot without any article having a
+   fake one. A task declares `shot:{src,alt,caption}` when a real image exists; until one does,
+   this renders nothing at all and the written steps stand on their own. No placeholder frames,
+   no apologetic placeholder in its place. */
+const helpShotHtmlV904=shot=>shot&&shot.src
+  ?`<figure class="help-shot-v904"><img src="${esc(shot.src)}" alt="${esc(shot.alt||'')}" loading="lazy" decoding="async">${shot.caption?`<figcaption>${esc(shot.caption)}</figcaption>`:''}</figure>`
+  :'';
+function helpGoButtonV904(topic){
+  if(!topic?.route)return '';
+  return `<button type="button" class="btn sm help-go-v904" data-help-go="${esc(topic.route)}" data-help-go-topic="${esc(topic.slug)}">${CUI.icon('forward',{size:16})}<span>${esc(helpGoLabelV904(topic))}</span></button>`;
+}
+function helpFreeBlockV904(block){
+  if(!block)return '';
+  return `${block.h?`<h3 class="help-h3-v904">${esc(block.h)}</h3>`:''}${block.p?`<p>${esc(block.p)}</p>`:''}${block.list?helpListHtmlV904(block.list):''}${block.steps?helpStepsHtmlV904(block.steps):''}${block.note?helpNoteHtmlV904(block.note):''}${helpShotHtmlV904(block.shot)}`;
+}
+/* The left rail of the Help Centre. It lists only what this reader may open, so it is also the
+   answer to "what does my account actually have?". Rendered as a <details> on narrow screens by
+   CSS alone — same markup, one layout. */
+/* Below 960px — the width at which this workspace already decides there is no room for a side
+   rail — the section nav IS the <details> it is authored as, and it must start CLOSED: opened, it
+   is twenty-five rows the reader has to scroll past to reach the guide they asked for. Above it,
+   the summary is hidden by CSS and the nav is the rail, so it must be open. A <details> cannot be
+   opened by a stylesheet, so the breakpoint is asked here instead — once at render, and again
+   whenever the viewport crosses it, so a tablet rotating from portrait to landscape does not end
+   up with the rail collapsed into nothing. matchMedia missing is treated as "wide", because a
+   visible nav is the failure everyone can still work with.
+   ONE window-level listener for the life of the app, registered behind a flag — the same shape
+   wirePopoverDismissV452 uses, and for the same reason: the element it targets is replaced on
+   every render, so the listener must re-query rather than hold a reference. */
+const helpWideViewportV904=()=>globalThis.matchMedia?.('(min-width:961px)')?.matches!==false;
+let helpNavMediaWiredV904=false;
+function helpSyncNavDisclosureV904(){
+  const details=globalThis.document?.querySelector?.('.help-nav-v904');
+  if(details)details.open=helpWideViewportV904();
+}
+function helpNavHtmlV904(activeSlug){
+  const group=(label,topics)=>topics.length?`<div class="help-nav-group-v904"><p class="help-nav-head-v904">${esc(label)}</p>${topics.map(topic=>
+    `<a href="${helpHrefV904(topic.slug)}" class="${topic.slug===activeSlug?'act':''}"${topic.slug===activeSlug?' aria-current="page"':''}><span class="ic">${CUI.icon(topic.icon,{size:18})}</span><span>${esc(topic.title)}</span></a>`).join('')}</div>`:'';
+  const visible=helpVisibleTopicsV904();
+  const views=Object.entries(HELP_VIEWS_V904).map(([slug,label])=>
+    `<a href="#/help/${slug}" class="${slug===activeSlug?'act':''}"${slug===activeSlug?' aria-current="page"':''}><span class="ic">${CUI.icon(slug==='glossary'?'tag':slug==='faq'?'chat':slug==='troubleshooting'?'info':'check',{size:18})}</span><span>${esc(label)}</span></a>`).join('');
+  return `<nav class="help-nav-inner-v904" aria-label="Help sections">
+    <a href="#/help" class="help-nav-home-v904 ${activeSlug?'':'act'}"${activeSlug?'':' aria-current="page"'}><span class="ic">${CUI.icon('home',{size:18})}</span><span>Help home</span></a>
+    ${group('Getting started',visible.filter(topic=>topic.group==='start'))}
+    ${group('Modules',visible.filter(topic=>topic.group==='module'))}
+    <div class="help-nav-group-v904"><p class="help-nav-head-v904">More help</p>${views}</div>
+  </nav>`;
+}
+/* One shell for every Help page: rail, article, and an optional "On this page" column that is
+   only drawn when the article is long enough to need one (four sections or more — below that it
+   is a list of links to things already on the screen). */
+function helpShellHtmlV904({activeSlug='',article='',toc=[]}={}){
+  const tocHtml=toc.length>=4
+    ?`<aside class="help-toc-v904" aria-label="On this page"><p class="help-toc-head-v904">On this page</p>${toc.map(item=>
+      `<button type="button" class="help-toc-link-v904" data-help-jump="${esc(item.id)}">${esc(item.label)}</button>`).join('')}</aside>`
+    :'';
+  return `<div class="help-shell-v904${tocHtml?' has-toc':''}">
+    <details class="help-nav-v904"${helpWideViewportV904()?' open':''}><summary class="help-nav-summary-v904">${CUI.icon('menu',{size:18})}<span>Help sections</span></summary>${helpNavHtmlV904(activeSlug)}</details>
+    <div class="help-article-v904">${article}</div>
+    ${tocHtml}
+  </div>`;
+}
+const helpCrumbHtmlV904=trail=>`<nav class="help-crumb-v904" aria-label="Breadcrumb">${trail.map((item,index)=>
+  item.href?`<a href="${esc(item.href)}">${esc(item.label)}</a>${index<trail.length-1?`<span aria-hidden="true">/</span>`:''}`
+    :`<span aria-current="page">${esc(item.label)}</span>`).join('')}</nav>`;
+
+const helpCardHtmlV904=({href,icon,title,body,meta=''})=>`<a class="help-card-v904" href="${esc(href)}">
+  <span class="help-card-ic-v904">${CUI.icon(icon,{size:20})}</span>
+  <span class="help-card-text-v904"><b>${esc(title)}</b>${body?`<span class="muted small">${esc(body)}</span>`:''}${meta?`<span class="help-card-meta-v904">${esc(meta)}</span>`:''}</span>
+</a>`;
+
+/* ---------- home -------------------------------------------------------------------------- */
+function helpSearchResultsHtmlV904(query){
+  const results=helpSearchV904(query);
+  if(!results.length){
+    /* Brief §19: never a bare "No results". Say what to try, and offer the guides this reader
+       actually has — a dead end is the one thing a help centre may not be. */
+    const suggestions=helpSuggestionsV904();
+    return `<section class="help-empty-v904" aria-live="polite">
+      <h2>We couldn't find a guide for that</h2>
+      <p class="muted">Nothing matched <b>${esc(query)}</b>. Try:</p>
+      ${helpListHtmlV904(['a different word — try what you would say out loud, like "add a customer" or "give a reward"',
+        'one word instead of a sentence',
+        'browsing the modules below'])}
+      <div class="help-grid-v904" style="margin-top:14px">${suggestions.map(topic=>helpCardHtmlV904({href:helpHrefV904(topic.slug),icon:topic.icon,title:topic.title,body:topic.summary})).join('')}</div>
+      <p class="muted small" style="margin-top:14px">Still stuck? <a href="#/help/troubleshooting">Troubleshooting</a> covers the problems people hit most.</p>
+    </section>`;
+  }
+  return `<section class="help-results-v904" aria-live="polite">
+    <p class="help-results-count-v904">${results.length} result${results.length===1?'':'s'} for <b>${esc(query)}</b></p>
+    ${results.map(result=>`<a class="help-result-v904" href="${esc(result.href)}">
+      <span class="help-result-kind-v904">${esc(result.kind)}</span>
+      <b>${esc(result.title)}</b>
+      ${result.summary?`<span class="muted small">${esc(result.summary)}</span>`:''}
+    </a>`).join('')}
+  </section>`;
+}
+function helpHomeHtmlV904(query){
+  const visible=helpVisibleTopicsV904();
+  const start=visible.filter(topic=>topic.group==='start');
+  const modules=visible.filter(topic=>topic.group==='module');
+  const tasks=helpAllTasksV904().slice(0,8);
+  return `<section class="help-hero-v904">
+      <h1 id="helpTitleV904">Help Centre</h1>
+      <p class="help-hero-sub-v904">How can we help you?</p>
+      <div class="help-search-v904" role="search">
+        <span class="help-search-ic-v904">${CUI.icon('search',{size:20})}</span>
+        <label class="sr-only" for="helpSearchV904">Search guides, features or questions</label>
+        <input id="helpSearchV904" type="search" autocomplete="off" enterkeyhint="search"
+          placeholder="Search for anything…" value="${esc(query)}" aria-describedby="helpSearchHintV904" aria-controls="helpResultsV904">
+        <button type="button" class="help-search-clear-v904" id="helpSearchClearV904" aria-label="Clear search"${query?'':' hidden'}>${CUI.icon('close',{size:16})}</button>
+      </div>
+      <p class="muted small help-search-hint-v904" id="helpSearchHintV904">Try: how do I add a customer · create a reward · edit a branch · check my subscription · customer activity</p>
+    </section>
+    <div id="helpResultsV904">${query?helpSearchResultsHtmlV904(query):''}</div>
+    <div id="helpBrowseV904"${query?' hidden':''}>
+      ${start.length?`<section class="help-home-block-v904">${helpSectionHeadV904('helpStartV904','Getting started')}
+        <div class="help-grid-v904">${start.map(topic=>helpCardHtmlV904({href:helpHrefV904(topic.slug),icon:topic.icon,title:topic.title,body:topic.summary})).join('')}</div></section>`:''}
+      ${modules.length?`<section class="help-home-block-v904">${helpSectionHeadV904('helpModulesV904','Modules')}
+        <p class="muted small help-block-sub-v904">A guide for every part of the workspace your account can open.</p>
+        <div class="help-grid-v904">${modules.map(topic=>helpCardHtmlV904({href:helpHrefV904(topic.slug),icon:topic.icon,title:topic.title,body:topic.summary})).join('')}</div></section>`:''}
+      ${tasks.length?`<section class="help-home-block-v904">${helpSectionHeadV904('helpTasksV904','Common tasks')}
+        <p class="muted small help-block-sub-v904">Short, numbered instructions for the things people do most.</p>
+        <div class="help-tasklist-v904">${tasks.map(row=>helpCardHtmlV904({href:helpHrefV904(row.topic.slug,row.task.slug),icon:row.topic.icon,title:row.task.title,body:row.task.path||'',meta:row.topic.title})).join('')}</div>
+        <p style="margin-top:12px"><a class="help-more-v904" href="#/help/tasks">See all common tasks</a></p></section>`:''}
+      <section class="help-home-block-v904">${helpSectionHeadV904('helpMoreV904','More help')}
+        <div class="help-grid-v904">
+          ${helpCardHtmlV904({href:'#/help/troubleshooting',icon:'info',title:'Troubleshooting',body:'Something is not behaving the way you expect.'})}
+          ${helpCardHtmlV904({href:'#/help/faq',icon:'chat',title:'Frequently asked questions',body:'Short answers to the questions people ask most.'})}
+          ${helpCardHtmlV904({href:'#/help/glossary',icon:'tag',title:'Glossary',body:'What the words in this product mean.'})}
+        </div>
+      </section>
+    </div>`;
+}
+/* Every visible task in every visible guide, in guide order. The Common tasks page and the home
+   page's short list are the same list, cut at a different length. */
+function helpAllTasksV904(){
+  const rows=[];
+  for(const topic of helpVisibleTopicsV904())for(const task of helpTopicTasksV904(topic))rows.push({topic,task});
+  return rows;
+}
+
+/* ---------- a module guide ------------------------------------------------------------------ */
+function helpTopicHtmlV904(topic){
+  const sections=[],toc=[];
+  const add=(id,label,html)=>{if(!html)return;sections.push(`<section class="help-section-v904">${helpSectionHeadV904(id,label)}${html}</section>`);toc.push({id,label})};
+  add('helpWhatV904','What is this?',topic.what?`<p>${esc(topic.what)}</p>`:'');
+  add('helpCanV904','What can I do here?',(topic.can||[]).length?helpListHtmlV904(topic.can):'');
+  add('helpSectionsV904','How it works',(topic.sections||[]).length?(topic.sections||[]).map(helpFreeBlockV904).join(''):'');
+  const tasks=helpTopicTasksV904(topic);
+  add('helpHowV904','How to use it',tasks.length?tasks.map(task=>helpDisclosureV904(task.title,
+    `${helpPathHtmlV904(task.path)}${helpStepsHtmlV904(task.steps)}${helpNoteHtmlV904(task.note)}${helpShotHtmlV904(task.shot)}
+     <p style="margin-top:10px"><a class="help-more-v904" href="${helpHrefV904(topic.slug,task.slug)}">Open this guide on its own page</a></p>`)).join(''):'');
+  add('helpScreenV904','Understanding this screen',(topic.screen||[]).length
+    ?`<dl class="help-deflist-v904">${topic.screen.map(([label,meaning])=>`<dt>${esc(label)}</dt><dd>${esc(meaning)}</dd>`).join('')}</dl>`:'');
+  add('helpKnowV904','Things to know',(topic.know||[]).length
+    ?`<ul class="help-know-v904">${topic.know.map(item=>`<li>${CUI.icon('info',{size:15})}<span>${esc(item)}</span></li>`).join('')}</ul>`:'');
+  add('helpProblemsV904','Common problems',(topic.problems||[]).length?topic.problems.map(problem=>helpDisclosureV904(problem.q,
+    `${(problem.causes||[]).length?`<p class="help-sublabel-v904">Possible reasons</p>${helpListHtmlV904(problem.causes)}`:''}
+     ${(problem.fix||[]).length?`<p class="help-sublabel-v904">What to do</p>${helpStepsHtmlV904(problem.fix)}`:''}`,'is-problem')).join(''):'');
+  add('helpFaqV904','Common questions',(topic.faq||[]).length
+    ?topic.faq.map(([question,answer])=>helpDisclosureV904(question,`<p>${esc(answer)}</p>`)).join(''):'');
+  const related=(topic.related||[]).map(helpTopicV904).filter(item=>item&&helpAccessOkV904(item));
+  add('helpRelatedV904','Related guides',related.length
+    ?`<div class="help-grid-v904">${related.map(item=>helpCardHtmlV904({href:helpHrefV904(item.slug),icon:item.icon,title:item.title,body:item.summary})).join('')}</div>`:'');
+  const article=`${helpCrumbHtmlV904([{label:'Help',href:'#/help'},{label:topic.title}])}
+    <header class="help-head-v904">
+      <span class="help-head-ic-v904">${CUI.icon(topic.icon,{size:26})}</span>
+      <div><h1 id="helpTitleV904">${esc(topic.title)}</h1><p class="help-head-sub-v904">${esc(topic.summary)}</p></div>
+    </header>
+    ${helpPathHtmlV904(topic.path)}
+    ${helpGoButtonV904(topic)}
+    ${sections.join('')}`;
+  return {article,toc};
+}
+
+/* ---------- one task, on its own page (the deep-linkable unit) ------------------------------ */
+function helpTaskHtmlV904(topic,task){
+  const siblings=helpTopicTasksV904(topic).filter(item=>item.slug!==task.slug).slice(0,6);
+  const article=`${helpCrumbHtmlV904([{label:'Help',href:'#/help'},{label:topic.title,href:helpHrefV904(topic.slug)},{label:task.title}])}
+    <header class="help-head-v904">
+      <span class="help-head-ic-v904">${CUI.icon(topic.icon,{size:26})}</span>
+      <div><h1 id="helpTitleV904">${esc(task.title)}</h1><p class="help-head-sub-v904">${esc(topic.title)}</p></div>
+    </header>
+    ${task.path?`<section class="help-section-v904">${helpSectionHeadV904('helpWhereV904','Where to go')}${helpPathHtmlV904(task.path)}</section>`:''}
+    <section class="help-section-v904">${helpSectionHeadV904('helpStepsHeadV904','Steps')}${helpStepsHtmlV904(task.steps)}${helpNoteHtmlV904(task.note)}${helpShotHtmlV904(task.shot)}</section>
+    ${helpGoButtonV904(topic)}
+    <section class="help-section-v904">${helpSectionHeadV904('helpRelatedV904','Related guides')}
+      <div class="help-tasklist-v904">
+        ${helpCardHtmlV904({href:helpHrefV904(topic.slug),icon:topic.icon,title:`${topic.title} guide`,body:topic.summary})}
+        ${siblings.map(item=>helpCardHtmlV904({href:helpHrefV904(topic.slug,item.slug),icon:topic.icon,title:item.title,body:item.path||''})).join('')}
+      </div></section>`;
+  return {article,toc:[]};
+}
+
+/* ---------- the four computed pages --------------------------------------------------------- */
+function helpTasksPageHtmlV904(){
+  const rows=helpAllTasksV904();
+  const byTopic=new Map();
+  for(const row of rows){
+    if(!byTopic.has(row.topic.slug))byTopic.set(row.topic.slug,{topic:row.topic,tasks:[]});
+    byTopic.get(row.topic.slug).tasks.push(row.task);
+  }
+  const article=`${helpCrumbHtmlV904([{label:'Help',href:'#/help'},{label:'Common tasks'}])}
+    <header class="help-head-v904"><span class="help-head-ic-v904">${CUI.icon('check',{size:26})}</span>
+      <div><h1 id="helpTitleV904">Common tasks</h1><p class="help-head-sub-v904">Short, numbered instructions for the things people do most.</p></div></header>
+    ${rows.length?[...byTopic.values()].map(entry=>`<section class="help-section-v904">
+      ${helpSectionHeadV904(`helpTasks-${esc(entry.topic.slug)}`,entry.topic.title)}
+      <div class="help-tasklist-v904">${entry.tasks.map(task=>helpCardHtmlV904({href:helpHrefV904(entry.topic.slug,task.slug),icon:entry.topic.icon,title:task.title,body:task.path||''})).join('')}</div>
+    </section>`).join('')
+    :CUI.emptyState({iconName:'empty',title:'No tasks to show',body:'Your account does not have a module with step-by-step guides yet. Ask the owner what you should have access to.'})}`;
+  return {article,toc:[...byTopic.values()].map(entry=>({id:`helpTasks-${entry.topic.slug}`,label:entry.topic.title}))};
+}
+function helpTroubleshootingPageHtmlV904(){
+  const groups=[{title:'Across the workspace',problems:HELP_GENERAL_PROBLEMS_V904,slug:'general'}];
+  for(const topic of helpVisibleTopicsV904()){
+    if((topic.problems||[]).length)groups.push({title:topic.title,problems:topic.problems,slug:topic.slug,topic});
+  }
+  const article=`${helpCrumbHtmlV904([{label:'Help',href:'#/help'},{label:'Troubleshooting'}])}
+    <header class="help-head-v904"><span class="help-head-ic-v904">${CUI.icon('info',{size:26})}</span>
+      <div><h1 id="helpTitleV904">Troubleshooting</h1><p class="help-head-sub-v904">What you are seeing, why it happens, and what to do about it.</p></div></header>
+    ${groups.map(group=>`<section class="help-section-v904">${helpSectionHeadV904(`helpTs-${esc(group.slug)}`,group.title)}
+      ${group.problems.map(problem=>helpDisclosureV904(problem.q,
+        `${(problem.causes||[]).length?`<p class="help-sublabel-v904">Possible reasons</p>${helpListHtmlV904(problem.causes)}`:''}
+         ${(problem.fix||[]).length?`<p class="help-sublabel-v904">What to do</p>${helpStepsHtmlV904(problem.fix)}`:''}`,'is-problem')).join('')}
+      ${group.topic?`<p style="margin-top:10px"><a class="help-more-v904" href="${helpHrefV904(group.topic.slug)}">Open the ${esc(group.topic.title)} guide</a></p>`:''}
+    </section>`).join('')}
+    <section class="help-section-v904">${helpSectionHeadV904('helpTsStillV904','Still not working?')}
+      <p>Work through the reasons above first — nearly everything people report turns out to be the branch selector, a date range, or an access setting.</p>
+      <p>If it is none of those, note the exact screen you were on, what you pressed and what it said, then contact Peekaa. The wording of the message is the fastest way to identify what happened.</p></section>`;
+  return {article,toc:groups.map(group=>({id:`helpTs-${group.slug}`,label:group.title}))};
+}
+function helpFaqPageHtmlV904(){
+  const groups=helpVisibleTopicsV904().filter(topic=>(topic.faq||[]).length);
+  const article=`${helpCrumbHtmlV904([{label:'Help',href:'#/help'},{label:'Frequently asked questions'}])}
+    <header class="help-head-v904"><span class="help-head-ic-v904">${CUI.icon('chat',{size:26})}</span>
+      <div><h1 id="helpTitleV904">Frequently asked questions</h1><p class="help-head-sub-v904">Grouped by the part of the workspace they are about.</p></div></header>
+    ${groups.length?groups.map(topic=>`<section class="help-section-v904">${helpSectionHeadV904(`helpFaq-${esc(topic.slug)}`,topic.title)}
+      ${topic.faq.map(([question,answer])=>helpDisclosureV904(question,`<p>${esc(answer)}</p>`)).join('')}
+      <p style="margin-top:10px"><a class="help-more-v904" href="${helpHrefV904(topic.slug)}">Open the ${esc(topic.title)} guide</a></p></section>`).join('')
+    :CUI.emptyState({iconName:'chat',title:'No questions to show yet',body:'Questions appear here for the parts of the workspace your account can open.'})}`;
+  return {article,toc:groups.map(topic=>({id:`helpFaq-${topic.slug}`,label:topic.title}))};
+}
+function helpGlossaryPageHtmlV904(){
+  const article=`${helpCrumbHtmlV904([{label:'Help',href:'#/help'},{label:'Glossary'}])}
+    <header class="help-head-v904"><span class="help-head-ic-v904">${CUI.icon('tag',{size:26})}</span>
+      <div><h1 id="helpTitleV904">Glossary</h1><p class="help-head-sub-v904">What the words in this product mean.</p></div></header>
+    <dl class="help-deflist-v904 help-glossary-v904">${HELP_GLOSSARY_V904.map(([term,meaning])=>`<dt>${esc(term)}</dt><dd>${esc(meaning)}</dd>`).join('')}</dl>`;
+  return {article,toc:[]};
+}
+
+/* nestly_v904 — the ONE analytics seam for Help, and the only new emit site this feature adds.
+   It rides the existing merchant.surface_viewed taxonomy rather than inventing an event name: a
+   name that is not already in the database taxonomy is refused with 22023, so a new one would be
+   a migration, and Help does not need one. What it answers:
+     surface_key  'help', 'help:customers', 'help:customers/add-customer' -> most-viewed guides
+     query_shape  exploreQueryShapeV256's shape, NEVER the typed text     -> what people search
+     outcome      'results' | 'no_results' | 'go_to_feature'              -> searches that fail
+   The typed query never leaves the browser. A Help search can easily contain a customer's name,
+   so the shape (word count, length band, matched or not) is all that is recorded — the same
+   privacy rule, and the same helper, the customer search already used. */
+function helpRecordV904(surfaceKey,outcome,queryShape){
+  if(typeof recordProductInteractionV100!=='function')return;
+  recordProductInteractionV100('merchant.surface_viewed',S.biz?.id,{context:{
+    surface_key:String(surfaceKey||'help').slice(0,80),entry_point:'help',
+    locale:workspaceLocale,surface_version:'v904',
+    ...(outcome?{outcome:String(outcome)}:{}),...(queryShape?{query_shape:String(queryShape)}:{})
+  }});
+}
+
+/* ============================================================================================
+   THE HELP CENTRE PAGE.  #/help · #/help/<topic> · #/help/<topic>/<task>
+
+   It is reachable by EVERY signed-in workspace account, deliberately: it has no MODULES entry,
+   so route()'s generic module gate never sees it, and a staff member whose only granted module
+   is Record sale can still read how to record one. What a reader may SEE inside it is filtered
+   per guide by helpAccessOkV904, which mirrors the workspace's own gates.
+
+   Back/forward/refresh/bookmark all work because every destination is a real hash the router
+   resolves — there is no in-page state that the URL does not carry, apart from the search box,
+   which mirrors itself into ?q= with replaceState so typing does not fill the history.
+   ============================================================================================ */
+function helpPage(topicSlug,taskSlug){
+  const main=M();
+  const requested=String(topicSlug||'');
+  const view=Object.prototype.hasOwnProperty.call(HELP_VIEWS_V904,requested)?requested:'';
+  const topic=view?null:helpTopicV904(requested);
+  /* An unknown or refused guide is answered, never 404ed: it lands on the home page with the
+     search pre-filled from what was asked for, which is usually what the person wanted anyway. */
+  if(requested&&!view&&(!topic||!helpAccessOkV904(topic))){
+    const fallbackQuery=requested.replace(/[-_]+/g,' ').trim();
+    main.innerHTML=helpShellHtmlV904({article:helpHomeHtmlV904(fallbackQuery)});
+    helpWireV904(fallbackQuery);
+    helpRecordV904('help','no_results',exploreQueryShapeV256(fallbackQuery,false));
+    CUI.announce('That guide is not available for your account. Showing the Help Centre.');
+    return;
+  }
+  if(!requested){
+    const query=routeParamV288('q');
+    main.innerHTML=helpShellHtmlV904({article:helpHomeHtmlV904(query)});
+    helpWireV904(query);
+    helpRecordV904('help',query?(helpSearchV904(query).length?'results':'no_results'):'',
+      query?exploreQueryShapeV256(query,helpSearchV904(query).length>0):'');
+    return;
+  }
+  let built;
+  if(view==='tasks')built=helpTasksPageHtmlV904();
+  else if(view==='troubleshooting')built=helpTroubleshootingPageHtmlV904();
+  else if(view==='faq')built=helpFaqPageHtmlV904();
+  else if(view==='glossary')built=helpGlossaryPageHtmlV904();
+  else{
+    const task=String(taskSlug||'')
+      ?helpTopicTasksV904(topic).find(item=>item.slug===String(taskSlug)):null;
+    /* A task slug that does not resolve falls back to its guide rather than to an error — the
+       guide contains that task's steps anyway, so the reader still lands on the answer. */
+    /* No announcement for the fallback: CUI.focusRoute moves focus to the article's own <h1>,
+       which already reads the guide's real name, so a second spoken sentence would say the same
+       thing twice — and an interpolated announcement is exactly what the v97 rule forbids. */
+    built=task?helpTaskHtmlV904(topic,task):helpTopicHtmlV904(topic);
+  }
+  main.innerHTML=helpShellHtmlV904({activeSlug:view||topic.slug,article:built.article,toc:built.toc});
+  helpWireV904('');
+  helpRecordV904(`help:${view||topic.slug}${taskSlug&&!view?`/${taskSlug}`:''}`);
+}
+function helpWireV904(currentQuery){
+  helpSyncNavDisclosureV904();
+  if(!helpNavMediaWiredV904&&globalThis.matchMedia){
+    helpNavMediaWiredV904=true;
+    try{globalThis.matchMedia('(min-width:961px)').addEventListener('change',helpSyncNavDisclosureV904)}catch{}
+  }
+  const input=$('helpSearchV904');
+  if(input){
+    const repaint=()=>{
+      const query=input.value.trim();
+      const results=$('helpResultsV904'),browse=$('helpBrowseV904'),clear=$('helpSearchClearV904');
+      if(results)results.innerHTML=query?helpSearchResultsHtmlV904(query):'';
+      if(browse)browse.hidden=!!query;
+      if(clear)clear.hidden=!query;
+      /* replaceState, not a hash change: a search must be copyable and survive a refresh without
+         writing one history entry per keystroke, which would make Back unusable. */
+      try{history.replaceState(null,'',`${location.pathname}${location.search}#/help${query?`?q=${encodeURIComponent(query)}`:''}`)}catch{}
+    };
+    input.oninput=repaint;
+    input.onkeydown=event=>{
+      if(event.key!=='Enter')return;
+      event.preventDefault();
+      const query=input.value.trim();
+      if(!query)return;
+      const matched=helpSearchV904(query).length>0;
+      helpRecordV904('help',matched?'results':'no_results',exploreQueryShapeV256(query,matched));
+    };
+    const clear=$('helpSearchClearV904');
+    if(clear)clear.onclick=()=>{input.value='';repaint();input.focus()};
+    if(!currentQuery)input.focus({preventScroll:true});
+  }
+  /* "Go to feature" navigates rather than linking, so the click can be counted and so the button
+     reads as an action. The route it opens is one this reader has already passed the same access
+     check for, because the guide carrying the button was filtered by helpAccessOkV904. */
+  M().querySelectorAll('[data-help-go]').forEach(button=>{button.onclick=()=>{
+    helpRecordV904(`help:${button.dataset.helpGoTopic||''}`,'go_to_feature');
+    nav(button.dataset.helpGo);
+  }});
+  /* The "On this page" column scrolls rather than linking: a bare #anchor href would replace the
+     router's hash and navigate away from the page it is trying to move around inside. */
+  M().querySelectorAll('[data-help-jump]').forEach(button=>{button.onclick=()=>{
+    const target=document.getElementById(button.dataset.helpJump);
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block:'start'});
+    target.setAttribute('tabindex','-1');
+    target.focus({preventScroll:true});
+  }});
 }
 
 /* ---------- platform (super-admin only) ----------

@@ -271,7 +271,7 @@ test('service worker notifies but never re-navigates open pages after replacing 
       'nestly-shell-v10-20260812-v289-guarded-updates',
       'nestly-shell-v21-20260828-v578',
       'nestly-shell-v22-20260829-v584',
-      'nestly-shell-v23-20260829-v585',
+      'nestly-shell-v24-20260915-v904',
       'unrelated-cache'
     ]
   });
@@ -305,7 +305,7 @@ test('service worker notifies but never re-navigates open pages after replacing 
   assert.deepEqual(JSON.parse(JSON.stringify(harness.clientMessages)), [
     {
       type: 'PEEKAA_SW_ACTIVATED',
-      cacheVersion: 'v23-20260829-v585'
+      cacheVersion: 'v24-20260915-v904'
     }
   ]);
   /* V289 (audit A3, G3a): activation is now only reached through the guarded applyUpdate path,

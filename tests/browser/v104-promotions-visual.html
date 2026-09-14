@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v104-production-source-sha256" content="907af31aa922211e71c4141b502d4197d6b2565cd6b59d5a1a3b9321fa720ec1">
+<meta name="v104-production-source-sha256" content="534329c726134c862aa60b78f3bb15b303dc00a029effb059348f2bac9b2b33c">
 <title>Peekaa v104 production-render visual acceptance</title>
 <style>
 
@@ -5993,6 +5993,205 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .svc-cat-chip-v896.is-none{color:var(--muted);font-weight:600}
 .svc-cat-change-v896{margin-left:6px;font-size:11.5px;font-weight:650;color:var(--muted);text-decoration:underline}
 .svc-cat-change-v896:hover{color:var(--coral)}
+/* ============================================================================================
+   nestly_v904 — HELP CENTRE. Every selector here is scoped to a -v904 class; nothing touches
+   .card, .btn, .pill, .nav or any other shared shape, so adding the Help Centre cannot change
+   how an existing screen looks. Colours are the product's own tokens throughout — there is no
+   second palette here, and no new shell breakpoint: the two thresholds this workspace already
+   governs itself by (960px for "no room for a side column", 768px for "compact") are the two
+   this page uses.
+   ============================================================================================ */
+
+/* The rail row and the app-bar trigger. Both deliberately reuse the shapes beside them —
+   .nav a for the row, .bellbtn's circle for the trigger — so Help reads as part of the
+   furniture rather than as something bolted on. */
+.nav a.nav-help-v904{margin-top:14px;border-top:1px solid var(--line);border-radius:0 0 10px 10px;padding-top:14px}
+.nav a.nav-help-v904:hover{border-top-color:var(--line)}
+.help-trigger-v904{position:relative;width:44px;height:44px;border-radius:999px;display:flex;align-items:center;
+  justify-content:center;flex:0 0 auto;background:#fff;border:1px solid var(--hair);box-shadow:var(--shadow);
+  color:var(--ink2);cursor:pointer;text-decoration:none;
+  transition:transform .2s var(--spring),box-shadow .2s var(--ease),color .14s}
+.help-trigger-v904:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg);color:var(--coral)}
+.help-trigger-v904:active{transform:scale(.94)}
+.help-trigger-v904.act{color:var(--coral);background:var(--brand-red-faint)}
+
+/* ---- the three-column shell ---------------------------------------------------------------
+   Article column first in the grid definition so it gets the space; the two side columns are
+   fixed. Below 1180px the "On this page" column goes (it is a convenience, never the content);
+   below 960px — the same threshold at which the workspace rail itself disappears — the section
+   nav collapses into its own <details>, which is why it is authored as one in the markup rather
+   than being swapped for a different element. */
+.help-shell-v904{display:grid;grid-template-columns:232px minmax(0,1fr);gap:28px;align-items:start;max-width:1320px}
+.help-shell-v904.has-toc{grid-template-columns:232px minmax(0,1fr) 208px}
+.help-nav-v904{position:sticky;top:84px;min-width:0}
+.help-nav-v904>summary{display:none}
+.help-nav-inner-v904{display:block}
+.help-nav-group-v904{margin-top:16px}
+.help-nav-head-v904{margin:0 0 4px;padding:0 12px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted)}
+.help-nav-v904 a{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;min-height:40px;
+  font-size:13.5px;font-weight:500;color:var(--ink2);text-decoration:none;overflow-wrap:anywhere;
+  transition:background .14s var(--ease),color .14s}
+.help-nav-v904 a:hover{background:#F2EFEA;color:var(--ink)}
+.help-nav-v904 a.act{background:var(--brand-red-soft);color:var(--brand-red-on-soft);font-weight:650}
+.help-nav-v904 a .ic{width:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.help-nav-home-v904{font-weight:650!important}
+.help-article-v904{min-width:0;max-width:760px}
+
+/* ---- headings, breadcrumbs, the "where to go" chip ----------------------------------------- */
+.help-crumb-v904{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.help-crumb-v904 a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent}
+.help-crumb-v904 a:hover{color:var(--coral);border-bottom-color:currentColor}
+.help-head-v904{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.help-head-ic-v904{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  width:48px;height:48px;border-radius:14px;background:var(--brand-red-faint);color:var(--coral)}
+.help-head-v904 h1{font-size:28px;line-height:1.2;letter-spacing:-.02em;margin:0}
+.help-head-sub-v904{margin:6px 0 0;color:var(--muted);font-size:14.5px;line-height:1.5}
+.help-h2-v904{font-size:17px;letter-spacing:-.01em;margin:0 0 10px;scroll-margin-top:92px}
+.help-h2-v904:focus-visible{outline:2px solid var(--coral);outline-offset:4px;border-radius:4px}
+.help-h3-v904{font-size:14.5px;margin:18px 0 6px;color:var(--ink)}
+.help-section-v904{padding-top:22px;margin-top:22px;border-top:1px solid var(--line)}
+.help-section-v904 p{margin:0 0 10px;line-height:1.62;color:var(--ink2);font-size:14.5px}
+.help-path-v904{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;padding:7px 12px;border-radius:999px;
+  background:var(--neutral-bg);border:1px solid var(--line);color:var(--ink2);font-size:13px;font-weight:600;
+  line-height:1.4;overflow-wrap:anywhere}
+.help-path-v904 svg{flex-shrink:0;color:var(--muted)}
+
+/* ---- the body shapes: steps, bullets, callouts, definitions -------------------------------- */
+.help-steps-v904{margin:0 0 12px;padding:0;list-style:none;counter-reset:helpstep}
+.help-steps-v904>li{counter-increment:helpstep;position:relative;padding:0 0 0 34px;margin-bottom:10px;
+  line-height:1.6;color:var(--ink2);font-size:14.5px}
+.help-steps-v904>li::before{content:counter(helpstep);position:absolute;left:0;top:0;width:24px;height:24px;
+  border-radius:999px;background:var(--brand-red-faint);color:var(--brand-red-on-soft);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.help-list-v904{margin:0 0 12px;padding-left:20px}
+.help-list-v904>li{margin-bottom:7px;line-height:1.6;color:var(--ink2);font-size:14.5px}
+.help-know-v904{margin:0;padding:0;list-style:none}
+.help-know-v904>li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin-bottom:8px;border-radius:12px;
+  background:var(--neutral-bg);line-height:1.55;color:var(--ink2);font-size:14px}
+.help-know-v904>li svg{flex-shrink:0;margin-top:2px;color:var(--muted)}
+.help-note-v904{display:flex;gap:9px;align-items:flex-start;margin:10px 0 0;padding:10px 12px;border-radius:12px;
+  background:var(--warn-bg);color:var(--ink2);font-size:13.5px;line-height:1.55}
+.help-note-v904 svg{flex-shrink:0;margin-top:2px;color:var(--warn)}
+.help-sublabel-v904{margin:12px 0 6px!important;font-size:11.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted)}
+.help-deflist-v904{margin:0;display:grid;gap:0}
+.help-deflist-v904 dt{font-weight:650;color:var(--ink);font-size:14px;padding-top:12px}
+.help-deflist-v904 dd{margin:3px 0 12px;color:var(--ink2);font-size:14px;line-height:1.55;
+  padding-bottom:12px;border-bottom:1px solid var(--line)}
+.help-deflist-v904 dd:last-of-type{border-bottom:0}
+.help-shot-v904{margin:12px 0 0}
+.help-shot-v904 img{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);display:block}
+.help-shot-v904 figcaption{margin-top:7px;font-size:12.5px;color:var(--muted);line-height:1.5}
+
+/* Expandable answers. A <details> rather than a scripted accordion so browser find-in-page,
+   keyboard access and printing all keep working with no JS at all. */
+.help-disclosure-v904{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.help-disclosure-v904>summary{cursor:pointer;padding:12px 14px;font-weight:600;font-size:14px;color:var(--ink);
+  list-style:none;display:flex;align-items:center;gap:10px;min-height:44px}
+.help-disclosure-v904>summary::-webkit-details-marker{display:none}
+.help-disclosure-v904>summary::after{content:'+';margin-left:auto;color:var(--muted);font-size:16px;font-weight:700;flex-shrink:0}
+.help-disclosure-v904[open]>summary::after{content:'\2212'}
+.help-disclosure-v904[open]>summary{border-bottom:1px solid var(--line)}
+.help-disclosure-v904:hover{border-color:var(--control-border)}
+.help-disclosure-body-v904{padding:14px}
+.help-disclosure-body-v904>*:last-child{margin-bottom:0}
+.help-disclosure-v904.is-problem>summary{color:var(--ink)}
+
+/* ---- cards and lists used by the home page and the Related sections ------------------------ */
+.help-grid-v904{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}
+.help-tasklist-v904{display:grid;gap:8px}
+.help-card-v904{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);text-decoration:none;color:var(--ink);min-height:44px;
+  transition:transform .18s var(--spring),box-shadow .18s var(--ease),border-color .14s}
+.help-card-v904:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--control-border)}
+.help-card-ic-v904{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:34px;height:34px;
+  border-radius:10px;background:var(--brand-red-faint);color:var(--coral)}
+.help-card-text-v904{display:flex;flex-direction:column;gap:3px;min-width:0}
+.help-card-text-v904 b{font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.help-card-text-v904 .small{line-height:1.45;overflow-wrap:anywhere}
+.help-card-meta-v904{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.help-more-v904{font-size:13.5px;font-weight:600;color:var(--coral);text-decoration:none;border-bottom:1px solid transparent}
+.help-more-v904:hover{border-bottom-color:currentColor}
+.help-go-v904{margin-bottom:4px}
+
+/* ---- home: the search hero ----------------------------------------------------------------- */
+.help-hero-v904{padding:6px 0 4px}
+.help-hero-v904 h1{font-size:30px;letter-spacing:-.025em;margin:0}
+.help-hero-sub-v904{margin:6px 0 16px;color:var(--muted);font-size:16px}
+.help-search-v904{display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:14px;background:var(--card);
+  border:1px solid var(--line);box-shadow:var(--shadow);min-height:54px;max-width:640px;
+  transition:border-color .14s,box-shadow .18s var(--ease)}
+.help-search-v904:focus-within{border-color:var(--coral);box-shadow:var(--shadow-lg)}
+.help-search-ic-v904{display:inline-flex;color:var(--muted);flex-shrink:0}
+.help-search-v904 input{flex:1 1 auto;min-width:0;border:0;outline:0;background:transparent;font-size:16px;
+  color:var(--ink);height:52px;padding:0}
+.help-search-v904 input::-webkit-search-cancel-button{display:none}
+.help-search-clear-v904{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+  border-radius:999px;border:0;background:var(--neutral-bg);color:var(--ink2);cursor:pointer;flex-shrink:0}
+.help-search-clear-v904:hover{background:var(--brand-red-soft);color:var(--brand-red-on-soft)}
+/* The clear control is display:inline-flex, and a class beats the UA's [hidden]{display:none} —
+   so without this it sat in the box with nothing to clear. Every -v904 element that is toggled
+   with the `hidden` attribute is listed here rather than relying on the UA rule. */
+.help-search-clear-v904[hidden],.help-shell-v904 [hidden]{display:none!important}
+.help-search-hint-v904{margin:10px 0 0;max-width:640px;line-height:1.55}
+.help-home-block-v904{padding-top:24px;margin-top:24px;border-top:1px solid var(--line)}
+.help-block-sub-v904{margin:-4px 0 12px}
+
+/* ---- search results and the empty state ---------------------------------------------------- */
+.help-results-v904{padding-top:20px;display:grid;gap:8px}
+.help-results-count-v904{margin:0 0 4px;color:var(--muted);font-size:13.5px}
+.help-result-v904{display:grid;gap:3px;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .14s,box-shadow .18s var(--ease)}
+.help-result-v904:hover{border-color:var(--control-border);box-shadow:var(--shadow)}
+.help-result-kind-v904{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.help-result-v904 b{font-size:14.5px;line-height:1.35}
+.help-empty-v904{padding-top:20px}
+.help-empty-v904 h2{font-size:19px;margin:0 0 6px}
+
+/* ---- "On this page" ------------------------------------------------------------------------- */
+.help-toc-v904{position:sticky;top:84px;min-width:0;display:grid;gap:2px;
+  padding-left:16px;border-left:1px solid var(--line)}
+.help-toc-head-v904{margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.help-toc-link-v904{display:block;width:100%;text-align:left;border:0;background:transparent;cursor:pointer;
+  padding:6px 0;font-size:13px;line-height:1.4;color:var(--muted);transition:color .14s}
+.help-toc-link-v904:hover{color:var(--coral)}
+
+@media(max-width:1180px){
+  .help-shell-v904.has-toc{grid-template-columns:232px minmax(0,1fr)}
+  .help-toc-v904{display:none}
+}
+/* 960px — the same threshold at which this workspace decides there is no room for a side rail.
+   The section nav becomes the collapsible it was authored as, above the article. */
+@media(max-width:960px){
+  .help-shell-v904,.help-shell-v904.has-toc{grid-template-columns:minmax(0,1fr);gap:18px}
+  .help-nav-v904{position:static;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:6px}
+  .help-nav-v904>summary{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 10px;border-radius:10px;
+    cursor:pointer;font-weight:650;font-size:14px;color:var(--ink);list-style:none}
+  .help-nav-v904>summary::-webkit-details-marker{display:none}
+  .help-nav-v904>summary::after{content:'+';margin-left:auto;color:var(--muted);font-weight:700}
+  .help-nav-v904[open]>summary::after{content:'\2212'}
+  .help-nav-inner-v904{padding:4px 2px 6px}
+  .help-nav-group-v904{margin-top:10px}
+  .help-article-v904{max-width:none}
+}
+@media(max-width:768px){
+  .help-hero-v904 h1{font-size:25px}
+  .help-head-v904 h1{font-size:23px}
+  .help-head-ic-v904{width:42px;height:42px}
+  .help-search-v904{min-height:50px}
+  .help-search-v904 input{height:48px;font-size:16px}
+  .help-grid-v904{grid-template-columns:minmax(0,1fr)}
+  .help-section-v904,.help-home-block-v904{padding-top:18px;margin-top:18px}
+}
+/* The whole guide, on paper, with the furniture removed. Someone printing a procedure for the
+   counter wall should get the steps, not the navigation. */
+@media print{
+  .help-nav-v904,.help-toc-v904,.help-search-v904,.help-search-hint-v904,.help-go-v904{display:none!important}
+  .help-shell-v904,.help-shell-v904.has-toc{display:block}
+  .help-disclosure-body-v904{display:block!important}
+  .help-disclosure-v904>summary::after{content:''}
+}
 
 /* Evidence label only. Layout and customer promotion components are production CSS. */
 .v104-provenance{margin-bottom:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
@@ -6000,7 +6199,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 </head>
 <body>
 <div class="wallet-shell customer-shell"><div class="wallet-inner">
-  <p class="v104-provenance">Local production-render harness · source 907af31aa922211e71c4141b502d4197d6b2565cd6b59d5a1a3b9321fa720ec1</p>
+  <p class="v104-provenance">Local production-render harness · source 534329c726134c862aa60b78f3bb15b303dc00a029effb059348f2bac9b2b33c</p>
   <header class="customer-programme-compact-head">
     <div class="customer-programme-logo"><span>G</span></div>
     <div class="customer-programme-compact-copy"><h1>Glow Atelier</h1><p>Glow Rewards</p></div>
@@ -6012,7 +6211,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
   </section>
 </div></div>
 <script>
-const PRODUCTION_SOURCE_SHA256="907af31aa922211e71c4141b502d4197d6b2565cd6b59d5a1a3b9321fa720ec1";
+const PRODUCTION_SOURCE_SHA256="534329c726134c862aa60b78f3bb15b303dc00a029effb059348f2bac9b2b33c";
 const FIXTURE_LONG_TOKEN="NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60";
 const FIXTURE_OFFERS=[{"id":"11111111-1111-4111-8111-111111111111","name":"National Day: 30% off Spa Ritual 60","description":"Celebrate National Day with 30% off Spa Ritual 60 at Glow Atelier. Book now to enjoy this offer.","terms":"One redemption per customer. Advance booking required.","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ed6154%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffb56d%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"National Day spa treatment promotion","starts_at":"2026-08-01T00:00:00+08:00","ends_at":"2026-08-30T23:59:59+08:00","metadata":{"offer_facts":"30% off Spa Ritual 60","cta":{"kind":"book","label":"Book now"}}},{"id":"22222222-2222-4222-8222-222222222222","name":"Weekday facial upgrade","description":"Use coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","terms":"Show this exact code at the counter: NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","image_url":"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201200%20800%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2330234f%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238b74cc%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%221200%22%20height%3D%22800%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22950%22%20cy%3D%22160%22%20r%3D%22210%22%20fill%3D%22white%22%20fill-opacity%3D%22.13%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22650%22%20r%3D%22260%22%20fill%3D%22white%22%20fill-opacity%3D%22.09%22%2F%3E%3C%2Fsvg%3E","image_alt":"Weekday facial promotion","starts_at":"2026-08-15T00:00:00+08:00","ends_at":"2026-09-15T23:59:59+08:00","metadata":{"offer_facts":"Coupon NESTLY-NDP-2026-SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30SAVE30-HTTPS-EXAMPLE-COM-PROMOTIONS-SPA-RITUAL-60","cta":{"kind":"programme","label":"View details"}}}];
 const $=id=>document.getElementById(id);
