@@ -11,7 +11,7 @@ a literal slice of the committed fixture file, so the expected answers a reviewe
 against live in exactly one place (the fixture itself) and this document, not two places
 that can drift apart.
 
-Fixtures with an extracted truth table: **49**. Flagged (no truth-table
+Fixtures with an extracted truth table: **50**. Flagged (no truth-table
 marker found): **40**.
 
 ## Flagged — no truth-table marker found
@@ -3580,5 +3580,33 @@ rollback;
 --   service undeletable.
 --
 -- Any row in v895_out whose outcome starts with FAIL is a failure; the block at the end raises.
+```
+
+### `db/tests/executed/v897_corpus_bar_pack.sql`
+
+```
+--
+--   app.business_pack_v648 by industry, after v897:
+--     fnb -> fnb | bar -> fnb | salon -> hair_salon | facial -> beauty_wellness
+--     massage -> beauty_wellness | fitness -> generic | retail -> generic | other -> generic
+--     (a business id that does not exist -> generic, unchanged)
+--
+--   Business BAR, industry 'bar':
+--     S1 'Tiger draught'   -> beverages.alcohol   kw 'draught'   own_pack_unique  CONFIDENT
+--                             the headline: BEFORE v897 this same name resolved cross_pack,
+--                             because beverages.alcohol is in the fnb pack and a bar was generic.
+--     S2 'Massage'         -> massage_body.full_body_massage  kw 'massage'  cross_pack  not confident
+--                             the guard still holds in the other direction: a bar that lists a
+--                             massage is NOT auto-classified as a spa.
+--
+--   Trigger: S1 mapped (method auto_keyword), S2 left unmapped.
+--   Backfill: clear S1's row, then app.service_automap_backfill_v895() -> exactly 1
+--             (the estate is drained at the top of this fixture so the count is this tenant's),
+--             the row carries method auto_keyword_backfill and mapped_by null, S2 stays unmapped,
+--             and a second call returns 0.
+--   An owner's own mapping is never overwritten by the re-drive.
+--   The six bar keywords are on beverages.alcohol and 'ale' is deliberately NOT among them.
+--
+-- Any row in v897_out whose outcome starts with FAIL is a failure; the block at the end raises.
 ```
 

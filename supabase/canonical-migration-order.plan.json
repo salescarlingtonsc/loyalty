@@ -4330,6 +4330,12 @@
       "version": "20261010200000",
       "name": "nestly_v895_service_automap",
       "sourcePath": "db/migrations/20261007_nestly_v895_service_automap.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010210000",
+      "name": "nestly_v897_bar_pack",
+      "sourcePath": "db/migrations/20261007_nestly_v897_bar_pack.sql"
     }
   ]
 }

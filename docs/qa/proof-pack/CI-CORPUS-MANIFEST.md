@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **89**.
+Fixture count: **90**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -106,6 +106,7 @@ Fixture count: **89**.
 | `db/tests/executed/v777_corpus_branch_code_and_comparison.sql` | `db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql` | _(none)_ | 1 | 4 | `122c391e0126e340f9d093214dc209e124cb6eab76c6a543a93fced771d37de8` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_branch_code_and_comparison --migrated-only` |
 | `db/tests/executed/v777_corpus_referral_reward_visible.sql` | `db/migrations/20261006_nestly_v777_referral_reward_visible.sql` | _(none)_ | 1 | 3 | `6cab0fe8b386937266af515402ea25a02a251d1e028de846f3277c66c6f778f2` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_referral_reward_visible --migrated-only` |
 | `db/tests/executed/v895_corpus_service_automap.sql` | `db/migrations/20261007_nestly_v895_service_automap.sql` | _(none)_ | 1 | 0 | `b7cf091e658f3f8dc2061191ee2d4c144884b5873614e15be51dcd02e2ebf060` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v895_corpus_service_automap --migrated-only` |
+| `db/tests/executed/v897_corpus_bar_pack.sql` | `db/migrations/20261007_nestly_v897_bar_pack.sql` | _(none)_ | 1 | 0 | `264b55238536e5183b04b73228fd8bed69d833b19da44adabb5f0104a2fc586a` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v897_corpus_bar_pack --migrated-only` |
 
 ## Notes
 
