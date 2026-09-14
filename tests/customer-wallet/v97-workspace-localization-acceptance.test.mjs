@@ -237,7 +237,13 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        most operational guides, each translated end to end. */
         /* 1895 -> 2056: nestly_v909 wave 4 — the Appointments and Customers guides. */
         /* 2056 -> 2181: nestly_v910 wave 5 — the Staff Members and Branches guides. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,2181,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* 2181 -> 2337: nestly_v911 wave 6 — the Packages, Services, Products and Sales & refunds
+       guides, plus 'Not set up' and 'Not included', the two status words those guides name. The
+       same wave corrected 17 earlier entries that had described the module-access values and the
+       status pills in English or in words the screen does not use: the pills really do translate
+       (On/Off -> 开启/关闭, Hidup/Mati) and so do Read and Edit (阅读/编辑, Baca/Sunting), so a
+       guide that said 只读 or 'Read' was naming something the reader would never see. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,2337,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

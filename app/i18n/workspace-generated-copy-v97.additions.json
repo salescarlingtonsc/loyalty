@@ -778,8 +778,8 @@
     {
       "source": "In Staff Members the owner sets each teammate's modules to Off, Read or Edit. Read means they can open the screen but not change anything; the screen says so at the top. Owners always have every module the business has.",
       "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
-      "zh-CN": "在「员工」中，店主将每位同事的模块设为「关闭」、「只读」或「可编辑」。「只读」表示可以打开页面但不能更改；页面顶部会注明。店主始终拥有商家的全部模块。",
-      "ms": "Dalam Ahli Kakitangan, pemilik menetapkan modul setiap rakan sepasukan kepada Off, Read atau Edit. Read bermaksud mereka boleh membuka skrin tetapi tidak boleh mengubah apa-apa; skrin menyatakannya di bahagian atas. Pemilik sentiasa mempunyai setiap modul yang dimiliki perniagaan."
+      "zh-CN": "在「员工」中，店主将每位同事的模块设为「关闭」、「阅读」或「编辑」。「阅读」表示可以打开页面但不能更改；页面顶部会注明。店主始终拥有商家的全部模块。",
+      "ms": "Dalam Ahli Kakitangan, pemilik menetapkan modul setiap rakan sepasukan kepada Mati, Baca atau Sunting. Baca bermaksud mereka boleh membuka skrin tetapi tidak boleh mengubah apa-apa; skrin menyatakannya di bahagian atas. Pemilik sentiasa mempunyai setiap modul yang dimiliki perniagaan."
     },
     {
       "source": "Two reasons a screen can be closed to you",
@@ -797,7 +797,7 @@
       "source": "Your module switches — the owner has set that module to Off for you.",
       "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
       "zh-CN": "您的模块开关 — 店主已为您将该模块设为「关闭」。",
-      "ms": "Suis modul anda — pemilik telah menetapkan modul itu kepada Off untuk anda."
+      "ms": "Suis modul anda — pemilik telah menetapkan modul itu kepada Mati untuk anda."
     },
     {
       "source": "Full access to everything the business has, including Branches, Staff Members, Subscription and Customer Interface. There is exactly one owner role and it cannot be given out by invite.",
@@ -862,8 +862,8 @@
     {
       "source": "You set that module to Read rather than Edit.",
       "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
-      "zh-CN": "您将该模块设为了「只读」而非「可编辑」。",
-      "ms": "Anda menetapkan modul itu kepada Read dan bukannya Edit."
+      "zh-CN": "您将该模块设为了「阅读」而非「编辑」。",
+      "ms": "Anda menetapkan modul itu kepada Baca dan bukannya Sunting."
     },
     {
       "source": "The module is switched off for them entirely.",
@@ -880,8 +880,8 @@
     {
       "source": "Set the module they need to Edit, then ask them to reload the workspace.",
       "reason": "nestly_v907 wave 2 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. This entry is from the Getting Started section and the Dashboard guide.",
-      "zh-CN": "将他们需要的模块设为「可编辑」，然后请他们重新加载工作区。",
-      "ms": "Tetapkan modul yang mereka perlukan kepada Edit, kemudian minta mereka memuatkan semula ruang kerja."
+      "zh-CN": "将他们需要的模块设为「编辑」，然后请他们重新加载工作区。",
+      "ms": "Tetapkan modul yang mereka perlukan kepada Sunting, kemudian minta mereka memuatkan semula ruang kerja."
     },
     {
       "source": "Can I have two owners?",
@@ -1211,7 +1211,7 @@
       "source": "The cards. Each says On, Off or Not set up, and opens its own setup.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "方案卡片。每张显示「开启」、「关闭」或「未设置」，并可打开各自的设置。",
-      "ms": "Kad-kad itu. Setiap satu menyatakan On, Off atau Not set up, dan membuka tetapannya sendiri."
+      "ms": "Kad-kad itu. Setiap satu menyatakan Hidup, Mati atau Belum disediakan, dan membuka tetapannya sendiri."
     },
     {
       "source": "Short-lived offers you publish to customers, with a start and end date.",
@@ -1343,7 +1343,7 @@
       "source": "Set each reward On.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "将每项奖励设为「开启」。",
-      "ms": "Tetapkan setiap ganjaran kepada On."
+      "ms": "Tetapkan setiap ganjaran kepada Hidup."
     },
     {
       "source": "Publish.",
@@ -1769,7 +1769,7 @@
       "source": "Open Rewards & Offer -> Overview and check the programme reads On.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "打开「奖励与优惠」->「简介」，确认方案显示为「开启」。",
-      "ms": "Buka Ganjaran & Tawaran -> Gambaran keseluruhan dan semak program itu berbunyi On."
+      "ms": "Buka Ganjaran & Tawaran -> Gambaran keseluruhan dan semak program itu berbunyi Hidup."
     },
     {
       "source": "Open the customer's profile and check the sale is listed against them.",
@@ -1793,7 +1793,7 @@
       "source": "The reward is Off, paused, or has ended.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "该奖励已关闭、暂停或结束。",
-      "ms": "Ganjaran itu Off, dijeda, atau telah tamat."
+      "ms": "Ganjaran itu Mati, dijeda, atau telah tamat."
     },
     {
       "source": "It has already been used within its limit period.",
@@ -1853,7 +1853,7 @@
       "source": "Check the card says On, not Off or Not set up.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "检查卡片显示为「开启」，而非「关闭」或「未设置」。",
-      "ms": "Semak kad itu menyatakan On, bukan Off atau Not set up."
+      "ms": "Semak kad itu menyatakan Hidup, bukan Mati atau Belum disediakan."
     },
     {
       "source": "Can I run points and stamps at the same time?",
@@ -2453,7 +2453,7 @@
       "source": "Open Rewards & Offer and check the programme says On.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "打开「奖励与优惠」，确认方案显示为「开启」。",
-      "ms": "Buka Ganjaran & Tawaran dan semak program itu menyatakan On."
+      "ms": "Buka Ganjaran & Tawaran dan semak program itu menyatakan Hidup."
     },
     {
       "source": "If the sale was recorded as a walk-in, record it again against the customer and reverse the walk-in from Sales.",
@@ -2495,7 +2495,7 @@
       "source": "Open Rewards & Offer -> Rewards Programme and check the reward is On.",
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "打开「奖励与优惠」->「奖励方案」，确认该奖励已开启。",
-      "ms": "Buka Ganjaran & Tawaran -> Program Ganjaran dan semak ganjaran itu On."
+      "ms": "Buka Ganjaran & Tawaran -> Program Ganjaran dan semak ganjaran itu Hidup."
     },
     {
       "source": "The scan will not read the customer's QR",
@@ -3580,8 +3580,8 @@
     {
       "source": "Set module access to Off, Read or Edit per person",
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
-      "zh-CN": "为每人设置模块权限：关闭、只读或可编辑",
-      "ms": "Tetapkan akses modul kepada Off, Read atau Edit bagi setiap orang"
+      "zh-CN": "为每人设置模块权限：关闭、阅读或编辑",
+      "ms": "Tetapkan akses modul kepada Mati, Baca atau Sunting bagi setiap orang"
     },
     {
       "source": "Save and apply a module template",
@@ -3622,8 +3622,8 @@
     {
       "source": "Off, Read or Edit per module, for this person.",
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
-      "zh-CN": "针对此人的每个模块设为：关闭、只读或可编辑。",
-      "ms": "Off, Read atau Edit bagi setiap modul, untuk orang ini."
+      "zh-CN": "针对此人的每个模块设为：关闭、阅读或编辑。",
+      "ms": "Mati, Baca atau Sunting bagi setiap modul, untuk orang ini."
     },
     {
       "source": "Create company invite",
@@ -3760,8 +3760,8 @@
     {
       "source": "Some modules depend on others. When you grant one that needs another, Peekaa adds the dependency as Read and tells you which.",
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
-      "zh-CN": "某些模块依赖其他模块。当您授予的模块需要另一个模块时，Peekaa 会自动以「只读」方式添加依赖项并告知您。",
-      "ms": "Sesetengah modul bergantung pada modul lain. Apabila anda memberikan satu yang memerlukan yang lain, Peekaa menambah kebergantungan itu sebagai Read dan memberitahu anda yang mana satu."
+      "zh-CN": "某些模块依赖其他模块。当您授予的模块需要另一个模块时，Peekaa 会自动以「阅读」方式添加依赖项并告知您。",
+      "ms": "Sesetengah modul bergantung pada modul lain. Apabila anda memberikan satu yang memerlukan yang lain, Peekaa menambah kebergantungan itu sebagai Baca dan memberitahu anda yang mana satu."
     },
     {
       "source": "Open the person.",
@@ -3772,14 +3772,14 @@
     {
       "source": "Set each module to Off, Read or Edit.",
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
-      "zh-CN": "将每个模块设为「关闭」、「只读」或「可编辑」。",
-      "ms": "Tetapkan setiap modul kepada Off, Read atau Edit."
+      "zh-CN": "将每个模块设为「关闭」、「阅读」或「编辑」。",
+      "ms": "Tetapkan setiap modul kepada Mati, Baca atau Sunting."
     },
     {
       "source": "Give at least one module Read or Edit, or there is nothing for them to open.",
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
-      "zh-CN": "至少给一个模块「只读」或「可编辑」权限，否则他们无任何可打开的内容。",
-      "ms": "Berikan sekurang-kurangnya satu modul Read atau Edit, jika tidak tiada apa untuk mereka buka."
+      "zh-CN": "至少给一个模块「阅读」或「编辑」权限，否则他们无任何可打开的内容。",
+      "ms": "Berikan sekurang-kurangnya satu modul Baca atau Sunting, jika tidak tiada apa untuk mereka buka."
     },
     {
       "source": "Reuse a set of permissions",
@@ -3796,8 +3796,8 @@
     {
       "source": "Applying a template grants Edit access for the modules in it. Modules the business does not have are skipped, and Peekaa tells you which.",
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
-      "zh-CN": "应用模板会为其中的模块授予「可编辑」权限。商家没有的模块会被跳过，Peekaa 会告知您是哪些。",
-      "ms": "Menggunakan templat memberikan akses Edit untuk modul di dalamnya. Modul yang tiada pada perniagaan dilangkau, dan Peekaa memberitahu anda yang mana satu."
+      "zh-CN": "应用模板会为其中的模块授予「编辑」权限。商家没有的模块会被跳过，Peekaa 会告知您是哪些。",
+      "ms": "Menggunakan templat memberikan akses Sunting untuk modul di dalamnya. Modul yang tiada pada perniagaan dilangkau, dan Peekaa memberitahu anda yang mana satu."
     },
     {
       "source": "Set one person's modules the way you want them.",
@@ -4290,6 +4290,942 @@
       "reason": "nestly_v910 wave 5 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Staff Members and Branches guides.",
       "zh-CN": "有历史记录的分店会保留。请改为取消其员工分配，使其停止使用。",
       "ms": "Cawangan yang mempunyai sejarah akan kekal. Batalkan penugasan kakitangannya sebaliknya, supaya ia berhenti digunakan."
+    },
+    {
+      "source": "Prepaid sessions a customer buys once and uses over time.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "顾客一次购买、分次使用的预付服务。",
+      "ms": "Sesi prabayar yang pelanggan beli sekali dan guna dari masa ke masa."
+    },
+    {
+      "source": "A package is a number of sessions a customer pays for up front and uses later. You set them up here; they are sold and used at Record sale.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "配套是顾客预先付费、日后分次使用的若干服务。您在此设置；销售和使用则在「记录销售」中进行。",
+      "ms": "Pakej ialah beberapa sesi yang pelanggan bayar terlebih dahulu dan guna kemudian. Anda menyediakannya di sini; ia dijual dan digunakan di Rekod jualan."
+    },
+    {
+      "source": "Operations setup → Packages",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 配套",
+      "ms": "Tetapan operasi → Pakej"
+    },
+    {
+      "source": "Create a package and price it",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "创建配套并定价",
+      "ms": "Cipta pakej dan tetapkan harganya"
+    },
+    {
+      "source": "See the saving against buying each session separately",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "查看相比单次购买所节省的金额",
+      "ms": "Lihat penjimatan berbanding membeli setiap sesi secara berasingan"
+    },
+    {
+      "source": "Choose whether buying it earns points",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "选择购买该配套是否产生积分",
+      "ms": "Pilih sama ada membelinya memperoleh mata"
+    },
+    {
+      "source": "Set an expiry",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置有效期",
+      "ms": "Tetapkan tarikh luput"
+    },
+    {
+      "source": "Switch a package On or Off",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "开启或关闭配套",
+      "ms": "Hidup atau matikan pakej"
+    },
+    {
+      "source": "See which customers hold packages and what is left",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "查看哪些顾客持有配套及剩余次数",
+      "ms": "Lihat pelanggan mana yang memegang pakej dan berapa yang tinggal"
+    },
+    {
+      "source": "Individual value",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "单次价值",
+      "ms": "Nilai individu"
+    },
+    {
+      "source": "What the sessions would cost bought separately.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "这些服务单次购买的总价。",
+      "ms": "Kos sesi itu jika dibeli secara berasingan."
+    },
+    {
+      "source": "Selling price",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "售价",
+      "ms": "Harga jualan"
+    },
+    {
+      "source": "What the customer pays for the package.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "顾客购买该配套所付的金额。",
+      "ms": "Apa yang pelanggan bayar untuk pakej itu."
+    },
+    {
+      "source": "Savings",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "节省",
+      "ms": "Penjimatan"
+    },
+    {
+      "source": "The difference, in money and as a percentage.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "两者的差额，以金额和百分比显示。",
+      "ms": "Perbezaannya, dalam wang dan sebagai peratusan."
+    },
+    {
+      "source": "Offered at / Usable at",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "销售分店 / 可用分店",
+      "ms": "Ditawarkan di / Boleh digunakan di"
+    },
+    {
+      "source": "Which branches sell it, and which accept it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "哪些分店销售，哪些分店接受使用。",
+      "ms": "Cawangan mana yang menjualnya, dan yang mana menerimanya."
+    },
+    {
+      "source": "How long the customer has to use it. Leave blank for no expiry.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "顾客的使用期限。留空表示无有效期限制。",
+      "ms": "Berapa lama pelanggan ada untuk menggunakannya. Biarkan kosong untuk tiada tarikh luput."
+    },
+    {
+      "source": "The sidebar row showing who holds what, and how many sessions are left.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "侧边栏中显示谁持有哪些配套及剩余次数的入口。",
+      "ms": "Baris bar sisi yang menunjukkan siapa memegang apa, dan berapa sesi yang tinggal."
+    },
+    {
+      "source": "Operations setup → Packages → Add package",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 配套 → 添加配套",
+      "ms": "Tetapan operasi → Pakej → Tambah pakej"
+    },
+    {
+      "source": "Expiry must be between 1 and 3650 days, or blank. Eligibility must name the exact service, so the counter knows what a session may be used for.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "有效期必须在 1 至 3650 天之间，或留空。适用范围必须指明具体服务，柜台才知道每次可用于什么。",
+      "ms": "Tarikh luput mesti antara 1 dan 3650 hari, atau kosong. Kelayakan mesti menamakan perkhidmatan yang tepat, supaya kaunter tahu untuk apa sesuatu sesi boleh digunakan."
+    },
+    {
+      "source": "Open Packages.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「配套」。",
+      "ms": "Buka Pakej."
+    },
+    {
+      "source": "Press Add package.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "按「添加配套」。",
+      "ms": "Tekan Tambah pakej."
+    },
+    {
+      "source": "Give the package a name.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "为配套命名。",
+      "ms": "Berikan pakej itu satu nama."
+    },
+    {
+      "source": "Choose exactly which service or variant it covers.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "明确选择它涵盖哪项服务或规格。",
+      "ms": "Pilih dengan tepat perkhidmatan atau varian yang ia liputi."
+    },
+    {
+      "source": "Set how many sessions it contains.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置它包含多少次服务。",
+      "ms": "Tetapkan berapa sesi yang terkandung di dalamnya."
+    },
+    {
+      "source": "Set the selling price — Peekaa shows the saving against the individual value.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置售价 — Peekaa 会显示相比单次价值所节省的金额。",
+      "ms": "Tetapkan harga jualan — Peekaa menunjukkan penjimatan berbanding nilai individu."
+    },
+    {
+      "source": "Set an expiry in days, or leave it blank for no expiry.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "以天数设置有效期，或留空表示无期限。",
+      "ms": "Tetapkan tarikh luput dalam hari, atau biarkan kosong untuk tiada tarikh luput."
+    },
+    {
+      "source": "Choose whether buying it earns points.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "选择购买该配套是否产生积分。",
+      "ms": "Pilih sama ada membelinya memperoleh mata."
+    },
+    {
+      "source": "See what a customer has left",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "查看顾客的剩余次数",
+      "ms": "Lihat apa yang tinggal pada pelanggan"
+    },
+    {
+      "source": "Serve & sell → Customer packages",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "服务与销售 → 顾客配套",
+      "ms": "Layan & jual → Pakej pelanggan"
+    },
+    {
+      "source": "The same information is on the customer's profile, and the customer sees it in their own app.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "相同信息也显示在顾客资料中，顾客在自己的应用中也能看到。",
+      "ms": "Maklumat yang sama ada pada profil pelanggan, dan pelanggan melihatnya dalam aplikasi mereka sendiri."
+    },
+    {
+      "source": "Open Customer packages under Serve & sell.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "在「服务与销售」下打开「顾客配套」。",
+      "ms": "Buka Pakej pelanggan di bawah Layan & jual."
+    },
+    {
+      "source": "Search the customer.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "搜索该顾客。",
+      "ms": "Cari pelanggan itu."
+    },
+    {
+      "source": "The list shows each package they hold and the sessions remaining.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "列表显示他们持有的每个配套及剩余次数。",
+      "ms": "Senarai itu menunjukkan setiap pakej yang mereka pegang dan sesi yang tinggal."
+    },
+    {
+      "source": "Buying a package and using a session are two different records. The purchase is takings; using a session is a visit, not new takings, so revenue is never counted twice.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "购买配套和使用次数是两条不同的记录。购买属于营业收入；使用一次属于到访，而非新增收入，因此收入绝不会重复计算。",
+      "ms": "Membeli pakej dan menggunakan satu sesi ialah dua rekod berbeza. Pembelian ialah kutipan; menggunakan sesi ialah kunjungan, bukan kutipan baharu, jadi hasil tidak pernah dikira dua kali."
+    },
+    {
+      "source": "Whether buying a package earns points is your decision, set per package.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "购买配套是否产生积分由您决定，按每个配套分别设置。",
+      "ms": "Sama ada membeli pakej memperoleh mata adalah keputusan anda, ditetapkan bagi setiap pakej."
+    },
+    {
+      "source": "Switching a package Off stops new sales. Sessions customers already hold stay valid.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "关闭配套后即停止新的销售。顾客已持有的次数仍然有效。",
+      "ms": "Mematikan pakej menghentikan jualan baharu. Sesi yang sudah dipegang pelanggan kekal sah."
+    },
+    {
+      "source": "A session will not apply at the counter",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "柜台无法使用配套次数",
+      "ms": "Sesi tidak boleh digunakan di kaunter"
+    },
+    {
+      "source": "The package does not cover the service being sold.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "该配套不涵盖正在销售的服务。",
+      "ms": "Pakej itu tidak meliputi perkhidmatan yang sedang dijual."
+    },
+    {
+      "source": "It has expired.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它已过期。",
+      "ms": "Ia telah tamat tempoh."
+    },
+    {
+      "source": "There are no sessions left.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "已没有剩余次数。",
+      "ms": "Tiada sesi yang tinggal."
+    },
+    {
+      "source": "The branch is not one the package is usable at.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "该分店不在配套的可用分店范围内。",
+      "ms": "Cawangan itu bukan cawangan tempat pakej boleh digunakan."
+    },
+    {
+      "source": "Open the customer's profile and check the package, its remaining sessions and its expiry.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开顾客资料，检查该配套、剩余次数和有效期。",
+      "ms": "Buka profil pelanggan dan semak pakej itu, sesi yang tinggal dan tarikh luputnya."
+    },
+    {
+      "source": "Open Packages and check Usable at includes this branch.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「配套」，确认「可用分店」包含该分店。",
+      "ms": "Buka Pakej dan semak Boleh digunakan di termasuk cawangan ini."
+    },
+    {
+      "source": "Does selling a package count as revenue today?",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "销售配套算作当天的营业收入吗？",
+      "ms": "Adakah menjual pakej dikira sebagai hasil hari ini?"
+    },
+    {
+      "source": "The purchase is recorded when it is sold. Using a session later does not add revenue again — it is recorded as a visit.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "购买在售出时即记录。日后使用次数不会再次增加收入 — 它记录为一次到访。",
+      "ms": "Pembelian direkodkan apabila ia dijual. Menggunakan sesi kemudian tidak menambah hasil sekali lagi — ia direkodkan sebagai kunjungan."
+    },
+    {
+      "source": "Can I extend a package that expired?",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "可以延长已过期的配套吗？",
+      "ms": "Bolehkah saya melanjutkan pakej yang telah tamat tempoh?"
+    },
+    {
+      "source": "Not from this screen. Sell a fresh package, or record the session as an ordinary sale.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "无法在此页面操作。请销售一个新配套，或将该次服务记录为普通交易。",
+      "ms": "Tidak dari skrin ini. Jual pakej baharu, atau rekodkan sesi itu sebagai jualan biasa."
+    },
+    {
+      "source": "What you sell that takes time, and bundles of them.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "您销售的需占用时间的项目，以及它们的组合套餐。",
+      "ms": "Apa yang anda jual yang mengambil masa, dan gabungannya."
+    },
+    {
+      "source": "Your service list. A service has a name, a price and how long it takes, and that is what fills the counter, the calendar and the customer's app.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "您的服务列表。每项服务有名称、价格和所需时长，这些内容会填充柜台、日历和顾客的应用。",
+      "ms": "Senarai perkhidmatan anda. Satu perkhidmatan mempunyai nama, harga dan tempoh, dan itulah yang mengisi kaunter, kalendar dan aplikasi pelanggan."
+    },
+    {
+      "source": "Operations setup → Services",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 服务",
+      "ms": "Tetapan operasi → Perkhidmatan"
+    },
+    {
+      "source": "Add a service with its price and duration",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "添加服务及其价格和时长",
+      "ms": "Tambah perkhidmatan dengan harga dan tempohnya"
+    },
+    {
+      "source": "Switch a service On or Off",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "开启或关闭服务",
+      "ms": "Hidup atau matikan perkhidmatan"
+    },
+    {
+      "source": "Set which branches offer it",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置提供该服务的分店",
+      "ms": "Tetapkan cawangan mana yang menawarkannya"
+    },
+    {
+      "source": "Create a bundle of two or more items",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "创建包含两项或以上的组合套餐",
+      "ms": "Cipta gabungan dua item atau lebih"
+    },
+    {
+      "source": "Edit or delete",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "编辑或删除",
+      "ms": "Edit atau padam"
+    },
+    {
+      "source": "What staff and customers see.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "员工和顾客看到的名称。",
+      "ms": "Apa yang kakitangan dan pelanggan lihat."
+    },
+    {
+      "source": "What it is sold for.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它的售价。",
+      "ms": "Harga jualannya."
+    },
+    {
+      "source": "How long it takes — this is what the calendar reserves.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "所需时长 — 日历将据此预留时间。",
+      "ms": "Berapa lama ia mengambil masa — inilah yang ditempah oleh kalendar."
+    },
+    {
+      "source": "On / Off",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "开启 / 关闭",
+      "ms": "Hidup / Mati"
+    },
+    {
+      "source": "Whether it can be sold right now. Off keeps the record and its history.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "当前是否可销售。「关闭」会保留记录及其历史。",
+      "ms": "Sama ada ia boleh dijual sekarang. Off mengekalkan rekod dan sejarahnya."
+    },
+    {
+      "source": "Offered at",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "提供分店",
+      "ms": "Ditawarkan di"
+    },
+    {
+      "source": "Which branches sell it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "哪些分店销售它。",
+      "ms": "Cawangan mana yang menjualnya."
+    },
+    {
+      "source": "Two or more items sold together as one thing.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "两项或以上作为单一项目一起销售。",
+      "ms": "Dua item atau lebih yang dijual bersama sebagai satu perkara."
+    },
+    {
+      "source": "Add a service",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "添加服务",
+      "ms": "Tambah perkhidmatan"
+    },
+    {
+      "source": "Operations setup → Services → Add service",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 服务 → 添加服务",
+      "ms": "Tetapan operasi → Perkhidmatan → Tambah perkhidmatan"
+    },
+    {
+      "source": "The service appears at Record sale and in the appointment form straight away.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "该服务会立即出现在「记录销售」和预约表单中。",
+      "ms": "Perkhidmatan itu muncul di Rekod jualan dan dalam borang janji temu dengan serta-merta."
+    },
+    {
+      "source": "Open Services.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「服务」。",
+      "ms": "Buka Perkhidmatan."
+    },
+    {
+      "source": "Press Add service.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "按「添加服务」。",
+      "ms": "Tekan Tambah perkhidmatan."
+    },
+    {
+      "source": "Set the price.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置价格。",
+      "ms": "Tetapkan harga."
+    },
+    {
+      "source": "Set the duration in minutes — the calendar uses this.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "以分钟设置时长 — 日历会使用此数值。",
+      "ms": "Tetapkan tempoh dalam minit — kalendar menggunakannya."
+    },
+    {
+      "source": "Choose which branches offer it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "选择提供该服务的分店。",
+      "ms": "Pilih cawangan mana yang menawarkannya."
+    },
+    {
+      "source": "Create a bundle",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "创建组合套餐",
+      "ms": "Cipta gabungan"
+    },
+    {
+      "source": "Operations setup → Services → Add bundle",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 服务 → 添加组合套餐",
+      "ms": "Tetapan operasi → Perkhidmatan → Tambah gabungan"
+    },
+    {
+      "source": "A bundle needs at least two items. It behaves as one line at the counter.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "组合套餐至少需包含两项。在柜台会作为一行处理。",
+      "ms": "Gabungan memerlukan sekurang-kurangnya dua item. Ia bertindak sebagai satu baris di kaunter."
+    },
+    {
+      "source": "Press Add bundle.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "按「添加组合套餐」。",
+      "ms": "Tekan Tambah gabungan."
+    },
+    {
+      "source": "Name the bundle.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "为组合套餐命名。",
+      "ms": "Namakan gabungan itu."
+    },
+    {
+      "source": "Pick at least two items to include.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "选择至少两项包含在内。",
+      "ms": "Pilih sekurang-kurangnya dua item untuk dimasukkan."
+    },
+    {
+      "source": "Set the bundle price.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置组合套餐价格。",
+      "ms": "Tetapkan harga gabungan."
+    },
+    {
+      "source": "Switching a service Off stops it being sold without removing anything already sold.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "关闭服务后即无法再销售，但已售出的内容不会被删除。",
+      "ms": "Mematikan perkhidmatan menghentikannya daripada dijual tanpa membuang apa-apa yang telah dijual."
+    },
+    {
+      "source": "Deleting a service is not the same as switching it off. Switch it off unless you are sure.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "删除服务与关闭服务不同。除非您确定，否则请选择关闭。",
+      "ms": "Memadamkan perkhidmatan tidak sama dengan mematikannya. Matikannya melainkan anda pasti."
+    },
+    {
+      "source": "Duration is what the calendar reserves, so a wrong duration makes the diary wrong.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "日历按时长预留时间，因此时长设置错误会导致日程出错。",
+      "ms": "Tempoh itulah yang ditempah oleh kalendar, jadi tempoh yang salah menjadikan diari salah."
+    },
+    {
+      "source": "A service does not appear at Record sale",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "某项服务未出现在「记录销售」中",
+      "ms": "Sesuatu perkhidmatan tidak muncul di Rekod jualan"
+    },
+    {
+      "source": "It is switched Off.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它已被关闭。",
+      "ms": "Ia dimatikan."
+    },
+    {
+      "source": "It is not offered at the branch you are on.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "当前所在分店不提供该服务。",
+      "ms": "Ia tidak ditawarkan di cawangan tempat anda berada."
+    },
+    {
+      "source": "The counter catalogue is switched off for this business.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "该商家的柜台目录功能已关闭。",
+      "ms": "Katalog kaunter dimatikan untuk perniagaan ini."
+    },
+    {
+      "source": "Open Services and check On and Offered at.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「服务」，检查「开启」状态和「提供分店」。",
+      "ms": "Buka Perkhidmatan dan semak On serta Ditawarkan di."
+    },
+    {
+      "source": "Change the branch in the top bar.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "更改顶部栏的分店。",
+      "ms": "Tukar cawangan di bar atas."
+    },
+    {
+      "source": "Physical things you sell over the counter.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "您在柜台销售的实体商品。",
+      "ms": "Barangan fizikal yang anda jual di kaunter."
+    },
+    {
+      "source": "Your product list. This is the only place a product is created, and it is what the counter offers under Products.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "您的产品列表。这是创建产品的唯一入口，柜台「产品」标签页显示的就是这些内容。",
+      "ms": "Senarai produk anda. Inilah satu-satunya tempat produk dicipta, dan inilah yang ditawarkan kaunter di bawah Produk."
+    },
+    {
+      "source": "Operations setup → Products",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 产品",
+      "ms": "Tetapan operasi → Produk"
+    },
+    {
+      "source": "Add a product with its price",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "添加产品及其价格",
+      "ms": "Tambah produk dengan harganya"
+    },
+    {
+      "source": "Switch a product On or Off",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "开启或关闭产品",
+      "ms": "Hidup atau matikan produk"
+    },
+    {
+      "source": "Set which branches sell it",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置销售该产品的分店",
+      "ms": "Tetapkan cawangan mana yang menjualnya"
+    },
+    {
+      "source": "Edit a product",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "编辑产品",
+      "ms": "Edit produk"
+    },
+    {
+      "source": "What staff see at the counter.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "员工在柜台看到的名称。",
+      "ms": "Apa yang kakitangan lihat di kaunter."
+    },
+    {
+      "source": "What it sells for.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它的售价。",
+      "ms": "Harga jualannya."
+    },
+    {
+      "source": "Whether it can be sold right now.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "当前是否可销售。",
+      "ms": "Sama ada ia boleh dijual sekarang."
+    },
+    {
+      "source": "Sold at",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "销售分店",
+      "ms": "Dijual di"
+    },
+    {
+      "source": "Add a product",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "添加产品",
+      "ms": "Tambah produk"
+    },
+    {
+      "source": "Operations setup → Products → Add product",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "运营设置 → 产品 → 添加产品",
+      "ms": "Tetapan operasi → Produk → Tambah produk"
+    },
+    {
+      "source": "It appears under the Products tab at Record sale straight away.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它会立即出现在「记录销售」的「产品」标签页中。",
+      "ms": "Ia muncul di bawah tab Produk di Rekod jualan dengan serta-merta."
+    },
+    {
+      "source": "Open Products.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「产品」。",
+      "ms": "Buka Produk."
+    },
+    {
+      "source": "Press Add product.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "按「添加产品」。",
+      "ms": "Tekan Tambah produk."
+    },
+    {
+      "source": "Choose which branches sell it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "选择销售该产品的分店。",
+      "ms": "Pilih cawangan mana yang menjualnya."
+    },
+    {
+      "source": "Products are the only catalogue a reward can point at when the reward is a free item.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "当奖励是免费商品时，产品是奖励唯一可指向的目录。",
+      "ms": "Produk ialah satu-satunya katalog yang boleh dirujuk oleh ganjaran apabila ganjaran itu ialah item percuma."
+    },
+    {
+      "source": "Switching a product Off leaves everything already sold intact.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "关闭产品不会影响任何已售出的内容。",
+      "ms": "Mematikan produk membiarkan segala yang telah dijual tidak tersentuh."
+    },
+    {
+      "source": "A product is missing at the counter",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "柜台缺少某个产品",
+      "ms": "Sesuatu produk hilang di kaunter"
+    },
+    {
+      "source": "It is Off.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它已关闭。",
+      "ms": "Ia dimatikan."
+    },
+    {
+      "source": "It is not set to be sold at this branch.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它未设置为在该分店销售。",
+      "ms": "Ia tidak ditetapkan untuk dijual di cawangan ini."
+    },
+    {
+      "source": "Open Products and check On and Sold at.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「产品」，检查「开启」状态和「销售分店」。",
+      "ms": "Buka Produk dan semak On serta Dijual di."
+    },
+    {
+      "source": "Check the branch in the top bar.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "检查顶部栏的分店。",
+      "ms": "Semak cawangan di bar atas."
+    },
+    {
+      "source": "Every sale you have recorded, and how to correct one.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "您记录的每一笔交易，以及如何更正。",
+      "ms": "Setiap jualan yang anda rekodkan, dan cara membetulkannya."
+    },
+    {
+      "source": "The record of every sale, newest first. It is also where a mistake is put right — reversing or correcting a sale here moves the customer's points with it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "所有交易的记录，最新的在前。这里也是更正错误的地方 — 在此冲正或修正交易时，顾客的积分会随之调整。",
+      "ms": "Rekod setiap jualan, terbaharu dahulu. Di sinilah juga kesilapan dibetulkan — membatalkan atau membetulkan jualan di sini menggerakkan mata pelanggan bersamanya."
+    },
+    {
+      "source": "Reports → Sales",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "报告 → 销售",
+      "ms": "Laporan → Jualan"
+    },
+    {
+      "source": "Search and filter sales",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "搜索和筛选交易",
+      "ms": "Cari dan tapis jualan"
+    },
+    {
+      "source": "Reverse a sale",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "冲正一笔交易",
+      "ms": "Batalkan satu jualan"
+    },
+    {
+      "source": "Amend the amount of a sale",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "修改交易金额",
+      "ms": "Pinda jumlah sesuatu jualan"
+    },
+    {
+      "source": "Export the list to CSV",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "将列表导出为 CSV",
+      "ms": "Eksport senarai ke CSV"
+    },
+    {
+      "source": "When the sale was recorded.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "交易记录的时间。",
+      "ms": "Bila jualan itu direkodkan."
+    },
+    {
+      "source": "Who it was recorded against, or blank for a walk-in.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "交易记在谁名下；散客交易则为空白。",
+      "ms": "Terhadap siapa ia direkodkan, atau kosong bagi pelanggan datang terus."
+    },
+    {
+      "source": "What was recorded.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "所记录的金额。",
+      "ms": "Apa yang direkodkan."
+    },
+    {
+      "source": "Which branch it belongs to.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它属于哪家分店。",
+      "ms": "Cawangan mana ia tergolong."
+    },
+    {
+      "source": "Whether the sale still stands, or has been reversed.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "该交易是否仍然有效，或已被冲正。",
+      "ms": "Sama ada jualan itu masih berkuat kuasa, atau telah dibatalkan."
+    },
+    {
+      "source": "Reports → Sales → find the sale → Reverse",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "报告 → 销售 → 找到该交易 → 冲正",
+      "ms": "Laporan → Jualan → cari jualan itu → Batalkan"
+    },
+    {
+      "source": "Reversing takes back the points that sale earned and anything given because of it. The original row stays in the list, marked as reversed, so your history is complete.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "冲正会收回该交易产生的积分，以及因此发放的任何内容。原记录仍保留在列表中并标记为已冲正，以保持历史完整。",
+      "ms": "Membatalkan menarik balik mata yang diperoleh jualan itu dan apa-apa yang diberikan kerananya. Baris asal kekal dalam senarai, bertanda dibatalkan, supaya sejarah anda lengkap."
+    },
+    {
+      "source": "Open Sales.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "打开「销售」。",
+      "ms": "Buka Jualan."
+    },
+    {
+      "source": "Find the sale — filter by date, or search the customer.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "找到该交易 — 按日期筛选，或搜索顾客。",
+      "ms": "Cari jualan itu — tapis mengikut tarikh, atau cari pelanggan."
+    },
+    {
+      "source": "Press Reverse on that row.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "在该行按「冲正」。",
+      "ms": "Tekan Batalkan pada baris itu."
+    },
+    {
+      "source": "Read what it says will happen, then confirm.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "阅读将会发生的说明，然后确认。",
+      "ms": "Baca apa yang dinyatakan akan berlaku, kemudian sahkan."
+    },
+    {
+      "source": "Correct the amount of a sale",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "更正交易金额",
+      "ms": "Betulkan jumlah sesuatu jualan"
+    },
+    {
+      "source": "Reports → Sales → find the sale → Amend",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "报告 → 销售 → 找到该交易 → 修改",
+      "ms": "Laporan → Jualan → cari jualan itu → Pinda"
+    },
+    {
+      "source": "Points are recalculated from the corrected amount. Use this rather than reversing and re-recording when only the figure was wrong.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "积分会根据更正后的金额重新计算。若只是金额有误，请使用此方式，而不是冲正后重新记录。",
+      "ms": "Mata dikira semula daripada jumlah yang dibetulkan. Gunakan ini dan bukannya membatalkan dan merekod semula apabila hanya angkanya yang salah."
+    },
+    {
+      "source": "Find the sale.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "找到该交易。",
+      "ms": "Cari jualan itu."
+    },
+    {
+      "source": "Press Amend on that row.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "在该行按「修改」。",
+      "ms": "Tekan Pinda pada baris itu."
+    },
+    {
+      "source": "Enter the right amount in Amend sale amount and confirm.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "在「修改交易金额」中输入正确金额并确认。",
+      "ms": "Masukkan jumlah yang betul dalam Pinda jumlah jualan dan sahkan."
+    },
+    {
+      "source": "Export sales to CSV",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "将交易导出为 CSV",
+      "ms": "Eksport jualan ke CSV"
+    },
+    {
+      "source": "Reports → Sales → Export CSV",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "报告 → 销售 → 导出 CSV",
+      "ms": "Laporan → Jualan → Eksport CSV"
+    },
+    {
+      "source": "The export follows exactly the filters on screen. If it says no sales match, widen the range or clear the filters.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "导出内容完全依照屏幕上的筛选条件。如提示无匹配交易，请扩大范围或清除筛选。",
+      "ms": "Eksport itu mengikut tepat penapis pada skrin. Jika ia menyatakan tiada jualan sepadan, luaskan julat atau kosongkan penapis."
+    },
+    {
+      "source": "Set the date range and any filters you want.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "设置日期范围和所需的筛选条件。",
+      "ms": "Tetapkan julat tarikh dan apa-apa penapis yang anda mahu."
+    },
+    {
+      "source": "Reversing is recorded, not hidden. The original sale stays visible and marked.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "冲正会被记录，而非隐藏。原交易仍可见并带有标记。",
+      "ms": "Pembatalan direkodkan, bukan disembunyikan. Jualan asal kekal kelihatan dan bertanda."
+    },
+    {
+      "source": "A reversed sale is left out of your revenue and visit totals, and out of staff commission.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "已冲正的交易不计入您的收入和到访总计，也不计入员工佣金。",
+      "ms": "Jualan yang dibatalkan dikecualikan daripada jumlah hasil dan kunjungan anda, dan daripada komisen kakitangan."
+    },
+    {
+      "source": "Only roles that can record sales can reverse one.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "只有具备记录销售权限的角色才能执行冲正。",
+      "ms": "Hanya peranan yang boleh merekod jualan boleh membatalkannya."
+    },
+    {
+      "source": "I cannot find a sale I know was recorded",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "我找不到一笔确实记录过的交易",
+      "ms": "Saya tidak dapat mencari jualan yang saya tahu telah direkodkan"
+    },
+    {
+      "source": "The date filter does not cover it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "日期筛选范围未涵盖它。",
+      "ms": "Penapis tarikh tidak meliputinya."
+    },
+    {
+      "source": "It was recorded at a different branch.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它是在另一家分店记录的。",
+      "ms": "Ia direkodkan di cawangan yang berbeza."
+    },
+    {
+      "source": "It was a walk-in, so searching the customer will not find it.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "它是散客交易，因此搜索顾客无法找到。",
+      "ms": "Ia adalah jualan pelanggan datang terus, jadi mencari pelanggan tidak akan menemuinya."
+    },
+    {
+      "source": "Widen the date range and clear the filters.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "扩大日期范围并清除筛选条件。",
+      "ms": "Luaskan julat tarikh dan kosongkan penapis."
+    },
+    {
+      "source": "Sort by date and look around the time it happened.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "按日期排序，在事发时间附近查找。",
+      "ms": "Susun mengikut tarikh dan cari sekitar masa ia berlaku."
+    },
+    {
+      "source": "Does reversing a sale give the customer their money back?",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "冲正交易会把钱退给顾客吗？",
+      "ms": "Adakah membatalkan jualan memulangkan wang kepada pelanggan?"
+    },
+    {
+      "source": "No. Peekaa corrects the record and the points. You refund the money your usual way.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "不会。Peekaa 只更正记录和积分。退款请按您惯常的方式处理。",
+      "ms": "Tidak. Peekaa membetulkan rekod dan mata. Anda memulangkan wang itu mengikut cara biasa anda."
+    },
+    {
+      "source": "Can I delete a sale completely?",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "可以彻底删除一笔交易吗？",
+      "ms": "Bolehkah saya memadamkan jualan sepenuhnya?"
+    },
+    {
+      "source": "No. Sales are reversed, never erased, so your figures and the customer's history stay explainable.",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "不可以。交易只会被冲正，永不删除，以保证您的数据和顾客的历史记录始终可追溯。",
+      "ms": "Tidak. Jualan dibatalkan, tidak pernah dipadamkan, supaya angka anda dan sejarah pelanggan kekal boleh dijelaskan."
+    },
+    {
+      "source": "Not set up",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "未设置",
+      "ms": "Belum disediakan"
+    },
+    {
+      "source": "Not included",
+      "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
+      "zh-CN": "未包含",
+      "ms": "Tidak termasuk"
     }
   ]
 }
