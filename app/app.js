@@ -479,9 +479,15 @@ const customerPhoneBlockedInProduction=()=>(
   RUNTIME_CONFIG.environment==='production'
   && !customerPhoneOtpRuntimeConfigured()
 );
+/* nestly_v894. This used to read window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__, which was READ
+   here and in app-customer.js and WRITTEN nowhere in the repository — so the WhatsApp radio could
+   not appear however the server answered, and the c42 channel was dark by construction rather
+   than by decision. It is now the same shape as every other runtime seam beside it: a key in
+   config/runtime/*.json, checked against the server capability probe as before. Two switches
+   still have to agree (this one and the platform flag customer_whatsapp_otp), which is the point. */
 const CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED=(
   CUSTOMER_PHONE_OTP_RUNTIME_ENABLED
-  && window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__===true
+  && RUNTIME_CONFIG.customerWhatsappOtpEnabled===true
 );
 let passwordRecoveryActive=false,passwordRecoveryError=false;
 
@@ -5337,8 +5343,13 @@ async function route(){
    "Verify", and is wiped the moment it has been applied. It is never written to sessionStorage
    alongside the consent and profile stashes — those survive a reload on purpose, and a password
    must not. */
+/* nestly_v894: whatsappChallengeId is the WhatsApp path's equivalent of the GoTrue OTP that the
+   SMS path never has to hold — an opaque uuid naming the challenge row, useless without the six
+   digits that were sent to the phone. It lives beside signupPassword, in memory only, for the
+   same single hop. */
 let customerRegistrationState={
-  phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false,signupPassword:''
+  phone:'',channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false,signupPassword:'',
+  whatsappChallengeId:''
 };
 let customerAutomaticPasskeyAttempted=false;
 function passwordControlHtml(id,{autocomplete='current-password',minlength='',describedBy='',placeholder='',passkeyButtonId='',locale='en',name=''}={}){
@@ -5378,7 +5389,8 @@ function bindPasswordVisibility(container=document){
 }
 function resetCustomerRegistrationState({phone=''}={}){
   customerRegistrationState={
-    phone,channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false,signupPassword:''
+    phone,channel:'sms',purpose:'signup',legalAccepted:false,marketingOptedIn:false,signupPassword:'',
+    whatsappChallengeId:''
   };
   try{sessionStorage.removeItem('peekaa-customer-signup-consent-v163')}catch{}
   try{sessionStorage.removeItem('peekaa-customer-signup-profile-v174')}catch{}
@@ -5468,6 +5480,35 @@ async function customerPhoneOtpAvailable(channel='sms'){
   if(channel==='whatsapp'&&!CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED)return false;
   const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
   return channel==='whatsapp'?serverCapabilities.whatsapp===true:serverCapabilities.sms===true;
+}
+/* nestly_v894 — the WhatsApp sign-up code, and why it does not go through sb.auth.
+   The c42 channel called signInWithOtp({channel:'whatsapp'}), which is GoTrue's own WhatsApp
+   channel and is delivered by TWILIO — WhatsApp routed through Twilio Verify, not Peekaa's Meta
+   WABA. The owner asked for Meta directly and for the SMS path to keep working beside it, so the
+   two channels now diverge here: SMS stays exactly where it was (GoTrue + Twilio Verify, not one
+   line changed), and WhatsApp goes to two edge functions that mint, send and check the code.
+   The Supabase Send-SMS hook was the other candidate and cannot do this: its payload carries no
+   channel, so one hook cannot serve both, and enabling it would take SMS off Verify too.
+   Neither call carries a session — the account does not exist yet. */
+async function startWhatsappSignupOtpV894(phone){
+  try{
+    const result=await publicGateway('whatsapp-otp-start',{body:{phone,purpose:'signup'}});
+    const challengeId=String(result?.challenge_id||'');
+    if(!challengeId)return {ok:false,message:'We could not send a WhatsApp code. Please try SMS instead.'};
+    return {ok:true,challengeId};
+  }catch(error){
+    /* publicGateway throws the gateway's own sentence, which is already written for a customer
+       and already says nothing about whether the number has an account. */
+    return {ok:false,message:String(error?.message||'We could not send a WhatsApp code. Please try SMS instead.')};
+  }
+}
+async function verifyWhatsappSignupOtpV894(challengeId,code,password){
+  try{
+    await publicGateway('whatsapp-otp-verify',{body:{challenge_id:challengeId,code,password}});
+    return {ok:true};
+  }catch(error){
+    return {ok:false,message:String(error?.message||'That code could not be checked. Please try again.')};
+  }
 }
 /* v190 appearance. The customer surface used to go dark whenever the DEVICE was in dark mode, so
    the same person saw a beige workspace and a black wallet on one phone. Beige — the business
@@ -5585,6 +5626,34 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
       otpError.innerHTML='<div class="err">Enter the 6-digit code.</div>';return;
     }
     const button=verify;button.disabled=true;
+    /* nestly_v894: the WhatsApp code was not minted by GoTrue, so GoTrue cannot check it. The
+       edge function checks it and creates the confirmed account; the session then comes from an
+       ordinary password sign-in, which is why the password is carried across this hop at all.
+       From renderCustomerRegistration onward the two channels are the same screen. */
+    if(channel==='whatsapp'){
+      const typedPasswordV894=customerRegistrationState.signupPassword;
+      const verifiedV894=await verifyWhatsappSignupOtpV894(
+        customerRegistrationState.whatsappChallengeId,token,typedPasswordV894);
+      if(!isRouteCurrent()||!button.isConnected||!otpError.isConnected)return;
+      if(!verifiedV894.ok){
+        button.disabled=false;
+        otpError.innerHTML=`<div class="err">${esc(verifiedV894.message)}</div>`;return;
+      }
+      const signedInV894=await sb.auth.signInWithPassword({phone,password:typedPasswordV894});
+      if(!isRouteCurrent()||!button.isConnected||!otpError.isConnected)return;
+      /* The account exists and its number is confirmed either way. If the sign-in itself failed
+         (offline between the two calls, say), say so plainly and send them to the sign-in screen —
+         do NOT offer to verify again: the challenge is spent and a second code would create
+         nothing. */
+      if(signedInV894.error||!signedInV894.data?.user){
+        customerRegistrationState={...customerRegistrationState,signupPassword:'',whatsappChallengeId:''};
+        button.disabled=false;
+        otpError.innerHTML='<div class="err">Your number is verified and your account is created, but we could not sign you in. Please return and sign in with the password you just chose.</div>';return;
+      }
+      customerRegistrationState={...customerRegistrationState,signupPassword:'',whatsappChallengeId:''};
+      S.user=signedInV894.data.user;
+      return renderCustomerRegistration(isRouteCurrent);
+    }
     const {data,error}=await sb.auth.verifyOtp({phone,token,type:'sms'});
     if(!isRouteCurrent()||!button.isConnected||!otpError.isConnected)return;
     if(error||!data?.user||!data?.session){
@@ -5620,12 +5689,26 @@ function renderCustomerOtpVerification(isRouteCurrent=()=>true){
       otpError.innerHTML='<div class="err">Customer mobile verification is unavailable. Please return and try again later.</div>';return;
     }
     resend.disabled=true;
-    const options={};if(channel==='whatsapp')options.channel='whatsapp';
+    /* nestly_v894: a WhatsApp resend is a NEW challenge, not a re-send of the old one — the code
+       is not stored anywhere it could be re-read. The per-number ceiling in the database (three in
+       ten minutes) is what stops this being a free send button. */
+    if(channel==='whatsapp'){
+      const resentV894=await startWhatsappSignupOtpV894(phone);
+      if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
+      if(!resentV894.ok){
+        resend.disabled=false;
+        otpError.innerHTML=`<div class="err">${esc(resentV894.message)}</div>`;return;
+      }
+      customerRegistrationState={...customerRegistrationState,whatsappChallengeId:resentV894.challengeId};
+      otpError.innerHTML='';
+    }else{
+    const options={};
     const {error}=recovering
       ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
       :await sb.auth.resend({type:'sms',phone,options});
     if(!isRouteCurrent()||!resend.isConnected||!otpError.isConnected)return;
     if(error){resend.disabled=false;otpError.innerHTML=`<div class="err">${esc(customerAuthErrorMessageV289(error,'otp_send'))}</div>`;return;}
+    }
     seconds=30;resend.textContent='Resend available in 30 seconds';
     const nextCountdown=setInterval(()=>{
       if(!resend?.isConnected)return clearInterval(nextCountdown);
@@ -6056,7 +6139,9 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
   const serverCapabilities=await loadCustomerPhoneOtpCapabilities({refresh:true});
   if(!isRouteCurrent())return;
   const smsAvailable=CUSTOMER_PHONE_OTP_RUNTIME_ENABLED&&serverCapabilities.sms===true;
-  const whatsappAvailable=CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&serverCapabilities.whatsapp===true;
+  /* nestly_v894: sign-up only. Password recovery still needs a GoTrue session to set the new
+     password on, which the WhatsApp path does not produce, so that screen keeps SMS. */
+  const whatsappAvailable=!recovering&&CUSTOMER_WHATSAPP_OTP_RUNTIME_ENABLED&&serverCapabilities.whatsapp===true;
   /* V289 (audit A3, G7). When the server reports sms:false this function used to paint the ENTIRE
      sign-up form — every field, the channel radios, a Turnstile placeholder — and only then hit
      `if(!smsAvailable)return`, which left the widget unmounted. The result was a complete-looking
@@ -6163,7 +6248,30 @@ async function renderCustomerOtpStart(isRouteCurrent=()=>true,purpose='signup'){
       rememberCustomerSignupProfile({fullName:signupFullName,birthDate:signupBirthDate,gender:signupGender});
     }
     send.disabled=true;
-    const options={};if(channel==='whatsapp')options.channel='whatsapp';
+    /* nestly_v894: the WhatsApp branch. It never reaches sb.auth — the account is created by
+       whatsapp-otp-verify once the code is proved, and the browser signs in with this same
+       password a moment later. Everything below this block is the SMS path, unchanged. */
+    if(channel==='whatsapp'){
+      const startedV894=await startWhatsappSignupOtpV894(phone);
+      if(!isRouteCurrent()||!send.isConnected)return;
+      if(!startedV894.ok){
+        send.disabled=false;
+        errorHost.innerHTML=`<div class="err">${esc(startedV894.message)}</div>`;return;
+      }
+      customerRegistrationState={
+        phone,channel,purpose,
+        legalAccepted:$('customerSignupConsent').checked,
+        marketingOptedIn:$('customerSignupMarketing').checked,
+        signupPassword:password,
+        whatsappChallengeId:startedV894.challengeId
+      };
+      rememberCustomerSignupConsent($('customerSignupConsent').checked,$('customerSignupMarketing').checked);
+      return renderCustomerOtpVerification(isRouteCurrent);
+    }
+    /* nestly_v894: `options` was `{channel:'whatsapp'}` on the WhatsApp branch, which is what sent
+       the code through Twilio Verify's WhatsApp sender. That branch returns above, and password
+       recovery is SMS-only, so nothing can set it any more. */
+    const options={};
     const result=recovering
       ?await sb.auth.signInWithOtp({phone,options:{...options,shouldCreateUser:false}})
       :await sb.auth.signUp({phone,password,options});

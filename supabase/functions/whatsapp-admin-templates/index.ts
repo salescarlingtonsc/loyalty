@@ -1,4 +1,4 @@
-/* v557/v581 — one-purpose admin plane: create/check Peekaa's UTILITY templates.
+/* v557/v581 — one-purpose admin plane: create/check Peekaa's templates.
  *
  * Owner approved the appointment pair 2026-08-27 (amended same day because Meta
  * forbids a body that STARTS with a variable, subcode 2388299 — the business
@@ -71,6 +71,26 @@ const TEMPLATES = [
     // Same meaning, no repeated placeholder, still no invitation to reply.
     fallbackText: 'Update from {{1}}: Your appointment for {{2}} has been changed to {{3}}. Please contact the shop if this timing does not work for you.',
   },
+  {
+    /* nestly_v894 — the sign-up verification code, and the first AUTHENTICATION template Peekaa
+       has. Meta writes the copy for this category, not us: the body text is fixed and localised
+       by Meta, we only choose whether the security line appears, how the expiry is worded, and
+       what the button says. That is why this entry has no `text` and no `example` — supplying
+       either is what gets an authentication template refused.
+
+       The button is not decoration. Meta requires an authentication template to carry a COPY_CODE
+       or one-tap button, and the sender must then pass the code TWICE (body parameter and button
+       parameter) — see buildOtpTemplateSend in _shared/whatsapp-otp-boundaries.mjs. */
+    key: 'signup_otp',
+    name: 'peekaa_signup_otp',
+    language: 'en',
+    category: 'AUTHENTICATION',
+    components: [
+      { type: 'BODY', add_security_recommendation: true },
+      { type: 'FOOTER', code_expiration_minutes: 5 },
+      { type: 'BUTTONS', buttons: [{ type: 'OTP', otp_type: 'COPY_CODE', text: 'Copy code' }] },
+    ],
+  },
 ];
 
 function authorized(req: Request): boolean {
@@ -93,10 +113,17 @@ function metaErr(body: Record<string, unknown> | null) {
   };
 }
 
-async function submit(token: string, t: Record<string, unknown>, text: string) {
+async function submit(token: string, t: Record<string, unknown>, text: string | undefined) {
+  const components = t.components as Record<string, unknown>[];
+  /* nestly_v894: a UTILITY template is one BODY whose wording this function substitutes (that is
+     what the fallback retry needs). An AUTHENTICATION template has three components and no body
+     text of ours at all, so it is submitted verbatim. The `text === undefined` test is the
+     difference between the two, and it is the template definition above that decides it. */
   const payload = {
     name: t.name, language: t.language, category: t.category,
-    components: [{ ...(t.components as Record<string, unknown>[])[0], text }],
+    components: typeof text === 'string'
+      ? [{ ...components[0], text }, ...components.slice(1)]
+      : components,
   };
   const r = await fetch(`${GRAPH}/${WABA_ID}/message_templates`, {
     method: 'POST',
@@ -123,7 +150,7 @@ Deno.serve(async (req) => {
   if (action === 'create') {
     const results: Record<string, unknown>[] = [];
     for (const t of wanted) {
-      const primary = (t.components as Record<string, unknown>[])[0].text as string;
+      const primary = (t.components as Record<string, unknown>[])[0].text as string | undefined;
       let attempt = await submit(token, t as Record<string, unknown>, primary);
       let usedFallback = false;
       // Only a wording refusal is retried, and only with the wording recorded

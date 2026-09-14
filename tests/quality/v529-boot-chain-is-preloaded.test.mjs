@@ -75,7 +75,7 @@ test('V529 defer was not silently applied to the boot chain', () => {
      DOMContentLoaded and is a behaviour change, not a performance one. */
   const body = shipped.slice(shipped.indexOf('<body'));
   for (const src of ['/brand-config.js', '/runtime-config.js?v=2',
-    '/runtime-config-loader.js?v=2']) {
+    '/runtime-config-loader.js?v=20260914-v894']) {
     assert.ok(body.includes(`<script src="${src}"></script>`),
       `${src} must stay a plain blocking script — its execution point is part of the contract`);
   }

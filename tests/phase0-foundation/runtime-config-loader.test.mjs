@@ -21,6 +21,7 @@ function remoteConfig(overrides = {}) {
     supabaseUrl: `https://${NON_PRODUCTION_REF}.supabase.co`,
     supabasePublishableKey: PUBLISHABLE_KEY,
     customerPhoneOtpEnabled: false,
+    customerWhatsappOtpEnabled: false,
     webPushPublicKey: '',
     ...overrides
   };
@@ -77,6 +78,7 @@ test('all declared environments have explicit accepted routing semantics', () =>
     supabaseUrl: 'http://127.0.0.1:54321',
     supabasePublishableKey: PUBLISHABLE_KEY,
     customerPhoneOtpEnabled: false,
+    customerWhatsappOtpEnabled: false,
     webPushPublicKey: ''
   };
   assert.equal(runtimeConfig.validate(local).supabaseUrl, 'http://127.0.0.1:54321');
@@ -211,7 +213,7 @@ for (const page of ['app/index.html', 'app/join.html']) {
       // url carries a byte fingerprint so a Cloudflare-cached copy cannot outlive a deploy.
       // Locate the tag by prefix rather than pinning the exact url.
       const appTag = markup.indexOf('<script src="/app-core.js?b=');
-      assert.ok(appTag > markup.indexOf('<script src="/runtime-config-loader.js?v=2"></script>'),
+      assert.ok(appTag > markup.indexOf('<script src="/runtime-config-loader.js?v=20260914-v894"></script>'),
         'app-core.js must load after the runtime config loader');
       assert.ok(appTag > markup.indexOf('@supabase/supabase-js'),
         'app-core.js must load after the Supabase client library');
@@ -220,7 +222,7 @@ for (const page of ['app/index.html', 'app/join.html']) {
     }
     const source = bundle ? `${markup}\n${bundle}` : markup;
     const configScript = source.indexOf('<script src="/runtime-config.js?v=2"></script>');
-    const loaderScript = source.indexOf('<script src="/runtime-config-loader.js?v=2"></script>');
+    const loaderScript = source.indexOf('<script src="/runtime-config-loader.js?v=20260914-v894"></script>');
     const supabaseScript = source.indexOf('@supabase/supabase-js');
     const requireCall = source.indexOf('window.FrenlyRuntimeConfig.require(window)');
     const createClient = source.indexOf('window.supabase.createClient');

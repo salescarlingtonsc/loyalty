@@ -53,6 +53,16 @@ verify_jwt = false
 [functions.whatsapp-send-dispatch]
 verify_jwt = false
 
+# nestly_v894 WhatsApp sign-up OTP. Both are called by an anonymous browser on the
+# create-account screen, before any session exists, so neither can present a Supabase JWT.
+# They authenticate the way every other public-* function does: an origin allowlist plus the
+# shared gateway's per-IP rate limiter, with the per-number ceiling enforced in the database.
+[functions.whatsapp-otp-start]
+verify_jwt = false
+
+[functions.whatsapp-otp-verify]
+verify_jwt = false
+
 [functions.sme-document-signer]
 verify_jwt = true
 

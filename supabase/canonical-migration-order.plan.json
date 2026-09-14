@@ -4336,6 +4336,12 @@
       "version": "20261010210000",
       "name": "nestly_v897_bar_pack",
       "sourcePath": "db/migrations/20261007_nestly_v897_bar_pack.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261011000000",
+      "name": "nestly_v894_whatsapp_otp_signup",
+      "sourcePath": "db/migrations/20261011_nestly_v894_whatsapp_otp_signup.sql"
     }
   ]
 }

@@ -288,8 +288,8 @@ export async function checkSupabaseProjectReferences(
 export async function checkSupabaseClientContract(root = repoRoot) {
   const productionConfig = JSON.parse(await readText(root, 'config/runtime/production.json'));
   assert.deepEqual(Object.keys(productionConfig).sort(), [
-    'customerPhoneOtpEnabled', 'environment', 'projectRef', 'schemaVersion',
-    'supabasePublishableKey', 'supabaseUrl', 'webPushPublicKey'
+    'customerPhoneOtpEnabled', 'customerWhatsappOtpEnabled', 'environment', 'projectRef',
+    'schemaVersion', 'supabasePublishableKey', 'supabaseUrl', 'webPushPublicKey'
   ]);
   assert.equal(productionConfig.schemaVersion, 2);
   assert.equal(productionConfig.environment, 'production');
@@ -297,6 +297,10 @@ export async function checkSupabaseClientContract(root = repoRoot) {
   assert.equal(productionConfig.supabaseUrl, singaporeSupabaseUrl);
   assert.equal(productionConfig.supabasePublishableKey, singaporePublishableKey);
   assert.equal(productionConfig.customerPhoneOtpEnabled, true);
+  /* nestly_v894: WhatsApp sign-up OTP is OFF in production until Meta approves the
+     peekaa_signup_otp authentication template and the platform flag customer_whatsapp_otp is
+     turned on. Both are deliberate, separate go-live acts; this asserts the shipped default. */
+  assert.equal(productionConfig.customerWhatsappOtpEnabled, false);
   assert.equal(typeof productionConfig.webPushPublicKey, 'string');
 
   const runtimeArtifact = await readText(root, 'app/runtime-config.js');
@@ -317,7 +321,11 @@ export async function checkSupabaseClientContract(root = repoRoot) {
     const source = (await Promise.all(parts.map((part) => readText(root, part)))).join('\n');
     assert.match(
       source,
-      /<script src="\/runtime-config\.js\?v=2"><\/script>[\s\S]*?<script src="\/runtime-config-loader\.js\?v=2"><\/script>/,
+      /* nestly_v894: the loader's key is versioned now (the V522 cache-key guard requires a file
+         carrying nestly_vNNN markers to be served under a key at least as new). What this line
+         has always asserted is the ORDER — explicit config before the validator that reads it —
+         so the key is matched loosely and the order strictly. */
+      /<script src="\/runtime-config\.js\?v=2"><\/script>[\s\S]*?<script src="\/runtime-config-loader\.js\?v=[^"]+"><\/script>/,
       `${file} must load explicit runtime config before the shared validator.`
     );
     assert.match(
@@ -475,6 +483,13 @@ function parseMigrationFilename(fileName) {
 // exactly" guarantee this recovery exists to provide, so the one resulting adjacent regression is
 // recorded here rather than silenced generally.
 const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
+  // 2026-09-14 merge: nestly_v894 (the WhatsApp sign-up OTP, written and APPLIED to production
+  // under that name) is a semantic twin of the Business Intelligence v894 that landed on main in
+  // the same window, and it was written four days after main's v895/v897 catalogue pair — so
+  // semantic order walks v894 (dated 20261011) into v895 (dated 20261007) exactly once. A
+  // parallel-session twin, not a real ordering regression: deploy order is unambiguous in the
+  // canonical plan (v895 20261010200000, v897 20261010210000, v894 20261011000000, applied last).
+  '20261011_nestly_v894_whatsapp_otp_signup.sql -> 20261007_nestly_v895_service_automap.sql',
   // localeCompare's tie-break within the same (major, variant) semantic pair sorts the "_fn"
   // filename ahead of its plainer sibling, so the actual reported transition lands here rather
   // than on the alphabetically-simpler v590 name.

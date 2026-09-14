@@ -52,7 +52,8 @@
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) fail('CONFIG_MISSING');
     exactKeys(raw, [
       'schemaVersion', 'environment', 'projectRef', 'supabaseUrl',
-      'supabasePublishableKey', 'customerPhoneOtpEnabled', 'webPushPublicKey'
+      'supabasePublishableKey', 'customerPhoneOtpEnabled', 'customerWhatsappOtpEnabled',
+      'webPushPublicKey'
     ], 'CONFIG_SCHEMA');
     if (raw.schemaVersion !== 2) fail('CONFIG_SCHEMA');
     if (!ENVIRONMENTS.has(raw.environment)) fail('CONFIG_ENVIRONMENT');
@@ -60,6 +61,10 @@
     if (typeof raw.supabaseUrl !== 'string') fail('CONFIG_URL');
     if (typeof raw.supabasePublishableKey !== 'string') fail('CONFIG_KEY');
     if (typeof raw.customerPhoneOtpEnabled !== 'boolean') fail('CONFIG_SCHEMA');
+    /* nestly_v894. Required, not optional: a key the browser may silently read as undefined is
+       how the old window.__FRENLY_CUSTOMER_WHATSAPP_OTP_ENABLED__ managed to be a switch nobody
+       could find. An environment that has not decided must write false. */
+    if (typeof raw.customerWhatsappOtpEnabled !== 'boolean') fail('CONFIG_SCHEMA');
     if (typeof raw.webPushPublicKey !== 'string'
         || (raw.webPushPublicKey !== '' && !/^[A-Za-z0-9_-]{80,120}$/.test(raw.webPushPublicKey))) {
       fail('CONFIG_WEB_PUSH_KEY');
@@ -106,6 +111,7 @@
       supabaseUrl: url.origin,
       supabasePublishableKey: raw.supabasePublishableKey,
       customerPhoneOtpEnabled: raw.customerPhoneOtpEnabled,
+      customerWhatsappOtpEnabled: raw.customerWhatsappOtpEnabled,
       webPushPublicKey: raw.webPushPublicKey
     });
   }
