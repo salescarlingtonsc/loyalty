@@ -116,6 +116,36 @@ test('malformed input cannot produce a write', () => {
     'a Meta row with no name names no registry row');
 });
 
+test('nestly_v900: a registered template this function never submits is not "absent from Meta"', () => {
+  const source = readRepoFile('supabase/functions/whatsapp-admin-templates/index.ts');
+  /* THE BUG, encoded. The first live reconcile paused peekaa_bring_back_v1 — a template Meta had
+     approved — because the Meta list handed to the reconciler had already been filtered down to
+     this function's TEMPLATES array, and bring_back is registered by migration v551 and has never
+     been in it. "Not in our submission catalogue" was reading as "deleted at Meta". */
+  assert.match(source, /reconcileTemplateStatuses\(allMetaRows, registry\)/,
+    'reconcile must be given what Meta actually said, not the TEMPLATES-filtered subset');
+  assert.ok(!/reconcileTemplateStatuses\(rows,/.test(source),
+    'the filtered list must never be the reconcile input again');
+  // The filtered list is still right for the read-only status response.
+  assert.match(source, /const rows = allMetaRows\.filter\(\(d\) => names\.includes/);
+  // And an empty 200 must not be read as "everything was deleted".
+  assert.match(source, /allMetaRows\.length === 0[\s\S]{0,300}meta_returned_no_templates/);
+});
+
+test('nestly_v900: the mapping pauses on absence only when Meta really did not list it', () => {
+  // Exactly the production shape: bring_back registered and approved, and Meta DOES list it.
+  const registry = [
+    { template_key: 'bring_back_v1', meta_name: 'peekaa_bring_back_v1', status: 'approved' },
+    { template_key: 'appointment_reminder', meta_name: 'peekaa_appt_reminder', status: 'approved' },
+  ];
+  const plan = reconcileTemplateStatuses([
+    { name: 'peekaa_bring_back_v1', status: 'APPROVED', id: '276' },
+    { name: 'peekaa_appt_reminder', status: 'APPROVED', id: '160' },
+  ], registry);
+  assert.deepEqual(plan.absentAtMeta, [], 'nothing Meta listed may be treated as absent');
+  assert.ok(plan.observations.every((o) => o.status === 'approved'));
+});
+
 test('the admin plane refuses to reconcile from a failed Meta read', () => {
   const source = readRepoFile('supabase/functions/whatsapp-admin-templates/index.ts');
   // The dangerous shape: an errored Graph call returns no rows, every template then looks absent,

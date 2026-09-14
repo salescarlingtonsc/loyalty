@@ -186,9 +186,10 @@ Deno.serve(async (req) => {
     headers: { authorization: `Bearer ${token}` },
   });
   const body = await r.json().catch(() => ({}));
-  const rows = Array.isArray((body as { data?: unknown[] })?.data)
-    ? (body as { data: Array<{ name?: string }> }).data.filter((d) => names.includes(String(d?.name || '')))
+  const allMetaRows = Array.isArray((body as { data?: unknown[] })?.data)
+    ? (body as { data: Array<{ name?: string }> }).data
     : [];
+  const rows = allMetaRows.filter((d) => names.includes(String(d?.name || '')));
 
   if (action !== 'reconcile') {
     return Response.json({ action, http: r.status, templates: rows, error: metaErr(body) });
@@ -200,6 +201,16 @@ Deno.serve(async (req) => {
   if (!r.ok) {
     return Response.json(
       { action, http: r.status, reconciled: false, reason: 'meta_read_failed', error: metaErr(body) },
+      { status: 502 },
+    );
+  }
+
+  /* An empty list from a 200 is not evidence that every template was deleted — it is far more
+     likely a scoping or permission oddity on the read. Pausing the entire lane on that reading is
+     the same destructive mistake as reconciling from a failed call, so it gets the same refusal. */
+  if (allMetaRows.length === 0) {
+    return Response.json(
+      { action, http: r.status, reconciled: false, reason: 'meta_returned_no_templates' },
       { status: 502 },
     );
   }
@@ -216,7 +227,16 @@ Deno.serve(async (req) => {
     return Response.json({ action, reconciled: false, reason: 'registry_read_failed' }, { status: 503 });
   }
 
-  const plan = reconcileTemplateStatuses(rows, registry);
+  /* nestly_v900, and this line is the whole of the bug it fixes. Reconcile used to be handed
+     `rows` — Meta's list ALREADY filtered down to the TEMPLATES array above. That array is this
+     function's submission catalogue, not the registry: peekaa_bring_back_v1 is registered by
+     migration v551 and has never appeared in it. So the first live reconcile saw a Meta list with
+     bring_back missing, concluded it had been deleted at Meta, and paused a template Meta had
+     approved. Fail-closed, and caught within a minute, but wrong.
+     `allMetaRows` is what Meta actually said. reconcileTemplateStatuses already ignores names the
+     registry does not hold, so the registry — the thing being reconciled — decides what matters,
+     and "absent from Meta" now means absent from META. */
+  const plan = reconcileTemplateStatuses(allMetaRows, registry);
   const { data: result, error: writeError } = await admin.rpc(
     'internal_whatsapp_template_reconcile_v899',
     { p_observations: plan.observations },
