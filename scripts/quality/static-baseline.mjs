@@ -510,7 +510,14 @@ const KNOWN_DATE_ORDER_REGRESSIONS = new Set([
   // therefore steps from main's v773 (20261005) back to this session's v775 (20261003) — a
   // parallel-session twin, not a real ordering regression. Deploy order is unambiguous and
   // strictly monotonic in both plans: …003010000 and …003020000 precede …004000000/…005000000.
-  '20261005_nestly_v773_rewards_same_at_every_branch.sql -> 20261003_nestly_v775_visit_rhythm_current_totals.sql'
+  '20261005_nestly_v773_rewards_same_at_every_branch.sql -> 20261003_nestly_v775_visit_rhythm_current_totals.sql',
+  // nestly_v895 (services map themselves on creation) was authored on 2026-10-07 against the
+  // v647/v648 Phase C taxonomy, whose files carry that authoring week, and takes deploy slot
+  // 20261010200000 — strictly after every existing slot, so deploy order is unambiguous. Its
+  // FILE date therefore sits three days before the v865-v884 number-accuracy wave that was
+  // written later at lower semantic numbers. Re-dating the file would misstate when it was
+  // written, which is the only thing the file date is for.
+  '20261010_nestly_v884_bundles_are_services_everywhere.sql -> 20261007_nestly_v895_service_automap.sql'
 ]);
 
 export async function checkMigrationFilenameSanity(root = repoRoot) {

@@ -4324,6 +4324,12 @@
       "version": "20261010190000",
       "name": "nestly_v884_bundles_are_services_everywhere",
       "sourcePath": "db/migrations/20261010_nestly_v884_bundles_are_services_everywhere.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261010200000",
+      "name": "nestly_v895_service_automap",
+      "sourcePath": "db/migrations/20261007_nestly_v895_service_automap.sql"
     }
   ]
 }

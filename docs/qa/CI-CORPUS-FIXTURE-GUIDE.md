@@ -129,8 +129,20 @@ check demands all three `converted_*` fields together or none.
 ## Catalogue rows
 
 `public.service_canonical_map` needs `version_no` (1) and a `method` from
-`('suggested_confirmed','owner_chosen','console_corrected')`. Node keys must exist in
-`public.taxonomy_nodes` at `version_no = 1`; select them rather than hardcoding.
+`('suggested_confirmed','owner_chosen','console_corrected','auto_keyword',
+'accepted_suggestions','auto_keyword_backfill')` — the last three are `nestly_v895`'s automatic
+provenances. Node keys must exist in `public.taxonomy_nodes` at `version_no = 1`; select them
+rather than hardcoding.
+
+**Since `nestly_v895`, inserting a service MAPS IT.** An AFTER INSERT trigger on
+`public.services` writes a `service_canonical_map` row whenever the service name yields a
+confident keyword match, so a fixture that inserts a service and then inserts its own mapping
+raises `duplicate key ... service_canonical_map_pkey` (this is how v695 found out). Two rules:
+
+- to state the mapping yourself, add
+  `on conflict (business_id, service_id) do update set node_key = excluded.node_key, version_no = excluded.version_no, method = excluded.method, mapped_at = now()`;
+- to leave a service UNMAPPED, delete the row after inserting the service — "unmapped" is now
+  something a fixture arranges, not something it can assume.
 
 ## Write-guard GUCs
 

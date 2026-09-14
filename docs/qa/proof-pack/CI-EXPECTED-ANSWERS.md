@@ -11,7 +11,7 @@ a literal slice of the committed fixture file, so the expected answers a reviewe
 against live in exactly one place (the fixture itself) and this document, not two places
 that can drift apart.
 
-Fixtures with an extracted truth table: **48**. Flagged (no truth-table
+Fixtures with an extracted truth table: **49**. Flagged (no truth-table
 marker found): **40**.
 
 ## Flagged — no truth-table marker found
@@ -3524,5 +3524,61 @@ rollback;
 --   and this fixture does not pretend otherwise.
 -- * An inverted window is refused 22023, not silently emptied.
 -- ===========================================================================================
+```
+
+### `db/tests/executed/v895_corpus_service_automap.sql`
+
+```
+--
+--   Business B1, industry 'facial' -> pack beauty_wellness
+--     S1 'Spa package 5x'        -> massage_body           kw 'spa'        own_pack_unique  CONFIDENT
+--     S2 'Facials'               -> facial.general         kw 'facial'     own_pack_unique  CONFIDENT
+--                                   ('facial' sits on BOTH facial and facial.general; same
+--                                    length, same level-2 family, so the deeper node wins the
+--                                    tie-break and the pair is not "ambiguous")
+--     S3 'Threading'             -> brows_lashes           kw 'threading'  own_pack_unique  CONFIDENT
+--                                   (v647 had threading on hair_removal; v895 moves it)
+--     S4 'Herbal tea (add-on)'   -> beverages.coffee_tea   kw 'tea'        cross_pack       not confident
+--     S5 'Zzz bespoke item'      -> (none)                                 no_match         not confident
+--     S6 'Deluxe manicure'       -> a map row to nails.pedicure, method owner_chosen, written
+--                                   BEFORE the service row exists (service_canonical_map has no
+--                                   FK to services — nestly_v686 says so). Its own suggestion
+--                                   would be nails.manicure and is never applied.
+--
+--   Business B2, industry 'fnb' -> pack fnb
+--     S7 'Spaghetti bolognese'   -> food.mains             kw 'spaghetti'  own_pack_unique  CONFIDENT
+--                                   THE HEADLINE: "spaghetti" word-starts with "spa", so the
+--                                   beauty keyword really does match. The pack rule is what
+--                                   makes the answer food.mains and not massage_body.
+--     S8 'Foot reflexology 60min'-> massage_body.foot_reflexology kw 'foot reflexology'
+--                                                                          cross_pack       not confident
+--                                   the same guard in the other direction.
+--
+--   After the AFTER INSERT trigger: mapped = S1,S2,S3 (method auto_keyword, mapped_by = the
+--   creating user) and S7; unmapped = S4, S5, S8; S6 keeps its owner_chosen nails.pedicure.
+--   B1 board: suggestions.confident 0, suggestions.possible 1 (S4 only — S5 has no suggestion).
+--
+--   accept-all(B1, only_confident := true)  -> mapped 0, no_suggestion 1, not_confident 1
+--   accept-all(B1)                          -> mapped 1 (S4 -> beverages.coffee_tea,
+--                                              method accepted_suggestions), no_suggestion 1,
+--                                              not_confident 0, rows length 1, confident false
+--   accept-all(B1) again                    -> mapped 0  (idempotent)
+--   O2 (a real owner of B2) calling accept-all on B1 -> 42501
+--
+--   Backfill: the estate is drained once at the top of this fixture so the count below is
+--   exact. Delete every fixture mapping except S6's, then
+--     app.service_automap_backfill_v895() -> 4   (S1,S2,S3,S7; S4/S8 are not confident,
+--                                                 S5 has no suggestion, S6 is already mapped)
+--     the same call again                 -> 0   (idempotent)
+--     the four rows carry method auto_keyword_backfill and mapped_by null; S6 is untouched.
+--
+--   History carries all three new methods as change_kind 'set'.
+--
+--   Knock-on (nestly_v686): the owner can still HARD DELETE a service whose only reference is
+--   an automatic mapping (used_by 0, row gone, mapping gone), while a service the owner mapped
+--   by hand still RETIRES (used_by >= 1). Without this, auto-mapping would have made every new
+--   service undeletable.
+--
+-- Any row in v895_out whose outcome starts with FAIL is a failure; the block at the end raises.
 ```
 

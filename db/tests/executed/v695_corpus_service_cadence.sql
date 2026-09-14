@@ -204,13 +204,23 @@ begin
     (svc_m, biz, 'ZZ Mutation Probe', 500, 10),
     (svc_retail, biz, 'ZZ Retail Item', 300, 5);
 
+  /* nestly_v895 auto-maps a service from its name inside the INSERT that creates it, so this
+     fixture's premise — three named mappings, two services left unmapped — is now something to
+     ARRANGE rather than assume. The owner's mapping wins over an automatic one (that is what the
+     product's own set_service_canonical_node_v1 does), and the two deliberately-unmapped rows are
+     cleared. The mappings asserted below are byte-for-byte the ones this suite always used. */
   insert into public.service_canonical_map (business_id, service_id, node_key, version_no, method)
   values
     (biz, svc_s, 'food.mains', 1, 'owner_chosen'),
     (biz, svc_t, 'beverages.specialty_drinks', 1, 'owner_chosen'),
-    (biz, svc_u, 'beverages.coffee_tea', 1, 'owner_chosen');
+    (biz, svc_u, 'beverages.coffee_tea', 1, 'owner_chosen')
+  on conflict (business_id, service_id) do update
+    set node_key = excluded.node_key, version_no = excluded.version_no,
+        method = excluded.method, mapped_at = now();
   -- svc_m and svc_retail deliberately left unmapped: T6's mutation probe and T5's acquisition
   -- scenario exercise service/segment cadence directly and need no category resolution.
+  delete from public.service_canonical_map
+   where business_id = biz and service_id in (svc_m, svc_retail);
 
   ---------------------------------------------------------------------------
   -- customers (T5's acquisition-path customers are inserted separately, under the

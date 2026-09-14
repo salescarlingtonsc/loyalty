@@ -4329,6 +4329,12 @@
       "path": "db/migrations/20261010_nestly_v884_bundles_are_services_everywhere.sql",
       "semanticVersion": "v884",
       "proposedDeployVersion": "20261010190000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261007_nestly_v895_service_automap.sql",
+      "semanticVersion": "v895",
+      "proposedDeployVersion": "20261010200000"
     }
   ]
 }

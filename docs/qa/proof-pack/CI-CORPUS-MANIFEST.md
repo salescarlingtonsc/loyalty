@@ -13,7 +13,7 @@ population it seeds directly — some fixtures seed through an RPC instead and s
 here by design; see the fixture itself), the raw-byte SHA-256 of the file, and the exact
 harness command that runs it.
 
-Fixture count: **88**.
+Fixture count: **89**.
 
 | File | Migration(s) proved | Checks cited | Businesses seeded (literal INSERT) | Clients seeded (literal INSERT) | SHA-256 | Harness command |
 |---|---|---:|---:|---:|---|---|
@@ -40,7 +40,7 @@ Fixture count: **88**.
 | `db/tests/executed/v692_corpus_lineage.sql` | `db/migrations/20260920_nestly_v692_lineage_and_visit_dedupe.sql` | 4, 19 | 1 | 1 | `12a2bc66dc3b7db1a058a5f627a4edaf0bfed89ec0a46455bae806f9aa473428` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v692_corpus_lineage --migrated-only` |
 | `db/tests/executed/v693_corpus_exclusions_verdicts.sql` | `db/migrations/20260920_nestly_v693_exclusions_and_typed_verdicts.sql` | _(none)_ | 1 | 6 | `2c43dcc19c97e9d5328e37127dd2901f3b43ad4818b06eae9b84e377e8faecd9` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v693_corpus_exclusions_verdicts --migrated-only` |
 | `db/tests/executed/v694_corpus_preference.sql` | _(none named by path in this file — see checks/domain notes in the file's own header)_ | _(none)_ | 1 | 2 | `cb05e0c490dbcc17e789ebcc2659df7485023ba6499973d111ff81b4769ed42e` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v694_corpus_preference --migrated-only` |
-| `db/tests/executed/v695_corpus_service_cadence.sql` | `db/migrations/20260717_frenly_v10_sale_policy.sql`<br>`db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql`<br>`db/migrations/20260920_nestly_v695_service_cadence_fallback.sql` | 17, 46 | 1 | 2 | `6b3aebd7d6324a2f917b88d89fffbd6d44898d3f8880c92ad5518f6c3be6082c` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v695_corpus_service_cadence --migrated-only` |
+| `db/tests/executed/v695_corpus_service_cadence.sql` | `db/migrations/20260717_frenly_v10_sale_policy.sql`<br>`db/migrations/20260729_nestly_v109_economics_driver_sector_policy.sql`<br>`db/migrations/20260920_nestly_v695_service_cadence_fallback.sql` | 17, 46 | 1 | 2 | `4f75385e8bf40a049d67a0fda4b6d502733d25b187bfb06c7f1abef0fa013e42` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v695_corpus_service_cadence --migrated-only` |
 | `db/tests/executed/v696_corpus_spine_verdicts.sql` | `db/migrations/20260920_nestly_v688_consultant_spine_v2.sql` | 17, 65 | 1 | 2 | `b764428411adb21e7412284a18b678768303a5be81591f8a003b4994b8a73b9d` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v696_corpus_spine_verdicts --migrated-only` |
 | `db/tests/executed/v697_corpus_service_promotion.sql` | _(none named by path in this file — see checks/domain notes in the file's own header)_ | 38 | 1 | 5 | `0080e0fb8b438d3844db051be21d6bd722ef286483c42a58f788d28267595a1e` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v697_corpus_service_promotion --migrated-only` |
 | `db/tests/executed/v698_corpus_weekend_timezone.sql` | `db/migrations/20260920_nestly_v698_weekend_split_and_branch_timezone.sql` | 8, 37 | 2 | 2 | `5a7af09e53c19b251791f4fb2c229e1f6441b9f8dd2b54e4daef4c3ed6706116` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v698_corpus_weekend_timezone --migrated-only` |
@@ -105,6 +105,7 @@ Fixture count: **88**.
 | `db/tests/executed/v775_corpus_capacity_increase_invoice_reason.sql` | `db/migrations/20261006_nestly_v775_capacity_increase_invoice_reason.sql` | _(none)_ | 1 | 0 | `d8d594a87d42122de81dff3787a2aaeb9445a9d3642c11802dd8383410c0a990` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v775_corpus_capacity_increase_invoice_reason --migrated-only` |
 | `db/tests/executed/v777_corpus_branch_code_and_comparison.sql` | `db/migrations/20261006_nestly_v777_branch_code_and_comparison.sql` | _(none)_ | 1 | 4 | `122c391e0126e340f9d093214dc209e124cb6eab76c6a543a93fced771d37de8` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_branch_code_and_comparison --migrated-only` |
 | `db/tests/executed/v777_corpus_referral_reward_visible.sql` | `db/migrations/20261006_nestly_v777_referral_reward_visible.sql` | _(none)_ | 1 | 3 | `6cab0fe8b386937266af515402ea25a02a251d1e028de846f3277c66c6f778f2` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v777_corpus_referral_reward_visible --migrated-only` |
+| `db/tests/executed/v895_corpus_service_automap.sql` | `db/migrations/20261007_nestly_v895_service_automap.sql` | _(none)_ | 1 | 0 | `b7cf091e658f3f8dc2061191ee2d4c144884b5873614e15be51dcd02e2ebf060` | `LC_ALL=C node scripts/db-tests/run.mjs --filter=v895_corpus_service_automap --migrated-only` |
 
 ## Notes
 
