@@ -235,7 +235,8 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        Getting Started section and the Dashboard guide. */
         /* 1656 -> 1895: nestly_v908 wave 3 — Rewards & Offer and Record sale, the two largest and
        most operational guides, each translated end to end. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,1895,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* 1895 -> 2056: nestly_v909 wave 4 — the Appointments and Customers guides. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,2056,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

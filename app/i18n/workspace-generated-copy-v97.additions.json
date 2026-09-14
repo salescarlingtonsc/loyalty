@@ -2574,6 +2574,972 @@
       "reason": "nestly_v908 wave 3 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The two largest and most operational guides: Rewards & Offer and Record sale.",
       "zh-CN": "不可以。请在「销售」中冲正该散客交易，然后重新以该顾客名义记录。",
       "ms": "Tidak. Batalkan jualan datang terus itu dalam Jualan dan rekodkannya semula terhadap pelanggan."
+    },
+    {
+      "source": "Book a customer with a team member, and record how it went.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "为顾客预约团队成员，并记录服务结果。",
+      "ms": "Tempah pelanggan dengan ahli pasukan, dan rekod bagaimana ia berjalan."
+    },
+    {
+      "source": "The calendar for work that takes a person's time. Book a customer with a team member, move or cancel it, and record the outcome when they arrive.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "用于占用人员时间的工作日历。为顾客预约团队成员，可改期或取消，顾客到店后记录结果。",
+      "ms": "Kalendar untuk kerja yang mengambil masa seseorang. Tempah pelanggan dengan ahli pasukan, alih atau batalkannya, dan rekod hasilnya apabila mereka tiba."
+    },
+    {
+      "source": "Serve & sell → Appointments",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "服务与销售 → 预约",
+      "ms": "Layan & jual → Janji temu"
+    },
+    {
+      "source": "See the calendar by day, 3 days, week or month",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按日、3 天、周或月查看日历",
+      "ms": "Lihat kalendar mengikut hari, 3 hari, minggu atau bulan"
+    },
+    {
+      "source": "Book a new appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "创建新预约",
+      "ms": "Tempah janji temu baharu"
+    },
+    {
+      "source": "Reschedule or cancel",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "改期或取消",
+      "ms": "Jadual semula atau batalkan"
+    },
+    {
+      "source": "Record the outcome and take payment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "记录结果并收款",
+      "ms": "Rekod hasil dan terima bayaran"
+    },
+    {
+      "source": "Block time out for a team member",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "为团队成员锁定时间",
+      "ms": "Sekat masa untuk ahli pasukan"
+    },
+    {
+      "source": "Filter an Appointment List and export it",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "筛选预约列表并导出",
+      "ms": "Tapis Senarai Janji Temu dan eksportnya"
+    },
+    {
+      "source": "Calendar / Appointment List / Block",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "日历 / 预约列表 / 锁定",
+      "ms": "Kalendar / Senarai Janji Temu / Sekat"
+    },
+    {
+      "source": "Three ways to look at the same diary: the grid, a filterable list, and time blocked out.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "查看同一日程的三种方式：网格视图、可筛选列表，以及已锁定的时间。",
+      "ms": "Tiga cara melihat diari yang sama: grid, senarai yang boleh ditapis, dan masa yang disekat."
+    },
+    {
+      "source": "Day / 3 days / week / month",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "日 / 3 天 / 周 / 月",
+      "ms": "Hari / 3 hari / minggu / bulan"
+    },
+    {
+      "source": "How much of the calendar is in view.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "当前视图显示的日历范围。",
+      "ms": "Berapa banyak kalendar yang dilihat."
+    },
+    {
+      "source": "Unassigned",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "未指派",
+      "ms": "Belum ditugaskan"
+    },
+    {
+      "source": "An appointment with no team member on it yet.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "尚未指派团队成员的预约。",
+      "ms": "Janji temu yang belum mempunyai ahli pasukan."
+    },
+    {
+      "source": "Off / Branch closed / Working hours not set",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "休息 / 分店关闭 / 未设置工作时间",
+      "ms": "Cuti / Cawangan tutup / Waktu kerja belum ditetapkan"
+    },
+    {
+      "source": "Why a slot cannot be booked. Working hours are set per team member.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "某时段无法预约的原因。工作时间按每位团队成员分别设置。",
+      "ms": "Sebab sesuatu slot tidak boleh ditempah. Waktu kerja ditetapkan bagi setiap ahli pasukan."
+    },
+    {
+      "source": "Badge on the sidebar row",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "侧边栏行上的角标",
+      "ms": "Lencana pada baris bar sisi"
+    },
+    {
+      "source": "How many booking requests from customers are waiting for a decision.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "有多少来自顾客的预订请求正在等待处理。",
+      "ms": "Berapa banyak permintaan tempahan daripada pelanggan sedang menunggu keputusan."
+    },
+    {
+      "source": "Book an appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "创建预约",
+      "ms": "Tempah janji temu"
+    },
+    {
+      "source": "Serve & sell → Appointments → New appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "服务与销售 → 预约 → 新建预约",
+      "ms": "Layan & jual → Janji temu → Janji temu baharu"
+    },
+    {
+      "source": "Peekaa can suggest a team member who is free. Slots marked Off, Branch closed or Working hours not set cannot be booked.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "Peekaa 可推荐有空的团队成员。标记为「休息」、「分店关闭」或「未设置工作时间」的时段无法预约。",
+      "ms": "Peekaa boleh mencadangkan ahli pasukan yang lapang. Slot bertanda Cuti, Cawangan tutup atau Waktu kerja belum ditetapkan tidak boleh ditempah."
+    },
+    {
+      "source": "Open Appointments.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开「预约」。",
+      "ms": "Buka Janji temu."
+    },
+    {
+      "source": "Press New appointment.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「新建预约」。",
+      "ms": "Tekan Janji temu baharu."
+    },
+    {
+      "source": "Choose the branch if you work across more than one.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "如果您在多个分店工作，请选择分店。",
+      "ms": "Pilih cawangan jika anda bekerja di lebih daripada satu."
+    },
+    {
+      "source": "Search the customer by name or phone and select them. Names repeat — confirm with the phone number.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按姓名或电话搜索并选择顾客。姓名可能重复 — 请用电话号码确认。",
+      "ms": "Cari pelanggan mengikut nama atau telefon dan pilih mereka. Nama boleh berulang — sahkan dengan nombor telefon."
+    },
+    {
+      "source": "Choose the service. The duration fills in from the service and you can change it.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择服务。时长会根据服务自动填入，您也可以更改。",
+      "ms": "Pilih perkhidmatan. Tempoh akan diisi daripada perkhidmatan itu dan anda boleh mengubahnya."
+    },
+    {
+      "source": "Choose who it is assigned to, or leave it unassigned.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择指派给谁，或留空不指派。",
+      "ms": "Pilih siapa yang ditugaskan, atau biarkan tanpa penugasan."
+    },
+    {
+      "source": "Set the date and time.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "设置日期和时间。",
+      "ms": "Tetapkan tarikh dan masa."
+    },
+    {
+      "source": "Add a note if it helps the person doing the work.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "如果对执行者有帮助，可添加备注。",
+      "ms": "Tambah nota jika ia membantu orang yang melakukan kerja itu."
+    },
+    {
+      "source": "Save.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "保存。",
+      "ms": "Simpan."
+    },
+    {
+      "source": "Move or cancel an appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "改期或取消预约",
+      "ms": "Alih atau batalkan janji temu"
+    },
+    {
+      "source": "Appointments → select the appointment → Change appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "预约 → 选择预约 → 更改预约",
+      "ms": "Janji temu → pilih janji temu → Tukar janji temu"
+    },
+    {
+      "source": "The new time must be in the future. Cancelling leaves the appointment in your history marked Cancelled — it is not erased.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "新时间必须在未来。取消后预约仍保留在记录中并标记为「已取消」 — 不会被删除。",
+      "ms": "Masa baharu mesti pada masa hadapan. Membatalkan meninggalkan janji temu itu dalam sejarah anda bertanda Dibatalkan — ia tidak dipadamkan."
+    },
+    {
+      "source": "Open Appointments and select the appointment.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开「预约」并选择该预约。",
+      "ms": "Buka Janji temu dan pilih janji temu itu."
+    },
+    {
+      "source": "Press Change appointment.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「更改预约」。",
+      "ms": "Tekan Tukar janji temu."
+    },
+    {
+      "source": "Pick the new date and time, or choose to cancel.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择新的日期和时间，或选择取消。",
+      "ms": "Pilih tarikh dan masa baharu, atau pilih untuk membatalkan."
+    },
+    {
+      "source": "Press Confirm amendment.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「确认修改」。",
+      "ms": "Tekan Sahkan pindaan."
+    },
+    {
+      "source": "Record the outcome of an appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "记录预约的结果",
+      "ms": "Rekod hasil janji temu"
+    },
+    {
+      "source": "Appointments → select the appointment",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "预约 → 选择预约",
+      "ms": "Janji temu → pilih janji temu"
+    },
+    {
+      "source": "An outcome can only be recorded once the appointment has started. Completing needs an account that can record sales.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "只有在预约开始后才能记录结果。完成操作需要具备记录销售权限的账户。",
+      "ms": "Hasil hanya boleh direkodkan setelah janji temu bermula. Melengkapkannya memerlukan akaun yang boleh merekod jualan."
+    },
+    {
+      "source": "Choose the outcome: Complete & checkout when they came and were served, or No-show if they did not.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择结果：顾客到店并已服务则选「完成并结账」，未到店则选「未出席」。",
+      "ms": "Pilih hasil: Lengkap & bayar apabila mereka datang dan dilayan, atau Tidak hadir jika tidak."
+    },
+    {
+      "source": "Complete & checkout carries you into Record sale with the customer and the service already filled in.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "「完成并结账」会带您进入「记录销售」，顾客和服务已自动填好。",
+      "ms": "Lengkap & bayar membawa anda ke Rekod jualan dengan pelanggan dan perkhidmatan sudah diisi."
+    },
+    {
+      "source": "Finish the sale to record the money and the points.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "完成交易以记录金额和积分。",
+      "ms": "Selesaikan jualan untuk merekodkan wang dan mata."
+    },
+    {
+      "source": "Appointments → Block",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "预约 → 锁定",
+      "ms": "Janji temu → Sekat"
+    },
+    {
+      "source": "Blocked time stops new bookings landing in it. It does not move appointments that are already there.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "锁定时间可阻止新预约进入该时段。已存在的预约不会被移动。",
+      "ms": "Masa yang disekat menghalang tempahan baharu daripada masuk. Ia tidak mengalihkan janji temu yang sudah ada di situ."
+    },
+    {
+      "source": "Switch to Block.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "切换到「锁定」。",
+      "ms": "Tukar kepada Sekat."
+    },
+    {
+      "source": "Choose the team member and the period to block.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择要锁定的团队成员和时间段。",
+      "ms": "Pilih ahli pasukan dan tempoh untuk disekat."
+    },
+    {
+      "source": "Export the calendar",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "导出日历",
+      "ms": "Eksport kalendar"
+    },
+    {
+      "source": "Appointments → Appointment List → Download CSV",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "预约 → 预约列表 → 下载 CSV",
+      "ms": "Janji temu → Senarai Janji Temu → Muat turun CSV"
+    },
+    {
+      "source": "The export follows exactly the filters on screen.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "导出内容完全依照屏幕上的筛选条件。",
+      "ms": "Eksport itu mengikut tepat penapis pada skrin."
+    },
+    {
+      "source": "Switch to Appointment List.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "切换到「预约列表」。",
+      "ms": "Tukar kepada Senarai Janji Temu."
+    },
+    {
+      "source": "Set From, To and the status filter, then Apply filters.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "设置「起始」、「结束」和状态筛选，然后按「应用筛选」。",
+      "ms": "Tetapkan Dari, Hingga dan penapis status, kemudian Guna penapis."
+    },
+    {
+      "source": "Press Download CSV, or Print.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「下载 CSV」或「打印」。",
+      "ms": "Tekan Muat turun CSV, atau Cetak."
+    },
+    {
+      "source": "Completing an appointment is what creates the sale and the points. Booking one does not.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "完成预约才会产生交易和积分。仅创建预约不会。",
+      "ms": "Melengkapkan janji temu itulah yang mencipta jualan dan mata. Menempahnya tidak."
+    },
+    {
+      "source": "Cancelled appointments stay in the record and are excluded from your figures.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "已取消的预约保留在记录中，但不计入您的数据。",
+      "ms": "Janji temu yang dibatalkan kekal dalam rekod dan dikecualikan daripada angka anda."
+    },
+    {
+      "source": "Cafes and bars do not have this screen — they take table Bookings and run a Waitlist instead.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "咖啡馆和酒吧没有此页面 — 它们使用餐桌预订和候补名单。",
+      "ms": "Kafe dan bar tidak mempunyai skrin ini — mereka menggunakan Tempahan meja dan Senarai menunggu."
+    },
+    {
+      "source": "Time is Singapore time throughout.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "全部时间均为新加坡时间。",
+      "ms": "Masa adalah waktu Singapura sepanjangnya."
+    },
+    {
+      "source": "The calendar is empty but I know there are appointments",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "日历是空的，但我知道有预约",
+      "ms": "Kalendar kosong tetapi saya tahu ada janji temu"
+    },
+    {
+      "source": "The branch in the top bar is not the one they were booked at.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顶部栏的分店不是预约所在的分店。",
+      "ms": "Cawangan di bar atas bukan cawangan tempat ia ditempah."
+    },
+    {
+      "source": "The view is on a day or week with nothing in it.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "当前视图所在的日或周没有任何安排。",
+      "ms": "Paparan berada pada hari atau minggu yang tiada apa-apa."
+    },
+    {
+      "source": "A staff filter is still applied from an earlier look.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "之前查看时设置的员工筛选仍在生效。",
+      "ms": "Penapis kakitangan daripada tinjauan sebelumnya masih digunakan."
+    },
+    {
+      "source": "Check the branch selector.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "检查分店选择器。",
+      "ms": "Semak pemilih cawangan."
+    },
+    {
+      "source": "Switch to month view to see the whole picture.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "切换到月视图以查看全貌。",
+      "ms": "Tukar kepada paparan bulan untuk melihat gambaran penuh."
+    },
+    {
+      "source": "Clear the filters on Appointment List.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "清除「预约列表」上的筛选条件。",
+      "ms": "Kosongkan penapis pada Senarai Janji Temu."
+    },
+    {
+      "source": "I cannot book a slot",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "我无法预约某个时段",
+      "ms": "Saya tidak boleh menempah slot"
+    },
+    {
+      "source": "The team member has no working hours set.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "该团队成员未设置工作时间。",
+      "ms": "Ahli pasukan itu tiada waktu kerja ditetapkan."
+    },
+    {
+      "source": "The branch is closed at that time.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "该时间分店处于关闭状态。",
+      "ms": "Cawangan itu tutup pada masa tersebut."
+    },
+    {
+      "source": "The time is blocked out.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "该时间已被锁定。",
+      "ms": "Masa itu telah disekat."
+    },
+    {
+      "source": "The slot is already taken.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "该时段已被占用。",
+      "ms": "Slot itu sudah diambil."
+    },
+    {
+      "source": "Set the team member's working hours in Staff Members.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "在「员工」中设置该团队成员的工作时间。",
+      "ms": "Tetapkan waktu kerja ahli pasukan itu dalam Ahli Kakitangan."
+    },
+    {
+      "source": "Check Block for time blocked out.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "在「锁定」中检查被锁定的时间。",
+      "ms": "Semak Sekat untuk masa yang disekat."
+    },
+    {
+      "source": "Try a different team member or leave it unassigned.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "换一位团队成员，或留空不指派。",
+      "ms": "Cuba ahli pasukan lain atau biarkan tanpa penugasan."
+    },
+    {
+      "source": "Complete is not offered",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "没有出现「完成」选项",
+      "ms": "Lengkap tidak ditawarkan"
+    },
+    {
+      "source": "The appointment has not started yet — an outcome cannot be recorded in advance.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "预约尚未开始 — 无法提前记录结果。",
+      "ms": "Janji temu belum bermula — hasil tidak boleh direkodkan lebih awal."
+    },
+    {
+      "source": "Your role cannot record sales.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "您的角色无法记录销售。",
+      "ms": "Peranan anda tidak boleh merekod jualan."
+    },
+    {
+      "source": "Wait until the start time, or move the appointment earlier.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "等到开始时间，或将预约提前。",
+      "ms": "Tunggu sehingga waktu mula, atau alihkan janji temu lebih awal."
+    },
+    {
+      "source": "Ask someone who can record sales to complete it.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "请有记录销售权限的同事来完成。",
+      "ms": "Minta seseorang yang boleh merekod jualan untuk melengkapkannya."
+    },
+    {
+      "source": "Does booking an appointment earn the customer points?",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "创建预约会让顾客获得积分吗？",
+      "ms": "Adakah menempah janji temu memberi pelanggan mata?"
+    },
+    {
+      "source": "No. Points are earned when the appointment is completed and the sale is recorded.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "不会。积分在预约完成并记录交易时产生。",
+      "ms": "Tidak. Mata diperoleh apabila janji temu dilengkapkan dan jualan direkodkan."
+    },
+    {
+      "source": "Can a customer book themselves?",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客可以自己预约吗？",
+      "ms": "Bolehkah pelanggan menempah sendiri?"
+    },
+    {
+      "source": "Yes, if you turn customer booking on in Customer Interface. Their request appears under Bookings for you to confirm.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "可以，只要您在「顾客界面」中开启顾客预订。他们的请求会出现在「预订」中等待您确认。",
+      "ms": "Boleh, jika anda menghidupkan tempahan pelanggan dalam Antara Muka Pelanggan. Permintaan mereka muncul di bawah Tempahan untuk anda sahkan."
+    },
+    {
+      "source": "Everyone on your programme, and each person's full history.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "所有参与您方案的顾客，以及每个人的完整记录。",
+      "ms": "Semua orang dalam program anda, dan sejarah penuh setiap orang."
+    },
+    {
+      "source": "Your customer list and, behind each name, everything Peekaa knows about that person: their visits, points, rewards, packages and purchases.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "您的顾客名单，以及每个姓名背后 Peekaa 掌握的全部信息：到访记录、积分、奖励、配套和消费。",
+      "ms": "Senarai pelanggan anda dan, di sebalik setiap nama, segala yang Peekaa tahu tentang orang itu: kunjungan, mata, ganjaran, pakej dan pembelian mereka."
+    },
+    {
+      "source": "Search customers by name or phone number",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按姓名或电话号码搜索顾客",
+      "ms": "Cari pelanggan mengikut nama atau nombor telefon"
+    },
+    {
+      "source": "Add a customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "添加顾客",
+      "ms": "Tambah pelanggan"
+    },
+    {
+      "source": "Open a customer's full profile",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开顾客的完整资料",
+      "ms": "Buka profil penuh pelanggan"
+    },
+    {
+      "source": "Adjust a customer's details",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "修改顾客资料",
+      "ms": "Laraskan butiran pelanggan"
+    },
+    {
+      "source": "Import customers from a spreadsheet",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "从电子表格导入顾客",
+      "ms": "Import pelanggan daripada hamparan"
+    },
+    {
+      "source": "Export your list to CSV",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "将名单导出为 CSV",
+      "ms": "Eksport senarai anda ke CSV"
+    },
+    {
+      "source": "The customer's registered name. Names repeat, so use the phone number to be sure.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客登记的姓名。姓名可能重复，请用电话号码确认。",
+      "ms": "Nama berdaftar pelanggan. Nama boleh berulang, jadi gunakan nombor telefon untuk memastikan."
+    },
+    {
+      "source": "The mobile number the customer is identified by. This is the number staff type at Record sale.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "用于识别顾客的手机号码。员工在「记录销售」中输入的就是这个号码。",
+      "ms": "Nombor telefon bimbit yang mengenal pasti pelanggan. Inilah nombor yang ditaip kakitangan di Rekod jualan."
+    },
+    {
+      "source": "Recorded visits that count under your current sale policy.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "在当前销售规则下计入的到访记录。",
+      "ms": "Kunjungan yang direkodkan dan dikira di bawah dasar jualan semasa anda."
+    },
+    {
+      "source": "Points / stamps",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "积分 / 印花",
+      "ms": "Mata / setem"
+    },
+    {
+      "source": "What they have to spend right now.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "他们目前可用于消费的余额。",
+      "ms": "Apa yang mereka ada untuk dibelanjakan sekarang."
+    },
+    {
+      "source": "Tier",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "等级",
+      "ms": "Peringkat"
+    },
+    {
+      "source": "Their current tier, when tier membership is running.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "在等级会员运行时，他们当前所处的等级。",
+      "ms": "Peringkat semasa mereka, apabila keahlian peringkat sedang berjalan."
+    },
+    {
+      "source": "Filters",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "筛选",
+      "ms": "Penapis"
+    },
+    {
+      "source": "Narrow the list — for example to customers who have not been in for a while.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "缩小名单范围 — 例如筛选出一段时间未光顾的顾客。",
+      "ms": "Persempitkan senarai — contohnya kepada pelanggan yang sudah lama tidak datang."
+    },
+    {
+      "source": "Customers → Add customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客 → 添加顾客",
+      "ms": "Pelanggan → Tambah pelanggan"
+    },
+    {
+      "source": "The customer appears in your list straight away. They will not see anything in their own phone until they scan your business QR and join.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客会立即出现在您的名单中。但在扫描您的商家二维码并加入之前，他们的手机上不会显示任何内容。",
+      "ms": "Pelanggan muncul dalam senarai anda dengan serta-merta. Mereka tidak akan melihat apa-apa dalam telefon mereka sehingga mereka mengimbas QR perniagaan anda dan menyertai."
+    },
+    {
+      "source": "Open Customers.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开「顾客」。",
+      "ms": "Buka Pelanggan."
+    },
+    {
+      "source": "Press Add customer.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「添加顾客」。",
+      "ms": "Tekan Tambah pelanggan."
+    },
+    {
+      "source": "Type the customer's name. This is the only required field.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "输入顾客姓名。这是唯一必填项。",
+      "ms": "Taip nama pelanggan. Ini satu-satunya medan yang wajib."
+    },
+    {
+      "source": "Add the mobile number. Without it, staff cannot find this person at Record sale.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "添加手机号码。没有它，员工在「记录销售」中无法找到此人。",
+      "ms": "Tambah nombor telefon bimbit. Tanpanya, kakitangan tidak dapat mencari orang ini di Rekod jualan."
+    },
+    {
+      "source": "Add email and birth date if you have them. A birth date is what makes the Birthday benefit work.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "如有，请添加电子邮件和出生日期。生日优惠依赖出生日期才能生效。",
+      "ms": "Tambah e-mel dan tarikh lahir jika anda ada. Tarikh lahir itulah yang membolehkan Faedah hari jadi berfungsi."
+    },
+    {
+      "source": "Press Save customer.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「保存顾客」。",
+      "ms": "Tekan Simpan pelanggan."
+    },
+    {
+      "source": "Find a customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "查找顾客",
+      "ms": "Cari pelanggan"
+    },
+    {
+      "source": "Top bar → Find a customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顶部栏 → 查找顾客",
+      "ms": "Bar atas → Cari pelanggan"
+    },
+    {
+      "source": "Searching by the last digits of a phone number is the fastest way to tell two customers with the same name apart.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按电话号码的末几位搜索，是区分同名顾客最快的方法。",
+      "ms": "Mencari mengikut digit akhir nombor telefon ialah cara terpantas membezakan dua pelanggan yang sama nama."
+    },
+    {
+      "source": "Type a name or phone number in the Find a customer box at the top of any screen. On a phone, tap the magnifying glass.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "在任意页面顶部的「查找顾客」框中输入姓名或电话号码。在手机上，点击放大镜图标。",
+      "ms": "Taip nama atau nombor telefon dalam kotak Cari pelanggan di bahagian atas mana-mana skrin. Pada telefon, ketik kanta pembesar."
+    },
+    {
+      "source": "Press Enter or the arrow.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按 Enter 键或箭头。",
+      "ms": "Tekan Enter atau anak panah."
+    },
+    {
+      "source": "A name opens Customers with that search applied; a phone number opens Record sale ready for that customer.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "输入姓名会打开已套用该搜索的「顾客」页面；输入电话号码则打开已准备好该顾客的「记录销售」。",
+      "ms": "Nama membuka Pelanggan dengan carian itu digunakan; nombor telefon membuka Rekod jualan yang sedia untuk pelanggan itu."
+    },
+    {
+      "source": "Select the customer from the results.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "从结果中选择该顾客。",
+      "ms": "Pilih pelanggan itu daripada keputusan."
+    },
+    {
+      "source": "Open a customer profile",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开顾客资料",
+      "ms": "Buka profil pelanggan"
+    },
+    {
+      "source": "Customers → select a customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客 → 选择一位顾客",
+      "ms": "Pelanggan → pilih pelanggan"
+    },
+    {
+      "source": "From the profile you can go straight to Record sale or a new appointment for that person.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "在资料页可直接为该顾客进入「记录销售」或创建新预约。",
+      "ms": "Daripada profil itu anda boleh terus ke Rekod jualan atau janji temu baharu untuk orang itu."
+    },
+    {
+      "source": "Search the name or phone number.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "搜索姓名或电话号码。",
+      "ms": "Cari nama atau nombor telefon."
+    },
+    {
+      "source": "Select the customer.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择该顾客。",
+      "ms": "Pilih pelanggan itu."
+    },
+    {
+      "source": "The profile opens on their summary: visits, points, tier and packages.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "资料页会打开其摘要：到访、积分、等级和配套。",
+      "ms": "Profil itu dibuka pada ringkasan mereka: kunjungan, mata, peringkat dan pakej."
+    },
+    {
+      "source": "Scroll for their purchase history, points movements and rewards.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "向下滚动可查看其消费记录、积分变动和奖励。",
+      "ms": "Tatal untuk melihat sejarah pembelian, pergerakan mata dan ganjaran mereka."
+    },
+    {
+      "source": "Change a customer's details",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "修改顾客资料",
+      "ms": "Tukar butiran pelanggan"
+    },
+    {
+      "source": "Customers → select a customer → Edit customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客 → 选择一位顾客 → 编辑顾客",
+      "ms": "Pelanggan → pilih pelanggan → Edit pelanggan"
+    },
+    {
+      "source": "Adding a birth date to an existing customer makes them eligible for the Birthday benefit from then on.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "为现有顾客补填出生日期后，他们自此即可享有生日优惠。",
+      "ms": "Menambah tarikh lahir kepada pelanggan sedia ada menjadikan mereka layak untuk Faedah hari jadi selepas itu."
+    },
+    {
+      "source": "Open the customer's profile.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开该顾客的资料。",
+      "ms": "Buka profil pelanggan itu."
+    },
+    {
+      "source": "Press Edit customer.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「编辑顾客」。",
+      "ms": "Tekan Edit pelanggan."
+    },
+    {
+      "source": "Change the details.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "修改资料。",
+      "ms": "Tukar butiran itu."
+    },
+    {
+      "source": "Press Save changes.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「保存更改」。",
+      "ms": "Tekan Simpan perubahan."
+    },
+    {
+      "source": "Customers → Import",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客 → 导入",
+      "ms": "Pelanggan → Import"
+    },
+    {
+      "source": "Importing adds customers to your list. It does not send anything to them and does not join them to your programme — they still scan your QR to see it on their phone.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "导入只是将顾客加入您的名单。不会向他们发送任何内容，也不会让他们加入您的方案 — 他们仍需扫描您的二维码才能在手机上看到。",
+      "ms": "Mengimport menambah pelanggan ke senarai anda. Ia tidak menghantar apa-apa kepada mereka dan tidak menyertakan mereka ke program anda — mereka masih perlu mengimbas QR anda untuk melihatnya pada telefon mereka."
+    },
+    {
+      "source": "Press Import.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「导入」。",
+      "ms": "Tekan Import."
+    },
+    {
+      "source": "Choose your CSV file.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "选择您的 CSV 文件。",
+      "ms": "Pilih fail CSV anda."
+    },
+    {
+      "source": "Check the preview — name is required; phone, email and birth_date (as YYYY-MM-DD) are recognised.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "检查预览 — 姓名为必填；电话、电子邮件和出生日期（格式 YYYY-MM-DD）可被识别。",
+      "ms": "Semak pratonton — nama diwajibkan; telefon, e-mel dan birth_date (sebagai YYYY-MM-DD) dikenali."
+    },
+    {
+      "source": "Start the import and wait for it to finish. Peekaa reports how many were added and how many were skipped.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "开始导入并等待完成。Peekaa 会报告成功添加和被跳过的数量。",
+      "ms": "Mulakan import dan tunggu ia selesai. Peekaa melaporkan berapa yang ditambah dan berapa yang dilangkau."
+    },
+    {
+      "source": "Export your customer list",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "导出顾客名单",
+      "ms": "Eksport senarai pelanggan anda"
+    },
+    {
+      "source": "Customers → Export CSV",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客 → 导出 CSV",
+      "ms": "Pelanggan → Eksport CSV"
+    },
+    {
+      "source": "The export contains personal data. Handle it the way you would any customer list.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "导出文件包含个人资料。请按处理任何顾客名单的方式妥善保管。",
+      "ms": "Eksport itu mengandungi data peribadi. Kendalikannya sebagaimana anda mengendalikan mana-mana senarai pelanggan."
+    },
+    {
+      "source": "Apply any filters you want the export to respect.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "设置您希望导出遵循的筛选条件。",
+      "ms": "Gunakan apa-apa penapis yang anda mahu eksport itu patuhi."
+    },
+    {
+      "source": "Press Export CSV.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "按「导出 CSV」。",
+      "ms": "Tekan Eksport CSV."
+    },
+    {
+      "source": "The file downloads to your device.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "文件会下载到您的设备。",
+      "ms": "Fail itu dimuat turun ke peranti anda."
+    },
+    {
+      "source": "A customer must have a phone number for staff to find them at Record sale.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客必须有电话号码，员工才能在「记录销售」中找到他们。",
+      "ms": "Pelanggan mesti mempunyai nombor telefon supaya kakitangan boleh mencari mereka di Rekod jualan."
+    },
+    {
+      "source": "Names are not unique. Peekaa says so on screens where it matters and asks you to confirm with the phone number.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "姓名并不唯一。Peekaa 会在相关页面提示，并请您用电话号码确认。",
+      "ms": "Nama tidak unik. Peekaa menyatakannya pada skrin yang penting dan meminta anda mengesahkan dengan nombor telefon."
+    },
+    {
+      "source": "Customers you add here are your records. The customer only sees their points and rewards after they join with your QR.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "您在此添加的顾客属于您的记录。顾客只有通过您的二维码加入后，才能看到自己的积分和奖励。",
+      "ms": "Pelanggan yang anda tambah di sini ialah rekod anda. Pelanggan hanya melihat mata dan ganjaran mereka selepas menyertai dengan QR anda."
+    },
+    {
+      "source": "What you can see is limited to the branches you are assigned to.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "您能看到的内容仅限于您被分配的分店。",
+      "ms": "Apa yang anda boleh lihat terhad kepada cawangan yang ditugaskan kepada anda."
+    },
+    {
+      "source": "I cannot see a customer",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "我看不到某位顾客",
+      "ms": "Saya tidak dapat melihat seorang pelanggan"
+    },
+    {
+      "source": "The branch selected in the top bar is not the branch this customer belongs to.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顶部栏所选分店不是该顾客所属的分店。",
+      "ms": "Cawangan yang dipilih di bar atas bukan cawangan yang pelanggan ini tergolong."
+    },
+    {
+      "source": "The name is spelled differently from how it was entered.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "姓名的拼写与录入时不同。",
+      "ms": "Nama itu dieja berbeza daripada cara ia dimasukkan."
+    },
+    {
+      "source": "The customer was added at another branch you are not assigned to.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "该顾客是在您未被分配的其他分店添加的。",
+      "ms": "Pelanggan itu ditambah di cawangan lain yang anda tidak ditugaskan."
+    },
+    {
+      "source": "Your account does not have Customers access.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "您的账户没有「顾客」模块权限。",
+      "ms": "Akaun anda tiada akses Pelanggan."
+    },
+    {
+      "source": "Search by the last digits of their phone number instead of their name.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "改用电话号码的末几位搜索，而非姓名。",
+      "ms": "Cari mengikut digit akhir nombor telefon mereka dan bukan nama mereka."
+    },
+    {
+      "source": "Change the branch in the top bar, or select all branches if your role allows it.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "更改顶部栏的分店，或在您的角色允许时选择所有分店。",
+      "ms": "Tukar cawangan di bar atas, atau pilih semua cawangan jika peranan anda membenarkannya."
+    },
+    {
+      "source": "Ask the owner to check your branch assignment in Staff Members.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "请店主在「员工」中检查您的分店分配。",
+      "ms": "Minta pemilik menyemak penugasan cawangan anda dalam Ahli Kakitangan."
+    },
+    {
+      "source": "The same customer appears twice",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "同一位顾客出现了两次",
+      "ms": "Pelanggan yang sama muncul dua kali"
+    },
+    {
+      "source": "They were once added without a phone number, then again with one.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "他们曾在没有电话号码时被添加过一次，之后又带号码添加了一次。",
+      "ms": "Mereka pernah ditambah tanpa nombor telefon, kemudian ditambah semula dengan nombor."
+    },
+    {
+      "source": "Two different mobile numbers were used for the same person.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "同一个人使用了两个不同的手机号码。",
+      "ms": "Dua nombor telefon bimbit berbeza digunakan untuk orang yang sama."
+    },
+    {
+      "source": "Open both profiles and decide which holds the history you want to keep.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "打开两份资料，确定保留哪一份的记录。",
+      "ms": "Buka kedua-dua profil dan tentukan yang mana menyimpan sejarah yang anda mahu kekalkan."
+    },
+    {
+      "source": "Correct the phone number on the one you are keeping so staff always find the right record.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "更正保留那份资料的电话号码，确保员工始终找到正确记录。",
+      "ms": "Betulkan nombor telefon pada profil yang anda kekalkan supaya kakitangan sentiasa menemui rekod yang betul."
+    },
+    {
+      "source": "Does adding a customer send them anything?",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "添加顾客会向他们发送任何内容吗？",
+      "ms": "Adakah menambah pelanggan menghantar apa-apa kepada mereka?"
+    },
+    {
+      "source": "No. Nothing is sent. They see your programme only after they scan your business QR.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "不会。不会发送任何内容。他们只有扫描您的商家二维码后才能看到您的方案。",
+      "ms": "Tidak. Tiada apa dihantar. Mereka melihat program anda hanya selepas mengimbas QR perniagaan anda."
+    },
+    {
+      "source": "Can I delete a customer?",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "可以删除顾客吗？",
+      "ms": "Bolehkah saya memadamkan pelanggan?"
+    },
+    {
+      "source": "Customer records carry sales and points history, so they are not removed from the workspace. Ask the customer to use the privacy request page in their own app if they want their data removed.",
+      "reason": "nestly_v909 wave 4 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Appointments and Customers guides.",
+      "zh-CN": "顾客记录承载着销售和积分历史，因此不会从工作区中删除。如顾客希望删除其数据，请让他们在自己的应用中使用隐私请求页面。",
+      "ms": "Rekod pelanggan membawa sejarah jualan dan mata, jadi ia tidak dibuang daripada ruang kerja. Minta pelanggan menggunakan halaman permintaan privasi dalam aplikasi mereka sendiri jika mereka mahu data mereka dibuang."
     }
   ]
 }
