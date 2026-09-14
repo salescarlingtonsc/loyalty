@@ -34138,35 +34138,39 @@ async function customerIntelligencePage(){
     const biExplore=biExploreHtmlV892([
       {key:'customers',title:'Customers',hint:'Who to call, who matters most, and who they are',
         body:`${ownerBriefMarkupV771({blocks:['bringback','top']})}${customerRecordsMarkup(data)}${ciDemographicsMarkupV679()}${ownerBriefMarkupV771({blocks:['who']})}`},
-      {key:'money',title:'Revenue & payments',hint:'What was recorded, collected, and still owed',
+      {key:'money',title:'Money in and money owed',hint:'What came in, what was paid, and what is still owed',
         body:`${activeExecutionMarkup}${RevenueTruthUI.render(truthView)}${ownerBriefMarkupV771({blocks:['cash']})}`},
-      {key:'retention',title:'Retention',hint:'Who comes back and where customers drop off',
+      {key:'retention',title:'Do customers come back?',hint:'Who comes back, and where you lose them',
         body:ciFunnelConversionMarkupV679()},
-      {key:'services',title:'Services',hint:'What sells and what brings people back',
+      {key:'services',title:'What sells',hint:'Your best sellers, and what brings people back',
         body:`${ownerBriefMarkupV771({blocks:['services']})}${ciCategoryMixWrapV650()}`},
-      {key:'staff',title:'Staff',hint:'Who brings customers back',
+      {key:'staff',title:'Staff',hint:'Who gets customers coming back',
         body:ownerBriefMarkupV771({blocks:['staff']})},
-      {key:'acquisition',title:'Acquisition',hint:'Where customers come from',
+      {key:'acquisition',title:'Where customers come from',hint:'How people find you, and who you may contact',
         body:`${acquisitionMarkupV650()}${contactabilityMarkupV650()}`},
-      {key:'booking',title:'Booking funnel',hint:'How customers move from viewing to booking',
+      {key:'booking',title:'From looking to booking',hint:'How many people who look go on to book',
         body:funnelMarkupV650()},
       {key:'rewards',title:'Rewards',hint:'Which rewards customers actually use',
         body:ownerBriefMarkupV771({blocks:['rewards']})},
-      {key:'behaviour',title:'Weekday & time-of-day behaviour',hint:'When customers come in',
+      {key:'behaviour',title:'Busy and quiet times',hint:'Which days and hours are busy, and which are quiet',
         body:ownerBriefMarkupV771({blocks:['when']})},
-      {key:'packages',title:'Packages',hint:'Prepaid sessions still unused',
+      {key:'packages',title:'Prepaid sessions',hint:'Sessions paid for but not used yet',
         body:ownerBriefMarkupV771({blocks:['unused']})},
-      {key:'branches',title:'Branches',hint:'Compare performance across branches',
+      {key:'branches',title:'Compare your branches',hint:'How each branch is doing',
         body:ownerBriefMarkupV771({blocks:['branches']})},
-      {key:'coverage',title:'Improve your insights',hint:'Missing data that limits Peekaa’s analysis',
+      {key:'coverage',title:'Make Peekaa smarter',hint:'Information Peekaa is missing',
         body:ownerBriefMarkupV771({blocks:['limits']})},
-      {key:'evidence',title:'Evidence & methodology',hint:'Why Peekaa reached its findings',
+      {key:'evidence',title:'How Peekaa works this out',hint:'The numbers behind each finding',
         body:`${ciBehaviourMarkupV679()}${ciOpportunitiesMarkupV685()}${economicsMarkupV522}`},
-      {key:'ask',title:'Ask my business',hint:'Answers prepared from last night’s data',
+      {key:'ask',title:'Questions and answers',hint:'Answers worked out from last night’s numbers',
         body:nightlyBriefAnswersMarkupV892()}
     ]);
     const biCardsV901=biSelectInsightsV892(biModel);
-    body.innerHTML=`${biSnapshotHtmlV892(biModel)}${biInsightsHtmlV892(biCardsV901)}${biPulseHtmlV892(biModel)}${biHealthHtmlV892(biModel)}${nightlyBriefStripMarkupV892()}${biExplore}`;
+    /* nestly_v902: "Who buys what" answers the owner's first question (which product is popular
+       with which crowd) right under the three things to know, and "Ideas to try" answers the
+       third (what could I do about any of this) right under the watch-list. Both are pure
+       functions of the same model; neither adds a read. */
+    body.innerHTML=`${biSnapshotHtmlV892(biModel)}${biInsightsHtmlV892(biCardsV901)}${biWhoBuysHtmlV902(biModel)}${biPulseHtmlV892(biModel)}${biHealthHtmlV892(biModel)}${biIdeasHtmlV902(biModel)}${nightlyBriefStripMarkupV892()}${biExplore}`;
     RevenueTruthUI.bind(body,{onRetry:run});
     window.NestlySectorEconomics.bind(body,{
       rpc:(name,payload)=>sb.rpc(name,payload),
@@ -34205,6 +34209,15 @@ async function customerIntelligencePage(){
       button.onclick=()=>biOpenExplainV892(card,{
         findSection:key=>key&&body.isConnected?body.querySelector(`[data-bi-section-v892="${key}"]`):null
       });
+    });
+    /* nestly_v902: an idea's section CTA opens the Explore group it names. Same contract as the
+       explain pop-up's: a group whose readers returned nothing is not on the page, and a control
+       pointing at one is removed rather than left dead. */
+    body.querySelectorAll('[data-bi-open-v892]').forEach(button=>{
+      const key=button.getAttribute('data-bi-open-v892');
+      const group=key&&body.isConnected?body.querySelector(`[data-bi-section-v892="${key}"]`):null;
+      if(!group){button.remove();return;}
+      button.onclick=()=>{group.open=true;group.scrollIntoView({behavior:'smooth',block:'start'});};
     });
     $('ciCsv').disabled=!!lastCustomerError||!customers.length;
     const more=$('ciMore');if(more)more.onclick=loadMore;
@@ -35756,7 +35769,17 @@ function ownerBriefHtmlV771(brief,options){
    as an answer, not as an archive. The owner opens it and sees, without scrolling past a table:
    four numbers, at most three things to know, a one-line customer pulse, a short health list, last
    night's brief in one strip, and then everything the page has always rendered, filed behind
-   "Explore your business".
+   "Look deeper".
+
+   nestly_v902 (owner ruling 2026-09-15: "the wordings are too profound, a layman could not
+   understand — make it easy to understand"): every owner-facing string on the primary surface is
+   rewritten at a twelve-year-old's reading level, and two sections are added to answer questions
+   the page did not — WHO BUYS WHAT (which product is popular with which crowd) and IDEAS TO TRY
+   (what could be done about any of it). NOTHING behind the page changed: no migration, no RPC, no
+   threshold, no ranking, no permission, no privacy rule, no calculation and no new request. Both
+   new sections are pure functions of the SAME model the rest of this layer reads, built from
+   bundles #/customerintel already fetched. tests/business-ui/v902-plain-words.test.mjs executes
+   every rule below, including the scan that says no analyst noun survives up here.
 
    NOTHING BELOW ASKS THE BACKEND ANYTHING. Every function here is a pure function of bundles the
    page has already fetched — same readers, same arguments, same order (tests/business-ui/
@@ -35772,37 +35795,44 @@ function ownerBriefHtmlV771(brief,options){
 const BI_WORDING_V892=Object.freeze({
   title:'Business Intelligence',
   subtitle:'Know what happened. See what to do next.',
-  snapshot:'Business snapshot',
+  snapshot:'How your business is doing',
   insights:'3 things to know',
-  pulse:'Customer pulse',
-  health:'Business health',
-  explore:'Explore your business',
+  pulse:'Your customers right now',
+  health:'Things to keep an eye on',
+  explore:'Look deeper',
+  /* nestly_v902 — the two sections the owner asked for by name: which product is popular with
+     which crowd, and what to do about any of it. */
+  whoBuys:'Who buys what',
+  ideas:'Ideas to try',
+  ideasHint:'Simple things you could do this week. Peekaa suggests these from your own numbers.',
+  noCrowd:'You don’t know who bought this yet.',
+  crowdNote:'Peekaa can only match a crowd to a product when the customer’s age or gender is on file.',
   /* nestly_v894: the strip always describes the same window, so it says so in its own heading
      rather than leaving the owner to infer it from the sentences. */
-  overnight:'Last night’s brief · Last 7 days',
+  overnight:'Last night’s summary · past 7 days',
   showMore:'Show more',
-  evidenceSummary:'Why am I seeing this?',
+  evidenceSummary:'Why is Peekaa telling me this?',
   /* nestly_v901: the two headings inside the explain pop-up. */
-  explainNumbers:'Where these numbers come from',
-  explainNext:'What to do next',
-  noComparison:'No earlier period to compare yet.',
-  noInsight:'No reliable recommendation yet — Peekaa will surface one once there is enough evidence.',
+  explainNumbers:'Where this number comes from',
+  explainNext:'What you can do',
+  noComparison:'Not enough history yet to compare.',
+  noInsight:'Nothing worth flagging yet. Peekaa will tell you as soon as it spots something.',
   /* nestly_v894: the heading a finding gets when this page has no approved owner wording for it.
      The server's own analytical prose is NEVER promoted to the primary screen — it is written for
      an analyst, in cents and basis points — so an untemplated finding says where to read it
      instead, and the verbatim wording stays where it already lives, under Explore → Evidence &
      methodology. */
-  noTemplate:'View this insight in detailed analysis',
+  noTemplate:'Open the full details',
   /* nestly_v894 (owner ruling): six OWNER-facing card types. These are presentation labels only —
      the engine's own classes (rank_class, report_sections) are untouched and are still what the
      mapping below reads. Peekaa red stays for the brand and for a primary call to action, so
      "needs attention" is a pale warm wash with a red edge, never a solid red block. */
   types:Object.freeze({
     needs_attention:Object.freeze({label:'Needs attention',mark:'🔴'}),
-    customer_risk:Object.freeze({label:'Customer risk',mark:'🟠'}),
-    business_risk:Object.freeze({label:'Business risk',mark:'🟠'}),
-    opportunity:Object.freeze({label:'Opportunity',mark:'🟡'}),
-    doing_well:Object.freeze({label:'Doing well',mark:'🟢'}),
+    customer_risk:Object.freeze({label:'A customer may be leaving',mark:'🟠'}),
+    business_risk:Object.freeze({label:'Too dependent on one thing',mark:'🟠'}),
+    opportunity:Object.freeze({label:'Chance to grow',mark:'🟡'}),
+    doing_well:Object.freeze({label:'Going well',mark:'🟢'}),
     still_learning:Object.freeze({label:'Still learning',mark:'⚪'})
   })
 });
@@ -35811,8 +35841,8 @@ const BI_WORDING_V892=Object.freeze({
    the owner gets the sentence it means and never the token. An unknown class contributes nothing
    rather than a guess. */
 const BI_EVIDENCE_CLASS_V894=Object.freeze({
-  DIRECT_FACT:'Based directly on your recorded business data.',
-  ASSOCIATION:'Based on a pattern in your data, not a proven cause.'
+  DIRECT_FACT:'This comes straight from your own sales records.',
+  ASSOCIATION:'This is a pattern Peekaa noticed. It may not be the reason.'
 });
 
 /* nestly_v894 — the consent channels, in words an owner uses. A channel this map does not know
@@ -35822,7 +35852,7 @@ const BI_CHANNEL_WORDS_V894=Object.freeze({
 });
 
 /* nestly_v894 — an exposure-shaped finding is about the business's own concentration, not about
-   a customer and not about money sitting uncollected, so it reads as "Business risk". */
+   a customer and not about money sitting uncollected, so it reads as "Too dependent on one thing". */
 const BI_EXPOSURE_GENERATORS_V894=Object.freeze(['category_concentration','contactability_gap']);
 
 /* nestly_v894 — the display names an erased or withheld identity carries. Matching any of them
@@ -35880,9 +35910,9 @@ const BI_TEMPLATES_V894=Object.freeze({
     const bought=buyers===null?'':`${biPluralV892(buyers,'customer','customers')} bought ${label}`;
     const biggest=topOne===null?'':`your biggest ${label} customer contributes about ${topOne}% of that category`;
     return {
-      finding:`${label} makes up ${share}% of your categorised revenue`,
+      finding:`${label} makes up ${share}% of the money you’ve sorted into categories`,
       why:biSentenceV894([bought,biggest].filter(Boolean).join(', and ')),
-      action:'Your revenue is heavily concentrated in one service.',
+      action:'Most of your money comes from one kind of service.',
       cta:{kind:'section',section:'services',label:'View services'}
     };
   },
@@ -35907,12 +35937,12 @@ const BI_TEMPLATES_V894=Object.freeze({
     const busyLabel=biTextV892(busy.label),busyVisits=biWholeV892(busy.visits);
     if(!gold||!dead)return null;
     return {
-      finding:`${gold} earns more per visit than ${dead}`,
+      finding:`${gold} brings in more money per visit than ${dead}`,
       why:busyLabel
         ?`${busyLabel} is your busiest day${busyVisits===null?'':` (${biPluralV892(busyVisits,'visit','visits')})`}.`
         :'',
       action:'Check whether your staffing follows the days that earn most.',
-      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'}
+      cta:{kind:'section',section:'behaviour',label:'See busy and quiet times'}
     };
   },
   contactability_gap(item){
@@ -35953,7 +35983,7 @@ const BI_TEMPLATES_V894=Object.freeze({
       finding:`${returned} of ${outOf} first-time customers came back for a second visit`,
       why:window===null?'':`Counted within ${window} days of their first visit.`,
       action:'Look at what happens right after a first visit.',
-      cta:{kind:'section',section:'retention',label:'See retention'}
+      cta:{kind:'section',section:'retention',label:'See who comes back'}
     };
   },
   gateway_followthrough(item){
@@ -36039,7 +36069,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     if(!label)return null;
     return {
       finding:`${label} is your strongest day`,why:'',action:'',
-      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'}
+      cta:{kind:'section',section:'behaviour',label:'See busy and quiet times'}
     };
   },
   'strength:category'(item){
@@ -36265,6 +36295,10 @@ function biModelV892(bundles){
   /* Weekday strength — the server's own busiest weekday, and the row it already measured. */
   const rhythm=biObjectV892(input.rhythm);
   const busiest=biListV892(rhythm?.busiest_weekdays)[0]||null;
+  /* nestly_v902: the server's OWN quietest weekday, read exactly the way the busiest one is —
+     its ranked list, first row. Nothing is ranked, compared or inverted here, so a server that
+     did not name a quiet day leaves this absent rather than having one chosen for it. */
+  const quietest=biListV892(rhythm?.slowest_weekdays)[0]||null;
   const weekdayRow=busiest?biListV892(rhythm?.weekdays).find(row=>String(row.dow)===String(busiest.dow))||null:null;
 
   const funnel=biObjectV892(input.funnelConversion);
@@ -36343,6 +36377,12 @@ function biModelV892(bundles){
       visits:biWholeV892(weekdayRow.visits),
       revenueMinor:biFiniteV892(weekdayRow.revenue_cents)
     }:null,
+    /* nestly_v902 — the quiet day, and the per-item crowd rows. Both come out of bundles this
+       page already holds (get_ci_visit_rhythm_v1, get_ci_demographic_totals_v1); neither adds a
+       read. itemDemographics is carried VERBATIM — no row is dropped, ranked or re-worded here,
+       so that every one of those rules lives in biWhoBuysRowsV902, where a test executes it. */
+    quietWeekday:(quietest&&biTextV892(quietest.label))?{label:biTextV892(quietest.label)}:null,
+    itemDemographics:biListV892(demographics?.by_item),
     retention:{
       present:!!funnel,
       measurable:biFiniteV892(stageOne.pct)!==null,
@@ -36500,7 +36540,7 @@ function biSelectInsightsV892(model){
         money walking away reads as something to fix. */
   biListV892(view.advisory).forEach(item=>{
     const sample=(item.sampleSize!==null&&item.sampleSize!==undefined&&item.sampleFloor)
-      ?`Based on ${biPluralV892(item.sampleSize,'observation','observations')}. Peekaa needs at least ${item.sampleFloor} before showing this finding.`
+      ?`Peekaa saw this ${biPluralV892(item.sampleSize,'time','times')}. It waits for at least ${item.sampleFloor} before saying anything.`
       :'';
     /* nestly_v894: the approved owner wording for this generator, built from the payload's own
        structured fields. A generator with no template prints NO server prose here — it offers
@@ -36557,7 +36597,7 @@ function biSelectInsightsV892(model){
       finding:`${biTextV892(weekday.label)} performs best`,
       why:[visits===null?'':biPluralV892(visits,'visit','visits'),takings||''].filter(Boolean).join(' · '),
       action:'',
-      cta:{kind:'section',section:'behaviour',label:'See weekday analysis'},
+      cta:{kind:'section',section:'behaviour',label:'See busy and quiet times'},
       evidence:{
         fact:'The busiest weekday Peekaa measured, counted per day the business was open.',
         period,sample:'',
@@ -36581,7 +36621,7 @@ function biSelectInsightsV892(model){
   if(retention.present===true&&retention.measurable===false){
     return [{
       type:'still_learning',topic:'retention',
-      finding:'Peekaa needs more customer history before it can reliably measure first-to-second visit retention.',
+      finding:'Peekaa needs to see more customers before it can say how many come back a second time.',
       why:'',action:'',cta:null,
       evidence:{
         fact:'A return rate is only reported once enough customers have had the chance to come back.',
@@ -36738,7 +36778,7 @@ function biHealthHtmlV892(model){
   const concentration=biObjectV892(view.concentration);
   if(concentration){
     rows.push({
-      label:'Customer concentration',
+      label:'How much you rely on your top customers',
       value:`Top ${concentration.count} ${concentration.count===1?'customer':'customers'} = ${concentration.pct}% of known revenue`,
       cta:null
     });
@@ -36748,7 +36788,7 @@ function biHealthHtmlV892(model){
   if(coverage!==null){
     coverageSaidV892=true;
     rows.push({
-      label:'What you sell',
+      label:'Services sorted into categories',
       value:`${coverage.toFixed(1)}% of revenue is sorted into categories`,
       cta:coverage<100?{href:'#/servicemapping',label:'Map services'}:null
     });
@@ -36761,7 +36801,7 @@ function biHealthHtmlV892(model){
     coverageSaidV892=true;
     const parts=[agePct===null?'':`Age known for ${agePct}%`,genderPct===null?'':`gender for ${genderPct}%`].filter(Boolean);
     rows.push({
-      label:'Customer profiles',
+      label:'What you know about your customers',
       value:`${parts.join(' · ')}${profileBase===null||profileBase===undefined?'':` of ${biPluralV892(profileBase,'customer','customers')}`}`,
       cta:null
     });
@@ -36784,6 +36824,245 @@ function biHealthHtmlV892(model){
       <span class="bi-health-value">${esc(row.value)}</span>
       ${row.cta?`<a class="btn ghost sm" href="${esc(row.cta.href)}">${esc(row.cta.label)} →</a>`:''}
     </li>`).join('')}</ul>
+  </section>`;
+}
+
+/* -------------------------------------------------------------------------------------------
+   nestly_v902 — WHO BUYS WHAT. Owner ruling 2026-09-15: "which product is most popular with
+   which crowd".
+   ===========================================================================================
+   Built from ONE bundle this page ALREADY fetches — get_ci_demographic_totals_v1's own
+   `by_item` — and from nothing else. No reader is added, no share is derived: every count and
+   every denominator below is a field the server sent, and a percentage the server withheld is
+   never reconstructed out of the counts beside it.
+
+   Three rules, each of them the server's own posture carried up to the owner:
+     · a row with no catalogue `item_id` is DROPPED. Those are the till's cart and package
+       bookkeeping lines, not products, and naming a crowd for one would be telling the owner
+       about their own paperwork.
+     · the sentence is only as strong as the cell behind it. When a cell the sentence leans on
+       is below the server's own evidence floor, the sentence says so IN BUYERS rather than
+       rounding a handful of people up into a claim. Fail closed: if EITHER cell is short, the
+       whole sentence is marked unsure.
+     · an item nobody's age or gender is known for says exactly that, and never "0%".
+   ------------------------------------------------------------------------------------------- */
+const BI_AGE_WORDS_V902=Object.freeze({
+  under_20:'under 20','20_24':'20–24','25_30':'25–30','31_40':'31–40','41_50':'41–50','51_plus':'51 and over'
+});
+const BI_GENDER_WORDS_V902=Object.freeze({female:'women',male:'men',other:'other'});
+/* The biggest cell of a breakdown, by the server's own buyer counts. A cell whose token this page
+   has no word for is not ranked at all — printing "51_plus" would leak the machine name, and
+   guessing at what it means would invent a band. */
+function biTopCellV902(rows,key,words){
+  const ranked=biListV892(rows).filter(row=>
+    biWholeV892(row.buyers)!==null&&!!words[biTextV892(row[key]).toLowerCase()]);
+  if(!ranked.length)return null;
+  return ranked.reduce((first,second)=>
+    (biWholeV892(second.buyers)||0)>(biWholeV892(first.buyers)||0)?second:first);
+}
+function biCellWordV902(cell,key,words){
+  return cell?(words[biTextV892(cell[key]).toLowerCase()]||''):'';
+}
+/* The rate block the server attached to a cell, as two counts. Never its pct: a share the server
+   withheld stays withheld, and a share it published is already said better as "5 of 6 buyers". */
+function biCellRateV902(cell){
+  const rate=biObjectV892(biObjectV892(cell)?.share_of_item_buyers)||{};
+  const numerator=biWholeV892(rate.numerator),denominator=biWholeV892(rate.denominator);
+  return (numerator===null||denominator===null)?null:{numerator,denominator};
+}
+function biCellSureV902(cell){
+  return biTextV892(biObjectV892(biObjectV892(cell)?.evidence)?.status).toLowerCase()==='ok';
+}
+/* The ranked crowd rows, and how many rows were dropped for carrying no catalogue id. Shared by
+   the section below AND by the first idea in biIdeasV902, so the two can never describe different
+   crowds for the same product. */
+function biWhoBuysRowsV902(model){
+  const view=biObjectV892(model)||{};
+  const currency=biTextV892(view.currency,'SGD');
+  const all=biListV892(view.itemDemographics);
+  const named=all.filter(row=>biTextV892(row.item_id));
+  const ranked=named.slice()
+    .sort((first,second)=>(biFiniteV892(second.revenue_cents)||0)-(biFiniteV892(first.revenue_cents)||0))
+    .slice(0,5);
+  const rows=ranked.map(row=>{
+    const ageCell=biTopCellV902(row.by_age_band,'age_band',BI_AGE_WORDS_V902);
+    const genderCell=biTopCellV902(row.by_gender,'gender',BI_GENDER_WORDS_V902);
+    const ageWord=biCellWordV902(ageCell,'age_band',BI_AGE_WORDS_V902);
+    const genderWord=biCellWordV902(genderCell,'gender',BI_GENDER_WORDS_V902);
+    const words=(genderWord&&ageWord)?`${genderWord} aged ${ageWord}`:(ageWord?`aged ${ageWord}`:genderWord);
+    const used=[genderWord?genderCell:null,ageWord?ageCell:null].filter(Boolean);
+    const lead=genderWord?genderCell:ageCell;
+    const short=used.find(cell=>!biCellSureV902(cell))||null;
+    const rate=biCellRateV902(short||lead);
+    let sentence=BI_WORDING_V892.noCrowd;
+    if(words&&short){
+      sentence=rate
+        ?`Mostly ${words} (only ${rate.numerator} of ${rate.denominator} buyers told you their details — too few to be sure)`
+        :`Mostly ${words} (too few buyers told you their details to be sure)`;
+    }else if(words){
+      sentence=rate?`Mostly ${words} · ${rate.numerator} of ${rate.denominator} buyers`:`Mostly ${words}`;
+    }
+    return {
+      name:biTextV892(row.item_name,'Item'),
+      buyers:biWholeV892(row.buyers),
+      money:biMoneyV892(row.revenue_cents,currency),
+      crowd:{words,sentence,known:!!words,sure:!!words&&!short}
+    };
+  });
+  return {rows,dropped:all.length-named.length};
+}
+/* The one coverage line above the rows, from the server's own two rate blocks. A block it did not
+   send contributes no half-sentence rather than a zero. */
+function biCrowdCoverageLineV902(model){
+  const profile=biObjectV892(biObjectV892(model)?.profileCoverage)||{};
+  const pair=block=>{
+    const entry=biObjectV892(block);
+    const numerator=biWholeV892(entry?.numerator),denominator=biWholeV892(entry?.denominator);
+    return (numerator===null||denominator===null)?null:{numerator,denominator};
+  };
+  const age=pair(profile.age),gender=pair(profile.gender);
+  if(age&&gender)return `You know the age of ${age.numerator} of ${biPluralV892(age.denominator,'customer','customers')} and the gender of ${gender.numerator} of ${gender.denominator}.`;
+  if(age)return `You know the age of ${age.numerator} of ${biPluralV892(age.denominator,'customer','customers')}.`;
+  if(gender)return `You know the gender of ${gender.numerator} of ${biPluralV892(gender.denominator,'customer','customers')}.`;
+  return '';
+}
+function biWhoBuysHtmlV902(model){
+  const view=biObjectV892(model)||{};
+  const built=biWhoBuysRowsV902(view),rows=built.rows;
+  if(!rows.length)return '';
+  const coverage=biCrowdCoverageLineV902(view);
+  const profile=biObjectV892(view.profileCoverage)||{};
+  const incomplete=[profile.age,profile.gender].some(block=>{
+    const entry=biObjectV892(block);
+    const numerator=biWholeV892(entry?.numerator),denominator=biWholeV892(entry?.denominator);
+    return numerator!==null&&denominator!==null&&numerator<denominator;
+  });
+  const note=built.dropped>0||incomplete||rows.some(row=>!row.crowd.known||!row.crowd.sure);
+  return `<section class="card bi-buys" aria-labelledby="biBuysTitleV902">
+    <div class="bi-section-head"><h2 id="biBuysTitleV902">${esc(BI_WORDING_V892.whoBuys)}</h2>
+    ${coverage?`<p class="muted small">${esc(coverage)}</p>`:''}</div>
+    <ul class="bi-buys-list">${rows.map(row=>`<li class="bi-buys-row">
+      <span class="bi-buys-name">${esc(row.name)}</span>
+      <span class="bi-buys-facts">${esc([row.buyers===null?'':biPluralV892(row.buyers,'buyer','buyers'),row.money||''].filter(Boolean).join(' · '))}</span>
+      <span class="bi-buys-crowd${row.crowd.known?'':' is-unknown'}">${esc(row.crowd.sentence)}</span>
+    </li>`).join('')}</ul>
+    ${note?`<p class="muted small bi-buys-note">${esc(BI_WORDING_V892.crowdNote)}</p>`:''}
+  </section>`;
+}
+
+/* -------------------------------------------------------------------------------------------
+   nestly_v902 — IDEAS TO TRY. Owner ruling 2026-09-15: "ideas to improve the business", and
+   "how to reach more of that crowd".
+   ===========================================================================================
+   Four at most, and every one of them is a SUGGESTION ABOUT A FACT THIS MODEL ALREADY HOLDS.
+   What makes it safe is the absence rule the rest of this surface already lives by: an idea is
+   generated only when the fact behind it is present, its "Because" line quotes THAT fact and
+   nothing else, and its control goes somewhere this page can already reach. Nothing here
+   predicts a result, promises an outcome, or computes a figure of its own — every number below
+   was a server field before it reached this function.
+
+   The order is the owner's, and it is a priority order rather than a ranking: the first four
+   that qualify are the four that show.
+   ------------------------------------------------------------------------------------------- */
+function biIdeasV902(model){
+  const view=biObjectV892(model)||{};
+  const ideas=[];
+  const add=idea=>{if(idea&&ideas.length<4)ideas.push(idea);};
+
+  /* 1. The crowd behind the best-selling product — the same computation the section above runs,
+        so the two can never name different crowds for the same item. */
+  const lead=biWhoBuysRowsV902(view).rows.find(row=>row.crowd.known)||null;
+  if(lead)add({
+    text:'Ask your best customers to bring a friend.',
+    because:`Most ${lead.name} buyers are ${lead.crowd.words}.`,
+    cta:{kind:'section',section:'services',label:'See what sells'}
+  });
+
+  /* 2. Work already paid for and not yet taken. */
+  const packages=biObjectV892(view.packages)||{};
+  const holders=biWholeV892(packages.holders),sessions=biWholeV892(packages.sessions);
+  if(holders&&sessions)add({
+    text:`Call the ${biPluralV892(holders,'customer','customers')} who still ${holders===1?'has':'have'} sessions left.`,
+    because:`${biPluralV892(holders,'customer holds','customers hold')} ${biPluralV892(sessions,'unused session','unused sessions')}.`,
+    cta:{kind:'route',href:'#/custpackages',label:'View packages'}
+  });
+
+  /* 3. The quiet day — only when the server named one. */
+  const quiet=biObjectV892(view.quietWeekday);
+  if(quiet&&biTextV892(quiet.label))add({
+    text:'Try an offer on your quiet day.',
+    because:`${biTextV892(quiet.label)} is your quietest day.`,
+    cta:{kind:'section',section:'behaviour',label:'See busy and quiet times'}
+  });
+
+  /* 4. Regulars past their own rhythm — the server's own count and its own verdict. */
+  const overdue=biWholeV892(biObjectV892(view.bringBack)?.overdue);
+  if(overdue)add({
+    text:'Call the regulars who are overdue.',
+    because:`${biPluralV892(overdue,'regular is','regulars are')} overdue their usual visit.`,
+    cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
+  });
+
+  /* 5. Permission to reach them. BOTH numbers come from the server's own contactability finding
+        (best_channel_allowed against its own base). The widest channel is not chosen here:
+        "which channel reaches most people" is a ranking, and rankings are the server's. */
+  const reach=biListV892(view.advisory).find(item=>item.generator==='contactability_gap')||null;
+  const reachRefs=biObjectV892(reach?.refs)||{};
+  const allowed=biWholeV892(reachRefs.best_channel_allowed);
+  const reachBase=biWholeV892(biObjectV892(reachRefs.business_offers)?.customers);
+  if(allowed!==null&&reachBase!==null)add({
+    text:'Ask customers at checkout if you may contact them.',
+    because:`Only ${allowed} of ${biPluralV892(reachBase,'customer','customers')} agreed to be contacted.`,
+    cta:{kind:'section',section:'acquisition',label:'See who you may contact'}
+  });
+
+  /* 6. What Peekaa does not know about the people themselves. */
+  const age=biObjectV892(biObjectV892(view.profileCoverage)?.age);
+  const agePct=biFiniteV892(age?.pct);
+  const ageKnown=biWholeV892(age?.numerator),ageBase=biWholeV892(age?.denominator);
+  if(agePct!==null&&agePct<60&&ageKnown!==null&&ageBase!==null)add({
+    text:'Record birthday and gender when you add a customer.',
+    because:`You know the age of only ${ageKnown} of ${biPluralV892(ageBase,'customer','customers')}.`,
+    cta:{kind:'route',href:'#/clients',label:'Open customers'}
+  });
+
+  /* 7. What Peekaa cannot sort into a category, and therefore cannot compare. */
+  const categories=biFiniteV892(view.categoryCoveragePct);
+  if(categories!==null&&categories<90)add({
+    text:'Sort the rest of your services into categories.',
+    because:`${categories.toFixed(1)}% of your money is sorted into categories.`,
+    cta:{kind:'route',href:'#/servicemapping',label:'Map services'}
+  });
+  return ideas;
+}
+/* A route CTA is a link; a section CTA is a button carrying the Explore group's own key, which
+   the page binds after paint. A button, never a bare "#name" anchor — the hash router would read
+   that as a route. A CTA this page cannot honour renders as nothing rather than as a dead end. */
+function biIdeaCtaHtmlV902(cta){
+  const entry=biObjectV892(cta);
+  const label=biTextV892(entry?.label);
+  if(!entry||!label)return '';
+  if(entry.kind==='route'){
+    const href=biTextV892(entry.href);
+    return href?`<a class="btn ghost sm bi-idea-cta" href="${esc(href)}">${esc(label)} →</a>`:'';
+  }
+  const section=biTextV892(entry.section);
+  return section?`<button type="button" class="btn ghost sm bi-idea-cta" data-bi-open-v892="${esc(section)}">${esc(label)} →</button>`:'';
+}
+function biIdeasHtmlV902(model){
+  const ideas=biIdeasV902(model);
+  if(!ideas.length)return '';
+  return `<section class="card bi-ideas" aria-labelledby="biIdeasTitleV902">
+    <div class="bi-section-head"><h2 id="biIdeasTitleV902">${esc(BI_WORDING_V892.ideas)}</h2>
+    <p class="muted small">${esc(BI_WORDING_V892.ideasHint)}</p></div>
+    <ol class="bi-ideas-list">${ideas.map((idea,index)=>`<li class="bi-idea">
+      <span class="bi-idea-number" aria-hidden="true">${index+1}</span>
+      <div class="bi-idea-body">
+        <p class="bi-idea-do">${esc(biTextV892(idea.text))}</p>
+        <p class="bi-idea-because">${esc(`Because: ${biTextV892(idea.because)}`)}</p>
+        ${biIdeaCtaHtmlV902(idea.cta)}
+      </div>
+    </li>`).join('')}</ol>
   </section>`;
 }
 

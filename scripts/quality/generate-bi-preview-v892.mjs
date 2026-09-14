@@ -9,8 +9,10 @@
  *
  * Three states are rendered side by side, because an owner acceptance that only ever sees the
  * happy path is not an acceptance:
- *   1. a real month  — everything present, a comparison available, three things to know;
- *   2. a thin month  — no earlier window, no cash reader, one customer, nothing ranked;
+ *   1. a real month  — everything present, a comparison available, three things to know, a full
+ *                       "Who buys what" with mixed known and unknown crowds, and four ideas;
+ *   2. a thin month  — no earlier window, no cash reader, one customer, nothing ranked, and both
+ *                       nestly_v902 sections absent rather than rendered empty;
  *   3. a new business — no sales, no customers, no readers at all.
  *
  * Run: node scripts/quality/generate-bi-preview-v892.mjs
@@ -49,8 +51,10 @@ function surface(lines) {
       const model=biModelV892(bundles);
       return biSnapshotHtmlV892(model)
         +biInsightsHtmlV892(biSelectInsightsV892(model))
+        +biWhoBuysHtmlV902(model)
         +biPulseHtmlV892(model)
         +biHealthHtmlV892(model)
+        +biIdeasHtmlV902(model)
         +biOvernightStripHtmlV892(response);
     };`, context);
   return context.__exports.render;
@@ -82,7 +86,7 @@ const REAL = {
       { client_id: 'c9', full_name: 'Erased customer', phone: null, status: 'slipping', last_visit_days: 48, cadence_days: 19.2 },
       { client_id: 'c2', full_name: 'Wei Ling', phone: null, status: 'due', last_visit_days: 18, cadence_days: 17.6 }
     ],
-    summary: { due: 1, overdue: 0, slipping: 1, considered: 9, one_time_count: 2, monthly_at_risk_cents: 145700 }
+    summary: { due: 1, overdue: 2, slipping: 1, considered: 9, one_time_count: 2, monthly_at_risk_cents: 145700 }
   },
   packages: [
     { client_id: 'c1', remaining: 3, status: 'active', plan_name_snapshot: '4x Facial', list_unit_cents_snapshot: 9000 },
@@ -139,10 +143,58 @@ const REAL = {
     report_sections: { strengths: [], leakage: ['package_leakage:plan_small'], failures: [] }
   },
   rhythm: {
-    weekdays: [{ dow: 2, label: 'Tuesday', visits: 5, occurrences: 4, per_occurrence: 1.3, revenue_cents: 116900 }],
-    busiest_weekdays: [{ dow: 2, label: 'Tuesday', visits: 5, occurrences: 4, per_occurrence: 1.3 }]
+    weekdays: [
+      { dow: 2, label: 'Tuesday', visits: 5, occurrences: 4, per_occurrence: 1.3, revenue_cents: 116900 },
+      { dow: 5, label: 'Friday', visits: 1, occurrences: 4, per_occurrence: 0.3, revenue_cents: 9000 }
+    ],
+    busiest_weekdays: [{ dow: 2, label: 'Tuesday', visits: 5, occurrences: 4, per_occurrence: 1.3 }],
+    /* nestly_v902: the server names its own quiet day, which is what the third idea quotes. */
+    slowest_weekdays: [{ dow: 5, label: 'Friday', visits: 1, occurrences: 4, per_occurrence: 0.3 }]
   },
-  demographics: { coverage: { gender_known: { numerator: 3, denominator: 9, pct: 33.3 }, age_known: { numerator: 3, denominator: 9, pct: 33.3 } } },
+  /* nestly_v902: get_ci_demographic_totals_v1's own by_item, with one of every case the section
+     has to handle — a till bookkeeping line with no catalogue id (dropped), an item whose buyers
+     told the business both things, one that told it only their age and below the server's own
+     evidence floor, one that told it only their gender, and one that told it nothing. */
+  demographics: {
+    coverage: { gender_known: { numerator: 3, denominator: 9, pct: 33.3 }, age_known: { numerator: 3, denominator: 9, pct: 33.3 } },
+    by_item: [
+      {
+        item_id: null, item_name: 'Cart line', item_type: 'custom', revenue_cents: 220000, buyers: 14,
+        by_gender: [{ gender: 'female', buyers: 14, share_of_item_buyers: { numerator: 14, denominator: 14, pct: 100.0 }, evidence: { n: 14, floor: 5, status: 'ok' } }],
+        by_age_band: [{ age_band: '25_30', buyers: 14, share_of_item_buyers: { numerator: 14, denominator: 14, pct: 100.0 }, evidence: { n: 14, floor: 5, status: 'ok' } }]
+      },
+      {
+        item_id: 'svc_facial', item_name: 'Signature facial', item_type: 'service', revenue_cents: 141000, buyers: 6,
+        buyers_known_gender: 6, buyers_known_age: 5,
+        by_gender: [
+          { gender: 'female', buyers: 5, revenue_cents: 120000, share_of_item_buyers: { numerator: 5, denominator: 6, pct: 83.3 }, evidence: { n: 5, floor: 5, status: 'ok' } },
+          { gender: 'male', buyers: 1, revenue_cents: 21000, share_of_item_buyers: { numerator: 1, denominator: 6, pct: null }, evidence: { n: 1, floor: 5, status: 'insufficient' } }
+        ],
+        by_age_band: [{ age_band: '25_30', buyers: 5, revenue_cents: 118000, share_of_item_buyers: { numerator: 5, denominator: 5, pct: 100.0 }, evidence: { n: 5, floor: 5, status: 'ok' } }]
+      },
+      {
+        item_id: 'svc_colour', item_name: 'Hair colour', item_type: 'service', revenue_cents: 96000, buyers: 4,
+        buyers_known_gender: 0, buyers_known_age: 4, by_gender: [],
+        by_age_band: [{ age_band: '41_50', buyers: 3, revenue_cents: 72000, share_of_item_buyers: { numerator: 3, denominator: 4, pct: null }, evidence: { n: 3, floor: 5, status: 'insufficient' } }]
+      },
+      {
+        item_id: 'prd_shampoo', item_name: 'Repair shampoo', item_type: 'product', revenue_cents: 24000, buyers: 5,
+        buyers_known_gender: 5, buyers_known_age: 0,
+        by_gender: [{ gender: 'male', buyers: 4, revenue_cents: 19000, share_of_item_buyers: { numerator: 4, denominator: 5, pct: 80.0 }, evidence: { n: 4, floor: 5, status: 'ok' } }],
+        by_age_band: []
+      },
+      {
+        item_id: 'svc_massage', item_name: 'Head massage', item_type: 'service', revenue_cents: 18000, buyers: 3,
+        buyers_known_gender: 0, buyers_known_age: 0, by_gender: [], by_age_band: []
+      },
+      {
+        item_id: 'svc_brow', item_name: 'Brow shaping', item_type: 'service', revenue_cents: 6000, buyers: 2,
+        buyers_known_gender: 2, buyers_known_age: 2,
+        by_gender: [{ gender: 'female', buyers: 2, share_of_item_buyers: { numerator: 2, denominator: 2, pct: 100.0 }, evidence: { n: 2, floor: 5, status: 'insufficient' } }],
+        by_age_band: [{ age_band: '20_24', buyers: 2, share_of_item_buyers: { numerator: 2, denominator: 2, pct: 100.0 }, evidence: { n: 2, floor: 5, status: 'insufficient' } }]
+      }
+    ]
+  },
   categoryMix: { status: 'ok', coverage: { classified_pct_bps: 5680 } },
   contactability: { business_offers: { customers: 9, allowed_by_channel: { sms: 6, email: 4 } } },
   funnelConversion: { stage_1_to_2: { numerator: 3, denominator: 7, pct: 42.9 } },
@@ -207,8 +259,8 @@ const page = `<!doctype html>
 </style>
 </head>
 <body>
-${pane('1 · A real month', 'Everything present: a comparison against the previous 30 days, three things to know (money not collected, a customer whose identity was erased, and the concentration exposure), a full pulse and every health row.', renderReal(REAL, { data_status: 'ok', as_of: '2026-09-14', brief: { week: {} } }))}
-${pane('2 · A thin month, one branch selected', 'No earlier window to compare against, no payments reader, one customer, nothing ranked yet — and Peekaa says which of those it is.', renderBare(THIN, null))}
+${pane('1 · A real month', 'Everything present: a comparison against the previous 30 days, three things to know (money not collected, a customer whose identity was erased, and the single-category exposure), Who buys what with one of every crowd case, a full pulse, every health row, and four ideas.', renderReal(REAL, { data_status: 'ok', as_of: '2026-09-14', brief: { week: {} } }))}
+${pane('2 · A thin month, one branch selected', 'No earlier window to compare against, no payments reader, one customer, nothing ranked yet — and Peekaa says which of those it is. Who buys what and Ideas to try are absent, not empty.', renderBare(THIN, null))}
 ${pane('3 · A brand-new business', 'No sales, no customers, no readers. Every figure is a dash and nothing is invented as a zero.', renderBare(EMPTY, null))}
 </body>
 </html>

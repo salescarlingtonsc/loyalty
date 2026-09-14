@@ -5980,7 +5980,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .bi-section-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:12px}
 .bi-section-head h2{margin:0;font-size:17px;line-height:1.25}
 .bi-section-head p{margin:0}
-.bi-snapshot,.bi-insights,.bi-pulse,.bi-health,.bi-overnight,.bi-explore{display:block;margin-bottom:14px}
+.bi-snapshot,.bi-insights,.bi-buys,.bi-pulse,.bi-health,.bi-ideas,.bi-overnight,.bi-explore{display:block;margin-bottom:14px}
 /* Four white KPI cards: two columns on a phone, four from the compact threshold up. */
 .bi-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .bi-kpi{min-width:0;display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow)}
@@ -6035,11 +6035,35 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 /* nestly_v894: emphasis on exactly two chips, so it still reads as emphasis when it appears. */
 .bi-chip.is-due{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 30%,var(--line));color:var(--warn)}
 .bi-chip.is-slipping{background:var(--brand-red-faint);border-color:color-mix(in srgb,var(--brand-red) 28%,var(--line));color:var(--brand-red-dark)}
+/* nestly_v902 — "Who buys what". One row per product: the name and its two facts on the first
+   line, the crowd sentence on its own line underneath, so a long sentence never squeezes the
+   name down to one word per line on a phone. */
+.bi-buys-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.bi-buys-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding-bottom:10px;border-bottom:1px solid var(--hair)}
+.bi-buys-row:last-child{padding-bottom:0;border-bottom:0}
+.bi-buys-name{min-width:0;font-size:14.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.bi-buys-facts{justify-self:end;text-align:right;font-size:13px;font-weight:650;color:var(--ink2);white-space:nowrap}
+.bi-buys-crowd{grid-column:1/-1;font-size:13.5px;line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+.bi-buys-crowd.is-unknown{color:var(--muted)}
+.bi-buys-note{margin:12px 0 0}
+/* nestly_v902 — "Ideas to try". Deliberately the LIGHTEST block on the page: no tint, no coloured
+   edge, a hairline border and one small brand-tinted number. A suggestion must never read as
+   loudly as the three things to know sitting above it. */
+.bi-ideas-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.bi-idea{display:flex;align-items:flex-start;gap:10px;min-width:0;padding:10px 12px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--card)}
+.bi-idea-number{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--brand-red-faint);color:var(--brand-red-dark);font-size:12px;font-weight:750;line-height:1}
+.bi-idea-body{flex:1 1 auto;min-width:0}
+.bi-idea-do{margin:0;font-size:14px;line-height:1.4;font-weight:650;color:var(--ink);overflow-wrap:anywhere}
+.bi-idea-because{margin:3px 0 0;font-size:13px;line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+.bi-idea-cta{margin-top:8px}
 /* Health — status rows, not alerts. */
 .bi-health-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .bi-health-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding-bottom:8px;border-bottom:1px solid var(--hair)}
 .bi-health-row:last-child{padding-bottom:0;border-bottom:0}
-.bi-health-label{flex:0 0 auto;min-width:150px;font-size:12.5px;font-weight:700;color:var(--muted)}
+/* nestly_v902: the labels are sentences now ("How much you rely on your top customers"), so the
+   floor is a maximum rather than a fixed rail — it still lines the short ones up, and a long one
+   wraps its value underneath instead of pushing it off the row. */
+.bi-health-label{flex:0 0 auto;max-width:100%;min-width:min(190px,100%);font-size:12.5px;font-weight:700;color:var(--muted)}
 .bi-health-value{flex:1 1 200px;min-width:0;font-size:13.5px;color:var(--ink);overflow-wrap:anywhere}
 /* Overnight strip. */
 .bi-overnight-line{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink2)}
@@ -6185,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
      translation tables only for a non-English locale. Every url is fingerprinted by the build
      (npm run bundle-stamp) — never edit these by hand. -->
 <script type="application/json" id="appSurfaceChunks">
-{"auth":"/app-auth.js?b=426cc2cc23f0","customer":"/app-customer.js?b=f37a8a0801e5","business":"/app-business.js?b=b5dee9242605","i18n":"/app-i18n.js?b=1d2067afb261"}
+{"auth":"/app-auth.js?b=426cc2cc23f0","customer":"/app-customer.js?b=f37a8a0801e5","business":"/app-business.js?b=f9c61f786632","i18n":"/app-i18n.js?b=1d2067afb261"}
 </script>
 <script>
 /* Start the surface download in parallel with the core rather than after it. This only PRELOADS —

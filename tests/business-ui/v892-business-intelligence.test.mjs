@@ -248,18 +248,18 @@ test('v892 snapshot: a comparison is one line per metric, computed only from two
   assert.ok(html.includes('↑ 12% vs previous 30 days'), `revenue comparison, got: ${html}`);
   assert.ok(html.includes('↑ 13% vs previous 30 days'), 'customers comparison');
   assert.ok(html.includes('↑ 50% vs previous 30 days'), 'new customers comparison');
-  assert.ok(!html.includes('No earlier period to compare yet'), 'no apology while a comparison exists');
+  assert.ok(!html.includes('Not enough history yet to compare'), 'no apology while a comparison exists');
 });
 
 test('v892 snapshot: with no earlier window the page apologises ONCE, not four times', () => {
   const html = plain(BI.snapshot(model({ truthPrev: null, lifecyclePrev: null })));
-  assert.equal((html.match(/No earlier period to compare yet/g) || []).length, 1);
+  assert.equal((html.match(/Not enough history yet to compare/g) || []).length, 1);
   assert.ok(!html.includes('vs previous'), 'no comparison line survives without an earlier window');
 });
 
 test('v892 snapshot: one metric without a comparison loses only its own line', () => {
   const html = plain(BI.snapshot(model({ truthPrev: null })));
-  assert.ok(!html.includes('No earlier period to compare yet'), 'the whole-row apology is for the whole row');
+  assert.ok(!html.includes('Not enough history yet to compare'), 'the whole-row apology is for the whole row');
   assert.equal((html.match(/vs previous 30 days/g) || []).length, 2, 'the other two metrics keep theirs');
 });
 
@@ -348,9 +348,16 @@ test('v894 selector: the owner\'s six card types, mapped from the server\'s own 
   const kinds = BI.wording.types;
   assert.equal(Object.keys(kinds).join(' '),
     'needs_attention customer_risk business_risk opportunity doing_well still_learning');
-  assert.equal(kinds.customer_risk.label, 'Customer risk');
-  assert.equal(kinds.business_risk.label, 'Business risk');
-  assert.equal(kinds.opportunity.mark, '\u{1F7E1}', 'Opportunity is warm yellow, not the risk orange');
+  /* nestly_v902 (owner ruling 2026-09-15: "a layman could not understand"): the SIX types are
+     unchanged and still mapped from the server's own classes — only the words an owner reads
+     changed. */
+  assert.equal(kinds.customer_risk.label, 'A customer may be leaving');
+  assert.equal(kinds.business_risk.label, 'Too dependent on one thing');
+  assert.equal(kinds.opportunity.label, 'Chance to grow');
+  assert.equal(kinds.doing_well.label, 'Going well');
+  assert.equal(kinds.needs_attention.label, 'Needs attention');
+  assert.equal(kinds.still_learning.label, 'Still learning');
+  assert.equal(kinds.opportunity.mark, '\u{1F7E1}', 'a chance to grow is warm yellow, not the risk orange');
 });
 
 test('v892 selector: a strength reads as a strength, never as a task', () => {
@@ -379,7 +386,7 @@ test('v892 selector: fewer than three real findings are never padded', () => {
     opportunities: { ...OPPORTUNITIES, ranked: [FOUNDATION_ITEM], report_sections: {} }
   }));
   assert.equal(cards.length, 0, 'nothing real left once the coverage defect is excluded');
-  assert.match(plain(BI.insights(cards)), /No reliable recommendation yet/);
+  assert.match(plain(BI.insights(cards)), /Nothing worth flagging yet/);
 });
 
 test('v892 selector: with nothing to say but a reason to say it, Peekaa says it is still learning', () => {
@@ -390,7 +397,7 @@ test('v892 selector: with nothing to say but a reason to say it, Peekaa says it 
   }));
   assert.equal(cards.length, 1);
   assert.equal(cards[0].type, 'still_learning');
-  assert.match(cards[0].finding, /needs more customer history/);
+  assert.match(cards[0].finding, /needs to see more customers/);
 });
 
 test('v892 selector: a weekday strength names the day and its measured facts, and offers a look, not a chore', () => {
@@ -414,7 +421,7 @@ test('v892 card: each card carries its type, its finding, and ONE control that o
   assert.match(html, /bi-card--needs-attention/);
   assert.match(plain(html), /Needs attention/);
   /* nestly_v901: the evidence is no longer inline; the card's only control opens the pop-up. */
-  assert.match(html, /<button type="button" class="btn ghost sm bi-cta" data-bi-explain-v892="0">Why am I seeing this\? →<\/button>/);
+  assert.match(html, /<button type="button" class="btn ghost sm bi-cta" data-bi-explain-v892="0">Why is Peekaa telling me this\? →<\/button>/);
   assert.ok(!html.includes('bi-evidence'), 'no inline evidence on the card');
   assert.ok(!html.includes('data-bi-open-v892'), 'no CTA on the card: it lives in the pop-up');
 });
@@ -424,15 +431,15 @@ test('v901 explain pop-up: the numbers, then what to do next, then the CTA — f
   const html = BI.explain(card);
   const text = plain(html);
   assert.match(html, /bi-explain bi-card--needs-attention/, 'the pop-up carries the card tone');
-  assert.ok(text.includes('Where these numbers come from'), `numbers heading, got: ${text}`);
+  assert.ok(text.includes('Where this number comes from'), `numbers heading, got: ${text}`);
   assert.ok(text.includes('6 with no payment recorded and 2 part paid'), 'the evidence rows are inside the pop-up');
-  assert.ok(text.includes('What to do next'), 'next-step heading');
+  assert.ok(text.includes('What you can do'), 'next-step heading');
   assert.ok(text.includes('Review the open sales and record any payments already received.'), 'the action sentence moved in');
   assert.match(html, /<button type="button" class="btn bi-explain-cta" data-bi-explain-cta="1">Review payments →<\/button>/);
   assert.ok(!/href="#/.test(html), 'the CTA is a button, so the dialog can close before navigating');
   const hidden = BI.explain(card, { showCta: false });
   assert.ok(!hidden.includes('data-bi-explain-cta'), 'a CTA with nowhere to go is left out, not left dead');
-  assert.ok(plain(hidden).includes('What to do next'), 'the action sentence still stands on its own');
+  assert.ok(plain(hidden).includes('What you can do'), 'the action sentence still stands on its own');
 });
 
 test('v892 evidence: the sample size is translated into a sentence an owner can read', () => {
@@ -441,7 +448,7 @@ test('v892 evidence: the sample size is translated into a sentence an owner can 
     opportunities: { ...OPPORTUNITIES, ranked: [LEAKAGE_ITEM], report_sections: { leakage: ['package_leakage:plan_small'] } }
   }));
   const evidence = plain(BI.evidence(cards[0]));
-  assert.ok(evidence.includes('Based on 9 observations. Peekaa needs at least 5 before showing this finding.'),
+  assert.ok(evidence.includes('Peekaa saw this 9 times. It waits for at least 5 before saying anything.'),
     `confidence.n and confidence.floor become one sentence, got: ${evidence}`);
   assert.ok(evidence.includes('Peekaa drops this once the remaining sessions are booked.'),
     'reversal_condition is printed as when Peekaa would change its mind');
@@ -500,9 +507,9 @@ test('v892 health: coverage is a status row with its own route, never an alarm',
   assert.ok(html.includes('Top 3 customers = 87% of known revenue'), `concentration, got: ${html}`);
   /* Owner acceptance: below three earning customers the row states arithmetic, not concentration. */
   const one = plain(BI.health(model({ customers: [CUSTOMERS[0]], summary: { net_revenue_cents: 357030 } })));
-  assert.ok(!one.includes('Customer concentration'), 'one earning customer is not a concentration');
+  assert.ok(!one.includes('How much you rely'), 'one earning customer is not a reliance row');
   const two = plain(BI.health(model({ customers: CUSTOMERS.slice(0, 2) })));
-  assert.ok(!two.includes('Customer concentration'), 'nor are two');
+  assert.ok(!two.includes('How much you rely'), 'nor are two');
   const three = plain(BI.health(model({ customers: CUSTOMERS.slice(0, 3) })));
   assert.ok(three.includes('Top 3 customers'), 'three earning customers is');
   assert.ok(html.includes('56.8% of revenue is sorted into categories'), 'category coverage as percent');
@@ -528,7 +535,7 @@ test('v892 overnight: one strip, two sentences, the rest behind Show more', () =
   ];
   const strip = sandbox({ ownerBriefLinesV826: () => lines }).overnight({ as_of: '2026-09-14', data_status: 'ok', brief: { week: {} } });
   const shown = plain(strip);
-  assert.ok(shown.includes('Last night’s brief'));
+  assert.ok(shown.includes('Last night’s summary'));
   assert.ok(shown.includes('Last 7 days: SGD 1,240.00 from 14 visits.'));
   assert.ok(shown.includes('overdue their usual visit'), 'the regulars sentence leads with the first one');
   assert.match(strip, /<details class="bi-overnight-more"><summary>Show more<\/summary>/);
@@ -617,10 +624,10 @@ test('v894 card: category concentration is worded from its structured evidence, 
   assert.ok(card, 'the concentration finding takes a slot of its own');
   /* 8393 bps → 84%, the one conversion this surface performs. Nothing is hardcoded: the label,
      the share, the buyer count and the top-customer share all come out of the payload. */
-  assert.equal(card.finding, 'Facial makes up 84% of your categorised revenue');
+  assert.equal(card.finding, 'Facial makes up 84% of the money you’ve sorted into categories');
   assert.equal(card.why,
     '6 customers bought Facial, and your biggest Facial customer contributes about 40% of that category.');
-  assert.equal(card.action, 'Your revenue is heavily concentrated in one service.');
+  assert.equal(card.action, 'Most of your money comes from one kind of service.');
   assert.equal(card.cta.kind, 'section');
   assert.equal(card.cta.section, 'services');
   assert.equal(card.cta.label, 'View services');
@@ -641,7 +648,7 @@ test('v894 card: a generator with no approved owner wording prints no server pro
     cashGap: null, attention: null, packages: [],
     opportunities: { ...OPPORTUNITIES, ranked: [unknown], report_sections: {} }
   }));
-  const card = cards.find((entry) => entry.finding === 'View this insight in detailed analysis');
+  const card = cards.find((entry) => entry.finding === 'Open the full details');
   assert.ok(card, 'the untemplated finding falls back to a pointer, not to the prose');
   assert.equal(card.cta.section, 'evidence', 'and the pointer opens Evidence & methodology');
   const html = BI.insights(cards);
@@ -681,13 +688,13 @@ test('v894 evidence: the evidence class is translated, and the sample floor read
   const direct = plain(BI.evidence(BI.select(model({
     cashGap: null, attention: null, packages: [], opportunities: CONCENTRATION_ONLY
   }))[0]));
-  assert.ok(direct.includes('Based directly on your recorded business data.'), `DIRECT_FACT, got: ${direct}`);
+  assert.ok(direct.includes('This comes straight from your own sales records.'), `DIRECT_FACT, got: ${direct}`);
   assert.ok(!direct.includes('DIRECT_FACT'), 'and never the token');
   const association = plain(BI.evidence(BI.select(model({
     cashGap: null, attention: null, packages: [],
     opportunities: { ...OPPORTUNITIES, ranked: [STRENGTH_ITEM], report_sections: { strengths: ['strength:category:facial'] } }
   }))[0]));
-  assert.ok(association.includes('Based on a pattern in your data, not a proven cause.'));
+  assert.ok(association.includes('This is a pattern Peekaa noticed. It may not be the reason.'));
   assert.ok(!association.includes('ASSOCIATION'));
 });
 
@@ -705,7 +712,7 @@ test('v894 health: "Who you may contact" is a consent fact, not a health row', (
   assert.ok(!html.includes('Who you may contact'), 'it renders under Explore → Acquisition instead');
   assert.ok(!html.includes('by text message'), 'and none of its figures are duplicated here');
   /* Everything health keeps is still here. */
-  assert.ok(html.includes('Top 3 customers'), 'concentration stays, with its ≥3 earning rule');
+  assert.ok(html.includes('Top 3 customers'), 'the reliance row stays, with its ≥3 earning rule');
   assert.ok(html.includes('sorted into categories'), 'category coverage stays');
   assert.match(BI.health(model()), /Map services/, 'with its own route');
   assert.ok(html.includes('Age known for 33%'), 'profile completeness stays');
@@ -719,7 +726,7 @@ test('v894 overnight: the strip names the window it describes', () => {
       { kind: 'plain', text: 'Most redeemed reward: Free scalp massage.' }
     ]
   }).overnight({ data_status: 'ok', brief: { week: {} } });
-  assert.ok(plain(strip).includes('Last night’s brief · Last 7 days'));
+  assert.ok(plain(strip).includes('Last night’s summary · past 7 days'));
   assert.match(strip, /<details class="bi-overnight-more"><summary>Show more<\/summary>/);
 });
 
@@ -772,9 +779,21 @@ test('v894 page: Explore titles are plain text, and contactability renders once'
   assert.ok(start > -1, 'the Explore wiring must exist');
   const wiring = app.slice(start, app.indexOf('body.innerHTML=`${biSnapshotHtmlV892', start));
   assert.ok(!wiring.includes('&amp;'), 'no title is pre-escaped in the data');
-  for (const title of ["title:'Revenue & payments'", "title:'Weekday & time-of-day behaviour'",
-    "title:'Evidence & methodology'"]) {
+  /* nestly_v902 (owner ruling 2026-09-15): the Explore rows are named in the words an owner would
+     use for them. The double-escape regression the ampersands once carried is pinned on
+     biExploreHtmlV892 itself, in the test above; what this pins is the caller's own data. */
+  for (const title of ["title:'Money in and money owed'", "title:'Do customers come back?'",
+    "title:'What sells'", "title:'Where customers come from'", "title:'From looking to booking'",
+    "title:'Busy and quiet times'", "title:'Prepaid sessions'", "title:'Compare your branches'",
+    "title:'Make Peekaa smarter'", "title:'How Peekaa works this out'",
+    "title:'Questions and answers'"]) {
     assert.ok(wiring.includes(title), `${title} is carried as plain text`);
+  }
+  for (const gone of ["title:'Revenue & payments'", "title:'Retention'", "title:'Acquisition'",
+    "title:'Booking funnel'", "title:'Weekday & time-of-day behaviour'", "title:'Packages'",
+    "title:'Branches'", "title:'Improve your insights'", "title:'Evidence & methodology'",
+    "title:'Ask my business'"]) {
+    assert.ok(!wiring.includes(gone), `the analyst label ${gone} is gone`);
   }
   assert.equal((wiring.match(/contactabilityMarkupV650\(\)/g) || []).length, 1,
     'the contactability panel is mounted exactly once');
