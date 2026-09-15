@@ -4431,6 +4431,12 @@
       "path": "db/migrations/20261016_nestly_v967_manual_payment_consumes_promo.sql",
       "semanticVersion": "v967",
       "proposedDeployVersion": "20261017040000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261016_nestly_v984_promo_records_money_that_moved.sql",
+      "semanticVersion": "v984",
+      "proposedDeployVersion": "20261017050000"
     }
   ]
 }

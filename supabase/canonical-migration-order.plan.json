@@ -4426,6 +4426,12 @@
       "version": "20261017040000",
       "name": "nestly_v967_manual_payment_consumes_promo",
       "sourcePath": "db/migrations/20261016_nestly_v967_manual_payment_consumes_promo.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261017050000",
+      "name": "nestly_v984_promo_records_money_that_moved",
+      "sourcePath": "db/migrations/20261016_nestly_v984_promo_records_money_that_moved.sql"
     }
   ]
 }
