@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V959 = workspaceTemplateRuntime('en');
+
 /* nestly_v832 (owner, 2026-09-09), two asks against the Staff commission page:
      1. "Boss able to track individual sales (with breakdown on the sale) & filter accordingly."
      2. "Is there a tracker and analysis behind to show who is performing better? lesser deals but
@@ -34,9 +39,9 @@ function region(start,end){
   return app.slice(from,to);
 }
 const helperSource=region('const STAFF_COMMISSION_KINDS_V832=[','\nfunction commissionInputsHtmlV825(');
-const H=new Function(`${helperSource};return {STAFF_COMMISSION_KINDS_V832,staffCommissionKindKeyV832,`
+const H=new Function('workspaceTemplateTextV97', `${helperSource};return {STAFF_COMMISSION_KINDS_V832,staffCommissionKindKeyV832,`
   +'staffCommissionFilterV832,staffCommissionInsightsV832,staffCommissionMixTextV832,'
-  +'staffCommissionInsightLineV832}')();
+  +'staffCommissionInsightLineV832}')(TPL_V959.workspaceTemplateTextV97);
 
 const cash=cents=>`$${(Number(cents)/100).toFixed(2)}`;
 

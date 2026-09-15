@@ -176,7 +176,9 @@ test('V301 (b) each step Next writes through the SAME draft RPCs the editor writ
   assert.ok(publishStep.indexOf("publish_loyalty_config") < publishStep.indexOf('applyProgrammeSwitchesV314(false)'),
     'the switches may only be applied AFTER the publish they belong with');
   // Publishing happened, so a failed switch write must say so rather than report a failed publish.
-  assert.match(wizard, /Published\. The programme switch could not be applied/);
+  /* nestly_v959: the sentence is a named template now — the words are pinned once where they are
+     written, and the call site is pinned to the key and its values. */
+  assert.match(wizard, /publishedSwitchNotApplied(Retry)?'/);
   assert.match(wizard, /id="growSetupModeRetryV303"/);
   /* The retry reuses ONE key, so a retry after a timeout that had actually succeeded replays the
      server's receipt instead of flipping a second time — while a SECOND publish in the same wizard

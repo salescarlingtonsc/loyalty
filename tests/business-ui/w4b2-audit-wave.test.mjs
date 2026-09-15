@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const appJs = await readFile(path.join(root, 'app/app.js'), 'utf8');
 const section = (from, to) => {
@@ -123,6 +124,10 @@ function buildDeleteHandler({ rpcError = null, navigateAwayAfterRpc = false } = 
     promotionsPage: id => promotionsPageCalls.push(id),
     promotionPageCurrentV104,
   };
+/* nestly_v959: several sentences in the sliced region are named templates now, so the sandbox
+     carries the REAL template runtime. A stub would let a missing key or a dropped value pass a
+     test that claims to render production output. */
+  Object.assign(context, workspaceTemplateRuntime('en'));
   vm.createContext(context);
   vm.runInContext(src, context);
   return { button, promotionsPageCalls, toasts };

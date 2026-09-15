@@ -198,10 +198,12 @@ test('V287 the Sales ledger states a permission limit instead of painting it as 
 
 test('V287 the last bare record id in the Sales audit disclosure is labelled', () => {
   assert.doesNotMatch(app, /details:`Corrected by \$\{/);
-  assert.match(app, /Original sale row, later corrected\. Audit record id of the correction: \$\{/);
+  /* nestly_v959: the sentence is a named template now — the words are pinned once where they are
+     written, and the call site is pinned to the key and its values. */
+  assert.match(app, /workspaceTemplateTextV97\('originalSaleRowLaterCorrectedAuditId'/);
   // The two V267 lines are unchanged; all three now read the same way.
-  assert.match(app, /Compensating reversal row\. Audit record id of the sale it reverses: \$\{s\.reversal_of\}/);
-  assert.match(app, /Original sale row, fully reversed\. Audit record id of the reversal: \$\{w\.reversal_sale_id\}/);
+  assert.match(app, /workspaceTemplateTextV97\('compensatingReversalRowAuditId',\{[^}]*s\.reversal_of[^}]*\}\)/);
+  assert.match(app, /workspaceTemplateTextV97\('originalSaleRowFullyReversedAuditId',\{[^}]*w\.reversal_sale_id[^}]*\}\)/);
 });
 
 /* ------------------------------------------------------------------ MINOR 13 */

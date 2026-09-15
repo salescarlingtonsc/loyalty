@@ -41,7 +41,8 @@ test('V215 appears in Programmes with a state an owner can act on', () => {
   assert.match(row, /Paused/);
   // A deactivated free item is called out, because the offer silently stops issuing.
   assert.match(row, /item_available===false/);
-  assert.match(row, /no longer on sale/);
+  /* nestly_v959: the sentence is a named template; the key is what the row must name. */
+  assert.match(row, /itemNoLongerOnSaleChooseAnother/);
   // Uses the shared pill, not an invented status class.
   assert.match(row, /class="pill \$\{esc\(tone\)\}"/);
   assert.match(app, /\[data-welcome-offer-edit-v215\]/);

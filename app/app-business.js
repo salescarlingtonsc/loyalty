@@ -1193,12 +1193,12 @@ function merchantRedemptionRefusalTextV060(error,fallback='This redemption could
      first, so the second reached the counter as raw SQL English. */
   if(/not eligible at (?:this )?branch/i.test(msg))return 'This reward is not available at this branch.';
   const expiredMatch=msg.match(/this reward expired on (.+)$/i);
-  if(expiredMatch)return `This reward expired on ${expiredMatch[1]}.`;
+  if(expiredMatch)return workspaceTemplateTextV97('thisRewardExpiredOn',{expiryDate:expiredMatch[1]});
   if(/redemption is disabled/i.test(msg))return 'Customer redemption is turned off for this business.';
   /* nestly_v829 — an internal invariant is never shown to a counter: it means nothing to staff,
      and it names our own tables. Apologise, and hand over a reference the owner can quote. */
   if(MERCHANT_REDEMPTION_INVARIANT_V829.test(msg))
-    return `Something went wrong on our side, so nothing was redeemed. Try again — if it keeps happening, quote reference ${merchantSupportReferenceV829(error)} to Peekaa support.`;
+    return workspaceTemplateTextV97('somethingWentWrongNothingRedeemedQuoteReference',{referenceCode:merchantSupportReferenceV829(error)});
   /* nestly_v829 — the rest of production's redemption vocabulary, most common first. */
   if(/redemption QR is no longer pending/i.test(msg))return 'This reward QR has already been used. Ask the customer to open Redeem again for a fresh one.';
   if(/redemption QR is invalid|invalid redemption QR scan/i.test(msg))return 'This is not a redemption QR from this business.';
@@ -1253,7 +1253,7 @@ function merchantGiftRefusalTextV829(error,{minSpendCents=null}={}){
   const msg=String(error?.message||'');
   const detail=`${msg} ${String(error?.details||'')} ${String(error?.hint||'')}`;
   const quoted=Number(minSpendCents);
-  const amount=Number.isFinite(quoted)&&quoted>0?` This gift needs at least ${money(quoted)} on the sale.`:'';
+  const amount=Number.isFinite(quoted)&&quoted>0?' '+workspaceTemplateTextV97('thisGiftNeedsAtLeastOnTheSale',{minimumSpend:money(quoted)}):'';
   if(/qualifying[ _]sale[ _]not[ _]found/i.test(detail))
     return 'That sale is not on this customer’s account. Ring the sale up for them, then scan this from the receipt screen.';
   if(/requires[ _]qualifying[ _]sale|qualifying sale/i.test(detail))
@@ -1629,7 +1629,7 @@ function openMerchantRedemptionScanner({
         if(!closed&&stream){
           refusedScanValueV829=value;
           armCameraRetryV830(value);
-          if(status)status.textContent=`${status.textContent} Scanning is paused for this code — show a different QR, or press “Confirm redemption” under “Camera unavailable?” to send this one again.`;
+          if(status)status.textContent=workspaceTemplateTextV97('scanningIsPausedForThisCode',{statusMessage:status.textContent});
         }
         if(!closed&&stream)frameHandle=requestAnimationFrame(detectFrame);
         return;
@@ -1847,7 +1847,7 @@ function reportRangeValidation(from,to,maxDays=REPORT_MAX_RANGE_DAYS){
   const start=parse(from),end=parse(to);
   if(start===null||end===null||end<start)return {ok:false,reason:'Choose a valid report range.'};
   const days=Math.round((end-start)/864e5)+1;
-  if(days>maxDays)return {ok:false,reason:`Choose a range of ${maxDays.toLocaleString('en-SG')} days or fewer.`};
+  if(days>maxDays)return {ok:false,reason:workspaceTemplateTextV97('chooseARangeOfDaysOrFewer',{maxDays:maxDays.toLocaleString('en-SG')})};
   return {ok:true,days};
 }
 function lifecycleAnswerProjection(payload){
@@ -2087,10 +2087,10 @@ function staffCommissionInsightLineV832(insights,formatMoney){
      must not crown one of them — the owner reads this line as a ranking. */
   const salesTied=people.filter(s=>s.sales===most.sales).length>1;
   const avgTied=people.filter(s=>s.avgSale===biggest.avgSale).length>1;
-  if(salesTied&&avgTied)return `Sales are level (${most.sales} each) and so is the average sale (${fmt(biggest.avgSale)}).`;
-  if(salesTied)return `Sales are level (${most.sales} each); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)}).`;
-  if(avgTied)return `${most.name} closes the most sales (${most.sales}); the average sale is level (${fmt(biggest.avgSale)}).`;
-  if(most.key===biggest.key)return `${most.name} leads on both: the most sales (${most.sales}) and the biggest average sale (${fmt(most.avgSale)}).`;
+  if(salesTied&&avgTied)return workspaceTemplateTextV97('salesAreLevelAndSoIsTheAverageSale',{saleCount:most.sales,averageSale:fmt(biggest.avgSale)});
+  if(salesTied)return workspaceTemplateTextV97('salesAreLevelBiggestAverageSaleIs',{saleCount:most.sales,staffName:biggest.name,averageSale:fmt(biggest.avgSale)});
+  if(avgTied)return workspaceTemplateTextV97('closesTheMostSalesAverageSaleIsLevel',{staffName:most.name,saleCount:most.sales,averageSale:fmt(biggest.avgSale)});
+  if(most.key===biggest.key)return workspaceTemplateTextV97('leadsOnBothMostSalesAndBiggestAverageSale',{staffName:most.name,saleCount:most.sales,averageSale:fmt(most.avgSale)});
   const tail=biggest.sales<most.sales?' — fewer deals, bigger tickets':'';
   return `${most.name} closes the most sales (${most.sales}); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)})${tail}.`;
 }
@@ -4155,7 +4155,22 @@ async function setWorkspaceLocaleV97(locale){
   if(error){workspaceLocale=previous;localizeWorkspaceSubtreeV97();toast('Language preference could not be saved.');return false}
   workspaceLocale=normalizeWorkspaceLocaleV97(data?.locale||next);
   workspaceLocaleVersion=Number(data?.version??workspaceLocaleVersion+1);
-  localizeWorkspaceSubtreeV97();return true;
+  localizeWorkspaceSubtreeV97();
+  /* nestly_v959. In-place localisation reaches every whole text node and every named template
+     already on the page, which is most of the workspace — but it cannot reach a sentence that was
+     ASSEMBLED from English and a runtime value before it was inserted. Those are resolved once, at
+     render time, in whatever language the page was drawn in, and no amount of re-walking the DOM
+     moves them: there is no key on them to look up.
+
+     The language picker lives in the profile menu and the mobile sheet, so it is reachable from
+     every page — an owner can switch while looking at Business Intelligence, which is exactly where
+     those assembled sentences are thickest. So the route is re-run: the page is rebuilt from the
+     same data in the new language, and render-time sentences follow along with everything else.
+
+     Not while a dialog is open. Re-rendering would destroy a modal the owner is working inside, and
+     a dialog is transient — it will be drawn in the new language the next time it is opened. */
+  if(!root.querySelector('[role="dialog"]'))await route();
+  return true;
 }
 function wireWorkspaceLanguageV97(){
   const wirePicker=picker=>{if(!picker)return;picker.onchange=async()=>{
@@ -5605,7 +5620,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   if(summary){
     summary.textContent=rows.length
       ?(isTodayV252?`${rows.length} ${rows.length===1?'booking':'bookings'} today.`:`${rows.length} ${rows.length===1?'booking':'bookings'} on ${dayLabelV252}.`)
-      :(isTodayV252?'Nothing booked for today.':`Nothing booked on ${dayLabelV252}.`);
+      :(isTodayV252?'Nothing booked for today.':workspaceTemplateTextV97('nothingBookedOnDaySummary',{day:dayLabelV252}));
   }
   if(!rows.length){
     host.innerHTML=isTodayV252
@@ -5742,7 +5757,7 @@ function ownerBriefLinesV826(brief){
   const act=brief.action||{};
   if(act.status==='ok'&&act.top_action?.title){
     const cost=Number(act.top_action.estimated_cost_cents);
-    lines.push({kind:'good',text:`Suggested: ${act.top_action.title}.${Number.isFinite(cost)&&cost>0?` Cost up to ${money(cost)}.`:''}`});
+    lines.push({kind:'good',text:`Suggested: ${act.top_action.title}.${Number.isFinite(cost)&&cost>0?' '+workspaceTemplateTextV97('costUpToAmount',{amount:money(cost)}):''}`});
   }
   return lines;
 }
@@ -5818,7 +5833,7 @@ function ownerBriefAnswersV828(brief){
     factItem('month','This month so far, am I ahead or behind?',fact=>{
       const mtd=fact.mtd||{},prev=fact.previous_month_same_days||{};
       const d=fact.revenue_delta_pct;
-      const pace=Number.isFinite(Number(fact.on_pace_cents))?` On pace for ${money(fact.on_pace_cents)} this month.`:'';
+      const pace=Number.isFinite(Number(fact.on_pace_cents))?' '+workspaceTemplateTextV97('onPaceForAmountThisMonth',{amount:money(fact.on_pace_cents)}):'';
       if(d==null)return {answer:`Day ${fact.days_elapsed} of the month: ${money(mtd.revenue_cents||0)}.${pace}`,kind:'plain'};
       const n=Number(d);
       return {answer:`Day ${fact.days_elapsed} of the month: ${money(mtd.revenue_cents||0)} versus ${money(prev.revenue_cents||0)} at this point last month, ${ownerBriefPctV826(n)} last month.${pace}`,kind:n<-5?'warn':n>5?'good':'plain'};
@@ -5851,9 +5866,9 @@ function ownerBriefAnswersV828(brief){
       if(!top.length)return null;
       const first=top[0];
       const hasMargin=Array.isArray(fact.top_by_margin)&&fact.top_by_margin.length>0;
-      if(!hasMargin)return {answer:`Top seller by revenue: ${first.name} (${money(first.revenue_cents||0)}). Margin is unknown — no item in your catalogue has a cost price set yet.`,kind:'warn'};
+      if(!hasMargin)return {answer:workspaceTemplateTextV97('topSellerByRevenueMarginUnknown',{itemName:first.name,amount:money(first.revenue_cents||0)}),kind:'warn'};
       const bestMargin=fact.top_by_margin[0];
-      return {answer:`Top seller by revenue: ${first.name} (${money(first.revenue_cents||0)}). Top by margin: ${bestMargin.name} (${money(bestMargin.margin_cents||0)}).`,kind:'plain'};
+      return {answer:workspaceTemplateTextV97('topSellerByRevenueAndByMargin',{itemName:first.name,amount:money(first.revenue_cents||0),marginItemName:bestMargin.name,marginAmount:money(bestMargin.margin_cents||0)}),kind:'plain'};
     }),
     factItem('dying','What is dying?',fact=>{
       const items=fact.dying_items||[];
@@ -5866,12 +5881,12 @@ function ownerBriefAnswersV828(brief){
       const pairs=fact.top_pairs||[];
       if(!pairs.length)return {answer:'No clear buy-together pattern yet.',kind:'plain'};
       const p=pairs[0];
-      return {answer:`Most bought together: ${p.item_a} and ${p.item_b} (${pct1(p.attach_pct)}% attach rate).`,kind:'plain'};
+      return {answer:workspaceTemplateTextV97('mostBoughtTogetherPair',{itemA:p.item_a,itemB:p.item_b,attachPct:pct1(p.attach_pct)}),kind:'plain'};
     }),
     factItem('discounts','Who is giving discounts, and on what?',fact=>{
       const staff=fact.staff;
       if(!staff||!staff.length){
-        if(fact.staff_note)return {answer:`${money(fact.total_discount_cents||0)} in discounts were given, but none of it could be attributed to a staff member.`,kind:'plain'};
+        if(fact.staff_note)return {answer:workspaceTemplateTextV97('discountsGivenButNoStaffAttributed',{amount:money(fact.total_discount_cents||0)}),kind:'plain'};
         return null;
       }
       const top=staff[0];
@@ -5886,8 +5901,8 @@ function ownerBriefAnswersV828(brief){
     factItem('multi_outlet','Who visits more than one outlet?',fact=>{
       const n=Number(fact.multi_outlet_customers)||0,total=Number(fact.identified_customers)||0;
       if(total===0)return {answer:'No identified customers yet to say who visits more than one outlet.',kind:'plain'};
-      if(n===0)return {answer:`None of your ${total} identified customers visit more than one outlet yet.`,kind:'plain'};
-      return {answer:`${n} of ${total} identified customers (${rpct(fact.multi_outlet_share_pct)}%) visit more than one outlet.`,kind:'plain'};
+      if(n===0)return {answer:workspaceTemplateTextV97('noneOfYourIdentifiedCustomersVisitMoreThanOneOutlet',{total:total}),kind:'plain'};
+      return {answer:workspaceTemplateTextV97('identifiedCustomersVisitingMoreThanOneOutlet',{count:n,total:total,sharePct:rpct(fact.multi_outlet_share_pct)}),kind:'plain'};
     }),
     factItem('birthdays','Birthdays this month. Did we actually send anything?',fact=>{
       const n=Number(fact.birthday_clients_this_month)||0;
@@ -5905,15 +5920,15 @@ function ownerBriefAnswersV828(brief){
     asItem('Which reward is popular, which is ignored?',rewardsLine),
     factItem('points_expiry','How much expires unused?',fact=>{
       const pct=fact.expired_pct_of_earned;
-      if(pct==null)return {answer:`${fact.earned_points||0} points earned in the last 90 days; none have expired yet.`,kind:'good'};
+      if(pct==null)return {answer:workspaceTemplateTextV97('pointsEarnedInLast90DaysNoneExpired',{earned:fact.earned_points||0}),kind:'good'};
       const n=Number(pct);
-      return {answer:`${fact.expired_points||0} of ${fact.earned_points||0} points earned in the last 90 days expired unused (${pct1(n)}%).`,kind:n>=15?'warn':n===0?'good':'plain'};
+      return {answer:workspaceTemplateTextV97('pointsEarnedInLast90DaysExpiredUnused',{expired:fact.expired_points||0,earned:fact.earned_points||0,pct:pct1(n)}),kind:n>=15?'warn':n===0?'good':'plain'};
     }),
     factItem('member_lift','Do members spend more than non-members?',fact=>{
       const m=fact.members,nm=fact.non_members;
       if(!m||!nm)return null;
       const better=Number(m.visit_days_per_customer)>Number(nm.visit_days_per_customer);
-      return {answer:`Members visit ${m.visit_days_per_customer} days on average versus ${nm.visit_days_per_customer} for non-members.`,kind:better?'good':'warn'};
+      return {answer:workspaceTemplateTextV97('membersVisitDaysVersusNonMembers',{memberDays:m.visit_days_per_customer,nonMemberDays:nm.visit_days_per_customer}),kind:better?'good':'warn'};
     }),
     factItem('referrals','Referrals. Do the friends stick?',fact=>{
       if(fact.referred_customers==null)return null;
@@ -5958,14 +5973,14 @@ function ownerBriefAnswersV828(brief){
         const best=ranked[0],worst=ranked[ranked.length-1];
         let text=`${best.name} earns the most per rostered hour (${money(best.revenue_per_rostered_hour_cents)})`;
         if(zeroSales&&zeroSales.name===worst.name){
-          text+=`; ${worst.name} is rostered ${worst.rostered_hours} hours with 0 sales in the window.`;
+          text+=workspaceTemplateTextV97('staffRosteredHoursWithZeroSalesClause',{staff:worst.name,hours:worst.rostered_hours});
         }else{
           text+=`; ${worst.name} earns the least (${money(worst.revenue_per_rostered_hour_cents)})`;
-          text+=zeroSales?`, and ${zeroSales.name} is rostered ${zeroSales.rostered_hours} hours with 0 sales in the window.`:'.';
+          text+=zeroSales?workspaceTemplateTextV97('andStaffRosteredHoursWithZeroSalesClause',{staff:zeroSales.name,hours:zeroSales.rostered_hours}):'.';
         }
         return {answer:text,kind:zeroSales?'warn':'plain'};
       }
-      if(zeroSales)return {answer:`${zeroSales.name} is rostered ${zeroSales.rostered_hours} hours but has 0 attributed sales in the window.`,kind:'warn'};
+      if(zeroSales)return {answer:workspaceTemplateTextV97('staffRosteredHoursButNoAttributedSales',{staff:zeroSales.name,hours:zeroSales.rostered_hours}),kind:'warn'};
       return {answer:`${list.length} staff ${plural(list.length,'member is','members are')} attributed sales in the window.`,kind:'plain'};
     }),
   ]);
@@ -6612,7 +6627,7 @@ function openCampaignPrepV153({audienceKey='inactive_60_plus',audienceLabel='Ina
   document.querySelector('#campaignPrepModalV153')?.remove();
   const exclusionCopy=consentEligible===null
     ?'Notification-device eligibility is not enabled yet, so Peekaa only shows the audience rule and consent warning.'
-    :`${Math.max(0,Number(count)-Number(consentEligible))} customers are missing recorded marketing consent or eligibility evidence.`;
+    :workspaceTemplateTextV97('customersMissingMarketingConsentOrEligibilityEvidence',{missingCount:Math.max(0,Number(count)-Number(consentEligible))});
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="campaignPrepModalV153" role="dialog" aria-modal="true" aria-labelledby="campaignPrepTitleV153" tabindex="-1">
     <section class="modal-card" style="max-width:720px">
       <div class="row"><div><p class="eyebrow">Campaign preparation</p><h2 id="campaignPrepTitleV153" style="margin-top:4px">Prepare a campaign draft</h2><p class="muted small" style="margin-top:5px">Draft the audience and message now. Delivery is intentionally not enabled in this release.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="campaignPrepCloseV153" aria-label="Close campaign preparation">Close</button></div>
@@ -7504,7 +7519,7 @@ async function clientDetail(id){
     const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
       ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
-      :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?`${earnPerDollarV567} points for every SGD 1 spent`:'');
+      :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?workspaceTemplateTextV97('pointsForEverySgd1Spent',{pointsPerDollar:earnPerDollarV567}):'');
     const earnLineV567=earnCopy
       ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
       :stamps
@@ -7922,7 +7937,7 @@ async function clientDetail(id){
     const branchId=$('c360PackageBranchV442')?.value||'';
     if(!branchId)return toast('Choose the branch using this session');
     if(!await confirmActionV386(
-      `Use one ${entry.planName} session for ${c.full_name}? ${entry.remaining-1} of ${entry.sessions} will be left. No payment is taken, and only Packages can undo it.`,
+      workspaceTemplateTextV97('useOnePackageSessionForCustomerConfirm',{planName:entry.planName,customerName:c.full_name,remainingAfter:entry.remaining-1,totalSessions:entry.sessions}),
       {confirmLabel:'Use a session',danger:false}))return;
     if(!isClientDetailCurrent())return;
     CUI.setButtonBusy(button,{busy:true,label:'Using…'});
@@ -8430,7 +8445,7 @@ function activitySaleBreakdownV541(h,earnedPoints=0){
     </tr></thead><tbody>${rows}</tbody></table>
     ${mismatch}
     <p class="muted small" style="margin-top:6px">${earned
-      ?`This sale earned ${esc(customerPointTotalV103(earned))} points on its total of ${esc(money(saleCents))}. Points are recorded once for the whole sale, so the figures above are each line's share of that, not separately recorded amounts.`
+      ?workspaceTemplateTextV97('saleEarnedPointsOnTotalLinesAreShares',{pointsEarned:esc(customerPointTotalV103(earned)),saleTotal:esc(money(saleCents))})
       :'This sale earned no points.'}</p>
   </div>`;
 }
@@ -8866,7 +8881,7 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
   const liveUses=entry.uses.filter(use=>!use.reversed);
   const lastUsedAt=liveUses.length?liveUses[liveUses.length-1].at:null;
   const caveats=[
-    entry.ambiguous?`This customer holds more than one “${entry.planName}”. A session use is recorded on the sale, not against one purchase, so the list below covers every use of this package name since this one was bought.`:'',
+    entry.ambiguous?workspaceTemplateTextV97('holdsMoreThanOnePackageUsesListedByName',{packageName:entry.planName}):'',
     entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${liveUses.length} matching sales are visible to you here.`:''
   ].filter(Boolean);
   return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
@@ -9489,7 +9504,7 @@ async function tillPage(){
            percentage discount — falls through to the staging path below, unchanged. */
         if(data?.settle_now===true){
           const confirmedV681=await confirmActionV386(
-            `Give "${labelV666||'this reward'}" to ${data?.full_name||'this customer'} now? This reward needs no purchase, so confirming hands it over and uses it up.`,
+            workspaceTemplateTextV97('giveRewardNowNoPurchaseNeeded',{rewardName:labelV666||'this reward',customerName:data?.full_name||'this customer'}),
             {confirmLabel:'Yes, give it',cancelLabel:'No',danger:false});
           if(!isTillCurrent())return;
           if(!confirmedV681)return toast(workspaceTemplateTextV97('giftOnRewardsTab',{item:labelV666||'The reward'}));
@@ -10037,7 +10052,7 @@ async function tillPage(){
   }
   function extraLineBadge(l,succeeded,failed){
     if(l.type==='package')return succeeded
-      ?`Sold · ${Number(l._packageResult?.pointsEarned||0)} points earned · ${Number(l._packageResult?.pointsTotal||0)} total`
+      ?workspaceTemplateTextV97('soldPointsEarnedAndTotal',{pointsEarned:Number(l._packageResult?.pointsEarned||0),pointsTotal:Number(l._packageResult?.pointsTotal||0)})
       :failed?`Not sold — ${esc(l._error||'failed')}`:'Package — charged at checkout';
     if(l.type==='membership')return succeeded?'Enrolled':failed?`Not enrolled — ${esc(l._error||'failed')}`:'Membership — charged at checkout';
     return '';
@@ -11982,7 +11997,7 @@ function saleAmendCellV579(sale,paymentsBySale){
     :`<span class="muted small" data-workspace-i18n title="${esc(correctable.reason)}">${esc(correctable.reason)}</span>`;
 }
 function saleRecordStatusV154(s,w={}){
-  if(s.reversal_of)return {label:'Reversal',tone:'no',details:`Compensating reversal row. Audit record id of the sale it reverses: ${s.reversal_of}`};
+  if(s.reversal_of)return {label:'Reversal',tone:'no',details:workspaceTemplateTextV97('compensatingReversalRowAuditId',{reversedSaleId:s.reversal_of})};
   /* V287: this was the last line in the Sales audit disclosure that dropped a bare UUID into
      prose. It follows the two V267 lines above: the id stays, because a reconciler inside this
      collapsed disclosure genuinely needs the key, but it is named as a record id instead of
@@ -11994,10 +12009,10 @@ function saleRecordStatusV154(s,w={}){
   if(w.correction_sale_id||w.corrected_sale_id||s.corrected_by){
     const ref=w.correction_sale_id||w.corrected_sale_id||s.corrected_by;
     return w.corrected_sale_id&&!w.correction_sale_id
-      ?{label:'Correction',tone:'new',details:`Replacement sale row, written to correct an earlier amount. Audit record id of the sale it corrects: ${ref}`}
-      :{label:'Corrected',tone:'new',details:`Original sale row, later corrected. Audit record id of the correction: ${ref}`};
+      ?{label:'Correction',tone:'new',details:workspaceTemplateTextV97('replacementSaleRowCorrectsEarlierAmountAuditId',{correctedSaleId:ref})}
+      :{label:'Corrected',tone:'new',details:workspaceTemplateTextV97('originalSaleRowLaterCorrectedAuditId',{correctionSaleId:ref})};
   }
-  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:`Original sale row, fully reversed. Audit record id of the reversal: ${w.reversal_sale_id}`};
+  if(w.reversal_sale_id)return {label:'Reversed',tone:'off',details:workspaceTemplateTextV97('originalSaleRowFullyReversedAuditId',{reversalSaleId:w.reversal_sale_id})};
   return {label:'Sale',tone:'ok',details:'Original sale row.'};
 }
 async function salesPage(){
@@ -12549,7 +12564,7 @@ async function servicesPage(){
     document.querySelectorAll('[data-svc-active]').forEach(button=>button.onclick=async()=>{
       const turningOn=button.dataset.svcNext==='on';
       if(!turningOn&&!await confirmActionV386(
-        `Switch "${button.dataset.svcName||'this service'}" off? Customers can no longer book it and staff can no longer sell it. Past bookings and sales keep it, and you can switch it back on at any time.`,
+        workspaceTemplateTextV97('switchServiceOffConfirm',{serviceName:button.dataset.svcName||'this service'}),
         {confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
       window.toggleSvc(button.dataset.svcActive,turningOn);
     });
@@ -13706,7 +13721,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const tierRequirementLineV235=(tier)=>{
     const threshold=Number(tier?.threshold)||0;
     if(!threshold)return 'Starting tier';
-    if((p?.tier_basis||'visits')==='spend')return `Unlock at ${money(threshold*100)} spent`;
+    if((p?.tier_basis||'visits')==='spend')return workspaceTemplateTextV97('unlockAtAmountSpent',{amount:money(threshold*100)});
     return `Unlock at ${threshold.toLocaleString('en-SG')} ${tierBasisWordV235}`;
   };
   /* Two "% off" lines are not merged or deleted — the owner's data is the owner's. It is
@@ -14599,7 +14614,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       const archiveName=$('rwCustomerName')?.value.trim()||rewardLabel(editorReward)||'this reward';
       const confirmed=await confirmDeliberateV288({
         title:'Archive this reward?',
-        body:`\u201C${archiveName}\u201D stops being offered to customers.`,
+        body:workspaceTemplateTextV97('rewardStopsBeingOfferedToCustomers',{rewardName:archiveName}),
         summaryHtml:'<b>What archiving does</b><p class="small" style="margin-top:5px">The reward is switched off and disappears from the customer app. Rewards customers have already claimed are untouched, and the reward stays in your history \u2014 you can switch it back on later. Nothing changes for customers until this draft is published.</p>',
         acknowledgement:'I understand customers will no longer see this reward.',
         confirmLabel:'Archive reward',danger:true});
@@ -15651,9 +15666,9 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
     :!configured
     ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
     :status.item_available===false
-    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    ?workspaceTemplateTextV97('itemNoLongerOnSaleChooseAnother',{itemName:label})
     :active
-    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    ?(min?workspaceTemplateTextV97('newSignUpsGetItemFreeAfterMinimumSpend',{itemName:label,minSpend:money(min)}):workspaceTemplateTextV97('newSignUpsGetItemFreeNoMinimumSpend',{itemName:label}))
     :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
   const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
     :active?STATUS_WORDS.on:STATUS_WORDS.off;
@@ -16067,8 +16082,8 @@ function ownerRewardJourneyV122({rewards=[],birthday=null,loyalty=null,loyaltyMo
   const pointsRate=Math.max(0,Number(loyalty?.earn_points_per_dollar||0));
   const stampSpendCents=Math.max(0,Number(loyalty?.stamp_per_cents||0));
   const earning=!loyalty?null:model==='stamps'
-    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:`Earn 1 stamp per SGD ${(stampSpendCents/100).toFixed(2)} spent`}
-    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:`Earn ${compactNumber(pointsRate)} points per SGD 1 spent`};
+    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:workspaceTemplateTextV97('earnOneStampPerSgdSpent',{spendAmount:(stampSpendCents/100).toFixed(2)})}
+    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:workspaceTemplateTextV97('earnPointsPerSgdOneSpent',{pointsRate:compactNumber(pointsRate)})};
   const allRewards=Array.isArray(rewards)?rewards:[];
   const ordered=allRewards
     .filter(reward=>reward?.active!==false)
@@ -16244,7 +16259,7 @@ function promotionPhotoRefusalV280(file){
   if(!file)return '';
   if(!PROMOTION_MEDIA_TYPES_V280.includes(file.type))return 'That file type cannot be used. Choose a PNG, JPG, WebP or GIF.';
   if(Number(file.size||0)>PROMOTION_MEDIA_MAX_BYTES_V280){
-    return `That photo is ${(Number(file.size||0)/1048576).toFixed(1)} MB. The limit is 10 MB — choose a smaller photo.`;
+    return workspaceTemplateTextV97('thatPhotoIsMbTheLimitIsTenMbChooseSmaller',{sizeMb:(Number(file.size||0)/1048576).toFixed(1)});
   }
   return '';
 }
@@ -16347,7 +16362,7 @@ function promotionLifecycleV186(item,now=new Date()){
   if(ends&&ends<=now)return {state:'ended',live:false,
     label:`Ended ${promotionDateTextV104(item.ends_at)}`};
   return {state:'live',live:true,
-    label:ends?`Live now · ends ${promotionDateTextV104(item.ends_at)}`:'Live now'};
+    label:ends?workspaceTemplateTextV97('liveNowEndsDate',{endDate:promotionDateTextV104(item.ends_at)}):'Live now'};
 }
 function promotionPreviewMarkupV104(item,imageUrl='',business=null){
   const preview={...item,image_url:imageUrl||item.imageUrl,metadata:{...(item.metadata||{}),
@@ -16601,7 +16616,7 @@ async function promotionsPage(selectedPromotionId=null){
         <button type="button" class="btn" id="promotionPublish" ${!canPublishThis?'disabled':''}>${initial.active?'Update published offer':'Publish offer'}</button>
         ${initial.active?'<button type="button" class="btn ghost" id="promotionUnpublish">Unpublish</button>':''}
         <button type="button" class="btn ghost" id="promotionResumeFinalizeV373" hidden>Confirm interrupted save</button></div>
-      <p class="muted small" id="promotionSaveStatus" role="status" aria-live="polite" style="margin-top:9px">${initial.active?(promotionLifecycleV186(initial).live?'Published and visible to customers now.':promotionLifecycleV186(initial).state==='scheduled'?`Published, but customers cannot see it yet — it starts ${esc(promotionDateTextV104(initial.starts_at))}.`:'Published, but the end date has passed — customers no longer see it.'):'Drafts are never shown to customers.'}</p>
+      <p class="muted small" id="promotionSaveStatus" role="status" aria-live="polite" style="margin-top:9px">${initial.active?(promotionLifecycleV186(initial).live?'Published and visible to customers now.':promotionLifecycleV186(initial).state==='scheduled'?workspaceTemplateTextV97('publishedButCustomersCannotSeeItYetItStarts',{startDate:esc(promotionDateTextV104(initial.starts_at))}):'Published, but the end date has passed — customers no longer see it.'):'Drafts are never shown to customers.'}</p>
     </section>
     <aside class="promotion-preview"><h2>Customer preview</h2><p class="muted small" style="margin:5px 0 10px">This is the marketing card customers will see before products and benefits.</p><div id="promotionPreview">${promotionPreviewMarkupV104(initial,'',businessSnapshot)}</div></aside></div>
     <section class="card"><div class="row"><div><h2>Your promotions</h2><p class="muted small">Published, scheduled, and draft offers stay together.</p></div><span class="spacer"></span></div>
@@ -16622,8 +16637,8 @@ async function promotionsPage(selectedPromotionId=null){
        two delete paths do not disagree (tests/business-ui/v324-limited-offer-buckets.test.mjs
        pins this wording to be identical across both). */
     const question=published
-      ? `End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
-      : `Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
+      ? workspaceTemplateTextV97('endOfferCustomersStopSeeingItRecordKept',{offerName:name})
+      : workspaceTemplateTextV97('deleteDraftCannotBeUndoneNoCustomerHasSeenIt',{offerName:name});
     if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
@@ -17098,11 +17113,11 @@ async function promotionsPage(selectedPromotionId=null){
           if(publish){
             buttons.forEach(button=>button.disabled=false);
             status.textContent='Your draft is safe. The photo needs another try.';
-            const publishPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} Your words are safe — press Save draft, or try the photo again.`;
+            const publishPhotoFailureV280=workspaceTemplateTextV97('photoWasNotSavedYourWordsAreSafePressSaveDraft',{errorMessage:ownerErrorText(uploaded.error)});
             field('promotionImageStatus').textContent=publishPhotoFailureV280;
             return fail(uploaded.error);
           }
-          const draftPhotoFailureV280=`Photo was not saved: ${ownerErrorText(uploaded.error)} This draft was saved without it.`;
+          const draftPhotoFailureV280=workspaceTemplateTextV97('photoNotSavedDraftSavedWithoutIt',{errorMessage:ownerErrorText(uploaded.error)});
           field('promotionImageStatus').textContent=draftPhotoFailureV280;
         }else{
           fileInfo=uploaded.fileInfo;
@@ -17225,7 +17240,7 @@ async function promotionsPage(selectedPromotionId=null){
       [field('promotionSave'),field('promotionPublish'),field('promotionUnpublish')]
         .filter(Boolean).forEach(button=>{button.disabled=false});
       const status=field('promotionSaveStatus');
-      const unexpectedFailureV280=`This did not finish: ${ownerErrorText(error)} Nothing was lost — press again.`;
+      const unexpectedFailureV280=workspaceTemplateTextV97('didNotFinishNothingLostPressAgain',{errorMessage:ownerErrorText(error)});
       if(status)status.textContent=unexpectedFailureV280;
       const imageStatus=field('promotionImageStatus');
       if(imageStatus&&/^(Uploading promotion photo|Photo uploaded)/.test(imageStatus.textContent||'')){
@@ -18857,7 +18872,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          series makes growUsageComparisonChartV386 render its single-series "Times used, by
          category" form (V468 renamed it from "Customers used"), which is the shape it already had before comparison was added. */''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
-      ?`Counting how many times each programme was used between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
+      ?workspaceTemplateTextV97('countingProgrammeUsesBetweenDates',{fromDate:esc(promotionDateShortV324(growUsageFromV386)),toDate:esc(promotionDateShortV324(growUsageToV386))})
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
   </div>`;
   /* The windowed read failing is not the same as nobody having used anything. Saying so beats
@@ -19351,7 +19366,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="grow-tier-card-body-v351">
         <b data-merchant-content>${esc(campaign.name)}</b>
         <span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97('awayDaysToReward',{days:Math.max(0,Number(campaign.away_days)||0),reward:campaign.reward_label})}</span>
-        <span class="muted small">${expiry?`Voucher expires ${expiry} days after it is sent`:'Voucher does not expire'}</span>
+        <span class="muted small">${expiry?workspaceTemplateTextV97('voucherExpiresDaysAfterSent',{days:expiry}):'Voucher does not expire'}</span>
       </span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}">${statusOnOff(!paused)}</span>
@@ -19435,7 +19450,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :(growWelcomeV584.custom_label||growWelcomeV584.reward_label||'A free item');
   const growWelcomeWhenTextV584=!growWelcomeV584?''
     :Number(growWelcomeV584.min_spend_cents)>0
-      ?`After they spend ${money(Number(growWelcomeV584.min_spend_cents))}`
+      ?workspaceTemplateTextV97('afterTheySpendAmount',{amount:money(Number(growWelcomeV584.min_spend_cents))})
       :'Straight away — no minimum spend';
   const growWelcomeExpiryTextV584=!growWelcomeV584?''
     :Number(growWelcomeV584.expiry_days)>0
@@ -19616,7 +19631,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsShorterToV463=growStampsOverMaxV463
     ?GROW_STAMPS_MAX_LEN_V463:growStampsCardLenV416-1;
   const growStampsShorterLabelV463=growStampsOverMaxV463
-    ?`Shorten to ${GROW_STAMPS_MAX_LEN_V463} stamps`:'One stamp shorter';
+    ?workspaceTemplateTextV97('shortenToStamps',{maxStamps:GROW_STAMPS_MAX_LEN_V463}):'One stamp shorter';
   /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
      rather than looked up through a variable: the workspace audit
      (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
@@ -19693,7 +19708,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}`;
       const label=reward
         ?`Stamp ${stamp} gives ${name}. Edit this gift.`
-        :`Stamp ${stamp} has no gift. Add one.`;
+        :workspaceTemplateTextV97('stampHasNoGiftAddOne',{stampNumber:stamp});
       if(!canSetupGrow)return `<span role="listitem" class="${cls}">${reward?`<span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span>`:''}<span class="grow-stamps-editcell-num-v416">${stamp}</span></span>`;
       /* data-merchant-content, matching the v410 preview grid one card down: the label names a
          gift the firm wrote, so the workspace localiser must not rewrite it. */
@@ -19711,7 +19726,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
     ?`${growStampsLevelsSortedV350.length} gift${growStampsLevelsSortedV350.length===1?'':'s'} on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.`
-    :`No gifts yet — a good starting point is one every ${GROW_STAMPS_DEFAULT_EVERY_V416} stamps. Tap stamp ${Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)} to begin.`}</p>`;
+    :workspaceTemplateTextV97('noGiftsYetStartOneEveryStamps',{everyStamps:GROW_STAMPS_DEFAULT_EVERY_V416,startStamp:Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)})}</p>`;
   /* v414's refusal, said BEFORE the owner hits it. business_set_stamp_card_length_v414 will not
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
      end — so a firm in that state (Cubbly is, today) needs to be told which gift and offered the
@@ -21089,8 +21104,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=button.dataset.growOfferNameV324||'this offer';
     /* V334 (owner markup, photo 7): the confirm copy follows the button's own "End" wording. */
     const question=published
-      ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
-      :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
+      ?workspaceTemplateTextV97('endOfferCustomersStopSeeingItRecordKept',{offerName:name})
+      :workspaceTemplateTextV97('deleteDraftCannotBeUndoneNoCustomerHasSeenIt',{offerName:name});
     if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
@@ -21301,7 +21316,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   outerMain.querySelectorAll('[data-grow-bb-template-v364]').forEach(el=>el.onclick=()=>{
     const days=Math.max(1,Math.round(Number(el.dataset.growBbTemplateV364)||30));
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
-    growBbDraftV361={name:`We miss you — away ${days} days`,reward:'',away:String(days),expiry:'30'};
+    growBbDraftV361={name:workspaceTemplateTextV97('weMissYouAwayDays',{days:days}),reward:'',away:String(days),expiry:'30'};
     growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-bb-edit-v361]').forEach(el=>el.onclick=()=>{
@@ -21933,7 +21948,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        stranded warning — the owner may legitimately place a gift at 12 and then lengthen the card
        to 12, which is exactly what the warning band's one-tap fix offers. */
     if(growPointsIsStampsV326&&points>GROW_STAMPS_MAX_LEN_V463){
-      growPointsErrorV326=`A stamp card is at most ${GROW_STAMPS_MAX_LEN_V463} stamps long, so a gift cannot sit on stamp ${points}. Choose a stamp between 1 and ${GROW_STAMPS_MAX_LEN_V463}.`;
+      growPointsErrorV326=workspaceTemplateTextV97('stampCardIsAtMostStampsLongChooseBetween',{maxStamps:GROW_STAMPS_MAX_LEN_V463,chosenStamp:points,upperBound:GROW_STAMPS_MAX_LEN_V463});
       return growRerenderV322({quiet:true});
     }
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderOwnV880({quiet:true});
@@ -22535,7 +22550,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           toast('Saved. Benefit limits start counting once the service update is applied.');
           return growRerenderV322();
         }
-        growTiersErrorV331=`The tier was saved, but its benefits could not be stored — ${ownerErrorText(benefitError)}`;
+        growTiersErrorV331=workspaceTemplateTextV97('tierSavedButBenefitsCouldNotBeStored',{errorMessage:ownerErrorText(benefitError)});
         return growRerenderV322();
       }
     }
@@ -22957,13 +22972,13 @@ function pbResultsHtml(r,ctx){
   let headline,headSub;
   if(awaiting){
     headline='Measurement not started';
-    headSub=`${verifiedExposures} of ${treatmentMembers} treatment customers have an explicit manual receipt confirmation.`;
+    headSub=workspaceTemplateTextV97('ofTreatmentCustomersHaveManualReceiptConfirmation',{confirmedCount:verifiedExposures,treatmentTotal:treatmentMembers});
   }else if(measurementStatus==='collecting'){
     headline='Collecting observed returns';
-    headSub=`The common measurement window ends ${walletDate(r.measurement_ends_at,true)}.`;
+    headSub=workspaceTemplateTextV97('commonMeasurementWindowEnds',{endDate:walletDate(r.measurement_ends_at,true)});
   }else if(measurementStatus==='inconclusive_minimum_sample'){
     headline='Inconclusive — sample too small';
-    headSub=`The completed window did not reach the ${Number(r.minimum_sample_per_arm||0)}-customer minimum in each arm.`;
+    headSub=workspaceTemplateTextV97('completedWindowMissedCustomerMinimumPerArm',{minimumCustomers:Number(r.minimum_sample_per_arm||0)});
   }else if(measurementStatus==='inconclusive_statistical_test_not_implemented'){
     headline='Inconclusive — descriptive results only';
     headSub='Observed differences are shown, but no statistical-significance test is implemented.';
@@ -23031,14 +23046,14 @@ async function pbSealMeasurement(c,el,ctx){
   pbRenderResults(c,el,ctx);
 }
 async function pbComplete(c,ctx){
-  if(!await confirmActionV386(`Mark "${c.name}" complete? Its sealed measurement evidence stays viewable and observed returns can still be refreshed, but no new campaign reward entitlements can be prepared.`))return;
+  if(!await confirmActionV386(workspaceTemplateTextV97('markCampaignCompleteConfirm',{campaignName:c.name})))return;
   const {error}=await sb.rpc('complete_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id});
   if(error)return fail(error);
   toast('Playbook completed');
   if(ctx.isCurrent())renderPlaybooks(ctx);
 }
 async function pbCancel(c,ctx){
-  if(!await confirmActionV386(`Cancel "${c.name}"? This stops the playbook. Any recorded evidence is kept.`))return;
+  if(!await confirmActionV386(workspaceTemplateTextV97('cancelPlaybookConfirm',{playbookName:c.name})))return;
   const {error}=await sb.rpc('cancel_retention_campaign',{p_business:S.biz.id,p_campaign:c.campaign_id,p_reason:null});
   if(error)return fail(error);
   toast('Playbook cancelled');
@@ -23269,7 +23284,7 @@ function openPlaybookWizard(ctx){
     if(!modal.isConnected)return;
     state.candidates=matched.candidates;state.truncated=matched.truncated;state.versions=versions;
     if(versions.length)state.version=versions[0];
-    state.name=`Bring back lapsed regulars · ${sgDateInputValue()}`;
+    state.name=workspaceTemplateTextV97('bringBackLapsedRegularsDefaultName',{date:sgDateInputValue()});
     renderStep();
   })();
 
@@ -23425,7 +23440,7 @@ function openPlaybookWizard(ctx){
     state.busy=true;
     const b=$('pbLaunch');if(b){b.disabled=true;b.querySelector('span').textContent='Starting…'}
     const out=$('pbLaunchOutcome');
-    const name=(state.name||'').trim()||`Bring back lapsed regulars · ${sgDateInputValue()}`;
+    const name=(state.name||'').trim()||workspaceTemplateTextV97('bringBackLapsedRegularsDefaultName',{date:sgDateInputValue()});
     const clientIds=state.candidates.map(c=>c.id);
     const criteria={segment:'lapsed',lapsed_days:state.lapsedDays,min_visits:state.minVisits,computed_at:new Date().toISOString()};
     const capCents=Math.round((parseFloat(state.capDollars)||0)*100);
@@ -23535,16 +23550,16 @@ function studioConditionText(c,cat){
 function studioEffectText(e,cat){
   const t=e.effect_type;
   switch(t){
-    case 'grant_credit':return `Give ${studioMoney(e.amount_cents)} store credit`;
+    case 'grant_credit':return workspaceTemplateTextV97('giveStoreCreditAmount',{amount:studioMoney(e.amount_cents)});
     case 'apply_discount_amount':return `Take ${studioMoney(e.amount_cents)} off`;
     case 'apply_discount_pct':return `Take ${Number(e.discount_pct||0)}% off`;
     case 'earn_bonus_points':
       if(e.points_per_dollar!=null)return `Earn ${Number(e.points_per_dollar)} point${Number(e.points_per_dollar)===1?'':'s'} per $1 spent`;
-      return `Give ${Number(e.points||0)} bonus points`;
+      return workspaceTemplateTextV97('giveBonusPoints',{points:Number(e.points||0)});
     case 'earn_bonus_stamps':
-      if(e.per_cents!=null)return `Earn 1 stamp per ${studioMoney(e.per_cents)} spent`;
-      return `Give ${Number(e.stamps||0)} bonus stamps`;
-    case 'tier_multiplier':return `Multiply points by ${Number(e.multiplier||1)}x`;
+      if(e.per_cents!=null)return workspaceTemplateTextV97('earnOneStampPerAmountSpent',{amount:studioMoney(e.per_cents)});
+      return workspaceTemplateTextV97('giveBonusStamps',{stampCount:Number(e.stamps||0)});
+    case 'tier_multiplier':return workspaceTemplateTextV97('multiplyPointsBy',{multiplier:Number(e.multiplier||1)});
     case 'grant_free_item':{const nm=e.catalog_id&&cat&&cat.byId&&cat.byId[e.catalog_id]?cat.byId[e.catalog_id].name:null;
       return nm?`Give a free ${esc(nm)}`:'Give a free item';}
     case 'display_perk':return 'Show a perk (nothing is given)';
@@ -23676,7 +23691,7 @@ function openStudioEmergencyDialog(kind,item,onDone){
   const isLift=kind==='lift';
   const title=isLift?'Lift emergency pause':'Emergency pause';
   const intro=isLift
-    ?`Reactivate "${esc(item.name||'this rule')}". It will start running again immediately — record why you are lifting the pause.`
+    ?workspaceTemplateTextV97('reactivateRuleRecordWhyLiftingPause',{ruleName:esc(item.name||'this rule')})
     :`Immediately stop "${esc(item.name||'this rule')}" from applying any new discount, benefit or message. History is kept; only new effects stop. Record why.`;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="studioEmgModal" role="dialog" aria-modal="true" aria-labelledby="studioEmgTitle" tabindex="-1"><div class="modal-card" style="max-width:520px">
     <div class="row"><div><h2 id="studioEmgTitle">${esc(title)}</h2><p class="muted small">${intro}</p></div><span class="spacer"></span><button class="btn ghost sm" id="studioEmgClose" type="button">Close</button></div>
@@ -23748,7 +23763,7 @@ function studioEstimate(rule,agg){
       const perApprox=avg!=null?Math.round(avg*pct/100):null;
       lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${pct}% off the bill`,
         est:(monthly!=null&&perApprox!=null)?`Rough estimate: about ${studioMoney(perApprox*monthly)} per month`:null,
-        note:(monthly!=null&&perApprox!=null)?`Assumes an average bill of ${studioMoney(avg)} over the last 30 days; real cost varies with bill size and match rate.`
+        note:(monthly!=null&&perApprox!=null)?workspaceTemplateTextV97('assumesAverageBillOverLast30Days',{averageBill:studioMoney(avg)})
           :'No monthly estimate available — it depends on bill size and how often this rule matches.'});
     }else{
       const why={earn_bonus_points:'Points cost depends on future redemption, so no cash estimate is shown.',
@@ -24602,7 +24617,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   }
   function rewardHintText(){
     if(familyW6I2()==='stamps')return 'Type what the reward costs you, then how many stamps a customer needs for it.';
-    return `One point costs you ${currency} ${(Math.max(1,costPerPointCents())/100).toFixed(3)}. Type your cost and the points fill in — change them if you want.`;
+    return workspaceTemplateTextV97('onePointCostsYouTypeYourCost',{currency:currency,costPerPoint:(Math.max(1,costPerPointCents())/100).toFixed(3)});
   }
   /* Every save goes through here. The draft is created on the FIRST save, never on page load,
      so a wizard the owner browsed away from leaves no orphan draft behind; the snapshot hash is
@@ -26061,7 +26076,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         p_min_spend_cents:Math.round(Math.max(0,Number(state.referralMinSpend)||0)*100)});
       if(!isCurrent())return false;
       if(referralError){
-        state.modeError=`Published. The referral settings could not be saved — ${ownerErrorText(referralError)} Press retry.`;
+        state.modeError=workspaceTemplateTextV97('publishedReferralSettingsCouldNotBeSaved',{errorMessage:ownerErrorText(referralError)});
         render();return false;
       }
       state.referralDirty=false;
@@ -26078,7 +26093,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!ok){
       /* Honest: publishing HAPPENED. Saying "publish failed" would send the owner to re-publish a
          version that is already live. */
-      state.modeError=`Published. The programme switch could not be applied — ${ownerErrorText(error)} Press retry.`;
+      state.modeError=workspaceTemplateTextV97('publishedSwitchNotAppliedRetry',{reason:ownerErrorText(error)});
       render();return false;
     }
     /* Referral settings are NOT in the versioned draft — public.referral_programs is a live table
@@ -26875,7 +26890,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
         <button class="btn ghost sm studioDelRule" data-id="${esc(r.rule_id)}" data-name="${esc(r.name||'')}">Delete</button></div>
     </div></div>`;
   };
-  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — authoring draft',subtitle:`Draft v${draft.version_no}. Author and check rules — the publish preview shows what will run before anything goes live.`,iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
+  routeMain.innerHTML=`${CUI.pageHeader({title:'Program Studio — authoring draft',subtitle:workspaceTemplateTextV97('draftVersionAuthorAndCheckRules',{version:draft.version_no}),iconName:'loyalty',canWrite:true,moduleLabel:'Program Studio'})}
     <div class="card" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:10px">
       <div><b>Draft — not visible to customers</b><div class="muted small">Every save checks the draft hash. Publishing can turn rules on immediately — you will see a preview of exactly what begins running, what stays shadow-only, and what stays off before you confirm.</div></div>
       <span class="spacer"></span>
@@ -27245,7 +27260,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
   document.querySelectorAll('.studioEditRule').forEach(b=>b.onclick=()=>{
     const r=rules.find(x=>x.rule_id===b.dataset.id);if(r)openEditor(modelFromRule(r));});
   document.querySelectorAll('.studioDelRule').forEach(b=>b.onclick=async()=>{
-    if(!await confirmActionV386(`Delete rule "${b.dataset.name||''}"? This only changes the draft.`))return;
+    if(!await confirmActionV386(workspaceTemplateTextV97('deleteRuleOnlyChangesDraft',{name:b.dataset.name||''})))return;
     b.disabled=true;
     const {error}=await sb.rpc('delete_program_rule_draft',{p_config_version:draftVersionId,p_rule_id:b.dataset.id,p_expected_snapshot_hash:snapshotHash});
     if(!isCurrent())return;
@@ -27811,7 +27826,7 @@ async function membershipsPage(){
     const metrics=result.metrics;
     if(metrics.avgTicketCents===null){
       hint.innerHTML=CUI.emptyState({iconName:'services',title:'Add your prices first',
-        body:`Add at least one service or product with a price and ${BRAND.productName} can suggest a monthly plan price.`});
+        body:workspaceTemplateTextV97('addPricedItemForPlanPriceSuggestion',{product:BRAND.productName})});
       return;
     }
     const plan=GROWREC().recommendMembership({avgTicketCents:metrics.avgTicketCents});
@@ -28077,7 +28092,7 @@ async function giftcardsPage(){
     const metrics=result.metrics;
     if(metrics.avgTicketCents===null){
       hint.innerHTML=CUI.emptyState({iconName:'services',title:'Add your prices first',
-        body:`Add at least one service or product with a price and ${BRAND.productName} can suggest gift card amounts.`});
+        body:workspaceTemplateTextV97('addPricedItemForGiftCardAmountSuggestion',{product:BRAND.productName})});
       return;
     }
     const gift=GROWREC().recommendGiftCards({avgTicketCents:metrics.avgTicketCents});
@@ -28174,7 +28189,7 @@ function appointmentWhatsAppUrlV129(options){
     customerName?`Hi ${String(customerName).trim()},`:'Hello,',
     `This is ${String(businessName||'the team').trim()} about your appointment.`,
     `Appointment: ${String(serviceName||'General visit').trim()}`,
-    `When: ${when} (Singapore time)`,
+    workspaceTemplateTextV97('whenSingaporeTime',{when:when}),
     branchName?`Where: ${String(branchName).trim()}`:null,
     staffName?`With: ${String(staffName).trim()}`:null,
     status?`Status: ${String(status).replaceAll('_',' ').trim()}`:null,
@@ -28531,7 +28546,7 @@ async function appointmentsPage(){
       new QRCode(host,{text:portalUrl,width:180,height:180,correctLevel:QRCode.CorrectLevel.M});
       host.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:8px">Customers scan this to reach your booking page.</p>`);
       host.dataset.drawnV378='1';
-      apptPortalQrButtonV378.innerHTML=`${CUI.icon('scan',{size:16})} Hide QR code`;
+      apptPortalQrButtonV378.innerHTML=workspaceTemplateTextV97('hideQrCode',{icon:CUI.icon('scan',{size:16})});
     }).catch(()=>{
       if(!host.isConnected)return;
       host.innerHTML=`<p class="muted small">The QR code could not be drawn. Share the link above instead.</p>`;
@@ -31627,7 +31642,7 @@ async function bottlesPage(){
       host.innerHTML=CUI.emptyState({iconName:'bottle',title:'No bottles here',
         body:narrowed
           ?'Nothing matches that. Go back to Storage to see the whole shelf.'
-          :`Park a bottle and it is kept for ${keepDays} days.`,
+          :workspaceTemplateTextV97('parkBottleKeptForDays',{days:keepDays}),
         actionHtml:canWrite&&!narrowed
           ?'<button class="btn sm" type="button" data-park-empty>Park bottle</button>':''});
       const parkEmpty=host.querySelector('[data-park-empty]');
@@ -32125,7 +32140,7 @@ async function bottlesPage(){
       if(extendButton)extendButton.onclick=()=>runAction(extendButton,
         `extend:${bottleId}:${bottle.expires_at||''}`,
         key=>sb.rpc('extend_bottle_v275',{p_business:S.biz.id,p_bottle:bottleId,
-          p_expires_at:null,p_idempotency_key:key}),`Kept ${keepDays} more days`);
+          p_expires_at:null,p_idempotency_key:key}),workspaceTemplateTextV97('keptMoreDays',{days:keepDays}));
       /* V279 (owner rulings 10 and 13). Retrieved IS the ending — the bottle went out with the
          customer — so it is the terminal control and there is no separate Finish beside it. The
          server refuses every transition out of 'retrieved', so this confirm is a courtesy rather
@@ -33766,7 +33781,7 @@ function receiptIdentityHtmlV788(branch,businessName,branchName){
   const trading=String(businessName||'').trim();
   const shown=registered||trading;
   const gst=b.gst_registered
-    ?`GST Reg. No. ${b.gst_registration_number?esc(String(b.gst_registration_number)):'—'}`
+    ?workspaceTemplateTextV97('gstRegNo',{number:b.gst_registration_number?esc(String(b.gst_registration_number)):'—'})
     :'Not GST registered';
   return `<p class="small" data-merchant-content style="margin:4px 0"><b>${esc(shown)}</b>${branchName?` · ${esc(branchName)}`:''}</p>
         ${registered&&trading&&registered!==trading?`<p class="muted small" data-merchant-content style="margin:0">trading as ${esc(trading)}</p>`:''}
@@ -34047,7 +34062,7 @@ async function branchesPage(){
       const chargeTickV778=setInterval(()=>{
         const btn=$('brSave');if(!btn||!btn.isConnected){clearInterval(chargeTickV778);return}
         const secs=Math.round((Date.now()-chargeStartedV778)/1000);
-        CUI.setButtonBusy(btn,{busy:true,label:secs<10?'Opening the payment page…':`Waiting for Stripe… ${secs}s`});
+        CUI.setButtonBusy(btn,{busy:true,label:secs<10?'Opening the payment page…':workspaceTemplateTextV97('waitingForStripeSeconds',{seconds:secs})});
       },1000);
       let executed;
       try{executed=await sb.functions.invoke('stripe-billing-command',{body:{command_id:commandId}})}
@@ -34068,7 +34083,7 @@ async function branchesPage(){
       const uncertain=executed.data?.status==='uncertain';
       if(uncertain)rememberBranchPaymentRetryV764(added?.branch_id||added?.id,commandId);
       toast(uncertain
-        ?`${payload.name} is saved. The payment is still confirming.`
+        ?workspaceTemplateTextV97('nameSavedPaymentStillConfirming',{name:payload.name})
         :`${payload.name} is saved. Pay for it from Subscription to switch it on.`);
       dismissFormModalV658($('brForm')); // nestly_v658
       load();
@@ -34178,7 +34193,7 @@ async function branchesPage(){
       return;
     }
     if(!await confirmActionV386(`Delete "${branch.name}"? Its staff assignments and opening hours go with it, and it disappears from every branch picker. If you only want it closed, press Cancel and untick Active in Edit — that keeps everything and stops the billing.`))return;
-    const typed=String(prompt(`Type the branch name to confirm deletion: ${branch.name}`)||'').trim();
+    const typed=String(prompt(workspaceTemplateTextV97('typeBranchNameToConfirmDeletion',{branchName:branch.name}))||'').trim();
     if(typed!==String(branch.name||'').trim())return toast('The name did not match — nothing was deleted');
     if(button)button.disabled=true;
     const {error}=await sb.from('branches').delete().eq('id',branchId).eq('business_id',S.biz.id);
@@ -34418,7 +34433,7 @@ async function customerIntelligencePage(){
       return `<section class="revenue-opportunity--withheld" aria-labelledby="ciCategoryMixHeadingV650">
         <div><span class="revenue-truth-eyebrow">What they buy</span>
         <h2 id="ciCategoryMixHeadingV650">Category mix is not reliable yet</h2>
-        <p>${bundle.status==='empty'?'No service or retail lines have been mapped to a category yet.':`Only ${classifiedPct.toFixed(1)}% of service &amp; retail revenue is classified — Peekaa withholds this view below ${(CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650/100).toFixed(0)}%.`}</p></div>
+        <p>${bundle.status==='empty'?'No service or retail lines have been mapped to a category yet.':workspaceTemplateTextV97('onlyPctClassifiedPeekaaWithholdsBelow',{classifiedPct:classifiedPct.toFixed(1),thresholdPct:(CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650/100).toFixed(0)})}</p></div>
         <a class="btn ghost sm" href="#/servicemapping">Map services</a>
       </section>`;
     }
@@ -35431,7 +35446,7 @@ function ciEvidenceCaptionV679(evidence){
   const ev=evidence&&typeof evidence==='object'?evidence:{};
   if(ev.status!=='insufficient')return '';
   const floor=Number(ev.floor)||5;
-  return `Not enough data yet (fewer than ${floor}).`;
+  return workspaceTemplateTextV97('notEnoughDataFewerThan',{count:floor});
 }
 
 /* 1. get_ci_funnel_conversion_v1 (nestly_v673) — 1st->2nd->3rd visit conversion, maturity-gated. */
@@ -35449,7 +35464,7 @@ function funnelConversionPanelHtmlV679(payload){
   const bottleneckLine=bottleneckLabel
     ?`Bottleneck: <b>${esc(bottleneckLabel)}</b>`
     :(ciEvidenceInsufficientV679(p.evidence)
-      ?`${ciEvidenceCaptionV679(p.evidence)} No bottleneck can be named yet.`
+      ?workspaceTemplateTextV97('captionNoBottleneckYet',{caption:ciEvidenceCaptionV679(p.evidence)})
       :'No bottleneck — the two stages convert about equally.');
   return `<section class="revenue-truth-section" aria-labelledby="ciFunnelConversionHeadingV679">
     <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">How customers return</span>
@@ -35650,7 +35665,7 @@ function ownerBriefHtmlV771(brief,options){
     }
     const companyV778=String(scopeV778.companySlug==null?'':scopeV778.companySlug).trim()
       ||String(scopeV778.companyName==null?'':scopeV778.companyName).trim();
-    return companyV778?`Showing all branches · company code ${companyV778}`:'Showing all branches';
+    return companyV778?workspaceTemplateTextV97('showingAllBranchesCompanyCode',{companyCode:companyV778}):'Showing all branches';
   })();
   const scopeLineV778=scopeTextV778
     ?`<p class="muted small ci-brief-scope-v778" style="margin-top:4px">${esc(scopeTextV778)}</p>`
@@ -35755,7 +35770,7 @@ function ownerBriefHtmlV771(brief,options){
     branchesV778=`<section class="ci-brief-branches-v778" aria-labelledby="ciBriefBranchesTitleV778" style="margin-top:18px">
       ${headV771('branch','ciBriefBranchesTitleV778','Your branches side by side','The same '+periodDaysV771+' days, one row for each branch.')}
       ${comparisonErrorV778?errorRowV771('Your branches side by side could not load.',comparisonErrorV778):`
-      ${firmV778?`<p class="small" style="margin:10px 0 2px">${esc(`Across all branches: ${countV771(firmV778.visits)} valid visits · ${money(countV771(firmV778.revenue_cents))} · ${countV771(firmV778.customers)} customers.`)}</p>`:''}
+      ${firmV778?`<p class="small" style="margin:10px 0 2px">${esc(workspaceTemplateTextV97('acrossAllBranchesVisitsRevenueCustomers',{visits:countV771(firmV778.visits),revenue:money(countV771(firmV778.revenue_cents)),customers:countV771(firmV778.customers)}))}</p>`:''}
       <div class="cui-table-wrap" role="region" aria-label="Your branches side by side"><table class="cui-table" data-responsive="true"><thead><tr><th>Branch</th><th>Valid visits</th><th class="num">Revenue</th><th>Customers</th><th>New customers</th></tr></thead><tbody>${comparisonRowsV778.map(row=>{
         const detail=detailLineV778(row);
         return `<tr><td data-label="Branch"><b>${esc(branchNameV778(row))}</b></td>
@@ -36040,7 +36055,7 @@ function ownerBriefHtmlV771(brief,options){
         ${canOpenV771?`<td data-label="Action">${openCellV771(row.client_id)}</td>`:''}</tr>`).join('')}</tbody></table></div>
       ${namesHiddenV774?'<p class="muted small" style="margin-top:10px">Names are hidden for your role.</p>':''}`
         :'<div class="empty">Every recorded sale in this period has a payment recorded against it.</div>'}
-      <p class="muted small" style="margin-top:10px">${esc(`${countV771(cashTotalsV774.sales_fully_paid)} of ${countV771(cashTotalsV774.sales_count)} sales are fully paid.`)}</p>
+      <p class="muted small" style="margin-top:10px">${esc(workspaceTemplateTextV97('salesFullyPaidOfTotal',{paidCount:countV771(cashTotalsV774.sales_fully_paid),totalCount:countV771(cashTotalsV774.sales_count)}))}</p>
       ${noteLineV774('A sale with no payment row is either unpaid or was paid without being recorded. Peekaa cannot tell the two apart.')}`}
     </section>`;
   }
@@ -36054,7 +36069,7 @@ function ownerBriefHtmlV771(brief,options){
   if(staffBundleV774||staffErrorV774){
     const windowDaysV774=countV771(staffBundleV774?.window_days);
     const cameBackPhraseV774=windowDaysV774>0?`came back within ${windowDaysV774} days`:'came back again';
-    const cameBackHeadV774=windowDaysV774>0?`Came back within ${windowDaysV774} days`:'Came back again';
+    const cameBackHeadV774=windowDaysV774>0?workspaceTemplateTextV97('cameBackWithinDaysHeading',{days:windowDaysV774}):'Came back again';
     /* nestly_v776: a cohort that has not MATURED is a different answer from one that is too
        small. Until a customer's first visit is window_days old they cannot yet have failed to
        come back, so the reader reports them as `immature` and returns a 0-of-0 rate. Printing
@@ -36214,7 +36229,7 @@ function ownerBriefHtmlV771(brief,options){
       <div class="cui-table-wrap" role="region" aria-label="Who comes when"><table class="cui-table" data-responsive="true"><thead><tr><th>Time</th><th>Who came</th></tr></thead><tbody>${ageBlockRowsV774.map(entry=>
         `<tr><td data-label="Time"><b>${esc(entry.label)}</b></td>
         <td data-label="Who came">${esc(entry.parts.join(' · '))}</td></tr>`).join('')}</tbody></table></div>
-      ${ageCoverV774?`<p class="muted small" style="margin-top:10px">${esc(`Age known for ${countV771(ageCoverV774.numerator)} of ${countV771(ageCoverV774.denominator)} visits.`)}</p>`:''}`:''}
+      ${ageCoverV774?`<p class="muted small" style="margin-top:10px">${esc(workspaceTemplateTextV97('ageKnownForVisits',{knownCount:countV771(ageCoverV774.numerator),totalCount:countV771(ageCoverV774.denominator)}))}</p>`:''}`:''}
       ${recentDaysV774.length?`<p class="small" style="margin:12px 0 2px"><b>Last 14 days</b></p>
       <div class="cui-table-wrap" role="region" aria-label="Last 14 days"><table class="cui-table" data-responsive="true"><thead><tr><th>Date</th><th>Day</th><th>Valid visits</th><th class="num">Revenue</th></tr></thead><tbody>${recentDaysV774.map(row=>
         `<tr><td data-label="Date"><b>${esc(String(row.date==null?'':row.date))}</b></td>
@@ -36476,7 +36491,7 @@ const BI_TEMPLATES_V894=Object.freeze({
       finding:count===null
         ?'Some regulars are past their usual visit gap'
         :`${biPluralV892(count,'regular is','regulars are')} past their usual visit gap`,
-      why:worth?`About ${worth} of their usual spend is at stake.`:'',
+      why:worth?workspaceTemplateTextV97('aboutAmountOfUsualSpendAtStake',{amount:worth}):'',
       action:'',
       cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
     };
@@ -36518,7 +36533,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const worth=biMoneyV892(item.impactMinor,ctx.currency);
     return {
       finding:unused===null
-        ?(plan?`Prepaid sessions on ${plan} are sitting unused`:'Prepaid sessions are sitting unused')
+        ?(plan?workspaceTemplateTextV97('prepaidSessionsOnPlanSittingUnused',{planName:plan}):'Prepaid sessions are sitting unused')
         :`${biPluralV892(unused,'prepaid session is','prepaid sessions are')} unused${plan?` on ${plan}`:''}`,
       why:worth?`Worth about ${worth} of work already paid for.`:'',
       action:'Book these customers in before the sessions expire.',
@@ -36533,7 +36548,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     if(returned===null||outOf===null)return null;
     return {
       finding:`${returned} of ${outOf} first-time customers came back for a second visit`,
-      why:window===null?'':`Counted within ${window} days of their first visit.`,
+      why:window===null?'':workspaceTemplateTextV97('countedWithinDaysOfFirstVisit',{days:window}),
       action:'Look at what happens right after a first visit.',
       cta:{kind:'section',section:'retention',label:'See who comes back'}
     };
@@ -36748,7 +36763,7 @@ function biChangePctV892(now,before){
 }
 function biChangeLineV892(change,periodDays){
   if(change===null)return '';
-  if(change===0)return `No change vs previous ${periodDays} days`;
+  if(change===0)return workspaceTemplateTextV97('noChangeVsPreviousDays',{periodDays:periodDays});
   return `${change>0?'↑':'↓'} ${Math.abs(change)}% vs previous ${periodDays} days`;
 }
 
@@ -37046,7 +37061,7 @@ function biSelectInsightsV892(model){
          router's own page map; the module gate on it is unchanged. */
       cta:{kind:'route',href:'#/sales',label:'Review payments'},
       evidence:{
-        fact:`${biWholeV892(cash.unpaid)||0} with no payment recorded and ${biWholeV892(cash.partlyPaid)||0} part paid, out of ${biWholeV892(cash.salesCount)||0} sales.`,
+        fact:workspaceTemplateTextV97('noPaymentAndPartPaidOutOfSales',{unpaidCount:biWholeV892(cash.unpaid)||0,partPaidCount:biWholeV892(cash.partlyPaid)||0,salesCount:biWholeV892(cash.salesCount)||0}),
         period,
         sample:'',
         limitation:'A sale with no payment recorded is either unpaid or was paid without being written down. Peekaa cannot tell the two apart.',
@@ -37068,21 +37083,21 @@ function biSelectInsightsV892(model){
     const withheld=urgent.withheld===true;
     const overdue=biTextV892(urgent.status)==='overdue';
     const rhythm=(cadence!==null&&lastSeen!==null)
-      ?`Usually visits every ${cadence} days · last seen ${lastSeen} days ago.`:'';
+      ?workspaceTemplateTextV97('usuallyVisitsEveryDaysLastSeenDaysAgo',{cadenceDays:cadence,daysSinceSeen:lastSeen}):'';
     push({
       type:'customer_risk',topic:'bringback',
       finding:withheld
         ?(overdue?'A regular customer is overdue':'A regular customer is slipping away')
         :(cadence!==null&&lastSeen!==null
-          ?`${urgent.name} usually visits every ${cadence} days. Last seen ${lastSeen} days ago.`
-          :`${urgent.name} is overdue against their own visit rhythm.`),
+          ?workspaceTemplateTextV97('customerUsuallyVisitsEveryDaysLastSeenDaysAgo',{customerName:urgent.name,cadenceDays:cadence,daysSinceSeen:lastSeen})
+          :workspaceTemplateTextV97('customerIsOverdueAgainstTheirOwnVisitRhythm',{customerName:urgent.name})),
       why:withheld
         ?rhythm
         :(fading>0
           ? (stake?`${biPluralV892(fading,'regular is','regulars are')} overdue · about ${stake} a month of regular spend at stake.`
             :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
           :'This customer is overdue against their own visit rhythm.'),
-      why2:(withheld&&stake)?`About ${stake}/month of regular spend may be at risk.`:'',
+      why2:(withheld&&stake)?workspaceTemplateTextV97('aboutMonthlyRegularSpendMayBeAtRisk',{monthlySpend:stake}):'',
       action:'',
       cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'},
       evidence:{
@@ -37157,7 +37172,7 @@ function biSelectInsightsV892(model){
     push({
       type:'opportunity',topic:'packages',
       finding:`${biPluralV892(biWholeV892(packages.holders)||0,'customer holds','customers hold')} ${biPluralV892(biWholeV892(packages.sessions)||0,'unused session','unused sessions')}`,
-      why:value?`Worth about ${value} of work already paid for.`:'Work already paid for and not yet taken.',
+      why:value?workspaceTemplateTextV97('worthAboutOfWorkAlreadyPaidFor',{amount:value}):'Work already paid for and not yet taken.',
       action:'Book them in before the sessions expire.',
       cta:{kind:'route',href:'#/custpackages',label:'View packages'},
       evidence:{
@@ -37432,7 +37447,7 @@ function biHealthHtmlV892(model){
   const profileBase=biWholeV892(age?.denominator)??biWholeV892(gender?.denominator);
   if(agePct!==null||genderPct!==null){
     coverageSaidV892=true;
-    const parts=[agePct===null?'':`Age known for ${agePct}%`,genderPct===null?'':`gender for ${genderPct}%`].filter(Boolean);
+    const parts=[agePct===null?'':workspaceTemplateTextV97('ageKnownForPercent',{agePercent:agePct}),genderPct===null?'':`gender for ${genderPct}%`].filter(Boolean);
     rows.push({
       label:'What you know about your customers',
       value:`${parts.join(' · ')}${profileBase===null||profileBase===undefined?'':` of ${biPluralV892(profileBase,'customer','customers')}`}`,
@@ -37663,7 +37678,7 @@ function biIdeasV902(model){
   const categories=biFiniteV892(view.categoryCoveragePct);
   if(categories!==null&&categories<90)add({
     text:'Sort the rest of your services into categories.',
-    because:`${categories.toFixed(1)}% of your money is sorted into categories.`,
+    because:workspaceTemplateTextV97('percentOfYourMoneyIsSortedIntoCategories',{percent:categories.toFixed(1)}),
     cta:{kind:'route',href:'#/servicemapping',label:'Map services'}
   });
   return ideas;
@@ -38643,8 +38658,8 @@ async function reportsPage(){
          as the word "percent" so the band's only "%" is a real period-on-period change. */
       const busyWindowV297=reportPriorWindowV297(scope);
       const busyNoteV297=[
-        capacity.known&&utilization!==null?`Utilisation: ${utilization.toFixed(1)} percent of the branch-open team hours scheduled in this period.`:'',
-        busyWindowV297.comparable?`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`:''
+        capacity.known&&utilization!==null?workspaceTemplateTextV97('utilisationPercentOfBranchOpenTeamHoursScheduled',{percent:utilization.toFixed(1)}):'',
+        busyWindowV297.comparable?workspaceTemplateTextV97('comparedWithPriorRangeSameBranchScope',{priorFrom:scope.priorFrom,priorTo:scope.priorTo}):''
       ].filter(Boolean).join(' ');
       const busyVerdictV297=reportVerdictBandV297({
         label:'Booked work · selected period',
@@ -38699,7 +38714,7 @@ async function reportsPage(){
     if(!c.usable){
       const reason=c.status==='no_data'||c.eligibleTransactions===0
         ?'No eligible recorded purchases exist in this answer period.'
-        :`Lifecycle figures are unavailable because none of ${c.eligibleTransactions} eligible recorded purchases are linked to a customer.`;
+        :workspaceTemplateTextV97('lifecycleFiguresUnavailableNoPurchaseLinkedToCustomer',{purchaseCount:c.eligibleTransactions});
       target.innerHTML=`<div class="card"><div class="empty"><span>${esc(reason)}</span> No zero is inferred.</div></div>`;
       return;
     }
@@ -38722,7 +38737,7 @@ async function reportsPage(){
         ?'no identified customer purchases exist in those earlier dates'
         :returningWindowV297.reason,
       zeroBaselineText:'nobody returned in the previous period',
-      note:priorReturningV297===null?'':`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`
+      note:priorReturningV297===null?'':workspaceTemplateTextV97('comparedWithPriorRangeSameBranchScope',{priorFrom:scope.priorFrom,priorTo:scope.priorTo})
     });
     target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
         <p class="muted small"><span>${pct(cm.existing_customer_share_pct)}</span> of identified customers in this period.</p>
@@ -41228,7 +41243,7 @@ async function settingsPage(){
     $('tplList').querySelectorAll('[data-template-delete]').forEach(button=>button.onclick=async()=>{
       const template=templates.find(item=>item.id===button.dataset.templateDelete);
       if(!template)return;
-      if(!await confirmActionV386(`Delete the "${template.name}" template? Teammates who were given these modules keep them — only the saved shortcut goes.`))return;
+      if(!await confirmActionV386(workspaceTemplateTextV97('deleteTemplateTeammatesKeepTheirModules',{templateName:template.name})))return;
       const {error}=await sb.from('module_templates').delete()
         .eq('id',template.id).eq('business_id',S.biz.id);
       if(error)return fail(error);
@@ -41321,7 +41336,7 @@ async function settingsPage(){
      why it warns rather than deletes. */
   window.decideStaffAccessV569=async(id,approve,button)=>{
     const name=button?.dataset?.name||'this teammate';
-    if(!approve&&!await confirmActionV386(`Decline app access for ${name}? Their sign-in is disconnected, they stay on your team list, and you can send them a new invite later.`))return;
+    if(!approve&&!await confirmActionV386(workspaceTemplateTextV97('declineAppAccessForTeammate',{staffName:name})))return;
     if(button)button.disabled=true;
     const {error}=await sb.rpc('decide_staff_access_v207',{p_business:S.biz.id,p_staff:id,p_approve:approve});
     if(button)button.disabled=false;
@@ -41332,7 +41347,7 @@ async function settingsPage(){
   };
   window.setStaffActiveV285=async(id,active,button)=>{
     const name=button?.dataset?.name||'this teammate';
-    if(!active&&!await confirmActionV386(`Switch ${name} off? They lose access straight away and stop using a paid seat. Everything they have already done stays on record, and you can switch them back on any time.`))return;
+    if(!active&&!await confirmActionV386(workspaceTemplateTextV97('switchTeammateOffLosesAccessAndSeat',{staffName:name})))return;
     if(button)button.disabled=true;
     const {error}=await sb.from('staff').update({active}).eq('id',id).eq('business_id',S.biz.id);
     if(button)button.disabled=false;
@@ -41794,7 +41809,7 @@ function billingManageSheetHtmlV784(model){
 function billingFootnoteV786(moneyBackWindow){
   const until=moneyBackWindow&&moneyBackWindow.money_back_request_until?billingDateV758(moneyBackWindow.money_back_request_until):'';
   const refund=until
-    ?`Money-back request deadline under your previously accepted terms: ${until}. It does not reset after plan changes.`
+    ?workspaceTemplateTextV97('moneyBackRequestDeadlineUnderAcceptedTerms',{deadlineDate:until})
     :'Subscription fees are non-refundable after payment, except where required by law or Peekaa agrees otherwise in writing.';
   return `${refund} GST not charged. Staff access included — staff count never changes this price. Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · admin.peekaa@gmail.com`;
 }
@@ -41937,14 +41952,14 @@ function billingLifecycleLinesV764(billing,summary,paymentMethod){
     out.show_resume=true;
     out.cancel_line=`Renewal cancelled · access until ${endsOn||'your next billing date'}`;
     out.resume_label='Resume renewal';
-    out.resume_confirm=`Resume renewal? Next payment ${moneyShortV758(Number(s.total_cents||0))}`
+    out.resume_confirm=workspaceTemplateTextV97('resumeRenewalNextPaymentAmount',{amount:moneyShortV758(Number(s.total_cents||0))})
       +` on ${endsOn||'your next billing date'} to ${card}.`;
   }else{
     out.show_cancel=true;
     const resumeUntil=billingDateV758(s.renewal_cancel_final_after||b.renewal_cancel_final_after);
     out.cancel_confirm=`Cancel renewal? Everything keeps working until ${endsOn||'your next billing date'}.`
       +` Nothing is refunded.`
-      +(resumeUntil?` You can resume until ${resumeUntil}.`:'');
+      +(resumeUntil?' '+workspaceTemplateTextV97('youCanResumeUntilDate',{resumeByDate:resumeUntil}):'');
   }
   return out;
 }

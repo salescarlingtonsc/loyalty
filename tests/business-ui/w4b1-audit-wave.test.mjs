@@ -46,7 +46,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
 
 test('F019 tillFoldPhoneDigitsV019 folds a +65/065 prefix before truncating to 8 digits', () => {
   const src = section('function tillFoldPhoneDigitsV019(raw){', '\nasync function tillPage(){');
-  const fold = vm.runInNewContext(`${src}; tillFoldPhoneDigitsV019`, {});
+  const fold = vm.runInNewContext(`${src}; tillFoldPhoneDigitsV019`, {...workspaceTemplateRuntime('en')});
   // "+65 8186 3833" -> digits "6581863833" (10 digits, starts 65) -> fold to "81863833"
   assert.equal(fold('+65 8186 3833'), '81863833');
   assert.equal(fold('065 8186 3833'), '81863833');
@@ -60,7 +60,7 @@ test('F019 tillFoldPhoneDigitsV019 folds a +65/065 prefix before truncating to 8
 
 test('F021 legacySaleReceiptV145 never asserts "no extra points added" on a replay', () => {
   const src = section('function legacySaleReceiptV145(doneInfo={},unitNounV430=\'points\'){', '\nfunction giftCardAbilitiesV102(');
-  const build = vm.runInNewContext(`${src}; legacySaleReceiptV145`, {});
+  const build = vm.runInNewContext(`${src}; legacySaleReceiptV145`, {...workspaceTemplateRuntime('en')});
   const replay = build({ duplicate: true, pointsEarned: 0, pointsTotal: 1200 }, 'points');
   assert.equal(replay.heading, 'Recorded');
   assert.doesNotMatch(replay.message, /no extra points added/i);
@@ -161,6 +161,7 @@ test('F024 drawCustomerCard never renders a "Who made this sale?" picker and alw
     $: () => ({ onclick: null, onchange: null, onkeydown: null, addEventListener() {}, value: '', focus() {} }),
     document: { querySelectorAll: () => [] },
   };
+  Object.assign(context, workspaceTemplateRuntime('en'));
   vm.runInNewContext(`${src}; drawCustomerCard()`, context);
   assert.equal(context.tillSaleStaffId, 'staff-me', 'the sale must always be attributed to the acting staff — record_sale_by_phone rejects any other p_staff');
   assert.doesNotMatch(html, /Who made this sale\?/);
@@ -243,7 +244,7 @@ test('F058 a found gift stops the keypad on the identified customer', async () =
 
 test('F060 merchantRedemptionRefusalTextV060 maps every known server refusal to its own sentence', () => {
   const src = section('function merchantRedemptionRefusalTextV060(error,', '\nfunction openMerchantRedemptionScanner(');
-  const context = { humanErrorV295: (error, fallback) => {
+  const context = { ...workspaceTemplateRuntime('en'), humanErrorV295: (error, fallback) => {
     const raw = String(error?.message || '');
     return /\s/.test(raw) ? raw : fallback;
   } };
@@ -496,6 +497,7 @@ test('F097 deleteBranchV285 refuses to even attempt deleting a branch with sales
       }),
     },
   };
+  Object.assign(context, workspaceTemplateRuntime('en'));
   vm.runInNewContext(`${src}`, context);
   await context.window.deleteBranchV285('b1', { disabled: false });
   assert.equal(deleteCalls.count, 0, 'a branch with sales history must never even attempt the DELETE the FK will refuse');
@@ -522,6 +524,7 @@ test('F097 a branch with no history still deletes through the normal confirm+typ
       }),
     },
   };
+  Object.assign(context, workspaceTemplateRuntime('en'));
   vm.runInNewContext(`${src}`, context);
   await context.window.deleteBranchV285('b1', { disabled: false });
   assert.equal(deleted, true);
@@ -662,6 +665,7 @@ test('F105 the expense correction dialog asks the server to CLEAR a note that wa
       expense,
       sb: { rpc: (name, body) => { payload = { name, body }; return Promise.resolve({ error: null }); } },
     };
+    Object.assign(context, workspaceTemplateRuntime('en'));
     vm.runInNewContext(`(async()=>{${src}})()`, context);
     return { payload, toasts };
   };

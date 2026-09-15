@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
@@ -37,7 +38,11 @@ const block = app.slice(from, to);
 
 const NBSP = String.fromCharCode(160);
 function sandbox(overrides = {}) {
+/* nestly_v959: several sentences in the sliced region are named templates now, so the sandbox
+     carries the REAL template runtime. A stub would let a missing key or a dropped value pass a
+     test that claims to render production output. */
   const context = vm.createContext({
+    ...workspaceTemplateRuntime('en'),
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}`,
     walletDate: (v) => `WD:${v}`,

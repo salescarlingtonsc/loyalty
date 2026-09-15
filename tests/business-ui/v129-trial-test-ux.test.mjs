@@ -3,6 +3,9 @@ import {existsSync,readFileSync} from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const migrationUrl=new URL(
   '../../supabase/migrations/20260801170000_nestly_v129_trial_test_ux.sql',
@@ -115,7 +118,7 @@ test('Customers exposes exact all, 30, 60 and 90 day inactivity filters backed b
 
 test('appointment WhatsApp action creates a factual explicit-send link and no false receipt',()=>{
   const source=declaredFunction('appointmentWhatsAppUrlV129');
-  const build=vm.runInNewContext(`(()=>{${source};return appointmentWhatsAppUrlV129})()`);
+  const build=vm.runInNewContext(`(()=>{${source};return appointmentWhatsAppUrlV129})()`, {...workspaceTemplateRuntime('en')});
   const url=build({
     phone:'+65 8123 4567',businessName:'Glow Atelier',branchName:'Orchard',
     customerName:'Mei Lin',serviceName:'Spa Ritual 60',startsAt:'2026-08-03T06:00:00Z',

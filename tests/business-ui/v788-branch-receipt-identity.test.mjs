@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 const migration = readFileSync(new URL('../../db/migrations/20261006_nestly_v788_branch_receipt_identity_gst.sql', import.meta.url), 'utf8');
 
@@ -28,6 +31,7 @@ function tillFn(name) {
 function loadHelpers() {
   const src = slice('function receiptIdentityHtmlV788(', 'function branchIdentityFieldsHtmlV788(');
   const ctx = {esc: s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))};
+  Object.assign(ctx, workspaceTemplateRuntime('en'));
   vm.runInNewContext(src + '\nthis.receiptIdentityHtmlV788=receiptIdentityHtmlV788;this.gstRowLabelV788=gstRowLabelV788;', ctx);
   return ctx;
 }

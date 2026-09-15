@@ -538,6 +538,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      WORDS inside the sentence — 'on'/'off', 'point'/'stamp' — which is the same trap as a
      grammatical 's': a value is preserved verbatim, so the switch has to be the key, not the
      argument. 321 + 8 = 329.
+     nestly_v959 adds 117 and closes the last class: sentences ASSEMBLED in JS from English and a
+     runtime value, then inserted. They never appear as markup, so no harvest saw them, and they
+     render as one text node that no catalogue keyed on whole nodes can match. Almost all of them
+     are escaped somewhere downstream, so these use workspaceTemplateTextV97 — plain text, not a
+     span that would show as literal markup in an escaped slot. That leaves the text resolved at
+     render time, so the same wave makes a language change re-run the route: the picker sits in the
+     profile menu and is reachable from every page, and in-place localisation cannot move a sentence
+     that carries no key to look up. 426 + 117 = 543.
      nestly_v952 adds 31 and closes the workspace interpolation gap: the two reversal receipts and
      the exact-compensation proof list, the profile-scope refusal in its three shapes, the paused
      tier warning in its four, the reward-cost profitability line, the typical-sale basis, the
@@ -563,7 +571,7 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      joined by "·" rather than one sentence with three optional tails and eight shapes to review.
      The six expiry keys are named literally at the call site rather than built from a prefix,
      because a key assembled at run time is a key this gate cannot see. 360 + 66 = 426. */
-  assert.equal(keys.length,426,'mixed-interface interpolation inventory changed without review');
+  assert.equal(keys.length,543,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

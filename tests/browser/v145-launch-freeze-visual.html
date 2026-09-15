@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="2347a73aceac0a03446d31624d0911564f250839c2894bfb3eeba202b3e09cdb"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="0ca26b08ee531c9ed335226a3c184b6fecf28461609f083dd97d832ad7257759"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6228,7 +6228,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 2347a73aceac0a03446d31624d0911564f250839c2894bfb3eeba202b3e09cdb</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 0ca26b08ee531c9ed335226a3c184b6fecf28461609f083dd97d832ad7257759</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6463,7 +6463,7 @@ function reportRangeValidation(from,to,maxDays=REPORT_MAX_RANGE_DAYS){
   const start=parse(from),end=parse(to);
   if(start===null||end===null||end<start)return {ok:false,reason:'Choose a valid report range.'};
   const days=Math.round((end-start)/864e5)+1;
-  if(days>maxDays)return {ok:false,reason:`Choose a range of ${maxDays.toLocaleString('en-SG')} days or fewer.`};
+  if(days>maxDays)return {ok:false,reason:workspaceTemplateTextV97('chooseARangeOfDaysOrFewer',{maxDays:maxDays.toLocaleString('en-SG')})};
   return {ok:true,days};
 }
 function lifecycleAnswerProjection(payload){
@@ -6703,10 +6703,10 @@ function staffCommissionInsightLineV832(insights,formatMoney){
      must not crown one of them — the owner reads this line as a ranking. */
   const salesTied=people.filter(s=>s.sales===most.sales).length>1;
   const avgTied=people.filter(s=>s.avgSale===biggest.avgSale).length>1;
-  if(salesTied&&avgTied)return `Sales are level (${most.sales} each) and so is the average sale (${fmt(biggest.avgSale)}).`;
-  if(salesTied)return `Sales are level (${most.sales} each); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)}).`;
-  if(avgTied)return `${most.name} closes the most sales (${most.sales}); the average sale is level (${fmt(biggest.avgSale)}).`;
-  if(most.key===biggest.key)return `${most.name} leads on both: the most sales (${most.sales}) and the biggest average sale (${fmt(most.avgSale)}).`;
+  if(salesTied&&avgTied)return workspaceTemplateTextV97('salesAreLevelAndSoIsTheAverageSale',{saleCount:most.sales,averageSale:fmt(biggest.avgSale)});
+  if(salesTied)return workspaceTemplateTextV97('salesAreLevelBiggestAverageSaleIs',{saleCount:most.sales,staffName:biggest.name,averageSale:fmt(biggest.avgSale)});
+  if(avgTied)return workspaceTemplateTextV97('closesTheMostSalesAverageSaleIsLevel',{staffName:most.name,saleCount:most.sales,averageSale:fmt(biggest.avgSale)});
+  if(most.key===biggest.key)return workspaceTemplateTextV97('leadsOnBothMostSalesAndBiggestAverageSale',{staffName:most.name,saleCount:most.sales,averageSale:fmt(most.avgSale)});
   const tail=biggest.sales<most.sales?' — fewer deals, bigger tickets':'';
   return `${most.name} closes the most sales (${most.sales}); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)})${tail}.`;
 }
@@ -8048,7 +8048,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
       ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
-      :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?`${earnPerDollarV567} points for every SGD 1 spent`:'');
+      :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?workspaceTemplateTextV97('pointsForEverySgd1Spent',{pointsPerDollar:earnPerDollarV567}):'');
     const earnLineV567=earnCopy
       ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
       :stamps
@@ -8466,7 +8466,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const branchId=$('c360PackageBranchV442')?.value||'';
     if(!branchId)return toast('Choose the branch using this session');
     if(!await confirmActionV386(
-      `Use one ${entry.planName} session for ${c.full_name}? ${entry.remaining-1} of ${entry.sessions} will be left. No payment is taken, and only Packages can undo it.`,
+      workspaceTemplateTextV97('useOnePackageSessionForCustomerConfirm',{planName:entry.planName,customerName:c.full_name,remainingAfter:entry.remaining-1,totalSessions:entry.sessions}),
       {confirmLabel:'Use a session',danger:false}))return;
     if(!isClientDetailCurrent())return;
     CUI.setButtonBusy(button,{busy:true,label:'Using…'});
@@ -8974,7 +8974,7 @@ function activitySaleBreakdownV541(h,earnedPoints=0){
     </tr></thead><tbody>${rows}</tbody></table>
     ${mismatch}
     <p class="muted small" style="margin-top:6px">${earned
-      ?`This sale earned ${esc(customerPointTotalV103(earned))} points on its total of ${esc(money(saleCents))}. Points are recorded once for the whole sale, so the figures above are each line's share of that, not separately recorded amounts.`
+      ?workspaceTemplateTextV97('saleEarnedPointsOnTotalLinesAreShares',{pointsEarned:esc(customerPointTotalV103(earned)),saleTotal:esc(money(saleCents))})
       :'This sale earned no points.'}</p>
   </div>`;
 }
@@ -9586,8 +9586,8 @@ function renderHistPage(history,n,offsetV468=0){
          as the word "percent" so the band's only "%" is a real period-on-period change. */
       const busyWindowV297=reportPriorWindowV297(scope);
       const busyNoteV297=[
-        capacity.known&&utilization!==null?`Utilisation: ${utilization.toFixed(1)} percent of the branch-open team hours scheduled in this period.`:'',
-        busyWindowV297.comparable?`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`:''
+        capacity.known&&utilization!==null?workspaceTemplateTextV97('utilisationPercentOfBranchOpenTeamHoursScheduled',{percent:utilization.toFixed(1)}):'',
+        busyWindowV297.comparable?workspaceTemplateTextV97('comparedWithPriorRangeSameBranchScope',{priorFrom:scope.priorFrom,priorTo:scope.priorTo}):''
       ].filter(Boolean).join(' ');
       const busyVerdictV297=reportVerdictBandV297({
         label:'Booked work · selected period',
@@ -9642,7 +9642,7 @@ function renderHistPage(history,n,offsetV468=0){
     if(!c.usable){
       const reason=c.status==='no_data'||c.eligibleTransactions===0
         ?'No eligible recorded purchases exist in this answer period.'
-        :`Lifecycle figures are unavailable because none of ${c.eligibleTransactions} eligible recorded purchases are linked to a customer.`;
+        :workspaceTemplateTextV97('lifecycleFiguresUnavailableNoPurchaseLinkedToCustomer',{purchaseCount:c.eligibleTransactions});
       target.innerHTML=`<div class="card"><div class="empty"><span>${esc(reason)}</span> No zero is inferred.</div></div>`;
       return;
     }
@@ -9665,7 +9665,7 @@ function renderHistPage(history,n,offsetV468=0){
         ?'no identified customer purchases exist in those earlier dates'
         :returningWindowV297.reason,
       zeroBaselineText:'nobody returned in the previous period',
-      note:priorReturningV297===null?'':`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`
+      note:priorReturningV297===null?'':workspaceTemplateTextV97('comparedWithPriorRangeSameBranchScope',{priorFrom:scope.priorFrom,priorTo:scope.priorTo})
     });
     target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
         <p class="muted small"><span>${pct(cm.existing_customer_share_pct)}</span> of identified customers in this period.</p>
@@ -10723,7 +10723,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'2347a73aceac0a03446d31624d0911564f250839c2894bfb3eeba202b3e09cdb',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'0ca26b08ee531c9ed335226a3c184b6fecf28461609f083dd97d832ad7257759',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

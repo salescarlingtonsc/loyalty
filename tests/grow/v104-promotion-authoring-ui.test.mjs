@@ -93,7 +93,8 @@ test('photo and copy finalize through one receipt-backed operation and preserve 
      "your draft is safe" promise is kept, now with the real reason attached. */
   assert.match(page,/try\{dimensions=await imageDimensionsV95\(sending\)\}/);
   assert.match(page,/Your draft is safe\. The photo needs another try\./);
-  assert.match(page,/Photo was not saved: \$\{ownerErrorText\(uploaded\.error\)\}/);
+  /* nestly_v959: a named template now; the key and its value are what the call site must carry. */
+  assert.match(page,/workspaceTemplateTextV97\('photoWasNotSavedYourWordsAreSafePressSaveDraft',\{[^}]*uploaded\.error[^}]*\}\)/);
   assert.match(page,/URL\.revokeObjectURL/);
   assert.match(page,/operation:unpublish\?'unpublish':publish\?'publish':'draft'/);
   assert.match(page,/promotionUnpublish'\)\.onclick=\(\)=>save\(false,\{unpublish:true\}\)/);

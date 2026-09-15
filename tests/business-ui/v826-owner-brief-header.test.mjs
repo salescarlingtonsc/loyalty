@@ -12,6 +12,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
+/* nestly_v959: several brief sentences are named templates now. Without the real runtime the
+   fact callback throws, factItem swallows it, and a whole worry group disappears from the
+   brief — which is how this test caught the harness rather than the code. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const index = readFileSync(join(root, 'app', 'index.html'), 'utf8');
@@ -29,7 +34,7 @@ function extractFunction(src, name) {
 }
 
 function builder() {
-  const ctx = { money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}` };
+  const ctx = { money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}`, ...workspaceTemplateRuntime('en') };
   vm.createContext(ctx);
   for (const name of ['ownerBriefHourV826', 'ownerBriefPctV826', 'ownerBriefSignedV826', 'ownerBriefLinesV826']) {
     vm.runInContext(extractFunction(app, name), ctx);
@@ -40,7 +45,7 @@ function builder() {
 /* nestly_v828 — same extraction approach, plus ownerBriefAnswersV828 itself, which calls
    ownerBriefLinesV826 internally to reuse six of its sentences. */
 function answersBuilder() {
-  const ctx = { money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}` };
+  const ctx = { money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}`, ...workspaceTemplateRuntime('en') };
   vm.createContext(ctx);
   for (const name of ['ownerBriefHourV826', 'ownerBriefPctV826', 'ownerBriefSignedV826', 'ownerBriefLinesV826', 'ownerBriefAnswersV828']) {
     vm.runInContext(extractFunction(app, name), ctx);

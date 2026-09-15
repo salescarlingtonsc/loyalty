@@ -12,6 +12,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V959 = workspaceTemplateRuntime('en');
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const shell = readFileSync(join(root, 'app', 'index.html'), 'utf8');
@@ -162,7 +167,7 @@ test('V249 the scan sentence is gone and the scanner button sits under the rewar
    chose, the second the exact opposite of the truth. Its neighbour `loyaltyFactsAvailable`
    already refuses to print zero in place of an unread balance; this is the same discipline one
    field over, so it is proved by running it. */
-const earnLine = (prog, stamps) => new Function('prog', 'stamps', 'esc', 'money', 'DASH_V541', `
+const earnLine = (prog, stamps) => new Function('prog', 'stamps', 'esc', 'money', 'DASH_V541', 'workspaceTemplateTextV97', `
   ${(() => {
     const from = app.indexOf('    const stampCentsV567=Number(prog.stamp_per_cents);');
     const end = "Peekaa is not guessing one.\">${DASH_V541}</span></p>`;";
@@ -175,7 +180,7 @@ const earnLine = (prog, stamps) => new Function('prog', 'stamps', 'esc', 'money'
   v => String(v ?? '').replace(/[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
   c => 'SGD ' + ((c || 0) / 100).toFixed(2),
-  '\u2014');
+  '\u2014', TPL_V959.workspaceTemplateTextV97);
 
 test('nestly_v567 a stamps programme with no spend-per-stamp says nothing at all', () => {
   for (const missing of [{}, { stamp_per_cents: null }, { stamp_per_cents: 0 },

@@ -3,6 +3,9 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const app=(readFileSync(new URL('../../app/index.html',import.meta.url),'utf8')+'\n'+readFileSync(new URL('../../app/app.js',import.meta.url),'utf8'));
 const birthdayReaderMigration=readFileSync(new URL('../../db/migrations/20260801_nestly_v127_rewards_overview_birthday_reader.sql',import.meta.url),'utf8');
 
@@ -37,7 +40,7 @@ function declaredFunction(name){
 
 test('V375 a firm stored as classic gets the reward catalogue, and no store-credit reward',()=>{
   const source=declaredFunction('ownerRewardJourneyV122');
-  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`);
+  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`, {...workspaceTemplateRuntime('en')});
   const overview=JSON.parse(JSON.stringify(build({
     loyalty:{id:'programme-1',active:true,loyalty_model:'classic',earn_points_per_dollar:10,
       redeem_points:1000,reward_credit_cents:1000,expiry_mode:'inactivity',expiry_days:365},
@@ -69,7 +72,7 @@ test('V375 a firm stored as classic gets the reward catalogue, and no store-cred
 
 test('stamp overview explains the earn rate and incremental milestones without inventing birthday',()=>{
   const source=declaredFunction('ownerRewardJourneyV122');
-  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`);
+  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`, {...workspaceTemplateRuntime('en')});
   const overview=JSON.parse(JSON.stringify(build({
     loyalty:{id:'programme-2',active:true,loyalty_model:'stamps',stamp_per_cents:500},
     rewards:[
@@ -84,7 +87,7 @@ test('stamp overview explains the earn rate and incremental milestones without i
 
 test('paused programmes and scheduled or ended rewards are never described as customer-available',()=>{
   const source=declaredFunction('ownerRewardJourneyV122');
-  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`);
+  const build=vm.runInNewContext(`(()=>{${NORMALISER_V375};${source};return ownerRewardJourneyV122})()`, {...workspaceTemplateRuntime('en')});
   const paused=JSON.parse(JSON.stringify(build({
     asOf:'2026-08-01T00:00:00.000Z',
     loyalty:{id:'paused',active:false,loyalty_model:'points_tiers',earn_points_per_dollar:5},

@@ -207,7 +207,9 @@ test('module templates can be renamed and deleted', () => {
 test('a branch can be deleted, but only behind a typed confirmation', () => {
   assert.match(app, /window\.deleteBranchV285=async\(branchId,button\)=>\{/);
   assert.match(app, /if\(branch\.is_default\)return toast\('Your main branch cannot be deleted\.'\)/);
-  assert.match(app, /prompt\(`Type the branch name to confirm deletion: \$\{branch\.name\}`\)/);
+  /* nestly_v959: the sentence is a named template now — the words are pinned once where they are
+     written, and the call site is pinned to the key and its values. */
+  assert.match(app, /prompt\(workspaceTemplateTextV97\('typeBranchNameToConfirmDeletion',\{[^}]*branch\.name[^}]*\}\)\)/);
   assert.match(app, /untick Active in Edit/, 'the confirm must point at the reversible alternative');
   assert.match(app, /sb\.from\('branches'\)\.delete\(\)\.eq\('id',branchId\)\.eq\('business_id',S\.biz\.id\)/);
   assert.match(app, /\$\{b\.is_default\?'':`<button class="btn ghost sm" data-name="\$\{esc\(b\.name\)\}" onclick="deleteBranchV285/,

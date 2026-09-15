@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="512001db6fee3e63e9a07114646a7e112c997f31e3b8c55ec12c4b3ca147efe1"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="461f2ad74cc996b7be436480bc3349076eb547c5dc4d4e6f0fcc1b0609c10208"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6227,7 +6227,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 512001db6fee3e63e9a07114646a7e112c997f31e3b8c55ec12c4b3ca147efe1</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 461f2ad74cc996b7be436480bc3349076eb547c5dc4d4e6f0fcc1b0609c10208</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -7693,9 +7693,9 @@ function welcomeOfferRowV215(status,canSetup,canRewards,draftOpen=false){
     :!configured
     ?'Give every new sign-up a free item on their first visit — with or without a minimum spend.'
     :status.item_available===false
-    ?`${label} is no longer on sale, so no new customer can be given it. Choose another item.`
+    ?workspaceTemplateTextV97('itemNoLongerOnSaleChooseAnother',{itemName:label})
     :active
-    ?(min?`New sign-ups get ${label} free once they spend ${money(min)}.`:`New sign-ups get ${label} free — no minimum spend.`)
+    ?(min?workspaceTemplateTextV97('newSignUpsGetItemFreeAfterMinimumSpend',{itemName:label,minSpend:money(min)}):workspaceTemplateTextV97('newSignUpsGetItemFreeNoMinimumSpend',{itemName:label}))
     :`Paused — configured as ${label}${min?` after ${money(min)}`:' with no minimum spend'}.`;
   const state=!status?'Unavailable':!configured?'Not set up':status.item_available===false?'Needs attention'
     :active?STATUS_WORDS.on:STATUS_WORDS.off;
@@ -8109,8 +8109,8 @@ async function openWelcomeOfferEditorV215(current,onSaved){
   const pointsRate=Math.max(0,Number(loyalty?.earn_points_per_dollar||0));
   const stampSpendCents=Math.max(0,Number(loyalty?.stamp_per_cents||0));
   const earning=!loyalty?null:model==='stamps'
-    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:`Earn 1 stamp per SGD ${(stampSpendCents/100).toFixed(2)} spent`}
-    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:`Earn ${compactNumber(pointsRate)} points per SGD 1 spent`};
+    ?{model,unit,rate:stampSpendCents,availableToCustomers:programmeActive,label:workspaceTemplateTextV97('earnOneStampPerSgdSpent',{spendAmount:(stampSpendCents/100).toFixed(2)})}
+    :{model,unit,rate:pointsRate,availableToCustomers:programmeActive,label:workspaceTemplateTextV97('earnPointsPerSgdOneSpent',{pointsRate:compactNumber(pointsRate)})};
   const allRewards=Array.isArray(rewards)?rewards:[];
   const ordered=allRewards
     .filter(reward=>reward?.active!==false)
@@ -9709,7 +9709,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   }
   function rewardHintText(){
     if(familyW6I2()==='stamps')return 'Type what the reward costs you, then how many stamps a customer needs for it.';
-    return `One point costs you ${currency} ${(Math.max(1,costPerPointCents())/100).toFixed(3)}. Type your cost and the points fill in — change them if you want.`;
+    return workspaceTemplateTextV97('onePointCostsYouTypeYourCost',{currency:currency,costPerPoint:(Math.max(1,costPerPointCents())/100).toFixed(3)});
   }
   /* Every save goes through here. The draft is created on the FIRST save, never on page load,
      so a wizard the owner browsed away from leaves no orphan draft behind; the snapshot hash is
@@ -11168,7 +11168,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
         p_min_spend_cents:Math.round(Math.max(0,Number(state.referralMinSpend)||0)*100)});
       if(!isCurrent())return false;
       if(referralError){
-        state.modeError=`Published. The referral settings could not be saved — ${ownerErrorText(referralError)} Press retry.`;
+        state.modeError=workspaceTemplateTextV97('publishedReferralSettingsCouldNotBeSaved',{errorMessage:ownerErrorText(referralError)});
         render();return false;
       }
       state.referralDirty=false;
@@ -11185,7 +11185,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!ok){
       /* Honest: publishing HAPPENED. Saying "publish failed" would send the owner to re-publish a
          version that is already live. */
-      state.modeError=`Published. The programme switch could not be applied — ${ownerErrorText(error)} Press retry.`;
+      state.modeError=workspaceTemplateTextV97('publishedSwitchNotAppliedRetry',{reason:ownerErrorText(error)});
       render();return false;
     }
     /* Referral settings are NOT in the versioned draft — public.referral_programs is a live table
@@ -13311,7 +13311,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          series makes growUsageComparisonChartV386 render its single-series "Times used, by
          category" form (V468 renamed it from "Customers used"), which is the shape it already had before comparison was added. */''}
     <p class="muted small" style="flex-basis:100%;margin:6px 0 0">${growUsageWindowedV386
-      ?`Counting how many times each programme was used between ${esc(promotionDateShortV324(growUsageFromV386))} and ${esc(promotionDateShortV324(growUsageToV386))}. Leave both blank for all time.`
+      ?workspaceTemplateTextV97('countingProgrammeUsesBetweenDates',{fromDate:esc(promotionDateShortV324(growUsageFromV386)),toDate:esc(promotionDateShortV324(growUsageToV386))})
       :'Showing every customer since you opened. Set both dates to narrow this table.'}</p>
   </div>`;
   /* The windowed read failing is not the same as nobody having used anything. Saying so beats
@@ -13805,7 +13805,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="grow-tier-card-body-v351">
         <b data-merchant-content>${esc(campaign.name)}</b>
         <span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97('awayDaysToReward',{days:Math.max(0,Number(campaign.away_days)||0),reward:campaign.reward_label})}</span>
-        <span class="muted small">${expiry?`Voucher expires ${expiry} days after it is sent`:'Voucher does not expire'}</span>
+        <span class="muted small">${expiry?workspaceTemplateTextV97('voucherExpiresDaysAfterSent',{days:expiry}):'Voucher does not expire'}</span>
       </span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}">${statusOnOff(!paused)}</span>
@@ -13889,7 +13889,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     :(growWelcomeV584.custom_label||growWelcomeV584.reward_label||'A free item');
   const growWelcomeWhenTextV584=!growWelcomeV584?''
     :Number(growWelcomeV584.min_spend_cents)>0
-      ?`After they spend ${money(Number(growWelcomeV584.min_spend_cents))}`
+      ?workspaceTemplateTextV97('afterTheySpendAmount',{amount:money(Number(growWelcomeV584.min_spend_cents))})
       :'Straight away — no minimum spend';
   const growWelcomeExpiryTextV584=!growWelcomeV584?''
     :Number(growWelcomeV584.expiry_days)>0
@@ -14070,7 +14070,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growStampsShorterToV463=growStampsOverMaxV463
     ?GROW_STAMPS_MAX_LEN_V463:growStampsCardLenV416-1;
   const growStampsShorterLabelV463=growStampsOverMaxV463
-    ?`Shorten to ${GROW_STAMPS_MAX_LEN_V463} stamps`:'One stamp shorter';
+    ?workspaceTemplateTextV97('shortenToStamps',{maxStamps:GROW_STAMPS_MAX_LEN_V463}):'One stamp shorter';
   /* Which of the three refusals applies. The copy keys are written as LITERALS at each call below
      rather than looked up through a variable: the workspace audit
      (tests/customer-wallet/v97-workspace-localization-acceptance) reads call sites to prove every
@@ -14147,7 +14147,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const cls=`grow-stamps-editcell-v416${reward?' is-gift-v416':''}`;
       const label=reward
         ?`Stamp ${stamp} gives ${name}. Edit this gift.`
-        :`Stamp ${stamp} has no gift. Add one.`;
+        :workspaceTemplateTextV97('stampHasNoGiftAddOne',{stampNumber:stamp});
       if(!canSetupGrow)return `<span role="listitem" class="${cls}">${reward?`<span class="grow-stamps-editcell-gift-v416" aria-hidden="true">${CUI.icon('giftcard',{size:16})}</span>`:''}<span class="grow-stamps-editcell-num-v416">${stamp}</span></span>`;
       /* data-merchant-content, matching the v410 preview grid one card down: the label names a
          gift the firm wrote, so the workspace localiser must not rewrite it. */
@@ -14165,7 +14165,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
     ?`${growStampsLevelsSortedV350.length} gift${growStampsLevelsSortedV350.length===1?'':'s'} on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.`
-    :`No gifts yet — a good starting point is one every ${GROW_STAMPS_DEFAULT_EVERY_V416} stamps. Tap stamp ${Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)} to begin.`}</p>`;
+    :workspaceTemplateTextV97('noGiftsYetStartOneEveryStamps',{everyStamps:GROW_STAMPS_DEFAULT_EVERY_V416,startStamp:Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)})}</p>`;
   /* v414's refusal, said BEFORE the owner hits it. business_set_stamp_card_length_v414 will not
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
      end — so a firm in that state (Cubbly is, today) needs to be told which gift and offered the
@@ -15543,8 +15543,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const name=button.dataset.growOfferNameV324||'this offer';
     /* V334 (owner markup, photo 7): the confirm copy follows the button's own "End" wording. */
     const question=published
-      ?`End "${name}"? Customers stop seeing it immediately. The record is kept so your reports stay accurate.`
-      :`Delete the draft "${name}"? This cannot be undone. No customer has seen it.`;
+      ?workspaceTemplateTextV97('endOfferCustomersStopSeeingItRecordKept',{offerName:name})
+      :workspaceTemplateTextV97('deleteDraftCannotBeUndoneNoCustomerHasSeenIt',{offerName:name});
     if(!await confirmActionV386(question))return;
     CUI.setButtonBusy(button,{busy:true,label:published?'Ending…':'Deleting…'});
     const {error}=await sb.rpc('business_delete_promotion_v183',{
@@ -15755,7 +15755,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   outerMain.querySelectorAll('[data-grow-bb-template-v364]').forEach(el=>el.onclick=()=>{
     const days=Math.max(1,Math.round(Number(el.dataset.growBbTemplateV364)||30));
     growBbEditingV361=null;growBbAddOpenV361=true;growBbErrorV361='';
-    growBbDraftV361={name:`We miss you — away ${days} days`,reward:'',away:String(days),expiry:'30'};
+    growBbDraftV361={name:workspaceTemplateTextV97('weMissYouAwayDays',{days:days}),reward:'',away:String(days),expiry:'30'};
     growRerenderV322({quiet:true});
   });
   outerMain.querySelectorAll('[data-grow-bb-edit-v361]').forEach(el=>el.onclick=()=>{
@@ -16387,7 +16387,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        stranded warning — the owner may legitimately place a gift at 12 and then lengthen the card
        to 12, which is exactly what the warning band's one-tap fix offers. */
     if(growPointsIsStampsV326&&points>GROW_STAMPS_MAX_LEN_V463){
-      growPointsErrorV326=`A stamp card is at most ${GROW_STAMPS_MAX_LEN_V463} stamps long, so a gift cannot sit on stamp ${points}. Choose a stamp between 1 and ${GROW_STAMPS_MAX_LEN_V463}.`;
+      growPointsErrorV326=workspaceTemplateTextV97('stampCardIsAtMostStampsLongChooseBetween',{maxStamps:GROW_STAMPS_MAX_LEN_V463,chosenStamp:points,upperBound:GROW_STAMPS_MAX_LEN_V463});
       return growRerenderV322({quiet:true});
     }
     growPointsBusyV326=true;growPointsErrorV326='';growRerenderOwnV880({quiet:true});
@@ -16989,7 +16989,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           toast('Saved. Benefit limits start counting once the service update is applied.');
           return growRerenderV322();
         }
-        growTiersErrorV331=`The tier was saved, but its benefits could not be stored — ${ownerErrorText(benefitError)}`;
+        growTiersErrorV331=workspaceTemplateTextV97('tierSavedButBenefitsCouldNotBeStored',{errorMessage:ownerErrorText(benefitError)});
         return growRerenderV322();
       }
     }
@@ -17243,7 +17243,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'512001db6fee3e63e9a07114646a7e112c997f31e3b8c55ec12c4b3ca147efe1',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'461f2ad74cc996b7be436480bc3349076eb547c5dc4d4e6f0fcc1b0609c10208',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

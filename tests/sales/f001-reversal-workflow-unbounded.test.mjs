@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 
 const section = (source, from, to) => {
@@ -60,6 +61,10 @@ test('F001: saleRecordStatusV154 (the render logic the fix protects) correctly r
   // function declaration) and execute it in a vm — not a re-implementation of its logic.
   const statusFn = section(app, 'function saleRecordStatusV154(s,w={}){', 'async function salesPage(){');
   const ctx = {};
+/* nestly_v959: several sentences in the sliced region are named templates now, so the sandbox
+     carries the REAL template runtime. A stub would let a missing key or a dropped value pass a
+     test that claims to render production output. */
+  Object.assign(ctx, workspaceTemplateRuntime('en'));
   vm.createContext(ctx);
   vm.runInContext(statusFn, ctx);
   assert.equal(typeof ctx.saleRecordStatusV154, 'function');

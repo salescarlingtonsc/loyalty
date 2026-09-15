@@ -39,6 +39,11 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V959 = workspaceTemplateRuntime('en');
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const appJs = await readFile(path.join(root, 'app/app.js'), 'utf8');
 const appCss = await readFile(path.join(root, 'app/app.css'), 'utf8');
@@ -72,7 +77,7 @@ const upTo = (from, to) => {
 const buildMaps = () => {
   const mapSrc = upTo('/* F060: merchant_scan_redemption_qr_v117',
     '\nfunction openMerchantRedemptionScanner(');
-  const names = ['humanErrorV295', 'money'];
+  const names = ['humanErrorV295', 'money', 'workspaceTemplateTextV97'];
   const values = [
     /* The shipped humanErrorV295 hands a MACHINE code (no whitespace) to the fallback and passes
        a human sentence straight through. Reproduced exactly, so "raw DB English reached the
@@ -82,7 +87,8 @@ const buildMaps = () => {
       if (!raw) return fallback;
       return (!/\s/.test(raw) || /^[a-z0-9_]+$/.test(raw)) ? fallback : raw;
     },
-    cents => `SGD ${(Number(cents || 0) / 100).toFixed(2)}`
+    cents => `SGD ${(Number(cents || 0) / 100).toFixed(2)}`,
+    TPL_V959.workspaceTemplateTextV97
   ];
   return new Function(...names, `${mapSrc}
     return {merchantRedemptionRefusalTextV060,merchantGiftRefusalTextV829,merchantScanStatusTextV829};`)(...values);
@@ -495,7 +501,11 @@ const makeScannerRig = ({
     requestAnimationFrame: cb => { raf.push(cb); return raf.length },
     cancelAnimationFrame: () => {},
     URL: { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} },
-    createImageBitmap: async () => ({ width: 8, height: 8, close() {} })
+    createImageBitmap: async () => ({ width: 8, height: 8, close() {} }),
+    /* nestly_v959: the scanner's paused-status sentence is a named template now. The REAL runtime
+       goes in, never a stub — a stub returns '' for a missing key, which would turn a broken
+       status line into a silently passing test. */
+    workspaceTemplateTextV97: TPL_V959.workspaceTemplateTextV97
   };
   const names = Object.keys(scope);
   const scannerSrc = upTo('function openMerchantRedemptionScanner({',

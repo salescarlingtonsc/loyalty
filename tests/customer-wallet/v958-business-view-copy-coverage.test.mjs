@@ -133,7 +133,9 @@ test('single-word labels are translated — the class every two-word harvest ski
    from the source, so the count can only fall. It may never rise. A new English sentence built in
    JS pushes it up and fails here, which is the whole point — the class that hid from every previous
    scan is now counted, and counted out loud. */
-const JS_BUILT_SENTENCES_REMAINING_V958 = 317;
+/* nestly_v959 templated 117 of these. Each one removed its own raw literal from the source, which
+   is why the number moved on its own — it is not a figure anyone edited to match. */
+const JS_BUILT_SENTENCES_REMAINING_V958 = 200;
 
 test('sentences built in JS are counted, and the count only ever falls', () => {
   const found = jsBuiltSentences();

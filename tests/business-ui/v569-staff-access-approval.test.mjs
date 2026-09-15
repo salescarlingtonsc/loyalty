@@ -11,6 +11,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V959 = workspaceTemplateRuntime('en');
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const section = (start, end) => {
@@ -29,7 +34,7 @@ const esc = v => String(v ?? '').replace(/[&<>"']/g,
 
 /* The roster row exactly as it ships. Everything it leans on that is not under test — the two
    expandable panels and the role labels — is stubbed; the pill/button logic is the real source. */
-const renderRow = new Function('esc', `
+const renderRow = new Function('esc', 'workspaceTemplateTextV97', `
   const ROLE_LABELS={owner:'Owner',manager:'Manager',staff:'Team member',frontdesk:'Front desk'};
   const openProfileId=null, openModId=null;
   const staffProfilePanelHtml=()=>'', modPanelHtml=()=>'', staffEditDialogHtmlV584=()=>'';
@@ -39,7 +44,7 @@ const renderRow = new Function('esc', `
   const staffBranchListV577=[{id:'b1',name:'Orchard',is_default:true,active:true}];
   const staffBranchAssignedV577=new Map();
   ${section('const staffRowV209=s=>{', 'const rows=st||[];')}
-  return staffRowV209;`)(esc);
+  return staffRowV209;`)(esc, TPL_V959.workspaceTemplateTextV97);
 
 /* The handler, executed against a fake supabase so the RPC name and its arguments are observed
    rather than asserted about in a regex. */
@@ -49,7 +54,7 @@ const makeHandler = () => {
   const confirms = [];
   const window = {};
   new Function('sb', 'S', 'fail', 'toast', 'teamRowsById', 'confirmActionV386',
-    'loadTeam', 'invalidateBranchModuleProjectionCache', 'window', `
+    'loadTeam', 'invalidateBranchModuleProjectionCache', 'window', 'workspaceTemplateTextV97', `
     ${section('window.decideStaffAccessV569=async(id,approve,button)=>{', 'window.setStaffActiveV285=')}`)(
     { rpc: async (name, args) => { calls.push({ name, args }); return { error: null }; } },
     { biz: { id: 'biz-1' } },
@@ -59,7 +64,8 @@ const makeHandler = () => {
     async message => { confirms.push(message); return true; },
     async () => {},
     () => {},
-    window
+    window,
+    TPL_V959.workspaceTemplateTextV97
   );
   return { decide: window.decideStaffAccessV569, calls, toasts, confirms };
 };

@@ -33,7 +33,10 @@ test('promotions can be removed, with published offers retired rather than erase
   assert.ok(src.includes('confirmActionV386('), 'deletion must be confirmed');
   /* V334 (owner markup, photo 7: "all 'retire' change to 'end'"): the wording changed, the
      underlying behaviour (kept record vs hard delete) did not. */
-  assert.ok(/End/.test(app) && /Delete the draft/.test(src),
+  /* nestly_v959: both confirmations are named templates now, so the control names its key rather
+     than carrying the words inline — and the two keys still say which of end/delete will happen. */
+  assert.ok(/endOfferCustomersStopSeeingItRecordKept/.test(src)
+    && /deleteDraftCannotBeUndoneNoCustomerHasSeenIt/.test(src),
     'the control must say which of end/delete will happen');
 });
 

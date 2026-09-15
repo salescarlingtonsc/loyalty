@@ -13,6 +13,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
+/* nestly_v959: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, never a stub, so a missing key cannot pass as a rendered sentence. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V959 = workspaceTemplateRuntime('en');
+
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const code = stripComments(app);
@@ -28,8 +33,8 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;',
 const promotionDateTextSrc = statement('function promotionDateTextV104(value){', '\n}');
 const promotionLifecycleSrc = statement('function promotionLifecycleV186(item,now=new Date()){', '\n}');
 const NOW = new Date('2026-08-14T12:00:00+08:00');
-const promotionLifecycleV186 = new Function('now',
-  `${promotionDateTextSrc}\n${promotionLifecycleSrc}\nreturn promotionLifecycleV186;`)(NOW);
+const promotionLifecycleV186 = new Function('now', 'workspaceTemplateTextV97',
+  `${promotionDateTextSrc}\n${promotionLifecycleSrc}\nreturn promotionLifecycleV186;`)(NOW, TPL_V959.workspaceTemplateTextV97);
 
 const bucketBody = [
   statement('const growOfferBucketV324=item=>{', '};'),
@@ -57,14 +62,14 @@ const promotionDateTextV104 = new Function(`${promotionDateTextSrc}\nreturn prom
    an assertion cannot pass on an accidentally empty icon call. */
 const build = new Function('esc', 'isOwner', 'canRewards', 'growOffersTabV324', 'growOffersNowV324',
   'promotionLifecycleV186', 'promotionDateTextV104', 'customerMediaUrlV95',
-  'growFeaturedOfferIdV462', 'growFeaturedPinnedV462', 'CUI', 'items', bucketBody);
+  'growFeaturedOfferIdV462', 'growFeaturedPinnedV462', 'CUI', 'items', 'workspaceTemplateTextV97', bucketBody);
 
 const CUI_STUB = {icon: () => '<svg data-icon></svg>'};
 
 const call = (items, {isOwner = true, canRewards = true, tab = 'published',
   featuredId = '', featuredPinned = false} = {}) =>
   build(esc, isOwner, canRewards, tab, NOW, promotionLifecycleV186, promotionDateTextV104, () => '',
-    featuredId, featuredPinned, CUI_STUB, items);
+    featuredId, featuredPinned, CUI_STUB, items, TPL_V959.workspaceTemplateTextV97);
 
 const PUBLISHED_LIVE = {id: 'p1', name: '20% off spa', active: true, ends_at: '2026-08-27T23:59:59+08:00'};
 const PUBLISHED_SCHEDULED = {id: 'p2', name: 'National Day', active: true, starts_at: '2026-09-01T00:00:00+08:00', ends_at: '2026-09-10T23:59:59+08:00'};
@@ -195,9 +200,14 @@ test('V324 deleting reuses business_delete_promotion_v183 — the same RPC, same
   const handler = app.slice(app.indexOf("outerMain.querySelectorAll('[data-grow-offer-delete-v324]')"),
     app.indexOf('/* V324: show/hide the inline confirm block in place'));
   assert.match(handler, /business_delete_promotion_v183/);
-  /* V334 (owner markup, photo 7: "all 'retire' change to 'end'"). */
-  assert.match(handler, /End "\$\{name\}"\? Customers stop seeing it immediately\. The record is kept so your reports stay accurate\./);
-  assert.match(handler, /Delete the draft "\$\{name\}"\? This cannot be undone\. No customer has seen it\./);
+  /* V334 (owner markup, photo 7: "all 'retire' change to 'end'"). nestly_v959: both sentences are
+     named templates now — the wording lives in WORKSPACE_TEMPLATE_COPY_V97 in all three languages,
+     and the offer name still arrives as its own value. The keys are asserted here; the words
+     themselves are pinned once, where they are written. */
+  assert.match(handler, /workspaceTemplateTextV97\('endOfferCustomersStopSeeingItRecordKept',\{offerName:name\}\)/);
+  assert.match(handler, /workspaceTemplateTextV97\('deleteDraftCannotBeUndoneNoCustomerHasSeenIt',\{offerName:name\}\)/);
+  const endCopy = app.slice(app.indexOf('endOfferCustomersStopSeeingItRecordKept:Object.freeze('));
+  assert.match(endCopy.slice(0, 400), /Customers stop seeing it immediately\. The record is kept so your reports stay accurate\./);
   assert.match(handler, /growRerenderV322\(\)/, 'a real write still repaints from the server reply');
   // Same RPC the deep editor (promotionsPage) already calls — a second write path with different
   // wording would be two sources of truth for one action.

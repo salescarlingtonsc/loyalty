@@ -391,8 +391,8 @@ test('V267 no operational surface prints a bare record id for a reversal', () =>
 test('V267 the Sales audit disclosure keeps the id, but calls it a record id', () => {
   // Deliberate exception: this text lives inside the collapsed "Audit details" disclosure and
   // is the one place a reconciler genuinely needs the key. It must not read as prose.
-  assert.match(app, /Compensating reversal row\. Audit record id of the sale it reverses: \$\{s\.reversal_of\}/);
-  assert.match(app, /Original sale row, fully reversed\. Audit record id of the reversal: \$\{w\.reversal_sale_id\}/);
+  assert.match(app, /workspaceTemplateTextV97\('compensatingReversalRowAuditId'/);
+  assert.match(app, /workspaceTemplateTextV97\('originalSaleRowFullyReversedAuditId'/);
 });
 
 /* V270 — the owner circled DATE, TYPE and ITEM on the Activity history header. Type and date

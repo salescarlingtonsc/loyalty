@@ -18,6 +18,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(resolve(root, 'app/app.js'), 'utf8');
 
@@ -36,7 +37,11 @@ const grabConst = (name) => {
   return app.slice(start, end + '</style>`;'.length);
 };
 
-const sandbox = vm.createContext({ Intl, Date, Number, Math, JSON, String, Array, Object, console });
+/* nestly_v959: several sentences in the sliced region are named templates now, so the sandbox
+   carries the REAL template runtime. A stub would let a missing key or a dropped value pass a
+   test that claims to render production output. */
+const sandbox = vm.createContext({ Intl, Date, Number, Math, JSON, String, Array, Object, console,
+  ...workspaceTemplateRuntime('en') });
 vm.runInContext([
   /* the app's own escaper, quoted from app/app.js so the card is built the way the app builds it */
   "const esc=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));",

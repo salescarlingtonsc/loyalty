@@ -135,7 +135,9 @@ test('the busy state is released on every failure path, including an unexpected 
   assert.match(app, /finally\{[\s\S]{0,400}?promotionSaveInFlightV373=false;/,
     'the in-flight flag and the controls must be released however the save ended');
   assert.match(app, /catch\(error\)\{[\s\S]{0,400}?\.forEach\(button=>\{button\.disabled=false\}\)/);
-  assert.match(app, /This did not finish: \$\{ownerErrorText\(error\)\} Nothing was lost — press again\./);
+  /* nestly_v959: the sentence is a named template now — the words are pinned once where they are
+     written, and the call site is pinned to the key and its values. */
+  assert.match(app, /workspaceTemplateTextV97\('didNotFinishNothingLostPressAgain',\{[^}]*ownerErrorText\(error\)[^}]*\}\)/);
   // every storage call is bounded, because storage-js rethrows anything that is not a StorageError
   assert.match(app, /const withDeadlineV280=\(work,ms,timeoutMessage\)=>/);
   assert.match(app, /uploaded=await withDeadlineV280\(\s*\n\s*sb\.storage\.from\('business-public'\)\.upload\(/);
@@ -147,7 +149,7 @@ test('the busy state is released on every failure path, including an unexpected 
 
 test('an oversized photo is refused in plain words before anything is uploaded', () => {
   assert.match(app, /const PROMOTION_MEDIA_MAX_BYTES_V280=10485760;/);
-  assert.match(app, /That photo is \$\{\(Number\(file\.size\|\|0\)\/1048576\)\.toFixed\(1\)\} MB\. The limit is 10 MB/);
+  assert.match(app, /workspaceTemplateTextV97\('thatPhotoIsMbTheLimitIsTenMbChooseSmaller',\{[^}]*file\.size[^}]*\}\)/);
   assert.match(app, /const photoRefusalV280=promotionPhotoRefusalV280\(file\);/);
   // the refusal is also written where the owner is looking, not only into a toast
   assert.match(app, /refusedStatus\.textContent=photoRefusalV280/);
