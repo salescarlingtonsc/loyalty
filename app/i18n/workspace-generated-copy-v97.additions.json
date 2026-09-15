@@ -5226,6 +5226,1458 @@
       "reason": "nestly_v911 wave 6 — Help Centre article prose, complete guides. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre (nestly_v904) rendered entirely English to a zh-CN or ms reader. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. The Packages, Services, Products and Sales & refunds guides, plus the two status words those guides name (Not set up, Not included).",
       "zh-CN": "未包含",
       "ms": "Tidak termasuk"
+    },
+    {
+      "source": "Find customer",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查找顾客",
+      "ms": "Cari pelanggan"
+    },
+    {
+      "source": "Search by name or phone number.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "按姓名或电话号码搜索。",
+      "ms": "Cari mengikut nama atau nombor telefon."
+    },
+    {
+      "source": "Customer search",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客搜索",
+      "ms": "Carian pelanggan"
+    },
+    {
+      "source": "Appointment",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "预约",
+      "ms": "Janji temu"
+    },
+    {
+      "source": "View calendar",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看日历",
+      "ms": "Lihat kalendar"
+    },
+    {
+      "source": "Preparing…",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "准备中…",
+      "ms": "Menyediakan…"
+    },
+    {
+      "source": "See today’s bookings and appointments from the Dashboard.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "在仪表板查看今日的预订和预约。",
+      "ms": "Lihat tempahan dan janji temu hari ini dari Papan pemuka."
+    },
+    {
+      "source": "Open bookings",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "打开预订",
+      "ms": "Buka tempahan"
+    },
+    {
+      "source": "Open calendar",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "打开日历",
+      "ms": "Buka kalendar"
+    },
+    {
+      "source": "Tomorrow",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "明天",
+      "ms": "Esok"
+    },
+    {
+      "source": "Schedule date",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "安排日期",
+      "ms": "Tarikh jadual"
+    },
+    {
+      "source": "Follows the period you choose below. Open calendar shows the full schedule.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "跟随您在下方选择的时间段。打开日历可查看完整安排。",
+      "ms": "Mengikut tempoh yang anda pilih di bawah. Buka kalendar untuk melihat jadual penuh."
+    },
+    {
+      "source": "Minimise",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "收起",
+      "ms": "Kecilkan"
+    },
+    {
+      "source": "Understand your business",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "了解您的业务",
+      "ms": "Fahami perniagaan anda"
+    },
+    {
+      "source": "See visits, revenue and customer mix at a glance.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "一览到访、营收和顾客构成。",
+      "ms": "Lihat kunjungan, hasil dan komposisi pelanggan sekali pandang."
+    },
+    {
+      "source": "Not enough data yet",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "数据尚不足",
+      "ms": "Data belum mencukupi"
+    },
+    {
+      "source": "Merchant insights",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "商家洞察",
+      "ms": "Wawasan peniaga"
+    },
+    {
+      "source": "Loading recommendations…",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在加载建议…",
+      "ms": "Memuatkan cadangan…"
+    },
+    {
+      "source": "Inactive customer counts could not be loaded.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "无法加载不活跃顾客数量。",
+      "ms": "Kiraan pelanggan tidak aktif tidak dapat dimuatkan."
+    },
+    {
+      "source": "Charts could not load. The totals above are still current.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "图表无法加载。上方的总计仍然有效。",
+      "ms": "Carta tidak dapat dimuatkan. Jumlah di atas masih terkini."
+    },
+    {
+      "source": "Retry charts",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "重试加载图表",
+      "ms": "Cuba semula carta"
+    },
+    {
+      "source": "Campaign preparation",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "活动准备",
+      "ms": "Penyediaan kempen"
+    },
+    {
+      "source": "Prepare a campaign draft",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "准备活动草稿",
+      "ms": "Sediakan draf kempen"
+    },
+    {
+      "source": "Draft the audience and message now. Delivery is intentionally not enabled in this release.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "现在拟定受众和信息内容。本版本刻意未启用发送功能。",
+      "ms": "Rangka khalayak dan mesej sekarang. Penghantaran sengaja tidak diaktifkan dalam keluaran ini."
+    },
+    {
+      "source": "Campaign name",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "活动名称",
+      "ms": "Nama kempen"
+    },
+    {
+      "source": "Campaign type",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "活动类型",
+      "ms": "Jenis kempen"
+    },
+    {
+      "source": "We miss you",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "我们想念您",
+      "ms": "Kami rindukan anda"
+    },
+    {
+      "source": "Weekend promotion",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "周末促销",
+      "ms": "Promosi hujung minggu"
+    },
+    {
+      "source": "New service or menu",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "新服务或新菜单",
+      "ms": "Perkhidmatan atau menu baharu"
+    },
+    {
+      "source": "Flash promotion",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "限时快闪促销",
+      "ms": "Promosi kilat"
+    },
+    {
+      "source": "Audience preview",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "受众预览",
+      "ms": "Pratonton khalayak"
+    },
+    {
+      "source": "matching customers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "位符合条件的顾客",
+      "ms": "pelanggan yang sepadan"
+    },
+    {
+      "source": "Message preview",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "信息预览",
+      "ms": "Pratonton mesej"
+    },
+    {
+      "source": "Delivery is not enabled yet",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "尚未启用发送功能",
+      "ms": "Penghantaran belum diaktifkan"
+    },
+    {
+      "source": "Save draft",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "保存草稿",
+      "ms": "Simpan draf"
+    },
+    {
+      "source": "Business health summary",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "业务健康摘要",
+      "ms": "Ringkasan kesihatan perniagaan"
+    },
+    {
+      "source": "Business health",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "业务健康",
+      "ms": "Kesihatan perniagaan"
+    },
+    {
+      "source": "Recommended next actions from verified activity.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "根据已核实的活动记录推荐的后续操作。",
+      "ms": "Tindakan seterusnya yang disyorkan daripada aktiviti yang disahkan."
+    },
+    {
+      "source": "customer has",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "位顾客",
+      "ms": "pelanggan telah"
+    },
+    {
+      "source": "customers have",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "位顾客",
+      "ms": "pelanggan telah"
+    },
+    {
+      "source": "Needs attention",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "需要关注",
+      "ms": "Perlu perhatian"
+    },
+    {
+      "source": "Stable",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "稳定",
+      "ms": "Stabil"
+    },
+    {
+      "source": "Revenue is increasing",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "营收正在上升",
+      "ms": "Hasil sedang meningkat"
+    },
+    {
+      "source": "Revenue is lower",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "营收有所下降",
+      "ms": "Hasil lebih rendah"
+    },
+    {
+      "source": "increased",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "上升",
+      "ms": "meningkat"
+    },
+    {
+      "source": "decreased",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "下降",
+      "ms": "menurun"
+    },
+    {
+      "source": "Review which services and days contributed most.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看哪些服务和日期贡献最大。",
+      "ms": "Semak perkhidmatan dan hari yang menyumbang paling banyak."
+    },
+    {
+      "source": "Review inactive customers and recent visit trends.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看不活跃顾客和近期到访趋势。",
+      "ms": "Semak pelanggan tidak aktif dan trend kunjungan terkini."
+    },
+    {
+      "source": "Date range changed",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "日期范围已更改",
+      "ms": "Julat tarikh telah berubah"
+    },
+    {
+      "source": "Apply the new range to refresh these figures.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "应用新的日期范围以刷新这些数据。",
+      "ms": "Gunakan julat baharu untuk menyegarkan angka ini."
+    },
+    {
+      "source": "Performance unavailable",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "无法显示经营表现",
+      "ms": "Prestasi tidak tersedia"
+    },
+    {
+      "source": "Sales access is not complete for this branch scope. Choose an authorized branch.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "该分店范围的销售权限不完整。请选择已授权的分店。",
+      "ms": "Akses jualan tidak lengkap untuk skop cawangan ini. Pilih cawangan yang dibenarkan."
+    },
+    {
+      "source": "Members joined",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "新加入会员",
+      "ms": "Ahli menyertai"
+    },
+    {
+      "source": "Rewards redeemed",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "已兑换奖励",
+      "ms": "Ganjaran ditebus"
+    },
+    {
+      "source": "See which days receive the most visits.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看哪些日子到访最多。",
+      "ms": "Lihat hari yang menerima paling banyak kunjungan."
+    },
+    {
+      "source": "See how revenue changes over the selected period.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看所选期间的营收变化。",
+      "ms": "Lihat bagaimana hasil berubah sepanjang tempoh yang dipilih."
+    },
+    {
+      "source": "Understand the age profile of recorded customers.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "了解已记录顾客的年龄结构。",
+      "ms": "Fahami profil umur pelanggan yang direkodkan."
+    },
+    {
+      "source": "Understand the recorded gender mix of customers.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "了解已记录顾客的性别构成。",
+      "ms": "Fahami komposisi jantina pelanggan yang direkodkan."
+    },
+    {
+      "source": "Show all branches",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "显示所有分店",
+      "ms": "Tunjukkan semua cawangan"
+    },
+    {
+      "source": "Add customers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "添加顾客",
+      "ms": "Tambah pelanggan"
+    },
+    {
+      "source": "Inactive 30–59 days",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "不活跃 30–59 天",
+      "ms": "Tidak aktif 30–59 hari"
+    },
+    {
+      "source": "Inactive 60–89 days",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "不活跃 60–89 天",
+      "ms": "Tidak aktif 60–89 hari"
+    },
+    {
+      "source": "Inactive 90+ days / never visited",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "不活跃 90 天以上 / 从未到访",
+      "ms": "Tidak aktif 90+ hari / tidak pernah datang"
+    },
+    {
+      "source": "Inactive 60+ days",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "不活跃 60 天以上",
+      "ms": "Tidak aktif 60+ hari"
+    },
+    {
+      "source": "Inactive 30+ days",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "不活跃 30 天以上",
+      "ms": "Tidak aktif 30+ hari"
+    },
+    {
+      "source": "View sales report",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看销售报告",
+      "ms": "Lihat laporan jualan"
+    },
+    {
+      "source": "Revenue has started",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "营收已开始",
+      "ms": "Hasil telah bermula"
+    },
+    {
+      "source": "Customers may be drifting away",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客可能正在流失",
+      "ms": "Pelanggan mungkin semakin menjauh"
+    },
+    {
+      "source": "Prepare campaign",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "准备活动",
+      "ms": "Sediakan kempen"
+    },
+    {
+      "source": "View appointment report",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看预约报告",
+      "ms": "Lihat laporan janji temu"
+    },
+    {
+      "source": "From",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "起始",
+      "ms": "Dari"
+    },
+    {
+      "source": "To",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "截至",
+      "ms": "Hingga"
+    },
+    {
+      "source": "Run report",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "运行报告",
+      "ms": "Jalankan laporan"
+    },
+    {
+      "source": "Checking which branches these figures cover…",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在确认这些数据涵盖哪些分店…",
+      "ms": "Menyemak cawangan mana yang dirangkumi angka ini…"
+    },
+    {
+      "source": "Loading business intelligence…",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在加载商业智能…",
+      "ms": "Memuatkan business intelligence…"
+    },
+    {
+      "source": "Where customers come from",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客来源",
+      "ms": "Dari mana pelanggan datang"
+    },
+    {
+      "source": "Acquisition mix",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "获客构成",
+      "ms": "Komposisi perolehan"
+    },
+    {
+      "source": "All branches",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "所有分店",
+      "ms": "Semua cawangan"
+    },
+    {
+      "source": "Source",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "来源",
+      "ms": "Sumber"
+    },
+    {
+      "source": "Evidence",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "依据",
+      "ms": "Bukti"
+    },
+    {
+      "source": "New this period",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期新增",
+      "ms": "Baharu tempoh ini"
+    },
+    {
+      "source": "Repeat",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "回头",
+      "ms": "Berulang"
+    },
+    {
+      "source": "No acquisition activity recorded in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无获客记录。",
+      "ms": "Tiada aktiviti perolehan direkodkan dalam skop ini lagi."
+    },
+    {
+      "source": "Join &amp; booking funnel",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "加入与预订漏斗",
+      "ms": "Corong penyertaan &amp; tempahan"
+    },
+    {
+      "source": "How customers move through sign-up and booking",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客从注册到预订的流程",
+      "ms": "Bagaimana pelanggan bergerak melalui pendaftaran dan tempahan"
+    },
+    {
+      "source": "Join",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "加入",
+      "ms": "Sertai"
+    },
+    {
+      "source": "No join funnel data in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无加入漏斗数据。",
+      "ms": "Tiada data corong penyertaan dalam skop ini lagi."
+    },
+    {
+      "source": "Booking",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "预订",
+      "ms": "Tempahan"
+    },
+    {
+      "source": "No booking funnel data in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无预订漏斗数据。",
+      "ms": "Tiada data corong tempahan dalam skop ini lagi."
+    },
+    {
+      "source": "Run this report to load contactability.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "运行此报告以加载可联系情况。",
+      "ms": "Jalankan laporan ini untuk memuatkan kebolehhubungan."
+    },
+    {
+      "source": "Who you may contact",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "您可以联系的顾客",
+      "ms": "Siapa yang boleh anda hubungi"
+    },
+    {
+      "source": "Contactable customers, by channel",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "按渠道划分的可联系顾客",
+      "ms": "Pelanggan yang boleh dihubungi, mengikut saluran"
+    },
+    {
+      "source": "Loading customers…",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在加载顾客…",
+      "ms": "Memuatkan pelanggan…"
+    },
+    {
+      "source": "No customers in this category yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此类别中尚无顾客。",
+      "ms": "Tiada pelanggan dalam kategori ini lagi."
+    },
+    {
+      "source": "Counted visits",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "已计入的到访",
+      "ms": "Kunjungan yang dikira"
+    },
+    {
+      "source": "Last visit",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "最近到访",
+      "ms": "Kunjungan terakhir"
+    },
+    {
+      "source": "Concentration",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "集中度",
+      "ms": "Penumpuan"
+    },
+    {
+      "source": "Run this report to load category mix.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "运行此报告以加载类别构成。",
+      "ms": "Jalankan laporan ini untuk memuatkan komposisi kategori."
+    },
+    {
+      "source": "What they buy",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "他们购买什么",
+      "ms": "Apa yang mereka beli"
+    },
+    {
+      "source": "Category mix is not reliable yet",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "类别构成尚不可靠",
+      "ms": "Komposisi kategori belum boleh dipercayai"
+    },
+    {
+      "source": "Map services",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "归类服务",
+      "ms": "Petakan perkhidmatan"
+    },
+    {
+      "source": "Category mix",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "类别构成",
+      "ms": "Komposisi kategori"
+    },
+    {
+      "source": "No categorised revenue in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无已分类的营收。",
+      "ms": "Tiada hasil berkategori dalam skop ini lagi."
+    },
+    {
+      "source": "Last night's brief",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "昨夜简报",
+      "ms": "Taklimat malam tadi"
+    },
+    {
+      "source": "All answers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "全部答案",
+      "ms": "Semua jawapan"
+    },
+    {
+      "source": "Customer records could not load.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "无法加载顾客记录。",
+      "ms": "Rekod pelanggan tidak dapat dimuatkan."
+    },
+    {
+      "source": "Customer records and forecast",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客记录与预测",
+      "ms": "Rekod pelanggan dan ramalan"
+    },
+    {
+      "source": "Identified customer records",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "已识别的顾客记录",
+      "ms": "Rekod pelanggan yang dikenal pasti"
+    },
+    {
+      "source": "Paid visits",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "付费到访",
+      "ms": "Kunjungan berbayar"
+    },
+    {
+      "source": "Valid visits",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "有效到访",
+      "ms": "Kunjungan sah"
+    },
+    {
+      "source": ", which also counts zero-price visits such as package sessions.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "，其中也包含零价到访，例如配套次数。",
+      "ms": ", yang turut mengira kunjungan berharga sifar seperti sesi pakej."
+    },
+    {
+      "source": "Repeat this period",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期回头",
+      "ms": "Berulang tempoh ini"
+    },
+    {
+      "source": "Identified customer revenue",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "已识别顾客的营收",
+      "ms": "Hasil pelanggan yang dikenal pasti"
+    },
+    {
+      "source": "No completed sales linked to an identified customer in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无与已识别顾客关联的已完成交易。",
+      "ms": "Tiada jualan selesai yang dipautkan kepada pelanggan dikenal pasti dalam skop ini lagi."
+    },
+    {
+      "source": "Building a defensible revenue briefing…",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在生成有据可依的营收简报…",
+      "ms": "Membina taklimat hasil yang boleh dipertahankan…"
+    },
+    {
+      "source": "Expected value",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "预期价值",
+      "ms": "Nilai jangkaan"
+    },
+    {
+      "source": "Scenario value",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "情景价值",
+      "ms": "Nilai senario"
+    },
+    {
+      "source": "Incentive",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "激励",
+      "ms": "Insentif"
+    },
+    {
+      "source": "Primary option",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "首选方案",
+      "ms": "Pilihan utama"
+    },
+    {
+      "source": "Why now",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "为何是现在",
+      "ms": "Mengapa sekarang"
+    },
+    {
+      "source": "What would prove this wrong",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "什么会推翻这一判断",
+      "ms": "Apa yang akan membuktikan ini salah"
+    },
+    {
+      "source": "Margin",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "毛利",
+      "ms": "Margin untung"
+    },
+    {
+      "source": "Enter costs in Settings",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "在设置中输入成本",
+      "ms": "Masukkan kos dalam Tetapan"
+    },
+    {
+      "source": "Capacity",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "接待能力",
+      "ms": "Kapasiti"
+    },
+    {
+      "source": "Retention risk",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "流失风险",
+      "ms": "Risiko pengekalan"
+    },
+    {
+      "source": "Options",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "选项",
+      "ms": "Pilihan"
+    },
+    {
+      "source": "Impact",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "影响",
+      "ms": "Kesan"
+    },
+    {
+      "source": "Evidence class",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "依据等级",
+      "ms": "Kelas bukti"
+    },
+    {
+      "source": "Confidence",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "置信度",
+      "ms": "Keyakinan"
+    },
+    {
+      "source": "Channel",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "渠道",
+      "ms": "Saluran"
+    },
+    {
+      "source": "Top actions",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "首要行动",
+      "ms": "Tindakan utama"
+    },
+    {
+      "source": "Nothing surfaced above the evidence floor.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "没有内容达到依据下限。",
+      "ms": "Tiada apa muncul melebihi paras bukti minimum."
+    },
+    {
+      "source": "Today’s best actions",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "今日最佳行动",
+      "ms": "Tindakan terbaik hari ini"
+    },
+    {
+      "source": "Ranked opportunities",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "机会排序",
+      "ms": "Peluang berperingkat"
+    },
+    {
+      "source": "How customers return",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客如何回头",
+      "ms": "Bagaimana pelanggan kembali"
+    },
+    {
+      "source": "Retention funnel",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "留存漏斗",
+      "ms": "Corong pengekalan"
+    },
+    {
+      "source": "First to second visit",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "首次到第二次到访",
+      "ms": "Kunjungan pertama ke kedua"
+    },
+    {
+      "source": "Second to third visit",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "第二次到第三次到访",
+      "ms": "Kunjungan kedua ke ketiga"
+    },
+    {
+      "source": "Who they are",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "他们是谁",
+      "ms": "Siapa mereka"
+    },
+    {
+      "source": "Demographics",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "人口构成",
+      "ms": "Demografi"
+    },
+    {
+      "source": "Age band",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "年龄段",
+      "ms": "Julat umur"
+    },
+    {
+      "source": "Cell visits",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "分组到访",
+      "ms": "Kunjungan kumpulan"
+    },
+    {
+      "source": "Average transaction value",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "平均交易金额",
+      "ms": "Nilai transaksi purata"
+    },
+    {
+      "source": "Unclassified",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "未分类",
+      "ms": "Tidak dikelaskan"
+    },
+    {
+      "source": "No identified customers in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无已识别的顾客。",
+      "ms": "Tiada pelanggan dikenal pasti dalam skop ini lagi."
+    },
+    {
+      "source": "When customers come in",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客何时到店",
+      "ms": "Bila pelanggan datang"
+    },
+    {
+      "source": "Weekday behaviour",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "按星期的到店规律",
+      "ms": "Tingkah laku mengikut hari"
+    },
+    {
+      "source": "Busiest day (by visits)",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "最繁忙的一天（按到访）",
+      "ms": "Hari paling sibuk (mengikut kunjungan)"
+    },
+    {
+      "source": "Most valuable day (by revenue per visit)",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "最有价值的一天（按每次到访营收）",
+      "ms": "Hari paling bernilai (mengikut hasil setiap kunjungan)"
+    },
+    {
+      "source": "Weekday",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "星期",
+      "ms": "Hari"
+    },
+    {
+      "source": "Weekday visits",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "按星期的到访",
+      "ms": "Kunjungan mengikut hari"
+    },
+    {
+      "source": "Revenue per visit",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "每次到访营收",
+      "ms": "Hasil setiap kunjungan"
+    },
+    {
+      "source": "Occurrences in range",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "范围内出现次数",
+      "ms": "Kekerapan dalam julat"
+    },
+    {
+      "source": "Visited on",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "到访于",
+      "ms": "Dikunjungi pada"
+    },
+    {
+      "source": "No weekday activity in this scope yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "此范围内尚无按星期的活动记录。",
+      "ms": "Tiada aktiviti mengikut hari dalam skop ini lagi."
+    },
+    {
+      "source": "Call",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "致电",
+      "ms": "Panggil"
+    },
+    {
+      "source": "Usually comes every",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "通常每隔",
+      "ms": "Biasanya datang setiap"
+    },
+    {
+      "source": "Nobody is overdue against their own visit rhythm right now.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "目前没有顾客超出其自身的到访规律。",
+      "ms": "Tiada sesiapa yang lewat berbanding rentak kunjungan mereka sendiri buat masa ini."
+    },
+    {
+      "source": "Sessions left",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "剩余次数",
+      "ms": "Sesi yang tinggal"
+    },
+    {
+      "source": "Every prepaid session has been used.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "所有预付次数均已用完。",
+      "ms": "Setiap sesi prabayar telah digunakan."
+    },
+    {
+      "source": "Share",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "占比",
+      "ms": "Bahagian"
+    },
+    {
+      "source": "No customer revenue on record for this period yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期尚无顾客营收记录。",
+      "ms": "Tiada hasil pelanggan direkodkan bagi tempoh ini lagi."
+    },
+    {
+      "source": "Customers who bought it",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "购买过的顾客",
+      "ms": "Pelanggan yang membelinya"
+    },
+    {
+      "source": "Bought it again",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "再次购买",
+      "ms": "Membelinya semula"
+    },
+    {
+      "source": "First-time customers it brought in",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "由此带来的首次顾客",
+      "ms": "Pelanggan kali pertama yang dibawanya"
+    },
+    {
+      "source": "No service sales in this period yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期尚无服务销售。",
+      "ms": "Tiada jualan perkhidmatan dalam tempoh ini lagi."
+    },
+    {
+      "source": "Open sales",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "打开销售",
+      "ms": "Buka jualan"
+    },
+    {
+      "source": "Outstanding",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "未收款",
+      "ms": "Belum dikutip"
+    },
+    {
+      "source": "Names are hidden for your role.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "您的角色无法查看姓名。",
+      "ms": "Nama disembunyikan untuk peranan anda."
+    },
+    {
+      "source": "Every recorded sale in this period has a payment recorded against it.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期每一笔已记录的交易都有对应的收款记录。",
+      "ms": "Setiap jualan yang direkodkan dalam tempoh ini mempunyai bayaran yang direkodkan terhadapnya."
+    },
+    {
+      "source": "To the same person",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "归同一人",
+      "ms": "Kepada orang yang sama"
+    },
+    {
+      "source": "vs firm",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "对比全公司",
+      "ms": "berbanding firma"
+    },
+    {
+      "source": "(no longer active)",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "（已停用）",
+      "ms": "(tidak lagi aktif)"
+    },
+    {
+      "source": "No staff-attributed visits in this period yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期尚无归属员工的到访。",
+      "ms": "Tiada kunjungan yang dikaitkan dengan kakitangan dalam tempoh ini lagi."
+    },
+    {
+      "source": "Times redeemed",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "兑换次数",
+      "ms": "Kali ditebus"
+    },
+    {
+      "source": "Share of all redemptions",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "占全部兑换的比例",
+      "ms": "Bahagian daripada semua penebusan"
+    },
+    {
+      "source": "Redeemed by",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "兑换者",
+      "ms": "Ditebus oleh"
+    },
+    {
+      "source": "No reward redemptions in this period.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期没有奖励兑换。",
+      "ms": "Tiada penebusan ganjaran dalam tempoh ini."
+    },
+    {
+      "source": "Day",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "日期",
+      "ms": "Hari"
+    },
+    {
+      "source": "Visits per day",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "每日到访",
+      "ms": "Kunjungan sehari"
+    },
+    {
+      "source": "Not enough days in this period to rank the week yet.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期天数不足，尚无法排出星期名次。",
+      "ms": "Hari dalam tempoh ini belum cukup untuk menyusun kedudukan minggu."
+    },
+    {
+      "source": "Share of visits",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "到访占比",
+      "ms": "Bahagian kunjungan"
+    },
+    {
+      "source": "No visits recorded at any time of day in this period.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "本期任何时段均无到访记录。",
+      "ms": "Tiada kunjungan direkodkan pada bila-bila masa dalam tempoh ini."
+    },
+    {
+      "source": "Who comes when",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "谁在何时到店",
+      "ms": "Siapa datang bila"
+    },
+    {
+      "source": "Who came",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "到店的顾客",
+      "ms": "Siapa yang datang"
+    },
+    {
+      "source": "Last 14 days",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "最近 14 天",
+      "ms": "14 hari lepas"
+    },
+    {
+      "source": "Age",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "年龄",
+      "ms": "Umur"
+    },
+    {
+      "source": "What each group buys",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "各群体购买什么",
+      "ms": "Apa yang setiap kumpulan beli"
+    },
+    {
+      "source": "Item",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "项目",
+      "ms": "Item jualan"
+    },
+    {
+      "source": "Buyers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "购买人数",
+      "ms": "Pembeli"
+    },
+    {
+      "source": "Women",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "女性",
+      "ms": "Wanita"
+    },
+    {
+      "source": "Men",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "男性",
+      "ms": "Lelaki"
+    },
+    {
+      "source": "Top age band",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "主要年龄段",
+      "ms": "Julat umur teratas"
+    },
+    {
+      "source": "Owner brief",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "店主简报",
+      "ms": "Taklimat pemilik"
+    },
+    {
+      "source": "The short version: what happened, who to call, and what is already paid for.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "简要版：发生了什么、该联系谁，以及哪些已经付款。",
+      "ms": "Versi ringkas: apa yang berlaku, siapa yang perlu dihubungi, dan apa yang sudah dibayar."
+    },
+    {
+      "source": "Repeat (2+ days)",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "回头（间隔 2 天以上）",
+      "ms": "Berulang (2+ hari)"
+    },
+    {
+      "source": "Fewer than 2 days",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "少于 2 天",
+      "ms": "Kurang daripada 2 hari"
+    },
+    {
+      "source": "A regular customer is overdue",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "一位常客已超过通常的到访间隔",
+      "ms": "Pelanggan tetap sudah lewat"
+    },
+    {
+      "source": "A regular customer is slipping away",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "一位常客正在流失",
+      "ms": "Pelanggan tetap semakin menjauh"
+    },
+    {
+      "source": "Ranked by Peekaa as something this business is doing well.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "Peekaa 将此列为该商家做得好的方面。",
+      "ms": "Disenaraikan oleh Peekaa sebagai sesuatu yang perniagaan ini lakukan dengan baik."
+    },
+    {
+      "source": "Ranked by Peekaa against every other finding it could measure.",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "Peekaa 将其与所有其他可衡量的发现进行了排序。",
+      "ms": "Disenaraikan oleh Peekaa berbanding setiap penemuan lain yang boleh diukurnya."
+    },
+    {
+      "source": "Likely",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "很可能",
+      "ms": "Berkemungkinan"
+    },
+    {
+      "source": "Possible",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "有可能",
+      "ms": "Mungkin"
+    },
+    {
+      "source": "Money in and money owed",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "收入与应收款",
+      "ms": "Wang masuk dan wang terhutang"
+    },
+    {
+      "source": "Do customers come back?",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "顾客会回头吗？",
+      "ms": "Adakah pelanggan datang semula?"
+    },
+    {
+      "source": "What sells",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "什么好卖",
+      "ms": "Apa yang laku"
+    },
+    {
+      "source": "From looking to booking",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "从浏览到预订",
+      "ms": "Daripada melihat kepada menempah"
+    },
+    {
+      "source": "Rewards",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "奖励",
+      "ms": "Ganjaran"
+    },
+    {
+      "source": "Busy and quiet times",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "繁忙与清闲时段",
+      "ms": "Waktu sibuk dan lengang"
+    },
+    {
+      "source": "Prepaid sessions",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "预付次数",
+      "ms": "Sesi prabayar"
+    },
+    {
+      "source": "Compare your branches",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "比较各分店",
+      "ms": "Bandingkan cawangan anda"
+    },
+    {
+      "source": "Make Peekaa smarter",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "让 Peekaa 更聪明",
+      "ms": "Jadikan Peekaa lebih pintar"
+    },
+    {
+      "source": "How Peekaa works this out",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "Peekaa 如何得出这一结果",
+      "ms": "Bagaimana Peekaa mengiranya"
+    },
+    {
+      "source": "Questions and answers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "问与答",
+      "ms": "Soalan dan jawapan"
+    },
+    {
+      "source": "Due back",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "应回头",
+      "ms": "Patut kembali"
+    },
+    {
+      "source": "Overdue",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "已逾期",
+      "ms": "Lewat"
+    },
+    {
+      "source": "Slipping away",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在流失",
+      "ms": "Semakin menjauh"
+    },
+    {
+      "source": "A customer may be leaving",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "一位顾客可能要流失",
+      "ms": "Pelanggan mungkin akan pergi"
+    },
+    {
+      "source": "Too dependent on one thing",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "过度依赖单一来源",
+      "ms": "Terlalu bergantung pada satu perkara"
+    },
+    {
+      "source": "Chance to grow",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "增长机会",
+      "ms": "Peluang untuk berkembang"
+    },
+    {
+      "source": "Going well",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "进展良好",
+      "ms": "Berjalan lancar"
+    },
+    {
+      "source": "Still learning",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "仍在学习中",
+      "ms": "Masih mempelajari"
+    },
+    {
+      "source": "View services",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看服务",
+      "ms": "Lihat perkhidmatan"
+    },
+    {
+      "source": "Open bring-back list",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "打开挽回名单",
+      "ms": "Buka senarai bawa kembali"
+    },
+    {
+      "source": "See busy and quiet times",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看繁忙与清闲时段",
+      "ms": "Lihat waktu sibuk dan lengang"
+    },
+    {
+      "source": "See who you may contact",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看可联系的顾客",
+      "ms": "Lihat siapa yang boleh anda hubungi"
+    },
+    {
+      "source": "View packages",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看配套",
+      "ms": "Lihat pakej"
+    },
+    {
+      "source": "See who comes back",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看哪些顾客回头",
+      "ms": "Lihat siapa yang datang semula"
+    },
+    {
+      "source": "See rewards",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看奖励",
+      "ms": "Lihat ganjaran"
+    },
+    {
+      "source": "See staff performance",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看员工表现",
+      "ms": "Lihat prestasi kakitangan"
+    },
+    {
+      "source": "See the full evidence",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看完整依据",
+      "ms": "Lihat bukti penuh"
+    },
+    {
+      "source": "Review payments",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看收款",
+      "ms": "Semak bayaran"
+    },
+    {
+      "source": "Open today’s best action",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "打开今日最佳行动",
+      "ms": "Buka tindakan terbaik hari ini"
+    },
+    {
+      "source": "How much you rely on your top customers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "您对主要顾客的依赖程度",
+      "ms": "Sejauh mana anda bergantung pada pelanggan utama"
+    },
+    {
+      "source": "Services sorted into categories",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "已归类的服务",
+      "ms": "Perkhidmatan yang disusun mengikut kategori"
+    },
+    {
+      "source": "What you know about your customers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "您对顾客的了解程度",
+      "ms": "Apa yang anda tahu tentang pelanggan anda"
+    },
+    {
+      "source": "Coverage",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "覆盖率",
+      "ms": "Liputan"
+    },
+    {
+      "source": "See what sells",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "查看什么好卖",
+      "ms": "Lihat apa yang laku"
+    },
+    {
+      "source": "Open customers",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "打开顾客",
+      "ms": "Buka pelanggan"
+    },
+    {
+      "source": "Action",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "操作",
+      "ms": "Tindakan"
+    },
+    {
+      "source": "What",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "内容",
+      "ms": "Apa"
+    },
+    {
+      "source": "Improving",
+      "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
+      "zh-CN": "正在改善",
+      "ms": "Bertambah baik"
     }
   ]
 }

@@ -243,7 +243,9 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        status pills in English or in words the screen does not use: the pills really do translate
        (On/Off -> 开启/关闭, Hidup/Mati) and so do Read and Edit (阅读/编辑, Baca/Sunting), so a
        guide that said 只读 or 'Read' was naming something the reader would never see. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,2337,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* 2337 -> 2578: nestly_v924 wave 7 — the first MODULE wave: Dashboard, Business Intelligence
+       and the global chrome. The brand name Peekaa is deliberately never translated. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,2578,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
