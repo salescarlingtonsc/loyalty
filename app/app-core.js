@@ -711,6 +711,9 @@ function disposeCurrentRoute(){
   activeCustomerWalletLiveCleanupV295();
   document.querySelectorAll('.appointment-detail-modal').forEach(dialog=>dialog.remove());
 }
+let notifState={unread:0,items:[]};
+let notifLoaded=false;
+let notifError=null;
 let rtChannel=null;       // the single realtime channel for this session
 let rtChannelBizId=null;  // which business it's currently subscribed to
 let muteAlerts=false;     // in-session-only pop-up mute for non-owners (can't persist — the
@@ -1160,6 +1163,12 @@ function resetClientSessionState({preserveInvitation=false}={}){
   /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
+  /* nestly_v922, and the same rule as V286 above: the bell cache is per-person too, and it holds
+     notification BODIES, which carry customer names. Two staff sharing one till device is the
+     ordinary case, and the one where signing out and back in must not first-paint the previous
+     person's rows. The workspace-change clear in loadNotifications does not cover it, because
+     signing back into the SAME business compares equal. */
+  notifState={unread:0,items:[]};notifLoaded=false;notifError=null;notifLoadedForV922='';
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;rebookFromAppointmentV640=null;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growOffersPageV584=0;growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
@@ -7495,9 +7504,24 @@ function resetPopoverStateV452(){
   doc.getElementById(POPOVER_SHEET_ID_V452)?.removeAttribute('open');
 }
 let autoRefreshTimerV370=0,pendingBookingCountTimerV370=0;
+/* nestly_v922: the workspace channel's rejoin budget. Declared here because killChannels() reads
+   it and lives in the CORE chunk; the full account of the defect and of the storm this must not
+   cause is with joinRealtimeChannelV922 below, in the business chunk, so every customer does not
+   download it. */
+let rtRetriesV922=0,rtRetryTimerV922=0;
 function killChannels(){
-  if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
+  /* nestly_v922: cancel the queued rejoin FIRST — a live timer fires after sign-out and
+     re-subscribes to a workspace this browser no longer has. Primitives only in this function:
+     it lives in the CORE chunk, and naming a workspace function here would drag the whole
+     workspace surface into the bundle every customer downloads. */
+  if(rtRetryTimerV922){clearTimeout(rtRetryTimerV922);rtRetryTimerV922=0}
+  rtRetriesV922=0;
+  /* Slot cleared BEFORE the teardown: leave() closes synchronously when the channel cannot push,
+     and a CLOSED that still matches the live slot ARMS A REJOIN — one this function has just
+     cancelled. Same ordering and same reason as joinRealtimeChannelV922 (see F052 there). */
+  const discardedOnKillV922=rtChannel;
   rtChannel=null;rtChannelBizId=null;
+  if(discardedOnKillV922){ try{sb.removeChannel(discardedOnKillV922);}catch(e){} }
   /* V370: a debounced refresh scheduled by the last event this channel delivered must not fire
      into a signed-out session and re-query a workspace this browser no longer has. */
   if(autoRefreshTimerV370){clearTimeout(autoRefreshTimerV370);autoRefreshTimerV370=0}

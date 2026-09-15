@@ -2273,6 +2273,12 @@ function resetClientSessionState({preserveInvitation=false}={}){
   /* V286: the nav badge cache is per-person. Left standing, customer B's Rewards/Bookings tabs
      first-painted with customer A's counts on a shared phone until the wallet data landed. */
   customerNavCountsV194={bookings:0};
+  /* nestly_v922, and the same rule as V286 above: the bell cache is per-person too, and it holds
+     notification BODIES, which carry customer names. Two staff sharing one till device is the
+     ordinary case, and the one where signing out and back in must not first-paint the previous
+     person's rows. The workspace-change clear in loadNotifications does not cover it, because
+     signing back into the SAME business compares equal. */
+  notifState={unread:0,items:[]};notifLoaded=false;notifError=null;notifLoadedForV922='';
   customerFeatureCapabilities=null;customerPhoneOtpCapabilities=null;customerRelationshipSyncState={userId:null,attempted:false,result:null};pendingCustomerInvitationToken=invitation;rememberPendingCustomerJoinToken(joinToken);pendingCustomerBusinessSlug='';rememberPendingCustomerDestination(destination);selectedBranchId=null;profileOpen=false;
   pendingCustomerSearch='';pendingTillPhone='';pendingApptClientId='';pendingWaitlistBookIdV571='';pendingApptPrefillV575=null;pendingOpenApptFormV217=false;rebookFromAppointmentV640=null;settingsActiveTab='modules';growTopicV229='';growSwitchPendingV322='';growSwitchErrorV322='';growOffersTabV324='published';growOffersPageV584=0;growPointsRewardTabV324='published';growPointsViewKindV350=null;growPointsManageTabV326='published';growPointsDeletePendingV326='';growPointsAddOpenV326='';growPointsAddDraftV326={name:'',points:'',description:'',endsOn:'',whereItWorks:'',expiryDays:''};growPointsErrorV326='';growPointsBusyV326=false;growPointsEditingV326=null;growRedemptionBusyV521=false;growRedemptionErrorV521='';growPointsPhotoFileV343=null;growPointsRemovePhotoV343=false;growReferralEditOpenV364=false;growReferralOnV558=false;growReferralErrorV364='';growReferralBusyV364=false;growTiersManageTabV331='published';growTiersDeletePendingV331='';growTiersAddOpenV331='';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};growTiersErrorV331='';growTiersBusyV331=false;growTiersEditingV331=null;growTileFilterStateV357='all';growEarnEditOpenV359=false;growEarnErrorV359='';growEarnBusyV359=false;growBbAddOpenV361=false;growBbEditingV361=null;growBbDraftV361={name:'',reward:'',away:'',expiry:''};growBbErrorV361='';growBbBusyV361=false;growBbDeletePendingV361='';
   resetProductInteractionSessionV100();
@@ -21434,10 +21440,28 @@ function timeAgo(iso){
 const NOTIF_ROUTE={booking_new:'#/bookings',booking_waitlisted:'#/bookings',change_request:'#/bookings',
   booking_expired:'#/bookings',waitlist_ready:'#/bookings',subscription_payment_due:'#/settings',
   feedback_new:'#/clients'};
+/* nestly_v922: which workspace notifState currently describes, and a monotonic ticket for the
+   reads in flight. refreshWaitlistBadge has carried exactly this since it was written; this
+   function never did, and it is the one that matters most — the rows it caches are notification
+   BODIES, which carry customer names. */
+let notifRequestV922=0,notifLoadedForV922='';
 async function loadNotifications(){
-  const {data,error}=await sb.rpc('get_notifications',{p_business:S.biz.id,p_limit:30});
+  const bizIdV922=String(S.biz?.id||'');
+  /* ⚖️ Cross-tenant: notifState is module-level and was NOT cleared when S.biz changed, so after a
+     workspace switch the bell kept painting the previous firm's customer names until a later read
+     happened to land. Clearing on the switch makes the gap show "Loading…" instead. */
+  if(notifLoadedForV922&&notifLoadedForV922!==bizIdV922){
+    notifState={unread:0,items:[]};notifLoaded=false;notifError=null;
+  }
+  const ticketV922=++notifRequestV922;
+  const {data,error}=await sb.rpc('get_notifications',{p_business:S.biz?.id,p_limit:30});
+  /* A slower answer for a workspace the owner has already left must never overwrite a newer one.
+     v922 gave this function a second caller — the realtime rejoin — which fires at a moment nobody
+     chose, so the race stopped being theoretical. */
+  if(ticketV922!==notifRequestV922||String(S.biz?.id||'')!==bizIdV922)return;
   if(error){notifError=error.message||'Could not load notifications';return}
-  notifError=null;notifLoaded=true;notifState={unread:data.unread||0,items:data.items||[]};
+  notifError=null;notifLoaded=true;notifLoadedForV922=bizIdV922;
+  notifState={unread:data.unread||0,items:data.items||[]};
 }
 function bellHtml(){
   const n=notifState.unread||0;
@@ -21568,11 +21592,120 @@ function autoRefreshIfRelevantNowV370(){
   if(editing&&M()?.contains(focused))return;
   P[key](currentPage[1]);
 }
+/* nestly_v922: the workspace channel's rejoin budget. Declared here because killChannels() reads
+   it and lives in the CORE chunk; the full account of the defect and of the storm this must not
+   cause is with joinRealtimeChannelV922 below, in the business chunk, so every customer does not
+   download it. */
+let rtRetriesV922=0,rtRetryTimerV922=0;
+/* How long 'joining' may be believed. supabase-js gives the join push a 10s timeout, so a join
+   that is going to succeed or fail has done so well inside this. */
+const REALTIME_JOIN_WINDOW_MS_V922=15000;
+let rtJoinStartedAtV922=0;
+/* 'joining' counts as up, but only for ONE join window — and that bound is the point.
+   A join in flight must not be torn down and restarted by the next navigation; that is the same
+   churn by another route. But 'joining' is NOT reliably transient: RealtimeChannel installs its own
+   rejoinTimer, and both the error handler and the join-push timeout set state='errored' then
+   reschedule, while _rejoin() sets it back to 'joining'. Against a realtime tenant that is down the
+   channel therefore alternates joining/errored forever and never reaches a terminal state. With an
+   unbounded belief in 'joining', the app's five attempts would be spent and then every later
+   navigation would sample the state at an arbitrary instant — repairing only when it happened to
+   land on 'errored'. That is a coin flip, and the merchant has no way to know which side came up.
+   Bounding the window makes navigating back into the workspace a GUARANTEE rather than a chance. */
+const realtimeChannelUpV922=()=>{
+  const stateV922=rtChannel?.state;
+  if(stateV922==='joined')return true;
+  return stateV922==='joining'&&(Date.now()-rtJoinStartedAtV922)<REALTIME_JOIN_WINDOW_MS_V922;
+};
+/* postgres_changes has NO REPLAY, so a join that follows a failure comes back to a page whose
+   badges are missing everything that happened in the gap — and the unread count is a client-side
+   increment, not a re-derivation, so those INSERTs are gone for good. Re-reading is what makes a
+   rejoin mean something. Deliberately NOT run on the FIRST successful join: initNotifications has
+   just read, and re-reading there would add a request per workspace open for nothing. The waitlist
+   badge is deliberately absent too — it has no realtime subscription at all, so a socket gap tells
+   us nothing about it. */
+function resyncAfterRealtimeRejoinV922(bizId){
+  if(String(S.biz?.id||'')!==String(bizId))return;
+  void loadNotifications().then(()=>{
+    if(String(S.biz?.id||'')!==String(bizId))return;
+    renderBell(currentPage);
+  });
+  refreshPendingBookingRequestCountV329();
+  autoRefreshIfRelevant();
+}
 function ensureRealtimeChannel(){
-  if(rtChannel&&rtChannelBizId===S.biz.id) return; // already live for this business — reuse it
-  if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} rtChannel=null; }
-  rtChannel=sb.channel('rt-'+S.biz.id)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'business_id=eq.'+S.biz.id},payload=>{
+  /* Liveness, not identity. This is the whole fix: a channel that is present but dead no longer
+     passes for a live one, so the next navigation rebuilds it. */
+  if(rtChannel&&rtChannelBizId===S.biz.id&&realtimeChannelUpV922())return;
+  /* Reaching here means there is no usable channel. Navigating back into the workspace is this
+     surface's equivalent of the customer wallet's return-to-foreground: it spends a fresh budget,
+     so a socket that died while the attempts were exhausted gets its chance back. */
+  rtRetriesV922=0;
+  if(rtRetryTimerV922){clearTimeout(rtRetryTimerV922);rtRetryTimerV922=0}
+  joinRealtimeChannelV922();
+}
+/* One place that owns the backoff, so the two callers cannot drift. Returns nothing; the guards
+   are here rather than at the call sites: the cap, and "never stack a second timer". */
+function scheduleRealtimeRejoinV922(bizId){
+  if(rtRetriesV922>=5||rtRetryTimerV922)return;
+  rtRetriesV922+=1;
+  rtRetryTimerV922=setTimeout(()=>{
+    rtRetryTimerV922=0;
+    if(S.biz?.id===bizId&&S.user)joinRealtimeChannelV922();
+     /* Jittered. Without it every tab that lost the socket in the same incident retries on the
+        same 2/4/8/16/32 grid, and the recovering service is met by a synchronised wave. */
+  },1000*(2**rtRetriesV922)+Math.floor(Math.random()*1000));
+}
+/* nestly_v922 — the workspace channel repairs itself.
+
+   THE DEFECT. This subscribed with NO status callback at all, and re-entry was gated on OBJECT
+   IDENTITY: `if(rtChannel&&rtChannelBizId===S.biz.id) return`. sb.channel(...).subscribe() hands
+   back the channel object whether or not the join SUCCEEDED, and rtChannel/rtChannelBizId were
+   assigned unconditionally — so a channel that errored or timed out while joining was recorded as
+   the live one, every later call returned early on it, and nothing ever rebuilt it. A single bad
+   second at open (a cold tenant answering "is initializing", a pocket, a dropped socket) cost the
+   whole session its notifications, its booking pop-ups and its badge updates, silently and until
+   reload. The customer wallet lost eleven minutes of pushes to exactly this and was given the
+   bounded rejoin loop at v498; the workspace never got it. This is that loop.
+
+   THE STORM THIS MUST NOT CAUSE (audit F052, learned on the customer side — read before editing).
+   removeChannel() calls leave(), which fires phx_close, and subscribe() registers
+   _onClose(()=>cb('CLOSED')) — so every deliberate rebuild makes the OLD channel report CLOSED. A
+   callback that reads CLOSED as a failure answers it with another rebuild; the new channel joins
+   and resets the counter without cancelling the timer already queued; that timer removes the
+   healthy channel; its CLOSED queues the next one. Because SUBSCRIBED keeps resetting the counter,
+   the cap is never reached and the tab churns channels every ~2s forever. Two things stop it, and
+   both are load-bearing: the live slot is cleared BEFORE the teardown so a deliberate teardown
+   compares unequal and is inert, and SUBSCRIBED cancels any timer queued by this channel's own bad
+   start. */
+function joinRealtimeChannelV922(){
+  if(!S.biz?.id||!S.user||typeof sb.channel!=='function')return;
+  const bizId=S.biz.id;
+  /* F052: the slot is cleared BEFORE the teardown, never after. removeChannel can emit the old
+     channel's CLOSED synchronously, and the guard inside subscribe() compares against this slot —
+     leaving it pointing at the channel being torn down would let that CLOSED look live. */
+  let discardedV922=null;
+  if(rtChannel){discardedV922=rtChannel;rtChannel=null;try{sb.removeChannel(discardedV922)}catch(e){}}
+  try{
+    const channelV922=sb.channel('rt-'+bizId);
+    /* sb.channel() DEDUPES BY TOPIC, and removeChannel() only drops the old channel from that
+       registry when its close lands — verified in the 2.110.7 build this app loads: channel() does
+       `channels.find(c=>c.topic===realtimeTopic)`, removeChannel awaits unsubscribe(), and the
+       channel calls socket._remove(this) from its own onClose. Phoenix closes synchronously only
+       when the channel CANNOT push, so tearing down a still-healthy channel and immediately asking
+       for the same topic hands back the very object being discarded — and .subscribe() is a no-op
+       on a channel that is not closed, so that rebuild would silently do NOTHING while this code
+       recorded it as live. Every rebuild path above reaches here with an errored, closed or leaving
+       channel, which does close synchronously, so this should be unreachable. It is checked rather
+       than assumed because the failure it prevents is exactly the one this whole change exists to
+       remove: a workspace that is permanently deaf while the code believes it is listening. */
+    if(discardedV922&&channelV922===discardedV922){
+      rtChannelBizId=null;
+      scheduleRealtimeRejoinV922(bizId);
+      return;
+    }
+    channelV922
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:'business_id=eq.'+bizId},payload=>{
+      if(String(S.biz?.id||'')!==String(bizId))return;
       notifState.unread=(notifState.unread||0)+1;
       notifState.items=[payload.new,...(notifState.items||[])].slice(0,30);
       renderBell(currentPage);
@@ -21587,26 +21720,65 @@ function ensureRealtimeChannel(){
        open) and, when pop-up alerts are on for this business and this session isn't muted,
        opens the request as a real dialog with the requested team member named — not just a
        toast, which disappears before an owner mid-service can read it. */
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},payload=>{
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_requests',filter:'business_id=eq.'+bizId},payload=>{
+      if(String(S.biz?.id||'')!==String(bizId))return;
       autoRefreshIfRelevant();
       refreshPendingBookingRequestCountV329();
       if(S.biz.notify_new_bookings&&!muteAlerts&&STAFF_BOOKING_DECISION_STATUSES.has(payload.new?.status)&&canWriteModule('bookings')){
         openBookingRequestPopupV329ById(payload.new.id);
       }
     })
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>{
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'business_id=eq.'+bizId},()=>{
+      if(String(S.biz?.id||'')!==String(bizId))return;
       autoRefreshIfRelevant();refreshPendingBookingRequestCountV329();
     })
-    .on('postgres_changes',{event:'DELETE',schema:'public',table:'booking_requests',filter:'business_id=eq.'+S.biz.id},()=>{
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'booking_requests',filter:'business_id=eq.'+bizId},()=>{
+      if(String(S.biz?.id||'')!==String(bizId))return;
       autoRefreshIfRelevant();refreshPendingBookingRequestCountV329();
     })
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'appointments',filter:'business_id=eq.'+S.biz.id},()=>autoRefreshIfRelevant())
-    .subscribe();
-  rtChannelBizId=S.biz.id;
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'appointments',filter:'business_id=eq.'+bizId},()=>{
+      if(String(S.biz?.id||'')!==String(bizId))return;
+      autoRefreshIfRelevant();
+    });
+    rtChannel=channelV922;
+    rtChannelBizId=bizId;
+    rtJoinStartedAtV922=Date.now();
+    channelV922.subscribe(status=>{
+      /* F052: this channel's own statuses only. A channel we have already replaced must not be
+         able to schedule anything. */
+      if(rtChannel!==channelV922)return;
+      if(String(S.biz?.id||'')!==String(bizId))return;
+      if(status==='SUBSCRIBED'){
+        if(rtRetryTimerV922){clearTimeout(rtRetryTimerV922);rtRetryTimerV922=0}
+        const recoveringV922=rtRetriesV922>0;
+        rtRetriesV922=0;
+        if(recoveringV922)resyncAfterRealtimeRejoinV922(bizId);
+        return;
+      }
+      /* CLOSED also lands here when killChannels removes the channel on sign-out; the slot guard
+         above is what keeps that teardown from scheduling a ghost rejoin. */
+      if(status!=='CHANNEL_ERROR'&&status!=='TIMED_OUT'&&status!=='CLOSED')return;
+      /* Bounded: 2s, 4s, 8s, 16s, 32s, then stop. A merely cold tenant is warm in one or two; one
+         that is genuinely down is not hammered, and the per-navigation badge reads carry the page
+         meanwhile. */
+      scheduleRealtimeRejoinV922(bizId);
+    });
+  }catch(e){rtChannel=null;rtChannelBizId=null}
 }
+
 function killChannels(){
-  if(rtChannel){ try{sb.removeChannel(rtChannel);}catch(e){} }
+  /* nestly_v922: cancel the queued rejoin FIRST — a live timer fires after sign-out and
+     re-subscribes to a workspace this browser no longer has. Primitives only in this function:
+     it lives in the CORE chunk, and naming a workspace function here would drag the whole
+     workspace surface into the bundle every customer downloads. */
+  if(rtRetryTimerV922){clearTimeout(rtRetryTimerV922);rtRetryTimerV922=0}
+  rtRetriesV922=0;
+  /* Slot cleared BEFORE the teardown: leave() closes synchronously when the channel cannot push,
+     and a CLOSED that still matches the live slot ARMS A REJOIN — one this function has just
+     cancelled. Same ordering and same reason as joinRealtimeChannelV922 (see F052 there). */
+  const discardedOnKillV922=rtChannel;
   rtChannel=null;rtChannelBizId=null;
+  if(discardedOnKillV922){ try{sb.removeChannel(discardedOnKillV922);}catch(e){} }
   /* V370: a debounced refresh scheduled by the last event this channel delivered must not fire
      into a signed-out session and re-query a workspace this browser no longer has. */
   if(autoRefreshTimerV370){clearTimeout(autoRefreshTimerV370);autoRefreshTimerV370=0}
