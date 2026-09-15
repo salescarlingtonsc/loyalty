@@ -3286,6 +3286,22 @@ function wireProfile(page){
      shell is wired, which is what the top-bar position always meant. */
   hydrateProfileBranchSelectorV158(page);
   if(profileOpen){
+    /* nestly_v921 — THE LANGUAGE PICKER HAD NO HANDLER AT ALL, and had not since V225.
+       wireWorkspaceLanguageV97() is called from renderShell, and renderShell runs with
+       profileOpen === false ALWAYS: it is initialised false and route() resets it through
+       resetPopoverStateV452() before every render. The desktop picker lives inside
+       profileHtml()'s `${profileOpen? … }` branch, so at the moment it is wired it does not
+       exist, wirePicker's `if(!picker)return` takes the early exit, and nothing is ever bound.
+       Opening the menu calls renderProfile -> wireProfile, which did not wire it either.
+       What the owner saw: choose 中文, the select shows 中文 because that is ordinary DOM state,
+       and NOTHING happens — no request, no re-render, no error, and the workspace stays English
+       because workspaceLocale was never assigned. Hence "do i need to press save or smth": no,
+       and there was nothing listening to press save for.
+       The mobile picker was never affected — it renders unconditionally inside the More drawer,
+       so it exists when renderShell wires it. That is why the mechanism looked sound in tests.
+       This is the only place the desktop picker can be bound, because it is the only place it
+       exists. Re-running is safe: wirePicker assigns .onchange, which overwrites. */
+    wireWorkspaceLanguageV97();
     /* V452: Escape (and the focus return to the account chip) is the shared controller's job now.
        It used to be bound to the panel, so it only fired when focus was already inside it. */
     const profileNameForm=$('profileNameFormV158');
