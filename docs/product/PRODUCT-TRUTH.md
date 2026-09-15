@@ -108,7 +108,12 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
 - Passkey presentation may be conditional on browser/platform support. The UI
   must not promise that a browser will allow a silent biometric prompt where
   platform policy requires user mediation.
-- The customer portal is English-only at this stage.
+- The customer portal is English-only at this stage. Reaffirmed by the owner on
+  2026-09-15 ("customer app = english only") after the code had drifted: a customer
+  could pick 中文 / Bahasa Melayu / தமிழ் at registration or in Profile, and from
+  nestly_v954 the whole wallet was walked into that language. nestly_v980 pins the
+  customer locale resolver to English and removes both pickers. The BUSINESS
+  workspace is a separate decision and stays trilingual (en / zh-CN / ms).
 
 ## Customer experience
 

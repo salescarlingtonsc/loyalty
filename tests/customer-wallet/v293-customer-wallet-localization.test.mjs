@@ -93,14 +93,26 @@ test('zh-CN, ms and ta sentence keys cover the ct()-routed wallet and scanner st
   }
 });
 
-test('the stored preferred language drives the wallet and legacy zh folds to zh-CN',()=>{
-  assert.match(js,/const normalizeCustomerLocale=value=>\{const v=String\(value\|\|''\)\.trim\(\);if\(v==='zh'\)return 'zh-CN';return CUSTOMER_LOCALES\.includes\(v\)\?v:'en'\}/);
+/* nestly_v980 — OWNER RULING 2026-09-15: "customer app = english only", restoring
+   docs/product/PRODUCT-TRUTH.md's long-standing "The customer portal is English-only at this stage".
+   The wallet no longer follows a stored language. What is still true — and still asserted — is that
+   the stored value is READ through the one resolver, so nobody who had already saved 中文 is
+   stranded, and that no separate locale RPC was ever introduced. */
+test('the wallet renders in English whatever language is stored',()=>{
+  assert.match(js,/const normalizeCustomerLocale=\(\)=>'en';/);
+  // the stored value is still read through the resolver, so a saved 中文 resolves back to English
   assert.match(js,/customerLocale=normalizeCustomerLocale\(profile\?\.preferred_language\)/);
   assert.match(js,/setAttribute\('lang',customerLocale\)/);
   // sign-out still resets the surface to English
   assert.match(js,/customerLocale='en';\n  workspaceLocaleLoadedFor=''/);
+  // and the customer is offered no way to choose another one
+  assert.doesNotMatch(js,/id="customerProfileLanguage"/);
 });
 
+/* nestly_v980: this branch is now INERT — normalizeCustomerLocale always answers 'en', so
+   nextLocale!==customerLocale can never be true. The assertions still describe the shipped code and
+   are left standing rather than deleted, because the branch is still there; see the commit's note on
+   what the ruling stranded and the follow-up that would remove it. */
 test('a saved language change applies immediately and re-renders the profile',()=>{
   assert.match(js,/const nextLocale=normalizeCustomerLocale\(language\);/);
   /* Pin updated (audit F041): the re-render now carries `requestedView`, so a language change made

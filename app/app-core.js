@@ -3491,7 +3491,22 @@ const CUSTOMER_COPY=Object.freeze({
     showMyCodeBody:'கவுண்டரில் உள்ள குழுவிடம் இதைக் காட்டுங்கள்.'
   })
 });
-const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
+/* nestly_v980 — OWNER RULING 2026-09-15: "customer app = english only". A restatement, not a new
+   decision: docs/product/PRODUCT-TRUTH.md has said "The customer portal is English-only at this
+   stage" since v102/v103 and has never been amended, and OWNER-ISSUE-LEDGER's CUSTOMER-001 says the
+   same. The code drifted away from it — a customer could pick 中文 / Bahasa Melayu / தமிழ் and, since
+   nestly_v954, have the whole wallet walked into that language against the workspace catalogue.
+   This resolver is the single seam: customerLocale has exactly three writers (first profile load,
+   a saved language change, sign-out) and all three pass through here, so pinning it switches off
+   ct(), localizeCustomerSubtreeV954, legalLinks(), merchantCopyLocale() and the lazy i18n chunk
+   fetch together. It also brings anyone who had already SAVED another language back to English
+   rather than stranding them, which hiding the picker alone would not have done.
+   The stored preferred_language column is deliberately left intact and still read through here, so
+   this is one line to undo if the ruling is ever reversed. The BUSINESS workspace localiser is a
+   disjoint set of identifiers (normalizeWorkspaceLocaleV97 / workspaceLocale / WORKSPACE_COPY_V97)
+   and is untouched — the staff app stays trilingual. Guarded by
+   tests/customer-wallet/v980-customer-app-is-english-only.test.mjs. */
+const normalizeCustomerLocale=()=>'en';
 let customerLocale='en';
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
 function ct(key,vars={}){

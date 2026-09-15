@@ -59,17 +59,20 @@ test('v286: a failed marketing-preference read keeps a way back to the control',
   assert.match(profile, /marketingRetry\.onclick=\(\)=>\{[\s\S]*?renderCustomerProfile\(requestedView\)/);
 });
 
-test('v293: the preferred-language control changes the app and says exactly what it covers', () => {
-  /* v286 pinned the honest EN-only label. v293 made the wallet follow the stored language for
-     en/zh-CN/ms, so the label and helper are localized copy keys, the explainer names the ta
-     (messages-only) carve-out, and a changed locale re-renders the profile immediately. */
-  assert.match(appJs, /const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
-  assert.match(profile, /\$\{esc\(ct\('preferredLanguage'\)\)\}/);
-  assert.match(profile, /\$\{esc\(ct\('languageHelp',\{product:BRAND\.productName\}\)\)\}/);
-  /* Pin updated (audit F041): the re-render carries `requestedView` so it stays on the route the
-     URL names. The v293 requirement — a changed locale re-renders the profile — is unchanged. */
-  assert.match(profile, /if\(nextLocale!==customerLocale\)\{[\s\S]{0,300}?renderCustomerProfile\(requestedView\)/);
+/* nestly_v980 — OWNER RULING 2026-09-15: "customer app = english only", restoring
+   PRODUCT-TRUTH.md's standing "The customer portal is English-only at this stage".
+   This test has tracked the preferred-language control through three positions: v286 pinned an
+   honest EN-only LABEL over a control that changed nothing, v293 made the control real, and the
+   ruling now removes the control altogether. The through-line v286 cared about is unchanged and is
+   what this still asserts — the profile card must not claim to cover something it does not. */
+test('v980: the profile card offers no language control, and claims none', () => {
+  assert.doesNotMatch(profile, /id="customerProfileLanguage"/);
+  assert.doesNotMatch(profile, /\$\{esc\(ct\('preferredLanguage'\)\)\}/);
+  assert.doesNotMatch(profile, /\$\{esc\(ct\('languageHelp',\{product:BRAND\.productName\}\)\)\}/);
   assert.doesNotMatch(profile, /Keep your name and preferred language current across/);
+  /* The save still SENDS a language, as the constant 'en', so a profile saved by anyone who had
+     previously chosen another one converges the stored column back to English. */
+  assert.match(profile, /language='en';/);
 });
 
 test('v286: the sound label follows the reduced-motion override', () => {

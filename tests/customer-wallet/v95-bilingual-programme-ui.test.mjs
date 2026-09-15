@@ -12,16 +12,20 @@ function section(start,end){
   return app.slice(from,to);
 }
 
-test('customer portal follows the stored preferred language (v293: en/zh-CN/ms)',()=>{
+/* nestly_v980 — OWNER RULING 2026-09-15: "customer app = english only", restoring
+   docs/product/PRODUCT-TRUTH.md's long-standing "The customer portal is English-only at this stage".
+   The wallet no longer follows a stored language. What is still true — and still asserted — is that
+   the stored value is READ through the one resolver, so nobody who had already saved 中文 is
+   stranded, and that no separate locale RPC was ever introduced. */
+test('customer portal renders in English whatever language is stored',()=>{
   const locale=section('const CUSTOMER_COPY','const CUSTOMER_PRIMARY_NAV');
-  // normalize honors its argument, folds legacy 'zh' to zh-CN, and falls back to en
-  assert.match(locale,/const normalizeCustomerLocale=value=>\{const v=String\(value\|\|''\)\.trim\(\);if\(v==='zh'\)return 'zh-CN';return CUSTOMER_LOCALES\.includes\(v\)\?v:'en'\}/);
+  assert.match(locale,/const normalizeCustomerLocale=\(\)=>'en';/);
   assert.match(locale,/'zh-CN':Object\.freeze/);
   assert.match(locale,/ms:Object\.freeze/);
   // the wallet reads the profile's preferred_language on load, no separate locale RPC
   assert.match(app,/customerLocale=normalizeCustomerLocale\(profile\?\.preferred_language\)/);
   assert.doesNotMatch(app,/customer_get_locale_preference_v95|customer_set_locale_preference_v95/);
-  assert.match(app,/id="customerProfileLanguage"/);
+  assert.doesNotMatch(app,/id="customerProfileLanguage"/);
 });
 
 test('programme selector precedes merchant detail and zero-programme state only offers issued-QR joining',()=>{

@@ -6537,8 +6537,6 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     ${birthDatePickerHtmlV663('customerDob','')}
     <label for="customerGender">Gender <span aria-hidden="true">*</span></label>
     <select id="customerGender" autocomplete="sex" required aria-required="true"><option value="" disabled selected>Select gender</option><option value="female">Female</option><option value="male">Male</option></select>
-    <label for="customerLanguage">Preferred language</label>
-    <select id="customerLanguage" autocomplete="language"><option value="en">English</option><option value="zh">中文</option><option value="ms">Bahasa Melayu</option><option value="ta">தமிழ்</option></select>
     <p class="muted small" style="margin-top:14px">${signupConsentRecorded?`Your Terms and Privacy Notice acceptance was captured before phone verification.${customerSignupMarketingOptedIn()?' You also opted in to offers and updates — you can change this anytime in Profile.':''}`:'Consent was not recorded for this browser session. Return to Create account and tick the Terms agreement box before verifying your phone.'}</p>
     <div id="customerProfileError" role="alert" aria-live="assertive"></div>
     <button class="btn" id="customerRegister" type="button" style="width:100%;margin-top:18px">${CUI.icon('check',{size:20})}<span>Create my customer account</span></button>
@@ -6554,7 +6552,7 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
      (the server hashes the payload and refuses a reused key for changed details). */
   let registrationAttemptV289=null;
   const register=$('customerRegister'),profileForm=$('customerProfileForm'),profileError=$('customerProfileError');
-  const fullNameInput=$('customerFullName'),birthDateInput=$('customerDob'),genderInput=$('customerGender'),languageInput=$('customerLanguage');
+  const fullNameInput=$('customerFullName'),birthDateInput=$('customerDob'),genderInput=$('customerGender');
   const isProfileCurrent=()=>isRouteCurrent()&&profileForm.isConnected&&register.isConnected;
   /* v174: the Create-account form already asked for these. Prefill from the
      stash and finish silently; this screen only stays visible when the stash is
@@ -6567,7 +6565,9 @@ function renderCustomerRegistrationProfile(isRouteCurrent=()=>true){
     genderInput.value=signupStash.gender;
   }
   register.onclick=async()=>{
-    const fullName=fullNameInput.value.trim(),birthDate=birthDateInput.value,gender=genderInput.value,language=languageInput.value;
+    /* nestly_v980: English-only customer app — the account is created in English and the column
+       keeps its NOT NULL DEFAULT rather than growing a second source of truth. */
+    const fullName=fullNameInput.value.trim(),birthDate=birthDateInput.value,gender=genderInput.value,language='en';
     if(!fullName||!birthDate||birthDate>sgDateInputValue()){
       profileError.innerHTML='<div class="err">Enter your name and a date of birth that is not in the future.</div>';return;
     }
@@ -7680,7 +7680,22 @@ const CUSTOMER_COPY=Object.freeze({
     showMyCodeBody:'கவுண்டரில் உள்ள குழுவிடம் இதைக் காட்டுங்கள்.'
   })
 });
-const normalizeCustomerLocale=value=>{const v=String(value||'').trim();if(v==='zh')return 'zh-CN';return CUSTOMER_LOCALES.includes(v)?v:'en'};
+/* nestly_v980 — OWNER RULING 2026-09-15: "customer app = english only". A restatement, not a new
+   decision: docs/product/PRODUCT-TRUTH.md has said "The customer portal is English-only at this
+   stage" since v102/v103 and has never been amended, and OWNER-ISSUE-LEDGER's CUSTOMER-001 says the
+   same. The code drifted away from it — a customer could pick 中文 / Bahasa Melayu / தமிழ் and, since
+   nestly_v954, have the whole wallet walked into that language against the workspace catalogue.
+   This resolver is the single seam: customerLocale has exactly three writers (first profile load,
+   a saved language change, sign-out) and all three pass through here, so pinning it switches off
+   ct(), localizeCustomerSubtreeV954, legalLinks(), merchantCopyLocale() and the lazy i18n chunk
+   fetch together. It also brings anyone who had already SAVED another language back to English
+   rather than stranding them, which hiding the picker alone would not have done.
+   The stored preferred_language column is deliberately left intact and still read through here, so
+   this is one line to undo if the ruling is ever reversed. The BUSINESS workspace localiser is a
+   disjoint set of identifiers (normalizeWorkspaceLocaleV97 / workspaceLocale / WORKSPACE_COPY_V97)
+   and is untouched — the staff app stays trilingual. Guarded by
+   tests/customer-wallet/v980-customer-app-is-english-only.test.mjs. */
+const normalizeCustomerLocale=()=>'en';
 let customerLocale='en';
 let customerCelebrationSoundEnabled=(()=>{try{return sessionStorage.getItem('nestly.customer.successSound')==='1'}catch{return false}})();
 /* v295: merchant-AUTHORED copy (offer text, promotion names, media alt) is stored per locale by
@@ -9886,8 +9901,6 @@ async function renderCustomerProfile(requestedView){
   const personalDetailsHtmlV286=profile
     ?`<div class="customer-profile-grid"><section class="card"><h2>Personal details</h2>
       <label for="customerProfileName">Full name</label><input id="customerProfileName" autocomplete="name" maxlength="200" value="${esc(profile.full_name||'')}">
-      <label for="customerProfileLanguage">${esc(ct('preferredLanguage'))}</label><select id="customerProfileLanguage" autocomplete="language"><option value="en" ${profile.preferred_language==='en'?'selected':''}>English</option><option value="zh" ${profile.preferred_language==='zh'?'selected':''}>中文</option><option value="ms" ${profile.preferred_language==='ms'?'selected':''}>Bahasa Melayu</option><option value="ta" ${profile.preferred_language==='ta'?'selected':''}>தமிழ்</option></select>
-      <p class="muted small" style="margin-top:6px">${esc(ct('languageHelp',{product:BRAND.productName}))}</p>
       <div id="customerProfileSaveStatus" role="status" aria-live="polite"></div>
       <button class="btn" id="customerProfileSave" type="button" style="margin-top:16px;width:100%">${CUI.icon('check',{size:16})}<span>Save profile</span></button>
     </section><aside class="card"><h2>Date of birth</h2><p style="font-weight:700;margin-top:8px">${esc(profile.birth_date?walletDate(`${profile.birth_date}T00:00:00+08:00`):'Not available')}</p><p class="muted small" style="margin-top:8px">Your date of birth is not editable here and is not shown to businesses.</p></aside></div>`
@@ -10057,7 +10070,9 @@ async function renderCustomerProfile(requestedView){
   const detailsRetry=$('customerProfileDetailsRetry');
   if(detailsRetry)detailsRetry.onclick=()=>{detailsRetry.disabled=true;CUI.announce('Loading your details again.');renderCustomerProfile(requestedView)};
   if($('customerProfileSave'))$('customerProfileSave').onclick=async()=>{
-    const fullName=$('customerProfileName').value.trim(),language=$('customerProfileLanguage').value;
+    /* nestly_v980: English-only customer app. Still SENT, so a profile saved by anyone who had
+       previously chosen another language converges the stored value back to 'en'. */
+    const fullName=$('customerProfileName').value.trim(),language='en';
     const status=$('customerProfileSaveStatus');
     if(!fullName){status.innerHTML='<div class="err">Enter your full name.</div>';$('customerProfileName').focus();return}
     const fingerprint=`${fullName}:${language}`;
