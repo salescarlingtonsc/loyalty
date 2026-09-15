@@ -50,6 +50,9 @@
 --   D21  RUNTIME  a promo redemption removed while its payment-provider coupon was already
 --                 applied — the state nestly_v964's guard exists to prevent. The discount stays
 --                 spendable at the provider with nothing on our side expecting it.
+--   D23  RUNTIME  a firm that settled a provider invoice in full and is still not reading as
+--                 paid (nestly_v986). This is the shape that closed customer join and switched
+--                 off every branch on a firm whose only mistake was using a promo code.
 --   D22  RUNTIME  a subscription naming a payment provider the platform does not bill through
 --                 (nestly_v984). Readers disagree about what such a row means, so the firm's plan,
 --                 card and promo eligibility stop agreeing with each other.
@@ -743,6 +746,47 @@ select s.business_id,
  where coalesce(s.billing_provider,'') <> 'manual'
    and coalesce(s.billing_provider,'') <> app.platform_billing_provider_v792();
 
+-- D23 (nestly_v986) — the firm paid, in full, and we still say they have not.
+--
+-- app.v510_verified_initial_payment used to accept an invoice only when its CHARGED amount equalled
+-- subscriptions.period_total_cents. A promo makes those differ by design, so a discounted first
+-- payment produced no evidence -- and app.v510_sync_payment_readiness's no-evidence arm then set
+-- businesses.join_enabled = false and deactivated every branch on any firm with activated_at set.
+-- Proven on production before the fix: same firm, same settled payment, 15% off, and the firm went
+-- from "active / 1 active branch" to "past_due / join_enabled=false / 0 active branches".
+--
+-- This keys on MONEY rather than on the reader: a paid, unrefunded provider invoice whose list
+-- price matches what the firm owes, sitting under a subscription that does not read as paid. It
+-- does not care WHY the reader disagrees, so it also catches the next rule that gets this wrong.
+insert into _scan
+select s.business_id,
+       coalesce(b.name, '(unknown business)'),
+       'D23',
+       'RUNTIME-DANGEROUS',
+       'invoice '||i.provider_invoice_id||' was settled in full ('||i.amount_paid_cents::text
+       ||' of '||i.total_cents::text
+       ||case when i.discount_cents > 0
+              then ', list '||i.subtotal_ex_tax_cents::text||' less '||i.discount_cents::text||' discount'
+              else '' end
+       ||') but the subscription reads payment_status='||coalesce(s.payment_status,'<null>')
+       ||' / status='||coalesce(s.status,'<null>')
+       ||coalesce(' -- join_enabled='||b.join_enabled::text, '')
+  from public.subscriptions s
+  join public.billing_provider_invoices i
+    on i.business_id = s.business_id
+   and i.provider_subscription_id = s.provider_subscription_id
+  left join public.businesses b on b.id = s.business_id
+ where i.paid_normalized
+   and i.status = 'paid'
+   and i.amount_remaining_cents = 0
+   and i.amount_paid_cents = i.total_cents
+   and i.subtotal_ex_tax_cents = s.period_total_cents
+   and coalesce(s.payment_status,'') <> 'paid'
+   /* a refunded or charged-back invoice is genuinely no longer payment */
+   and not exists (select 1 from public.billing_adjustments a
+                    where a.provider_invoice_id = i.provider_invoice_id
+                      and a.adjustment_type in ('refund','chargeback'));
+
 -- ---------------------------------------------------------------------------------------------
 -- OUTPUT
 -- ---------------------------------------------------------------------------------------------
@@ -778,7 +822,8 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
     ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D18','RUNTIME-DANGEROUS'),('D19','RUNTIME-DANGEROUS'),('D20','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
-    ('D15','RUNTIME-DANGEROUS'),('D21','RUNTIME-DANGEROUS'),('D22','RUNTIME-DANGEROUS')
+    ('D15','RUNTIME-DANGEROUS'),('D21','RUNTIME-DANGEROUS'),('D22','RUNTIME-DANGEROUS'),
+    ('D23','RUNTIME-DANGEROUS')
   ) c(check_id, severity)
 
  order by 1 desc, 4, 3;

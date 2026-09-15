@@ -4438,6 +4438,18 @@
       "version": "20261018000000",
       "name": "nestly_v984_razorpay_is_retired",
       "sourcePath": "db/migrations/20261018_nestly_v984_razorpay_is_retired.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261019000000",
+      "name": "nestly_v986_a_discounted_payment_is_still_a_payment",
+      "sourcePath": "db/migrations/20261019_nestly_v986_a_discounted_payment_is_still_a_payment.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261019010000",
+      "name": "nestly_v987_the_ledger_can_post_a_discount",
+      "sourcePath": "db/migrations/20261019_nestly_v987_the_ledger_can_post_a_discount.sql"
     }
   ]
 }

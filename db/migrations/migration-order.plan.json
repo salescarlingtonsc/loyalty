@@ -4443,6 +4443,18 @@
       "path": "db/migrations/20261018_nestly_v984_razorpay_is_retired.sql",
       "semanticVersion": "v984",
       "proposedDeployVersion": "20261018000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261019_nestly_v986_a_discounted_payment_is_still_a_payment.sql",
+      "semanticVersion": "v986",
+      "proposedDeployVersion": "20261019000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261019_nestly_v987_the_ledger_can_post_a_discount.sql",
+      "semanticVersion": "v987",
+      "proposedDeployVersion": "20261019010000"
     }
   ]
 }

@@ -56,6 +56,7 @@ type LocalInvoice = {
   paid_normalized: boolean;
   subtotal_ex_tax_cents: number;
   tax_cents: number;
+  discount_cents: number;
   total_cents: number;
   amount_paid_cents: number;
   amount_remaining_cents: number;
@@ -137,27 +138,43 @@ function localSubscriptionSnapshot(
 function stripeInvoiceSnapshot(invoice: Stripe.Invoice): Record<string, unknown> {
   const raw = invoice as Stripe.Invoice & {
     subtotal_excluding_tax?: number | null;
+    total_excluding_tax?: number | null;   /* nestly_v986 */
     status_transitions?: { paid_at?: number | null };
   };
+  const money = stripeDiscountShape(invoice, raw);
   return {
     status: invoice.status,
     paid_normalized:
       invoice.status === 'paid' && Boolean(raw.status_transitions?.paid_at),
-    subtotal_ex_tax_cents:
-      raw.subtotal_excluding_tax == null
-        ? invoice.subtotal
-        : raw.subtotal_excluding_tax,
-    tax_cents: Math.max(
-      invoice.total -
-        (raw.subtotal_excluding_tax == null
-          ? invoice.subtotal
-          : raw.subtotal_excluding_tax),
-      0,
-    ),
+    /* nestly_v986: subtotal is Stripe's figure BEFORE any invoice-level discount;
+       total_excluding_tax is the figure after it. The gap between them is the discount, and the
+       subtotal is derived back from the two so that
+       total = subtotal - discount + tax holds exactly -- the same identity the table now enforces
+       and the same arithmetic the appliers use, so the two sides cannot drift into a phantom
+       mismatch on every discounted invoice. */
+    subtotal_ex_tax_cents: money.subtotal,
+    tax_cents: money.tax,
+    discount_cents: money.discount,
     total_cents: invoice.total,
     amount_paid_cents: invoice.amount_paid,
     amount_remaining_cents: invoice.amount_remaining,
     paid_at: epoch(raw.status_transitions?.paid_at),
+  };
+}
+
+/* nestly_v986 — the one place the money shape of a Stripe invoice is decided on this side.
+   It mirrors apply_stripe_billing_event_v94_base exactly; if one changes the other must. */
+function stripeDiscountShape(
+  invoice: { subtotal: number; total: number },
+  raw: { subtotal_excluding_tax?: number | null; total_excluding_tax?: number | null },
+): { subtotal: number; tax: number; discount: number } {
+  const listed = Math.max(raw.subtotal_excluding_tax ?? invoice.subtotal ?? 0, 0);
+  const netOfTax = Math.max(raw.total_excluding_tax ?? invoice.total, 0);
+  const discount = Math.max(listed - netOfTax, 0);
+  return {
+    subtotal: netOfTax + discount,
+    tax: Math.max(invoice.total - netOfTax, 0),
+    discount,
   };
 }
 
@@ -167,6 +184,7 @@ function localInvoiceSnapshot(invoice: LocalInvoice): Record<string, unknown> {
     paid_normalized: invoice.paid_normalized,
     subtotal_ex_tax_cents: invoice.subtotal_ex_tax_cents,
     tax_cents: invoice.tax_cents,
+    discount_cents: invoice.discount_cents,
     total_cents: invoice.total_cents,
     amount_paid_cents: invoice.amount_paid_cents,
     amount_remaining_cents: invoice.amount_remaining_cents,
@@ -464,7 +482,7 @@ async function reconcileInvoices({
       let query = admin
         .from('billing_provider_invoices')
         .select(
-          'business_id,provider_invoice_id,status,paid_normalized,subtotal_ex_tax_cents,tax_cents,total_cents,amount_paid_cents,amount_remaining_cents,paid_at',
+          'business_id,provider_invoice_id,status,paid_normalized,subtotal_ex_tax_cents,tax_cents,discount_cents,total_cents,amount_paid_cents,amount_remaining_cents,paid_at',
         )
         .in('business_id', scopeIds)
         .like('provider_invoice_id', 'in_%')

@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 694,
-  "itemCount": 739,
+  "pendingCount": 696,
+  "itemCount": 741,
   "items": [
     {
       "order": 1,
@@ -7397,6 +7397,26 @@
       "path": "supabase/migrations/20261018000000_nestly_v984_razorpay_is_retired.sql",
       "octetLength": 10957,
       "sha256": "a959258569f9c3ac4beec71639fc8fce4d9b02246a883f943fd23c9cccb9a967",
+      "provenance": "local-source"
+    },
+    {
+      "order": 740,
+      "kind": "pending",
+      "version": "20261019000000",
+      "name": "nestly_v986_a_discounted_payment_is_still_a_payment",
+      "path": "supabase/migrations/20261019000000_nestly_v986_a_discounted_payment_is_still_a_payment.sql",
+      "octetLength": 66167,
+      "sha256": "ab70adcc6d1bcf5989e03c24bbedf0dfd2da046302e7fe5428fbe8bcf8869cbd",
+      "provenance": "local-source"
+    },
+    {
+      "order": 741,
+      "kind": "pending",
+      "version": "20261019010000",
+      "name": "nestly_v987_the_ledger_can_post_a_discount",
+      "path": "supabase/migrations/20261019010000_nestly_v987_the_ledger_can_post_a_discount.sql",
+      "octetLength": 14276,
+      "sha256": "3cceca060f69ea2ca94e62ea2ce8d261b54d87124601d0818302d1c433abadf7",
       "provenance": "local-source"
     }
   ]
