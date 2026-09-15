@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="be6afddb0a6f3bccd3653fea12acbf8e22710f52c52e3eadc0ca30b09b5095e4"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="4dd22e36fa20d7ca39aa817f72150fd4f6bdf88d415f9dbea24357d00265feba"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -841,6 +841,27 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .inline-status{display:inline-flex;align-items:center;gap:6px}
 .cui-fade-in{animation:cui-fade-in var(--motion-ui) var(--ease) both}
+/* nestly_v914 — a render that finishes inside 180ms is not a wait, and must not be dressed as one.
+
+   The owner's v888 ruling stands and is untouched: the animated Peekaa mark appears in
+   CUI.loadingState, which is the one component every route waits in, and
+   tests/quality/v888-boot-mark-moves.test.mjs still pins that markup byte for byte. Nothing about
+   what a LOADING state looks like changes here. What changes is whether a navigation that was
+   never slow enough to be a wait gets dressed as one: fourteen workspace pages open with
+   CUI.loadingState, so Record sale, Programmes, Appointments and Settings showed the full boot
+   screen on every single visit, however fast the data came back. That is what reads as a page
+   load.
+
+   The whole route state — mark, page header and skeleton — is held at its own `from` keyframe for
+   180ms by delaying the fade it already carries. `both` is already on that shorthand, so the
+   backwards fill holds opacity:0 through the delay rather than flashing visible first. If the page
+   paints its content inside 180ms the node is replaced before the delay elapses and nobody ever
+   sees a loading screen; if the wait is real, the mark arrives exactly as ruled.
+
+   Scoped to .cui-route-state, so every other user of .cui-fade-in is untouched. 180ms sits under
+   the ~200ms threshold at which a delay stops reading as instant. To revert, delete this one
+   declaration. */
+.cui-route-state.cui-fade-in{animation-delay:180ms}
 @keyframes cui-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cui-skeleton-line{display:block;width:var(--skel-w,100%);height:12px;border-radius:999px;background:linear-gradient(90deg,#EEE9E2,var(--card),#EEE9E2);background-size:220% 100%;animation:cui-skeleton 1.15s linear infinite}
 .cui-skeleton-line.short{height:10px}.cui-skeleton-line.label{height:10px;margin-bottom:8px}.cui-skeleton-line.control{height:44px;border-radius:var(--r-sm)}.cui-skeleton-line.button{height:44px;border-radius:999px;margin-top:4px}
@@ -6188,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · be6afddb0a6f3bccd3653fea12acbf8e22710f52c52e3eadc0ca30b09b5095e4</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 4dd22e36fa20d7ca39aa817f72150fd4f6bdf88d415f9dbea24357d00265feba</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -10683,7 +10704,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'be6afddb0a6f3bccd3653fea12acbf8e22710f52c52e3eadc0ca30b09b5095e4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'4dd22e36fa20d7ca39aa817f72150fd4f6bdf88d415f9dbea24357d00265feba',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

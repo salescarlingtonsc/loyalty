@@ -222,6 +222,54 @@ try {
   assertTrue(await markSurvived(page, '#profileBranchScopeV158', '__v912scope'),
     'the mount is the SAME node after navigating — it is not blanked back to its loading pill');
 
+  /* nestly_v914. Fourteen workspace pages open with CUI.loadingState — the full boot screen,
+     animated Peekaa mark and all — so Record sale, Programmes, Appointments and Settings showed
+     it on EVERY visit however fast the data came back. The v888 ruling (the mark appears wherever
+     there is a wait) is untouched: the markup is unchanged and v888-boot-mark-moves.test.mjs
+     still pins it. What is pinned HERE is that a render too fast to be a wait is not dressed as
+     one — the route state is held at opacity 0 for 180ms, so it is never seen unless the wait is
+     real. Captured with a MutationObserver installed BEFORE the navigation, because the whole
+     point is that the node may be replaced before anyone could poll for it. */
+  say('9. a loading state that appears is held invisible for its first 180ms');
+  await page.evaluate(() => {
+    window.__v913 = null;
+    const seen = new MutationObserver(records => {
+      for (const record of records) for (const node of record.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        const el = node.matches?.('.cui-route-state') ? node : node.querySelector?.('.cui-route-state');
+        if (!el || window.__v913) continue;
+        const style = getComputedStyle(el);
+        window.__v913 = {
+          delay: style.animationDelay,
+          name: style.animationName,
+          fill: style.animationFillMode,
+          opacity: Number(style.opacity),
+          hasMark: !!el.querySelector('.cui-loading-mark-v888'),
+        };
+      }
+    });
+    seen.observe(document.body, { childList: true, subtree: true });
+    window.__v913stop = () => seen.disconnect();
+  });
+  /* Several of the fourteen short-circuit under this stub before they reach loadingState (tillPage
+     returns its "additional access required" card when the stubbed persona lacks create_sales), so
+     the destination is DISCOVERED rather than assumed — otherwise a fixture change silently turns
+     this step into a false pass by never producing the node it means to measure. */
+  let seenState = null;
+  for (const hash of targets) {
+    await navigate(hash);
+    seenState = await page.evaluate(() => window.__v913);
+    if (seenState) { process.stdout.write(`  (route state captured on ${hash})\n`); break; }
+  }
+  await page.evaluate(() => window.__v913stop?.());
+  assertTrue(!!seenState, `a route loading state was observed on one of ${targets.slice(0, 5).join(', ')}`);
+  assertTrue(seenState.delay === '0.18s' || seenState.delay === '180ms',
+    `it is held for 180ms before it may paint (animation-delay ${seenState.delay})`);
+  assertTrue(seenState.fill === 'both' || seenState.fill.includes('both'),
+    `with backwards fill, so the delay holds opacity 0 rather than flashing visible first (${seenState.fill})`);
+  assertTrue(seenState.opacity === 0, `and it measured invisible at the moment it was inserted (opacity ${seenState.opacity})`);
+  assertTrue(seenState.hasMark, 'the v888 Peekaa mark is still inside it — the ruling is untouched, only the timing changed');
+
   say('8. the app logged no errors through all of it');
   assertTrue(pageErrors.length === 0, `no page errors (${pageErrors.slice(0, 3).join(' | ') || 'none'})`);
 

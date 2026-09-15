@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="901e4302987835488d2ec9d19fdf025e7fbd5e84a42f1032465d86d600ef3b0c">
+<meta name="v105-production-component-sha256" content="2e2695d827ae0ac8415e67b73cab8ce7f717ee0314fefa039fe232995399360c">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -847,6 +847,27 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .inline-status{display:inline-flex;align-items:center;gap:6px}
 .cui-fade-in{animation:cui-fade-in var(--motion-ui) var(--ease) both}
+/* nestly_v914 — a render that finishes inside 180ms is not a wait, and must not be dressed as one.
+
+   The owner's v888 ruling stands and is untouched: the animated Peekaa mark appears in
+   CUI.loadingState, which is the one component every route waits in, and
+   tests/quality/v888-boot-mark-moves.test.mjs still pins that markup byte for byte. Nothing about
+   what a LOADING state looks like changes here. What changes is whether a navigation that was
+   never slow enough to be a wait gets dressed as one: fourteen workspace pages open with
+   CUI.loadingState, so Record sale, Programmes, Appointments and Settings showed the full boot
+   screen on every single visit, however fast the data came back. That is what reads as a page
+   load.
+
+   The whole route state — mark, page header and skeleton — is held at its own `from` keyframe for
+   180ms by delaying the fade it already carries. `both` is already on that shorthand, so the
+   backwards fill holds opacity:0 through the delay rather than flashing visible first. If the page
+   paints its content inside 180ms the node is replaced before the delay elapses and nobody ever
+   sees a loading screen; if the wait is real, the mark arrives exactly as ruled.
+
+   Scoped to .cui-route-state, so every other user of .cui-fade-in is untouched. 180ms sits under
+   the ~200ms threshold at which a delay stops reading as instant. To revert, delete this one
+   declaration. */
+.cui-route-state.cui-fade-in{animation-delay:180ms}
 @keyframes cui-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cui-skeleton-line{display:block;width:var(--skel-w,100%);height:12px;border-radius:999px;background:linear-gradient(90deg,#EEE9E2,var(--card),#EEE9E2);background-size:220% 100%;animation:cui-skeleton 1.15s linear infinite}
 .cui-skeleton-line.short{height:10px}.cui-skeleton-line.label{height:10px;margin-bottom:8px}.cui-skeleton-line.control{height:44px;border-radius:var(--r-sm)}.cui-skeleton-line.button{height:44px;border-radius:999px;margin-top:4px}
@@ -7194,7 +7215,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 901e43029878</span>
+<span class="v105-provenance">v105 production-component harness · 2e2695d827ae</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -7319,7 +7340,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'901e4302987835488d2ec9d19fdf025e7fbd5e84a42f1032465d86d600ef3b0c',
+  sourceHash:'2e2695d827ae0ac8415e67b73cab8ce7f717ee0314fefa039fe232995399360c',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,
