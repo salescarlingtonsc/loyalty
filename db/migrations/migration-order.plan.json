@@ -4377,6 +4377,12 @@
       "path": "db/migrations/20261014_nestly_v950_unattributed_customers_are_visible.sql",
       "semanticVersion": "v950",
       "proposedDeployVersion": "20261014000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261015_nestly_v951_bounded_read_limits.sql",
+      "semanticVersion": "v951",
+      "proposedDeployVersion": "20261015000000"
     }
   ]
 }

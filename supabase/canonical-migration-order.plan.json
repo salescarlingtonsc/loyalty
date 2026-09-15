@@ -4372,6 +4372,12 @@
       "version": "20261014000000",
       "name": "nestly_v950_unattributed_customers_are_visible",
       "sourcePath": "db/migrations/20261014_nestly_v950_unattributed_customers_are_visible.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261015000000",
+      "name": "nestly_v951_bounded_read_limits",
+      "sourcePath": "db/migrations/20261015_nestly_v951_bounded_read_limits.sql"
     }
   ]
 }
