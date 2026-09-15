@@ -3479,6 +3479,7 @@ async function renderCustomerProfile(requestedView){
       customerLocale=nextLocale;
       if(S.customerProfile)S.customerProfile.preferred_language=language;
       globalThis.document?.documentElement?.setAttribute('lang',customerLocale);
+      if(customerLocale!=='en')await loadWorkspaceI18nV185();
       CUI.announce(ct('profileSaved'));
       renderCustomerProfile(requestedView); // audit F041: stay on the route the URL names
       return;

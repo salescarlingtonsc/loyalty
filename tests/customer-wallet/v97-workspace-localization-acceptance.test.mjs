@@ -195,7 +195,13 @@ test('v97 catalog covers every signed-in workspace route plus dialogs, states an
       assert.ok(value&&value!==source,`${locale} must translate ${source}`);
     }
   }
-  assert.match(app,/WORKSPACE_COPY_V97\[workspaceLocale\]\?\.\[source\]\?\?WORKSPACE_GENERATED_COPY_V97\[workspaceLocale\]\?\.\[source\]\?\?source/);
+  /* nestly_v954: the locale is an argument now, because the customer wallet reads the same tables
+     for a different person's language. Curated still beats generated, generated still falls back to
+     the English source, and this is still the ONE place the tables are indexed — the build enforces
+     that (split-app-bundle.mjs: I18N_READER), and tests/customer-wallet/v954-customer-localization
+     runs both walkers to prove the two surfaces stay out of each other's way. */
+  assert.match(app,/WORKSPACE_COPY_V97\[locale\]\?\.\[source\]\?\?WORKSPACE_GENERATED_COPY_V97\[locale\]\?\.\[source\]\?\?source/);
+  assert.match(app,/const workspaceTranslationV97=\(source,locale=workspaceLocale\)=>/);
   assert.match(app,/data-workspace-i18n/);
   assert.match(app,/\.side,\.appbar,\.main,\[role="dialog"\],\[data-workspace-i18n\]/);
 });

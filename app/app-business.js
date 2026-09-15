@@ -2396,19 +2396,6 @@ function statusLabelV288(status){
   const label=STATUS_LABELS_V288[key.toLowerCase()]||key.replaceAll('_',' ');
   return workspaceTranslationV97(label);
 }
-/* The zh-CN / ms lookup tables are ~200KB of source and are consulted only when the active locale
-   is not English, so they ship as their own chunk. Until it arrives, translation returns the
-   English source — which is exactly what the 'en' path does — so a slow or failed load degrades
-   to English rather than to a broken screen. */
-/* nestly_v920: it now REPORTS whether the tables arrived. It used to swallow the failure and
-   return null, which was fine for the "degrade to English" promise above but left both callers
-   unable to tell a loaded table from a failed one — and loadWorkspaceLocaleV97 was caching the
-   locale as resolved either way, so a single dropped request meant an English workspace for the
-   rest of the session with no retry and no message. Returning a boolean is what lets the caller
-   leave the locale UNRESOLVED and try again on the next navigation. */
-function loadWorkspaceI18nV185(){
-  return loadAppChunkV185('i18n').then(()=>true,error=>{console.error(error);return false});
-}
 function routeParamV288(name){
   const value=routeQueryParamsV288.get(String(name||''));
   return value===null?'':String(value);

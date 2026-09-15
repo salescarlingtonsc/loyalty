@@ -1699,6 +1699,19 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
      along with it, so the signed-in persona/suspension screens are still present). */
   return signedIn?'business':'auth';
 }
+/* The zh-CN / ms lookup tables are ~200KB of source and are consulted only when the active locale
+   is not English, so they ship as their own chunk. Until it arrives, translation returns the
+   English source — which is exactly what the 'en' path does — so a slow or failed load degrades
+   to English rather than to a broken screen. */
+/* nestly_v920: it now REPORTS whether the tables arrived. It used to swallow the failure and
+   return null, which was fine for the "degrade to English" promise above but left both callers
+   unable to tell a loaded table from a failed one — and loadWorkspaceLocaleV97 was caching the
+   locale as resolved either way, so a single dropped request meant an English workspace for the
+   rest of the session with no retry and no message. Returning a boolean is what lets the caller
+   leave the locale UNRESOLVED and try again on the next navigation. */
+function loadWorkspaceI18nV185(){
+  return loadAppChunkV185('i18n').then(()=>true,error=>{console.error(error);return false});
+}
 /* v184: the Peekaa admin console is ~210KB of JS + CSS that only a platform admin can use. It
    used to be a plain <script defer> in index.html, so every customer opening a booking page paid
    for it. Its urls live in the #platformConsoleAssets manifest (one place to bump the version);
@@ -3979,6 +3992,11 @@ function renderCustomerShell({active='home',body='',businessSlug=null,staffWorks
     ${legalLinks(customerLocale)}</div></div>`;
   if($('customerNavScan'))$('customerNavScan').onclick=openCustomerJoinScanner;
   if($('walletBack'))$('walletBack').onclick=()=>nav(backHref);
+  /* nestly_v954: every customer view writes the wallet through this one function, so this is the
+     single place the localiser has to be called. The observer then catches what is added after —
+     dialogs, the QR sheet, a toast — the same way the workspace one does. */
+  localizeCustomerSubtreeV954();
+  observeCustomerLocalizationV954();
 }
 function focusCustomerRoute(){
   const main=$('main');if(main)CUI.focusRoute(main,{enhanceContent:true});
@@ -4037,6 +4055,9 @@ async function loadCustomerSurfaceContext(isCurrent=()=>true,{silent=false}={}){
      resets to 'en'. */
   customerLocale=normalizeCustomerLocale(profile?.preferred_language);
   globalThis.document?.documentElement?.setAttribute('lang',customerLocale);
+  /* nestly_v954: the tables before the first paint, so a 中文 customer never reads an English
+     frame first. A failure degrades to English, which is what the wallet did until now anyway. */
+  if(customerLocale!=='en')await loadWorkspaceI18nV185();
   if(!isCurrent())return null;
   /* v286: a null profile has two very different causes — this account has no profile row, or
      customer_get_profile just failed for a customer we kept on the surface because their personas
@@ -7534,9 +7555,14 @@ const WORKSPACE_LOCALES_V97=Object.freeze(['en','zh-CN','ms']);
 let workspaceLocale='en',workspaceLocaleVersion=0,workspaceLocaleLoadedFor='',workspaceLocalizationObserver=null;
 /* v185: the tables live in the lazily loaded i18n chunk. `typeof` is safe on an identifier that
    has not been declared yet, and returning the source text is the same behaviour as English. */
-const workspaceTranslationV97=source=>workspaceLocale==='en'||typeof WORKSPACE_GENERATED_COPY_V97==='undefined'
+/* nestly_v954: the locale is now an argument, because the customer wallet reads this same table
+   for a DIFFERENT person's language — the owner's preference and the customer's are two settings
+   and can disagree. This stays the single reader of the two tables by design (see
+   scripts/quality/split-app-bundle.mjs: I18N_READER), so the typeof guard that lets every surface
+   call it before the ~776KB chunk arrives is written once and cannot drift. */
+const workspaceTranslationV97=(source,locale=workspaceLocale)=>locale==='en'||typeof WORKSPACE_GENERATED_COPY_V97==='undefined'
   ?source
-  :(WORKSPACE_COPY_V97[workspaceLocale]?.[source]??WORKSPACE_GENERATED_COPY_V97[workspaceLocale]?.[source]??source);
+  :(WORKSPACE_COPY_V97[locale]?.[source]??WORKSPACE_GENERATED_COPY_V97[locale]?.[source]??source);
 /* v295: the workspace/portal twin of the platform console's platformErrorMessage.
    Sixteen sites rendered error.message straight into a toast or an .err block, so an owner or a
    customer could read 'Failed to fetch' or a bare Postgres code like
@@ -8390,6 +8416,81 @@ const workspaceTemplateInnerHtmlV97=(key,values={},locale=workspaceLocale)=>{
   return html+esc(template.slice(cursor));
 };
 const workspaceTemplateHtmlV97=(key,values={})=>`<span data-workspace-template="${esc(key)}">${workspaceTemplateInnerHtmlV97(key,values)}</span>`;
+/* nestly_v954 — the customer wallet gets a localiser.
+
+   ct() translates at the call site and reaches 152 strings. The other ~500 sentences the customer
+   actually reads — the whole redemption flow, the QR screens, the sign-in codes, the reward and
+   stamp copy — were written as plain literals, so a customer who picked 简体中文 got the language
+   picker in Chinese and the page in English. No setting has ever moved them, because nothing walked
+   this surface.
+
+   This is the v97 walker's twin: the customer's own locale, the customer's own root, and the SAME
+   reviewed catalogue. One ledger, one review gate, and a sentence keyed on its English text means
+   the same thing on either side of the counter.
+
+   The two walkers can never both claim a node. isWorkspaceDynamicNodeV97 already treats
+   .wallet-shell as dynamic — that is how the owner's customer-interface PREVIEW keeps the merchant's
+   own words — and this one refuses to run at all while .shell is on screen. So the preview stays
+   exactly as it is, claimed by neither.
+
+   'ta' is declared by the customer picker but carries no catalogue: the lookup misses and the node
+   is left in English, which is what it does today. Tamil is a decision, not an omission to fix here. */
+const customerTranslationV954=source=>workspaceTranslationV97(source,customerLocale);
+const customerTextSourcesV954=new WeakMap(),customerAttributeSourcesV954=new WeakMap();
+let customerLocalizationObserverV954=null;
+/* Merchant words, and anything a template already owns. A customer's own business names, reward
+   names and message bodies are the merchant's copy, not the product's, and translating them would
+   put a machine between a shop and its customer. */
+function isCustomerDynamicNodeV954(element){
+  if(!element)return false;
+  return Boolean(element.closest?.([
+    '[data-merchant-content]','[data-workspace-template]','[data-customer-dynamic-v954]',
+    '.notif-item','.customer-link'
+  ].join(',')));
+}
+function localizeCustomerSubtreeV954(container=root){
+  if(!container?.querySelectorAll)return;
+  /* The workspace owns the page whenever its shell is up, preview included. */
+  if(root.querySelector('.shell')||!root.querySelector('.customer-surface'))return;
+  const scopes=[];
+  if(container.matches?.('.customer-surface')||container.closest?.('.customer-surface'))scopes.push(container);
+  scopes.push(...container.querySelectorAll('.customer-surface'));
+  const elements=[...new Set(scopes.flatMap(scope=>[scope,...scope.querySelectorAll('*')]))];
+  for(const element of elements){
+    if(!(element instanceof Element))continue;
+    if(isCustomerDynamicNodeV954(element))continue;
+    for(const attribute of ['placeholder','title','aria-label','data-label']){
+      if(!element.hasAttribute(attribute))continue;
+      let sources=customerAttributeSourcesV954.get(element);
+      if(!sources){sources={};customerAttributeSourcesV954.set(element,sources)}
+      if(!(attribute in sources))sources[attribute]=element.getAttribute(attribute);
+      element.setAttribute(attribute,customerTranslationV954(sources[attribute]));
+    }
+    for(const node of element.childNodes){
+      if(node.nodeType!==Node.TEXT_NODE||!node.nodeValue.trim()
+         ||isCustomerDynamicNodeV954(node.parentElement))continue;
+      /* The ENGLISH source is remembered per node, so switching language twice still translates
+         from English rather than from whatever the last pass left behind. */
+      if(!customerTextSourcesV954.has(node))customerTextSourcesV954.set(node,node.nodeValue);
+      const source=customerTextSourcesV954.get(node),trimmed=source.trim();
+      node.nodeValue=source.replace(trimmed,customerTranslationV954(trimmed));
+    }
+  }
+}
+function observeCustomerLocalizationV954(){
+  customerLocalizationObserverV954?.disconnect();
+  customerLocalizationObserverV954=null;
+  if(!globalThis.MutationObserver||!globalThis.document?.body)return;
+  if(root.querySelector('.shell')||!root.querySelector('.customer-surface'))return;
+  customerLocalizationObserverV954=new MutationObserver(records=>{
+    for(const record of records)for(const node of record.addedNodes){
+      const element=node.nodeType===Node.ELEMENT_NODE?node:node.parentElement;
+      if(!element)continue;
+      localizeCustomerSubtreeV954(element);
+    }
+  });
+  customerLocalizationObserverV954.observe(document.body,{childList:true,subtree:true});
+}
 /* V548 — "Customers to bring back", the dashboard's attention list.
    The strategy ruling (2026-08-26) is that Peekaa's first screen must answer the question no
    competitor can: WHO is overdue against their own visit rhythm, and how much monthly revenue is
