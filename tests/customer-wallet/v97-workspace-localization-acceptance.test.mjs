@@ -280,7 +280,7 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v940: +26 — the reviewed half of each split interpolated label. */
         /* nestly_v941: +56 — the reviewed half of 56 more split interpolated labels. */
     
-    assert.equal(Object.keys(generatedCopy[locale]).length,4979,`${locale} valid visible-literal inventory changed without catalog review`);
+    assert.equal(Object.keys(generatedCopy[locale]).length,5201,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

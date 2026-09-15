@@ -9994,7 +9994,7 @@ function customerAccountDeletionCardHtmlV749(){
 }
 let customerDeleteAccountAttemptV749=null;
 function openCustomerDeleteAccountDialogV749(){
-  document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="customerDeleteAccountModalV749" role="dialog" aria-modal="true" aria-labelledby="customerDeleteAccountTitleV749" tabindex="-1"><div class="modal-card" style="max-width:560px">
+  document.body.insertAdjacentHTML('beforeend',`<div class="modal customer-surface" id="customerDeleteAccountModalV749" role="dialog" aria-modal="true" aria-labelledby="customerDeleteAccountTitleV749" tabindex="-1"><div class="modal-card" style="max-width:560px">
     <div class="row"><div><h2 id="customerDeleteAccountTitleV749">Delete your Peekaa account</h2><p class="muted small" style="margin-top:4px">This happens immediately and cannot be undone.</p></div><span class="spacer"></span><button class="btn ghost sm" id="customerDeleteAccountCloseV749" type="button">Close</button></div>
     <div class="imp-note" style="margin-top:12px"><b>What is deleted</b><p class="small" style="margin-top:5px">Your name, phone number, email, date of birth and sign-in. Every business you joined stops seeing you, and their copy of your details is replaced with anonymous placeholders.</p></div>
     <div class="imp-note" style="margin-top:10px"><b>What is forfeited</b><p class="small" style="margin-top:5px">Unused points, stamps, rewards and store credit at every business. They cannot be moved to a new account. Anything a business keeps for you, such as a stored bottle, stays with the business but can no longer be matched to you.</p></div>

@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { element, Node } from '../support/mini-dom.mjs';
 
+
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 
 const block = (start, end) => {
@@ -25,6 +26,16 @@ const block = (start, end) => {
   assert.ok(to > from, `missing block end: ${end}`);
   return app.slice(from, to);
 };
+
+/* The REAL catalogue literal, sliced the way the shipped app is built. */
+const catalogueSource = (() => {
+  const open = 'const WORKSPACE_GENERATED_COPY_V97=Object.freeze(';
+  const from = app.indexOf(open);
+  assert.ok(from >= 0, 'the generated catalogue must exist');
+  const to = app.indexOf(');\nconst workspaceTextSourcesV97', from);
+  assert.ok(to > from, 'the generated catalogue must end where the build says it does');
+  return app.slice(from + open.length, to);
+})();
 
 const WALKERS = [
   block('function isWorkspaceDynamicNodeV97(element){', 'function observeWorkspaceLocalizationV97(){'),
@@ -163,4 +174,85 @@ test('there is still exactly one reader of the translation tables', () => {
   assert.equal(readers.length, 1, 'the generated table is indexed in one place');
   assert.match(app, /const customerTranslationV954=source=>workspaceTranslationV97\(source,customerLocale\);/,
     'the customer walker asks that one reader for the customer’s locale');
+});
+
+/* ------------------------------------------------------------------------------------------------
+   nestly_v955 — the copy, and the one thing that could silently make all of it miss.
+
+   The catalogue is keyed on the TRIMMED TEXT NODE, which is what a browser puts in nodeValue: the
+   entities are already decoded there. The ledger is written from app.js, where the same sentence is
+   spelled "Date &amp; time". Get that wrong in one direction and every entity-bearing string looks
+   filed and translates to nothing, in silence, for ever. So this walks real wallet literals out of
+   the shipped source, decodes them the way a browser would, and puts them through the real
+   catalogue and the real walker.
+   ------------------------------------------------------------------------------------------------ */
+const catalogue = JSON.parse(catalogueSource.replace(/^Object\.freeze\(/, '').replace(/\)$/, ''));
+
+const decodeAsBrowser = (s) => s
+  .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+  .replace(/&ldquo;/g, '\u201c').replace(/&rdquo;/g, '\u201d')
+  .replace(/&middot;/g, '\u00b7').replace(/&mdash;/g, '\u2014').replace(/&nbsp;/g, '\u00a0');
+
+/* Two of these carry an entity in the source. If the ledger were written from the encoded form,
+   exactly those two would fail here and the rest would pass — which is the failure this guards. */
+const WALLET_LITERALS = [
+  'Waiting for the counter',
+  'Nothing is deducted until staff scans and confirms this QR.',
+  'Date &amp; time',
+  'Privacy &amp; consent',
+  'Show QR at counter',
+  'Type DELETE to confirm',
+  'Delete your Peekaa account',
+  'None of your points expire in the next 30 days.'
+];
+
+test('every one of these is a literal the wallet really renders — not a string invented for a test', () => {
+  const customerChunk = readFileSync(new URL('../../app/app-customer.js', import.meta.url), 'utf8');
+  for (const literal of WALLET_LITERALS) {
+    assert.ok(customerChunk.includes(`>${literal}<`) || customerChunk.includes(`>${literal}`),
+      `${literal} is not rendered by the customer surface — the fixture has drifted from the app`);
+  }
+});
+
+test('the catalogue is keyed on what the DOM holds, not on what app.js spells', () => {
+  for (const literal of WALLET_LITERALS) {
+    const asTheBrowserSeesIt = decodeAsBrowser(literal);
+    for (const locale of ['zh-CN', 'ms']) {
+      const translated = catalogue[locale][asTheBrowserSeesIt];
+      assert.ok(translated, `${locale} has no entry for ${JSON.stringify(asTheBrowserSeesIt)}`);
+      assert.notEqual(translated, asTheBrowserSeesIt, `${locale} left ${asTheBrowserSeesIt} in English`);
+    }
+    assert.ok(!catalogue['zh-CN'][literal] || literal === asTheBrowserSeesIt,
+      `${literal} is filed in its ENCODED form — no text node will ever match it`);
+  }
+});
+
+test('the walker turns the real wallet into 中文 with the real catalogue', () => {
+  const lines = WALLET_LITERALS.map(literal => element('p', {}, decodeAsBrowser(literal)));
+  const root = element('div', {}, element('div', { class: 'customer-surface' }, ...lines));
+
+  const context = vm.createContext({
+    Node, root, workspaceLocale: 'en', customerLocale: 'zh-CN',
+    WORKSPACE_COPY_V97: {}, WORKSPACE_GENERATED_COPY_V97: catalogue,
+    HTMLOptionElement: class HTMLOptionElement {},
+    Element: Object.getPrototypeOf(element('p', {})).constructor,
+    globalThis: { document: null, MutationObserver: null },
+    localizeWorkspaceTemplateV97: () => {}, localizeWorkspaceTemplateAttributesV97: () => {},
+    workspaceTemplateValuesV97: new WeakMap(), workspaceTextSourcesV97: new WeakMap(),
+    workspaceAttributeSourcesV97: new WeakMap()
+  });
+  vm.runInContext(`${WALKERS}\n__run=localizeCustomerSubtreeV954;`, context);
+  context.__run(root);
+
+  for (const [index, literal] of WALLET_LITERALS.entries()) {
+    const english = decodeAsBrowser(literal);
+    assert.notEqual(lines[index].textContent, english, `${english} is still in English on the wallet`);
+    assert.equal(lines[index].textContent, catalogue['zh-CN'][english]);
+  }
+  /* DELETE is the word the customer must type, so it survives translation verbatim. */
+  const typeDelete = lines[WALLET_LITERALS.indexOf('Type DELETE to confirm')].textContent;
+  assert.match(typeDelete, /DELETE/, 'the word the customer has to type is not translated');
+  /* And Peekaa is never translated — owner instruction, 2026-09-15. */
+  assert.match(lines[WALLET_LITERALS.indexOf('Delete your Peekaa account')].textContent, /Peekaa/);
 });
