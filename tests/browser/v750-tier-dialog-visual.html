@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="ec59a1ef435c891a3e7b121b3e97666cf867721b10e2168b7a864db780265edc"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="df00ca86e8eee30cd076d074b4f765812dbd458df2b639afe877173fca6dcd08"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · ec59a1ef435c891a3e7b121b3e97666cf867721b10e2168b7a864db780265edc</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · df00ca86e8eee30cd076d074b4f765812dbd458df2b639afe877173fca6dcd08</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -11524,9 +11524,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      AWAITED at their original sites below, so the order values are consumed in, the per-read
      fail-soft handlers and every isGrowCurrent() guard are all unchanged. Each promise carries
      its own .catch, so abandoning them on an early return cannot raise an unhandled rejection. */
+  /* nestly_v970: this read used to end `.then(r=>r.error?null:r.data).catch(()=>null)`, which threw
+     away the one fact the page needs — WHY the answer is null. "The welcome offer is not set up" and
+     "we could not ask" became the same null, so a dropped request removed the row from the overview
+     and made the tile below assert "Not set up" about a gift the firm may well have configured. The
+     seven reads inside growOverviewSnapshot keep the distinction by handing their `error` to
+     overviewErrors; this one is built out here, so it carries the same fact in its own shape. */
   const welcomeOfferRequestV215=canRewards
-    ?sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
-    :Promise.resolve(null);
+    ?sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id})
+      .then(r=>({data:r.error?null:r.data,failed:Boolean(r.error)}))
+      .catch(()=>({data:null,failed:true}))
+    :Promise.resolve({data:null,failed:false});
   const loyaltyTiersRequestV229=canRewards
     ?sb.from('loyalty_tiers')
       .select('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at')
@@ -11597,7 +11605,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
      Settings. Read separately: a failure here must not blank the whole programme overview. */
-  const welcomeOfferStatusV215=await welcomeOfferRequestV215;
+  const welcomeOfferResultV215=await welcomeOfferRequestV215;
+  const welcomeOfferStatusV215=welcomeOfferResultV215?.data??null;
+  /* nestly_v970: snapshot is a local const, read by rewardsOverviewIncomplete and growTileStatusV371
+     further down and by nothing else, so the welcome read joins the same map every sibling programme
+     reports through rather than growing a second, parallel notion of "unavailable". */
+  if(snapshot.overviewErrors)snapshot.overviewErrors.welcome=Boolean(welcomeOfferResultV215?.failed);
   if(!isGrowCurrent())return;
   /* V229: the Tiered membership tile needs the ladder, and the whole page needs the firm's
      one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
@@ -11983,7 +11996,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        here, each with its own status and its own door, so nothing is one level deeper than the
        thing it sits beside. */
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
-      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
+      status:growTileStatusV371('welcome',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
     {key:'birthday',icon:'cake',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',

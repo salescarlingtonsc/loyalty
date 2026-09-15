@@ -77,7 +77,9 @@ const build=({overviewErrors={},writable=true,winbackWritable=true,ongoing=false
 };
 
 /* The error key each topic's tile actually names, copied from growTopicDefsV229. */
-const ERROR_KEY={points:'loyalty',tiers:'loyalty',stamps:'loyalty',welcome:'rewards',
+/* nestly_v970: welcome named 'rewards' here because production did — a read its status does not
+   depend on. Both are corrected together so this map keeps mirroring growTopicDefsV229. */
+const ERROR_KEY={points:'loyalty',tiers:'loyalty',stamps:'loyalty',welcome:'welcome',
   birthday:'birthday',bringback:'retention',referrals:'referrals',recurring:'memberships'};
 
 test('a tile whose read failed never offers to set it up', ()=>{

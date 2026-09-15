@@ -108,8 +108,19 @@ test('overview reads enough server state to label programme status without inven
      a failed read fell through to "Not set up", stating as fact that nothing is configured. Every
      tile now routes its status through growTileStatusV371, which names the read it depends on. */
   assert.match(grow,/const growTileStatusV371=\(errorKey,status\)=>\s*\n?\s*snapshot\.overviewErrors\?\.\[errorKey\]\?\['Unavailable','warn'\]:status;/);
-  for(const source of ['loyalty','rewards','birthday','retention','referrals']){
+  /* nestly_v970: this loop encoded the V371 rule correctly but mapped one tile wrongly. The welcome
+     tile named 'rewards' — a read its status does not depend on — so a failed WELCOME read left it
+     asserting "Not set up" about a gift that may well be configured, while a failed rewards read
+     greyed out a tile about a different programme. Each tile now names its own read, and 'welcome'
+     exists as a key for the first time. 'rewards' keeps an honest unavailable state: it always had
+     its own dedicated row ("Redeemable rewards — Status could not be confirmed"), which is a better
+     home for it than a tile about the welcome gift, and is asserted directly below. */
+  for(const source of ['loyalty','birthday','retention','referrals','welcome']){
     assert.match(grow,new RegExp(`growTileStatusV371\\('${source}'`),`${source} read failures need an honest unavailable state`);
+  }
+  for(const source of ['loyalty','rewards']){
+    assert.match(grow,new RegExp(`snapshot\\.overviewErrors\\?\\.${source}\\?programmeRow\\(`),
+      `${source} read failures need an honest unavailable row`);
   }
 });
 

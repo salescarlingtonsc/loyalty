@@ -17320,9 +17320,17 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      AWAITED at their original sites below, so the order values are consumed in, the per-read
      fail-soft handlers and every isGrowCurrent() guard are all unchanged. Each promise carries
      its own .catch, so abandoning them on an early return cannot raise an unhandled rejection. */
+  /* nestly_v970: this read used to end `.then(r=>r.error?null:r.data).catch(()=>null)`, which threw
+     away the one fact the page needs — WHY the answer is null. "The welcome offer is not set up" and
+     "we could not ask" became the same null, so a dropped request removed the row from the overview
+     and made the tile below assert "Not set up" about a gift the firm may well have configured. The
+     seven reads inside growOverviewSnapshot keep the distinction by handing their `error` to
+     overviewErrors; this one is built out here, so it carries the same fact in its own shape. */
   const welcomeOfferRequestV215=canRewards
-    ?sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id}).then(r=>r.error?null:r.data).catch(()=>null)
-    :Promise.resolve(null);
+    ?sb.rpc('business_get_welcome_offer_v215',{p_business:S.biz.id})
+      .then(r=>({data:r.error?null:r.data,failed:Boolean(r.error)}))
+      .catch(()=>({data:null,failed:true}))
+    :Promise.resolve({data:null,failed:false});
   const loyaltyTiersRequestV229=canRewards
     ?sb.from('loyalty_tiers')
       .select('id,name,threshold,points_multiplier,perk_note,sort,paused,deleted_at,effective_from,expires_at')
@@ -17393,7 +17401,12 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   });
   /* v215: the welcome offer is a reward, so it belongs in this list rather than buried in
      Settings. Read separately: a failure here must not blank the whole programme overview. */
-  const welcomeOfferStatusV215=await welcomeOfferRequestV215;
+  const welcomeOfferResultV215=await welcomeOfferRequestV215;
+  const welcomeOfferStatusV215=welcomeOfferResultV215?.data??null;
+  /* nestly_v970: snapshot is a local const, read by rewardsOverviewIncomplete and growTileStatusV371
+     further down and by nothing else, so the welcome read joins the same map every sibling programme
+     reports through rather than growing a second, parallel notion of "unavailable". */
+  if(snapshot.overviewErrors)snapshot.overviewErrors.welcome=Boolean(welcomeOfferResultV215?.failed);
   if(!isGrowCurrent())return;
   /* V229: the Tiered membership tile needs the ladder, and the whole page needs the firm's
      one choice for what points are FOR. tier_basis measures LIFETIME earn, so redemption never
@@ -17779,7 +17792,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        here, each with its own status and its own door, so nothing is one level deeper than the
        thing it sits beside. */
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
-      status:growTileStatusV371('rewards',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
+      status:growTileStatusV371('welcome',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
         ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
     {key:'birthday',icon:'cake',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
@@ -34319,7 +34332,7 @@ async function customerIntelligencePage(){
       return `<tr><td colspan="4"><div class="empty">${esc(suppressed.note||'Too few customers to name without identifying them.')}</div>${parityLine}</td></tr>`;
     }
     if(!customers.length)return `<tr><td colspan="4"><div class="empty">No customers in this category yet.</div>${parityLine}</td></tr>`;
-    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th>Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div>${parityLine}</td></tr>`;
+    return `<tr><td colspan="4" style="padding:0"><div class="cui-table-wrap" role="region" aria-label="Customers in category"><table class="cui-table"><thead><tr><th>Customer</th><th>Counted visits</th><th class="num">Revenue</th><th>Last visit</th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer">${esc(customer.full_name||'Customer')}</td><td data-label="Counted visits">${Number(customer.visits||0)}</td><td data-label="Revenue" class="num">${esc(scopeMoney(customer.revenue_cents))}</td><td data-label="Last visit">${customer.last_visit?esc(walletDate(customer.last_visit,true)):'—'}</td></tr>`).join('')}</tbody></table></div>${parityLine}</td></tr>`;
   }
   /* nestly_v704 (check 66). get_ci_category_mix_v1 (v691) now embeds a per-category
      `distribution` block {n, mean, median, p90, top1_share_bps, skew_material,
@@ -34361,7 +34374,7 @@ async function customerIntelligencePage(){
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">What they buy</span>
       <h2 id="ciCategoryMixHeadingV650">Category mix</h2></div></div>
       <p class="muted small">All branches</p>
-      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${ciCategoryDistributionRowMarkupV704(category)}${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
+      ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th class="num">Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue" class="num">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${ciCategoryDistributionRowMarkupV704(category)}${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
         :'<div class="empty">No categorised revenue in this scope yet.</div>'}
       <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97(projectedPct>0?'categoryViewCoversProjected':'categoryViewCovers',{covered:classifiedPct.toFixed(1),projected:projectedPct.toFixed(1)})}</p>
       ${ciMeasuredSinceV650(bundle.observed_since)}
@@ -34536,7 +34549,7 @@ async function customerIntelligencePage(){
     const range=forecast.next_90_days||{},months=Array.isArray(forecast.months)?forecast.months:[];
     return `<section class="card" style="grid-column:1/-1"><div class="row"><div><h2>Expected cash collected · next 90 days</h2><p class="muted small" style="margin-top:4px">Observed 20th percentile, mean and 80th percentile from 13 complete Singapore calendar weeks. Any partial report-end week is excluded.</p></div><span class="spacer"></span><span class="pill ok">Evidence threshold met</span></div>
       <div class="wallet-metrics"><div class="wallet-metric"><span class="muted small">Lower range</span><b>${esc(scopeMoney(range.lower_cents,currency))}</b></div><div class="wallet-metric"><span class="muted small">Expected</span><b>${esc(scopeMoney(range.expected_cents,currency))}</b></div><div class="wallet-metric"><span class="muted small">Upper range</span><b>${esc(scopeMoney(range.upper_cents,currency))}</b></div><div class="wallet-metric"><span class="muted small">Weekly observed average</span><b>${esc(scopeMoney(forecast.weekly_average_cents,currency))}</b></div></div>
-      ${months.length?`<div class="cui-table-wrap" role="region" aria-label="Three month cashflow range"><table class="cui-table"><thead><tr><th>Month</th><th>Period</th><th>Lower</th><th>Expected</th><th>Upper</th></tr></thead><tbody>${months.map(month=>`<tr><td>Month ${Number(month.month_index||0)}</td><td>${esc(month.from||'')} → ${esc(month.to||'')}</td><td>${esc(scopeMoney(month.lower_cents,currency))}</td><td><b>${esc(scopeMoney(month.expected_cents,currency))}</b></td><td>${esc(scopeMoney(month.upper_cents,currency))}</td></tr>`).join('')}</tbody></table></div>`:''}
+      ${months.length?`<div class="cui-table-wrap" role="region" aria-label="Three month cashflow range"><table class="cui-table"><thead><tr><th>Month</th><th>Period</th><th class="num">Lower</th><th class="num">Expected</th><th class="num">Upper</th></tr></thead><tbody>${months.map(month=>`<tr><td>Month ${Number(month.month_index||0)}</td><td>${esc(month.from||'')} → ${esc(month.to||'')}</td><td class="num">${esc(scopeMoney(month.lower_cents,currency))}</td><td class="num"><b>${esc(scopeMoney(month.expected_cents,currency))}</b></td><td class="num">${esc(scopeMoney(month.upper_cents,currency))}</td></tr>`).join('')}</tbody></table></div>`:''}
       <p class="muted small" style="margin-top:10px">${esc(forecast.caution||'Use this range alongside known bookings, seasonality and planned closures.')}</p></section>`;
   };
   const customerRecordsMarkup=data=>{
@@ -34555,7 +34568,7 @@ async function customerIntelligencePage(){
       ${lastCustomerError?'':`<div class="grid reports-grid" style="margin-top:16px">${forecastMarkup(data?.forecast||{},currency)}</div>
       <section style="margin-top:16px"><div class="row"><div><h2>Identified customer records</h2><p class="muted small" style="margin-top:4px">Purchase, visit and linked-customer revenue facts open into the customer’s complete ledger. <b>Paid visits</b> counts only visits that charged an amount, so it is deliberately lower than the Dashboard’s <b>Valid visits</b>, which also counts zero-price visits such as package sessions.</p></div><span class="spacer"></span><span class="pill" title="Forecast evidence window, not this period">${workspaceTemplateHtmlV97(completedCount===1?'completedTransaction':'completedTransactions',{count:completedCount})}</span></div>
         ${data?.pagination?.has_more?`<div class="imp-note small"><div class="row"><span>${workspaceTemplateHtmlV97('scopeCustomers',{shown:customers.length,total:Number(data.pagination.total_customers||0)})}</span><span class="spacer"></span><button class="btn ghost sm" id="ciMore">Load more customers</button></div></div>`:''}
-        ${customers.length?`<div class="cui-table-wrap" role="region" aria-label="Identified customer records"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Repeat this period</th><th>Purchases</th><th>Paid visits</th><th>Identified customer revenue</th><th>Cash collected</th><th>Frequency</th><th>Last purchase</th><th></th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer"><b>${esc(customer.full_name||'Customer')}</b><br><span class="muted small">${esc(customer.phone||customer.email||'No contact shown')}</span></td><td data-label="Repeat this period"><span class="pill ${customer.returning_customer?'ok':'off'}">${customer.returning_customer?'Repeat (2+ days)':'Fewer than 2 days'}</span></td><td data-label="Purchases">${Number(customer.purchase_count||0)}</td><td data-label="Paid visits">${Number(customer.visit_count||0)}</td><td data-label="Identified customer revenue"><b>${esc(scopeMoney(customer.net_revenue_cents,currency))}</b></td><td data-label="Cash collected">${esc(scopeMoney(customer.cash_collected_cents,currency))}</td><td data-label="Frequency">${esc(frequency(customer.average_days_between_purchases))}</td><td data-label="Last purchase">${esc(customer.last_purchase_at?walletDate(customer.last_purchase_at,true):'No completed purchase')}</td><td data-label="Record"><a class="btn ghost sm" href="#/client/${encodeURIComponent(customer.client_id)}">Open ledger</a></td></tr>`).join('')}</tbody></table></div>`
+        ${customers.length?`<div class="cui-table-wrap" role="region" aria-label="Identified customer records"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Repeat this period</th><th>Purchases</th><th>Paid visits</th><th class="num">Identified customer revenue</th><th class="num">Cash collected</th><th>Frequency</th><th>Last purchase</th><th></th></tr></thead><tbody>${customers.map(customer=>`<tr><td data-label="Customer"><b>${esc(customer.full_name||'Customer')}</b><br><span class="muted small">${esc(customer.phone||customer.email||'No contact shown')}</span></td><td data-label="Repeat this period"><span class="pill ${customer.returning_customer?'ok':'off'}">${customer.returning_customer?'Repeat (2+ days)':'Fewer than 2 days'}</span></td><td data-label="Purchases">${Number(customer.purchase_count||0)}</td><td data-label="Paid visits">${Number(customer.visit_count||0)}</td><td data-label="Identified customer revenue" class="num"><b>${esc(scopeMoney(customer.net_revenue_cents,currency))}</b></td><td data-label="Cash collected" class="num">${esc(scopeMoney(customer.cash_collected_cents,currency))}</td><td data-label="Frequency">${esc(frequency(customer.average_days_between_purchases))}</td><td data-label="Last purchase">${esc(customer.last_purchase_at?walletDate(customer.last_purchase_at,true):'No completed purchase')}</td><td data-label="Record"><a class="btn ghost sm" href="#/client/${encodeURIComponent(customer.client_id)}">Open ledger</a></td></tr>`).join('')}</tbody></table></div>`
           :'<div class="empty">No completed sales linked to an identified customer in this scope yet.</div>'}
         <div id="ciExportStatus" role="status" aria-live="polite"></div>
       </section>`}
@@ -35415,7 +35428,7 @@ function demographicsPanelHtmlV679(payload){
       ?(ciEvidenceCaptionV679(cell.evidence)||'Not enough data yet')
       :esc(money(cell.atv_cents));
     const genderLabel=cell.gender==='female'?'Female':cell.gender==='male'?'Male':cell.gender==='other'?'Other':(cell.gender||'—');
-    return `<tr><td data-label="Age band">${esc(CI_AGE_BAND_LABELS_V679[cell.age_band]||cell.age_band||'—')}</td><td data-label="Gender">${esc(genderLabel)}</td><td data-label="Customers">${Number(cell.customers)||0}</td><td data-label="Revenue">${esc(money(cell.revenue_cents))}</td><td data-label="Cell visits">${Number(cell.visits)||0}</td><td data-label="Average transaction value">${atvText}</td></tr>`;
+    return `<tr><td data-label="Age band">${esc(CI_AGE_BAND_LABELS_V679[cell.age_band]||cell.age_band||'—')}</td><td data-label="Gender">${esc(genderLabel)}</td><td data-label="Customers">${Number(cell.customers)||0}</td><td data-label="Revenue" class="num">${esc(money(cell.revenue_cents))}</td><td data-label="Cell visits">${Number(cell.visits)||0}</td><td data-label="Average transaction value" class="num">${atvText}</td></tr>`;
   }).join('');
   const unclassifiedCustomers=Number(unclassified.customers)||0,unclassifiedRevenue=Number(unclassified.revenue_cents)||0;
   const demCoverage=ciRateBlockV679(coverage.demographics);
@@ -35423,7 +35436,7 @@ function demographicsPanelHtmlV679(payload){
   return `<section class="revenue-truth-section" aria-labelledby="ciDemographicsHeadingV679">
     <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">Who they are</span>
     <h2 id="ciDemographicsHeadingV679">Demographics</h2></div></div>
-    ${(cells.length||unclassifiedCustomers)?`<div class="cui-table-wrap" role="region" aria-label="Demographics"><table class="cui-table"><thead><tr><th>Age band</th><th>Gender</th><th>Customers</th><th>Revenue</th><th>Cell visits</th><th>Average transaction value</th></tr></thead><tbody>${rows}<tr><td data-label="Age band">Unclassified</td><td data-label="Gender">—</td><td data-label="Customers">${unclassifiedCustomers}</td><td data-label="Revenue">${esc(money(unclassifiedRevenue))}</td><td data-label="Cell visits">—</td><td data-label="Average transaction value">—</td></tr></tbody></table></div>`
+    ${(cells.length||unclassifiedCustomers)?`<div class="cui-table-wrap" role="region" aria-label="Demographics"><table class="cui-table"><thead><tr><th>Age band</th><th>Gender</th><th>Customers</th><th class="num">Revenue</th><th>Cell visits</th><th class="num">Average transaction value</th></tr></thead><tbody>${rows}<tr><td data-label="Age band">Unclassified</td><td data-label="Gender">—</td><td data-label="Customers">${unclassifiedCustomers}</td><td data-label="Revenue" class="num">${esc(money(unclassifiedRevenue))}</td><td data-label="Cell visits">—</td><td data-label="Average transaction value" class="num">—</td></tr></tbody></table></div>`
       :'<div class="empty">No identified customers in this scope yet.</div>'}
     <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('demographicsKnownCoverage',{num:demCoverage.num,den:demCoverage.den,pct:demCoverage.pctText})}</p>
     <p class="muted small">${workspaceTemplateHtmlV97('revenueExplainedByDemographics',{num:money(revCoverage.num),den:money(revCoverage.den),pct:revCoverage.pctText})}</p>
@@ -35446,7 +35459,7 @@ function behaviourPanelHtmlV679(payload){
       ?(ciEvidenceCaptionV679(weekday.evidence)||'Not enough data yet')
       :esc(money(weekday.revenue_per_visit_cents));
     const occurrence=ciRateBlockV679(weekday.visits_per_occurrence);
-    return `<tr><td data-label="Weekday">${esc(weekday.label||'')}</td><td data-label="Weekday visits">${Number(weekday.visits)||0}</td><td data-label="Revenue">${esc(money(weekday.revenue_cents))}</td><td data-label="Revenue per visit">${perVisit}</td><td data-label="Occurrences in range">${Number(weekday.weekday_occurrences)||0}</td><td data-label="Visited on">${occurrence.num} of ${occurrence.den} (${occurrence.pctText})</td></tr>`;
+    return `<tr><td data-label="Weekday">${esc(weekday.label||'')}</td><td data-label="Weekday visits">${Number(weekday.visits)||0}</td><td data-label="Revenue" class="num">${esc(money(weekday.revenue_cents))}</td><td data-label="Revenue per visit" class="num">${perVisit}</td><td data-label="Occurrences in range">${Number(weekday.weekday_occurrences)||0}</td><td data-label="Visited on">${occurrence.num} of ${occurrence.den} (${occurrence.pctText})</td></tr>`;
   }).join('');
   const busiestLine=busiest
     ?`<b>${esc(busiest.label||'')}</b> — ${Number(busiest.visits)||0} visits`
@@ -35461,7 +35474,7 @@ function behaviourPanelHtmlV679(payload){
       <article class="revenue-truth-metric"><span>Busiest day (by visits)</span><strong>${busiestLine}</strong></article>
       <article class="revenue-truth-metric"><span>Most valuable day (by revenue per visit)</span><strong>${mostValuableLine}</strong></article>
     </div>
-    ${weekdays.length?`<div class="cui-table-wrap" role="region" aria-label="Weekday behaviour"><table class="cui-table"><thead><tr><th>Weekday</th><th>Weekday visits</th><th>Revenue</th><th>Revenue per visit</th><th>Occurrences in range</th><th>Visited on</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No weekday activity in this scope yet.</div>'}
+    ${weekdays.length?`<div class="cui-table-wrap" role="region" aria-label="Weekday behaviour"><table class="cui-table"><thead><tr><th>Weekday</th><th>Weekday visits</th><th class="num">Revenue</th><th class="num">Revenue per visit</th><th>Occurrences in range</th><th>Visited on</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No weekday activity in this scope yet.</div>'}
     <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('timeBasisIs',{basis:p.time_basis||'sale_occurred_at'})}</p>
     <p class="muted small">${esc(p.basis_note||'')}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
@@ -35808,12 +35821,12 @@ function ownerBriefHtmlV771(brief,options){
       ${headV771('packages','ciBriefUnusedTitleV771','Prepaid sessions still unused','Work these customers have already paid for and not yet taken.')}
       ${packagesErrorV771?errorRowV771('Prepaid sessions still unused could not load.',packagesErrorV771):`
       ${holdersV771?`<p style="margin:8px 0 2px"><b>${esc(headlineV771)}</b></p>
-      <div class="cui-table-wrap" role="region" aria-label="Prepaid sessions still unused"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Sessions left</th><th>Plan</th><th>Last visit</th><th>Value</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${unusedRowsV771.map(held=>
+      <div class="cui-table-wrap" role="region" aria-label="Prepaid sessions still unused"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Sessions left</th><th>Plan</th><th>Last visit</th><th class="num">Value</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${unusedRowsV771.map(held=>
         `<tr><td data-label="Customer"><b>${esc(held.name)}</b></td>
         <td data-label="Sessions left">${held.sessions}</td>
         <td data-label="Plan">${esc(held.plans.join(', ')||'—')}</td>
         <td data-label="Last visit">${esc(daysAgoV771(held.lastVisit)||'no visit recorded')}</td>
-        <td data-label="Value">${held.valueKnown?esc(money(held.valueCents)):'—'}</td>
+        <td data-label="Value" class="num">${held.valueKnown?esc(money(held.valueCents)):'—'}</td>
         ${canOpenV771?`<td data-label="Action">${openCellV771(held.key)}</td>`:''}</tr>`).join('')}</tbody></table></div>`
         :'<div class="empty">Every prepaid session has been used.</div>'}`}
     </section>`;
@@ -35838,10 +35851,10 @@ function ownerBriefHtmlV771(brief,options){
   const topCustomersV771=`<section class="ci-brief-top-v771" aria-labelledby="ciBriefTopTitleV771" style="margin-top:18px">
     ${headV771('star','ciBriefTopTitleV771','Your top customers','The people the period actually rested on.')}
     ${topLineV771}
-    ${earnersV771.length?`<div class="cui-table-wrap" role="region" aria-label="Your top customers"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Revenue</th><th>Share</th><th>Paid visits</th><th>Last visit</th><th>Note</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${earnersV771.map(record=>{
+    ${earnersV771.length?`<div class="cui-table-wrap" role="region" aria-label="Your top customers"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th class="num">Revenue</th><th>Share</th><th>Paid visits</th><th>Last visit</th><th>Note</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${earnersV771.map(record=>{
       const since=finiteV771(record.days_since_last_purchase);
       return `<tr><td data-label="Customer"><b>${esc(nameV771(record.full_name))}</b></td>
-        <td data-label="Revenue"><b>${esc(money(record.net_revenue_cents))}</b></td>
+        <td data-label="Revenue" class="num"><b>${esc(money(record.net_revenue_cents))}</b></td>
         <td data-label="Share">${esc(shareTextV771(Number(record.net_revenue_cents)))}</td>
         <td data-label="Paid visits">${countV771(record.visit_count)}</td>
         <td data-label="Last visit">${esc(daysAgoV771(since)||'—')}</td>
@@ -35862,7 +35875,7 @@ function ownerBriefHtmlV771(brief,options){
   const servicesV771=`<section class="ci-brief-services-v771" aria-labelledby="ciBriefServicesTitleV771" style="margin-top:18px">
     ${headV771('services','ciBriefServicesTitleV771','Which service brings people back','What people buy first, and what they come back for.')}
     ${servicesErrorV771?errorRowV771('Which service brings people back could not load.',servicesErrorV771):`
-    ${serviceRowsV771.length?`<div class="cui-table-wrap" role="region" aria-label="Which service brings people back"><table class="cui-table" data-responsive="true"><thead><tr><th>Service</th><th>Customers who bought it</th><th>Bought it again</th><th>First-time customers it brought in</th><th>Revenue</th></tr></thead><tbody>${serviceRowsV771.map(row=>{
+    ${serviceRowsV771.length?`<div class="cui-table-wrap" role="region" aria-label="Which service brings people back"><table class="cui-table" data-responsive="true"><thead><tr><th>Service</th><th>Customers who bought it</th><th>Bought it again</th><th>First-time customers it brought in</th><th class="num">Revenue</th></tr></thead><tbody>${serviceRowsV771.map(row=>{
       const again=objectV771(row.repeat_rate)||{};
       const share=finiteV771(again.pct);
       const againText=`${countV771(again.numerator)} of ${countV771(again.denominator)}`
@@ -35871,7 +35884,7 @@ function ownerBriefHtmlV771(brief,options){
         <td data-label="Customers who bought it">${countV771(row.buyers)}</td>
         <td data-label="Bought it again">${esc(againText)}</td>
         <td data-label="First-time customers it brought in">${countV771(row.gateway_count)}</td>
-        <td data-label="Revenue">${esc(money(row.revenue_cents))}</td></tr>`;
+        <td data-label="Revenue" class="num">${esc(money(row.revenue_cents))}</td></tr>`;
     }).join('')}</tbody></table></div>`
       :'<div class="empty">No service sales in this period yet.</div>'}`}
   </section>`;
@@ -35967,10 +35980,10 @@ function ownerBriefHtmlV771(brief,options){
       ${methodsV774.length?`<p style="margin:10px 0 2px">By method: <span>${esc(methodsV774.join(' · '))}</span></p>`:''}
       ${unlinkedCountV774>0?`<p class="small" style="margin:6px 0 2px">${esc(`${pluralV774(unlinkedCountV774,'payment','payments')} worth ${money(countV771(unlinkedV774.cents))} ${unlinkedCountV774===1?'is':'are'} not linked to any sale in this period.`)}</p>`:''}
       ${refundsV774>0?`<p class="small" style="margin:6px 0 2px">Refunds: ${esc(money(refundsV774))}</p>`:''}
-      ${debtorsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Who still has an open bill"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Open sales</th><th>Outstanding</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${debtorsV774.map(row=>
+      ${debtorsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Who still has an open bill"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Open sales</th><th class="num">Outstanding</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${debtorsV774.map(row=>
         `<tr><td data-label="Customer"><b>${esc(nameV771(row.client_name))}</b></td>
         <td data-label="Open sales">${countV771(row.sales)}</td>
-        <td data-label="Outstanding"><b>${esc(money(countV771(row.outstanding_cents)))}</b></td>
+        <td data-label="Outstanding" class="num"><b>${esc(money(countV771(row.outstanding_cents)))}</b></td>
         ${canOpenV771?`<td data-label="Action">${openCellV771(row.client_id)}</td>`:''}</tr>`).join('')}</tbody></table></div>
       ${namesHiddenV774?'<p class="muted small" style="margin-top:10px">Names are hidden for your role.</p>':''}`
         :'<div class="empty">Every recorded sale in this period has a payment recorded against it.</div>'}
@@ -36022,13 +36035,13 @@ function ownerBriefHtmlV771(brief,options){
       ${headV771('staff','ciBriefStaffTitleV774','Staff: who brings customers back','Of the customers each person served, how many came back at all — and how many came back to them.')}
       ${staffErrorV774?errorRowV771('Staff: who brings customers back could not load.',staffErrorV774):`
       ${firmLineV774?`<p style="margin:8px 0 2px"><b>${esc(firmLineV774)}</b></p>`:''}
-      ${staffRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Staff: who brings customers back"><table class="cui-table" data-responsive="true"><thead><tr><th>Staff</th><th>Valid visits</th><th>Customers</th><th>Revenue per visit</th><th>${esc(cameBackHeadV774)}</th><th>To the same person</th><th>vs firm</th></tr></thead><tbody>${staffRowsV774.map(row=>{
+      ${staffRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Staff: who brings customers back"><table class="cui-table" data-responsive="true"><thead><tr><th>Staff</th><th>Valid visits</th><th>Customers</th><th class="num">Revenue per visit</th><th>${esc(cameBackHeadV774)}</th><th>To the same person</th><th>vs firm</th></tr></thead><tbody>${staffRowsV774.map(row=>{
         const perVisit=finiteV771(row.revenue_per_visit_cents);
         const rowRecent=tooRecentV774(row.matured,row.immature);
         return `<tr><td data-label="Staff"><b>${esc(staffNameV774(row.full_name))}</b>${row.active===false?' <span class="muted small">(no longer active)</span>':''}</td>
         <td data-label="Valid visits">${countV771(row.visits)}</td>
         <td data-label="Customers">${countV771(row.customers)}</td>
-        <td data-label="Revenue per visit">${perVisit===null?'—':esc(money(perVisit))}</td>
+        <td data-label="Revenue per visit" class="num">${perVisit===null?'—':esc(money(perVisit))}</td>
         <td data-label="${esc(cameBackHeadV774)}">${esc(rowRecent||shareTextV774(row.returned_any))}</td>
         <td data-label="To the same person">${esc(rowRecent||shareTextV774(row.returned_same_staff))}</td>
         <td data-label="vs firm">${esc(vsFirmV774(row.vs_firm_points))}</td></tr>`;
@@ -36130,11 +36143,11 @@ function ownerBriefHtmlV771(brief,options){
         ${tileV771('Days covered',dayRowsV774.length?String(dayRowsV774.length):'—',rangeCaptionV774)}
       </div>
       <p style="margin:10px 0 2px">${workspaceTemplateHtmlV97('busiestAndSlowestDays',{busiest:labelsOfV774(busiestDaysV774)||'not enough days yet',slowest:labelsOfV774(slowestDaysV774)||'not enough days yet'})}</p>
-      ${weekdayRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Visits by day of the week"><table class="cui-table" data-responsive="true"><thead><tr><th>Day</th><th>Valid visits</th><th>Visits per day</th><th>Revenue</th></tr></thead><tbody>${weekdayRowsV774.map(row=>
+      ${weekdayRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Visits by day of the week"><table class="cui-table" data-responsive="true"><thead><tr><th>Day</th><th>Valid visits</th><th>Visits per day</th><th class="num">Revenue</th></tr></thead><tbody>${weekdayRowsV774.map(row=>
         `<tr><td data-label="Day"><b>${esc(labelOfV774(row)||'—')}</b></td>
         <td data-label="Valid visits">${countV771(row.visits)}</td>
         <td data-label="Visits per day">${esc(oneDecimalV774(row.per_occurrence))}</td>
-        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>`
+        <td data-label="Revenue" class="num">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>`
         :'<div class="empty">Not enough days in this period to rank the week yet.</div>'}
       <p style="margin:12px 0 2px">${workspaceTemplateHtmlV97(busiestTimesV952?'busiestOpenTimes':'busiestOpenTimesUnknown',{times:busiestTimesV952})} · ${workspaceTemplateHtmlV97(quietestTimesV952?'quietestOpenTimes':'quietestOpenTimesUnknown',{times:quietestTimesV952})}</p>
       ${shownBlocksV774.length?`<div class="cui-table-wrap" role="region" aria-label="Visits by time of day"><table class="cui-table" data-responsive="true"><thead><tr><th>Time</th><th>Valid visits</th><th>Share of visits</th></tr></thead><tbody>${shownBlocksV774.map(row=>
@@ -36150,11 +36163,11 @@ function ownerBriefHtmlV771(brief,options){
         <td data-label="Who came">${esc(entry.parts.join(' · '))}</td></tr>`).join('')}</tbody></table></div>
       ${ageCoverV774?`<p class="muted small" style="margin-top:10px">${esc(`Age known for ${countV771(ageCoverV774.numerator)} of ${countV771(ageCoverV774.denominator)} visits.`)}</p>`:''}`:''}
       ${recentDaysV774.length?`<p class="small" style="margin:12px 0 2px"><b>Last 14 days</b></p>
-      <div class="cui-table-wrap" role="region" aria-label="Last 14 days"><table class="cui-table" data-responsive="true"><thead><tr><th>Date</th><th>Day</th><th>Valid visits</th><th>Revenue</th></tr></thead><tbody>${recentDaysV774.map(row=>
+      <div class="cui-table-wrap" role="region" aria-label="Last 14 days"><table class="cui-table" data-responsive="true"><thead><tr><th>Date</th><th>Day</th><th>Valid visits</th><th class="num">Revenue</th></tr></thead><tbody>${recentDaysV774.map(row=>
         `<tr><td data-label="Date"><b>${esc(String(row.date==null?'':row.date))}</b></td>
         <td data-label="Day">${esc(labelOfV774(row)||'—')}</td>
         <td data-label="Valid visits">${countV771(row.visits)}</td>
-        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>`:''}`}
+        <td data-label="Revenue" class="num">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>`:''}`}
     </section>`;
   }
 
@@ -36197,18 +36210,18 @@ function ownerBriefHtmlV771(brief,options){
       ${headV771('customers','ciBriefWhoTitleV774','Who your customers are','Only the customers who told you, counted against the ones who did.')}
       ${demoErrorV774?errorRowV771('Who your customers are could not load.',demoErrorV774):`
       ${(genderRowsV774.length||ageRowsV774.length)?`
-      ${genderRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Customers by gender"><table class="cui-table" data-responsive="true"><thead><tr><th>Gender</th><th>Customers</th><th>Share</th><th>Revenue</th></tr></thead><tbody>${genderRowsV774.map(row=>
+      ${genderRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Customers by gender"><table class="cui-table" data-responsive="true"><thead><tr><th>Gender</th><th>Customers</th><th>Share</th><th class="num">Revenue</th></tr></thead><tbody>${genderRowsV774.map(row=>
         `<tr><td data-label="Gender"><b>${esc(genderLabelV774(row.gender))}</b></td>
         <td data-label="Customers">${countV771(row.customers)}</td>
         <td data-label="Share">${esc(shareTextV774(row.share))}</td>
-        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>
+        <td data-label="Revenue" class="num">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>
       ${unknownGenderV774>0?`<p class="muted small" style="margin-top:8px">${esc(`Unknown: ${pluralV774(unknownGenderV774,'customer','customers')}`)}</p>`:''}
       ${genderKnownV774?`<p class="muted small" style="margin-top:4px">${esc(knownLineV774(genderKnownV774,'Gender'))}</p>`:''}`:''}
-      ${ageRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Customers by age" style="margin-top:12px"><table class="cui-table" data-responsive="true"><thead><tr><th>Age</th><th>Customers</th><th>Share</th><th>Revenue</th></tr></thead><tbody>${ageRowsV774.map(row=>
+      ${ageRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Customers by age" style="margin-top:12px"><table class="cui-table" data-responsive="true"><thead><tr><th>Age</th><th>Customers</th><th>Share</th><th class="num">Revenue</th></tr></thead><tbody>${ageRowsV774.map(row=>
         `<tr><td data-label="Age"><b>${esc(ageLabelV774(row.age_band))}</b></td>
         <td data-label="Customers">${countV771(row.customers)}</td>
         <td data-label="Share">${esc(shareTextV774(row.share))}</td>
-        <td data-label="Revenue">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>
+        <td data-label="Revenue" class="num">${esc(money(countV771(row.revenue_cents)))}</td></tr>`).join('')}</tbody></table></div>
       ${unknownAgeV774>0?`<p class="muted small" style="margin-top:8px">${esc(`Unknown: ${pluralV774(unknownAgeV774,'customer','customers')}`)}</p>`:''}
       ${ageKnownV774?`<p class="muted small" style="margin-top:4px">${esc(knownLineV774(ageKnownV774,'Age'))}</p>`:''}`:''}`
         :'<div class="empty">No customer has a gender or date of birth on record yet. Customers who create a Peekaa account are asked for both.</div>'}

@@ -898,3 +898,88 @@ test('v97 merchant programme editor is canonical and keeps v96 media intact',()=
   assert.match(app,/function customerProgrammeTileLogoV96/);
   assert.match(app,/customerMediaUrlV95\(business\?\.logo_url\)/);
 });
+
+/* nestly_v970 (production sweep II). WORKSPACE_COPY_V97 is hand-written in blocks, and a later block
+   can re-declare a key an earlier block already decided. JavaScript keeps the LAST entry and discards
+   the earlier one with no error anywhere: 'Edit' was curated as 'Edit' in the core verb block beside
+   Simpan/Batal/Tambah/Padam, then again as 'Sunting' thirty lines later in a catch-all block, so
+   Bahasa Melayu shipped 'Sunting' while BOTH this table's own core block and the generated ledger
+   said 'Edit'. The same append also re-declared 'Services' and 'Record sale' in both locales, which
+   is how we know it was a bulk paste rather than a considered override.
+
+   The generated table cannot drift this way — it is JSON emitted by a generator — and its acceptance
+   count reads Object.keys, which collapses duplicates before it ever counts. So the gate has to read
+   the SOURCE of the curated table, which is the one that WINS the lookup. Scanner rather than a regex
+   because the table carries comments and apostrophes inside its values. */
+function curatedCopyKeyEntriesV970(source){
+  const entries=[];
+  let index=0,depth=0,locale=null,lastToken=null,lastDepth=-1;
+  const reset=()=>{lastToken=null;lastDepth=-1};
+  while(index<source.length){
+    const character=source[index];
+    if(character==='/'&&source[index+1]==='*'){
+      const end=source.indexOf('*/',index+2);
+      index=end<0?source.length:end+2;
+      continue;
+    }
+    if(character==='/'&&source[index+1]==='/'){
+      while(index<source.length&&source[index]!=='\n')index++;
+      continue;
+    }
+    if(character==="'"||character==='"'){
+      const quote=character;let value='';index++;
+      while(index<source.length){
+        const inner=source[index++];
+        if(inner==='\\'){value+=source[index++]||'';continue}
+        if(inner===quote)break;
+        value+=inner;
+      }
+      lastToken=value;lastDepth=depth;
+      continue;
+    }
+    if(/[A-Za-z_$]/.test(character)){
+      let end=index;
+      while(end<source.length&&/[\w$]/.test(source[end]))end++;
+      lastToken=source.slice(index,end);lastDepth=depth;
+      index=end;
+      continue;
+    }
+    if(character==='{'){depth++;index++;reset();continue}
+    if(character==='}'){depth--;index++;reset();continue}
+    if(character===','||character==='('||character===')'){index++;reset();continue}
+    if(character===':'){
+      if(lastToken!==null&&lastDepth===1)locale=lastToken;
+      else if(lastToken!==null&&lastDepth===2)entries.push({locale,key:lastToken});
+      index++;reset();
+      continue;
+    }
+    index++;
+  }
+  return entries;
+}
+
+test('the curated workspace copy table declares every key exactly once',()=>{
+  const curatedSource=expressionBetween(
+    'const WORKSPACE_COPY_V97=',
+    '\nconst WORKSPACE_GENERATED_COPY_V97',
+  );
+  const entries=curatedCopyKeyEntriesV970(curatedSource);
+  assert.deepEqual([...new Set(entries.map(entry=>entry.locale))],['zh-CN','ms'],
+    'the curated table should cover exactly the two translated locales');
+
+  const redeclared=[];
+  for(const locale of ['zh-CN','ms']){
+    const localeEntries=entries.filter(entry=>entry.locale===locale);
+    const seen=new Set();
+    for(const {key} of localeEntries){
+      if(seen.has(key))redeclared.push(`${locale}: ${JSON.stringify(key)}`);
+      seen.add(key);
+    }
+    /* The invariant that matters: what an author wrote is what ships. If these disagree, some
+       curated decision is being silently thrown away at parse time. */
+    assert.equal(localeEntries.length,Object.keys(curatedCopy[locale]).length,
+      `${locale}: ${localeEntries.length} curated entries in source but only `
+      +`${Object.keys(curatedCopy[locale]).length} survive — a duplicate key is discarding a decision`);
+  }
+  assert.deepEqual(redeclared,[],'a curated key is declared twice; the earlier decision is discarded');
+});

@@ -50,7 +50,7 @@ test('V215 appears in Programmes with a state an owner can act on', () => {
      state and its click opens the editor directly. (The row builder itself is now unreferenced;
      see the dead-code note in the V371 evidence document.) Both halves of "a state an owner can
      act on" are asserted against what actually ships. */
-  assert.match(app, /status:growTileStatusV371\('rewards',!canRewards\?\['Not included','off'\]:welcomeOfferStatusV215\?\.active\?\[STATUS_WORDS\.on,'on'\]:welcomeOfferStatusV215\?\.configured\?\['Paused','warn'\]:\['Not set up','warn'\]\)/,
+  assert.match(app, /status:growTileStatusV371\('welcome',!canRewards\?\['Not included','off'\]:welcomeOfferStatusV215\?\.active\?\[STATUS_WORDS\.on,'on'\]:welcomeOfferStatusV215\?\.configured\?\['Paused','warn'\]:\['Not set up','warn'\]\)/,
     'the tile reports live / paused / not set up, and says Unavailable when its read failed');
   /* nestly_v584 (owner photo 7: "welcome gift programme follow this style", written under the
      Birthday benefit landing page). The tile opens a LANDING PAGE now, not the editor — which
