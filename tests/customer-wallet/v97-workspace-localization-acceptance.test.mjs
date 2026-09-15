@@ -263,7 +263,8 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
            would have REWRITTEN a catalogue entry rather than added one. It is left as it is. */
         /* nestly_v934: +240 — Programmes (growPage), the service-mapping board, and the long copy a
        110-character harvest cap had hidden across every earlier wave. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,4009,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v935: +217 — the rewards and tiers editor, the setup wizard, and the Programmes dialogs. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,4226,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
