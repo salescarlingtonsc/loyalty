@@ -4371,6 +4371,12 @@
       "path": "db/migrations/20261012_nestly_v928_live_client_advisor.sql",
       "semanticVersion": "v928",
       "proposedDeployVersion": "20261012010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261014_nestly_v950_unattributed_customers_are_visible.sql",
+      "semanticVersion": "v950",
+      "proposedDeployVersion": "20261014000000"
     }
   ]
 }

@@ -4366,6 +4366,12 @@
       "version": "20261012010000",
       "name": "nestly_v928_live_client_advisor",
       "sourcePath": "db/migrations/20261012_nestly_v928_live_client_advisor.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261014000000",
+      "name": "nestly_v950_unattributed_customers_are_visible",
+      "sourcePath": "db/migrations/20261014_nestly_v950_unattributed_customers_are_visible.sql"
     }
   ]
 }
