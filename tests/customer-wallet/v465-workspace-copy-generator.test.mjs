@@ -4702,7 +4702,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941, ...SPLIT_LABELS_V951, ...SPLIT_LABELS_V952, ...SPLIT_LABELS_V953, ...CUSTOMER_WALLET_V955, ...CUSTOMER_CORE_V956, ...WORKSPACE_ATTRS_AND_ESCAPES_V957, ...BUSINESS_VIEW_V958].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941, ...SPLIT_LABELS_V951, ...SPLIT_LABELS_V952, ...SPLIT_LABELS_V953, ...CUSTOMER_WALLET_V955, ...CUSTOMER_CORE_V956, ...WORKSPACE_ATTRS_AND_ESCAPES_V957, ...BUSINESS_VIEW_V958, ...AUDIT_TAIL_V982].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -4736,7 +4736,7 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 5903);
+  assert.equal(once.keyCount, 5908);
 });
 
 /* nestly_v933. The generator applies `table[locale][entry.source] = value`, which ADDS a key when
@@ -4751,6 +4751,13 @@ test('the generator is idempotent, and app.js already equals what it produces', 
    one key short of that sum. Correcting an existing translation is still entirely possible — it
    belongs in WORKSPACE_COPY_V97, the curated table that beats this one at lookup time, where the
    change is visible as a diff instead of vanishing into a 190KB literal. */
+/* nestly_v982 — the audit tail. Five labels that render on workspace screens in every locale and
+   had never been harvested; the sixth, 'Import', is curated instead, because the generator rightly
+   refuses a translation identical to its source and Bahasa Melayu keeps the word as it is. */
+const AUDIT_TAIL_V982 = [
+  'Change photo', 'Attach photo', 'Price (SGD)', 'Payment history', '(unnamed)',
+];
+
 const WORKSPACE_GENERATED_BASELINE_V97 = 1468;
 
 test('every ledger entry adds a key — none rewrites a translation the ledger does not own', () => {
@@ -4764,7 +4771,7 @@ test('every ledger entry adds a key — none rewrites a translation the ledger d
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 5903 strings per locale/);
+  assert.match(clean, /up to date: 5908 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

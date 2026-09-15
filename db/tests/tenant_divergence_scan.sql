@@ -47,6 +47,10 @@
 --   D15  RUNTIME  the silent-expiry-disagreement shape: the live row's stamp validity / reward
 --                 expiry is NULL while some historical version for that tenant carries a value,
 --                 and stamps are live. Whichever version a cycle pins decides expiry silently.
+--   D21  RUNTIME  a promo redemption removed while its payment-provider coupon was already
+--                 applied — the state nestly_v964's guard exists to prevent. The discount stays
+--                 spendable at the provider with nothing on our side expecting it.
+--                 (D16-D20 predate this legend and are documented at their own definitions.)
 
 begin;
 
@@ -664,6 +668,41 @@ select s.business_id, s.business_name, 'D15', 'RUNTIME-DANGEROUS',
         and ((lp.stamp_validity_days is null and v.stamp_validity_days is not null)
           or (lp.stamp_reward_expiry_days is null and v.stamp_reward_expiry_days is not null)));
 
+-- D21 — a first-payment discount that is live at the payment provider on a redemption this
+-- database has already forgotten. nestly_v964 makes this state unreachable through
+-- platform_remove_promo_redemption_v961, which refuses outright while provider_applied_at is set:
+-- "Forgetting it here would leave the merchant quietly discounted with no record of why." So a row
+-- here either predates that guard or arrived by a path that does not go through it — and either
+-- way the coupon is still spendable at the provider while nothing on our side expects it.
+-- Reported rather than repaired: only someone with provider access can say whether the coupon is
+-- still live there, and guessing in either direction writes a lie into a billing record.
+--
+-- HOW TO CLOSE ONE. This check is deliberately NOT allowlistable (BUG_CLOSURE_PROTOCOL §6: a
+-- waiver is for intentional state, "never to silence a real defect"). Resolve the row instead,
+-- which needs no migration because removed_reason is the operator's own field:
+--   * the coupon is still live at the provider -> the removal was wrong. Clear removed_at so the
+--     record matches reality again, and let v965's consumer or v966's release close it properly.
+--   * the coupon has been voided at the provider -> the removal was right and only the record is
+--     incomplete. Say so in removed_reason, beginning with the marker below, and this check stops
+--     reporting it because the discount can no longer be spent.
+insert into _scan
+select r.business_id,
+       coalesce(b.name, '(unknown business)'),
+       'D21',
+       'RUNTIME-DANGEROUS',
+       'promo redemption '||r.id::text||' was removed at '||r.removed_at::text
+       ||' while its '||coalesce(r.provider,'provider')||' coupon '
+       ||coalesce(r.provider_coupon_id,'<no id recorded>')
+       ||' was already applied at '||r.provider_applied_at::text
+       ||' -- the discount can still be spent, and no row here expects it'
+  from public.platform_promo_redemptions_v961 r
+  left join public.businesses b on b.id = r.business_id
+ where r.provider_applied_at is not null
+   and r.removed_at is not null
+   /* The one exemption, and it is a statement of fact rather than a waiver: an operator who has
+      voided the coupon at the provider records that here, and the discount is then unspendable. */
+   and coalesce(r.removed_reason,'') not like 'provider-coupon-voided:%';
+
 -- ---------------------------------------------------------------------------------------------
 -- OUTPUT
 -- ---------------------------------------------------------------------------------------------
@@ -699,7 +738,7 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
     ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D18','RUNTIME-DANGEROUS'),('D19','RUNTIME-DANGEROUS'),('D20','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
-    ('D15','RUNTIME-DANGEROUS')
+    ('D15','RUNTIME-DANGEROUS'),('D21','RUNTIME-DANGEROUS')
   ) c(check_id, severity)
 
  order by 1 desc, 4, 3;
