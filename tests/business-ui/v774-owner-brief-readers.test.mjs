@@ -24,6 +24,10 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v949: a renderer here now carries a named template for a sentence that mixes reviewed
+   English with a runtime value — one text node, which the flat catalogue can never reach. The REAL
+   runtime is supplied, never a stub. */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -41,7 +45,7 @@ const block = app.slice(fnStart, fnEnd);
 /* The stubs are the names the renderer is allowed to reach for. A sixth one fails here with a
    ReferenceError rather than silently testing a different function. */
 function render(brief) {
-  const sandbox = {
+  const sandbox = { ...workspaceTemplateRuntime(),
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     money: (c) => 'SGD ' + ((c || 0) / 100).toFixed(2),
     walletDate: (v) => `WD:${v}`,

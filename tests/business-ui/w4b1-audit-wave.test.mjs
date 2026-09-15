@@ -26,6 +26,11 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
+import { installWorkspaceTemplateGlobals, workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v949: a renderer here now carries a named template for a sentence that mixes reviewed
+   English with a runtime value — one text node, which the flat catalogue can never reach. The REAL
+   runtime is supplied, never a stub. */
+installWorkspaceTemplateGlobals();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const appJs = await readFile(path.join(root, 'app/app.js'), 'utf8');
@@ -389,8 +394,10 @@ test('F081 the bottom-of-page CSV import resumes from the failing row instead of
     esc,
     $: id => (id === 'csvgo' ? btnState : id === 'csvprev' ? prevHtml : null),
     toast: () => {},
-    workspaceTemplateTextV97: (key, args) => `${key}:${JSON.stringify(args)}`,
-    workspaceTemplateHtmlV97: (key, args) => `${key}:${JSON.stringify(args)}`,
+    /* nestly_v949: this was a stub that echoed the key and its arguments, which meant the
+       assertions below could pass against a template that did not exist, had a missing locale or
+       dropped a value. The REAL runtime renders the same markup production does. */
+    ...workspaceTemplateRuntime(),
     sb: { rpc: async () => {
       calls += 1;
       if (calls === 2) return { data: null, error: { message: 'phone already used' } };
@@ -405,7 +412,7 @@ test('F081 the bottom-of-page CSV import resumes from the failing row instead of
   assert.equal(btnState.disabled, false, 'the button must be re-enabled after a mid-batch failure, not frozen');
   assert.equal(recs.length, 2, 'the already-succeeded row must be consumed so a retry does not re-attempt it');
   assert.equal(recs[0].full_name, 'Bad Row', 'retry must resume at the row that failed');
-  assert.match(prevHtml.value, /1 imported so far, 2 left to try/);
+  assert.match(prevHtml.value, />1<\/span> imported so far, <span[^>]*>2<\/span> left to try/);
 });
 
 /* ---------------------------------------------------------------- F093 */
@@ -445,6 +452,9 @@ test('F095 chRole only claims a finance-module removal when the PRIOR role actua
       myStaffId: 'someone-else',
       S: { biz: { id: 'biz-1' }, myModules: null, myModulePerms: null },
       route: () => {},
+      /* nestly_v949: the role-change toast is a named template now, and runInNewContext sees none
+         of this process's globals — so the real runtime goes in with the other helpers. */
+      ...workspaceTemplateRuntime(),
       calls,
     };
   };

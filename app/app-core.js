@@ -7964,8 +7964,37 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   timeBasisIs:Object.freeze({en:"Time basis: {basis}.",'zh-CN':"时间依据：{basis}。",ms:"Asas masa: {basis}."}),
   aboutMonthlySpendAtRisk:Object.freeze({en:"· about {amount} a month of regular spend at risk",'zh-CN':"· 约有每月 {amount} 的常规消费面临流失风险",ms:"· kira-kira {amount} sebulan perbelanjaan biasa berisiko"}),
   offersLiveOfMax:Object.freeze({en:"{used} of {max} offers live",'zh-CN':"{max} 个进行中优惠名额已用 {used} 个",ms:"{used} daripada {max} tawaran aktif"}),
+  /* nestly_v949 — nineteen more embedded-value sentences: the bottle auto keep window, the rhythm
+     and recovery report lines, scheduled capacity, the P&L scope note, the finance-role refusals,
+     the staff invite code, the gallery cap, the import progress line and the Help guide link.
+     Two of them state the same sentence in two render paths and share one key. */
+  busiestAndSlowestDays:Object.freeze({en:"Busiest days: {busiest} · Slowest days: {slowest}",'zh-CN':"最忙的日子：{busiest} · 最清闲的日子：{slowest}",ms:"Hari paling sibuk: {busiest} · Hari paling lengang: {slowest}"}),
+  notSentBecause:Object.freeze({en:"Not sent because: {reasons}.",'zh-CN':"未发送，原因：{reasons}。",ms:"Tidak dihantar kerana: {reasons}."}),
+  cameBackWithinDays:Object.freeze({en:"Came back within {days} days",'zh-CN':"在 {days} 天内回头",ms:"Kembali dalam {days} hari"}),
+  bookedHoursOutOfCapacity:Object.freeze({en:"{booked} booked service hours out of {capacity} branch-open active-team hours after merged breaks, staff blocks, and full-day time off.",'zh-CN':"在合并休息时段、员工锁定时间和整日休假之后，分店营业且团队在岗的 {capacity} 小时中，已预约 {booked} 个服务小时。",ms:"{booked} jam perkhidmatan ditempah daripada {capacity} jam pasukan aktif semasa cawangan dibuka selepas rehat digabungkan, sekatan kakitangan, dan cuti sehari penuh."}),
+  overbookedByHours:Object.freeze({en:"Overbooked by {hours} service hours in this period.",'zh-CN':"本期间超额预约了 {hours} 个服务小时。",ms:"Terlebih tempah sebanyak {hours} jam perkhidmatan dalam tempoh ini."}),
+  stepsDoneOfTotal:Object.freeze({en:"{done} of {total} done",'zh-CN':"已完成 {done} / {total}",ms:"{done} daripada {total} selesai"}),
+  cashBasisLessExpenses:Object.freeze({en:"Cash-basis revenue less {scope} expenses.",'zh-CN':"收付实现制营收减去{scope}支出。",ms:"Hasil asas tunai tolak perbelanjaan {scope}."}),
+  financeUnavailableForRole:Object.freeze({en:"Unavailable for {role}: Expenses, P&L, Staff commission and Business Intelligence require a finance-capable role.",'zh-CN':"{role}无法使用：支出、损益表、员工佣金和商业智能需要具备财务权限的角色。",ms:"Tidak tersedia untuk {role}: Perbelanjaan, Untung Rugi, Komisen kakitangan dan Kecerdasan Perniagaan memerlukan peranan yang berkemampuan kewangan."}),
+  serviceAndProductRates:Object.freeze({en:"Svc {service} · Prod {product}",'zh-CN':"服务 {service} · 产品 {product}",ms:"Perkh. {service} · Produk {product}"}),
+  roleUpdatedFinanceRemoved:Object.freeze({en:"Role updated. Expenses, P&L, Staff commission and Business Intelligence were removed because {role} is not finance-capable.",'zh-CN':"角色已更新。由于{role}不具备财务权限，支出、损益表、员工佣金和商业智能已被移除。",ms:"Peranan dikemas kini. Perbelanjaan, Untung Rugi, Komisen kakitangan dan Kecerdasan Perniagaan dialih keluar kerana {role} tidak berkemampuan kewangan."}),
+  codeOnlyWorksForEmail:Object.freeze({en:"This code only works for {email}.",'zh-CN':"此代码仅对 {email} 有效。",ms:"Kod ini hanya berfungsi untuk {email}."}),
+  sendInviteLinkTo:Object.freeze({en:"Send {name} the invite link (or read them the code).",'zh-CN':"把邀请链接发给{name}（或把代码念给他们听）。",ms:"Hantar pautan jemputan kepada {name} (atau bacakan kodnya)."}),
+  codeExpiresNewCancels:Object.freeze({en:"The code expires in 14 days and works once. Creating a new code for {name} cancels this one.",'zh-CN':"此代码 14 天后失效，且仅可使用一次。为{name}创建新代码会作废这一个。",ms:"Kod ini luput dalam 14 hari dan berfungsi sekali. Mencipta kod baharu untuk {name} membatalkan yang ini."}),
+  maximumPhotosReached:Object.freeze({en:"That is the maximum of {max} photos. Remove one to add another.",'zh-CN':"最多 {max} 张照片，已达上限。请先移除一张再添加。",ms:"Itu maksimum {max} foto. Alih keluar satu untuk menambah yang lain."}),
+  importedSoFarRowFailed:Object.freeze({en:"{done} imported so far, {left} left to try. Row failed: {name} — {error}",'zh-CN':"已导入 {done} 条，还有 {left} 条待尝试。失败的行：{name} — {error}",ms:"{done} diimport setakat ini, {left} lagi untuk dicuba. Baris gagal: {name} — {error}"}),
+  openTopicGuide:Object.freeze({en:"Open the {topic} guide",'zh-CN':"打开「{topic}」指南",ms:"Buka panduan {topic}"}),
+  everyCompanyOnBrand:Object.freeze({en:"Every company on {brand} — read-only, super-admin view.",'zh-CN':"{brand} 上的每一家公司 — 只读的超级管理员视图。",ms:"Setiap syarikat pada {brand} — paparan baca sahaja, super-admin."}),
+  autoUsesDaysForCustomer:Object.freeze({en:"Auto uses {days} days for this customer.",'zh-CN':"系统为这位顾客自动采用 {days} 天。",ms:"Auto menggunakan {days} hari untuk pelanggan ini."}),
+  grossSpendReturnedWithin:Object.freeze({en:"Net of what would likely have happened anyway. Gross spend by customers who returned within {days} days of being contacted:",'zh-CN':"已扣除本来也可能发生的部分。被联系后 {days} 天内回头的顾客的总消费：",ms:"Bersih daripada apa yang mungkin berlaku juga. Perbelanjaan kasar oleh pelanggan yang kembali dalam {days} hari selepas dihubungi:"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v949 — nineteen more embedded-value sentences. */
+  'busiestAndSlowestDays','notSentBecause','cameBackWithinDays','bookedHoursOutOfCapacity',
+  'overbookedByHours','stepsDoneOfTotal','cashBasisLessExpenses','financeUnavailableForRole',
+  'serviceAndProductRates','roleUpdatedFinanceRemoved','codeOnlyWorksForEmail','sendInviteLinkTo',
+  'codeExpiresNewCancels','maximumPhotosReached','importedSoFarRowFailed','openTopicGuide',
+  'everyCompanyOnBrand','autoUsesDaysForCustomer','grossSpendReturnedWithin',
   /* nestly_v947 — nine more embedded-value sentences. */
   'originalAndReplacement','suggestionsUseYourPrices','timeRangeSingaporeTime','minutesBookedOfAvailable',
   'demographicsKnownCoverage','revenueExplainedByDemographics','timeBasisIs','aboutMonthlySpendAtRisk',

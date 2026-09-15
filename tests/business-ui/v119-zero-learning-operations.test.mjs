@@ -28,8 +28,8 @@ test('scheduled capacity uses active branch staff and merges breaks with persist
   assert.match(reports,/\[\.\.\.dayBreaks,\.\.\.staffBlocks\][\s\S]*mergedIntervalMinutes\(clipped\)/);
   assert.match(reports,/staff_off_days/);
   assert.doesNotMatch(busy,/Math\.min\(100[\s\S]*utilization/);
-  assert.match(busy,/Overbooked by/);
-  assert.match(busy,/branch-open active-team hours after merged breaks, staff blocks, and full-day time off/);
+  assert.match(busy,/'overbookedByHours'/);
+  assert.match(busy,/'bookedHoursOutOfCapacity'/);
 });
 
 test('scheduled capacity splits persisted overnight blocks across Singapore calendar days',()=>{
@@ -70,7 +70,7 @@ test('capacity arithmetic merges overlapping breaks and allows honest utilizatio
 });
 
 test('branch module projections are fetched fresh so another session sees role downgrade',async()=>{
-  /* nestly_v948 narrowed this from the whole region to the LOADER ITSELF, and made the rule for
+  /* nestly_v949 narrowed this from the whole region to the LOADER ITSELF, and made the rule for
      what sits beside it explicit rather than a text proxy.
      The rule being protected is v370's: the per-branch projection is never cached, because it
      carries permission state another session can revoke. The old assertion enforced that by

@@ -972,7 +972,7 @@ async function loadBranchModuleProjection(branchId,{force=false}={}){
   if(error)throw error;
   return data||null;
 }
-/* nestly_v948 — the per-branch projection stays UNCACHED, and stops being LAST.
+/* nestly_v949 — the per-branch projection stays UNCACHED, and stops being LAST.
    v370 was explicit that this projection must never be cached: it carries permission state
    another session can revoke, and a cached copy would let a teammate whose access was just
    removed keep it until a TTL expired. That decision is untouched here. What was conflated with
@@ -9141,7 +9141,7 @@ async function tillPage(){
     return;
   }
   routeMain.innerHTML=CUI.loadingState({title:'Record sale',iconName:'till'});
-  /* nestly_v948: started HERE, not after the branch read below, so the projection overlaps the
+  /* nestly_v949: started HERE, not after the branch read below, so the projection overlaps the
      roster/branch/assignment reads instead of following them. */
   const tillProjectionsV948=startBranchProjectionsV948();
   const [
@@ -28196,7 +28196,7 @@ async function appointmentsPage(){
   const apptOpenFormV217=pendingOpenApptFormV217;pendingOpenApptFormV217=false;
   let canWrite=false,canComplete=false;
   routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
-  /* nestly_v948: started HERE, above the page's own reads, so the per-branch projection overlaps
+  /* nestly_v949: started HERE, above the page's own reads, so the per-branch projection overlaps
      them instead of following them. Settled where the second wave used to be. */
   const apptProjectionsV948=startBranchProjectionsV948();
   const [
@@ -31983,7 +31983,7 @@ async function bottlesPage(){
           <label for="bottleExpiryMode">Keep until</label>
           <select id="bottleExpiryMode">${BOTTLE_EXPIRY_MODES_V278.map(([value,label])=>`<option value="${esc(value)}"${value===String(bottle.expiry_mode||'auto')?' selected':''}>${esc(label)}</option>`).join('')}</select>
           <div id="bottleExpiryDateWrap"><label for="bottleExpiryDate">Date</label><input id="bottleExpiryDate" type="date" value="${esc(bottleDateInputV278(bottle.expires_at))}"></div>
-          <p class="muted small" id="bottleExpiryHint" style="margin-top:-2px">Auto uses ${Number(data?.auto_keep_days)||keepDays} days for this customer.</p>
+          <p class="muted small" id="bottleExpiryHint" style="margin-top:-2px">${workspaceTemplateHtmlV97('autoUsesDaysForCustomer',{days:Number(data?.auto_keep_days)||keepDays})}</p>
           <div class="row" style="margin-top:10px"><span class="spacer"></span>
             <button type="button" class="btn ghost sm" data-expiry-cancel>Cancel</button>
             <button type="button" class="btn sm" data-expiry-confirm>Save expiry</button></div>
@@ -32149,7 +32149,7 @@ async function bottlesPage(){
         if(hint)hint.textContent=mode==='none'
           ?'The bottle is kept until you say otherwise.'
           :mode==='custom'?'The bottle is kept until the end of the date you choose.'
-          :`Auto uses ${Number(data?.auto_keep_days)||keepDays} days for this customer.`;
+          :`${workspaceTemplateHtmlV97('autoUsesDaysForCustomer',{days:Number(data?.auto_keep_days)||keepDays})}`;
       };
       if(expiryButton)expiryButton.onclick=()=>{
         openPanelV278('bottleExpiryPanel','bottleExpiryMode');
@@ -36136,7 +36136,7 @@ function ownerBriefHtmlV771(brief,options){
         ${tileV771('Busiest day',leadDayV774?(labelOfV774(leadDayV774)||'—'):'not enough days yet',leadDayV774?`${pluralV774(countV771(leadDayV774.visits),'visit','visits')} across ${countV771(leadDayV774.occurrences)} of them`:'A weekday is only ranked once it has enough occurrences in the period.')}
         ${tileV771('Days covered',dayRowsV774.length?String(dayRowsV774.length):'—',rangeCaptionV774)}
       </div>
-      <p style="margin:10px 0 2px">Busiest days: ${esc(labelsOfV774(busiestDaysV774)||'not enough days yet')} · Slowest days: ${esc(labelsOfV774(slowestDaysV774)||'not enough days yet')}</p>
+      <p style="margin:10px 0 2px">${workspaceTemplateHtmlV97('busiestAndSlowestDays',{busiest:labelsOfV774(busiestDaysV774)||'not enough days yet',slowest:labelsOfV774(slowestDaysV774)||'not enough days yet'})}</p>
       ${weekdayRowsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Visits by day of the week"><table class="cui-table" data-responsive="true"><thead><tr><th>Day</th><th>Valid visits</th><th>Visits per day</th><th>Revenue</th></tr></thead><tbody>${weekdayRowsV774.map(row=>
         `<tr><td data-label="Day"><b>${esc(labelOfV774(row)||'—')}</b></td>
         <td data-label="Valid visits">${countV771(row.visits)}</td>
@@ -38077,7 +38077,7 @@ async function loadGrowBbWhatsappStripV551(root){
       ${[['Waiting',n('queued')],['Sent',n('sent')],['Delivered',n('delivered')],['Read',n('read')],['Failed',n('failed')],['Not sent',n('suppressed')]]
         .map(([label,value])=>`<span class="muted small"><b style="font-size:1.15em">${value}</b> ${label}</span>`).join('')}
     </div>`:''}
-    ${reasonBits.length?`<p class="muted small" style="margin-top:8px">Not sent because: ${esc(reasonBits.join(' · '))}.</p>`:''}
+    ${reasonBits.length?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('notSentBecause',{reasons:reasonBits.join(' · ')})}</p>`:''}
   </section>`;
 }
 /* nestly_v583 — the owner's automation control surface.
@@ -38194,7 +38194,7 @@ function recoveryReportHtmlV550(data){
     <div class="card"><b>The funnel</b><table style="margin-top:8px">
       <tr><td data-workspace-i18n>Customers contacted while lapsed</td><td class="num"><b>${treated}</b></td></tr>
       <tr><td class="muted small" style="padding-left:14px">by bring-back voucher</td><td class="num">${Number(iv.vouchers)||0}</td></tr>
-      <tr><td data-workspace-i18n>Came back within ${attrDays} days</td><td class="num"><b>${Number(ret.count)||0}</b> (${pct(ret.rate_pct)})</td></tr>
+      <tr><td data-workspace-i18n>${workspaceTemplateHtmlV97('cameBackWithinDays',{days:attrDays})}</td><td class="num"><b>${Number(ret.count)||0}</b> (${pct(ret.rate_pct)})</td></tr>
       <tr><td data-workspace-i18n>Vouchers actually redeemed</td><td class="num">${Number(rec.redeemed_vouchers)||0} · ${esc(money(rec.redeemed_voucher_cents))}</td></tr></table>
       ${excluded?`<p class="muted small" style="margin-top:8px">${excluded} contact${excluded===1?' was':'s were'} excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.</p>`:''}</div>
     <div class="card"><b>What would have happened anyway</b>
@@ -38212,7 +38212,7 @@ function recoveryHeadlineHtmlV652(evidenceRaw,net,rec,attrDays){
   if(!evidence){
     return `<div class="card"><b>Recovered revenue (estimated)</b>
       <div class="metric" style="margin-top:8px">${esc(money(net.cents))}</div>
-      <p class="muted small">Net of what would likely have happened anyway. Gross spend by customers who returned within ${attrDays} days of being contacted: <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
+      <p class="muted small">${workspaceTemplateHtmlV97('grossSpendReturnedWithin',{days:attrDays})} <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
       <p class="muted small">Method: ${esc(net.method||'')}</p></div>`;
   }
   /* verdict_ceiling is 'early_signal' — 'strong_pattern' cannot be issued by this RPC. A stray
@@ -38245,7 +38245,7 @@ function recoveryHeadlineHtmlV652(evidenceRaw,net,rec,attrDays){
   return `<div class="card"><span class="revenue-truth-eyebrow">Early signal</span>
     <div class="metric" style="margin-top:8px">${esc(money(net.cents))}</div>
     <p class="muted small" style="margin-top:6px">${diffLine}</p>
-    <p class="muted small">Net of what would likely have happened anyway. Gross spend by customers who returned within ${attrDays} days of being contacted: <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
+    <p class="muted small">${workspaceTemplateHtmlV97('grossSpendReturnedWithin',{days:attrDays})} <b>${esc(money(rec.gross_cents))}</b>. Whole business, all branches.</p>
     <p class="muted small">Method: ${esc(net.method||'')}</p>
     ${limitationsHtml}
     </div>`;
@@ -38606,8 +38606,8 @@ async function reportsPage(){
           <tr><td>Cancelled</td><td class="num"><b>${current.cancelled}</b></td></tr>
           <tr><td>No-show</td><td class="num"><b>${current.noShow}</b></td></tr></table></div>
         <div class="card"><b>Scheduled capacity</b>${capacity.known?`<div class="metric" style="margin-top:8px">${utilization===null?'—':`${utilization.toFixed(1)}%`}</div>
-          <p class="muted small">${current.serviceHours.toFixed(1)} booked service hours out of ${capacity.hours.toFixed(1)} branch-open active-team hours after merged breaks, staff blocks, and full-day time off.</p>
-          ${utilization!=null&&utilization>100?`<p class="err small">Overbooked by ${(current.serviceHours-capacity.hours).toFixed(1)} service hours in this period.</p>`:''}`:
+          <p class="muted small">${workspaceTemplateHtmlV97('bookedHoursOutOfCapacity',{booked:current.serviceHours.toFixed(1),capacity:capacity.hours.toFixed(1)})}</p>
+          ${utilization!=null&&utilization>100?`<p class="err small">${workspaceTemplateHtmlV97('overbookedByHours',{hours:(current.serviceHours-capacity.hours).toFixed(1)})}</p>`:''}`:
           `<div class="empty">${esc(capacity.reason)}</div>`}</div>`;
     }catch(error){if(isLatest()){target.innerHTML=`<div class="card"><div class="err">${esc(error.message||'Busy-time answer could not be calculated.')} <button class="btn ghost sm" id="busyRetry">Retry</button></div></div>`;$('busyRetry').onclick=runBusy}}
   }
@@ -38881,7 +38881,7 @@ async function setupPage(){
       done:(cl||[]).length>0,link:'#/clients',cta:'Add a customer →'}
   ];
   const doneCount=steps.filter(s=>s.done).length;
-  $('sp_progress').innerHTML=`<div class="row"><b>${doneCount} of ${steps.length} done</b><span class="spacer"></span>
+  $('sp_progress').innerHTML=`<div class="row"><b>${workspaceTemplateHtmlV97('stepsDoneOfTotal',{done:doneCount,total:steps.length})}</b><span class="spacer"></span>
     <button class="btn-textlink-v2c" id="sp_dismiss" type="button">Don't show this again</button>
     <button class="btn ghost sm" id="sp_hide">Back to dashboard</button></div>
     <div style="background:var(--line);border-radius:999px;height:8px;margin-top:12px;overflow:hidden">
@@ -39883,7 +39883,7 @@ async function pnlPage(){
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash-basis revenue</div></div><div class="v">${money(cash)}</div><p class="hint">Earned and settled in the selected period.</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Accrual revenue</div></div><div class="v">${money(accrual)}</div><p class="hint">Earned including unpaid amounts.</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
-        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
+        <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">${workspaceTemplateHtmlV97('cashBasisLessExpenses',{scope:branchSpecific?'selected-branch':'all business'})}</p></div>
       </div>
       <p class="muted small" style="margin:12px 0"><span>${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}</span>Only recorded eligible payments count toward cash-basis revenue.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
@@ -40661,7 +40661,7 @@ async function settingsPage(){
         <span class="spacer"></span><select id="modulePerm-${s.id}-${module}" data-staff-module="${module}" data-perm-state-v382="${value==='off'?'off':'on'}" class="module-perm-select-v382" onchange="setModulePermissionV74('${s.id}','${module}',this.value)" ${sel.mode==='inherit'||financeDisabled?'disabled':''} style="width:auto;min-width:105px;padding:7px 30px 7px 10px">
           <option value="off" ${value==='off'?'selected':''}>Off</option><option value="r" ${value==='r'?'selected':''}>Read</option><option value="rw" ${value==='rw'?'selected':''}>Edit</option>
         </select>
-        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">Unavailable for ${esc(ROLE_LABELS[s.role]||s.role)}: Expenses, P&amp;L, Staff commission and Business Intelligence require a finance-capable role.</span>`:''}
+        ${financeDisabled?`<span class="muted small" style="flex-basis:100%">${workspaceTemplateHtmlV97('financeUnavailableForRole',{role:ROLE_LABELS[s.role]||s.role})}</span>`:''}
       </div>`;
     }).join('');
   }
@@ -41016,7 +41016,7 @@ async function settingsPage(){
       const pct=bps=>bps===null||bps===undefined?'—':`${(Number(bps)/100).toFixed(Number(bps)%100?2:0)}%`;
       const commissionSummary=s.commission_service_bps==null&&s.commission_product_bps==null
         ?'<span class="muted small">Commission not set</span>'
-        :`<span class="muted small">Svc ${esc(pct(s.commission_service_bps))} · Prod ${esc(pct(s.commission_product_bps))}</span>`;
+        :`<span class="muted small">${workspaceTemplateHtmlV97('serviceAndProductRates',{service:pct(s.commission_service_bps),product:pct(s.commission_product_bps)})}</span>`;
       return `<div class="team-member-card">
         <div class="staff-row-line">
           <button type="button" class="staff-row-open" data-merchant-content onclick="openStaffProfileFromRowV595(event,'${s.id}')" aria-expanded="${openProfileId===s.id?'true':'false'}" aria-label="Open profile for ${esc(s.full_name||'this teammate')}">
@@ -41248,7 +41248,7 @@ async function settingsPage(){
     if(error){fail(error);await loadTeam();return}
     const removedFinance=priorHadFinance&&['expenses','pnl'].filter(module=>!Object.hasOwn(data?.module_perms||{},module));
     permissionStatusByStaff[id]=removedFinance.length&&['staff','frontdesk'].includes(role)
-      ?`<div class="imp-note small">Role updated. Expenses, P&amp;L, Staff commission and Business Intelligence were removed because ${esc(ROLE_LABELS[role])} is not finance-capable.</div>`
+      ?`<div class="imp-note small">${workspaceTemplateHtmlV97('roleUpdatedFinanceRemoved',{role:ROLE_LABELS[role]})}</div>`
       :'<div class="imp-note small">Role updated and effective module access refreshed.</div>';
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
     delete panelSel[id];openModId=id;toast('Role updated');await loadTeam();
@@ -41340,17 +41340,17 @@ async function settingsPage(){
     const paint=payload=>{
       const code=payload?.code||'';
       const reusedNote=payload?.reused?`<p class="muted small" style="margin-top:8px">This is the code you already created — it still works${payload?.expires_at?`, until ${esc(walletDate(payload.expires_at,true))}`:''}.</p>`:'';
-      const restrictedNote=payload?.restricted_to_email?`<p class="muted small" style="margin-top:4px">This code only works for ${esc(payload.restricted_to_email)}.</p>`:'';
+      const restrictedNote=payload?.restricted_to_email?`<p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('codeOnlyWorksForEmail',{email:payload.restricted_to_email})}</p>`:'';
       dialog.querySelector('.modal-card').innerHTML=`
         <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for <span>${esc(name)}</span></h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
         <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
         ${reusedNote}${restrictedNote}
         <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
-          <li>Send ${esc(name)} the invite link (or read them the code).</li>
+          <li>${workspaceTemplateHtmlV97('sendInviteLinkTo',{name:name})}</li>
           <li>They create their own account — the code is filled in for them from the link.</li>
           <li>You approve them, and they take over this exact record — their job title, commission, hours and past sales stay as they are. No details are re-entered.</li>
         </ol>
-        <p class="muted small" style="margin-top:12px">The code expires in 14 days and works once. Creating a new code for ${esc(name)} cancels this one.</p>
+        <p class="muted small" style="margin-top:12px">${workspaceTemplateHtmlV97('codeExpiresNewCancels',{name:name})}</p>
         <div class="row" style="margin-top:16px;flex-wrap:wrap;gap:8px">
           <button type="button" class="btn primary" id="staffReferenceCopyV217">Copy code</button>
           <button type="button" class="btn" id="staffReferenceCopyLinkV217">Copy invite link</button>
@@ -43399,7 +43399,7 @@ function businessProfileGallerySegmentHtmlV472(segment){
         </div>`;}).join('')}
     </div>`:`<p class="muted small" style="margin:0 0 10px">${esc(segment.empty)}</p>`}
     ${items.length<GROW_GALLERY_MAX_V418?`<label class="btn ghost sm service-photo-uploader-v158" style="margin-top:8px">Add photo<input type="file" accept="image/png,image/jpeg,image/webp" data-gallery-add-v472="${esc(segment.kind)}" data-workspace-i18n aria-label="Add a ${esc(segment.heading)} photo"${busy}></label>`
-      :`<p class="muted small" style="margin-top:8px">That is the maximum of ${GROW_GALLERY_MAX_V418} photos. Remove one to add another.</p>`}`;
+      :`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('maximumPhotosReached',{max:GROW_GALLERY_MAX_V418})}</p>`}`;
 }
 function businessProfileExtrasBodyHtmlV418(){
   const links=Array.isArray(businessProfileExtrasV418?.social_links)?businessProfileExtrasV418.social_links:[];
@@ -44248,7 +44248,7 @@ function wireCustomerCsvImportV368(){
           p_marketing_consent:false,p_referrer_code:null,p_source:'settings CSV import'});
         if(error){
           toast(workspaceTemplateTextV97('importPartial',{count:done,error:error.message}));
-          $('csvprev').innerHTML=`<p class="small">${done} imported so far, ${recs.length} left to try. Row failed: ${esc(rec.full_name)} — ${esc(error.message||'')}</p>
+          $('csvprev').innerHTML=`<p class="small">${workspaceTemplateHtmlV97('importedSoFarRowFailed',{done:done,left:recs.length,name:rec.full_name,error:error.message||''})}</p>
             <button class="btn sm" id="csvgo" style="margin-top:8px">Retry from here</button>`;
           $('csvgo').onclick=runCsvImportBatchV081;
           $('csvgo').disabled=false;
@@ -45838,7 +45838,7 @@ function helpTroubleshootingPageHtmlV904(){
       ${group.problems.map(problem=>helpDisclosureV904(problem.q,
         `${(problem.causes||[]).length?`<p class="help-sublabel-v904">Possible reasons</p>${helpListHtmlV904(problem.causes)}`:''}
          ${(problem.fix||[]).length?`<p class="help-sublabel-v904">What to do</p>${helpStepsHtmlV904(problem.fix)}`:''}`,'is-problem')).join('')}
-      ${group.topic?`<p style="margin-top:10px"><a class="help-more-v904" href="${helpHrefV904(group.topic.slug)}">Open the ${esc(group.topic.title)} guide</a></p>`:''}
+      ${group.topic?`<p style="margin-top:10px"><a class="help-more-v904" href="${helpHrefV904(group.topic.slug)}">${workspaceTemplateHtmlV97('openTopicGuide',{topic:group.topic.title})}</a></p>`:''}
     </section>`).join('')}
     <section class="help-section-v904">${helpSectionHeadV904('helpTsStillV904','Still not working?')}
       <p>Work through the reasons above first — nearly everything people report turns out to be the branch selector, a date range, or an access setting.</p>
@@ -45996,7 +45996,7 @@ function helpWireV904(currentQuery){
    is no separate flag here that could drift out of sync with the database. Read-only: no
    write path to another tenant exists in this page, and the DB enforces that regardless. */
 async function platformPage(){
-  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('platform',{size:24})}<div><h1>Platform</h1><p class="muted small">Every company on ${esc(BRAND.productName)} — read-only, super-admin view.</p></div></div></div>
+  M().innerHTML=`<div class="topbar"><div class="cui-page-title">${CUI.icon('platform',{size:24})}<div><h1>Platform</h1><p class="muted small">${workspaceTemplateHtmlV97('everyCompanyOnBrand',{brand:BRAND.productName})}</p></div></div></div>
     <div class="card" id="platBody"><div class="empty">Loading…</div></div>`;
   const {data,error}=await sb.rpc('super_admin_list_businesses');
   if(error){

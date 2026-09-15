@@ -125,8 +125,8 @@ test('reports answer money, capacity and returning-customer questions from recor
   assert.match(reports, /eligible completed purchases that retain positive value after reversals or refunds/i);
   assert.match(reports, /not inferred from visits/i);
   assert.match(reports, /Scheduled capacity needs both branch opening hours and team working hours/);
-  assert.match(reports, /branch-open active-team hours after merged breaks, staff blocks/i);
-  assert.match(reports, /Overbooked by/);
+  assert.match(reports, /'bookedHoursOutOfCapacity'/);
+  assert.match(reports, /'overbookedByHours'/);
 });
 
 test('dashboard and report layouts collapse to one column on narrow phones', () => {
@@ -140,7 +140,7 @@ test('dashboard and report layouts collapse to one column on narrow phones', () 
 
 test('appointment actions use branch-projected permissions and expose a truthful zero-access state', () => {
   const appointments = section('async function appointmentsPage(){', '/* ---------- waitlist');
-  /* nestly_v948: the page no longer calls loadBranchModuleProjection inline after its branch
+  /* nestly_v949: the page no longer calls loadBranchModuleProjection inline after its branch
      list — that inline call WAS the second round trip (Appointments 409ms and the loading screen
      on every visit, measured). It now starts the same per-branch projection above its own reads
      and settles it here. What this test protects is unchanged and is asserted directly: the

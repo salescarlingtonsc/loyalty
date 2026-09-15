@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="e4704ed2a2287c04411da84dbf73ee6545fc324de2ff83c1fdf8ab1dabf2d719"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="2e070caf8e577efd87ead1aa01220cea0825f2a10283254a981e962b02d965a8"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e4704ed2a2287c04411da84dbf73ee6545fc324de2ff83c1fdf8ab1dabf2d719</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 2e070caf8e577efd87ead1aa01220cea0825f2a10283254a981e962b02d965a8</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -11629,7 +11629,7 @@ async function loadGrowBbWhatsappStripV551(root){
       ${[['Waiting',n('queued')],['Sent',n('sent')],['Delivered',n('delivered')],['Read',n('read')],['Failed',n('failed')],['Not sent',n('suppressed')]]
         .map(([label,value])=>`<span class="muted small"><b style="font-size:1.15em">${value}</b> ${label}</span>`).join('')}
     </div>`:''}
-    ${reasonBits.length?`<p class="muted small" style="margin-top:8px">Not sent because: ${esc(reasonBits.join(' · '))}.</p>`:''}
+    ${reasonBits.length?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('notSentBecause',{reasons:reasonBits.join(' · ')})}</p>`:''}
   </section>`;
 }
     /* V468-E4: one shape for the affordance so a catalogue reward and a granted gift carry the same
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'e4704ed2a2287c04411da84dbf73ee6545fc324de2ff83c1fdf8ab1dabf2d719',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'2e070caf8e577efd87ead1aa01220cea0825f2a10283254a981e962b02d965a8',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

@@ -516,8 +516,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nestly_v947 adds 9: the sale-correction receipt, the reward-cost suggestion caveat, the
      calendar time ranges, scheduled capacity, and the Business Intelligence coverage lines.
      offersLiveOfMax serves BOTH places the publish cap is stated — the same sentence in two
-     renderers, one key, which is what this inventory is for. 279 + 9 = 288. */
-  assert.equal(keys.length,288,'mixed-interface interpolation inventory changed without review');
+     renderers, one key, which is what this inventory is for. 279 + 9 = 288.
+     nestly_v949 adds 19: the bottle auto keep window, the rhythm and recovery report lines,
+     scheduled capacity, the P&L scope note, the finance-role refusals, the staff invite code, the
+     gallery cap, the import progress line and the Help guide link. Two of those state the same
+     sentence in two render paths and share one key. 288 + 19 = 307. */
+  assert.equal(keys.length,307,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

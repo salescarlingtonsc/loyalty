@@ -76,7 +76,7 @@ test('V217 a roster teammate can be given a reference code that claims their exi
   assert.match(app, /\$\{!s\.user_id&&s\.active!==false\?`<button class="btn ghost sm" data-name="\$\{esc\(s\.full_name\|\|'this teammate'\)\}" onclick="staffReferenceCodeV217/);
   const handler = app.slice(app.indexOf('window.staffReferenceCodeV217='), app.indexOf('window.rvInv='));
   assert.match(handler, /their job title, commission, hours and past sales stay as they are/);
-  assert.match(handler, /expires in 14 days and works once/);
+  assert.match(handler, /'codeExpiresNewCancels'/);
   assert.match(handler, /staff-reference-code-v217/);
   assert.match(shell, /\.staff-reference-code-v217\{/);
 });

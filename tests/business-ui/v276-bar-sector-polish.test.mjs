@@ -128,7 +128,7 @@ test('V276 the guided setup asks a bar to park its first bottle, and asks nobody
     'the bottle probe must stay out of the guide-wide error gate');
   // The progress meter counts whatever steps exist, so the extra step cannot desynchronise it.
   assert.match(setup, /const doneCount=steps\.filter\(s=>s\.done\)\.length;/);
-  assert.match(setup, /\$\{doneCount\} of \$\{steps\.length\} done/);
+  assert.match(setup, /'stepsDoneOfTotal'/);
 });
 
 test('V276 the migration splices only the bar sector into the recommender', () => {

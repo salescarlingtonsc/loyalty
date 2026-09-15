@@ -130,7 +130,7 @@ test('the modal offers Copy invite link via the shared staffInviteLinkV151 helpe
   assert.match(referenceHandler, /payload\?\.reused\?`<p class="muted small"/);
   assert.match(referenceHandler, /This is the code you already created — it still works/);
   assert.match(referenceHandler, /payload\?\.restricted_to_email/);
-  assert.match(referenceHandler, /This code only works for/);
+  assert.match(referenceHandler, /'codeOnlyWorksForEmail'/);
   // No dynamic aria-label/title/placeholder interpolation on this workspace surface.
   assert.doesNotMatch(referenceHandler, /(aria-label|title|placeholder)="\$\{/);
   // Merchant name still carries the required marker.
@@ -138,7 +138,7 @@ test('the modal offers Copy invite link via the shared staffInviteLinkV151 helpe
 });
 
 test('the modal instructions reflect the link-first flow', () => {
-  assert.match(referenceHandler, /Send \$\{esc\(name\)\} the invite link \(or read them the code\)\./);
+  assert.match(referenceHandler, /'sendInviteLinkTo'/);
   assert.match(referenceHandler, /They create their own account — the code is filled in for them from the link\./);
   assert.match(referenceHandler, /their job title, commission, hours and past sales stay as they are\. No details are re-entered\./);
 });

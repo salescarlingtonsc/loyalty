@@ -229,7 +229,7 @@ test('P&L charts use complete server aggregates and Singapore dates, never cappe
   assert.doesNotMatch(pnl, /sb\.from\('sales'\)/);
   assert.match(pnl, /Accrual revenue vs expenses by month/);
   assert.match(pnl, /Cash-basis revenue/);
-  assert.match(pnl, /Cash-basis revenue less/);
+  assert.match(pnl, /'cashBasisLessExpenses'/);
   assert.match(pnl, /Selected-branch expenses/);
   assert.match(pnl, /excludes business-wide overhead/);
   /* nestly_v768: the gift-card sentence left the P&L note with the rest of the gift-card surface. */
