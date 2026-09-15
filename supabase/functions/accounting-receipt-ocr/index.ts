@@ -6,13 +6,24 @@
 // the existing v147 expense path -> the journal. Letting an OCR write the books
 // unreviewed is how bookkeeping goes quietly wrong, so the split is deliberate.
 //
-// MODEL CHOICE (owner asked whether Gemini Flash would be cheaper): at SME receipt
-// volume the difference is cents a month, and ANTHROPIC_API_KEY is already
-// configured and proven by the v176 report worker. Haiku is the cheapest Claude
-// tier and easily strong enough to read a receipt. The model is a single constant
-// below, so switching providers later is a contained change.
+// MODEL CHOICE (nestly_v985, owner ruling 2026-09-16): Gemini, cheapest tier. The
+// earlier note here argued Haiku on the grounds that the saving was cents a month
+// and ANTHROPIC_API_KEY was "already configured and proven" — the second half of
+// that stopped being true (the key now returns 401 "API key is invalid", and no
+// receipt has ever been read). The owner has chosen Gemini; at the measured shape
+// of this request, roughly 3.4k input and 200 output tokens per receipt, it costs
+// about 0.03 US cents against Haiku's 0.44.
+//
+// MODEL is env-overridable precisely BECAUSE this is the cheapest tier: if it
+// misreads Singapore receipts, set RECEIPT_OCR_MODEL=gemini-3.5-flash-lite and the
+// worker picks it up with no redeploy. Cost is not the reason to stay put — at this
+// volume every option is under a dollar a month — legibility is.
+//
+// maxOutputTokens is generous rather than tight: on models that think before
+// answering, a tight cap is spent reasoning and the response comes back truncated
+// with finishReason MAX_TOKENS and no JSON at all. Output is $0.40/MTok; headroom
+// is cheaper than a failed read.
 
-import Anthropic from 'npm:@anthropic-ai/sdk@0.115.0';
 import {
   billingAdminClient,
   billingCorsFor,
@@ -22,9 +33,10 @@ import {
   authenticatedUserId,
 } from '../_shared/billing-service.ts';
 
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = Deno.env.get('RECEIPT_OCR_MODEL') || 'gemini-2.5-flash-lite';
+const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_RECEIPTS_PER_INVOCATION = 10;
-const MAX_OUTPUT_TOKENS = 700;
+const MAX_OUTPUT_TOKENS = 2048;
 const BUCKET = 'accounting-private';
 
 // Categories must match the v147 expense contract exactly, or a confirmed post
@@ -54,40 +66,47 @@ const SYSTEM_PROMPT = [
   `- category must be one of: ${CATEGORIES.join(', ')}. Use "other" when unsure.`,
 ].join('\n');
 
-const EXTRACTION_SCHEMA = {
-  name: 'receipt_extraction',
-  description: 'Fields legible on the receipt. Anything unreadable is null.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      vendor_name: { type: ['string', 'null'] },
-      vendor_registration_number: { type: ['string', 'null'], description: 'UEN/GST no. if printed' },
-      document_date: { type: ['string', 'null'], description: 'YYYY-MM-DD' },
-      total_cents: { type: ['integer', 'null'] },
-      gst_cents: { type: ['integer', 'null'] },
-      currency: { type: ['string', 'null'] },
-      payment_reference: { type: ['string', 'null'], description: 'card tail, invoice or receipt no.' },
-      description: { type: ['string', 'null'], description: 'what was bought, one short line' },
-      category: { type: ['string', 'null'], enum: [...CATEGORIES, null] },
-      confidence: { type: 'number' },
-    },
-    required: ['confidence'],
-    additionalProperties: false,
+/* Gemini's responseSchema is an OpenAPI 3.0 subset, not JSON Schema: types are
+   upper-case, a nullable field is `nullable: true` rather than a ['string','null']
+   union, and additionalProperties is not accepted. Paired with
+   responseMimeType 'application/json' this constrains the decoder itself, so the
+   model cannot answer with prose — the failure mode that would otherwise reach
+   normalizeExtraction as a wall of nulls. */
+const RESPONSE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    vendor_name: { type: 'STRING', nullable: true },
+    vendor_registration_number: { type: 'STRING', nullable: true, description: 'UEN/GST no. if printed' },
+    document_date: { type: 'STRING', nullable: true, description: 'YYYY-MM-DD' },
+    total_cents: { type: 'INTEGER', nullable: true },
+    gst_cents: { type: 'INTEGER', nullable: true },
+    currency: { type: 'STRING', nullable: true },
+    payment_reference: { type: 'STRING', nullable: true, description: 'card tail, invoice or receipt no.' },
+    description: { type: 'STRING', nullable: true, description: 'what was bought, one short line' },
+    category: { type: 'STRING', nullable: true, enum: [...CATEGORIES] },
+    confidence: { type: 'NUMBER' },
   },
+  required: ['confidence'],
+  propertyOrdering: [
+    'vendor_name', 'vendor_registration_number', 'document_date', 'total_cents',
+    'gst_cents', 'currency', 'payment_reference', 'description', 'category', 'confidence',
+  ],
 } as const;
 
-function imageMediaType(mime: string): string {
-  // Claude accepts these image types; anything else is refused before the call.
-  return ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mime) ? mime : '';
+/* What Gemini will accept inline. This deliberately tracks the upload controls in
+   the console (jpeg/png/webp/heic + pdf) rather than the previous provider's list,
+   which allowed gif — never offered by the UI — and refused heic, which an iPhone
+   produces by default. */
+const READABLE_TYPES = [
+  'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf',
+];
+
+function canRead(mime: string): boolean {
+  return READABLE_TYPES.includes(mime);
 }
 
 function sourceBlock(mime: string, data: string): Record<string, unknown> | null {
-  const imageType = imageMediaType(mime);
-  if (imageType) return { type: 'image', source: { type: 'base64', media_type: imageType, data } };
-  if (mime === 'application/pdf') {
-    return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } };
-  }
-  return null;
+  return canRead(mime) ? { inlineData: { mimeType: mime, data } } : null;
 }
 
 function normalizeExtraction(input: unknown): Record<string, unknown> {
@@ -125,10 +144,9 @@ async function base64Of(bytes: Uint8Array): Promise<string> {
 }
 
 async function processQueue(): Promise<Record<string, unknown>> {
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY') || '';
+  const apiKey = Deno.env.get('GEMINI_API_KEY') || '';
   if (!apiKey) throw new Error('receipt_reading_unavailable');
   const admin = billingAdminClient();
-  const anthropic = new Anthropic({ apiKey });
   const processed: Array<Record<string, unknown>> = [];
 
   for (let i = 0; i < MAX_RECEIPTS_PER_INVOCATION; i += 1) {
@@ -147,7 +165,7 @@ async function processQueue(): Promise<Record<string, unknown>> {
     };
 
     try {
-      if (!imageMediaType(receipt.mime_type) && receipt.mime_type !== 'application/pdf') {
+      if (!canRead(receipt.mime_type)) {
         await fail(`unsupported_for_reading:${receipt.mime_type}`);
         continue;
       }
@@ -159,26 +177,57 @@ async function processQueue(): Promise<Record<string, unknown>> {
       const document = sourceBlock(receipt.mime_type, encoded);
       if (!document) { await fail(`unsupported_for_reading:${receipt.mime_type}`); continue; }
 
-      const message = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        system: SYSTEM_PROMPT,
-        tools: [EXTRACTION_SCHEMA as unknown as Anthropic.Tool],
-        tool_choice: { type: 'tool', name: 'receipt_extraction' },
-        messages: [{
-          role: 'user',
-          content: [document, { type: 'text', text: 'Read this receipt or supplier invoice. Leave unreadable fields null.' }] as Anthropic.ContentBlockParam[],
-        }],
+      /* temperature 0: this is transcription, not composition. The same receipt
+         must read the same way twice, or a figure can change between a retry and
+         the copy a human confirmed. */
+      const response = await fetch(`${GEMINI_ENDPOINT}/${MODEL}:generateContent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{
+            role: 'user',
+            parts: [document, { text: 'Read this receipt or supplier invoice. Leave unreadable fields null.' }],
+          }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: RESPONSE_SCHEMA,
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
+            temperature: 0,
+          },
+        }),
       });
+      if (!response.ok) {
+        /* The status and the provider's own words, the way the previous 401 told us
+           the key was invalid. Never swallow this into a generic failure. */
+        await fail(`${response.status} ${(await response.text()).slice(0, 300)}`);
+        continue;
+      }
 
-      const use = message.content.find(
-        (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use',
-      );
-      if (!use) { await fail('model_returned_no_extraction'); continue; }
+      const payload = await response.json();
+      const candidate = payload?.candidates?.[0];
+      const text = (candidate?.content?.parts ?? [])
+        .map((part: { text?: string }) => part?.text ?? '')
+        .join('')
+        .trim();
+      if (!text) {
+        /* Empty with a reason attached: MAX_TOKENS means the cap was spent before
+           any JSON, SAFETY means the image was refused. Both are worth telling
+           apart when a receipt will not read. */
+        await fail(`model_returned_no_extraction:${candidate?.finishReason ?? payload?.promptFeedback?.blockReason ?? 'empty'}`);
+        continue;
+      }
+      let extracted: unknown;
+      try {
+        extracted = JSON.parse(text);
+      } catch {
+        await fail('model_returned_unparsable_json');
+        continue;
+      }
 
       const { data: writeResult, error: writeError } = await admin.rpc(
         'internal_record_receipt_extraction_v199',
-        { p_receipt: receipt.id, p_extracted: normalizeExtraction(use.input), p_error: null },
+        { p_receipt: receipt.id, p_extracted: normalizeExtraction(extracted), p_error: null },
       );
       if (writeError) { await fail('extraction_store_failed'); continue; }
       if (!writeResult?.updated) {

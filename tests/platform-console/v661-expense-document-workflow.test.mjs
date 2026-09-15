@@ -27,11 +27,24 @@ test('posted receipt and supplier-invoice evidence remains visible and linked',a
   assert.match(row.join(' '),/data-open-receipt="receipt-1"/);
 });
 
-test('the OCR worker sends PDFs as documents and validates extracted values',async()=>{
+test('the OCR worker reads every type the console can upload, and constrains what comes back',async()=>{
   const worker=await read('supabase/functions/accounting-receipt-ocr/index.ts');
-  assert.match(worker,/mime === 'application\/pdf'/);
-  assert.match(worker,/type: 'document'/);
-  assert.match(worker,/normalizeExtraction\(use\.input\)/);
+  /* nestly_v985: the reader moved to Gemini, so these assert the CONTRACT rather than
+     one provider's field names — every type the upload controls offer must be readable,
+     the file must actually travel with the request, and the reply must be constrained
+     JSON rather than prose. */
+  for(const mime of ['image/jpeg','image/png','image/webp','image/heic','application/pdf']){
+    assert.match(worker,new RegExp(`'${mime.replace('/','\\/')}'`),`${mime} must be readable`);
+  }
+  assert.match(worker,/inlineData: \{ mimeType: mime, data \}/);
+  assert.match(worker,/responseMimeType: 'application\/json'/);
+  assert.match(worker,/responseSchema: RESPONSE_SCHEMA/);
+  /* transcription, not composition: the same receipt must read the same way twice */
+  assert.match(worker,/temperature: 0,/);
+  /* whatever the model returns is normalised before it is stored, never trusted raw */
+  assert.match(worker,/normalizeExtraction\(extracted\)/);
+  /* a provider error must reach the operator with its status, as the 401 did */
+  assert.match(worker,/\$\{response\.status\}/);
   assert.doesNotMatch(worker,/A PDF still uploads[\s\S]{0,120}cannot be/);
 });
 
