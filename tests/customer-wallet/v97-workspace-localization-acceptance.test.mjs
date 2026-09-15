@@ -257,7 +257,11 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v930: +103 — the Bottles shelf and Bottle keep setup. */
         /* nestly_v931: +145 — Promotions, Packages and Services. */
         /* nestly_v932: +174 — customer profile, customer list, Sales, P&L, Expenses, Daily report, Staff commission, Business Intelligence. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,3620,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v933: +149 — Settings, Branches, Gift cards, Products, Setup guide, Bookings,
+           Memberships, Waitlist, Reminders, Dashboard, Customer Interface. 149, not 150: 'SKU' was
+           already a key, carrying itself as its own value from the v97 machine pass, so adding it
+           would have REWRITTEN a catalogue entry rather than added one. It is left as it is. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,3769,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

@@ -12924,6 +12924,900 @@
       "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
       "zh-CN": "未显示联系方式",
       "ms": "Tiada maklumat hubungan ditunjukkan"
+    },
+    {
+      "source": "Choose which existing products and services staff can select in Record sale. This does not manage stock.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "选择员工在「记录销售」中可以选择哪些已有的产品和服务。此处不管理库存。",
+      "ms": "Pilih produk dan perkhidmatan sedia ada yang kakitangan boleh pilih dalam Rekod jualan. Ini tidak menguruskan stok."
+    },
+    {
+      "source": "Profile",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "个人资料",
+      "ms": "Profil"
+    },
+    {
+      "source": "Access & Module",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "权限与模块",
+      "ms": "Akses & Modul"
+    },
+    {
+      "source": "Job title",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "职位名称",
+      "ms": "Jawatan"
+    },
+    {
+      "source": "Team role",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "团队角色",
+      "ms": "Peranan pasukan"
+    },
+    {
+      "source": "Service commission %",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "服务佣金 %",
+      "ms": "Komisen perkhidmatan %"
+    },
+    {
+      "source": "Product commission %",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "产品佣金 %",
+      "ms": "Komisen produk %"
+    },
+    {
+      "source": "Save profile",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "保存个人资料",
+      "ms": "Simpan profil"
+    },
+    {
+      "source": "Turn all off",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "全部关闭",
+      "ms": "Matikan semua"
+    },
+    {
+      "source": "Give all Edit",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "全部给予「编辑」",
+      "ms": "Beri semua Sunting"
+    },
+    {
+      "source": "Then set the ones you want.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "然后逐项设置您需要的权限。",
+      "ms": "Kemudian tetapkan yang anda mahu."
+    },
+    {
+      "source": "Save modules",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "保存模块",
+      "ms": "Simpan modul"
+    },
+    {
+      "source": "Or apply a saved template to",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "或将已保存的模板应用到",
+      "ms": "Atau guna templat yang disimpan kepada"
+    },
+    {
+      "source": "Working hours could not be loaded. Nothing has been changed.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "无法加载工作时间。没有任何内容被更改。",
+      "ms": "Waktu bekerja tidak dapat dimuatkan. Tiada apa yang diubah."
+    },
+    {
+      "source": "Waiting",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "等待中",
+      "ms": "Menunggu"
+    },
+    {
+      "source": "Commission not set",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "未设置佣金",
+      "ms": "Komisen belum ditetapkan"
+    },
+    {
+      "source": "Approve access",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "批准权限",
+      "ms": "Luluskan akses"
+    },
+    {
+      "source": "Position",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "职位",
+      "ms": "Jawatan"
+    },
+    {
+      "source": "App access",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "应用访问权限",
+      "ms": "Akses aplikasi"
+    },
+    {
+      "source": "No teammates are assigned to this branch. Choose All branches at the top to see the rest of the team.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "没有团队成员被指派到本分店。请在顶部选择「所有分店」以查看其余成员。",
+      "ms": "Tiada rakan sepasukan ditugaskan ke cawangan ini. Pilih Semua cawangan di bahagian atas untuk melihat ahli pasukan yang lain."
+    },
+    {
+      "source": "No teammates yet — add one above, or invite one below.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "还没有团队成员 — 请在上方添加，或在下方邀请。",
+      "ms": "Belum ada rakan sepasukan — tambah satu di atas, atau jemput satu di bawah."
+    },
+    {
+      "source": "Invite pending",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "邀请待处理",
+      "ms": "Jemputan menunggu"
+    },
+    {
+      "source": "Restricted email: any authenticated user with this invite",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "受限邮箱：任何持有此邀请的已认证用户",
+      "ms": "E-mel terhad: mana-mana pengguna disahkan yang mempunyai jemputan ini"
+    },
+    {
+      "source": "Invite link opens the staff join flow directly.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "邀请链接会直接打开员工加入流程。",
+      "ms": "Pautan jemputan membuka aliran penyertaan kakitangan secara terus."
+    },
+    {
+      "source": "Copy code",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "复制代码",
+      "ms": "Salin kod"
+    },
+    {
+      "source": "Copy invite link",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "复制邀请链接",
+      "ms": "Salin pautan jemputan"
+    },
+    {
+      "source": "Owners and managers see every branch, so there is nothing to assign here.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "店主和经理可以看到所有分店，因此这里无需指派。",
+      "ms": "Pemilik dan pengurus melihat setiap cawangan, jadi tiada apa untuk ditugaskan di sini."
+    },
+    {
+      "source": "Give app access",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "给予应用访问权限",
+      "ms": "Beri akses aplikasi"
+    },
+    {
+      "source": "They create their own account — the code is filled in for them from the link.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "他们会自行创建账户 — 代码会从链接自动填入。",
+      "ms": "Mereka mencipta akaun sendiri — kod itu diisikan untuk mereka daripada pautan."
+    },
+    {
+      "source": "New code instead",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "改用新代码",
+      "ms": "Kod baharu sebagai ganti"
+    },
+    {
+      "source": "Disable catalogue-first",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "关闭「目录优先」",
+      "ms": "Matikan katalog-dahulu"
+    },
+    {
+      "source": "Enable catalogue-first",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "开启「目录优先」",
+      "ms": "Hidupkan katalog-dahulu"
+    },
+    {
+      "source": "Reactivate",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "重新启用",
+      "ms": "Aktifkan semula"
+    },
+    {
+      "source": "Deactivate",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "停用",
+      "ms": "Nyahaktifkan"
+    },
+    {
+      "source": "Working hours saved",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "工作时间已保存",
+      "ms": "Waktu bekerja disimpan"
+    },
+    {
+      "source": "Give the template a name of at least 2 characters",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "请为模板命名，至少 2 个字符",
+      "ms": "Beri templat itu nama sekurang-kurangnya 2 aksara"
+    },
+    {
+      "source": "Template renamed",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "模板已重命名",
+      "ms": "Templat dinamakan semula"
+    },
+    {
+      "source": "Template deleted",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "模板已删除",
+      "ms": "Templat dipadam"
+    },
+    {
+      "source": "Record deleted",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "记录已删除",
+      "ms": "Rekod dipadam"
+    },
+    {
+      "source": "Commission must be a percentage between 0 and 100",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "佣金必须是 0 到 100 之间的百分比",
+      "ms": "Komisen mestilah peratusan antara 0 dan 100"
+    },
+    {
+      "source": "Profile saved",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "个人资料已保存",
+      "ms": "Profil disimpan"
+    },
+    {
+      "source": "Teammate switched back on",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "团队成员已重新启用",
+      "ms": "Rakan sepasukan dihidupkan semula"
+    },
+    {
+      "source": "Teammate switched off",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "团队成员已停用",
+      "ms": "Rakan sepasukan dimatikan"
+    },
+    {
+      "source": "Permissions saved with required Read dependencies",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "权限已保存，并包含所需的「读取」依赖",
+      "ms": "Kebenaran disimpan bersama kebergantungan Baca yang diperlukan"
+    },
+    {
+      "source": "Permissions saved",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "权限已保存",
+      "ms": "Kebenaran disimpan"
+    },
+    {
+      "source": "Owner & managers",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "店主和经理",
+      "ms": "Pemilik & pengurus"
+    },
+    {
+      "source": "Team with app access",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "拥有应用访问权限的团队成员",
+      "ms": "Pasukan dengan akses aplikasi"
+    },
+    {
+      "source": "Receipts & GST for this branch",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "本分店的收据和消费税",
+      "ms": "Resit & GST untuk cawangan ini"
+    },
+    {
+      "source": "Start empty",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "从空白开始",
+      "ms": "Mula kosong"
+    },
+    {
+      "source": "Checking the price…",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "正在查询价格…",
+      "ms": "Menyemak harga…"
+    },
+    {
+      "source": "Awaiting payment",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "等待付款",
+      "ms": "Menunggu bayaran"
+    },
+    {
+      "source": "Payment lapsed",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "付款已逾期",
+      "ms": "Bayaran luput"
+    },
+    {
+      "source": "Unsubscribed",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "已取消订阅",
+      "ms": "Berhenti melanggan"
+    },
+    {
+      "source": "Retry payment",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "重试付款",
+      "ms": "Cuba semula bayaran"
+    },
+    {
+      "source": "Pay now",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "立即付款",
+      "ms": "Bayar sekarang"
+    },
+    {
+      "source": "Customers only ever see times inside these hours, minus anything already booked or blocked.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "顾客只会看到这些营业时间内的时段，且已预约或已锁定的时间会被排除。",
+      "ms": "Pelanggan hanya melihat masa dalam waktu ini, ditolak apa-apa yang sudah ditempah atau disekat."
+    },
+    {
+      "source": "Edit branch",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "编辑分店",
+      "ms": "Sunting cawangan"
+    },
+    {
+      "source": "New branch",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "新建分店",
+      "ms": "Cawangan baharu"
+    },
+    {
+      "source": "Create branch",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "创建分店",
+      "ms": "Cipta cawangan"
+    },
+    {
+      "source": "Close hours",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "休息时间",
+      "ms": "Waktu tutup"
+    },
+    {
+      "source": "Branch updated",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "分店已更新",
+      "ms": "Cawangan dikemas kini"
+    },
+    {
+      "source": "Branch created, but its receipt details did not save — open Edit to set them.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "分店已创建，但收据信息未保存 — 请打开「编辑」进行设置。",
+      "ms": "Cawangan dicipta, tetapi butiran resitnya tidak disimpan — buka Sunting untuk menetapkannya."
+    },
+    {
+      "source": "The payment is still confirming. Try again in a moment.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "付款仍在确认中。请稍后再试。",
+      "ms": "Bayaran masih disahkan. Cuba lagi sebentar nanti."
+    },
+    {
+      "source": "Payment confirmed",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "付款已确认",
+      "ms": "Bayaran disahkan"
+    },
+    {
+      "source": "This branch has recorded sales or appointments, so it can't be deleted. Untick Active in Edit to close it instead — that keeps everything and stops the billing.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "本分店已有交易或预约记录，因此无法删除。请在「编辑」中取消勾选「启用」以关闭它 — 这样会保留所有内容并停止计费。",
+      "ms": "Cawangan ini mempunyai jualan atau janji temu yang direkodkan, jadi ia tidak boleh dipadam. Nyahtanda Aktif dalam Sunting untuk menutupnya — itu mengekalkan segalanya dan menghentikan pengebilan."
+    },
+    {
+      "source": "The name did not match — nothing was deleted",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "名称不匹配 — 没有删除任何内容",
+      "ms": "Nama tidak sepadan — tiada apa yang dipadam"
+    },
+    {
+      "source": "Branch deleted",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "分店已删除",
+      "ms": "Cawangan dipadam"
+    },
+    {
+      "source": "Opening the payment page…",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "正在打开付款页面…",
+      "ms": "Membuka halaman pembayaran…"
+    },
+    {
+      "source": "No branches yet",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "还没有分店",
+      "ms": "Belum ada cawangan"
+    },
+    {
+      "source": "Add your first branch so sales, bookings, staff access and reports can be scoped correctly.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "添加您的第一家分店，销售、预约、员工权限和报告才能正确归属。",
+      "ms": "Tambah cawangan pertama anda supaya jualan, tempahan, akses kakitangan dan laporan boleh diskopkan dengan betul."
+    },
+    {
+      "source": "Issue a gift card",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "发行一张礼品卡",
+      "ms": "Terbitkan kad hadiah"
+    },
+    {
+      "source": "Purchaser (optional — links this card issuance to their customer history)",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "购买人（选填 — 将此次发卡关联到其顾客记录）",
+      "ms": "Pembeli (pilihan — memautkan penerbitan kad ini kepada sejarah pelanggan mereka)"
+    },
+    {
+      "source": "This issues value and a code. It does not record or prove that payment was collected.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "这会发出面值和一个代码。它不记录也不证明款项已收取。",
+      "ms": "Ini menerbitkan nilai dan satu kod. Ia tidak merekod atau membuktikan bahawa bayaran telah dikutip."
+    },
+    {
+      "source": "Redeem an existing card",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "兑换已有的卡",
+      "ms": "Tebus kad sedia ada"
+    },
+    {
+      "source": "Redemption stays available even when new card sales are off.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "即使关闭了新卡销售，兑换功能仍然可用。",
+      "ms": "Penebusan kekal tersedia walaupun jualan kad baharu dimatikan."
+    },
+    {
+      "source": "Gift-card write access and sales authority are required.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "需要礼品卡写入权限和销售权限。",
+      "ms": "Akses tulis kad hadiah dan kuasa jualan diperlukan."
+    },
+    {
+      "source": "Gift-card issuance setting unavailable",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "礼品卡发行设置不可用",
+      "ms": "Tetapan penerbitan kad hadiah tidak tersedia"
+    },
+    {
+      "source": "New gift-card issuance is off",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "新礼品卡发行已关闭",
+      "ms": "Penerbitan kad hadiah baharu dimatikan"
+    },
+    {
+      "source": "Customer Interface → Gift cards",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "顾客界面 → 礼品卡",
+      "ms": "Antara Muka Pelanggan → Kad hadiah"
+    },
+    {
+      "source": "New gift-card issuance is off. Existing cards can still be redeemed below.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "新礼品卡发行已关闭。已有的卡仍可在下方兑换。",
+      "ms": "Penerbitan kad hadiah baharu dimatikan. Kad sedia ada masih boleh ditebus di bawah."
+    },
+    {
+      "source": "Gift-card issuance setting unavailable. Issuance is paused until the setting can be confirmed.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "礼品卡发行设置不可用。在该设置确认之前，发行将暂停。",
+      "ms": "Tetapan penerbitan kad hadiah tidak tersedia. Penerbitan dijeda sehingga tetapan itu dapat disahkan."
+    },
+    {
+      "source": "one visit",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "一次到访",
+      "ms": "satu kunjungan"
+    },
+    {
+      "source": "a few visits",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "几次到访",
+      "ms": "beberapa kunjungan"
+    },
+    {
+      "source": "a real gift",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "一份像样的礼物",
+      "ms": "hadiah sebenar"
+    },
+    {
+      "source": "That issuance clashed with another — check the cards list, then start a fresh one",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "这次发卡与另一次冲突 — 请检查卡片列表，然后重新发一次",
+      "ms": "Penerbitan itu bertembung dengan yang lain — semak senarai kad, kemudian mulakan yang baharu"
+    },
+    {
+      "source": "Gift cards could not be loaded",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "无法加载礼品卡",
+      "ms": "Kad hadiah tidak dapat dimuatkan"
+    },
+    {
+      "source": "No card was issued or redeemed.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "没有发行或兑换任何卡。",
+      "ms": "Tiada kad diterbitkan atau ditebus."
+    },
+    {
+      "source": "A branch with Gift cards or Till access is required.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "需要一家具备「礼品卡」或「收银」权限的分店。",
+      "ms": "Cawangan dengan akses Kad hadiah atau Kaunter diperlukan."
+    },
+    {
+      "source": "Ask an owner or Peekaa administrator to review this staff member’s branch modules.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "请店主或 Peekaa 管理员检查这位员工的分店模块。",
+      "ms": "Minta pemilik atau pentadbir Peekaa menyemak modul cawangan ahli kakitangan ini."
+    },
+    {
+      "source": "Issue card and generate code",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "发行卡片并生成代码",
+      "ms": "Terbitkan kad dan jana kod"
+    },
+    {
+      "source": "Gift card sections",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "礼品卡分区",
+      "ms": "Bahagian kad hadiah"
+    },
+    {
+      "source": "What you sell and what you charge for it.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "您卖什么，以及卖多少钱。",
+      "ms": "Apa yang anda jual dan berapa yang anda caj untuknya."
+    },
+    {
+      "source": "Read-only product access",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "产品只读权限",
+      "ms": "Akses produk baca sahaja"
+    },
+    {
+      "source": "You can review products and prices. Ask for Products edit access to add or change them.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "您可以查看产品和价格。若要新增或修改，请申请「产品」编辑权限。",
+      "ms": "Anda boleh menyemak produk dan harga. Minta akses sunting Produk untuk menambah atau mengubahnya."
+    },
+    {
+      "source": "Save product",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "保存产品",
+      "ms": "Simpan produk"
+    },
+    {
+      "source": "Products catalogue",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "产品目录",
+      "ms": "Katalog produk"
+    },
+    {
+      "source": "Active products can be selected during checkout.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "启用的产品可在结账时选择。",
+      "ms": "Produk yang aktif boleh dipilih semasa pembayaran."
+    },
+    {
+      "source": "Products could not be loaded.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "无法加载产品。",
+      "ms": "Produk tidak dapat dimuatkan."
+    },
+    {
+      "source": "Sell for",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "售价",
+      "ms": "Jual pada"
+    },
+    {
+      "source": "Edit product",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "编辑产品",
+      "ms": "Sunting produk"
+    },
+    {
+      "source": "Correct anything typed wrongly. Past sales keep the price they were sold at.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "更正任何输错的内容。以往的交易仍保留当时的售出价格。",
+      "ms": "Betulkan apa-apa yang tersalah taip. Jualan lalu mengekalkan harga semasa ia dijual."
+    },
+    {
+      "source": "Product updated",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "产品已更新",
+      "ms": "Produk dikemas kini"
+    },
+    {
+      "source": "Product enabled",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "产品已启用",
+      "ms": "Produk dihidupkan"
+    },
+    {
+      "source": "Product disabled",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "产品已停用",
+      "ms": "Produk dimatikan"
+    },
+    {
+      "source": "Setup guide hidden on this device.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "设置向导已在本设备上隐藏。",
+      "ms": "Panduan persediaan disembunyikan pada peranti ini."
+    },
+    {
+      "source": "Setup guide hidden on this device. Show it again whenever you want.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "设置向导已在本设备上隐藏。您可以随时重新显示。",
+      "ms": "Panduan persediaan disembunyikan pada peranti ini. Tunjukkannya semula bila-bila masa anda mahu."
+    },
+    {
+      "source": "Show guide",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "显示向导",
+      "ms": "Tunjuk panduan"
+    },
+    {
+      "source": "Don't show this again",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "不再显示",
+      "ms": "Jangan tunjuk ini lagi"
+    },
+    {
+      "source": "Back to dashboard",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "返回仪表板",
+      "ms": "Kembali ke papan pemuka"
+    },
+    {
+      "source": "I run this on my own",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "我自己一个人经营",
+      "ms": "Saya menjalankannya sendiri"
+    },
+    {
+      "source": "Setup guide unavailable",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "设置向导不可用",
+      "ms": "Panduan persediaan tidak tersedia"
+    },
+    {
+      "source": "Your current setup could not be checked.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "无法检查您当前的设置。",
+      "ms": "Persediaan semasa anda tidak dapat disemak."
+    },
+    {
+      "source": "Add your services or products",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "添加您的服务或产品",
+      "ms": "Tambah perkhidmatan atau produk anda"
+    },
+    {
+      "source": "Park your first bottle",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "寄存您的第一瓶酒",
+      "ms": "Simpan botol pertama anda"
+    },
+    {
+      "source": "Add a reward customers can claim",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "添加一项顾客可领取的奖励",
+      "ms": "Tambah ganjaran yang pelanggan boleh tuntut"
+    },
+    {
+      "source": "Booking rules, opening hours and who customers may choose now live in",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "预约规则、营业时间以及顾客可选择的对象现已移至",
+      "ms": "Peraturan tempahan, waktu operasi dan siapa yang pelanggan boleh pilih kini berada dalam"
+    },
+    {
+      "source": "Booking requests unavailable",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "预约请求不可用",
+      "ms": "Permintaan tempahan tidak tersedia"
+    },
+    {
+      "source": "Time has passed",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "时间已过",
+      "ms": "Masa telah berlalu"
+    },
+    {
+      "source": "The new time must be in the future",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "新的时间必须是将来的时间",
+      "ms": "Masa baharu mestilah pada masa hadapan"
+    },
+    {
+      "source": "No booking requests yet",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "还没有预约请求",
+      "ms": "Belum ada permintaan tempahan"
+    },
+    {
+      "source": "Customer booking requests will appear here after customers use your booking link.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "顾客使用您的预约链接后，预约请求会出现在这里。",
+      "ms": "Permintaan tempahan pelanggan akan muncul di sini selepas pelanggan menggunakan pautan tempahan anda."
+    },
+    {
+      "source": "No pending change requests",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "没有待处理的更改请求",
+      "ms": "Tiada permintaan perubahan yang menunggu"
+    },
+    {
+      "source": "Customer reschedule requests appear here for your approval.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "顾客的改期请求会出现在这里，等待您批准。",
+      "ms": "Permintaan penjadualan semula pelanggan muncul di sini untuk kelulusan anda."
+    },
+    {
+      "source": "In history",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "在历史记录中",
+      "ms": "Dalam sejarah"
+    },
+    {
+      "source": "Nothing has been deleted yet.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "尚未删除任何内容。",
+      "ms": "Tiada apa yang telah dipadam."
+    },
+    {
+      "source": "Cancel@end",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "到期取消",
+      "ms": "Batal pada akhir"
+    },
+    {
+      "source": "Create a plan",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "创建一个方案",
+      "ms": "Cipta pelan"
+    },
+    {
+      "source": "Plan catalogue",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "方案目录",
+      "ms": "Katalog pelan"
+    },
+    {
+      "source": "Enroll a member",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "登记一位会员",
+      "ms": "Daftarkan seorang ahli"
+    },
+    {
+      "source": "Current memberships",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "当前会籍",
+      "ms": "Keahlian semasa"
+    },
+    {
+      "source": "Plan deleted — moved to History",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "方案已删除 — 已移至历史记录",
+      "ms": "Pelan dipadam — dipindahkan ke Sejarah"
+    },
+    {
+      "source": "Party size (table)",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "用餐人数（餐桌）",
+      "ms": "Saiz kumpulan (meja)"
+    },
+    {
+      "source": "No preference",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "没有偏好",
+      "ms": "Tiada pilihan"
+    },
+    {
+      "source": "Access needed",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "需要权限",
+      "ms": "Akses diperlukan"
+    },
+    {
+      "source": "Could not load the queue",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "无法加载排队列表",
+      "ms": "Tidak dapat memuatkan barisan"
+    },
+    {
+      "source": "Walk-in seated",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "步入式顾客已入座",
+      "ms": "Pelanggan datang terus telah duduk"
+    },
+    {
+      "source": "Waitlist entry updated",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "候补名单条目已更新",
+      "ms": "Entri senarai menunggu dikemas kini"
+    },
+    {
+      "source": "Waitlist write access is required.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "需要候补名单写入权限。",
+      "ms": "Akses tulis senarai menunggu diperlukan."
+    },
+    {
+      "source": "No waiting customers",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "没有等待中的顾客",
+      "ms": "Tiada pelanggan menunggu"
+    },
+    {
+      "source": "What Peekaa sends your customers on your behalf, and how it reaches them.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "Peekaa 代您向顾客发送什么，以及如何送达。",
+      "ms": "Apa yang Peekaa hantar kepada pelanggan anda bagi pihak anda, dan bagaimana ia sampai kepada mereka."
+    },
+    {
+      "source": "Nothing to set up here yet",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "这里暂时没有需要设置的内容",
+      "ms": "Belum ada apa untuk disediakan di sini"
+    },
+    {
+      "source": "Reminder settings could not be loaded",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "无法加载提醒设置",
+      "ms": "Tetapan peringatan tidak dapat dimuatkan"
+    },
+    {
+      "source": "Nothing has been changed. Reload the page to try again.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "没有任何内容被更改。请重新加载页面后再试。",
+      "ms": "Tiada apa yang diubah. Muat semula halaman untuk cuba lagi."
+    },
+    {
+      "source": "Only an owner or manager can view all branches at once",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "只有店主或经理可以同时查看所有分店",
+      "ms": "Hanya pemilik atau pengurus boleh melihat semua cawangan sekali gus"
+    },
+    {
+      "source": "Whole company · customer records created",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "全公司 · 已创建的顾客记录",
+      "ms": "Seluruh syarikat · rekod pelanggan dicipta"
+    },
+    {
+      "source": "Last visit 30+ days ago",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "最近到访在 30 天前",
+      "ms": "Kunjungan terakhir 30+ hari lalu"
+    },
+    {
+      "source": "Only the owner can change what customers see.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "只有店主可以更改顾客看到的内容。",
+      "ms": "Hanya pemilik boleh mengubah apa yang pelanggan lihat."
+    },
+    {
+      "source": "Everything here is already saved.",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "这里的所有内容都已保存。",
+      "ms": "Segalanya di sini telah disimpan."
+    },
+    {
+      "source": "Loading what your customers see…",
+      "reason": "nestly_v933 — the last eleven workspace screens: Settings (team profiles, the Off/Read/Edit module grid, templates, invites and app access), Branches (receipts, opening hours, the per-branch billing states and the delete refusal), Gift cards, Products, the Setup guide, Bookings, Memberships, the Waitlist, Reminders, and the last untranslated strings on the Dashboard and Customer Interface. With this wave every page function in the workspace reports zero untranslated static strings. Three nested ternary branches inside one text node -- one visit / a few visits / a real gift on the gift-card denomination hints -- are each a whole node and were translated together. One toast carries an escaped apostrophe, which the harvest truncates: the branch-delete refusal is keyed on the complete sentence the browser holds, not on the fragment before the backslash.",
+      "zh-CN": "正在加载顾客看到的内容…",
+      "ms": "Memuatkan apa yang pelanggan anda lihat…"
     }
   ]
 }

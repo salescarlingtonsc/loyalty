@@ -2192,6 +2192,159 @@ const CUSTOMERS_MONEY_V932 = [
   "No contact shown",
 ];
 
+/* nestly_v933 — nestly_v933 — Settings, Branches, Gift cards, Products, Setup guide, Bookings, Memberships, Waitlist, Reminders, Dashboard and Customer Interface. */
+const SETTINGS_OPS_V933 = [
+  "Choose which existing products and services staff can select in Record sale. This does not manage stock.",
+  "Profile",
+  "Access & Module",
+  "Job title",
+  "Team role",
+  "Service commission %",
+  "Product commission %",
+  "Save profile",
+  "Turn all off",
+  "Give all Edit",
+  "Then set the ones you want.",
+  "Save modules",
+  "Or apply a saved template to",
+  "Working hours could not be loaded. Nothing has been changed.",
+  "Waiting",
+  "Commission not set",
+  "Approve access",
+  "Position",
+  "App access",
+  "No teammates are assigned to this branch. Choose All branches at the top to see the rest of the team.",
+  "No teammates yet — add one above, or invite one below.",
+  "Invite pending",
+  "Restricted email: any authenticated user with this invite",
+  "Invite link opens the staff join flow directly.",
+  "Copy code",
+  "Copy invite link",
+  "Owners and managers see every branch, so there is nothing to assign here.",
+  "Give app access",
+  "They create their own account — the code is filled in for them from the link.",
+  "New code instead",
+  "Disable catalogue-first",
+  "Enable catalogue-first",
+  "Reactivate",
+  "Deactivate",
+  "Working hours saved",
+  "Give the template a name of at least 2 characters",
+  "Template renamed",
+  "Template deleted",
+  "Record deleted",
+  "Commission must be a percentage between 0 and 100",
+  "Profile saved",
+  "Teammate switched back on",
+  "Teammate switched off",
+  "Permissions saved with required Read dependencies",
+  "Permissions saved",
+  "Owner & managers",
+  "Team with app access",
+  "Receipts & GST for this branch",
+  "Start empty",
+  "Checking the price…",
+  "Awaiting payment",
+  "Payment lapsed",
+  "Unsubscribed",
+  "Retry payment",
+  "Pay now",
+  "Customers only ever see times inside these hours, minus anything already booked or blocked.",
+  "Edit branch",
+  "New branch",
+  "Create branch",
+  "Close hours",
+  "Branch updated",
+  "Branch created, but its receipt details did not save — open Edit to set them.",
+  "The payment is still confirming. Try again in a moment.",
+  "Payment confirmed",
+  "This branch has recorded sales or appointments, so it can't be deleted. Untick Active in Edit to close it instead — that keeps everything and stops the billing.",
+  "The name did not match — nothing was deleted",
+  "Branch deleted",
+  "Opening the payment page…",
+  "No branches yet",
+  "Add your first branch so sales, bookings, staff access and reports can be scoped correctly.",
+  "Issue a gift card",
+  "Purchaser (optional — links this card issuance to their customer history)",
+  "This issues value and a code. It does not record or prove that payment was collected.",
+  "Redeem an existing card",
+  "Redemption stays available even when new card sales are off.",
+  "Gift-card write access and sales authority are required.",
+  "Gift-card issuance setting unavailable",
+  "New gift-card issuance is off",
+  "Customer Interface → Gift cards",
+  "New gift-card issuance is off. Existing cards can still be redeemed below.",
+  "Gift-card issuance setting unavailable. Issuance is paused until the setting can be confirmed.",
+  "one visit",
+  "a few visits",
+  "a real gift",
+  "That issuance clashed with another — check the cards list, then start a fresh one",
+  "Gift cards could not be loaded",
+  "No card was issued or redeemed.",
+  "A branch with Gift cards or Till access is required.",
+  "Ask an owner or Peekaa administrator to review this staff member’s branch modules.",
+  "Issue card and generate code",
+  "Gift card sections",
+  "What you sell and what you charge for it.",
+  "Read-only product access",
+  "You can review products and prices. Ask for Products edit access to add or change them.",
+  "Save product",
+  "Products catalogue",
+  "Active products can be selected during checkout.",
+  "Products could not be loaded.",
+  "Sell for",
+  "Edit product",
+  "Correct anything typed wrongly. Past sales keep the price they were sold at.",
+  "Product updated",
+  "Product enabled",
+  "Product disabled",
+  "Setup guide hidden on this device.",
+  "Setup guide hidden on this device. Show it again whenever you want.",
+  "Show guide",
+  "Don't show this again",
+  "Back to dashboard",
+  "I run this on my own",
+  "Setup guide unavailable",
+  "Your current setup could not be checked.",
+  "Add your services or products",
+  "Park your first bottle",
+  "Add a reward customers can claim",
+  "Booking rules, opening hours and who customers may choose now live in",
+  "Booking requests unavailable",
+  "Time has passed",
+  "The new time must be in the future",
+  "No booking requests yet",
+  "Customer booking requests will appear here after customers use your booking link.",
+  "No pending change requests",
+  "Customer reschedule requests appear here for your approval.",
+  "In history",
+  "Nothing has been deleted yet.",
+  "Cancel@end",
+  "Create a plan",
+  "Plan catalogue",
+  "Enroll a member",
+  "Current memberships",
+  "Plan deleted — moved to History",
+  "Party size (table)",
+  "No preference",
+  "Access needed",
+  "Could not load the queue",
+  "Walk-in seated",
+  "Waitlist entry updated",
+  "Waitlist write access is required.",
+  "No waiting customers",
+  "What Peekaa sends your customers on your behalf, and how it reaches them.",
+  "Nothing to set up here yet",
+  "Reminder settings could not be loaded",
+  "Nothing has been changed. Reload the page to try again.",
+  "Only an owner or manager can view all branches at once",
+  "Whole company · customer records created",
+  "Last visit 30+ days ago",
+  "Only the owner can change what customers see.",
+  "Everything here is already saved.",
+  "Loading what your customers see…",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -2292,7 +2445,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -2326,13 +2479,35 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 3620);
+  assert.equal(once.keyCount, 3769);
+});
+
+/* nestly_v933. The generator applies `table[locale][entry.source] = value`, which ADDS a key when
+   the source is new and REWRITES one when it is not. Its own header says it does not own the v97
+   translations, but nothing enforced that, and a wave can trip it by accident: harvesting looks for
+   strings whose translation equals their source, and a handful of v97 keys carry themselves as
+   their own value ('SKU' is one). Adding such a source reads like filling a gap and is really an
+   edit to reviewed copy — silently, through a file whose review is per-entry.
+
+   The arithmetic catches it. Every ledger entry must contribute exactly one key, so the table's key
+   count is the v97 baseline plus the ledger length, and a rewrite shows up immediately as a table
+   one key short of that sum. Correcting an existing translation is still entirely possible — it
+   belongs in WORKSPACE_COPY_V97, the curated table that beats this one at lookup time, where the
+   change is visible as a diff instead of vanishing into a 190KB literal. */
+const WORKSPACE_GENERATED_BASELINE_V97 = 1468;
+
+test('every ledger entry adds a key — none rewrites a translation the ledger does not own', () => {
+  const {keyCount} = generate({appSource, additionsSource});
+  const entries = JSON.parse(additionsSource).entries;
+  assert.equal(keyCount, WORKSPACE_GENERATED_BASELINE_V97 + entries.length,
+    'the table is short of baseline + ledger, so at least one ledger entry overwrote an existing ' +
+    'key instead of adding one. Correct existing copy in WORKSPACE_COPY_V97, not here.');
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 3620 strings per locale/);
+  assert.match(clean, /up to date: 3769 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');
