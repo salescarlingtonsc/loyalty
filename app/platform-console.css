@@ -967,6 +967,12 @@
 .platform-billing-next{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 4px;padding:10px 12px;border-radius:11px;background:var(--tint)}
 .platform-billing-next b{font-size:17px}
 .platform-billing-actions{justify-content:space-between;align-items:center;margin-top:12px}
+/* nestly_v922 — the planned cycle switch sits below the live schedule, separated by a rule so the
+   two are never read as one form: the top one changes the period now, this one changes it later. */
+.platform-billing-planned{display:block;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}
+.platform-billing-planned>div:first-child{display:flex;flex-direction:column;gap:2px}
+.platform-billing-planned b{font-size:15px}
+.platform-billing-planned [data-cancel-planned]{margin-top:10px}
 .platform-scope-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .platform-scope-chip{border:1px solid var(--hair);background:#fff;border-radius:999px;padding:7px 13px;font-weight:650;font-size:13px;cursor:pointer;min-height:36px}
 .platform-scope-chip.active{background:var(--coral);color:#fff;border-color:var(--coral)}

@@ -15,6 +15,8 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../..',import.meta.url);
+const consoleAssetVersions=html=>[...html.matchAll(/platform-console\.(?:js|css)\?v=(\d{8})-v(\d+)/g)]
+  .map(([,date,semantic])=>({date,semantic:Number(semantic)}));
 const read=path=>readFile(new URL(path,root),'utf8');
 
 test('the prospect drawer head sticks alongside the tab strip, scoped to just this drawer',async()=>{
@@ -57,9 +59,9 @@ test('a Back button appears only when the prospect drawer opens on top of anothe
 
 test('the console asset version is bumped to v884 or later',async()=>{
   const html=await read('app/index.html');
-  assert.match(html,/platform-console\.js\?v=20260910-v88[45]/);
-  assert.match(html,/platform-console\.css\?v=20260910-v88[45]/);
-  assert.doesNotMatch(html,/platform-console\.(?:js|css)\?v=20260910-v883/);
+  const versions=consoleAssetVersions(html);
+  assert.equal(versions.length,2,'both the js and the css carry a console asset version');
+  for(const {semantic} of versions)assert.ok(semantic>=884,`console asset version v${semantic} is older than v884`);
 });
 
 test('Back has real zh-CN and ms dictionary copy, not an identity mapping',async()=>{

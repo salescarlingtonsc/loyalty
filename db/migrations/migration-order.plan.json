@@ -4359,6 +4359,12 @@
       "path": "db/migrations/20261011_nestly_v899_template_status_reconcile.sql",
       "semanticVersion": "v899",
       "proposedDeployVersion": "20261011020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261012_nestly_v922_scheduled_cadence_switch.sql",
+      "semanticVersion": "v922",
+      "proposedDeployVersion": "20261012000000"
     }
   ]
 }

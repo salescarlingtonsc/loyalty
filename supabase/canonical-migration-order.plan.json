@@ -4354,6 +4354,12 @@
       "version": "20261011020000",
       "name": "nestly_v899_template_status_reconcile",
       "sourcePath": "db/migrations/20261011_nestly_v899_template_status_reconcile.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261012000000",
+      "name": "nestly_v922_scheduled_cadence_switch",
+      "sourcePath": "db/migrations/20261012_nestly_v922_scheduled_cadence_switch.sql"
     }
   ]
 }

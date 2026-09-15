@@ -13,6 +13,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const root=new URL('../..',import.meta.url);
+const consoleAssetVersions=html=>[...html.matchAll(/platform-console\.(?:js|css)\?v=(\d{8})-v(\d+)/g)]
+  .map(([,date,semantic])=>({date,semantic:Number(semantic)}));
 const read=path=>readFile(new URL(path,root),'utf8');
 
 async function loadConsole(){
@@ -122,8 +124,9 @@ test('the firm record hosts the controls and wires them to the existing writers'
   assert.match(source,/mode:'inherit',expected_version:module\.override_version\?\?null/);
   assert.match(source,/data-prospect-subtitle/);
   const html=await read('app/index.html');
-  assert.match(html,/platform-console\.js\?v=20260910-v88[345]/);
-  assert.match(html,/platform-console\.css\?v=20260910-v88[345]/);
+  const versions=consoleAssetVersions(html);
+  assert.equal(versions.length,2,'both the js and the css carry a console asset version');
+  for(const {semantic} of versions)assert.ok(semantic>=883,`console asset version v${semantic} is older than v883`);
   const css=await read('app/platform-console.css');
   assert.match(css,/\.platform-switch\.on \.platform-switch-knob\{background:var\(--green\)\}/);
 });

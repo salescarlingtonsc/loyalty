@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="v105-production-component-sha256" content="2e2695d827ae0ac8415e67b73cab8ce7f717ee0314fefa039fe232995399360c">
+<meta name="v105-production-component-sha256" content="4768ed253638be74afb2a579430e4f2454dcd5c6316d3e84a4d4f9d78982449b">
 <title>Peekaa v105 admin visual acceptance</title>
 <style>
 /* ============================================================================
@@ -7182,6 +7182,12 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 .platform-billing-next{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 4px;padding:10px 12px;border-radius:11px;background:var(--tint)}
 .platform-billing-next b{font-size:17px}
 .platform-billing-actions{justify-content:space-between;align-items:center;margin-top:12px}
+/* nestly_v922 — the planned cycle switch sits below the live schedule, separated by a rule so the
+   two are never read as one form: the top one changes the period now, this one changes it later. */
+.platform-billing-planned{display:block;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}
+.platform-billing-planned>div:first-child{display:flex;flex-direction:column;gap:2px}
+.platform-billing-planned b{font-size:15px}
+.platform-billing-planned [data-cancel-planned]{margin-top:10px}
 .platform-scope-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .platform-scope-chip{border:1px solid var(--hair);background:#fff;border-radius:999px;padding:7px 13px;font-weight:650;font-size:13px;cursor:pointer;min-height:36px}
 .platform-scope-chip.active{background:var(--coral);color:#fff;border-color:var(--coral)}
@@ -7215,7 +7221,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 <div id="appStatus" class="sr-only" aria-live="polite"></div>
 <div id="appAlert" class="sr-only" aria-live="assertive"></div>
 <div id="v105AdminRoot"></div>
-<span class="v105-provenance">v105 production-component harness · 2e2695d827ae</span>
+<span class="v105-provenance">v105 production-component harness · 4768ed253638</span>
 <script src="../../app/customer-ui.js"></script>
 <script src="../../app/platform-console.js"></script>
 <script>
@@ -7340,7 +7346,7 @@ window.NestlyPlatformConsole.render({
   root.textContent='Harness error: '+error.message;
 });
 window.v105AcceptanceMetrics=()=>({
-  sourceHash:'2e2695d827ae0ac8415e67b73cab8ce7f717ee0314fefa039fe232995399360c',
+  sourceHash:'4768ed253638be74afb2a579430e4f2454dcd5c6316d3e84a4d4f9d78982449b',
   ready:document.documentElement.dataset.ready,
   viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
   role,

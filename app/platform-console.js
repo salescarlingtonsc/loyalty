@@ -623,6 +623,7 @@
       'Evidence-backed priorities':'证据支持的优先事项','Explicit scope, no silent blending':'明确范围，不静默混合',
       'File':'文件','Find user':'查找用户','Firm module policy':'企业模块政策','Guarded rollback':'受控回滚',
       /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'自 {date} 起成为 Peekaa 商户','Firm controls':'企业控制','Firm controls unavailable':'企业控制不可用','No subscription record exists for this firm yet.':'该企业尚无订阅记录。','Managed by {provider}':'由 {provider} 管理','Frequency':'频率','Period started':'周期开始','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'这些日期由 {provider} 根据其付款设定。请在 {provider} 中更改方案，此记录会随之更新。','worked out automatically':'自动计算','Saved: {cadence} from {start}':'已保存：自 {start} 起{cadence}','Not set yet — payment reminders cannot run until it is.':'尚未设置——设置前无法发送付款提醒。','Save schedule':'保存计划','Module scope':'模块范围','Branch setting':'分店设置','Firm setting':'企业设置','Follows template':'沿用模板','Read-only access and sector templates: Firms directory':'只读权限与行业模板：企业目录','Billing schedule saved. Next payment {date}.':'账单计划已保存。下次付款 {date}。','{module} is now {state}.':'{module} 已{state}。','{count} module settings now follow the default.':'{count} 项模块设置已恢复默认。','Loading billing schedule and modules…':'正在加载账单计划与模块…','Billing schedule':'账单计划','Start date':'开始日期','Modules':'模块','Every month':'每月','Every 3 months':'每 3 个月','Every 6 months':'每 6 个月','Every year':'每年','These switches apply to every branch unless a branch has its own setting.':'这些开关适用于所有分店，除非分店有自己的设置。','These switches apply to this branch only and win over the firm setting.':'这些开关仅适用于此分店，并优先于企业设置。','Follow the template for every module':'所有模块沿用模板','Follow the firm for every module':'所有模块沿用企业设置','Branch modules could not be loaded.':'无法加载分店模块。','The module could not be changed.':'无法更改模块。','Module settings could not be reset.':'无法重置模块设置。','The schedule could not be saved.':'无法保存计划。','on':'开启','off':'关闭','{module} access':'{module} 权限',
+      /* nestly_v922 advisor + planned cycle switch */ 'Change advisor':'更换顾问','Advisor updated.':'顾问已更新。','Planned change':'计划变更','Switch to {cadence} from {date}':'自 {date} 起改为{cadence}','Cancel planned change':'取消计划变更','Plan a switch':'安排变更','New frequency':'新频率','From':'开始日期','The current period runs to its end and is still due.':'当前周期照常结束，且仍需付款。','Planned change saved.':'计划变更已保存。','Planned change cancelled.':'计划变更已取消。','The planned change could not be saved.':'无法保存计划变更。','The planned change could not be cancelled.':'无法取消计划变更。',
       /* nestly_v885 converted-firm drawer */ 'Sales contract & billing documents':'销售合同与账单文件','Contract & billing':'合同与账单','This firm self-served through {provider}.':'该企业通过 {provider} 自助开通。','No quotation was needed. Billing dates and modules are on the Controls tab.':'无需报价单。账单日期与模块见“控制”标签页。','Pre-sale history':'售前历史','Stage, priority and qualification notes from before this firm became a merchant.':'该企业成为商户之前的阶段、优先级与资格审查记录。','Account setup record':'账户设置记录',
       'Import completed':'导入完成','Included modules':'包含的模块','Inventory is not available here':'此处不提供库存功能',
       'Invitation token':'邀请令牌','Invoices':'发票','Item-level intelligence':'项目级洞察',
@@ -739,6 +740,7 @@
       'Explicit scope, no silent blending':'Skop jelas, tiada campuran senyap','File':'Fail','Find user':'Cari pengguna',
       'Firm module policy':'Polisi modul firma','Guarded rollback':'Pemulangan terkawal',
       /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'Pedagang Peekaa sejak {date}','Firm controls':'Kawalan firma','No subscription record exists for this firm yet.':'Firma ini belum mempunyai rekod langganan.','Managed by {provider}':'Diurus oleh {provider}','Frequency':'Kekerapan','Period started':'Tempoh bermula','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'{provider} menetapkan tarikh ini daripada pembayarannya sendiri. Tukar pelan di {provider}; rekod ini akan mengikutinya.','worked out automatically':'dikira secara automatik','Saved: {cadence} from {start}':'Disimpan: {cadence} mulai {start}','Not set yet — payment reminders cannot run until it is.':'Belum ditetapkan — peringatan pembayaran tidak dapat dihantar sehingga ia ditetapkan.','Save schedule':'Simpan jadual','Module scope':'Skop modul','Branch setting':'Tetapan cawangan','Firm setting':'Tetapan firma','Follows template':'Mengikut templat','Read-only access and sector templates: Firms directory':'Akses baca sahaja dan templat sektor: Direktori firma','Billing schedule saved. Next payment {date}.':'Jadual bil disimpan. Pembayaran seterusnya {date}.','{module} is now {state}.':'{module} kini {state}.','{count} module settings now follow the default.':'{count} tetapan modul kini mengikut lalai.','Loading billing schedule and modules…':'Memuatkan jadual bil dan modul…','Billing schedule':'Jadual bil','Start date':'Tarikh mula','Modules':'Modul','Every month':'Setiap bulan','Every 3 months':'Setiap 3 bulan','Every 6 months':'Setiap 6 bulan','Every year':'Setiap tahun','These switches apply to every branch unless a branch has its own setting.':'Suis ini terpakai untuk setiap cawangan kecuali cawangan mempunyai tetapan sendiri.','Follow the template for every module':'Ikut templat untuk setiap modul','Branch modules could not be loaded.':'Modul cawangan tidak dapat dimuatkan.','The module could not be changed.':'Modul tidak dapat diubah.','Module settings could not be reset.':'Tetapan modul tidak dapat ditetapkan semula.','The schedule could not be saved.':'Jadual tidak dapat disimpan.','Whole firm':'Seluruh firma','Next payment':'Pembayaran seterusnya',
+      /* nestly_v922 advisor + planned cycle switch */ 'Change advisor':'Tukar penasihat','Advisor updated.':'Penasihat dikemas kini.','Planned change':'Perubahan dirancang','Switch to {cadence} from {date}':'Tukar kepada {cadence} mulai {date}','Cancel planned change':'Batal perubahan dirancang','Plan a switch':'Rancang pertukaran','New frequency':'Kekerapan baharu','From':'Mulai','The current period runs to its end and is still due.':'Tempoh semasa berjalan hingga tamat dan masih perlu dibayar.','Planned change saved.':'Perubahan dirancang disimpan.','Planned change cancelled.':'Perubahan dirancang dibatalkan.','The planned change could not be saved.':'Perubahan dirancang tidak dapat disimpan.','The planned change could not be cancelled.':'Perubahan dirancang tidak dapat dibatalkan.',
       /* nestly_v885 converted-firm drawer */ 'Sales contract & billing documents':'Kontrak jualan & dokumen bil','Contract & billing':'Kontrak & bil','This firm self-served through {provider}.':'Firma ini mendaftar sendiri melalui {provider}.','No quotation was needed. Billing dates and modules are on the Controls tab.':'Sebut harga tidak diperlukan. Tarikh bil dan modul terdapat pada tab Kawalan.','Pre-sale history':'Sejarah pra-jualan','Stage, priority and qualification notes from before this firm became a merchant.':'Peringkat, keutamaan dan nota kelayakan sebelum firma ini menjadi peniaga.','Account setup record':'Rekod persediaan akaun',
       'Import completed':'Import selesai','Included modules':'Modul disertakan',
       'Inventory is not available here':'Inventori tidak tersedia di sini','Invitation token':'Token jemputan',
@@ -8513,7 +8515,15 @@
         <div class="platform-action-disclosure-menu">
           ${primary.email?`<a class="btn ghost sm" href="mailto:${escapeHtml(primary.email)}">${CUI.icon('empty',{size:16})}<span>${escapeHtml(pt("Email"))}</span></a>`:''}
           ${converted?'':`<button type="button" class="btn ghost sm" data-edit-prospect>${CUI.icon('edit',{size:16})}<span>${escapeHtml(pt("Edit firm"))}</span></button>`}
-          ${converted||!isSuperAdmin?'':`<button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(pt("Change owner"))}</span></button>`}
+          ${/* nestly_v922: suppressed the moment a prospect converted (`converted||!isSuperAdmin`),
+                which meant a LIVE client's advisor could never be set or changed — and
+                sme_prospects.assigned_consultant_id is exactly what app.assigned_consultant_v94
+                reads to grant that advisor access to the firm's reports, so every live client sat
+                at "no advisor" with no way out. The writer was never the obstacle:
+                platform_transfer_lead_v510's stage and queue side effects are all guarded by
+                `when current_stage_key='new_lead'`, so on a converted record it reassigns, records
+                sme_prospect_assignments, audits, and touches nothing else. Only the door was missing. */
+            !isSuperAdmin?'':`<button type="button" class="btn ghost sm" data-assign-prospect>${CUI.icon('staff',{size:16})}<span>${escapeHtml(converted?pt("Change advisor"):pt("Change owner"))}</span></button>`}
           <button type="button" class="btn ghost sm" data-add-task>${CUI.icon('appointments',{size:16})}<span>${escapeHtml(pt("Add follow-up task"))}</span></button>
           <button type="button" class="btn ghost sm" data-upload-document>${CUI.icon('import',{size:16})}<span>${escapeHtml(pt("Upload document"))}</span></button>
           <button type="button" class="btn ghost sm" data-add-npu>${escapeHtml(pt("Record not proceeding"))}</button>
@@ -8706,7 +8716,11 @@
     if(!s.editable){
       const provider=platformStatus(s.provider||'provider');
       return CUI.card({title:'Billing schedule',body:`<div class="platform-control-status">${CUI.status(pt('Managed by {provider}',{provider}),'info')}<span class="muted small">${escapeHtml(platformStatus(s.payment_status||'—'))}</span></div>
-        <dl class="platform-context-list"><div><dt>${escapeHtml(pt('Frequency'))}</dt><dd>${escapeHtml(pt(BILLING_CADENCE_LABELS[s.cadence]||'—'))}</dd></div><div><dt>${escapeHtml(pt('Period started'))}</dt><dd>${escapeHtml(billingDayLabel(s.period_start_day))}</dd></div><div><dt>${escapeHtml(pt('Next payment'))}</dt><dd>${escapeHtml(billingDayLabel(s.next_payment_day))}</dd></div></dl>
+        <dl class="platform-context-list"><div><dt>${escapeHtml(pt('Frequency'))}</dt><dd>${escapeHtml(pt(BILLING_CADENCE_LABELS[s.cadence]||'—'))}</dd></div><div><dt>${escapeHtml(pt('Period started'))}</dt><dd>${escapeHtml(billingDayLabel(s.period_start_day))}</dd></div><div><dt>${escapeHtml(pt('Next payment'))}</dt><dd>${escapeHtml(billingDayLabel(s.next_payment_day))}</dd></div>${
+          /* nestly_v922: the reconciler records a provider's OWN pending plan change in the same
+             columns (v765). Showing it here is read-only by construction — this whole branch is
+             the not-editable one — and it is the only place the console ever surfaced it. */
+          s.scheduled_cadence?`<div><dt>${escapeHtml(pt('Planned change'))}</dt><dd>${escapeHtml(pt('Switch to {cadence} from {date}',{cadence:pt(BILLING_CADENCE_LABELS[s.scheduled_cadence]||s.scheduled_cadence),date:billingDayLabel(s.scheduled_effective_day)}))}</dd></div>`:''}</dl>
         <p class="muted small">${escapeHtml(pt('{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.',{provider}))}</p>`});
     }
     const cadence=BILLING_CADENCE_MONTHS[s.cadence]?s.cadence:'monthly';
@@ -8722,7 +8736,38 @@
         ?pt('Saved: {cadence} from {start}',{cadence:pt(BILLING_CADENCE_LABELS[s.cadence]),start:billingDayLabel(s.period_start_day)})
         :pt('Not set yet — payment reminders cannot run until it is.'))}</span><button type="submit" class="btn sm">${escapeHtml(pt('Save schedule'))}</button></div>
       <div data-error role="alert"></div>
-    </form>`});
+    </form>${plannedCadenceChangeHtml(s,CUI)}`});
+  }
+  /* nestly_v922 — switching cycle from a future date, without disturbing the period the firm is
+     already in. "Save schedule" above rewrites current_period_start the moment it is used, so a
+     future start day there ERASES an outstanding month; this block is the owner's "monthly to
+     yearly starting next month" and deliberately leaves the live period alone. It appears only
+     once there IS a period to switch after (can_schedule_switch), because switching after nothing
+     is meaningless — a firm with no schedule uses the form above first. */
+  function plannedCadenceChangeHtml(s,CUI){
+    if(!s.can_schedule_switch&&!s.scheduled_cadence)return '';
+    const label=cadence=>pt(BILLING_CADENCE_LABELS[cadence]||cadence||'—');
+    if(s.scheduled_cadence){
+      return `<div class="platform-billing-planned" data-planned-change>
+        <div><span class="muted small">${escapeHtml(pt('Planned change'))}</span>
+          <b>${escapeHtml(pt('Switch to {cadence} from {date}',{cadence:label(s.scheduled_cadence),date:billingDayLabel(s.scheduled_effective_day)}))}</b>
+          <span class="muted small">${escapeHtml(pt('The current period runs to its end and is still due.'))}</span></div>
+        <button type="button" class="btn ghost sm" data-cancel-planned>${escapeHtml(pt('Cancel planned change'))}</button>
+        <div data-planned-error role="alert"></div>
+      </div>`;
+    }
+    // The earliest legal day is the end of the period in flight; the RPC enforces the same bound.
+    const earliest=s.next_payment_day||sgTodayDay();
+    const options=Object.keys(BILLING_CADENCE_LABELS).filter(value=>value!==s.cadence);
+    return `<form class="platform-billing-planned" data-planned-form>
+      <span class="muted small">${escapeHtml(pt('Planned change'))}</span>
+      <div class="platform-form-grid">
+        ${CUI.field({id:'v922SwitchCadence',label:'New frequency',control:'select',options:options.map(value=>({value,label:pt(BILLING_CADENCE_LABELS[value])})),attributes:'name="cadence" data-planned-cadence'})}
+        ${CUI.field({id:'v922SwitchFrom',label:'From',type:'date',value:earliest,required:true,attributes:`name="effective_on" min="${escapeHtml(earliest)}" data-planned-day`})}
+      </div>
+      <div class="platform-form-actions platform-billing-actions"><span class="muted small">${escapeHtml(pt('The current period runs to its end and is still due.'))}</span><button type="submit" class="btn ghost sm">${escapeHtml(pt('Plan a switch'))}</button></div>
+      <div data-planned-error role="alert"></div>
+    </form>`;
   }
   function firmControlModules(){
     return sectorModuleCatalog.filter(module=>!['inventory','customerintel'].includes(module.key));
@@ -8794,6 +8839,43 @@
           }
         };
       }
+      /* nestly_v922: plan / cancel a future cycle switch. Both re-read the schedule from the RPC's
+         own return value rather than patching state locally, so what the card shows is what the
+         server stored — including the live period it deliberately did not move. */
+      const plannedForm=host.querySelector('[data-planned-form]');
+      if(plannedForm){
+        plannedForm.onsubmit=async event=>{
+          event.preventDefault();
+          const submit=plannedForm.querySelector('[type="submit"]'),errorHost=plannedForm.querySelector('[data-planned-error]');
+          const cadence=plannedForm.querySelector('[data-planned-cadence]').value;
+          const day=plannedForm.querySelector('[data-planned-day]').value;
+          submit.disabled=true;errorHost.innerHTML='';
+          try{
+            state.schedule=asObject(await rpc(sb,'platform_schedule_cadence_change_v922',{
+              p_business:businessId,p_cadence:cadence,p_effective_on:day,
+              p_reason:['Planned from the firm record: switch to',cadence,'from',day].join(' ')
+            }));
+            paint();CUI.announce(pt('Planned change saved.'));
+          }catch(error){
+            submit.disabled=false;
+            errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'The planned change could not be saved.'))}</div>`;
+          }
+        };
+      }
+      const cancelPlanned=host.querySelector('[data-cancel-planned]');
+      if(cancelPlanned)cancelPlanned.onclick=async()=>{
+        const errorHost=host.querySelector('[data-planned-error]');
+        cancelPlanned.disabled=true;if(errorHost)errorHost.innerHTML='';
+        try{
+          state.schedule=asObject(await rpc(sb,'platform_cancel_cadence_change_v922',{
+            p_business:businessId,p_reason:'Planned change cancelled from the firm record'
+          }));
+          paint();CUI.announce(pt('Planned change cancelled.'));
+        }catch(error){
+          cancelPlanned.disabled=false;
+          if(errorHost)errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'The planned change could not be cancelled.'))}</div>`;
+        }
+      };
       host.querySelectorAll('[data-module-scope]').forEach(button=>button.onclick=async()=>{
         const scope=button.dataset.moduleScope||'';
         if(scope===state.scope)return;
@@ -8845,7 +8927,14 @@
       overlay.querySelector(`#${button.dataset.detailSection}`)?.scrollIntoView?.({behavior:'smooth',block:'start'});
     });
     on('[data-edit-prospect]',()=>editProspectModal(detail,context));
-    on('[data-assign-prospect]',()=>assignProspectModal(prospect,context));
+    /* nestly_v922: a live client is reassigned in place — the record redraws with the new advisor
+       and the board it came from is marked dirty, instead of the drawer closing onto a board this
+       firm is not on. A lead keeps the original behaviour. */
+    on('[data-assign-prospect]',()=>assignProspectModal(prospect,context,
+      prospect.converted_business_id?{onSaved:async()=>{
+        context.markBoardDirty?.();
+        await refreshProspectDrawer(context,prospect.id||prospect.prospect_id);
+      }}:{}));
     on('[data-add-note]',()=>activityModal(prospect,'note',context));
     on('[data-add-npu]',()=>activityModal(prospect,'npu',context));
     on('[data-archive-prospect]',()=>archiveProspectModal(prospect,context));
@@ -9584,19 +9673,30 @@
       controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Prospect updated.');
     }});
   }
-  async function assignProspectModal(prospect,context) {
-    const {CUI,sb}=context;
+  /* nestly_v922: `options.onSaved` lets the opener say how to refresh itself, the same way v883
+     gave the drawer `onBoardDirty`. Without it this modal always closed the drawer and re-rendered
+     the ONBOARDING board — right for a lead, wrong for a live client, which never appears on that
+     board at all: the owner would have been thrown to an empty page after every reassignment. */
+  async function assignProspectModal(prospect,context,options={}) {
+    const {CUI,sb}=context,converted=!!prospect.converted_business_id;
     const payload=asObject(await rpc(sb,'platform_list_assignment_consultants_v89'));
     const consultants=scopedConsultantOptions(asArray(payload,['items']));
     modal({title:'Assign consultant',submitLabel:'Assign',CUI,body:`${CUI.field({
-      id:'assignConsultant',label:'Sales consultant',control:'select',
+      id:'assignConsultant',label:converted?'Advisor':'Sales consultant',control:'select',
       options:[{value:'',label:'Unassigned'},...consultants].map(option=>({
         ...option,selected:String(option.value)===String(prospect.assigned_consultant_id||'')
       })),attributes:'name="consultant"'
     })}<p class="muted small">${escapeHtml(pt("Choose by consultant name. Assignment changes are recorded in the prospect history."))}</p>`,
       onSubmit:async(form,controls)=>{
-        await saveCanonicalLeadAssignment(sb,prospect,form.get('consultant')||null,'Admin assignment from enterprise onboarding');
-        controls.close();context.close?.();await renderOnboarding(context);CUI.announce('Prospect assignment updated.');
+        await saveCanonicalLeadAssignment(sb,prospect,form.get('consultant')||null,
+          converted?'Advisor changed from the firm record':'Admin assignment from enterprise onboarding');
+        controls.close();
+        if(typeof options.onSaved==='function'){
+          await options.onSaved();
+          CUI.announce(pt('Advisor updated.'));
+          return;
+        }
+        context.close?.();await renderOnboarding(context);CUI.announce('Prospect assignment updated.');
       }});
   }
   function activityModal(prospect,type,context) {
