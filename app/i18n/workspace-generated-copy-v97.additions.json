@@ -9108,6 +9108,630 @@
       "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
       "zh-CN": "已过期",
       "ms": "Tamat tempoh"
+    },
+    {
+      "source": "Ask an owner to review your Customers and Record sale assignments.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "请店主检查您的「顾客」和「记录销售」模块分配。",
+      "ms": "Minta pemilik menyemak tugasan modul Pelanggan dan Rekod jualan anda."
+    },
+    {
+      "source": "No purchase, redemption, or package use was recorded.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "未记录任何消费、兑换或配套使用。",
+      "ms": "Tiada pembelian, penebusan atau penggunaan pakej direkodkan."
+    },
+    {
+      "source": "No points, rewards, packages or stored value.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "没有积分、奖励、配套或储值。",
+      "ms": "Tiada mata, ganjaran, pakej atau nilai tersimpan."
+    },
+    {
+      "source": "Redemption scanning requires Loyalty write access at this branch.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "扫码兑换需要本分店的「忠诚度」写入权限。",
+      "ms": "Pengimbasan penebusan memerlukan akses tulis Kesetiaan di cawangan ini."
+    },
+    {
+      "source": "Walk-in is not available",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "无法使用步入式",
+      "ms": "Pelanggan datang terus tidak tersedia"
+    },
+    {
+      "source": "This firm records sales by customer phone number. Nothing was charged.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "本商户按顾客电话号码记录交易。未收取任何费用。",
+      "ms": "Firma ini merekod jualan mengikut nombor telefon pelanggan. Tiada apa-apa dicaj."
+    },
+    {
+      "source": "Birthday",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "生日",
+      "ms": "Hari lahir"
+    },
+    {
+      "source": "(optional)",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "（选填）",
+      "ms": "(pilihan)"
+    },
+    {
+      "source": "Customer creation is read only at this branch.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "在本分店，新增顾客为只读。",
+      "ms": "Penciptaan pelanggan adalah baca sahaja di cawangan ini."
+    },
+    {
+      "source": "Who made this sale?",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这笔交易由谁完成？",
+      "ms": "Siapa yang membuat jualan ini?"
+    },
+    {
+      "source": "Commission for this sale is recorded against this teammate.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这笔交易的佣金记在这位同事名下。",
+      "ms": "Komisen bagi jualan ini direkodkan atas nama rakan sepasukan ini."
+    },
+    {
+      "source": "Change",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "更改",
+      "ms": "Tukar"
+    },
+    {
+      "source": "Walk-in customer",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "步入式顾客",
+      "ms": "Pelanggan datang terus"
+    },
+    {
+      "source": "Welcome offer — new sign-up",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "迎新优惠 — 新注册",
+      "ms": "Tawaran selamat datang — pendaftaran baharu"
+    },
+    {
+      "source": "No minimum spend. Nothing is charged.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "无最低消费。不收取任何费用。",
+      "ms": "Tiada perbelanjaan minimum. Tiada apa-apa dicaj."
+    },
+    {
+      "source": "Bring-back voucher",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "回头礼券",
+      "ms": "Baucar kembali"
+    },
+    {
+      "source": "Referral gift",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "推荐好友礼物",
+      "ms": "Hadiah rujukan"
+    },
+    {
+      "source": "Earned for introducing a friend who has now visited. Nothing is charged.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "因介绍好友并且好友已到店而获得。不收取任何费用。",
+      "ms": "Diperoleh kerana memperkenalkan rakan yang kini telah datang. Tiada apa-apa dicaj."
+    },
+    {
+      "source": "Reward voucher ready",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "奖励礼券已就绪",
+      "ms": "Baucar ganjaran sedia"
+    },
+    {
+      "source": "— scan the customer's QR to confirm it",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "— 扫描顾客的二维码即可确认",
+      "ms": "— imbas kod QR pelanggan untuk mengesahkannya"
+    },
+    {
+      "source": "Applied automatically at payment — no action needed",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "支付时自动应用 — 无需操作",
+      "ms": "Dikenakan secara automatik semasa pembayaran — tiada tindakan diperlukan"
+    },
+    {
+      "source": "Give",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "给予",
+      "ms": "Beri"
+    },
+    {
+      "source": "Ready to give now. Peekaa counts each one against its limit.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "现在即可给予。Peekaa 会将每一次计入其上限。",
+      "ms": "Sedia untuk diberi sekarang. Peekaa mengira setiap satu terhadap hadnya."
+    },
+    {
+      "source": "Already given",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "已给予",
+      "ms": "Telah diberi"
+    },
+    {
+      "source": "Scanned or handed over for this customer. Undo puts it straight back.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "已为这位顾客扫描或交付。撤销会立即恢复。",
+      "ms": "Telah diimbas atau diserahkan untuk pelanggan ini. Buat asal mengembalikannya terus."
+    },
+    {
+      "source": "Undo",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "撤销",
+      "ms": "Buat asal"
+    },
+    {
+      "source": "Customer redemption is switched off.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "顾客自助兑换已关闭。",
+      "ms": "Penebusan oleh pelanggan dimatikan."
+    },
+    {
+      "source": "Turn it on under Customer Interface → Customer Action to redeem rewards at the counter.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "请在「顾客界面 → 顾客操作」中开启，即可在柜台兑换奖励。",
+      "ms": "Hidupkannya di bawah Antara Muka Pelanggan → Tindakan Pelanggan untuk menebus ganjaran di kaunter."
+    },
+    {
+      "source": "Customer Action",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "顾客操作",
+      "ms": "Tindakan Pelanggan"
+    },
+    {
+      "source": "Rewards this customer can claim",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这位顾客可领取的奖励",
+      "ms": "Ganjaran yang boleh dituntut pelanggan ini"
+    },
+    {
+      "source": "Redeem",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "兑换",
+      "ms": "Tebus"
+    },
+    {
+      "source": "Ready",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "就绪",
+      "ms": "Sedia"
+    },
+    {
+      "source": "Not yet",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "尚未",
+      "ms": "Belum"
+    },
+    {
+      "source": "Automatic",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "自动",
+      "ms": "Automatik"
+    },
+    {
+      "source": "Available now",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "现在可用",
+      "ms": "Tersedia sekarang"
+    },
+    {
+      "source": "Birthday month only",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "仅限生日当月",
+      "ms": "Bulan hari lahir sahaja"
+    },
+    {
+      "source": "Used up",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "已用完",
+      "ms": "Telah habis"
+    },
+    {
+      "source": "Not available",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "不可用",
+      "ms": "Tidak tersedia"
+    },
+    {
+      "source": "Everything this customer's tier includes, and what can be given today.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这位顾客的等级包含的全部内容，以及今天可以给予的项目。",
+      "ms": "Semua yang termasuk dalam peringkat pelanggan ini, dan apa yang boleh diberi hari ini."
+    },
+    {
+      "source": "Redeem without the customer's QR",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "不使用顾客二维码进行兑换",
+      "ms": "Tebus tanpa kod QR pelanggan"
+    },
+    {
+      "source": "This is recorded as a manual redemption, with your name against it.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这将记录为手动兑换，并记在您的名下。",
+      "ms": "Ini direkodkan sebagai penebusan manual, dengan nama anda padanya."
+    },
+    {
+      "source": "Why is this being redeemed without the QR?",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "为什么不扫二维码就兑换？",
+      "ms": "Mengapa ini ditebus tanpa kod QR?"
+    },
+    {
+      "source": "Customer unable to show QR",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "顾客无法出示二维码",
+      "ms": "Pelanggan tidak dapat menunjukkan kod QR"
+    },
+    {
+      "source": "Say what happened",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "说明发生了什么",
+      "ms": "Nyatakan apa yang berlaku"
+    },
+    {
+      "source": "Nothing added yet. Tap what the customer had.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "尚未添加任何项目。点选顾客消费的内容。",
+      "ms": "Tiada apa ditambah lagi. Ketik apa yang pelanggan ambil."
+    },
+    {
+      "source": "More items",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "更多项目",
+      "ms": "Lagi item"
+    },
+    {
+      "source": "Everything else",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "其他全部",
+      "ms": "Segala yang lain"
+    },
+    {
+      "source": "What did they use or buy today?",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "他们今天使用或购买了什么？",
+      "ms": "Apa yang mereka guna atau beli hari ini?"
+    },
+    {
+      "source": "Search services, products and bundles",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "搜索服务、产品和捆绑包",
+      "ms": "Cari perkhidmatan, produk dan himpunan"
+    },
+    {
+      "source": "Or type an amount",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "或直接输入金额",
+      "ms": "Atau taip amaun"
+    },
+    {
+      "source": "What was it? (optional)",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这是什么？（选填）",
+      "ms": "Apakah ia? (pilihan)"
+    },
+    {
+      "source": "Total to collect",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "应收总额",
+      "ms": "Jumlah untuk dikutip"
+    },
+    {
+      "source": "Confirm sale",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "确认交易",
+      "ms": "Sahkan jualan"
+    },
+    {
+      "source": "One-off item",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "一次性项目",
+      "ms": "Item sekali sahaja"
+    },
+    {
+      "source": "Also on this bill · kept as its own receipt",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "同一单内 · 单独出具收据",
+      "ms": "Turut dalam bil ini · disimpan sebagai resitnya sendiri"
+    },
+    {
+      "source": "Tap to add. The sale stays open behind this.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "点选即可添加。这笔交易仍在后面保持开启。",
+      "ms": "Ketik untuk menambah. Jualan itu kekal terbuka di belakang ini."
+    },
+    {
+      "source": "No services match.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "没有匹配的服务。",
+      "ms": "Tiada perkhidmatan sepadan."
+    },
+    {
+      "source": "No products match.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "没有匹配的产品。",
+      "ms": "Tiada produk sepadan."
+    },
+    {
+      "source": "Use only when the customer is buying a prepaid package.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "仅在顾客购买预付配套时使用。",
+      "ms": "Guna hanya apabila pelanggan membeli pakej prabayar."
+    },
+    {
+      "source": "A one-off charge that isn't in your catalogue. Custom prices — owner and manager only.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "不在您目录内的一次性收费。自定价格 — 仅限店主和经理。",
+      "ms": "Caj sekali sahaja yang tiada dalam katalog anda. Harga tersuai — pemilik dan pengurus sahaja."
+    },
+    {
+      "source": "Search this list",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "搜索此列表",
+      "ms": "Cari senarai ini"
+    },
+    {
+      "source": "Use a minus for a correction the other way —",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "反向更正请使用负号 —",
+      "ms": "Guna tanda tolak untuk pembetulan arah sebaliknya —"
+    },
+    {
+      "source": "takes $5 off and reduces the points earned to match.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "会减去 5 元，并相应减少获得的积分。",
+      "ms": "menolak $5 dan mengurangkan mata yang diperoleh dengan sewajarnya."
+    },
+    {
+      "source": "Enter dollars and cents, for example 12.50 or -5.00",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "请输入金额，精确到分，例如 12.50 或 -5.00",
+      "ms": "Masukkan ringgit dan sen, contohnya 12.50 atau -5.00"
+    },
+    {
+      "source": "Enter an amount other than zero, for example 12.50 or -5.00",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "请输入非零金额，例如 12.50 或 -5.00",
+      "ms": "Masukkan amaun selain sifar, contohnya 12.50 atau -5.00"
+    },
+    {
+      "source": "Keep the note under 200 characters",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "备注请控制在 200 字以内",
+      "ms": "Pastikan nota kurang daripada 200 aksara"
+    },
+    {
+      "source": "Also charged · own record",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "另行收费 · 独立记录",
+      "ms": "Turut dicaj · rekod tersendiri"
+    },
+    {
+      "source": "Total collected",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "已收总额",
+      "ms": "Jumlah dikutip"
+    },
+    {
+      "source": "Walk-in — no points earned",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "步入式 — 不获得积分",
+      "ms": "Pelanggan datang terus — tiada mata diperoleh"
+    },
+    {
+      "source": "Welcome offer unlocked",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "迎新优惠已解锁",
+      "ms": "Tawaran selamat datang dibuka"
+    },
+    {
+      "source": "Print receipt",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "打印收据",
+      "ms": "Cetak resit"
+    },
+    {
+      "source": "Applying…",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "正在应用…",
+      "ms": "Sedang dikenakan…"
+    },
+    {
+      "source": "Use stored value",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "使用储值",
+      "ms": "Guna nilai tersimpan"
+    },
+    {
+      "source": "Use an existing customer package",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "使用顾客已有的配套",
+      "ms": "Guna pakej sedia ada pelanggan"
+    },
+    {
+      "source": "Available packages",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "可用配套",
+      "ms": "Pakej tersedia"
+    },
+    {
+      "source": "Switch to customer",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "切换为顾客",
+      "ms": "Tukar kepada pelanggan"
+    },
+    {
+      "source": "Different number",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "换一个号码",
+      "ms": "Nombor lain"
+    },
+    {
+      "source": "That could not be removed. Try again.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "无法移除该项目。请重试。",
+      "ms": "Itu tidak dapat dialih keluar. Cuba lagi."
+    },
+    {
+      "source": "That perk could not be applied to this sale.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "该福利无法应用到这笔交易。",
+      "ms": "Faedah itu tidak dapat dikenakan pada jualan ini."
+    },
+    {
+      "source": "Discount removed",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "折扣已移除",
+      "ms": "Diskaun dialih keluar"
+    },
+    {
+      "source": "Discount applied to this sale",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "折扣已应用到这笔交易",
+      "ms": "Diskaun dikenakan pada jualan ini"
+    },
+    {
+      "source": "Checkout saved. Some items did not finish.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "结账已保存。部分项目未完成。",
+      "ms": "Pembayaran disimpan. Sesetengah item tidak selesai."
+    },
+    {
+      "source": "Checkout saved. Ready for the next customer.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "结账已保存。可以接待下一位顾客。",
+      "ms": "Pembayaran disimpan. Sedia untuk pelanggan seterusnya."
+    },
+    {
+      "source": "Mostly done",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "大致完成",
+      "ms": "Hampir selesai"
+    },
+    {
+      "source": "That bundle has no items in it yet.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "该捆绑包中还没有任何项目。",
+      "ms": "Himpunan itu belum mempunyai sebarang item."
+    },
+    {
+      "source": "That package is no longer available",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "该配套已不再提供",
+      "ms": "Pakej itu tidak lagi tersedia"
+    },
+    {
+      "source": "This customer has no tier benefits yet.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这位顾客还没有任何等级福利。",
+      "ms": "Pelanggan ini belum mempunyai sebarang faedah peringkat."
+    },
+    {
+      "source": "Type an amount first.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "请先输入金额。",
+      "ms": "Taip amaun dahulu."
+    },
+    {
+      "source": "There is nothing to add at this branch yet.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "本分店暂时没有可添加的项目。",
+      "ms": "Belum ada apa-apa untuk ditambah di cawangan ini."
+    },
+    {
+      "source": "That perk has already been used this period — removed from the bill",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "该福利在本期已使用过 — 已从账单中移除",
+      "ms": "Faedah itu telah digunakan dalam tempoh ini — dialih keluar daripada bil"
+    },
+    {
+      "source": "Record sale requires customer read access and permission to record purchases.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "「记录销售」需要顾客读取权限以及记录消费的权限。",
+      "ms": "Rekod jualan memerlukan akses baca pelanggan dan kebenaran untuk merekod pembelian."
+    },
+    {
+      "source": "Branch access could not be checked safely.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "无法安全地检查分店权限。",
+      "ms": "Akses cawangan tidak dapat disemak dengan selamat."
+    },
+    {
+      "source": "Record sale could not be loaded",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "无法加载「记录销售」",
+      "ms": "Rekod jualan tidak dapat dimuatkan"
+    },
+    {
+      "source": "A staff identity and branch with Record sale access are required before taking payment.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "收款前，需要一个具备「记录销售」权限的员工身份和分店。",
+      "ms": "Identiti kakitangan dan cawangan dengan akses Rekod jualan diperlukan sebelum menerima bayaran."
+    },
+    {
+      "source": "Record sale is not available",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "「记录销售」不可用",
+      "ms": "Rekod jualan tidak tersedia"
+    },
+    {
+      "source": "Ask an owner or Peekaa administrator to review this staff member and branch module policy.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "请店主或 Peekaa 管理员检查这位员工及分店的模块政策。",
+      "ms": "Minta pemilik atau pentadbir Peekaa menyemak dasar modul ahli kakitangan dan cawangan ini."
+    },
+    {
+      "source": "View sales history",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "查看销售记录",
+      "ms": "Lihat sejarah jualan"
+    },
+    {
+      "source": "Walk-in sales need itemized checkout.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "步入式交易需要逐项结账。",
+      "ms": "Jualan pelanggan datang terus memerlukan pembayaran mengikut item."
+    },
+    {
+      "source": "No packages yet",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "暂无配套",
+      "ms": "Belum ada pakej"
+    },
+    {
+      "source": "This customer has no prepaid sessions left to use.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这位顾客已没有可使用的预付次数。",
+      "ms": "Pelanggan ini tiada lagi sesi prabayar untuk digunakan."
+    },
+    {
+      "source": "Nothing to give on this sale",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这笔交易没有可给予的项目",
+      "ms": "Tiada apa untuk diberi pada jualan ini"
+    },
+    {
+      "source": "This customer has no reward, voucher or tier benefit that can be given right now.",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "这位顾客目前没有可以给予的奖励、礼券或等级福利。",
+      "ms": "Pelanggan ini tiada ganjaran, baucar atau faedah peringkat yang boleh diberi sekarang."
+    },
+    {
+      "source": "Use package",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "使用配套",
+      "ms": "Guna pakej"
+    },
+    {
+      "source": "Sell package",
+      "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
+      "zh-CN": "销售配套",
+      "ms": "Jual pakej"
     }
   ]
 }

@@ -252,7 +252,8 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        troubleshooting entries. */
         /* nestly_v927: +184 — the last six Help Centre guides (178) and the six bottle status pills
        the Bottles guide names. The Help Centre is now translated end to end. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,2984,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v928: +104 — the Record sale (till) screen in one pass. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,3088,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 

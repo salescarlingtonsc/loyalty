@@ -1536,6 +1536,114 @@ const BOTTLE_PILLS_V927 = [
   "Expired",
 ];
 
+/* nestly_v928 — nestly_v928 — the Record sale (till) screen: labels, refusals, empty states and toasts. */
+const TILL_V928 = [
+  "Ask an owner to review your Customers and Record sale assignments.",
+  "No purchase, redemption, or package use was recorded.",
+  "No points, rewards, packages or stored value.",
+  "Redemption scanning requires Loyalty write access at this branch.",
+  "Walk-in is not available",
+  "This firm records sales by customer phone number. Nothing was charged.",
+  "Birthday",
+  "(optional)",
+  "Customer creation is read only at this branch.",
+  "Who made this sale?",
+  "Commission for this sale is recorded against this teammate.",
+  "Change",
+  "Walk-in customer",
+  "Welcome offer — new sign-up",
+  "No minimum spend. Nothing is charged.",
+  "Bring-back voucher",
+  "Referral gift",
+  "Earned for introducing a friend who has now visited. Nothing is charged.",
+  "Reward voucher ready",
+  "— scan the customer's QR to confirm it",
+  "Applied automatically at payment — no action needed",
+  "Give",
+  "Ready to give now. Peekaa counts each one against its limit.",
+  "Already given",
+  "Scanned or handed over for this customer. Undo puts it straight back.",
+  "Undo",
+  "Customer redemption is switched off.",
+  "Turn it on under Customer Interface → Customer Action to redeem rewards at the counter.",
+  "Customer Action",
+  "Rewards this customer can claim",
+  "Redeem",
+  "Ready",
+  "Not yet",
+  "Automatic",
+  "Available now",
+  "Birthday month only",
+  "Used up",
+  "Not available",
+  "Everything this customer's tier includes, and what can be given today.",
+  "Redeem without the customer's QR",
+  "This is recorded as a manual redemption, with your name against it.",
+  "Why is this being redeemed without the QR?",
+  "Customer unable to show QR",
+  "Say what happened",
+  "Nothing added yet. Tap what the customer had.",
+  "More items",
+  "Everything else",
+  "What did they use or buy today?",
+  "Search services, products and bundles",
+  "Or type an amount",
+  "What was it? (optional)",
+  "Total to collect",
+  "Confirm sale",
+  "One-off item",
+  "Also on this bill · kept as its own receipt",
+  "Tap to add. The sale stays open behind this.",
+  "No services match.",
+  "No products match.",
+  "Use only when the customer is buying a prepaid package.",
+  "A one-off charge that isn't in your catalogue. Custom prices — owner and manager only.",
+  "Search this list",
+  "Use a minus for a correction the other way —",
+  "takes $5 off and reduces the points earned to match.",
+  "Enter dollars and cents, for example 12.50 or -5.00",
+  "Enter an amount other than zero, for example 12.50 or -5.00",
+  "Keep the note under 200 characters",
+  "Also charged · own record",
+  "Total collected",
+  "Walk-in — no points earned",
+  "Welcome offer unlocked",
+  "Print receipt",
+  "Applying…",
+  "Use stored value",
+  "Use an existing customer package",
+  "Available packages",
+  "Switch to customer",
+  "Different number",
+  "That could not be removed. Try again.",
+  "That perk could not be applied to this sale.",
+  "Discount removed",
+  "Discount applied to this sale",
+  "Checkout saved. Some items did not finish.",
+  "Checkout saved. Ready for the next customer.",
+  "Mostly done",
+  "That bundle has no items in it yet.",
+  "That package is no longer available",
+  "This customer has no tier benefits yet.",
+  "Type an amount first.",
+  "There is nothing to add at this branch yet.",
+  "That perk has already been used this period — removed from the bill",
+  "Record sale requires customer read access and permission to record purchases.",
+  "Branch access could not be checked safely.",
+  "Record sale could not be loaded",
+  "A staff identity and branch with Record sale access are required before taking payment.",
+  "Record sale is not available",
+  "Ask an owner or Peekaa administrator to review this staff member and branch module policy.",
+  "View sales history",
+  "Walk-in sales need itemized checkout.",
+  "No packages yet",
+  "This customer has no prepaid sessions left to use.",
+  "Nothing to give on this sale",
+  "This customer has no reward, voucher or tier benefit that can be given right now.",
+  "Use package",
+  "Sell package",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -1636,7 +1744,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -1670,13 +1778,13 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 2984);
+  assert.equal(once.keyCount, 3088);
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 2984 strings per locale/);
+  assert.match(clean, /up to date: 3088 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');
