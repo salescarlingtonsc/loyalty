@@ -281,10 +281,19 @@ test('the translation tables have exactly one reader and it degrades to English'
   }
   assert.match(source, /typeof WORKSPACE_GENERATED_COPY_V97==='undefined'\s*\n?\s*\?source/,
     'an unloaded table must fall back to the English source, not throw');
-  assert.match(source, /if\(workspaceLocale!=='en'\)await loadWorkspaceI18nV185\(\)/,
-    'a translated workspace must not paint an English frame first');
-  assert.match(source, /if\(next!=='en'\)await loadWorkspaceI18nV185\(\)/,
-    'switching language must wait for the tables');
+  /* nestly_v913: both callers still AWAIT the tables before rendering — that is what these two
+     pinned — and both now also act on the answer. The loader reports a boolean instead of
+     swallowing the failure, because caching the locale as resolved after a failed fetch left a
+     zh-CN owner in an English workspace, with the picker showing 中文, for the rest of the
+     session and with no retry. */
+  assert.match(source, /if\(workspaceLocale!=='en'&&!await loadWorkspaceI18nV185\(\)\)return;/,
+    'a translated workspace must not paint an English frame first, and a failed table must leave the locale unresolved so the next navigation retries');
+  assert.match(source, /workspaceLocaleLoadedFor=userId;/,
+    'the locale is cached as resolved only after the tables it needs are present');
+  assert.match(source, /if\(next!=='en'&&!await loadWorkspaceI18nV185\(\)\)\{/,
+    'switching language must wait for the tables, and say so when they do not arrive');
+  assert.match(source, /return loadAppChunkV185\('i18n'\)\.then\(\(\)=>true,error=>\{console\.error\(error\);return false\}\);/,
+    'the loader reports whether the tables arrived rather than swallowing the failure');
 });
 
 /* ------------------------------------------------------------------------ what this buys */

@@ -4604,8 +4604,14 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
    is not English, so they ship as their own chunk. Until it arrives, translation returns the
    English source — which is exactly what the 'en' path does — so a slow or failed load degrades
    to English rather than to a broken screen. */
+/* nestly_v913: it now REPORTS whether the tables arrived. It used to swallow the failure and
+   return null, which was fine for the "degrade to English" promise above but left both callers
+   unable to tell a loaded table from a failed one — and loadWorkspaceLocaleV97 was caching the
+   locale as resolved either way, so a single dropped request meant an English workspace for the
+   rest of the session with no retry and no message. Returning a boolean is what lets the caller
+   leave the locale UNRESOLVED and try again on the next navigation. */
 function loadWorkspaceI18nV185(){
-  return loadAppChunkV185('i18n').catch(error=>{console.error(error);return null});
+  return loadAppChunkV185('i18n').then(()=>true,error=>{console.error(error);return false});
 }
 /* v184: the Peekaa admin console is ~210KB of JS + CSS that only a platform admin can use. It
    used to be a plain <script defer> in index.html, so every customer opening a booking page paid
@@ -22786,18 +22792,33 @@ async function loadWorkspaceLocaleV97(isCurrent=()=>true){
   if(!userId||workspaceLocaleLoadedFor===userId)return;
   const {data,error}=await sb.rpc('get_workspace_locale_preference_v97');
   if(!isCurrent())return;
-  workspaceLocaleLoadedFor=userId;
   if(!error&&data){workspaceLocale=normalizeWorkspaceLocaleV97(data.locale);workspaceLocaleVersion=Number(data.version||0)}
   /* v185: fetch the translation tables before the first workspace render, so a zh-CN or ms
      workspace never paints an English frame first. English users never download them. */
-  if(workspaceLocale!=='en')await loadWorkspaceI18nV185();
+  /* nestly_v913 — THE BUG THIS ORDER CAUSED. workspaceLocaleLoadedFor used to be set on the line
+     ABOVE the table fetch, and the fetch swallowed its own failure. So one dropped request left a
+     zh-CN owner with: the preference correctly read as zh-CN, the picker correctly showing 中文,
+     the whole workspace in English, no message, and — because this function returns at the
+     `workspaceLocaleLoadedFor===userId` guard on every later navigation — NO RETRY for the rest
+     of the session. The table is 375KB and arrives on the slowest part of the boot, so this is
+     not a rare shape; it is what a flaky connection produces every time.
+     The locale counts as loaded only when the workspace can actually RENDER in it: English, or a
+     translated locale whose tables are present. Leaving it unresolved costs one extra RPC on the
+     next navigation and is what makes the failure self-healing instead of permanent. */
+  if(workspaceLocale!=='en'&&!await loadWorkspaceI18nV185())return;
+  workspaceLocaleLoadedFor=userId;
 }
 async function setWorkspaceLocaleV97(locale){
   const next=normalizeWorkspaceLocaleV97(locale),previous=workspaceLocale;
   if(next===previous)return true;
   /* v185: switching INTO a translated language must wait for the tables, otherwise the first
      re-render after the switch would repaint the same English copy the user just moved away from. */
-  if(next!=='en')await loadWorkspaceI18nV185();
+  /* nestly_v913: and if they do not arrive, say so. Switching to 中文 and being handed the same
+     English screen with no explanation is the failure the owner actually reported. */
+  if(next!=='en'&&!await loadWorkspaceI18nV185()){
+    toast('The language pack could not be loaded. Check your connection and try again.');
+    return false;
+  }
   workspaceLocale=next;localizeWorkspaceSubtreeV97();
   const {data,error}=await sb.rpc('set_workspace_locale_preference_v97',{p_locale:next,p_expected_version:workspaceLocaleVersion});
   if(error){workspaceLocale=previous;localizeWorkspaceSubtreeV97();toast('Language preference could not be saved.');return false}
