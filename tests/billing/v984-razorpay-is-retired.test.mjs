@@ -84,10 +84,34 @@ test('v984: the history is deliberately kept, not deleted', () => {
     existsSync(join(ROOT, 'supabase/migrations/20260925000000_nestly_v755_razorpay_billing.sql')),
     'the v755 razorpay migration was deleted — the migration chain cannot replay without it',
   );
-  /* stripe-billing-reconcile and whatsapp-webhook both import from _shared/razorpay-*.ts today.
-     Deleting those modules breaks Stripe, which is the opposite of the intent. */
+  /* CORRECTION (same day, after the four razorpay-* edge functions were undeployed). v984 first
+     justified keeping these modules by claiming stripe-billing-reconcile and whatsapp-webhook
+     import from _shared/razorpay-*.ts. They do not. Both name Razorpay only in COMMENTS, and
+     _shared/billing-payment-method-backfill.ts takes a `razorpay` client as an injected PARAMETER
+     rather than importing one. Checked by import, not by mentioning the word:
+
+       grep -rn "from ['\"].*razorpay" supabase/functions/
+
+     answers with exactly two lines, and both are razorpay modules importing each other. Nothing
+     Stripe touches them. The original comment would have told a future reader that live Stripe code
+     depends on dead code, which is the opposite of true and exactly the kind of claim that costs
+     somebody an afternoon.
+
+     They are kept anyway, for the reason that IS true: supabase/functions/razorpay-billing-* is
+     still in the tree so an undeploy stays reversible with `supabase functions deploy <name>`, and
+     these five modules are what those four functions import. Delete them and the undo is gone. So
+     the assertion stands and only its reason changes. */
   assert.ok(
     existsSync(join(ROOT, 'supabase/functions/_shared/razorpay-client.ts')),
-    '_shared/razorpay-client.ts was deleted, but live Stripe code still imports from that folder',
+    '_shared/razorpay-client.ts was deleted — the four razorpay-billing-* functions kept in this '
+      + 'tree import it, and without it undeploying them stops being reversible',
   );
+  /* The positive control for the sentence above: the functions this exists to keep redeployable. */
+  for (const fn of ['webhook', 'return', 'reconcile', 'command']) {
+    assert.ok(
+      existsSync(join(ROOT, `supabase/functions/razorpay-billing-${fn}/index.ts`)),
+      `supabase/functions/razorpay-billing-${fn} was deleted, so _shared/razorpay-*.ts now has no `
+        + 'importer at all — either restore it or remove the shared modules with it',
+    );
+  }
 });
