@@ -1270,6 +1270,80 @@ const WAVE8_HELP_PROSE_20260915 = [
   "Ask the customer to reload their Peekaa page.",
 ];
 
+/* nestly_v926 wave 9 — the Help Centre glossary and the cross-cutting troubleshooting entries.
+   The glossary is the vocabulary every other guide is written in, so it goes in as one piece. */
+const WAVE9_HELP_PROSE_20260915 = [
+  "One of your locations. Almost every figure in the workspace is for one branch at a time — the one selected in the top bar.",
+  "Bring-back reward",
+  "A voucher offered to a customer who has not been in for a set number of days.",
+  "Bundle",
+  "Two or more services or products sold together as one line.",
+  "Someone on your programme. They have a record here and, once they scan your QR, their own view on their phone.",
+  "A role that can record sales but cannot see money figures.",
+  "A short-lived offer published to customers, with a start and an end date. Owner only.",
+  "A published offer whose start date has arrived and whose end date has not passed.",
+  "Module",
+  "One screen or area of the workspace — Customers, Record sale, Appointments and so on. What you have depends on your plan, and what each teammate can open depends on their access.",
+  "Whether something can be sold or used right now. Switching something Off never deletes what has already been sold.",
+  "A number of prepaid sessions a customer buys once and uses over time.",
+  "What a customer earns on qualifying spend, and redeems for the rewards you define.",
+  "Programme",
+  "One reward mechanism — Point system, Stamp card, Tier membership, Welcome gift, Birthday benefit, Bring-back rewards or Referrals. Each runs independently.",
+  "Publish",
+  "Making a programme or an offer real for customers. Saving a draft changes nothing for them.",
+  "Read / Edit",
+  "A teammate's access to one module. Read can look; Edit can change.",
+  "Referral",
+  "A customer introducing a friend. Both sides can be rewarded when the friend's first qualifying sale happens.",
+  "Reversed",
+  "A sale that has been undone. It stays in the list marked as reversed, and is left out of every total.",
+  "Something a customer can claim — a free item, a discount or a benefit. Rewards belong to a programme.",
+  "Roster-only",
+  "A team member on your roster for scheduling and reporting who cannot sign in. They do not use a login seat.",
+  "Seat",
+  "An active login on your subscription. Each one beyond the first adds to what you pay.",
+  "Stamp",
+  "One mark on a stamp card, earned on a qualifying spend. A full card earns its gift.",
+  "A level a customer reaches as they earn. Tiers can carry their own benefits. Spending and refunds never move a customer down.",
+  "Visit",
+  "A recorded occasion a customer was served. What counts as a visit depends on your sale settings — a prepaid package session is a visit, not new takings.",
+  "A sale recorded with no customer attached. It earns nothing and can claim nothing.",
+  "A one-off gift for a new member, on their first visit.",
+  "Your business inside Peekaa — its customers, sales, staff, branches and programmes.",
+  "The numbers on two screens do not agree",
+  "The two screens are on different branches.",
+  "The two screens are on different date ranges.",
+  "One of them excludes reversed sales and you are comparing it with something that does not.",
+  "One figure is a projection and the other is history.",
+  "Put both on the same branch using the selector in the top bar.",
+  "Put both on the same date range.",
+  "Open Sales for that exact range — the individual records are the underlying truth.",
+  "A screen says something could not be loaded",
+  "The connection dropped mid-read.",
+  "Your account does not have access to that information.",
+  "Press Try again.",
+  "If it keeps failing, reload the page.",
+  "Peekaa never fills an unreadable figure with a zero, so an \"unavailable\" message means the figure is genuinely unknown, not nil.",
+  "I pressed a button and nothing happened",
+  "The action is still running — buttons stay busy until the answer comes back.",
+  "Your access to that module is Read, not Edit.",
+  "Wait for the button to finish before pressing again. Peekaa will not record the same thing twice.",
+  "Check the top of the screen for a \"Read-only access\" note.",
+  "I was sent back to another screen with a short message",
+  "You opened an address your account is not allowed to open.",
+  "That screen is owner-only.",
+  "That module is switched off for your account.",
+  "Read the message — it says which rule stopped you.",
+  "Reminder & Notification is empty",
+  "Automated customer messaging is not switched on for this workspace.",
+  "There is nothing to set there today. Peekaa is not sending automated messages on your behalf.",
+  "Customers still see everything in their own app; nothing depends on messaging.",
+  "I cannot find Gift cards, Memberships or the WhatsApp Inbox",
+  "These are not part of the business workspace. They have been removed from it.",
+  "Nothing you have already recorded is lost — customers keep any value they already hold.",
+  "Use the reward programmes in Rewards & Offer instead.",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -1370,7 +1444,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -1404,13 +1478,13 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 2731);
+  assert.equal(once.keyCount, 2800);
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 2731 strings per locale/);
+  assert.match(clean, /up to date: 2800 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

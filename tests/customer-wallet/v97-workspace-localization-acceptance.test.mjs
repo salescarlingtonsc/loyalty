@@ -248,7 +248,9 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* 2578 -> 2731: nestly_v925 wave 8 — the Bookings, Waitlist, What your customers see and
        Customer Interface guides, and one shipped key un-escaped: an HTML-escaped source can
        never match node.nodeValue, which is decoded text. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,2731,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* 2731 -> 2800: nestly_v926 wave 9 — the Help Centre glossary and the cross-cutting
+       troubleshooting entries. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,2800,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
