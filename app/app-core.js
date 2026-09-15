@@ -8005,8 +8005,25 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   contactsExcludedRecentVisit:Object.freeze({en:"{count} contacts were excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.",'zh-CN':"{count} 位联系人被排除，因为该顾客在过去 14 天内到访过 — 联系一个本来就会来的人不算成果，本报告拒绝把它计入。",ms:"{count} kenalan dikecualikan kerana pelanggan itu telah datang dalam 14 hari lalu — menghubungi seseorang yang memang akan datang bukan kemenangan, dan laporan ini enggan mengiranya."}),
   teammateHiddenByBranch:Object.freeze({en:"{count} teammate not assigned to this branch is hidden. Choose All branches at the top to see everyone.",'zh-CN':"{count} 位团队成员未分配到本分店，已被隐藏。请在顶部选择「所有分店」以查看全部成员。",ms:"{count} rakan sepasukan tidak ditugaskan ke cawangan ini dan disembunyikan. Pilih Semua cawangan di bahagian atas untuk melihat semua orang."}),
   teammatesHiddenByBranch:Object.freeze({en:"{count} teammates not assigned to this branch are hidden. Choose All branches at the top to see everyone.",'zh-CN':"{count} 位团队成员未分配到本分店，已被隐藏。请在顶部选择「所有分店」以查看全部成员。",ms:"{count} rakan sepasukan tidak ditugaskan ke cawangan ini dan disembunyikan. Pilih Semua cawangan di bahagian atas untuk melihat semua orang."}),
+  autoApproveOnChangeThisIn:Object.freeze({en:"Auto-approve is on. Change this in",'zh-CN':"自动批准已开启。请前往",ms:"Auto-lulus dihidupkan. Tukar di"}),
+  autoApproveOffChangeThisIn:Object.freeze({en:"Auto-approve is off. Change this in",'zh-CN':"自动批准已关闭。请前往",ms:"Auto-lulus dimatikan. Tukar di"}),
+  autoApproveOnOwnerOnly:Object.freeze({en:"Auto-approve is on. Only the owner can change this setting.",'zh-CN':"自动批准已开启。只有店主可以更改此设置。",ms:"Auto-lulus dihidupkan. Hanya pemilik boleh menukar tetapan ini."}),
+  autoApproveOffOwnerOnly:Object.freeze({en:"Auto-approve is off. Only the owner can change this setting.",'zh-CN':"自动批准已关闭。只有店主可以更改此设置。",ms:"Auto-lulus dimatikan. Hanya pemilik boleh menukar tetapan ini."}),
+  unconfirmedAutoCancelMinutes:Object.freeze({en:"Unconfirmed bookings are auto-cancelled after this many minutes.",'zh-CN':"未确认的预订在这么多分钟后自动取消。",ms:"Tempahan yang belum disahkan dibatalkan secara automatik selepas bilangan minit ini."}),
+  unconfirmedAutoCancelMinutesWaitlist:Object.freeze({en:"Unconfirmed bookings are auto-cancelled after this many minutes; your waitlist is then flagged so you know to fill the gap.",'zh-CN':"未确认的预订在这么多分钟后自动取消；届时您的候补名单会被标记，提醒您补上这个空档。",ms:"Tempahan yang belum disahkan dibatalkan secara automatik selepas bilangan minit ini; senarai menunggu anda kemudian ditandakan supaya anda tahu untuk mengisi kekosongan itu."}),
+  redemptionOffPointSystem:Object.freeze({en:"Point system is on and your customers can see their points, but redeeming at the counter is switched off for this business — pressing “Show QR at counter” gives them nothing. Everything you have set up here is kept.",'zh-CN':"积分系统已开启，您的顾客可以看到自己的积分，但本商户的柜台兑换功能已关闭 — 按下「在柜台出示二维码」不会有任何反应。您在此设置的所有内容都会保留。",ms:"Sistem mata dihidupkan dan pelanggan anda boleh melihat mata mereka, tetapi penebusan di kaunter dimatikan untuk perniagaan ini — menekan “Tunjuk QR di kaunter” tidak memberi apa-apa kepada mereka. Semua yang anda sediakan di sini dikekalkan."}),
+  redemptionOffStampCard:Object.freeze({en:"Stamp card is on and your customers can see their stamps, but redeeming at the counter is switched off for this business — pressing “Show QR at counter” gives them nothing. Everything you have set up here is kept.",'zh-CN':"集章卡已开启，您的顾客可以看到自己的印章，但本商户的柜台兑换功能已关闭 — 按下「在柜台出示二维码」不会有任何反应。您在此设置的所有内容都会保留。",ms:"Kad setem dihidupkan dan pelanggan anda boleh melihat setem mereka, tetapi penebusan di kaunter dimatikan untuk perniagaan ini — menekan “Tunjuk QR di kaunter” tidak memberi apa-apa kepada mereka. Semua yang anda sediakan di sini dikekalkan."}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  'autoApproveOnChangeThisIn',
+  'autoApproveOffChangeThisIn',
+  'autoApproveOnOwnerOnly',
+  'autoApproveOffOwnerOnly',
+  'unconfirmedAutoCancelMinutes',
+  'unconfirmedAutoCancelMinutesWaitlist',
+  'redemptionOffPointSystem',
+  'redemptionOffStampCard',
+
   /* nestly_v950 — seven more counted sentences as singular/plural key pairs. */
   'grantRecordUnverified','grantRecordsUnverified','customerTooRecentStages','customersTooRecentStages',
   'briefCustomerOverdue','briefCustomersOverdue','briefCustomerVisitedOnce','briefCustomersVisitedOnce',

@@ -274,7 +274,7 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v940: +26 — the reviewed half of each split interpolated label. */
         /* nestly_v941: +56 — the reviewed half of 56 more split interpolated labels. */
     
-    assert.equal(Object.keys(generatedCopy[locale]).length,4949,`${locale} valid visible-literal inventory changed without catalog review`);
+    assert.equal(Object.keys(generatedCopy[locale]).length,4955,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
@@ -525,8 +525,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      owner-brief, excluded-contact and hidden-teammate counts. topCustomerShare's singular is the
      one place the English was corrected rather than copied: the source ternary pluralised the noun
      but not the verb, so at a count of one it read "customer are", and a reviewed template is the
-     wrong place to enshrine that. 307 + 14 = 321. */
-  assert.equal(keys.length,321,'mixed-interface interpolation inventory changed without review');
+     wrong place to enshrine that. 307 + 14 = 321.
+     nestly_v951 adds 8 as four more either/or pairs, all of them value-free: the two auto-approve
+     readouts, the auto-cancel minutes with and without a waitlist, and the redemption-off notice
+     in its point-system and stamp-card wordings. Each source ternary chose between two English
+     WORDS inside the sentence — 'on'/'off', 'point'/'stamp' — which is the same trap as a
+     grammatical 's': a value is preserved verbatim, so the switch has to be the key, not the
+     argument. 321 + 8 = 329. */
+  assert.equal(keys.length,329,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

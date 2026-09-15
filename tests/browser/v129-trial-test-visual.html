@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="1d4687dffa84d19f429e8e1323a0abff6c0b18091fe990e1d5b433003fa937b6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="01d5cf1f796d3fb8586b080e9d975c2a390c49746cc112503f197b5ebc54b2b3"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1d4687dffa84d19f429e8e1323a0abff6c0b18091fe990e1d5b433003fa937b6</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 01d5cf1f796d3fb8586b080e9d975c2a390c49746cc112503f197b5ebc54b2b3</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -10521,7 +10521,7 @@ async function tillPage(){
          this button now, so the money has already been taken by the time a hand reaches it — the
          button's job is to record what happened. The FIGURE is unchanged: still the whole amount
          across both records, still the evaluation's. */
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(dueV257)}</button>`;
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Record sale</span> · ${money(dueV257)}</button>`;
     }
     return '';
   }
@@ -13400,7 +13400,7 @@ async function bookingsPage(){
            auto-approve toggle itself moved to Customer Interface > Appointment Setting, following
            the same "move whole, leave a pointer" pattern V259 used for Workspace & brand. This
            readout is not a second copy of the control — it only reflects the stored value. -->
-      <p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Change this in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
+      <p class="muted small">${workspaceTemplateHtmlV97(S.biz.auto_approve_changes?'autoApproveOnChangeThisIn':'autoApproveOffChangeThisIn',{})} <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${/* nestly_v584: the settings tab is gone, so the one thing it was still worth saying is said
@@ -19515,7 +19515,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     && snapshot.customerRedemption===false;
   const growRedemptionBandV521=growRedemptionOffV521?`<div class="notice warn" role="status" style="margin-top:12px" data-grow-redemption-off-v521>
     <b>Your customers cannot claim these gifts yet</b>
-    <p class="muted small" style="margin-top:6px">${esc(growPointsRowLabelV326)} is on and your customers can see their ${esc(growPointsUnitV326)}s, but redeeming at the counter is switched off for this business \u2014 pressing &ldquo;Show QR at counter&rdquo; gives them nothing. Everything you have set up here is kept.</p>
+    <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(growPointsIsStampsV326?'redemptionOffStampCard':'redemptionOffPointSystem',{})}</p>
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-redemption-on-v521="1"${growRedemptionBusyV521?' disabled':''}>Let customers claim</button></div>
     ${growRedemptionErrorV521?`<p class="err small" style="margin-top:8px">${esc(growRedemptionErrorV521)}</p>`:''}
   </div>`:'';
@@ -25415,7 +25415,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     ${tierMovementBlockW6I2()}`;
   const stepTwoHtml=()=>familyW6I2()==='stamps'
     ?`<p class="grow-setup-lead-v301">How fast do customers collect a stamp?</p>
-      <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <input id="growSetupStampV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.stampSpend||0).toFixed(2))}" aria-label="Spend needed for one stamp"> → collects <b>1 stamp</b></p>
+      <p class="grow-setup-sentence-v301"><span>Customer spends</span> ${esc(currency)} <input id="growSetupStampV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.stampSpend||0).toFixed(2))}" aria-label="Spend needed for one stamp"> → collects <b>1 stamp</b></p>
       <p class="grow-setup-example-v301" id="growSetupExampleV301" role="status">${esc(exampleText())}</p>`
     :`<p class="grow-setup-lead-v301">How fast do customers earn points?</p>
       <!-- data-merchant-content, matching the house rule for an interpolated accessibility
@@ -29450,7 +29450,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
          this button now, so the money has already been taken by the time a hand reaches it — the
          button's job is to record what happened. The FIGURE is unchanged: still the whole amount
          across both records, still the evaluation's. */
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(dueV257)}</button>`;
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Record sale</span> · ${money(dueV257)}</button>`;
     }
     return '';
   }
@@ -31522,6 +31522,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'1d4687dffa84d19f429e8e1323a0abff6c0b18091fe990e1d5b433003fa937b6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'01d5cf1f796d3fb8586b080e9d975c2a390c49746cc112503f197b5ebc54b2b3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -73,7 +73,7 @@ test('BUG 3 — the split stays (two sale kinds), the confirm screen states ONE 
   // The single primary button names the whole amount it will collect, not just the kernel total.
   assert.match(till, /const dueV257=\(svTender\?svTender\.remaining_due_cents:evalResult\.total_cents\)\+extrasTotalCents\(\);/);
   // V373 renamed the button to the owner's own words; the FIGURE it names is unchanged.
-  assert.match(till, / Record sale · \$\{money\(dueV257\)\}/);
+  assert.match(till, /<span>Record sale<\/span> · \$\{money\(dueV257\)\}/);
   // The receipt totals both records afterwards, excluding anything that failed.
   assert.match(receipt, /d\.extras\.filter\(x=>x\.status!=='failed'\)\.reduce/);
   assert.match(receipt, /<span>Total collected<\/span>/);

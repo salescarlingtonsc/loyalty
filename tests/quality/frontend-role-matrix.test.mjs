@@ -137,9 +137,13 @@ test('global appointment, setup, and booking decision controls match their mutat
   /* V325 (owner-authorized relocation, 2026-08-14 Customer Interface cosmetics brief): the
      auto-approve control (and its non-owner readout) moved to Customer Interface > Appointment
      Setting; Bookings keeps only a value readout + pointer link, for every role. */
-  assert.match(bookings,/Auto-approve is \$\{S\.biz\.auto_approve_changes\?'on':'off'\}\. Change this in/);
+  /* nestly_v951: 'on' and 'off' are words, so the readout is an either/or key pair rather than a
+     value the localiser would have carried through untranslated. The readout and its pointer are
+     still exactly what Bookings keeps, for every role. */
+  assert.match(bookings,/autoApproveOnChangeThisIn':'autoApproveOffChangeThisIn'/);
   const bookingRulesRoleMatrix=section('function bookingRulesCardHtmlV325(){','function wireBookingRulesV325(');
-  assert.match(bookingRulesRoleMatrix,/Only the owner can change this setting/);
+  /* nestly_v951: same either/or pair — the owner-only refusal now names its two reviewed keys. */
+  assert.match(bookingRulesRoleMatrix,/autoApproveOnOwnerOnly':'autoApproveOffOwnerOnly'/);
   assert.match(bookings,/staff_decide_booking_request_v73/);
   assert.match(bookings,/decision==='confirm'\?canConvertBooking:decision==='decline'\?canDeclineBooking/);
   assert.doesNotMatch(bookings,/from\('booking_requests'\)\.update/);

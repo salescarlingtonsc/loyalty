@@ -22,7 +22,8 @@ test('nestly_v584 bookings is the requests list, with no settings tab behind it'
   assert.doesNotMatch(app, /setTakesTablesV223/);
   // The page still marks its own shell, and still points at where the rules actually live.
   assert.match(app, /data-bookings-shell="head"/);
-  assert.match(app, /Auto-approve is \$\{S\.biz\.auto_approve_changes\?'on':'off'\}\. Change this in <a href="#\/customer-interface\/appointment">/);
+  /* nestly_v951: the readout is a reviewed either/or key pair now; the pointer link is unmoved. */
+  assert.match(app, /autoApproveOnChangeThisIn':'autoApproveOffChangeThisIn',\{\}\)\} <a href="#\/customer-interface\/appointment">/);
 });
 
 test('nestly_v584 a booking decision is a tick and a cross, and the list pages at 20', () => {

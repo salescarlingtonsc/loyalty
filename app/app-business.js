@@ -5151,7 +5151,7 @@ function helpDotMarkupV385(title,body){
   /* No `title` attribute: it would duplicate the bubble, and an interpolated one is a dynamic
      accessibility attribute the v97 audit rightly refuses outside the named-template mechanism.
      The bubble is the visible copy and the aria-label is the spoken one, both from here. */
-  return ` <span class="help-dot-v385" tabindex="0" role="note" ${workspaceTemplateAttributeV97('aria-label','explainHelpDotV385',{topic:String(title||'this')})}><span aria-hidden="true">?</span><span class="help-dot-bubble-v385" data-merchant-content>${esc(text)}</span></span>`;
+  return ` <span class="help-dot-v385" tabindex="0" role="note" ${workspaceTemplateAttributeV97('aria-label','explainHelpDotV385',{topic:String(title||'this')})}><span aria-hidden="true">?</span><span class="help-dot-bubble-v385">${esc(text)}</span></span>`;
 }
 /* V387 (owner, second pass on photo 1: the ▲400% chip ringed again — "the 400% still unknown").
    The V385 legend answered "which period", which is not the question. The question a percentage
@@ -10193,7 +10193,7 @@ async function tillPage(){
          this button now, so the money has already been taken by the time a hand reaches it — the
          button's job is to record what happened. The FIGURE is unchanged: still the whole amount
          across both records, still the evaluation's. */
-      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(dueV257)}</button>`;
+      return `<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Record sale</span> · ${money(dueV257)}</button>`;
     }
     return '';
   }
@@ -13048,7 +13048,7 @@ async function bookingsPage(){
            auto-approve toggle itself moved to Customer Interface > Appointment Setting, following
            the same "move whole, leave a pointer" pattern V259 used for Workspace & brand. This
            readout is not a second copy of the control — it only reflects the stored value. -->
-      <p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Change this in <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
+      <p class="muted small">${workspaceTemplateHtmlV97(S.biz.auto_approve_changes?'autoApproveOnChangeThisIn':'autoApproveOffChangeThisIn',{})} <a href="#/customer-interface/appointment">Customer Interface → Appointment Setting</a>.</p>
       <div id="crlist" style="margin-top:14px"><div class="empty">Loading…</div></div></div>
     <div class="card" id="blist" style="margin-bottom:16px"><div class="empty">Loading…</div></div>
     ${/* nestly_v584: the settings tab is gone, so the one thing it was still worth saying is said
@@ -19154,7 +19154,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     && snapshot.customerRedemption===false;
   const growRedemptionBandV521=growRedemptionOffV521?`<div class="notice warn" role="status" style="margin-top:12px" data-grow-redemption-off-v521>
     <b>Your customers cannot claim these gifts yet</b>
-    <p class="muted small" style="margin-top:6px">${esc(growPointsRowLabelV326)} is on and your customers can see their ${esc(growPointsUnitV326)}s, but redeeming at the counter is switched off for this business \u2014 pressing &ldquo;Show QR at counter&rdquo; gives them nothing. Everything you have set up here is kept.</p>
+    <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(growPointsIsStampsV326?'redemptionOffStampCard':'redemptionOffPointSystem',{})}</p>
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-redemption-on-v521="1"${growRedemptionBusyV521?' disabled':''}>Let customers claim</button></div>
     ${growRedemptionErrorV521?`<p class="err small" style="margin-top:8px">${esc(growRedemptionErrorV521)}</p>`:''}
   </div>`:'';
@@ -25018,7 +25018,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     ${tierMovementBlockW6I2()}`;
   const stepTwoHtml=()=>familyW6I2()==='stamps'
     ?`<p class="grow-setup-lead-v301">How fast do customers collect a stamp?</p>
-      <p class="grow-setup-sentence-v301">Customer spends ${esc(currency)} <input id="growSetupStampV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.stampSpend||0).toFixed(2))}" aria-label="Spend needed for one stamp"> → collects <b>1 stamp</b></p>
+      <p class="grow-setup-sentence-v301"><span>Customer spends</span> ${esc(currency)} <input id="growSetupStampV301" class="grow-setup-input-v301" inputmode="decimal" value="${esc(Number(state.stampSpend||0).toFixed(2))}" aria-label="Spend needed for one stamp"> → collects <b>1 stamp</b></p>
       <p class="grow-setup-example-v301" id="growSetupExampleV301" role="status">${esc(exampleText())}</p>`
     :`<p class="grow-setup-lead-v301">How fast do customers earn points?</p>
       <!-- data-merchant-content, matching the house rule for an interpolated accessibility
@@ -28060,7 +28060,7 @@ async function giftcardsPage(){
       if(error.code==='23505'||error.code==='40001'){clearWriteAttempt(issueGiftCardSlot);return toast('That issuance clashed with another — check the cards list, then start a fresh one')}
       return fail(error);
     }
-    $('gcode').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. Give this code to the buyer.</div>`;
+    $('gcode').innerHTML=`<div class="err" style="background:var(--success-bg);color:var(--green)"><b>${esc(data.code)}</b> — ${money(data.initial_cents)}. <span>Give this code to the buyer.</span></div>`;
     clearWriteAttempt(issueGiftCardSlot);
     loadCards();
   };
@@ -30195,7 +30195,7 @@ async function appointmentsPage(){
     }
     const dateLabel=new Intl.DateTimeFormat('en-SG',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(`${day}T12:00:00+08:00`));
     if(!columns.length){
-      $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${esc(dateLabel)} · Singapore time</p><div class="cui-empty">${CUI.icon('staff',{size:32})}<h2>No team member assigned</h2><p>Add team members in Settings before scheduling appointments.</p></div>`;
+      $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${esc(dateLabel)} · <span>Singapore time</span></p><div class="cui-empty">${CUI.icon('staff',{size:32})}<h2>No team member assigned</h2><p>Add team members in Settings before scheduling appointments.</p></div>`;
       return;
     }
     const eventMinutes=columns.flatMap(column=>column.items.flatMap(item=>[eventParts(item.starts_at).minutes,eventParts(item.ends_at).minutes]));
@@ -30240,7 +30240,7 @@ async function appointmentsPage(){
     const dayAgendaV291=dayAgendaRowsV291.length
       ?dayAgendaRowsV291.map(row=>row.html).join('')
       :`<div class="cui-empty">${CUI.icon('appointments',{size:32})}<h2>Nothing scheduled</h2><p>No appointments or blocked time on this day.</p></div>`;
-    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · Singapore time</p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
+    $('alist').innerHTML=`<div class="day-timeline-intro"><p class="small muted">${esc(dateLabel)} · <span>Singapore time</span></p>${canWrite&&hasWorking?`<p class="small day-timeline-slot-hint-v291">${hasBookableV217
       ?`Choose a green start time for ${esc(selectedTiming.service?serviceDisplayName(selectedTiming.service):'general visit')} · ${selectedTiming.duration} min.`
       :day<todaySg
         ?'This day has already passed — appointments can only be booked for a time still to come.'
@@ -30393,7 +30393,7 @@ async function appointmentsPage(){
       const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');
       return `<div class="calendar-agenda-row"><span class="calendar-agenda-item" style="cursor:default"><span class="calendar-agenda-time"><b>${esc(calendarDayLabel(block.starts_at))}</b><br><span>${esc(minuteClock(from.minutes))}–${esc(minuteClock(to.minutes))}</span></span><span><b>Blocked time</b><br><span class="muted small" data-merchant-content>${esc(staffName[block.staff_id]||'Team member')} · ${esc(reason)}</span></span></span>${block.id?`<button type="button" class="btn ghost sm" data-edit-block="${block.id}">Edit</button><button type="button" class="btn ghost sm" data-delete-block="${block.id}">Delete</button>`:''}</div>`;
     }).join(''):'';
-    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · Singapore time</p>
+    $('alist').innerHTML=`<p class="small muted" style="margin-bottom:8px">${start} → ${addDays(start,6)}${staffFilter!=='all'?' · '+esc(staffName[staffFilter]||''):''} · <span>Singapore time</span></p>
       <div class="calendar-week-scroll"><div class="calendar-week"><div class="calendar-week-head"><div aria-hidden="true"></div>${days.map((day,i)=>`<div class="${day===todaySg?'is-today':''}" ${day===todaySg?'aria-current="date"':''}><span>${dayNames[i]}</span><br><span class="calendar-date">${Number(day.slice(8))}</span></div>`).join('')}</div>
       <div class="calendar-week-body" style="height:${bodyHeight}px"><div class="calendar-time-axis" style="height:${bodyHeight}px">${[...Array(endHour-startHour+1)].map((_,i)=>`<span class="calendar-time-label" style="top:${i*hourHeight}px">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>
       ${days.map((day,index)=>`<div class="calendar-day ${day===todaySg?'is-today':''}" style="height:${bodyHeight}px;--calendar-hour-height:${hourHeight}px">${dayPendingV468[index].map(request=>{const from=eventParts(request.preferred_at).minutes,to=from+(request.services?.duration_min||60);return `<button type="button" class="day-timeline-pending-v330 week-pending-v468" data-pending-tile="${esc(request.id)}" style="top:${Math.max(0,(from-startHour*60)/60*hourHeight)}px;height:${Math.max(28,(to-from)/60*hourHeight)}px" ${workspaceTemplateAttributeV97('aria-label','calendarPendingRequest',{service:bookingRequestForNameV882(request)||'—',customer:request.name||'—',time:bookingRequestBigWhenV330(request.preferred_at),staff:request.staff_id?(staffName[request.staff_id]||'Team member'):'Anyone available'})}><span>${esc(minuteClock(from))}</span><b>${esc(request.name||'Customer')}</b><small>Pending</small></button>`}).join('')}${dayBlocks[index].map(block=>{const from=eventParts(block.starts_at).minutes,to=eventParts(block.ends_at).minutes;const reason=block.reason||(block.id?'Unavailable':'Busy at another branch');const clampedFromV468=Math.max(startHour*60,from),clampedToV468=Math.min(endHour*60,to);return `<div class="day-blocked-window week-blocked-window" style="top:${(clampedFromV468-startHour*60)/60*hourHeight}px;height:${Math.max(24,(clampedToV468-clampedFromV468)/60*hourHeight)}px"><span><b>${esc(minuteClock(from))}–${esc(minuteClock(to))}</b>${esc(reason)}</span></div>`;}).join('')}${dayEvents[index].map(({item:a,from,to,lane,laneCount,inactiveV288})=>{const top=Math.max(0,(from-startHour*60)/60*hourHeight),height=(to-from)/60*hourHeight,color=staffColor[a.staff_id]||'#7C9CBF',left=(lane/laneCount*100).toFixed(4),width=(100/laneCount).toFixed(4);return `<button type="button" class="calendar-event${inactiveV288?' appointment-inactive-v288':''}" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" style="--event-color:${esc(color)};top:${top}px;height:${height}px;left:calc(${left}% + 3px);right:auto;width:calc(${width}% - 6px)" ${workspaceTemplateAttributeV97('aria-label','calendarAppointment',{service:appointmentServiceNameV884(a)||'—',customer:a.clients?.full_name||'—',time:appointmentTimeRange(a),duration:appointmentDuration(a),staff:staffName[a.staff_id]||'—'})}><b>${esc(appointmentServiceNameV884(a)||'General visit')} · ${esc(a.clients?.full_name||'—')}</b><span class="calendar-event-time">${esc(appointmentTimeRange(a))}</span>${staffFilter==='all'?`<span>${esc(staffName[a.staff_id]||'Unassigned')}</span>`:''}</button>`}).join('')}</div>`).join('')}</div></div></div>
@@ -43673,7 +43673,7 @@ function bookingRulesCardHtmlV325(){
            so the capability loader finds and enables it exactly as before; only its home moved. */''}
       <div class="row" style="margin-top:12px"><button class="btn sm" id="setStaffChoiceSaveV606" style="display:none">Save</button></div>
       <div id="setAvailabilityErr" role="status"></div>`
-        :`<p class="muted small">Auto-approve is ${S.biz.auto_approve_changes?'on':'off'}. Only the owner can change this setting.</p>`}</div>
+        :`<p class="muted small">${workspaceTemplateHtmlV97(S.biz.auto_approve_changes?'autoApproveOnOwnerOnly':'autoApproveOffOwnerOnly',{})}</p>`}</div>
     <div class="card" style="margin-top:16px">
       <b class="small" style="text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Booking rules</b>
       ${/* V385 (owner markup, photo 12): the Booking policy moved here from Business Profile —
@@ -43684,7 +43684,7 @@ function bookingRulesCardHtmlV325(){
       <textarea id="bp" rows="2" placeholder="e.g. Please arrive 5 minutes early. 24h notice for cancellations.">${esc(S.biz.booking_policy||'')}</textarea>
       <label for="setHold">Auto-cancel unconfirmed after (minutes, 0 = never)</label>
       <input id="setHold" type="number" min="0" value="${S.biz.booking_hold_minutes??0}">
-      <p class="muted small" style="margin-top:-2px">Unconfirmed bookings are auto-cancelled after this many minutes${waitlistLinkedV223?'; your waitlist is then flagged so you know to fill the gap':''}.</p>
+      <p class="muted small" style="margin-top:-2px">${workspaceTemplateHtmlV97(waitlistLinkedV223?'unconfirmedAutoCancelMinutesWaitlist':'unconfirmedAutoCancelMinutes',{})}</p>
       ${seatsGuestsV235?`<label for="setOverflow">When you're full</label><select id="setOverflow">
         <option value="waitlist" ${S.biz.booking_overflow!=='reject'?'selected':''}>Add to waitlist</option>
         <option value="reject" ${S.biz.booking_overflow==='reject'?'selected':''}>Reject the request</option></select>
