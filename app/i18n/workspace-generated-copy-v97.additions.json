@@ -11010,6 +11010,876 @@
       "reason": "nestly_v930 — the Bottles module, both screens: the shelf itself (park, top up, move, transfer, remind, expire, remove, and the movement log) and Bottle keep under Operations setup (storage places, keep window, tier windows, the bottle catalogue). The Help Centre guide for Bottles has been translated since v927; the screens it describes were still English, which is the worse half of the pair. Two merged-node cases were handled explicitly rather than keyed on the half that reads well: 'No bottles in your catalogue yet, so the size has to be typed.' is its own text node for an owner, because the branch beside it renders an <a> element, but for everyone else the branch renders TEXT and the two halves become ONE node -- so both forms are in the table, and the owner-only half alone would have rendered English for every non-owner. 'first.' is the trailing fragment of 'New customer? <a>Add them in Customers</a> first.', the only text node in the workspace whose whole content is that word, so translating it is safe and completes the sentence in both locales.",
       "zh-CN": "在上方添加一款酒品，员工寄存时即可选择。",
       "ms": "Tambah botol di atas dan kakitangan boleh memilihnya semasa menyimpan."
+    },
+    {
+      "source": "Customers currently see no offers.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客目前看不到任何优惠。",
+      "ms": "Pelanggan kini tidak melihat sebarang tawaran."
+    },
+    {
+      "source": "Customer-visible offer status could not be confirmed.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "无法确认顾客可见的优惠状态。",
+      "ms": "Status tawaran yang boleh dilihat pelanggan tidak dapat disahkan."
+    },
+    {
+      "source": "Refresh before relying on the offers shelf status.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "在依据优惠栏状态行事之前，请先刷新。",
+      "ms": "Muat semula sebelum bergantung pada status rak tawaran."
+    },
+    {
+      "source": "Publishing is not available for this company. Offers that are still live can still be edited or unpublished.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "本商户无法发布。仍在进行中的优惠仍可编辑或取消发布。",
+      "ms": "Penerbitan tidak tersedia untuk syarikat ini. Tawaran yang masih aktif masih boleh disunting atau dinyahterbitkan."
+    },
+    {
+      "source": "1. Offer",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "1. 优惠",
+      "ms": "1. Tawaran"
+    },
+    {
+      "source": "Add exact facts and dates",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "填写准确的内容和日期",
+      "ms": "Tambah fakta dan tarikh yang tepat"
+    },
+    {
+      "source": "2. Message",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "2. 文案",
+      "ms": "2. Mesej"
+    },
+    {
+      "source": "Polish and edit the wording",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "润色并编辑文案",
+      "ms": "Perhalus dan sunting perkataannya"
+    },
+    {
+      "source": "3. Publish",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "3. 发布",
+      "ms": "3. Terbit"
+    },
+    {
+      "source": "Add photo, preview, publish",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "添加照片、预览、发布",
+      "ms": "Tambah foto, pratonton, terbitkan"
+    },
+    {
+      "source": "Facts remain yours. Peekaa will not invent discount, timing, eligibility, or claims.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "事实内容由您决定。Peekaa 不会自行编造折扣、时间、资格或宣称。",
+      "ms": "Fakta kekal milik anda. Peekaa tidak akan mereka-reka diskaun, masa, kelayakan atau dakwaan."
+    },
+    {
+      "source": "New promotion",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "新建促销",
+      "ms": "Promosi baharu"
+    },
+    {
+      "source": "What is the offer?",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "优惠内容是什么？",
+      "ms": "Apakah tawarannya?"
+    },
+    {
+      "source": "Occasion or reason (optional)",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "场合或原因（选填）",
+      "ms": "Majlis atau sebab (pilihan)"
+    },
+    {
+      "source": "Starts",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "开始",
+      "ms": "Bermula"
+    },
+    {
+      "source": "Ends",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "结束",
+      "ms": "Berakhir"
+    },
+    {
+      "source": "Promotion availability",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "促销适用范围",
+      "ms": "Ketersediaan promosi"
+    },
+    {
+      "source": "Available at all current and future branches in this business.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "适用于本商户当前及未来的所有分店。",
+      "ms": "Tersedia di semua cawangan semasa dan akan datang dalam perniagaan ini."
+    },
+    {
+      "source": "Current branch",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "当前分店",
+      "ms": "Cawangan semasa"
+    },
+    {
+      "source": "Selected branches",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "指定分店",
+      "ms": "Cawangan terpilih"
+    },
+    {
+      "source": "Choose one or more branches.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请选择一家或多家分店。",
+      "ms": "Pilih satu atau lebih cawangan."
+    },
+    {
+      "source": "Polish wording — free",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "润色文案 — 免费",
+      "ms": "Perhalus perkataan — percuma"
+    },
+    {
+      "source": "Uses verified templates; no API credits.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "使用已验证的模板；不消耗 API 额度。",
+      "ms": "Menggunakan templat yang disahkan; tiada kredit API."
+    },
+    {
+      "source": "Headline",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "标题",
+      "ms": "Tajuk utama"
+    },
+    {
+      "source": "Customer message",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "给顾客的文案",
+      "ms": "Mesej pelanggan"
+    },
+    {
+      "source": "Terms (optional)",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "条款（选填）",
+      "ms": "Terma (pilihan)"
+    },
+    {
+      "source": "Customer action",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客操作",
+      "ms": "Tindakan pelanggan"
+    },
+    {
+      "source": "Book now",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "立即预约",
+      "ms": "Tempah sekarang"
+    },
+    {
+      "source": "View offer",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "查看优惠",
+      "ms": "Lihat tawaran"
+    },
+    {
+      "source": "Show at counter",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "在柜台出示",
+      "ms": "Tunjuk di kaunter"
+    },
+    {
+      "source": "Button wording",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "按钮文字",
+      "ms": "Perkataan butang"
+    },
+    {
+      "source": "Promotion photo",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "促销照片",
+      "ms": "Foto promosi"
+    },
+    {
+      "source": "Photo description",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "照片说明",
+      "ms": "Perihalan foto"
+    },
+    {
+      "source": "Unpublish",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "取消发布",
+      "ms": "Nyahterbit"
+    },
+    {
+      "source": "Confirm interrupted save",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "确认中断的保存",
+      "ms": "Sahkan simpanan yang terganggu"
+    },
+    {
+      "source": "Customer preview",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客预览",
+      "ms": "Pratonton pelanggan"
+    },
+    {
+      "source": "This is the marketing card customers will see before products and benefits.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "这是顾客在产品和权益之前会看到的营销卡片。",
+      "ms": "Inilah kad pemasaran yang pelanggan akan lihat sebelum produk dan faedah."
+    },
+    {
+      "source": "Your promotions",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "您的促销",
+      "ms": "Promosi anda"
+    },
+    {
+      "source": "Published, scheduled, and draft offers stay together.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "已发布、已排期和草稿的优惠都放在一起。",
+      "ms": "Tawaran yang diterbitkan, dijadualkan dan draf disimpan bersama."
+    },
+    {
+      "source": "Edit promotion",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "编辑促销",
+      "ms": "Sunting promosi"
+    },
+    {
+      "source": "Create promotion",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "创建促销",
+      "ms": "Cipta promosi"
+    },
+    {
+      "source": "Update published offer",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "更新已发布的优惠",
+      "ms": "Kemas kini tawaran yang diterbitkan"
+    },
+    {
+      "source": "Publish offer",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "发布优惠",
+      "ms": "Terbitkan tawaran"
+    },
+    {
+      "source": "Add the exact offer and end date first.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请先填写准确的优惠内容和结束日期。",
+      "ms": "Tambah tawaran yang tepat dan tarikh tamat dahulu."
+    },
+    {
+      "source": "Wording polished — review every fact before publishing.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "文案已润色 — 发布前请核对每一项事实。",
+      "ms": "Perkataan diperhalus — semak setiap fakta sebelum menerbitkan."
+    },
+    {
+      "source": "Add the exact offer.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请填写准确的优惠内容。",
+      "ms": "Tambah tawaran yang tepat."
+    },
+    {
+      "source": "Polish or write the headline and customer message.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请润色或撰写标题和给顾客的文案。",
+      "ms": "Perhalus atau tulis tajuk utama dan mesej pelanggan."
+    },
+    {
+      "source": "Choose a valid start and end date.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请选择有效的开始和结束日期。",
+      "ms": "Pilih tarikh mula dan tamat yang sah."
+    },
+    {
+      "source": "Choose a clear customer action.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请选择一个明确的顾客操作。",
+      "ms": "Pilih tindakan pelanggan yang jelas."
+    },
+    {
+      "source": "The headline needs to be 2–70 characters.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "标题需为 2–70 个字符。",
+      "ms": "Tajuk utama perlu 2–70 aksara."
+    },
+    {
+      "source": "The customer message needs to be 10–600 characters.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "给顾客的文案需为 10–600 个字符。",
+      "ms": "Mesej pelanggan perlu 10–600 aksara."
+    },
+    {
+      "source": "The exact offer needs to be 2–500 characters.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "准确的优惠内容需为 2–500 个字符。",
+      "ms": "Tawaran yang tepat perlu 2–500 aksara."
+    },
+    {
+      "source": "The customer action label needs to be 2–40 characters.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客操作按钮文字需为 2–40 个字符。",
+      "ms": "Label tindakan pelanggan perlu 2–40 aksara."
+    },
+    {
+      "source": "The occasion needs to be 2–80 characters, or left blank.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "场合需为 2–80 个字符，或留空。",
+      "ms": "Majlis perlu 2–80 aksara, atau dibiarkan kosong."
+    },
+    {
+      "source": "Terms are limited to 1000 characters.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "条款最多 1000 个字符。",
+      "ms": "Terma terhad kepada 1000 aksara."
+    },
+    {
+      "source": "The end date/time has already passed — choose a later end date to publish.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "结束日期/时间已过 — 请选择更晚的结束日期才能发布。",
+      "ms": "Tarikh/masa tamat telah berlalu — pilih tarikh tamat yang lebih lewat untuk menerbitkan."
+    },
+    {
+      "source": "Add a photo description.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请添加照片说明。",
+      "ms": "Tambah perihalan foto."
+    },
+    {
+      "source": "Open a live offer first.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请先打开一个进行中的优惠。",
+      "ms": "Buka tawaran yang aktif dahulu."
+    },
+    {
+      "source": "Customer Home now shows that offer",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客首页现在会显示该优惠",
+      "ms": "Laman Utama Pelanggan kini menunjukkan tawaran itu"
+    },
+    {
+      "source": "Promotion draft confirmed",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "促销草稿已确认",
+      "ms": "Draf promosi disahkan"
+    },
+    {
+      "source": "Offer retired — customers no longer see it",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "优惠已下架 — 顾客不再看到它",
+      "ms": "Tawaran ditamatkan — pelanggan tidak lagi melihatnya"
+    },
+    {
+      "source": "Draft deleted",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "草稿已删除",
+      "ms": "Draf dipadam"
+    },
+    {
+      "source": "Promotions unavailable",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "促销不可用",
+      "ms": "Promosi tidak tersedia"
+    },
+    {
+      "source": "Turn one factual offer and photo into clear customer-ready marketing.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "把一项真实的优惠和一张照片，变成清晰的、可直接面向顾客的营销内容。",
+      "ms": "Jadikan satu tawaran berfakta dan satu foto sebagai pemasaran yang jelas dan sedia untuk pelanggan."
+    },
+    {
+      "source": "No promotions yet",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "还没有促销",
+      "ms": "Belum ada promosi"
+    },
+    {
+      "source": "Start with one timely offer — it appears here as a draft you can publish.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "先从一项适时的优惠开始 — 它会以草稿形式出现在这里，可供发布。",
+      "ms": "Mulakan dengan satu tawaran yang tepat pada masanya — ia muncul di sini sebagai draf yang boleh anda terbitkan."
+    },
+    {
+      "source": "This save was attempted several times and did not complete. Your edits are still here — reopen the promotion and publish again.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "这次保存尝试了多次仍未完成。您的编辑仍在 — 请重新打开该促销并再次发布。",
+      "ms": "Simpanan ini telah dicuba beberapa kali dan tidak selesai. Suntingan anda masih ada — buka semula promosi itu dan terbitkan sekali lagi."
+    },
+    {
+      "source": "Exact service / variation",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "具体服务 / 规格",
+      "ms": "Perkhidmatan / variasi tepat"
+    },
+    {
+      "source": "— flexible package, no list-price comparison —",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "— 灵活配套，不与标价比较 —",
+      "ms": "— pakej fleksibel, tiada perbandingan harga senarai —"
+    },
+    {
+      "source": "Expires after purchase",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "购买后到期",
+      "ms": "Tamat tempoh selepas pembelian"
+    },
+    {
+      "source": "Choose a service to calculate value",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "选择一项服务以计算价值",
+      "ms": "Pilih perkhidmatan untuk mengira nilainya"
+    },
+    {
+      "source": "Peekaa compares the package price with the exact service price × sessions.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "Peekaa 会将配套价格与「具体服务价格 × 次数」作比较。",
+      "ms": "Peekaa membandingkan harga pakej dengan harga perkhidmatan tepat × sesi."
+    },
+    {
+      "source": "Save package",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "保存配套",
+      "ms": "Simpan pakej"
+    },
+    {
+      "source": "Package points setting unavailable",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套积分设置不可用",
+      "ms": "Tetapan mata pakej tidak tersedia"
+    },
+    {
+      "source": "Packages catalogue",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套目录",
+      "ms": "Katalog pakej"
+    },
+    {
+      "source": "Active packages can be sold at Record sale.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "启用的配套可在「记录销售」中出售。",
+      "ms": "Pakej yang aktif boleh dijual di Rekod jualan."
+    },
+    {
+      "source": "Search by customer name or phone, then use sessions from the matching customer record.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "按顾客姓名或电话搜索，然后从匹配的顾客记录中使用次数。",
+      "ms": "Cari mengikut nama atau telefon pelanggan, kemudian guna sesi daripada rekod pelanggan yang sepadan."
+    },
+    {
+      "source": "Session recorded at",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "次数记录于",
+      "ms": "Sesi direkodkan di"
+    },
+    {
+      "source": "Search customer",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "搜索顾客",
+      "ms": "Cari pelanggan"
+    },
+    {
+      "source": "+ Customise package",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "+ 定制配套",
+      "ms": "+ Sesuaikan pakej"
+    },
+    {
+      "source": "This list value is frozen with the package so future service-price changes do not rewrite what was sold.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "此标价会与配套一同锁定，因此日后的服务调价不会改写已售出的内容。",
+      "ms": "Nilai senarai ini dibekukan bersama pakej supaya perubahan harga perkhidmatan pada masa depan tidak menulis semula apa yang telah dijual."
+    },
+    {
+      "source": "Expiry must be between 1 and 3650 days, or left blank for no expiry.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "有效期必须介于 1 到 3650 天，或留空表示不设有效期。",
+      "ms": "Tamat tempoh mestilah antara 1 dan 3650 hari, atau dibiarkan kosong untuk tiada tamat tempoh."
+    },
+    {
+      "source": "Date bought",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "购买日期",
+      "ms": "Tarikh dibeli"
+    },
+    {
+      "source": "Last used",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "最近使用",
+      "ms": "Kali terakhir digunakan"
+    },
+    {
+      "source": "Used",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "已使用",
+      "ms": "Digunakan"
+    },
+    {
+      "source": "No expiry",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "不设有效期",
+      "ms": "Tiada tamat tempoh"
+    },
+    {
+      "source": "Use",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "使用",
+      "ms": "Guna"
+    },
+    {
+      "source": "Expired — sessions can no longer be used",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "已过期 — 次数不可再使用",
+      "ms": "Tamat tempoh — sesi tidak boleh digunakan lagi"
+    },
+    {
+      "source": "Package history",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套记录",
+      "ms": "Sejarah pakej"
+    },
+    {
+      "source": "Session added back · no refund",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "次数已退回 · 不退款",
+      "ms": "Sesi dikembalikan · tiada bayaran balik"
+    },
+    {
+      "source": "Undo session use",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "撤销次数使用",
+      "ms": "Buat asal penggunaan sesi"
+    },
+    {
+      "source": "No sessions have been used on this package yet.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "此配套尚未使用过任何次数。",
+      "ms": "Belum ada sesi digunakan pada pakej ini."
+    },
+    {
+      "source": "Customise a package",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "定制一个配套",
+      "ms": "Sesuaikan satu pakej"
+    },
+    {
+      "source": "Customer mobile number",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客手机号码",
+      "ms": "Nombor telefon bimbit pelanggan"
+    },
+    {
+      "source": "Find",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "查找",
+      "ms": "Cari"
+    },
+    {
+      "source": "Find the customer this package is for.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "找到这个配套所属的顾客。",
+      "ms": "Cari pelanggan yang pakej ini untuknya."
+    },
+    {
+      "source": "Package name",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套名称",
+      "ms": "Nama pakej"
+    },
+    {
+      "source": "Exact service",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "具体服务",
+      "ms": "Perkhidmatan tepat"
+    },
+    {
+      "source": "— no single service, this is a mix —",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "— 不是单一服务，这是组合 —",
+      "ms": "— bukan satu perkhidmatan, ini campuran —"
+    },
+    {
+      "source": "Find a customer and use one of their prepaid sessions.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "找到一位顾客，并使用其预付次数中的一次。",
+      "ms": "Cari pelanggan dan guna salah satu sesi prabayar mereka."
+    },
+    {
+      "source": "Manage prepaid sessions. Sell packages from Record sale.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "管理预付次数。配套请在「记录销售」中出售。",
+      "ms": "Urus sesi prabayar. Jual pakej dari Rekod jualan."
+    },
+    {
+      "source": "Package renamed",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套已重命名",
+      "ms": "Pakej dinamakan semula"
+    },
+    {
+      "source": "Package saved",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套已保存",
+      "ms": "Pakej disimpan"
+    },
+    {
+      "source": "No active branch is available. Choose one at the top.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "没有可用的在营分店。请在顶部选择一家。",
+      "ms": "Tiada cawangan aktif tersedia. Pilih satu di bahagian atas."
+    },
+    {
+      "source": "Package sold",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套已售出",
+      "ms": "Pakej dijual"
+    },
+    {
+      "source": "Package switched on",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套已开启",
+      "ms": "Pakej dihidupkan"
+    },
+    {
+      "source": "Package switched off — it stays here, and can be switched back on",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "配套已关闭 — 它仍留在这里，可以重新开启",
+      "ms": "Pakej dimatikan — ia kekal di sini, dan boleh dihidupkan semula"
+    },
+    {
+      "source": "Add package",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "添加配套",
+      "ms": "Tambah pakej"
+    },
+    {
+      "source": "Create your first prepaid package here. Staff can sell it from Record sale.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "在这里创建您的第一个预付配套。员工可在「记录销售」中出售。",
+      "ms": "Cipta pakej prabayar pertama anda di sini. Kakitangan boleh menjualnya dari Rekod jualan."
+    },
+    {
+      "source": "No customer packages yet",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "还没有顾客配套",
+      "ms": "Belum ada pakej pelanggan"
+    },
+    {
+      "source": "Sold packages will appear here after a customer purchases prepaid sessions.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "顾客购买预付次数后，已售出的配套会出现在这里。",
+      "ms": "Pakej yang dijual akan muncul di sini selepas pelanggan membeli sesi prabayar."
+    },
+    {
+      "source": "Usable at",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "可用分店",
+      "ms": "Boleh diguna di"
+    },
+    {
+      "source": "Manage what customers can book.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "管理顾客可以预约的内容。",
+      "ms": "Urus apa yang pelanggan boleh tempah."
+    },
+    {
+      "source": "Map categories",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "映射类别",
+      "ms": "Petakan kategori"
+    },
+    {
+      "source": "You can review services and bundles. Ask for Services edit access to change them.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "您可以查看服务和捆绑包。若要修改，请申请「服务」编辑权限。",
+      "ms": "Anda boleh menyemak perkhidmatan dan himpunan. Minta akses sunting Perkhidmatan untuk mengubahnya."
+    },
+    {
+      "source": "Variation (optional)",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "规格（选填）",
+      "ms": "Variasi (pilihan)"
+    },
+    {
+      "source": "Use the same service name with different variations, durations and prices.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "同一个服务名称可以有不同的规格、时长和价格。",
+      "ms": "Guna nama perkhidmatan yang sama dengan variasi, tempoh dan harga yang berbeza."
+    },
+    {
+      "source": "Buffer before (minutes)",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "前置缓冲（分钟）",
+      "ms": "Penimbal sebelum (minit)"
+    },
+    {
+      "source": "Buffer after (minutes)",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "后置缓冲（分钟）",
+      "ms": "Penimbal selepas (minit)"
+    },
+    {
+      "source": "Save service",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "保存服务",
+      "ms": "Simpan perkhidmatan"
+    },
+    {
+      "source": "Services catalogue",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "服务目录",
+      "ms": "Katalog perkhidmatan"
+    },
+    {
+      "source": "Active services can be selected for bookings and sales.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "启用的服务可在预约和销售中选择。",
+      "ms": "Perkhidmatan yang aktif boleh dipilih untuk tempahan dan jualan."
+    },
+    {
+      "source": "Edit service",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "编辑服务",
+      "ms": "Sunting perkhidmatan"
+    },
+    {
+      "source": "Commission override %",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "佣金覆盖 %",
+      "ms": "Tulis ganti komisen %"
+    },
+    {
+      "source": "The branch list could not be loaded, so this cannot be changed right now. Reload the page and try again.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "无法加载分店列表，因此目前无法更改。请重新加载页面后再试。",
+      "ms": "Senarai cawangan tidak dapat dimuatkan, jadi ini tidak boleh diubah sekarang. Muat semula halaman dan cuba lagi."
+    },
+    {
+      "source": "Bundles catalogue",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "捆绑包目录",
+      "ms": "Katalog himpunan"
+    },
+    {
+      "source": "Several services at one price. Packages remain in the Packages module.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "多项服务，一个价格。配套仍在「配套」模块中。",
+      "ms": "Beberapa perkhidmatan pada satu harga. Pakej kekal dalam modul Pakej."
+    },
+    {
+      "source": "Add bundle",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "添加捆绑包",
+      "ms": "Tambah himpunan"
+    },
+    {
+      "source": "Bundle means several services sold together at one combined price. Packages remain separate.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "捆绑包是指多项服务以一个合并价格一起出售。配套则另行处理。",
+      "ms": "Himpunan bermaksud beberapa perkhidmatan dijual bersama pada satu harga gabungan. Pakej kekal berasingan."
+    },
+    {
+      "source": "Included products",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "包含的产品",
+      "ms": "Produk yang disertakan"
+    },
+    {
+      "source": "Save bundle",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "保存捆绑包",
+      "ms": "Simpan himpunan"
+    },
+    {
+      "source": "Bundles could not be loaded.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "无法加载捆绑包。",
+      "ms": "Himpunan tidak dapat dimuatkan."
+    },
+    {
+      "source": "No active services yet — add them in the Services tab.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "还没有启用的服务 — 请在「服务」标签页中添加。",
+      "ms": "Belum ada perkhidmatan aktif — tambahnya dalam tab Perkhidmatan."
+    },
+    {
+      "source": "No active products yet — add them in Products.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "还没有启用的产品 — 请在「产品」中添加。",
+      "ms": "Belum ada produk aktif — tambahnya dalam Produk."
+    },
+    {
+      "source": "Service updated",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "服务已更新",
+      "ms": "Perkhidmatan dikemas kini"
+    },
+    {
+      "source": "Bundle deleted",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "捆绑包已删除",
+      "ms": "Himpunan dipadam"
+    },
+    {
+      "source": "Pick at least 2 items",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "请至少选择 2 个项目",
+      "ms": "Pilih sekurang-kurangnya 2 item"
+    },
+    {
+      "source": "Product bundles need the latest Peekaa service update.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "产品捆绑包需要最新的 Peekaa 服务更新。",
+      "ms": "Himpunan produk memerlukan kemas kini perkhidmatan Peekaa yang terkini."
+    },
+    {
+      "source": "Bundle updated",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "捆绑包已更新",
+      "ms": "Himpunan dikemas kini"
+    },
+    {
+      "source": "Bundle switched off",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "捆绑包已关闭",
+      "ms": "Himpunan dimatikan"
+    },
+    {
+      "source": "Bundle switched on",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "捆绑包已开启",
+      "ms": "Himpunan dihidupkan"
+    },
+    {
+      "source": "No services yet",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "还没有服务",
+      "ms": "Belum ada perkhidmatan"
+    },
+    {
+      "source": "Add your first service so customers can book and staff can select it during checkout.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "添加您的第一项服务，顾客即可预约，员工也能在结账时选择。",
+      "ms": "Tambah perkhidmatan pertama anda supaya pelanggan boleh menempah dan kakitangan boleh memilihnya semasa pembayaran."
+    },
+    {
+      "source": "No bundles yet",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "还没有捆绑包",
+      "ms": "Belum ada himpunan"
+    },
+    {
+      "source": "Create a bundle when you want to sell several services together at one combined price.",
+      "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
+      "zh-CN": "若想以一个合并价格一起出售多项服务，请创建捆绑包。",
+      "ms": "Cipta himpunan apabila anda mahu menjual beberapa perkhidmatan bersama pada satu harga gabungan."
     }
   ]
 }

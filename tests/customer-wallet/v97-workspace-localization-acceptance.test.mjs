@@ -255,7 +255,8 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v928: +104 — the Record sale (till) screen in one pass. */
         /* nestly_v929: +110 — the Appointments screen in one pass. */
         /* nestly_v930: +103 — the Bottles shelf and Bottle keep setup. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,3301,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v931: +145 — Promotions, Packages and Services. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,3446,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
