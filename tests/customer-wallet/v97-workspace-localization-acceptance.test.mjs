@@ -520,8 +520,13 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nestly_v949 adds 19: the bottle auto keep window, the rhythm and recovery report lines,
      scheduled capacity, the P&L scope note, the finance-role refusals, the staff invite code, the
      gallery cap, the import progress line and the Help guide link. Two of those state the same
-     sentence in two render paths and share one key. 288 + 19 = 307. */
-  assert.equal(keys.length,307,'mixed-interface interpolation inventory changed without review');
+     sentence in two render paths and share one key. 288 + 19 = 307.
+     nestly_v950 adds 14 as seven more singular/plural pairs — the grant-record, immature-stage,
+     owner-brief, excluded-contact and hidden-teammate counts. topCustomerShare's singular is the
+     one place the English was corrected rather than copied: the source ternary pluralised the noun
+     but not the verb, so at a count of one it read "customer are", and a reviewed template is the
+     wrong place to enshrine that. 307 + 14 = 321. */
+  assert.equal(keys.length,321,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

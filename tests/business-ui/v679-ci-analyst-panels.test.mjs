@@ -93,8 +93,8 @@ test('V679 funnel: the main scenario prints both stages with their counts and th
   assert.ok(stageLines(html).includes('4 of 6 returned (66.7%)'), 'stage 1->2 carries its own numerator/denominator');
   assert.ok(stageLines(html).includes('2 of 4 returned (50.0%)'), 'stage 2->3 carries its own numerator/denominator');
   assert.ok(html.includes('Second to third visit'), 'the weaker stage is named as the bottleneck');
-  assert.ok(html.includes('1 customer too recent to judge for the first stage'));
-  assert.ok(html.includes('0 too recent for the second'));
+  assert.match(html, /data-workspace-template="customerTooRecentStages"[^]*?data-workspace-value="first"[^>]*>1</);
+  assert.match(html, /data-workspace-value="second"[^>]*>0</);
   assert.ok(html.includes('WD:2026-08-01T00:00:00Z'), 'observed_since reaches the page');
   /* nestly_v946: the window sentence is a named template now, so the number sits in its own span.
      The caption and the figure are both still pinned. */

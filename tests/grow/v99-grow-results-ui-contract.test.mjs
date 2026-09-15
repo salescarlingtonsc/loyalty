@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {workspaceTemplateRuntime} from '../support/workspace-template-runtime.mjs';
 
 const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 const sql=await readFile(
@@ -14,10 +15,16 @@ const source=app.slice(from,to);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
 })[char]);
-const render=new Function('esc','walletDate','CUI',`${source};return pbResultsHtml;`)(
+/* nestly_v950: the renderer's grant-record count is a reviewed template now, so the harness
+   carries the real template runtime rather than a stub that would hide a broken key. */
+const tpl=workspaceTemplateRuntime('en');
+const render=new Function('esc','walletDate','CUI','workspaceTemplateHtmlV97','workspaceTemplateTextV97',
+  `${source};return pbResultsHtml;`)(
   esc,
   value=>value?`SGT:${value}`:'',
-  {icon:()=>'<svg></svg>'}
+  {icon:()=>'<svg></svg>'},
+  tpl.workspaceTemplateHtmlV97,
+  tpl.workspaceTemplateTextV97
 );
 
 const awaitingFixture={

@@ -56,7 +56,9 @@ test('V550 the report prints the server verdict: net, gross, funnel, baseline, m
   assert.ok(html.includes('SGD 100.00'), 'gross appears beside net, never instead of it');
   assert.ok(html.includes('gross scaled by (1 - baseline_rate / treated_rate)'), 'the method is stated on the page');
   assert.ok(html.includes('>4</b>') && html.includes('(75.0%)'), 'funnel counts and rate come through');
-  assert.ok(html.includes('1 contact was excluded'), 'the not-lapsed exclusion is announced, not absorbed');
+  /* nestly_v950: singular/plural key pair now, so the count sits in its own value span. */
+  assert.match(html, /data-workspace-template="contactExcludedRecentVisit"[^]*?data-workspace-value="count"[^>]*>1</,
+    'the not-lapsed exclusion is announced, not absorbed');
   assert.ok(html.includes('<b>2</b>') && html.includes('(50.0%)'), 'the baseline cohort and its rate are visible');
   assert.ok(html.includes('SGD 30.00'), 'the redeemed voucher value is shown');
   assert.ok(html.includes('2026-07'), 'the monthly table renders');

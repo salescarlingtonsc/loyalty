@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="bf8b4a49ac4931f694b80453b2e3bcca301b1a67ff71d44bba86b7c56063d3e9"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="1d4687dffa84d19f429e8e1323a0abff6c0b18091fe990e1d5b433003fa937b6"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · bf8b4a49ac4931f694b80453b2e3bcca301b1a67ff71d44bba86b7c56063d3e9</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 1d4687dffa84d19f429e8e1323a0abff6c0b18091fe990e1d5b433003fa937b6</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -23298,7 +23298,7 @@ function pbResultsHtml(r,ctx){
       <div class="card kpi"><div class="l">Observed return-rate difference</div><div class="v" style="font-size:20px">${esc(differenceText)}</div></div>
       <div class="card kpi"><div class="l">Window ends</div><div class="v" style="font-size:16px">${esc(windowEnds)}</div></div>
     </div>
-    ${awaiting&&unverifiedGrantRecords?`<div class="imp-note"><b>${unverifiedGrantRecords} campaign grant record${unverifiedGrantRecords===1?' is':'s are'} not verified as received.</b> A manual confirmation must reflect actual customer receipt; it is not a provider delivery receipt.</div>`:''}
+    ${awaiting&&unverifiedGrantRecords?`<div class="imp-note"><b>${workspaceTemplateHtmlV97(unverifiedGrantRecords===1?'grantRecordUnverified':'grantRecordsUnverified',{count:unverifiedGrantRecords})}</b> A manual confirmation must reflect actual customer receipt; it is not a provider delivery receipt.</div>`:''}
     <div class="imp-note" style="background:var(--tint)"><b>Descriptive only.</b> ${esc(serverNote)}</div>
     <div class="row" style="margin-top:12px;flex-wrap:wrap">
       ${canPrepare?`<button class="btn sm" data-pb-prepare>${CUI.icon('redeem',{size:16})}<span>Prepare rewards &amp; confirm receipt</span></button>`:''}
@@ -31522,6 +31522,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'bf8b4a49ac4931f694b80453b2e3bcca301b1a67ff71d44bba86b7c56063d3e9',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'1d4687dffa84d19f429e8e1323a0abff6c0b18091fe990e1d5b433003fa937b6',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

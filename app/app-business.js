@@ -22937,7 +22937,7 @@ function pbResultsHtml(r,ctx){
       <div class="card kpi"><div class="l">Observed return-rate difference</div><div class="v" style="font-size:20px">${esc(differenceText)}</div></div>
       <div class="card kpi"><div class="l">Window ends</div><div class="v" style="font-size:16px">${esc(windowEnds)}</div></div>
     </div>
-    ${awaiting&&unverifiedGrantRecords?`<div class="imp-note"><b>${unverifiedGrantRecords} campaign grant record${unverifiedGrantRecords===1?' is':'s are'} not verified as received.</b> A manual confirmation must reflect actual customer receipt; it is not a provider delivery receipt.</div>`:''}
+    ${awaiting&&unverifiedGrantRecords?`<div class="imp-note"><b>${workspaceTemplateHtmlV97(unverifiedGrantRecords===1?'grantRecordUnverified':'grantRecordsUnverified',{count:unverifiedGrantRecords})}</b> A manual confirmation must reflect actual customer receipt; it is not a provider delivery receipt.</div>`:''}
     <div class="imp-note" style="background:var(--tint)"><b>Descriptive only.</b> ${esc(serverNote)}</div>
     <div class="row" style="margin-top:12px;flex-wrap:wrap">
       ${canPrepare?`<button class="btn sm" data-pb-prepare>${CUI.icon('redeem',{size:16})}<span>Prepare rewards &amp; confirm receipt</span></button>`:''}
@@ -35406,7 +35406,7 @@ function funnelConversionPanelHtmlV679(payload){
       <article class="revenue-truth-metric"><span>First to second visit</span><strong>${workspaceTemplateHtmlV97('stageReturnedOfTotal',{num:stage1.num,den:stage1.den,pct:stage1.pctText})}</strong></article>
       <article class="revenue-truth-metric"><span>Second to third visit</span><strong>${workspaceTemplateHtmlV97('stageReturnedOfTotal',{num:stage2.num,den:stage2.den,pct:stage2.pctText})}</strong></article>
     </div>
-    <p class="muted small" style="margin-top:10px">${firstImmature} customer${firstImmature===1?'':'s'} too recent to judge for the first stage; ${secondImmature} too recent for the second.</p>
+    <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97(firstImmature===1?'customerTooRecentStages':'customersTooRecentStages',{first:firstImmature,second:secondImmature})}</p>
     <p class="muted small">${bottleneckLine}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
     ${ciFreshnessCaptionHtmlV734(p)}
@@ -35772,10 +35772,10 @@ function ownerBriefHtmlV771(brief,options){
     bringBackV771=`<section class="ci-brief-bringback-v771" aria-labelledby="ciBriefBringBackTitleV771" style="margin-top:18px">
       ${headV771('phone','ciBriefBringBackTitleV771','Customers to bring back','Each person judged against their own visit rhythm, not a fixed rule.')}
       ${attentionErrorV771?errorRowV771('Customers to bring back could not load.',attentionErrorV771):`
-      ${fadingV771>0?`<p style="margin:8px 0 2px"><b>${fadingV771} customer${fadingV771===1?'':'s'} overdue</b>${workspaceTemplateHtmlV97('aboutMonthlySpendAtRisk',{amount:money(atRiskV771)})}</p>`:''}
+      ${fadingV771>0?`<p style="margin:8px 0 2px"><b>${workspaceTemplateHtmlV97(fadingV771===1?'briefCustomerOverdue':'briefCustomersOverdue',{count:fadingV771})}</b>${workspaceTemplateHtmlV97('aboutMonthlySpendAtRisk',{amount:money(atRiskV771)})}</p>`:''}
       ${attentionRowsV771.length?`<div class="cui-table-wrap" role="region" aria-label="Customers to bring back"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Usually comes every</th><th>Last visit</th><th>Status</th><th>Action</th></tr></thead><tbody>${attentionRowsV771.map(bringBackRowV771).join('')}</tbody></table></div>`
         :'<div class="empty">Nobody is overdue against their own visit rhythm right now.</div>'}
-      ${oneTimeV771>0?`<p class="muted small" style="margin-top:10px">${oneTimeV771} customer${oneTimeV771===1?'':'s'} visited once in the last year and never came back.</p>`:''}`}
+      ${oneTimeV771>0?`<p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97(oneTimeV771===1?'briefCustomerVisitedOnce':'briefCustomersVisitedOnce',{count:oneTimeV771})}</p>`:''}`}
     </section>`;
   }
 
@@ -35843,7 +35843,7 @@ function ownerBriefHtmlV771(brief,options){
   const leadCountV771=Math.min(3,earnersV771.length);
   const leadShareV771=earnersV771.slice(0,leadCountV771).reduce((total,record)=>total+Number(record.net_revenue_cents||0),0);
   const topLineV771=(leadCountV771>0&&shareBaseV771!==null)
-    ?`<p style="margin:8px 0 2px">Your top ${leadCountV771} customer${leadCountV771===1?'':'s'} are ${Math.round(leadShareV771/shareBaseV771*100)}% of revenue.</p>`
+    ?`<p style="margin:8px 0 2px">${workspaceTemplateHtmlV97(leadCountV771===1?'topCustomerShare':'topCustomersShare',{count:leadCountV771,pct:Math.round(leadShareV771/shareBaseV771*100)})}</p>`
     :'';
   /* V522's ruling holds here: `visit_count` on this page counts only visits that charged an
      amount, so the column says "Paid visits". A bare "Visits" would mean the Dashboard's number,
@@ -38196,7 +38196,7 @@ function recoveryReportHtmlV550(data){
       <tr><td class="muted small" style="padding-left:14px">by bring-back voucher</td><td class="num">${Number(iv.vouchers)||0}</td></tr>
       <tr><td data-workspace-i18n>${workspaceTemplateHtmlV97('cameBackWithinDays',{days:attrDays})}</td><td class="num"><b>${Number(ret.count)||0}</b> (${pct(ret.rate_pct)})</td></tr>
       <tr><td data-workspace-i18n>Vouchers actually redeemed</td><td class="num">${Number(rec.redeemed_vouchers)||0} · ${esc(money(rec.redeemed_voucher_cents))}</td></tr></table>
-      ${excluded?`<p class="muted small" style="margin-top:8px">${excluded} contact${excluded===1?' was':'s were'} excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.</p>`:''}</div>
+      ${excluded?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97(excluded===1?'contactExcludedRecentVisit':'contactsExcludedRecentVisit',{count:excluded})}</p>`:''}</div>
     <div class="card"><b>What would have happened anyway</b>
       <p class="muted small" style="margin-top:8px">Of <b>${Number(base.cohort)||0}</b> similar lapsed customers who received no contact, <b>${Number(base.returned)||0}</b> returned on their own (${pct(base.rate_pct)}). The net figure above removes that share.</p></div>
     ${monthly.length?`<div class="card"><b>By month</b><table style="margin-top:8px">
@@ -41090,7 +41090,7 @@ async function settingsPage(){
             <div class="staff-col-head-v226" aria-hidden="true"><span>Name</span><span>Phone</span><span>Email</span><span>Branch</span><span>Position</span><span>Commission</span><span>App access</span><span></span></div>
             ${members.map(staffRowV209).join('')}
           </section>`;
-        }).join('')+(hiddenByBranchV613?`<p class="muted small" style="margin-top:12px">${hiddenByBranchV613} teammate${hiddenByBranchV613===1?'':'s'} not assigned to this branch ${hiddenByBranchV613===1?'is':'are'} hidden. Choose All branches at the top to see everyone.</p>`:'')
+        }).join('')+(hiddenByBranchV613?`<p class="muted small" style="margin-top:12px">${workspaceTemplateHtmlV97(hiddenByBranchV613===1?'teammateHiddenByBranch':'teammatesHiddenByBranch',{count:hiddenByBranchV613})}</p>`:'')
       :rows.length
         ? `<p class="muted small">No teammates are assigned to this branch. Choose All branches at the top to see the rest of the team.</p>`
         :'<p class="muted small">No teammates yet — add one above, or invite one below.</p>';

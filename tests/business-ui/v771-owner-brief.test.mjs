@@ -270,7 +270,9 @@ test('V771 block B keeps Call and Open side by side in one action cell', () => {
 
 test('V771 block B counts overdue customers in the singular and the plural', () => {
   const one = sectionOf(render(FULL), 'ci-brief-bringback-v771');
-  assert.ok(one.includes('<b>1 customer overdue</b>'), 'one is a customer, not customers');
+  /* nestly_v950: the count is a singular/plural key pair now — the KEY carries the grammar. */
+  assert.match(one, /data-workspace-template="briefCustomerOverdue"[^]*?data-workspace-value="count"[^>]*>1</,
+    'one is a customer, not customers');
   /* nestly_v947: the at-risk clause is a named template now, so the amount arrives in its own
      value span. The sentence and the figure are both still pinned. */
   assert.match(one, /about <span[^>]*>SGD 120\.00<\/span> a month of regular spend at risk/);
@@ -279,7 +281,8 @@ test('V771 block B counts overdue customers in the singular and the plural', () 
     ...FULL,
     attention: { ...ATTENTION_TWO, summary: { ...ATTENTION_TWO.summary, slipping: 1, monthly_at_risk_cents: 20000 } }
   }), 'ci-brief-bringback-v771');
-  assert.ok(two.includes('<b>2 customers overdue</b>'), 'overdue and slipping are counted together');
+  assert.match(two, /data-workspace-template="briefCustomersOverdue"[^]*?data-workspace-value="count"[^>]*>2</,
+    'overdue and slipping are counted together');
 });
 
 test('V771 block B prints each customer’s own rhythm, and is absent when it may not be read', () => {
@@ -287,7 +290,8 @@ test('V771 block B prints each customer’s own rhythm, and is absent when it ma
   assert.ok(section.includes('21 days'), 'cadence_days is rounded to whole days');
   assert.ok(section.includes('62 days ago'), 'last_visit_days is stated as days ago');
   assert.ok(section.includes('Overdue') && section.includes('Due back'), 'statuses keep their labels');
-  assert.ok(section.includes('2 customers visited once in the last year and never came back.'));
+  /* nestly_v950: singular and plural are two reviewed keys, so the count rides in a value span. */
+  assert.match(section, /data-workspace-template="briefCustomersVisitedOnce"[^]*?data-workspace-value="count"[^>]*>2</);
 
   const empty = sectionOf(render({ ...FULL, attention: { rows: [], summary: {} } }), 'ci-brief-bringback-v771');
   assert.ok(empty.includes('Nobody is overdue against their own visit rhythm right now.'));
@@ -353,7 +357,10 @@ test('V771 block D ranks only customers who actually spent, and shares them agai
   assert.ok(first > -1 && second > first, 'the biggest spender is ranked first');
   assert.ok(section.includes('SGD 3570.30'));
   assert.ok(section.includes('54% of revenue'), '357030 of 656330 is 54%');
-  assert.ok(section.includes('Your top 2 customers are 55% of revenue.'));
+  /* nestly_v950: the caption is a plural key pair — read the count and the share by name, which
+     also catches a render that swapped the two figures. */
+  assert.match(section, /data-workspace-template="topCustomersShare"[^]*?data-workspace-value="count"[^>]*>2</);
+  assert.match(section, /data-workspace-template="topCustomersShare"[^]*?data-workspace-value="pct"[^>]*>55</);
   /* "of revenue" is short enough to be misread as all revenue, so the caption states the
      denominator once, under the table, rather than lengthening every cell. */
   assert.ok(section.includes('Shares are of revenue from known customers. Walk-in sales with no name attached are not included.'));

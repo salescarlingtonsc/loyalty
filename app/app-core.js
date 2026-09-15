@@ -7987,8 +7987,31 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   everyCompanyOnBrand:Object.freeze({en:"Every company on {brand} — read-only, super-admin view.",'zh-CN':"{brand} 上的每一家公司 — 只读的超级管理员视图。",ms:"Setiap syarikat pada {brand} — paparan baca sahaja, super-admin."}),
   autoUsesDaysForCustomer:Object.freeze({en:"Auto uses {days} days for this customer.",'zh-CN':"系统为这位顾客自动采用 {days} 天。",ms:"Auto menggunakan {days} hari untuk pelanggan ini."}),
   grossSpendReturnedWithin:Object.freeze({en:"Net of what would likely have happened anyway. Gross spend by customers who returned within {days} days of being contacted:",'zh-CN':"已扣除本来也可能发生的部分。被联系后 {days} 天内回头的顾客的总消费：",ms:"Bersih daripada apa yang mungkin berlaku juga. Perbelanjaan kasar oleh pelanggan yang kembali dalam {days} hari selepas dihubungi:"}),
+  /* nestly_v950 — seven more counted sentences as fourteen keys, the last of the plural class.
+     topCustomerShare's singular is the one place the English was corrected rather than copied: the
+     source ternary pluralised the noun but not the verb, so at a count of one it read "customer
+     are". A reviewed template is the wrong place to enshrine that. */
+  grantRecordUnverified:Object.freeze({en:"{count} campaign grant record is not verified as received.",'zh-CN':"{count} 条活动发放记录未确认已收到。",ms:"{count} rekod pemberian kempen tidak disahkan sebagai diterima."}),
+  grantRecordsUnverified:Object.freeze({en:"{count} campaign grant records are not verified as received.",'zh-CN':"{count} 条活动发放记录未确认已收到。",ms:"{count} rekod pemberian kempen tidak disahkan sebagai diterima."}),
+  customerTooRecentStages:Object.freeze({en:"{first} customer too recent to judge for the first stage; {second} too recent for the second.",'zh-CN':"{first} 位顾客太近期，无法判断第一阶段；{second} 位太近期，无法判断第二阶段。",ms:"{first} pelanggan terlalu baharu untuk dinilai bagi peringkat pertama; {second} terlalu baharu untuk yang kedua."}),
+  customersTooRecentStages:Object.freeze({en:"{first} customers too recent to judge for the first stage; {second} too recent for the second.",'zh-CN':"{first} 位顾客太近期，无法判断第一阶段；{second} 位太近期，无法判断第二阶段。",ms:"{first} pelanggan terlalu baharu untuk dinilai bagi peringkat pertama; {second} terlalu baharu untuk yang kedua."}),
+  briefCustomerOverdue:Object.freeze({en:"{count} customer overdue",'zh-CN':"{count} 位顾客已逾期未到",ms:"{count} pelanggan lewat"}),
+  briefCustomersOverdue:Object.freeze({en:"{count} customers overdue",'zh-CN':"{count} 位顾客已逾期未到",ms:"{count} pelanggan lewat"}),
+  briefCustomerVisitedOnce:Object.freeze({en:"{count} customer visited once in the last year and never came back.",'zh-CN':"{count} 位顾客在过去一年中只来过一次，之后再也没有回来。",ms:"{count} pelanggan datang sekali dalam setahun lalu dan tidak pernah kembali."}),
+  briefCustomersVisitedOnce:Object.freeze({en:"{count} customers visited once in the last year and never came back.",'zh-CN':"{count} 位顾客在过去一年中只来过一次，之后再也没有回来。",ms:"{count} pelanggan datang sekali dalam setahun lalu dan tidak pernah kembali."}),
+  topCustomerShare:Object.freeze({en:"Your top {count} customer is {pct}% of revenue.",'zh-CN':"您最重要的 {count} 位顾客贡献了 {pct}% 的营收。",ms:"{count} pelanggan teratas anda ialah {pct}% daripada hasil."}),
+  topCustomersShare:Object.freeze({en:"Your top {count} customers are {pct}% of revenue.",'zh-CN':"您最重要的 {count} 位顾客贡献了 {pct}% 的营收。",ms:"{count} pelanggan teratas anda ialah {pct}% daripada hasil."}),
+  contactExcludedRecentVisit:Object.freeze({en:"{count} contact was excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.",'zh-CN':"{count} 位联系人被排除，因为该顾客在过去 14 天内到访过 — 联系一个本来就会来的人不算成果，本报告拒绝把它计入。",ms:"{count} kenalan dikecualikan kerana pelanggan itu telah datang dalam 14 hari lalu — menghubungi seseorang yang memang akan datang bukan kemenangan, dan laporan ini enggan mengiranya."}),
+  contactsExcludedRecentVisit:Object.freeze({en:"{count} contacts were excluded because the customer had visited within the last 14 days — contacting someone who was coming anyway is not a win, and this report refuses to count it.",'zh-CN':"{count} 位联系人被排除，因为该顾客在过去 14 天内到访过 — 联系一个本来就会来的人不算成果，本报告拒绝把它计入。",ms:"{count} kenalan dikecualikan kerana pelanggan itu telah datang dalam 14 hari lalu — menghubungi seseorang yang memang akan datang bukan kemenangan, dan laporan ini enggan mengiranya."}),
+  teammateHiddenByBranch:Object.freeze({en:"{count} teammate not assigned to this branch is hidden. Choose All branches at the top to see everyone.",'zh-CN':"{count} 位团队成员未分配到本分店，已被隐藏。请在顶部选择「所有分店」以查看全部成员。",ms:"{count} rakan sepasukan tidak ditugaskan ke cawangan ini dan disembunyikan. Pilih Semua cawangan di bahagian atas untuk melihat semua orang."}),
+  teammatesHiddenByBranch:Object.freeze({en:"{count} teammates not assigned to this branch are hidden. Choose All branches at the top to see everyone.",'zh-CN':"{count} 位团队成员未分配到本分店，已被隐藏。请在顶部选择「所有分店」以查看全部成员。",ms:"{count} rakan sepasukan tidak ditugaskan ke cawangan ini dan disembunyikan. Pilih Semua cawangan di bahagian atas untuk melihat semua orang."}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v950 — seven more counted sentences as singular/plural key pairs. */
+  'grantRecordUnverified','grantRecordsUnverified','customerTooRecentStages','customersTooRecentStages',
+  'briefCustomerOverdue','briefCustomersOverdue','briefCustomerVisitedOnce','briefCustomersVisitedOnce',
+  'topCustomerShare','topCustomersShare','contactExcludedRecentVisit','contactsExcludedRecentVisit',
+  'teammateHiddenByBranch','teammatesHiddenByBranch',
   /* nestly_v949 — nineteen more embedded-value sentences. */
   'busiestAndSlowestDays','notSentBecause','cameBackWithinDays','bookedHoursOutOfCapacity',
   'overbookedByHours','stepsDoneOfTotal','cashBasisLessExpenses','financeUnavailableForRole',
