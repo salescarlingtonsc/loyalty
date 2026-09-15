@@ -8004,6 +8004,1110 @@
       "reason": "nestly_v926 wave 9 — the Help Centre glossary and the cross-cutting troubleshooting entries. The glossary is the vocabulary the rest of the manual is written in, so it is translated as one piece rather than split across waves. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
       "zh-CN": "请改用「奖励与优惠」中的奖励方案。",
       "ms": "Gunakan program ganjaran dalam Ganjaran & Tawaran sebaliknya."
+    },
+    {
+      "source": "Your plan, your billing cycle and your next payment.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您的套餐、账单周期和下次付款。",
+      "ms": "Pelan anda, kitaran pengebilan dan bayaran seterusnya."
+    },
+    {
+      "source": "What you pay Peekaa, and when. Branch plans are managed here and on each branch.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您向 Peekaa 支付的金额和时间。分店套餐在此以及各分店页面管理。",
+      "ms": "Apa yang anda bayar kepada Peekaa, dan bila. Pelan cawangan diuruskan di sini dan pada setiap cawangan."
+    },
+    {
+      "source": "Account menu → Subscription",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "账户菜单 → 订阅",
+      "ms": "Menu akaun → Langganan"
+    },
+    {
+      "source": "See your plan and billing cycle",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看您的套餐和账单周期",
+      "ms": "Lihat pelan dan kitaran pengebilan anda"
+    },
+    {
+      "source": "See your customer capacity",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看您的顾客容量",
+      "ms": "Lihat kapasiti pelanggan anda"
+    },
+    {
+      "source": "See the next payment date",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看下次付款日期",
+      "ms": "Lihat tarikh bayaran seterusnya"
+    },
+    {
+      "source": "Retry a failed payment",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "重试失败的付款",
+      "ms": "Cuba semula bayaran yang gagal"
+    },
+    {
+      "source": "Peekaa subscription",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "Peekaa 订阅",
+      "ms": "Langganan Peekaa"
+    },
+    {
+      "source": "Your current plan.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您当前的套餐。",
+      "ms": "Pelan semasa anda."
+    },
+    {
+      "source": "Billing cycle",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "账单周期",
+      "ms": "Kitaran pengebilan"
+    },
+    {
+      "source": "Monthly or annual.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按月或按年。",
+      "ms": "Bulanan atau tahunan."
+    },
+    {
+      "source": "Customer capacity",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "顾客容量",
+      "ms": "Kapasiti pelanggan"
+    },
+    {
+      "source": "How many customers your plan covers.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您的套餐涵盖多少顾客。",
+      "ms": "Berapa ramai pelanggan yang dilindungi pelan anda."
+    },
+    {
+      "source": "Next payment date",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "下次付款日期",
+      "ms": "Tarikh bayaran seterusnya"
+    },
+    {
+      "source": "When the next charge is due.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "下次扣款的到期时间。",
+      "ms": "Bila caj seterusnya perlu dibayar."
+    },
+    {
+      "source": "Try a failed payment again.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "重新尝试失败的付款。",
+      "ms": "Cuba semula bayaran yang gagal."
+    },
+    {
+      "source": "Each branch is billed in its own right and has its own cycle — see Branches.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每家分店独立计费，并有自己的账单周期 — 请见「分店」。",
+      "ms": "Setiap cawangan dibilkan atas namanya sendiri dan mempunyai kitarannya sendiri — lihat Cawangan."
+    },
+    {
+      "source": "Your workspace only opens once a payment has actually been confirmed by the payment provider.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "只有在支付服务商确认付款后，您的工作区才会开放。",
+      "ms": "Ruang kerja anda hanya dibuka setelah bayaran benar-benar disahkan oleh penyedia pembayaran."
+    },
+    {
+      "source": "This is your subscription to Peekaa. It is separate from how your own customers pay you.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "这是您对 Peekaa 的订阅。它与您的顾客如何向您付款是两回事。",
+      "ms": "Ini ialah langganan anda kepada Peekaa. Ia berasingan daripada cara pelanggan anda sendiri membayar anda."
+    },
+    {
+      "source": "A payment failed",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "付款失败",
+      "ms": "Bayaran gagal"
+    },
+    {
+      "source": "The card was declined or has expired.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "银行卡被拒绝或已过期。",
+      "ms": "Kad ditolak atau telah tamat tempoh."
+    },
+    {
+      "source": "The payment is still being confirmed by the provider.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "支付服务商仍在确认该笔付款。",
+      "ms": "Bayaran masih disahkan oleh penyedia."
+    },
+    {
+      "source": "Press Retry billing.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按「重试扣款」。",
+      "ms": "Tekan Cuba semula pengebilan."
+    },
+    {
+      "source": "If it keeps failing, contact Peekaa.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "如果持续失败，请联系 Peekaa。",
+      "ms": "Jika ia terus gagal, hubungi Peekaa."
+    },
+    {
+      "source": "My workspace says it is locked or awaiting payment",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "我的工作区显示已锁定或等待付款",
+      "ms": "Ruang kerja saya menyatakan ia dikunci atau menunggu bayaran"
+    },
+    {
+      "source": "The first payment has not been confirmed yet.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "首次付款尚未确认。",
+      "ms": "Bayaran pertama belum disahkan."
+    },
+    {
+      "source": "A renewal failed.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "一次续费失败。",
+      "ms": "Satu pembaharuan gagal."
+    },
+    {
+      "source": "Complete or retry the payment from this screen.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在此页面完成或重试付款。",
+      "ms": "Selesaikan atau cuba semula bayaran dari skrin ini."
+    },
+    {
+      "source": "Access opens as soon as the provider confirms it.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "支付服务商确认后即刻开放访问。",
+      "ms": "Akses dibuka sebaik sahaja penyedia mengesahkannya."
+    },
+    {
+      "source": "Do extra staff logins cost more?",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "额外的员工登录账号会增加费用吗？",
+      "ms": "Adakah log masuk kakitangan tambahan menelan kos lebih?"
+    },
+    {
+      "source": "Each active login is a seat. Roster-only team members who do not sign in are free.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每个启用的登录账号占用一个席位。仅列入名单、不登录的团队成员免费。",
+      "ms": "Setiap log masuk aktif ialah satu kerusi. Ahli pasukan senarai sahaja yang tidak log masuk adalah percuma."
+    },
+    {
+      "source": "Does each branch cost separately?",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每家分店单独收费吗？",
+      "ms": "Adakah setiap cawangan dikenakan bayaran berasingan?"
+    },
+    {
+      "source": "Yes. Each branch carries its own plan and its own billing cycle.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "是的。每家分店有自己的套餐和账单周期。",
+      "ms": "Ya. Setiap cawangan membawa pelannya sendiri dan kitaran pengebilannya sendiri."
+    },
+    {
+      "source": "One day, end to end — what was sold and what it came to.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "一整天的完整记录 — 卖了什么、总计多少。",
+      "ms": "Satu hari, hujung ke hujung — apa yang dijual dan jumlahnya."
+    },
+    {
+      "source": "The day's sales for one branch, in one place. Run it at the end of a shift to see what was recorded.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "单家分店某一天的销售，集中在一处。在班次结束时运行，即可查看记录内容。",
+      "ms": "Jualan satu hari bagi satu cawangan, di satu tempat. Jalankannya di hujung syif untuk melihat apa yang direkodkan."
+    },
+    {
+      "source": "Reports → Daily report",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告 → 每日报告",
+      "ms": "Laporan → Laporan harian"
+    },
+    {
+      "source": "Run the report for a chosen day and branch",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按所选日期和分店运行报告",
+      "ms": "Jalankan laporan bagi hari dan cawangan yang dipilih"
+    },
+    {
+      "source": "See the sales behind the total",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看总计背后的每笔交易",
+      "ms": "Lihat jualan di sebalik jumlah itu"
+    },
+    {
+      "source": "Export the day to CSV",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "将当天数据导出为 CSV",
+      "ms": "Eksport hari itu ke CSV"
+    },
+    {
+      "source": "The day being reported. Choose it before running.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告所涵盖的日期。请在运行前选择。",
+      "ms": "Hari yang dilaporkan. Pilihnya sebelum menjalankan."
+    },
+    {
+      "source": "Which branch the day is for.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该日数据对应哪家分店。",
+      "ms": "Cawangan mana hari itu mewakili."
+    },
+    {
+      "source": "Totals",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "总计",
+      "ms": "Jumlah"
+    },
+    {
+      "source": "What was recorded on that day.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "当天记录的内容。",
+      "ms": "Apa yang direkodkan pada hari itu."
+    },
+    {
+      "source": "Sales list",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "销售列表",
+      "ms": "Senarai jualan"
+    },
+    {
+      "source": "The individual records behind the total.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "总计背后的每一条记录。",
+      "ms": "Rekod individu di sebalik jumlah itu."
+    },
+    {
+      "source": "Run the daily report",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "运行每日报告",
+      "ms": "Jalankan laporan harian"
+    },
+    {
+      "source": "Reports → Daily report → Run report",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告 → 每日报告 → 运行报告",
+      "ms": "Laporan → Laporan harian → Jalankan laporan"
+    },
+    {
+      "source": "The report has to be run before it can be exported.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告必须先运行才能导出。",
+      "ms": "Laporan mesti dijalankan sebelum ia boleh dieksport."
+    },
+    {
+      "source": "Open Daily report.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "打开「每日报告」。",
+      "ms": "Buka Laporan harian."
+    },
+    {
+      "source": "Choose the date.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "选择日期。",
+      "ms": "Pilih tarikh."
+    },
+    {
+      "source": "Check the branch in the top bar is the one you want.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "确认顶部栏的分店是您需要的那一家。",
+      "ms": "Pastikan cawangan di bar atas adalah yang anda mahu."
+    },
+    {
+      "source": "Press Run report.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按「运行报告」。",
+      "ms": "Tekan Jalankan laporan."
+    },
+    {
+      "source": "Read the totals and the list underneath.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "阅读总计及下方的列表。",
+      "ms": "Baca jumlah dan senarai di bawahnya."
+    },
+    {
+      "source": "Export to CSV if you need it.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "如有需要，可导出为 CSV。",
+      "ms": "Eksport ke CSV jika anda memerlukannya."
+    },
+    {
+      "source": "One day, one branch. Switch branch for another site.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "一天，一家分店。切换分店可查看其他门店。",
+      "ms": "Satu hari, satu cawangan. Tukar cawangan untuk tapak lain."
+    },
+    {
+      "source": "Reversed sales are excluded from the totals but the original rows stay visible in Sales.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "已冲正的交易不计入总计，但原记录仍在「销售」中可见。",
+      "ms": "Jualan yang dibatalkan dikecualikan daripada jumlah tetapi baris asal kekal kelihatan dalam Jualan."
+    },
+    {
+      "source": "Anyone whose account includes Daily report can run it.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "任何账户中包含「每日报告」的人都可以运行它。",
+      "ms": "Sesiapa yang akaunnya merangkumi Laporan harian boleh menjalankannya."
+    },
+    {
+      "source": "The day shows no sales",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "当天显示没有交易",
+      "ms": "Hari itu menunjukkan tiada jualan"
+    },
+    {
+      "source": "The wrong branch is selected.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "选择了错误的分店。",
+      "ms": "Cawangan yang salah dipilih."
+    },
+    {
+      "source": "The date is not the one you meant.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "日期不是您想要的那一天。",
+      "ms": "Tarikh itu bukan yang anda maksudkan."
+    },
+    {
+      "source": "Nothing was recorded that day.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "当天没有任何记录。",
+      "ms": "Tiada apa direkodkan pada hari itu."
+    },
+    {
+      "source": "Check the branch and the date, then run the report again.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "检查分店和日期，然后重新运行报告。",
+      "ms": "Semak cawangan dan tarikh, kemudian jalankan laporan sekali lagi."
+    },
+    {
+      "source": "Open Sales for the same day to confirm.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "打开同一天的「销售」以确认。",
+      "ms": "Buka Jualan untuk hari yang sama untuk mengesahkan."
+    },
+    {
+      "source": "What each team member sold, and the commission it earned.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每位团队成员卖了什么，以及由此产生的佣金。",
+      "ms": "Apa yang dijual oleh setiap ahli pasukan, dan komisen yang diperolehnya."
+    },
+    {
+      "source": "Every sale line, each paying exactly one team member, with the customer, the time, the rate and the commission. One commission per line — nothing overlaps.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每一行销售仅归属一位团队成员，并附顾客、时间、比例和佣金。每行一份佣金 — 不会重叠。",
+      "ms": "Setiap baris jualan, setiap satu membayar tepat satu ahli pasukan, dengan pelanggan, masa, kadar dan komisen. Satu komisen bagi setiap baris — tiada pertindihan."
+    },
+    {
+      "source": "Reports → Staff commission",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告 → 员工佣金",
+      "ms": "Laporan → Komisen kakitangan"
+    },
+    {
+      "source": "See commission by team member for a period",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按团队成员查看某期间的佣金",
+      "ms": "Lihat komisen mengikut ahli pasukan bagi sesuatu tempoh"
+    },
+    {
+      "source": "Filter by day, week, month or year",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按日、周、月或年筛选",
+      "ms": "Tapis mengikut hari, minggu, bulan atau tahun"
+    },
+    {
+      "source": "Open a team member to see the exact sales",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "打开某位团队成员查看具体交易",
+      "ms": "Buka seorang ahli pasukan untuk melihat jualan yang tepat"
+    },
+    {
+      "source": "All / a team member",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "全部 / 某位团队成员",
+      "ms": "Semua / seorang ahli pasukan"
+    },
+    {
+      "source": "Whose lines you are looking at.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您正在查看谁的销售行。",
+      "ms": "Baris siapa yang sedang anda lihat."
+    },
+    {
+      "source": "Date filter",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "日期筛选",
+      "ms": "Penapis tarikh"
+    },
+    {
+      "source": "Daily by default; also this week, this month, this year.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "默认按日；另有本周、本月、本年。",
+      "ms": "Harian secara lalai; juga minggu ini, bulan ini, tahun ini."
+    },
+    {
+      "source": "Line",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "销售行",
+      "ms": "Baris"
+    },
+    {
+      "source": "What was sold, to whom, and when.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "卖了什么、卖给谁、何时卖的。",
+      "ms": "Apa yang dijual, kepada siapa, dan bila."
+    },
+    {
+      "source": "Rate",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "比例",
+      "ms": "Kadar"
+    },
+    {
+      "source": "The commission rate that applied at the time of the sale.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "交易发生时适用的佣金比例。",
+      "ms": "Kadar komisen yang terpakai pada masa jualan itu."
+    },
+    {
+      "source": "A reversed sale is shown struck through and counted in no total.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "已冲正的交易会以删除线显示，且不计入任何总计。",
+      "ms": "Jualan yang dibatalkan ditunjukkan dengan garisan dan tidak dikira dalam mana-mana jumlah."
+    },
+    {
+      "source": "A line pays exactly one team member, so two people can never be paid for the same sale.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每行仅归属一位团队成员，因此绝不会有两人就同一笔交易获得佣金。",
+      "ms": "Satu baris membayar tepat satu ahli pasukan, jadi dua orang tidak akan dibayar untuk jualan yang sama."
+    },
+    {
+      "source": "The rate shown is the rate that applied when the sale happened, not today's rate.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "显示的是交易发生时的比例，而非今天的比例。",
+      "ms": "Kadar yang ditunjukkan ialah kadar yang terpakai semasa jualan berlaku, bukan kadar hari ini."
+    },
+    {
+      "source": "Every figure on the screen is worked out from the same lines the table shows.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "屏幕上的每个数字都由表格所示的同一批销售行计算得出。",
+      "ms": "Setiap angka pada skrin dikira daripada baris yang sama yang ditunjukkan jadual itu."
+    },
+    {
+      "source": "Commission rates are set per team member in Staff Members. Peekaa provides the mechanism; the numbers are yours.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "佣金比例在「员工」中按每位成员分别设置。Peekaa 只提供机制；数字由您决定。",
+      "ms": "Kadar komisen ditetapkan bagi setiap ahli pasukan dalam Ahli Kakitangan. Peekaa menyediakan mekanismenya; angkanya milik anda."
+    },
+    {
+      "source": "This screen needs finance access.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "此页面需要财务权限。",
+      "ms": "Skrin ini memerlukan akses kewangan."
+    },
+    {
+      "source": "A team member's commission looks too low",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "某位团队成员的佣金看起来偏低",
+      "ms": "Komisen seorang ahli pasukan kelihatan terlalu rendah"
+    },
+    {
+      "source": "Sales were recorded without them assigned.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "记录交易时未指派该成员。",
+      "ms": "Jualan direkodkan tanpa mereka ditugaskan."
+    },
+    {
+      "source": "Some sales in the period were reversed.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该期间有部分交易被冲正。",
+      "ms": "Sesetengah jualan dalam tempoh itu telah dibatalkan."
+    },
+    {
+      "source": "Their commission rate was set after those sales happened.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "他们的佣金比例是在那些交易发生之后才设置的。",
+      "ms": "Kadar komisen mereka ditetapkan selepas jualan itu berlaku."
+    },
+    {
+      "source": "The date filter is narrower than you think.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "日期筛选范围比您以为的更窄。",
+      "ms": "Penapis tarikh lebih sempit daripada yang anda sangka."
+    },
+    {
+      "source": "Open the team member to see the exact lines.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "打开该团队成员以查看具体销售行。",
+      "ms": "Buka ahli pasukan itu untuk melihat baris yang tepat."
+    },
+    {
+      "source": "Check who was assigned on the sale in Sales.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在「销售」中查看该笔交易指派给了谁。",
+      "ms": "Semak siapa yang ditugaskan pada jualan itu dalam Jualan."
+    },
+    {
+      "source": "Check the rate in Staff Members.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在「员工」中检查比例。",
+      "ms": "Semak kadar itu dalam Ahli Kakitangan."
+    },
+    {
+      "source": "Customers' own bottles, parked and kept for them.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "顾客自己的酒，寄存并代为保管。",
+      "ms": "Botol milik pelanggan sendiri, disimpan dan dijaga untuk mereka."
+    },
+    {
+      "source": "Bottle keep, for bars. Park a customer's bottle, record how full it is, and keep it until it expires. The customer sees it in their own app.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "面向酒吧的存酒服务。为顾客寄存酒瓶、记录剩余量，并保管至到期为止。顾客可在自己的应用中看到。",
+      "ms": "Simpanan botol, untuk bar. Simpan botol pelanggan, rekod berapa penuh ia, dan jaga sehingga tamat tempoh. Pelanggan melihatnya dalam aplikasi mereka sendiri."
+    },
+    {
+      "source": "Park a bottle for a customer",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "为顾客寄存一瓶酒",
+      "ms": "Simpan sebotol untuk pelanggan"
+    },
+    {
+      "source": "Record how full a bottle is",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "记录酒瓶的剩余量",
+      "ms": "Rekod berapa penuh sesuatu botol"
+    },
+    {
+      "source": "Move a bottle between storage places",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在存放位置之间移动酒瓶",
+      "ms": "Alihkan botol antara tempat simpanan"
+    },
+    {
+      "source": "Extend or change the keep window",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "延长或更改保管期限",
+      "ms": "Lanjutkan atau ubah tempoh simpanan"
+    },
+    {
+      "source": "Transfer a bottle to another customer",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "将酒瓶转让给另一位顾客",
+      "ms": "Pindahkan botol kepada pelanggan lain"
+    },
+    {
+      "source": "Remove a bottle",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "移除一瓶酒",
+      "ms": "Alih keluar sebotol"
+    },
+    {
+      "source": "Park bottle",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "寄存酒瓶",
+      "ms": "Simpan botol"
+    },
+    {
+      "source": "Start a new keep for a customer.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "为顾客开始一次新的寄存。",
+      "ms": "Mulakan simpanan baharu untuk seorang pelanggan."
+    },
+    {
+      "source": "Storage place",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "存放位置",
+      "ms": "Tempat simpanan"
+    },
+    {
+      "source": "Which shelf it is on.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "它放在哪一层架子上。",
+      "ms": "Rak mana ia berada."
+    },
+    {
+      "source": "Fill level",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "剩余量",
+      "ms": "Paras isi"
+    },
+    {
+      "source": "How much is left.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "还剩多少。",
+      "ms": "Berapa banyak yang tinggal."
+    },
+    {
+      "source": "When the keep runs out.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "保管期何时结束。",
+      "ms": "Bila tempoh simpanan tamat."
+    },
+    {
+      "source": "Stored, Called, At table, Retrieved, Finished, Expired, Moved or Removed.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "已存放、已呼叫、在桌上、已取走、已喝完、已过期、已移动或已删除。",
+      "ms": "Disimpan, Dipanggil, Di meja, Diambil, Habis, Tamat tempoh, Dialihkan atau Dialih keluar."
+    },
+    {
+      "source": "Park a bottle",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "寄存一瓶酒",
+      "ms": "Simpan sebotol"
+    },
+    {
+      "source": "Bottles → Park bottle",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "存酒 → 寄存酒瓶",
+      "ms": "Botol → Simpan botol"
+    },
+    {
+      "source": "The customer sees the bottle and its expiry in their own app straight away.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "顾客可立即在自己的应用中看到这瓶酒及其到期日。",
+      "ms": "Pelanggan melihat botol itu dan tarikh tamatnya dalam aplikasi mereka sendiri dengan serta-merta."
+    },
+    {
+      "source": "Open Bottles.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "打开「存酒」。",
+      "ms": "Buka Botol."
+    },
+    {
+      "source": "Press Park bottle.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "按「寄存酒瓶」。",
+      "ms": "Tekan Simpan botol."
+    },
+    {
+      "source": "Find the customer by phone, or scan their member QR.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "通过电话号码找到顾客，或扫描其会员二维码。",
+      "ms": "Cari pelanggan melalui telefon, atau imbas kod QR ahli mereka."
+    },
+    {
+      "source": "Choose the bottle from your bottle catalogue.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "从您的酒品目录中选择该瓶酒。",
+      "ms": "Pilih botol itu daripada katalog botol anda."
+    },
+    {
+      "source": "Choose the storage place.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "选择存放位置。",
+      "ms": "Pilih tempat simpanan."
+    },
+    {
+      "source": "Confirm — the keep window is set from your settings.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "确认 — 保管期限依据您的设置自动设定。",
+      "ms": "Sahkan — tempoh simpanan ditetapkan daripada tetapan anda."
+    },
+    {
+      "source": "Set up bottle keep",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "设置存酒服务",
+      "ms": "Sediakan simpanan botol"
+    },
+    {
+      "source": "Operations setup → Bottle keep",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "运营设置 → 存酒服务",
+      "ms": "Persediaan operasi → Simpanan botol"
+    },
+    {
+      "source": "Bottle keep is only available to bars.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "存酒服务仅向酒吧开放。",
+      "ms": "Simpanan botol hanya tersedia untuk bar."
+    },
+    {
+      "source": "Open Bottle keep under Operations setup.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在「运营设置」下打开「存酒服务」。",
+      "ms": "Buka Simpanan botol di bawah Persediaan operasi."
+    },
+    {
+      "source": "Add your storage places — the shelves you actually use.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "添加您的存放位置 — 也就是您实际使用的架子。",
+      "ms": "Tambah tempat simpanan anda — rak yang anda benar-benar guna."
+    },
+    {
+      "source": "Set the keep window in days.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "以天数设定保管期限。",
+      "ms": "Tetapkan tempoh simpanan dalam hari."
+    },
+    {
+      "source": "Add the bottles you sell to the bottle catalogue.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "将您售卖的酒品加入酒品目录。",
+      "ms": "Tambah botol yang anda jual ke dalam katalog botol."
+    },
+    {
+      "source": "Set longer keep windows for higher tiers if you want.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "如有需要，可为更高等级设定更长的保管期限。",
+      "ms": "Tetapkan tempoh simpanan yang lebih panjang untuk peringkat yang lebih tinggi jika anda mahu."
+    },
+    {
+      "source": "Bottles is only available to businesses in the bar sector.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "「存酒」仅向酒吧行业的商家开放。",
+      "ms": "Botol hanya tersedia untuk perniagaan dalam sektor bar."
+    },
+    {
+      "source": "Only the owner can change the bottle keep settings; any team member with the module can park and retrieve.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "只有店主可以更改存酒服务的设置；任何拥有该模块的团队成员都可以寄存和取出。",
+      "ms": "Hanya pemilik boleh mengubah tetapan simpanan botol; mana-mana ahli pasukan yang mempunyai modul itu boleh menyimpan dan mengambil."
+    },
+    {
+      "source": "Money in, work booked and customers returning, over a period you choose.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在您选择的期间内的收入、已预约的服务和回头客。",
+      "ms": "Wang masuk, kerja ditempah dan pelanggan kembali, dalam tempoh yang anda pilih."
+    },
+    {
+      "source": "The period view of the business: what came in, what was booked, and how many customers came back. Choose the range and the branch, and compare against an earlier period.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "业务的期间视图：进账多少、预约了多少、有多少顾客回来。选择时间范围和分店，并与更早的期间对比。",
+      "ms": "Pandangan tempoh bagi perniagaan: apa yang masuk, apa yang ditempah, dan berapa ramai pelanggan yang kembali. Pilih julat dan cawangan, dan bandingkan dengan tempoh terdahulu."
+    },
+    {
+      "source": "Reports → Business Insights",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告 → 业务洞察",
+      "ms": "Laporan → Wawasan Perniagaan"
+    },
+    {
+      "source": "See money in, booked work and returning customers for a period",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看某期间的收入、已预约的服务和回头客",
+      "ms": "Lihat wang masuk, kerja ditempah dan pelanggan kembali bagi sesuatu tempoh"
+    },
+    {
+      "source": "Change the date range and compare with a baseline",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "更改日期范围并与基准期对比",
+      "ms": "Ubah julat tarikh dan bandingkan dengan garis dasar"
+    },
+    {
+      "source": "Narrow to one branch",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "缩小到单一分店",
+      "ms": "Persempitkan kepada satu cawangan"
+    },
+    {
+      "source": "Export the sales behind a figure to CSV",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "将某个数字背后的交易导出为 CSV",
+      "ms": "Eksport jualan di sebalik sesuatu angka ke CSV"
+    },
+    {
+      "source": "Money in",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "收入",
+      "ms": "Wang masuk"
+    },
+    {
+      "source": "What was recorded as takings in the selected period.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "所选期间内记录为营收的金额。",
+      "ms": "Apa yang direkodkan sebagai kutipan dalam tempoh yang dipilih."
+    },
+    {
+      "source": "Booked work",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "已预约的服务",
+      "ms": "Kerja ditempah"
+    },
+    {
+      "source": "What was scheduled in the period.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该期间内已排定的内容。",
+      "ms": "Apa yang dijadualkan dalam tempoh itu."
+    },
+    {
+      "source": "Customers who came back within the period.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "在该期间内再次光顾的顾客。",
+      "ms": "Pelanggan yang kembali dalam tempoh itu."
+    },
+    {
+      "source": "Compare with",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "对比期间",
+      "ms": "Bandingkan dengan"
+    },
+    {
+      "source": "An earlier period to read the current one against.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "用来对照当前期间的更早期间。",
+      "ms": "Tempoh terdahulu untuk membaca tempoh semasa."
+    },
+    {
+      "source": "Which branch the whole screen is for.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "整个页面对应哪家分店。",
+      "ms": "Cawangan mana yang mewakili keseluruhan skrin ini."
+    },
+    {
+      "source": "Every figure names the period, the branch and what it counts. Change any of them and the figures change.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "每个数字都标明了期间、分店和统计口径。更改其中任何一项，数字都会随之改变。",
+      "ms": "Setiap angka menamakan tempoh, cawangan dan apa yang dikiranya. Ubah mana-mana daripadanya dan angka itu berubah."
+    },
+    {
+      "source": "A projection is labelled as a projection, never presented as history.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "预测会明确标示为预测，绝不会当作历史数据呈现。",
+      "ms": "Unjuran dilabelkan sebagai unjuran, tidak pernah dipersembahkan sebagai sejarah."
+    },
+    {
+      "source": "Anyone whose account includes Business Insights can open it. Business Intelligence is the one that additionally needs finance access.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "任何账户中包含「业务洞察」的人都可以打开它。需要额外财务权限的是「商业智能」。",
+      "ms": "Sesiapa yang akaunnya merangkumi Wawasan Perniagaan boleh membukanya. Kecerdasan Perniagaan ialah yang memerlukan akses kewangan tambahan."
+    },
+    {
+      "source": "Business Insights and my Daily report disagree",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "「业务洞察」与我的「每日报告」对不上",
+      "ms": "Wawasan Perniagaan dan Laporan harian saya tidak sepadan"
+    },
+    {
+      "source": "Different date ranges.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "日期范围不同。",
+      "ms": "Julat tarikh berbeza."
+    },
+    {
+      "source": "Different branches.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "分店不同。",
+      "ms": "Cawangan berbeza."
+    },
+    {
+      "source": "One includes reversed sales and the other does not.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "其中一个包含已冲正的交易，另一个不包含。",
+      "ms": "Satu merangkumi jualan yang dibatalkan dan satu lagi tidak."
+    },
+    {
+      "source": "Set both to the same range and the same branch.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "将两者设为相同的范围和相同的分店。",
+      "ms": "Tetapkan kedua-duanya kepada julat yang sama dan cawangan yang sama."
+    },
+    {
+      "source": "Open Sales for that exact range and read the individual records — that is the underlying truth.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "打开该范围内的「销售」并逐条查看记录 — 那才是底层的事实。",
+      "ms": "Buka Jualan untuk julat yang tepat itu dan baca rekod individu — itulah kebenaran asasnya."
+    },
+    {
+      "source": "The export says there are no sales",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "导出显示没有交易",
+      "ms": "Eksport menyatakan tiada jualan"
+    },
+    {
+      "source": "The filters on screen exclude everything.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "页面上的筛选条件排除了所有内容。",
+      "ms": "Penapis pada skrin mengecualikan segalanya."
+    },
+    {
+      "source": "The range has no sales at that branch.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该范围内这家分店没有任何交易。",
+      "ms": "Julat itu tiada jualan di cawangan tersebut."
+    },
+    {
+      "source": "Widen the range or clear the filters, then export again.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "扩大范围或清除筛选条件，然后重新导出。",
+      "ms": "Luaskan julat atau kosongkan penapis, kemudian eksport semula."
+    },
+    {
+      "source": "Who your customers are, how they arrive, and what to do next.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您的顾客是谁、他们如何找到您，以及下一步该做什么。",
+      "ms": "Siapa pelanggan anda, bagaimana mereka tiba, dan apa yang perlu dilakukan seterusnya."
+    },
+    {
+      "source": "A deeper read of your customer base: where customers come from, how they move from sign-up to booking, which categories sell, and a ranked list of things worth doing.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "对顾客群更深入的解读：顾客从哪里来、如何从注册走到预约、哪些类别卖得好，以及一份按优先次序排列的可行动清单。",
+      "ms": "Bacaan yang lebih mendalam tentang asas pelanggan anda: dari mana pelanggan datang, bagaimana mereka bergerak daripada pendaftaran ke tempahan, kategori mana yang laku, dan senarai perkara berbaloi yang disusun mengikut keutamaan."
+    },
+    {
+      "source": "Reports → Business Intelligence",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "报告 → 商业智能",
+      "ms": "Laporan → Kecerdasan Perniagaan"
+    },
+    {
+      "source": "See how customers arrive and where they drop off",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看顾客如何找到您，以及在哪一步流失",
+      "ms": "Lihat bagaimana pelanggan tiba dan di mana mereka tercicir"
+    },
+    {
+      "source": "See which categories and services carry the business",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看哪些类别和服务支撑着生意",
+      "ms": "Lihat kategori dan perkhidmatan mana yang menyokong perniagaan"
+    },
+    {
+      "source": "See which customers need attention",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "查看哪些顾客需要关注",
+      "ms": "Lihat pelanggan mana yang memerlukan perhatian"
+    },
+    {
+      "source": "Compare branches",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "对比各分店",
+      "ms": "Bandingkan cawangan"
+    },
+    {
+      "source": "Export the full analysis to CSV",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "将完整分析导出为 CSV",
+      "ms": "Eksport analisis penuh ke CSV"
+    },
+    {
+      "source": "How customers arrived.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "顾客是如何找到您的。",
+      "ms": "Bagaimana pelanggan tiba."
+    },
+    {
+      "source": "Where people drop out.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "人们在哪一步流失。",
+      "ms": "Di mana orang tercicir."
+    },
+    {
+      "source": "How many you can actually reach.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您实际能触达多少人。",
+      "ms": "Berapa ramai yang benar-benar boleh anda hubungi."
+    },
+    {
+      "source": "Which categories the takings come from.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "营收来自哪些类别。",
+      "ms": "Kategori mana kutipan itu datang."
+    },
+    {
+      "source": "What is expected, labelled as an expectation rather than as history.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "预期会发生什么 — 标示为预期，而非历史数据。",
+      "ms": "Apa yang dijangka, dilabelkan sebagai jangkaan dan bukan sebagai sejarah."
+    },
+    {
+      "source": "How many records the analysis is based on.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该分析基于多少条记录。",
+      "ms": "Berapa banyak rekod yang menjadi asas analisis ini."
+    },
+    {
+      "source": "This screen needs finance access — Owner, Manager or Bookkeeper. Staff and Front desk cannot open it.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "此页面需要财务权限 — 店主、经理或记账员。员工和前台无法打开。",
+      "ms": "Skrin ini memerlukan akses kewangan — Pemilik, Pengurus atau Kerani akaun. Kakitangan dan Kaunter depan tidak boleh membukanya."
+    },
+    {
+      "source": "A section that does not have enough data to be reliable says so instead of showing a figure.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "数据不足以支撑可靠结论的板块会直接说明，而不会显示一个数字。",
+      "ms": "Bahagian yang tidak mempunyai data yang mencukupi untuk dipercayai akan menyatakannya dan bukannya menunjukkan angka."
+    },
+    {
+      "source": "The export contains customer-level data. Handle it accordingly.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "导出的文件包含顾客层级的数据，请妥善处理。",
+      "ms": "Eksport itu mengandungi data pada peringkat pelanggan. Kendalikannya dengan sewajarnya."
+    },
+    {
+      "source": "Business Intelligence is not in my sidebar",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "我的侧边栏里没有「商业智能」",
+      "ms": "Kecerdasan Perniagaan tiada dalam bar sisi saya"
+    },
+    {
+      "source": "Your role does not have finance access.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "您的角色没有财务权限。",
+      "ms": "Peranan anda tiada akses kewangan."
+    },
+    {
+      "source": "The module is not part of your plan.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该模块不包含在您的套餐中。",
+      "ms": "Modul itu bukan sebahagian daripada pelan anda."
+    },
+    {
+      "source": "Ask the owner. Only Owner, Manager and Bookkeeper can open it.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "请咨询店主。只有店主、经理和记账员可以打开它。",
+      "ms": "Tanya pemilik. Hanya Pemilik, Pengurus dan Kerani akaun boleh membukanya."
+    },
+    {
+      "source": "A section says the data is not reliable yet",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "某个板块提示数据尚不可靠",
+      "ms": "Sesuatu bahagian menyatakan data itu belum boleh dipercayai"
+    },
+    {
+      "source": "There are not enough customer records in the range for the figure to mean anything.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "该范围内的顾客记录不足，数字没有意义。",
+      "ms": "Tiada rekod pelanggan yang mencukupi dalam julat itu untuk angka itu bermakna."
+    },
+    {
+      "source": "Widen the date range, or come back when you have more history.",
+      "reason": "nestly_v927 — the last six Help Centre guides: Subscription, Daily report, Staff commission, Bottles, Business Insights and Business Intelligence. With these the Help Centre (nestly_v904) is translated end to end, so a zh-CN or ms reader no longer meets an English guide behind a Chinese nav row. Translated a WHOLE guide at a time, never a layer at a time: a guide with English steps under Chinese headings is worse than an English one. Control names match the screen — Amend, Run report, Park bottle — and 'Peekaa' is never translated, it is the product's name.",
+      "zh-CN": "扩大日期范围，或等积累更多历史数据后再来查看。",
+      "ms": "Luaskan julat tarikh, atau kembali apabila anda mempunyai lebih banyak sejarah."
+    },
+    {
+      "source": "Stored",
+      "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
+      "zh-CN": "已存放",
+      "ms": "Disimpan"
+    },
+    {
+      "source": "At table",
+      "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
+      "zh-CN": "在桌上",
+      "ms": "Di meja"
+    },
+    {
+      "source": "Retrieved",
+      "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
+      "zh-CN": "已取走",
+      "ms": "Diambil"
+    },
+    {
+      "source": "Finished",
+      "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
+      "zh-CN": "已喝完",
+      "ms": "Habis"
+    },
+    {
+      "source": "Moved",
+      "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
+      "zh-CN": "已移动",
+      "ms": "Dialihkan"
+    },
+    {
+      "source": "Expired",
+      "reason": "nestly_v927 — the six bottle status pills the Bottles guide names. The guide lists Stored, Called, At table, Retrieved, Finished, Expired, Moved and Removed as the statuses a bottle moves through, and those exact words are what BOTTLE_STATUS_V275 renders on the KPI tiles, the status pill and the movement buttons. Translating the sentence but not the pills would have left a Chinese sentence pointing at English controls, which is the failure this wave series exists to stop. 'Called' and 'Removed' were already in the table, so only these six are new.",
+      "zh-CN": "已过期",
+      "ms": "Tamat tempoh"
     }
   ]
 }
