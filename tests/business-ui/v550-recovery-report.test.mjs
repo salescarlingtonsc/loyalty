@@ -59,7 +59,11 @@ test('V550 the report prints the server verdict: net, gross, funnel, baseline, m
   /* nestly_v950: singular/plural key pair now, so the count sits in its own value span. */
   assert.match(html, /data-workspace-template="contactExcludedRecentVisit"[^]*?data-workspace-value="count"[^>]*>1</,
     'the not-lapsed exclusion is announced, not absorbed');
-  assert.ok(html.includes('<b>2</b>') && html.includes('(50.0%)'), 'the baseline cohort and its rate are visible');
+  /* nestly_v952: the cohort stays a bold figure; the rate moved into the reviewed sentence that
+     explains what it means, so it is read by name from that template's value span. */
+  assert.ok(html.includes('<b>2</b>'), 'the baseline cohort is visible');
+  assert.match(html, /data-workspace-template="returnedOnTheirOwnNetRemoves"[^]*?data-workspace-value="rate"[^>]*>\(?50\.0%/,
+    'and so is the rate it returned at');
   assert.ok(html.includes('SGD 30.00'), 'the redeemed voucher value is shown');
   assert.ok(html.includes('2026-07'), 'the monthly table renders');
   assert.ok(html.includes('Whole business, all branches'), 'the business-wide scope is stated');

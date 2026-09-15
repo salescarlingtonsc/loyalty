@@ -20934,6 +20934,12 @@
    "reason": "nestly_v951 — words that only a source-level reader would call interpolated. Each of these text nodes renders as pure literal at run time: the interpolation beside it emits an element, an empty comment, or a value the call site now wraps in a span of its own. The harvest that built this catalogue skipped the whole node the moment it saw a ${, so these reached a zh-CN or ms reader in English while looking, to the tooling, like they had been reviewed. The two help-dot bubbles are here for a different reason: v385 marked the bubble data-merchant-content to keep an interpolated accessibility attribute out of the v97 audit, and that marker also told the localiser to leave the product's own explanation alone. The bubble holds a literal at both call sites, so the marker is gone and the words are reviewed like any other.",
    "zh-CN": "仅就这一项服务覆盖员工的默认佣金。留空表示沿用该团队成员自己的费率；0% 表示此服务完全不计佣金。请在「编辑」中设置。",
    "ms": "Mengatasi tetapan lalai kakitangan untuk perkhidmatan ini sahaja. Kosong bermakna kadar rakan sepasukan itu sendiri digunakan; 0% bermakna tiada komisen langsung bagi perkhidmatan ini. Tetapkan di dalam Edit."
+  },
+  {
+   "source": "Of",
+   "reason": "nestly_v952 — one word the wave's own templates left stranded. 'Of' opens the what-would-have-happened-anyway sentence and is followed by a bold figure, so it is a text node of its own; at two characters and one word it fell under the harvest's floor and stayed English while the clause after it was reviewed. Translating it is only worth doing because the rest of that sentence now reads in the reader's language around it.",
+   "zh-CN": "共",
+   "ms": "Daripada"
   }
  ]
 }

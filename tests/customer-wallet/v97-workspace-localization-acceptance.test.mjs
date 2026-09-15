@@ -274,7 +274,7 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v940: +26 — the reviewed half of each split interpolated label. */
         /* nestly_v941: +56 — the reviewed half of 56 more split interpolated labels. */
     
-    assert.equal(Object.keys(generatedCopy[locale]).length,4955,`${locale} valid visible-literal inventory changed without catalog review`);
+    assert.equal(Object.keys(generatedCopy[locale]).length,4956,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
@@ -531,8 +531,23 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      in its point-system and stamp-card wordings. Each source ternary chose between two English
      WORDS inside the sentence — 'on'/'off', 'point'/'stamp' — which is the same trap as a
      grammatical 's': a value is preserved verbatim, so the switch has to be the key, not the
-     argument. 321 + 8 = 329. */
-  assert.equal(keys.length,329,'mixed-interface interpolation inventory changed without review');
+     argument. 321 + 8 = 329.
+     nestly_v952 adds 31 and closes the workspace interpolation gap: the two reversal receipts and
+     the exact-compensation proof list, the profile-scope refusal in its three shapes, the paused
+     tier warning in its four, the reward-cost profitability line, the typical-sale basis, the
+     retention programme summary (one key serving two renderers), the where-it-works default, the
+     live-offer page rule, the busiest and quietest open times, the recovery baseline and its
+     comparison sample, the expense correction header in its four shapes, and the Help guide link.
+     Three of those sets are large because the source ternary chose between two English CLAUSES,
+     not two figures — a business-wide overhead, a date nobody recorded, times there is not enough
+     data for. Each had to become a key, because a template value is frozen in the locale it was
+     rendered in: the language picker re-localises the DOM in place and reuses the values it
+     already has, so a fallback computed at render time would stay in whichever language the page
+     was first drawn in. openTopicGuide is the one place a reviewed sentence still carries an
+     English noun — the topic title is a value, and translating a value needs a mechanism this
+     table does not have — and it was already in this table from v949, serving the Help index's own
+     copy of the same link, so this wave only brought the second call site onto it. 329 + 31 = 360. */
+  assert.equal(keys.length,360,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

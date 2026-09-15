@@ -16,6 +16,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 
 const app = await readFile(new URL('../../app/app.js', import.meta.url), 'utf8');
 
@@ -27,8 +28,9 @@ const block = (start, end) => {
   return app.slice(i, j + end.length);
 };
 
-const resultSrc = block('function reversalResultHtml(kind,result){',
-  "${result.replayed?' · exact replay verified':''}.</div>`;\n}");
+/* nestly_v952: the points arm's amounts are a reviewed template now, so the slice ends at the
+   function's own closing brace rather than at a sentence that has moved into the copy table. */
+const resultSrc = block('function reversalResultHtml(kind,result){', "</div>`;\n}");
 
 /* The dialog is ~90 lines of DOM wiring; only its note is under test, so the note expression is
    lifted on its own and evaluated with the same inputs the dialog gives it. */
@@ -39,10 +41,13 @@ const money = (cents) => `$${(Number(cents || 0) / 100).toFixed(2)}`;
 const esc = (s) => String(s);
 const BRAND = { productName: 'Peekaa' };
 
-const reversalResultHtml = new Function('money', 'BRAND', 'esc',
-  `${resultSrc}; return reversalResultHtml;`)(money, BRAND, esc);
-const loyaltyNoteFor = new Function('money', 'BRAND', 'esc',
-  `return function(kind,item){${noteSrc}; return loyaltyNote;};`)(money, BRAND, esc);
+/* The real template runtime, not a stub: a stub would render every key as its own name and the
+   "points restored" assertions below would pass over a broken table. */
+const tpl = workspaceTemplateRuntime('en');
+const reversalResultHtml = new Function('money', 'BRAND', 'esc', 'workspaceTemplateHtmlV97',
+  `${resultSrc}; return reversalResultHtml;`)(money, BRAND, esc, tpl.workspaceTemplateHtmlV97);
+const loyaltyNoteFor = new Function('money', 'BRAND', 'esc', 'workspaceTemplateHtmlV97',
+  `return function(kind,item){${noteSrc}; return loyaltyNote;};`)(money, BRAND, esc, tpl.workspaceTemplateHtmlV97);
 
 test('a stamp-gift reversal is reported as the gift coming back, not as 0 points', () => {
   const html = reversalResultHtml('redemption', {
@@ -73,8 +78,10 @@ test('the POINTS arm is untouched — the stamp branch cannot swallow it', () =>
     restored_points: 50, reversed_credit_cents: 250, replayed: false
   });
   assert.match(html, /Redemption reversed/);
-  assert.match(html, /50 points restored/);
-  assert.match(html, /\$2\.50 credit compensated/);
+  /* nestly_v952: both figures ride in named value spans now — read them by name, which also
+     catches a render that swapped the points for the credit. */
+  assert.match(html, /data-workspace-value="points"[^>]*>50</);
+  assert.match(html, /data-workspace-value="credit"[^>]*>\$2\.50</);
   assert.doesNotMatch(html, /stamp/i);
 });
 
@@ -94,7 +101,7 @@ test('the dialog note describes the claim for a stamp gift and the ledger for a 
   const points = loyaltyNoteFor('redemption', { points_spent: 50, credit_cents: 500 });
   assert.match(points, /original points entry/);
   assert.match(points, /FEFO batch drain/);
-  assert.match(points, /\$5\.00 reward credit/);
+  assert.match(points, /data-workspace-value="amount"[^>]*>\$5\.00</);
 
   assert.equal(loyaltyNoteFor('sale', { points_spent: 0, credit_cents: 0 }), '',
     'a sale reversal never showed this note and still must not');

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="8e85199a5debf36b64f833a885efafa09d0bf19b0e46e5b532e2ef14d914a078"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="93d49e2c992150cd3ba3d701bd18af54a1c74c97ac8075db09c92168074bf05f"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 8e85199a5debf36b64f833a885efafa09d0bf19b0e46e5b532e2ef14d914a078</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 93d49e2c992150cd3ba3d701bd18af54a1c74c97ac8075db09c92168074bf05f</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8346,7 +8346,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
     :'access across every branch assigned to this staff account';
-  const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${esc(unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', '))} cannot be shown because ${esc(profileScopeLoadError?'the assigned-branch list could not be loaded':profileScopeLabel+' could not be confirmed')}. Peekaa does not replace missing data with zero.</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
+  const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(profileScopeLoadError?'profileFiguresBranchListUnavailable':isProfileAdmin?'profileFiguresAdminScopeUnconfirmed':'profileFiguresStaffScopeUnconfirmed',{modules:unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', ')})}</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   const staffProfileScopeNote=!isProfileAdmin&&profileScopeBranchIds.length?`<div class="card" role="note" style="margin-top:14px"><b>Staff view scope</b><p class="muted small" style="margin-top:6px">Sales, visits and appointments cover every branch assigned to this staff account. Points and rewards are business-wide customer balances. Peekaa does not mix hidden branch sales into the visible totals.</p></div>`:'';
   const correctionScopeNotice=reversalActionsUnavailable?`<div class="card" role="status" style="margin-top:14px"><b>Correction actions are temporarily unavailable</b><p class="muted small" style="margin-top:6px">Verified customer history and totals remain visible. Reverse controls are withheld until their separate safety check can be reloaded.</p><button class="btn ghost sm" id="c360CorrectionsRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   const editCustomerMarkup=canWriteClients?`<section class="card c360-edit-card" id="c360EditCard" aria-labelledby="c360EditTitle" hidden>
@@ -10109,7 +10109,7 @@ function renderHistPage(history,n,offsetV468=0){
     const card=$('expenseEditCardV285');
     if(!expense||!card)return;
     card.style.display='block';
-    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>Recorded ${esc(expense.occurred_on||'on an unrecorded date')}${expense.branch_id?'':' as business-wide overhead'}. The date and the branch stay as they are — they decide which P&amp;L this cost already sits in.</p></div>
+    card.innerHTML=`<div class="v150-soft-head"><b>Correct this expense</b><p>${workspaceTemplateHtmlV97(expense.occurred_on?(expense.branch_id?'expenseRecordedOn':'expenseRecordedOnOverhead'):(expense.branch_id?'expenseRecordedOnUnknownDate':'expenseRecordedOnUnknownDateOverhead'),{date:expense.occurred_on||''})}</p></div>
       <label for="expEditAmountV285">Amount (${esc(S.biz.currency||'SGD')})</label><input id="expEditAmountV285" type="number" min="0.01" step="0.01" value="${(Number(expense.amount_cents||0)/100).toFixed(2)}">
       <label for="expEditCategoryV285">Category</label><input id="expEditCategoryV285" value="${esc(expense.category||'')}">
       <label for="expEditNoteV285">Note</label><input id="expEditNoteV285" value="${esc(expense.note||'')}" placeholder="Why it changed">
@@ -10704,7 +10704,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'8e85199a5debf36b64f833a885efafa09d0bf19b0e46e5b532e2ef14d914a078',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'93d49e2c992150cd3ba3d701bd18af54a1c74c97ac8075db09c92168074bf05f',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

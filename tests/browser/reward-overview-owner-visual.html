@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="d9c052c3993b61b2e9c2cadf831279ff7b2768dbcb05f548bc08387741eb8357"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="14392045d1612fa1cc24cc813085da6a65c73c50e1f259d46f0e4d22c5012c56"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d9c052c3993b61b2e9c2cadf831279ff7b2768dbcb05f548bc08387741eb8357</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 14392045d1612fa1cc24cc813085da6a65c73c50e1f259d46f0e4d22c5012c56</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -7211,7 +7211,7 @@ function pruneRewardSiblingsV139(root){
     </div>
     <div class="card"><b>${draftVersionId?'Programs in this draft':'Published programs'}</b><div id="rlist" style="margin-top:8px">
       ${draftVersionId?(programs.length?programs.map(r=>`<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">
-        <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
+        <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${workspaceTemplateHtmlV97(r.goal_visits===1?'visitInDaysReward':'visitsInDaysReward',{visits:r.goal_visits,days:r.period_days,reward:r.reward_label||'Reward',value:displayReward(r)})}</div></div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'will be live':'paused'}</span>
         ${isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
           <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>`:''}</div>`).join('')
@@ -7294,7 +7294,7 @@ function pruneRewardSiblingsV139(root){
     const historyPrograms=programs.filter(r=>r.deleted_at!=null);
     const rows=retentionTabV332==='published'?publishedPrograms:historyPrograms;
     const rowHtml=r=>{
-      const meta=`<div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>`;
+      const meta=`<div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${workspaceTemplateHtmlV97(r.goal_visits===1?'visitInDaysReward':'visitsInDaysReward',{visits:r.goal_visits,days:r.period_days,reward:r.reward_label||'Reward',value:displayReward(r)})}</div></div>`;
       if(retentionTabV332==='history')return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=retentionDeletePendingV332===String(r.program_id||r.id);
       return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
@@ -13537,7 +13537,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          of restricted branches/services, or a fallback sentence — with nowhere to type. The
          placeholder IS the default, so an owner can see what a customer reads before deciding to
          change it, and clearing the box puts the default back rather than leaving a blank row. */''}
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddWhereV477">Where it works <span class="muted">(optional)</span></label><br><input id="growPointsAddWhereV477" class="grow-setup-input-v301" data-workspace-i18n maxlength="280" placeholder="${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}" value="${esc(growPointsAddDraftV326.whereItWorks||'')}"><br><span class="muted small">Leave blank and customers see &ldquo;${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}&rdquo;</span></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddWhereV477">Where it works <span class="muted">(optional)</span></label><br><input id="growPointsAddWhereV477" class="grow-setup-input-v301" data-workspace-i18n maxlength="280" placeholder="${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}" value="${esc(growPointsAddDraftV326.whereItWorks||'')}"><br><span class="muted small">${workspaceTemplateHtmlV97('leaveBlankCustomersSee',{fallback:CUSTOMER_REWARD_WHERE_DEFAULT_V477})}</span></p>
     ${/* nestly_v520 (owner, photo 2 held against photo 3: "i need you to be like stamp rewards —
          rewards needs to expiry xx days after earn (if selected)", then, asked which clock:
          "for points it would be individual gifts expiry, if dont want to set expiry dont need to
@@ -14995,7 +14995,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${/* V462 (R2a/R2b): the page used to promise "up to six current offers", which was never
                a number the system held anywhere. It now states the two rules an owner actually
                lives under: every live offer is on their page, and one of them is on Home. */''}
-          <p class="muted small" style="flex:1 1 260px;margin:0">Customers see <b>every</b> live offer on your business page — ${growOfferLiveCountV462} of ${growOfferLiveLimitV462} live now. One of them also shows on their Home screen; pick which with <b>Show on Home</b>.<br>Edit one here and the change reaches customers when you publish it.</p>
+          <p class="muted small" style="flex:1 1 260px;margin:0">Customers see <b>every</b> ${workspaceTemplateHtmlV97('liveOfferPageCountPickHome',{live:growOfferLiveCountV462,limit:growOfferLiveLimitV462})} <b>Show on Home</b>.<br>Edit one here and the change reaches customers when you publish it.</p>
           ${growOffersCanWriteV324?'<a class="btn sm grow-offers-add-v324" href="#/promotions" aria-label="Add another promotion"><span aria-hidden="true">+</span> Add</a>':''}
         </div>
         ${growOffersTabStripV324}
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'d9c052c3993b61b2e9c2cadf831279ff7b2768dbcb05f548bc08387741eb8357',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'14392045d1612fa1cc24cc813085da6a65c73c50e1f259d46f0e4d22c5012c56',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

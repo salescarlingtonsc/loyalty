@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="01d5cf1f796d3fb8586b080e9d975c2a390c49746cc112503f197b5ebc54b2b3"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c5fe762c714b5f1aa9521bda956c9ded3a622796f93e8832147c710e69201201"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 01d5cf1f796d3fb8586b080e9d975c2a390c49746cc112503f197b5ebc54b2b3</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c5fe762c714b5f1aa9521bda956c9ded3a622796f93e8832147c710e69201201</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -8109,7 +8109,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
   const profileScopeLabel=isProfileAdmin
     ?'complete business-wide access'
     :'access across every branch assigned to this staff account';
-  const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${esc(unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', '))} cannot be shown because ${esc(profileScopeLoadError?'the assigned-branch list could not be loaded':profileScopeLabel+' could not be confirmed')}. Peekaa does not replace missing data with zero.</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
+  const profileScopeNotice=unavailableProfileFacets.length?`<div class="card" role="status" style="margin-top:14px"><b>Some profile figures are unavailable</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(profileScopeLoadError?'profileFiguresBranchListUnavailable':isProfileAdmin?'profileFiguresAdminScopeUnconfirmed':'profileFiguresStaffScopeUnconfirmed',{modules:unavailableProfileFacets.map(module=>MODULES[module]?.[1]||module).join(', ')})}</p><button class="btn ghost sm" id="c360ScopeRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   const staffProfileScopeNote=!isProfileAdmin&&profileScopeBranchIds.length?`<div class="card" role="note" style="margin-top:14px"><b>Staff view scope</b><p class="muted small" style="margin-top:6px">Sales, visits and appointments cover every branch assigned to this staff account. Points and rewards are business-wide customer balances. Peekaa does not mix hidden branch sales into the visible totals.</p></div>`:'';
   const correctionScopeNotice=reversalActionsUnavailable?`<div class="card" role="status" style="margin-top:14px"><b>Correction actions are temporarily unavailable</b><p class="muted small" style="margin-top:6px">Verified customer history and totals remain visible. Reverse controls are withheld until their separate safety check can be reloaded.</p><button class="btn ghost sm" id="c360CorrectionsRetry" style="margin-top:10px">Reload profile</button></div>`:'';
   const editCustomerMarkup=canWriteClients?`<section class="card c360-edit-card" id="c360EditCard" aria-labelledby="c360EditTitle" hidden>
@@ -14034,7 +14034,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const tierRewardChipsAllowedV240=loyaltySelectionV230!=='tiers';
   const tierRows=()=>`
     <b style="display:block;margin-top:18px">${loyaltySelectionV230==='redeem'?'Tiers (optional)':'Your tiers'}</b>
-    ${tiers.length&&!loyaltyActiveV235?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${tiers.length} tier${tiers.length===1?' is':'s are'} set up, but the programme Status above is Paused. Set Status to Active, then ${draftVersionId?'Review & publish':'Save'} — that is the whole fix.</p></div>`:''}
+    ${tiers.length&&!loyaltyActiveV235?`<div class="imp-note" style="margin-top:8px"><b>Customers cannot see these tiers</b><p class="small" style="margin-top:5px">${workspaceTemplateHtmlV97(tiers.length===1?(draftVersionId?'tierIsSetUpPausedReview':'tierIsSetUpPausedSave'):(draftVersionId?'tiersAreSetUpPausedReview':'tiersAreSetUpPausedSave'),{count:tiers.length})}</p></div>`:''}
     <label for="ltb">Tier level is earned by</label><select id="ltb"${loyaltyControlDisabled}${tierBasisValueV258==='points_earned'?' aria-describedby="ltbHelpV258"':''}>
       <option value="visits" ${tierBasisValueV258==='visits'?'selected':''}>Number of visits (recommended)</option>
       <option value="spend" ${tierBasisValueV258==='spend'?'selected':''}>Lifetime spend ($)</option>
@@ -14351,7 +14351,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
               priceCents:product.retail_price_cents,costCents:product.cost_cents,
               rewardCostCents:rec.rewardCreditCents
             });
-            return `<li>If the ${esc(growMoney(rec.rewardCreditCents))} credit is fully used, ${esc(product.name||'this product')} leaves ${esc(growMoney(result.profitAfterRewardCents))} after product and reward cost${result.profitableAfterReward?'':'; review this before saving'}.</li>`;
+            return `<li>${workspaceTemplateHtmlV97(result.profitableAfterReward?'creditFullyUsedLeaves':'creditFullyUsedLeavesReview',{credit:growMoney(rec.rewardCreditCents),product:product.name||'this product',profit:growMoney(result.profitAfterRewardCents)})}</li>`;
           }).join('')}</ul>`:''}
         ${growWhyList(rec.reasoning)}
         ${growLiftNote('points')}
@@ -14381,7 +14381,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         return;
       }
       growRecBody.innerHTML=`<div style="margin-top:14px">
-          <p class="small">Based on <b>${growRecMetrics.count}</b> priced item${growRecMetrics.count===1?'':'s'}. Your typical sale is <b>${esc(growMoney(growRecMetrics.avgTicketCents))}</b>.</p>
+          <p class="small">Based on <b>${growRecMetrics.count}</b> ${workspaceTemplateHtmlV97(growRecMetrics.count===1?'pricedItemTypicalSale':'pricedItemsTypicalSale',{})} <b>${esc(growMoney(growRecMetrics.avgTicketCents))}</b>.</p>
           <label for="growRecTarget" style="margin-top:14px">How much do you want to give back? <span id="growRecTargetOut">${sectorProfile.start.toFixed(2)}%</span></label>
           <div class="row" style="align-items:center;gap:12px"><input id="growRecTarget" type="range" min="0.5" max="30" step="0.5" value="${sectorProfile.start}" style="flex:1">
             <input id="growRecTargetNumber" type="number" min="0.5" max="50" step="0.5" value="${sectorProfile.start}" aria-label="Give-back percentage" style="width:100px"></div>
@@ -15493,7 +15493,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     </div>
     <div class="card"><b>${draftVersionId?'Programs in this draft':'Published programs'}</b><div id="rlist" style="margin-top:8px">
       ${draftVersionId?(programs.length?programs.map(r=>`<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">
-        <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>
+        <div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${workspaceTemplateHtmlV97(r.goal_visits===1?'visitInDaysReward':'visitsInDaysReward',{visits:r.goal_visits,days:r.period_days,reward:r.reward_label||'Reward',value:displayReward(r)})}</div></div>
         <span class="spacer"></span><span class="pill ${r.active?'on':'off'}">${r.active?'will be live':'paused'}</span>
         ${isOwner&&!exactProgramMissing?`<button class="btn ghost sm retentionEdit" data-id="${r.program_id||r.id}">Edit</button>
           <button class="btn ghost sm retentionToggle" data-id="${r.program_id||r.id}" data-to="${!r.active}">${r.active?'Turn off':'Turn on'}</button>`:''}</div>`).join('')
@@ -15576,7 +15576,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     const historyPrograms=programs.filter(r=>r.deleted_at!=null);
     const rows=retentionTabV332==='published'?publishedPrograms:historyPrograms;
     const rowHtml=r=>{
-      const meta=`<div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${r.goal_visits} visit${r.goal_visits===1?'':'s'} in ${r.period_days} days → ${esc(r.reward_label||'Reward')}: ${displayReward(r)}</div></div>`;
+      const meta=`<div><b data-merchant-content>${esc(r.name)}</b><div class="muted small">${workspaceTemplateHtmlV97(r.goal_visits===1?'visitInDaysReward':'visitsInDaysReward',{visits:r.goal_visits,days:r.period_days,reward:r.reward_label||'Reward',value:displayReward(r)})}</div></div>`;
       if(retentionTabV332==='history')return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=retentionDeletePendingV332===String(r.program_id||r.id);
       return `<div class="row" data-retention-program-id="${esc(r.program_id||r.id)}" style="padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
@@ -19423,7 +19423,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          of restricted branches/services, or a fallback sentence — with nowhere to type. The
          placeholder IS the default, so an owner can see what a customer reads before deciding to
          change it, and clearing the box puts the default back rather than leaving a blank row. */''}
-    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddWhereV477">Where it works <span class="muted">(optional)</span></label><br><input id="growPointsAddWhereV477" class="grow-setup-input-v301" data-workspace-i18n maxlength="280" placeholder="${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}" value="${esc(growPointsAddDraftV326.whereItWorks||'')}"><br><span class="muted small">Leave blank and customers see &ldquo;${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}&rdquo;</span></p>
+    <p class="grow-setup-sentence-v301"><label class="muted small" for="growPointsAddWhereV477">Where it works <span class="muted">(optional)</span></label><br><input id="growPointsAddWhereV477" class="grow-setup-input-v301" data-workspace-i18n maxlength="280" placeholder="${esc(CUSTOMER_REWARD_WHERE_DEFAULT_V477)}" value="${esc(growPointsAddDraftV326.whereItWorks||'')}"><br><span class="muted small">${workspaceTemplateHtmlV97('leaveBlankCustomersSee',{fallback:CUSTOMER_REWARD_WHERE_DEFAULT_V477})}</span></p>
     ${/* nestly_v520 (owner, photo 2 held against photo 3: "i need you to be like stamp rewards —
          rewards needs to expiry xx days after earn (if selected)", then, asked which clock:
          "for points it would be individual gifts expiry, if dont want to set expiry dont need to
@@ -20881,7 +20881,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${/* V462 (R2a/R2b): the page used to promise "up to six current offers", which was never
                a number the system held anywhere. It now states the two rules an owner actually
                lives under: every live offer is on their page, and one of them is on Home. */''}
-          <p class="muted small" style="flex:1 1 260px;margin:0">Customers see <b>every</b> live offer on your business page — ${growOfferLiveCountV462} of ${growOfferLiveLimitV462} live now. One of them also shows on their Home screen; pick which with <b>Show on Home</b>.<br>Edit one here and the change reaches customers when you publish it.</p>
+          <p class="muted small" style="flex:1 1 260px;margin:0">Customers see <b>every</b> ${workspaceTemplateHtmlV97('liveOfferPageCountPickHome',{live:growOfferLiveCountV462,limit:growOfferLiveLimitV462})} <b>Show on Home</b>.<br>Edit one here and the change reaches customers when you publish it.</p>
           ${growOffersCanWriteV324?'<a class="btn sm grow-offers-add-v324" href="#/promotions" aria-label="Add another promotion"><span aria-hidden="true">+</span> Add</a>':''}
         </div>
         ${growOffersTabStripV324}
@@ -31522,6 +31522,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'01d5cf1f796d3fb8586b080e9d975c2a390c49746cc112503f197b5ebc54b2b3',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'c5fe762c714b5f1aa9521bda956c9ded3a622796f93e8832147c710e69201201',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

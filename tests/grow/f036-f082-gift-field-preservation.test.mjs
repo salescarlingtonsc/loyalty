@@ -17,6 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {workspaceTemplateRuntime} from '../support/workspace-template-runtime.mjs';
 
 const app = await readFile(new URL('../../app/app.js', import.meta.url), 'utf8');
 
@@ -81,9 +82,14 @@ function openGridCellDraft(reward) {
 
 function renderWhereInputValue(draft) {
   const CUSTOMER_REWARD_WHERE_DEFAULT_V477 = 'Valid across all eligible services and locations.';
+  /* nestly_v952: the hint under the field names the default inside a reviewed sentence, so the
+     line needs the real template runtime — a stub would render the key name and the value check
+     below would pass over a broken table. */
   const render = new Function('esc', 'growPointsAddDraftV326', 'CUSTOMER_REWARD_WHERE_DEFAULT_V477',
+    'workspaceTemplateHtmlV97',
     `return \`${whereFieldLine.trim()}\`;`);
-  const html = render(esc, draft, CUSTOMER_REWARD_WHERE_DEFAULT_V477);
+  const html = render(esc, draft, CUSTOMER_REWARD_WHERE_DEFAULT_V477,
+    workspaceTemplateRuntime('en').workspaceTemplateHtmlV97);
   const match = html.match(/id="growPointsAddWhereV477"[^>]*\svalue="([^"]*)"/);
   assert.ok(match, 'rendered input must carry a value attribute');
   return match[1];

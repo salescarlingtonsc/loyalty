@@ -155,5 +155,8 @@ test('the workspace warns when tiers are configured but nobody can see them', ()
     'the warning fires exactly when tiers exist and the programme is not live');
   /* V230: the owner asked the paused state to name the fix, not just the fact — the warning
      now ends with the exact action ("Set Status to Active, then Review & publish / Save"). */
-  assert.match(app, /Set Status to Active, then \$\{draftVersionId\?'Review & publish':'Save'\} — that is the whole fix\./);
+  /* nestly_v952: 'Review & publish' and 'Save' are the names of two buttons, so the choice is
+     between two reviewed keys rather than between two English words handed to one. */
+  assert.match(app, /draftVersionId\?'tierIsSetUpPausedReview':'tierIsSetUpPausedSave'/);
+  assert.match(app, /draftVersionId\?'tiersAreSetUpPausedReview':'tiersAreSetUpPausedSave'/);
 });
