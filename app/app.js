@@ -20396,7 +20396,7 @@ function selfServeStartErrorTextV770(error){
   if(text.includes('plan is not available'))return 'That billing cycle is not available right now. Choose the other cycle, or contact Peekaa support.';
   if(text.includes('valid owner, business, plan'))return 'Fill in your full name, business name and workspace address, then try again.';
   if(!error)return 'The setup was not saved. Try again; if it repeats, contact Peekaa support.';
-  return `The setup was not saved: ${String(error.message||'unknown error')}.`;
+  return `${error.message?workspaceTemplateTextV97('theSetupWasNotSavedReason',{reason:String(error.message)}):workspaceTemplateTextV97('theSetupWasNotSavedUnknown',{})}`;
 }
 function renderOnboard(){
   const setupEpoch=++businessSetupRenderEpoch;
@@ -23552,6 +23552,72 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   switchesOffOnUnnamed:Object.freeze({en:"{v1} switches off on your next billing date",'zh-CN':"{v1} 将于下一个结算日关闭",ms:"{v1} dimatikan pada tarikh pengebilan anda yang seterusnya"}),
   switchesOffKeepItOnAndNamed:Object.freeze({en:"Switches off {named}. Keep it on and it renews with your plan.",'zh-CN':"将于 {named} 关闭。保持开启，它就会随您的方案一起续订。",ms:"Dimatikan pada {named}. Kekalkan ia dihidupkan dan ia diperbaharui bersama pelan anda."}),
   switchesOffKeepItOnAndUnnamed:Object.freeze({en:"Switches off at renewal. Keep it on and it renews with your plan.",'zh-CN':"将在续订时关闭。保持开启，它就会随您的方案一起续订。",ms:"Dimatikan pada pembaharuan. Kekalkan ia dihidupkan dan ia diperbaharui bersama pelan anda."}),
+  /* nestly_v961: the last of the sentences this app ASSEMBLED in JS. Each one was a template
+     literal whose English words sat between the values, so the walker saw a node it could not
+     key and the owner read half a sentence in 中文. Where the slot carries a word that itself
+     inflects — a plural, a date that may be absent — the call site picks between named variants
+     rather than interpolating an English noun, because a value is preserved verbatim and would
+     have survived into the Chinese. */
+  branchIncludedInPlanBillableOne:Object.freeze({en:"{total} branch · {included} included in your plan · {billable} billable",'zh-CN':"{total} 家分店 · 方案内含 {included} 家 · {billable} 家需付费",ms:"{total} cawangan · {included} termasuk dalam pelan anda · {billable} boleh dicaj"}),
+  branchIncludedInPlanBillableMany:Object.freeze({en:"{total} branches · {included} included in your plan · {billable} billable",'zh-CN':"{total} 家分店 · 方案内含 {included} 家 · {billable} 家需付费",ms:"{total} cawangan · {included} termasuk dalam pelan anda · {billable} boleh dicaj"}),
+  topCustomerEqualsShareOfKnownRevenueOne:Object.freeze({en:"Top {count} customer = {pct}% of known revenue",'zh-CN':"最重要的 {count} 位顾客 = 已知营收的 {pct}%",ms:"{count} pelanggan teratas = {pct}% daripada hasil yang diketahui"}),
+  topCustomerEqualsShareOfKnownRevenueMany:Object.freeze({en:"Top {count} customers = {pct}% of known revenue",'zh-CN':"最重要的 {count} 位顾客 = 已知营收的 {pct}%",ms:"{count} pelanggan teratas = {pct}% daripada hasil yang diketahui"}),
+  regularOverdueTheirUsualVisitOne:Object.freeze({en:"{count} regular is overdue their usual visit.",'zh-CN':"{count} 位常客已超过通常的到访间隔。",ms:"{count} pelanggan tetap sudah lewat daripada lawatan biasa mereka."}),
+  regularOverdueTheirUsualVisitMany:Object.freeze({en:"{count} regulars are overdue their usual visit.",'zh-CN':"{count} 位常客已超过通常的到访间隔。",ms:"{count} pelanggan tetap sudah lewat daripada lawatan biasa mereka."}),
+  bringBackListHeaderOne:Object.freeze({en:"Bring-back list — {campaign} ({count} customer)\n{brand} does not message customers automatically. These customers are ready to contact manually on WhatsApp.",'zh-CN':"挽回名单 — {campaign}（{count} 位顾客）\n{brand} 不会自动给顾客发消息。这些顾客可以由您在 WhatsApp 上手动联系。",ms:"Senarai bawa balik — {campaign} ({count} pelanggan)\n{brand} tidak menghantar mesej kepada pelanggan secara automatik. Pelanggan ini sedia untuk dihubungi secara manual di WhatsApp."}),
+  bringBackListHeaderMany:Object.freeze({en:"Bring-back list — {campaign} ({count} customers)\n{brand} does not message customers automatically. These customers are ready to contact manually on WhatsApp.",'zh-CN':"挽回名单 — {campaign}（{count} 位顾客）\n{brand} 不会自动给顾客发消息。这些顾客可以由您在 WhatsApp 上手动联系。",ms:"Senarai bawa balik — {campaign} ({count} pelanggan)\n{brand} tidak menghantar mesej kepada pelanggan secara automatik. Pelanggan ini sedia untuk dihubungi secara manual di WhatsApp."}),
+  percentOffYourVisit:Object.freeze({en:"{percent}% off your visit",'zh-CN':"本次到访享 {percent}% 折扣",ms:"Diskaun {percent}% untuk lawatan anda"}),
+  youStopPayingForThisBranch:Object.freeze({en:"You stop paying {amount} for this branch.",'zh-CN':"您将不再为这家分店支付 {amount}。",ms:"Anda berhenti membayar {amount} untuk cawangan ini."}),
+  roughEstimateAboutPerMonth:Object.freeze({en:"Rough estimate: about {amount} per month",'zh-CN':"粗略估算：每月约 {amount}",ms:"Anggaran kasar: kira-kira {amount} sebulan"}),
+  turnOnForCustomers:Object.freeze({en:"Turn {name} on for customers?",'zh-CN':"为顾客开启{name}吗？",ms:"Hidupkan {name} untuk pelanggan?"}),
+  nothingWasChanged:Object.freeze({en:"Nothing was changed.",'zh-CN':"没有任何内容被更改。",ms:"Tiada apa-apa yang diubah."}),
+  nothingWasPublished:Object.freeze({en:"Nothing was published.",'zh-CN':"没有任何内容被发布。",ms:"Tiada apa-apa yang diterbitkan."}),
+  theSetupWasNotSavedReason:Object.freeze({en:"The setup was not saved: {reason}.",'zh-CN':"设置未能保存：{reason}。",ms:"Persediaan tidak disimpan: {reason}."}),
+  theSetupWasNotSavedUnknown:Object.freeze({en:"The setup was not saved: unknown error.",'zh-CN':"设置未能保存：未知错误。",ms:"Persediaan tidak disimpan: ralat tidak diketahui."}),
+  stampsMustBeAPositiveNumber:Object.freeze({en:"Stamps must be a positive number.",'zh-CN':"印花数必须是正数。",ms:"Setem mestilah nombor positif."}),
+  pointsMustBeAPositiveNumber:Object.freeze({en:"Points must be a positive number.",'zh-CN':"积分必须是正数。",ms:"Mata mestilah nombor positif."}),
+  stampCardProgrammeNotFound:Object.freeze({en:"The stamp card programme could not be found. Reload and try again.",'zh-CN':"找不到印花卡方案。请重新载入后再试。",ms:"Program kad setem tidak dijumpai. Muat semula dan cuba lagi."}),
+  pointsProgrammeNotFound:Object.freeze({en:"The points programme could not be found. Reload and try again.",'zh-CN':"找不到积分方案。请重新载入后再试。",ms:"Program mata tidak dijumpai. Muat semula dan cuba lagi."}),
+  thisIsBusinessAboutYourAppointment:Object.freeze({en:"This is {business} about your appointment.",'zh-CN':"这里是{business}，关于您的预约。",ms:"Ini {business} mengenai temu janji anda."}),
+  thisIsTheTeamAboutYourAppointment:Object.freeze({en:"This is the team about your appointment.",'zh-CN':"这里是本店团队，关于您的预约。",ms:"Ini pasukan kami mengenai temu janji anda."}),
+  recordedCurrentBalancePoints:Object.freeze({en:"Recorded — current balance: {balance} points.",'zh-CN':"已记录 — 当前余额：{balance} 积分。",ms:"Direkodkan — baki semasa: {balance} mata."}),
+  recordedCurrentBalanceStamps:Object.freeze({en:"Recorded — current balance: {balance} stamps.",'zh-CN':"已记录 — 当前余额：{balance} 张印花。",ms:"Direkodkan — baki semasa: {balance} setem."}),
+  nowOfferedForPoints:Object.freeze({en:"now offered for {cost} points",'zh-CN':"现在需 {cost} 积分兑换",ms:"kini ditawarkan dengan {cost} mata"}),
+  nowOfferedForStamps:Object.freeze({en:"now offered for {cost} stamps",'zh-CN':"现在需 {cost} 张印花兑换",ms:"kini ditawarkan dengan {cost} setem"}),
+  publishedSwitchNotAppliedRetryJustTheSwitch:Object.freeze({en:"Published. The programme switch could not be applied — {reason} Press Publish now to retry just the switch.",'zh-CN':"已发布。方案切换未能应用 — {reason} 请按「立即发布」只重试这个切换。",ms:"Diterbitkan. Suis program tidak dapat digunakan — {reason} Tekan Terbitkan sekarang untuk mencuba semula suis itu sahaja."}),
+  theDraftCouldNotBeReRead:Object.freeze({en:"the draft could not be re-read.",'zh-CN':"无法重新读取草稿。",ms:"draf tidak dapat dibaca semula."}),
+  tryAgainReason:Object.freeze({en:"try again.",'zh-CN':"请再试一次。",ms:"cuba lagi."}),
+  birthdayWindowOneBeforeOneAfter:Object.freeze({en:"from {before} day before to {after} day after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
+  birthdayWindowOneBeforeManyAfter:Object.freeze({en:"from {before} day before to {after} days after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
+  birthdayWindowManyBeforeOneAfter:Object.freeze({en:"from {before} days before to {after} day after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
+  birthdayWindowManyBeforeManyAfter:Object.freeze({en:"from {before} days before to {after} days after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
+  customerHoldsUnusedSessionOneOne:Object.freeze({en:"{holders} customer holds {sessions} unused session",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionOneMany:Object.freeze({en:"{holders} customer holds {sessions} unused sessions",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionManyOne:Object.freeze({en:"{holders} customers hold {sessions} unused session",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionManyMany:Object.freeze({en:"{holders} customers hold {sessions} unused sessions",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
+  newBillingStartsOnDate:Object.freeze({en:"New billing starts on {startsOn}",'zh-CN':"新的计费从 {startsOn} 开始",ms:"Pengebilan baharu bermula pada {startsOn}"}),
+  newBillingStartsOnNextDate:Object.freeze({en:"New billing starts on your next billing date",'zh-CN':"新的计费从您的下一个结算日开始",ms:"Pengebilan baharu bermula pada tarikh pengebilan anda yang seterusnya"}),
+  /* nestly_v961: the last one, and the reason it was last — TWO independent plural conditions.
+     pluralV774 takes the English noun as an argument, so a value would carry "redemptions"
+     verbatim into 中文; the call site picks one of four keys instead. */
+  redemptionsByCustomersOutOfVisitedOneOne:Object.freeze({en:"{redemptions} redemption by {customers} customer, out of {eligible} who visited.",'zh-CN':"{redemptions} \u6b21\u5151\u6362\uff0c\u7531 {customers} \u4f4d\u987e\u5ba2\u5b8c\u6210\uff0c\u5171 {eligible} \u4f4d\u987e\u5ba2\u5230\u8bbf\u3002",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedOneMany:Object.freeze({en:"{redemptions} redemption by {customers} customers, out of {eligible} who visited.",'zh-CN':"{redemptions} \u6b21\u5151\u6362\uff0c\u7531 {customers} \u4f4d\u987e\u5ba2\u5b8c\u6210\uff0c\u5171 {eligible} \u4f4d\u987e\u5ba2\u5230\u8bbf\u3002",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedManyOne:Object.freeze({en:"{redemptions} redemptions by {customers} customer, out of {eligible} who visited.",'zh-CN':"{redemptions} \u6b21\u5151\u6362\uff0c\u7531 {customers} \u4f4d\u987e\u5ba2\u5b8c\u6210\uff0c\u5171 {eligible} \u4f4d\u987e\u5ba2\u5230\u8bbf\u3002",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedManyMany:Object.freeze({en:"{redemptions} redemptions by {customers} customers, out of {eligible} who visited.",'zh-CN':"{redemptions} \u6b21\u5151\u6362\uff0c\u7531 {customers} \u4f4d\u987e\u5ba2\u5b8c\u6210\uff0c\u5171 {eligible} \u4f4d\u987e\u5ba2\u5230\u8bbf\u3002",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  /* nestly_v961: the cadence is a WORD, so it cannot be a value. billingCadenceWordV764 returns
+     'Annual' or 'Monthly' in English and a value is preserved verbatim — an owner reading 中文
+     would have had "Annual计费从 … 开始". Six keys, picked by the cadence at the call site. */
+  annualBillingStartsOnDate:Object.freeze({en:"Annual billing starts on {startsOn}",'zh-CN':"\u5e74\u5ea6\u8ba1\u8d39\u4ece {startsOn} \u5f00\u59cb",ms:"Pengebilan tahunan bermula pada {startsOn}"}),
+  monthlyBillingStartsOnDate:Object.freeze({en:"Monthly billing starts on {startsOn}",'zh-CN':"\u6708\u5ea6\u8ba1\u8d39\u4ece {startsOn} \u5f00\u59cb",ms:"Pengebilan bulanan bermula pada {startsOn}"}),
+  annualBillingStartsOnNextDate:Object.freeze({en:"Annual billing starts on your next billing date",'zh-CN':"\u5e74\u5ea6\u8ba1\u8d39\u4ece\u60a8\u7684\u4e0b\u4e00\u4e2a\u7ed3\u7b97\u65e5\u5f00\u59cb",ms:"Pengebilan tahunan bermula pada tarikh pengebilan anda yang seterusnya"}),
+  monthlyBillingStartsOnNextDate:Object.freeze({en:"Monthly billing starts on your next billing date",'zh-CN':"\u6708\u5ea6\u8ba1\u8d39\u4ece\u60a8\u7684\u4e0b\u4e00\u4e2a\u7ed3\u7b97\u65e5\u5f00\u59cb",ms:"Pengebilan bulanan bermula pada tarikh pengebilan anda yang seterusnya"}),
+  annualBillingStartsOnRenewalDate:Object.freeze({en:"Annual billing starts on the renewal date.",'zh-CN':"\u5e74\u5ea6\u8ba1\u8d39\u4ece\u7eed\u8ba2\u65e5\u5f00\u59cb\u3002",ms:"Pengebilan tahunan bermula pada tarikh pembaharuan."}),
+  monthlyBillingStartsOnRenewalDate:Object.freeze({en:"Monthly billing starts on the renewal date.",'zh-CN':"\u6708\u5ea6\u8ba1\u8d39\u4ece\u7eed\u8ba2\u65e5\u5f00\u59cb\u3002",ms:"Pengebilan bulanan bermula pada tarikh pembaharuan."}),
+  /* nestly_v961: the undo button beside the scheduled line, and the same defect one line up —
+     currentLabel.toLowerCase() is an English word ('annual'/'monthly') and a value is kept
+     verbatim. Two keys rather than one with a slot. */
+  keepAnnualBilling:Object.freeze({en:"Keep annual",'zh-CN':"\u4fdd\u6301\u5e74\u5ea6\u8ba1\u8d39",ms:"Kekalkan tahunan"}),
+  keepMonthlyBilling:Object.freeze({en:"Keep monthly",'zh-CN':"\u4fdd\u6301\u6708\u5ea6\u8ba1\u8d39",ms:"Kekalkan bulanan"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'isSwitchedOffAndKeptRecordOne',
@@ -24143,7 +24209,60 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'publishConfirmationSensitive','publishConfirmationStandard',
   /* V375: classicEligibleEarning retired with the fixed-redeem panel that was its only
      render path (owner, photo 3) — the same rule V364 applied to the growPublished* keys. */
-  'stampsEligibleEarning','referralEnabledOutcome'
+  'stampsEligibleEarning','referralEnabledOutcome',
+  /* nestly_v961: the closing wave — the last JS-assembled sentences, named so the picker
+     can reach them. */
+  'branchIncludedInPlanBillableOne',
+  'branchIncludedInPlanBillableMany',
+  'topCustomerEqualsShareOfKnownRevenueOne',
+  'topCustomerEqualsShareOfKnownRevenueMany',
+  'regularOverdueTheirUsualVisitOne',
+  'regularOverdueTheirUsualVisitMany',
+  'bringBackListHeaderOne',
+  'bringBackListHeaderMany',
+  'percentOffYourVisit',
+  'youStopPayingForThisBranch',
+  'roughEstimateAboutPerMonth',
+  'turnOnForCustomers',
+  'nothingWasChanged',
+  'nothingWasPublished',
+  'theSetupWasNotSavedReason',
+  'theSetupWasNotSavedUnknown',
+  'stampsMustBeAPositiveNumber',
+  'pointsMustBeAPositiveNumber',
+  'stampCardProgrammeNotFound',
+  'pointsProgrammeNotFound',
+  'thisIsBusinessAboutYourAppointment',
+  'thisIsTheTeamAboutYourAppointment',
+  'recordedCurrentBalancePoints',
+  'recordedCurrentBalanceStamps',
+  'nowOfferedForPoints',
+  'nowOfferedForStamps',
+  'publishedSwitchNotAppliedRetryJustTheSwitch',
+  'theDraftCouldNotBeReRead',
+  'tryAgainReason',
+  'birthdayWindowOneBeforeOneAfter',
+  'birthdayWindowOneBeforeManyAfter',
+  'birthdayWindowManyBeforeOneAfter',
+  'birthdayWindowManyBeforeManyAfter',
+  'customerHoldsUnusedSessionOneOne',
+  'customerHoldsUnusedSessionOneMany',
+  'customerHoldsUnusedSessionManyOne',
+  'customerHoldsUnusedSessionManyMany',
+  'newBillingStartsOnDate',
+  'newBillingStartsOnNextDate',
+  'redemptionsByCustomersOutOfVisitedOneOne',
+  'redemptionsByCustomersOutOfVisitedOneMany',
+  'redemptionsByCustomersOutOfVisitedManyOne',
+  'redemptionsByCustomersOutOfVisitedManyMany',
+  'annualBillingStartsOnDate',
+  'monthlyBillingStartsOnDate',
+  'annualBillingStartsOnNextDate',
+  'monthlyBillingStartsOnNextDate',
+  'annualBillingStartsOnRenewalDate',
+  'monthlyBillingStartsOnRenewalDate',
+  'keepAnnualBilling',
+  'keepMonthlyBilling',
 ]);
 const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
@@ -29059,7 +29178,7 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
   return {
     heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
-    message:duplicate?`Recorded — current balance: ${pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'} ${unitNounV430}.`
+    message:duplicate?`${workspaceTemplateTextV97(unitNounV430==='stamps'?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints',{balance:pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'})}`
       :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97('noUnitEarnedForThisPurchase',{unitNoun:unitNounV430}),
     pointsEarned,
     pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
@@ -34479,14 +34598,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(birthdayTermsSuggest)birthdayTermsSuggest.onclick=()=>{
       const kind=$('birthdayKind').value;
       const benefit=kind==='discount_pct'
-        ?`${Number($('birthdayDiscount').value)||0}% off your visit`
+        ?`${workspaceTemplateTextV97('percentOffYourVisit',{percent:Number($('birthdayDiscount').value)||0})}`
         :($('birthdayItem').value.trim()||'the birthday benefit');
       const when=birthdayMode()==='month'
         ?'during your birthday month'
         :(()=>{
           const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
           if(!before&&!after)return 'on your birthday';
-          if(before&&after)return `from ${before} day${before===1?'':'s'} before to ${after} day${after===1?'':'s'} after your birthday`;
+          if(before&&after)return `${workspaceTemplateTextV97(before===1?(after===1?'birthdayWindowOneBeforeOneAfter':'birthdayWindowOneBeforeManyAfter'):(after===1?'birthdayWindowManyBeforeOneAfter':'birthdayWindowManyBeforeManyAfter'),{before,after})}`;
           return before?workspaceTemplateTextV97(before===1?'inTheDayBeforeYourBirthdayOne':'inTheDayBeforeYourBirthdayMany',{v1:before}):workspaceTemplateTextV97(after===1?'withinDayAfterYourBirthdayOne':'withinDayAfterYourBirthdayMany',{v1:after});
         })();
       $('birthdayTerms').value=[
@@ -38439,7 +38558,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
              one, so the two click handlers below can show/hide it with the `hidden` attribute —
              no network call, no re-render, no loading flash. */''}
         <li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px"${pending?'':' hidden'}>
-          <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
+          <b>${on?`Turn ${esc(title)} off for customers?`:`${workspaceTemplateTextV97('turnOnForCustomers',{name:title})}`}</b>
           <p class="muted small" style="margin-top:6px">${on
             ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
             :losing.length
@@ -39662,7 +39781,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
-          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
+          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`${workspaceTemplateTextV97('turnOnForCustomers',{name:growPointsRowLabelV326})}`}</b>
           <p class="muted small" style="margin-top:6px">${growPointsOnV326
             ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
             :growPointsLosingV326.length
@@ -41524,7 +41643,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     if(cancelled){button.disabled=false;return;}
     if(!ok){
-      growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
+      growSwitchErrorV322=`${ownerErrorText(error)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;
       growSwitchPendingV322='';return growRerenderV322({quiet:true});
     }
     /* nestly_v429 (B3, site 1): the companion write is GONE. SA-4 — app.on_sale_recorded gates the
@@ -41872,7 +41991,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=false;
     if(!isGrowCurrent())return;
     if(cancelled)return growRerenderV322({quiet:true});
-    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
+    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;return growRerenderV322({quiet:true});}
     /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
        strand a referral denominated in the pot that just closed. The server says when it has. */
     if(data?.referral_reward_kind_now_unpayable===true)
@@ -42274,7 +42393,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const expiryRawV520=growPointsIsStampsV326?'':String($('growPointsAddExpiryV520')?.value||'').trim();
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477,expiryDays:expiryRawV520};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
-    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${workspaceTemplateTextV97(growPointsIsStampsV326?'stampsMustBeAPositiveNumber':'pointsMustBeAPositiveNumber',{})}`;return growRerenderV322({quiet:true});}
     /* nestly_v754: caught here so the owner reads a sentence instead of the server's 22023. The
        server refuses it too — this is the friendly half of the same rule, not the only one. This
        is now a redeem-by day count (see p_claim_expires_after_days below), not
@@ -42341,7 +42460,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_clear_expiry_days:false}));
     }else{
       const spineId=growPointsSpineIdV326;
-      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
+      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`${workspaceTemplateTextV97(growPointsIsStampsV326?'stampCardProgrammeNotFound':'pointsProgrammeNotFound',{})}`;return growRerenderV322({quiet:true});}
       ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
         p_description:description||null,p_image_ref:imageRef||null,
@@ -42530,7 +42649,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {ok,error:switchError}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
     growTiersBusyV331=false;
     if(!isGrowCurrent())return;
-    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
+    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;return growRerenderV322();}
     growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
     growRerenderV322();
   };
@@ -43444,7 +43563,7 @@ async function pbIssueOffers(c,ctx){
   pbOpenIssueModal(c,targets,ctx);
 }
 function pbContactListText(c,targets){
-  const header=`Bring-back list — ${c.name} (${targets.length} customer${targets.length===1?'':'s'})\n${BRAND.productName} does not message customers automatically. These customers are ready to contact manually on WhatsApp.\n\n`;
+  const header=`${workspaceTemplateTextV97(targets.length===1?'bringBackListHeaderOne':'bringBackListHeaderMany',{campaign:c.name,count:targets.length,brand:BRAND.productName})}\n\n`;
   return header+targets.map(t=>`${t.full_name||'Customer'}\t${pbWaNumber(t.phone)}`).join('\n')+'\n';
 }
 function pbResolveExposureRetryChannel(existingChannels,displayedChannel){
@@ -44139,14 +44258,14 @@ function studioEstimate(rule,agg){
     if(t==='grant_credit'||t==='apply_discount_amount'){
       const per=Number(e.amount_cents||0);
       lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('amountEachTimeThisRuleGivesIt',{amount:studioMoney(per)}),
-        est:monthly!=null?`Rough estimate: about ${studioMoney(per*monthly)} per month`:null,
+        est:monthly!=null?`${workspaceTemplateTextV97('roughEstimateAboutPerMonth',{amount:studioMoney(per*monthly)})}`:null,
         note:monthly!=null?'Based on the last 30 days of sales; real cost depends on how often this rule matches once activated.'
           :'No monthly estimate available — it depends on how often this rule matches.'});
     }else if(t==='apply_discount_pct'){
       const pct=Number(e.discount_pct||0);const avg=agg&&agg.avgBill?agg.avgBill:null;
       const perApprox=avg!=null?Math.round(avg*pct/100):null;
       lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('percentOffTheBill',{percent:pct}),
-        est:(monthly!=null&&perApprox!=null)?`Rough estimate: about ${studioMoney(perApprox*monthly)} per month`:null,
+        est:(monthly!=null&&perApprox!=null)?`${workspaceTemplateTextV97('roughEstimateAboutPerMonth',{amount:studioMoney(perApprox*monthly)})}`:null,
         note:(monthly!=null&&perApprox!=null)?workspaceTemplateTextV97('assumesAverageBillOverLast30Days',{averageBill:studioMoney(avg)})
           :'No monthly estimate available — it depends on bill size and how often this rule matches.'});
     }else{
@@ -44548,7 +44667,7 @@ async function growSetupComparisonV301(draftVersionId){
       const name=String(reward?.customer_name||reward?.name||'Reward').trim();
       changes.forEach(change=>pushChange(name,change.label,change.live,change.pending));
     });
-    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`now offered for ${reward.cost} ${diff.unit}`));
+    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`${workspaceTemplateTextV97(diff.unit==='stamps'?'nowOfferedForStamps':'nowOfferedForPoints',{cost:reward.cost})}`));
     diff.rewards.removed.forEach(reward=>pushPlain(reward.name,'no longer offered'));
   }
   if(diff.birthday?.length)diff.birthday.forEach(change=>pushChange('Birthday benefit',change.label,change.live,change.pending));
@@ -46741,7 +46860,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const {data:impact,error:impactError}=await sb.rpc('preview_publish_impact',{p_config_version_id:state.versionId});
     if(!isCurrent())return;
     if(impactError){
-      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} Nothing was published.`;
+      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} ${workspaceTemplateTextV97('nothingWasPublished',{})}`;
       return render();
     }
     const rules=Array.isArray(impact?.rules)?impact.rules:[];
@@ -46754,7 +46873,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:state.versionId});
     if(!isCurrent())return;
     if(publishError){
-      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} Nothing was published.`;
+      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} ${workspaceTemplateTextV97('nothingWasPublished',{})}`;
       return render();
     }
     /* The version just published is no longer a draft, so a further edit has to start a new
@@ -46966,7 +47085,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
         changes.forEach(change=>pushLineV295(name,change.label,change.live,change.pending));
       });
       rewardDiffV291.rewards.added.forEach(reward=>
-        pushPlainV295(reward.name,`now offered for ${reward.cost} ${unitLabelV295}`));
+        pushPlainV295(reward.name,`${workspaceTemplateTextV97(unitLabelV295==='stamps'?'nowOfferedForStamps':'nowOfferedForPoints',{cost:reward.cost})}`));
       rewardDiffV291.rewards.removed.forEach(reward=>
         pushPlainV295(reward.name,'no longer offered'));
     }
@@ -47761,7 +47880,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       if(!isCurrent())return;
       if(draftForSwitchV314.error){
         cbtn.disabled=false;
-        const readMsg=`Published. The programme switch could not be applied — ${draftForSwitchV314.error.message||'the draft could not be re-read.'} Press Publish now to retry just the switch.`;
+        const readMsg=`${workspaceTemplateTextV97('publishedSwitchNotAppliedRetryJustTheSwitch',{reason:draftForSwitchV314.error.message||workspaceTemplateTextV97('theDraftCouldNotBeReRead',{})})}`;
         $('studioPubErr').innerHTML=`<div class="err">${esc(readMsg)}</div>`;CUI.announce(readMsg,{assertive:true});return;
       }
       const switchV314=await applyPublishedProgrammeSwitchesV314({
@@ -47770,7 +47889,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       if(!isCurrent())return;
       if(!switchV314.ok){
         cbtn.disabled=false;
-        const switchMsg=`Published. The programme switch could not be applied — ${switchV314.error?.message||'try again.'} Press Publish now to retry just the switch.`;
+        const switchMsg=`${workspaceTemplateTextV97('publishedSwitchNotAppliedRetryJustTheSwitch',{reason:switchV314.error?.message||workspaceTemplateTextV97('tryAgainReason',{})})}`;
         $('studioPubErr').innerHTML=`<div class="err">${esc(switchMsg)}</div>`;CUI.announce(switchMsg,{assertive:true});return;
       }
       close();
@@ -48829,7 +48948,7 @@ function appointmentWhatsAppUrlV129(options){
   }).format(start);
   const lines=[
     customerName?`Hi ${String(customerName).trim()},`:'Hello,',
-    `This is ${String(businessName||'the team').trim()} about your appointment.`,
+    `${businessName?workspaceTemplateTextV97('thisIsBusinessAboutYourAppointment',{business:String(businessName).trim()}):workspaceTemplateTextV97('thisIsTheTeamAboutYourAppointment',{})}`,
     `Appointment: ${String(serviceName||'General visit').trim()}`,
     workspaceTemplateTextV97('whenSingaporeTime',{when:when}),
     branchName?`Where: ${String(branchName).trim()}`:null,
@@ -54431,7 +54550,7 @@ function branchBillingSentenceV280(counts){
   const total=Number(counts?.total||0),included=Number(counts?.included||0),
     billable=Number(counts?.billable||0),lapsed=Number(counts?.lapsed||0);
   const stopping=Number(counts?.stopping||0),unsubscribed=Number(counts?.unsubscribed||0);
-  return `${total} ${total===1?'branch':'branches'} · ${included} included in your plan · ${billable} billable`
+  return `${workspaceTemplateTextV97(total===1?'branchIncludedInPlanBillableOne':'branchIncludedInPlanBillableMany',{total,included,billable})}`
     +(stopping?" "+workspaceTemplateTextV97('countStoppingAtTheBillingDate',{count:stopping}):'')
     +(unsubscribed?` · ${unsubscribed} unsubscribed`:'')
     +(lapsed?` · ${lapsed} payment lapsed`:'');
@@ -56558,7 +56677,7 @@ function ownerBriefHtmlV771(brief,options){
     const sessionsV771=unusedRowsV771.reduce((total,held)=>total+held.sessions,0);
     const allValuedV771=holdersV771>0&&unusedRowsV771.every(held=>held.valueKnown);
     const unusedValueV771=unusedRowsV771.reduce((total,held)=>total+held.valueCents,0);
-    const headlineV771=`${holdersV771} customer${holdersV771===1?'':'s'} hold${holdersV771===1?'s':''} ${sessionsV771} unused session${sessionsV771===1?'':'s'}`
+    const headlineV771=`${workspaceTemplateTextV97(holdersV771===1?(sessionsV771===1?'customerHoldsUnusedSessionOneOne':'customerHoldsUnusedSessionOneMany'):(sessionsV771===1?'customerHoldsUnusedSessionManyOne':'customerHoldsUnusedSessionManyMany'),{holders:holdersV771,sessions:sessionsV771})}`
       +(allValuedV771?` worth about ${money(unusedValueV771)}`:'');
     unusedV771=`<section class="ci-brief-unused-v771" aria-labelledby="ciBriefUnusedTitleV771" style="margin-top:18px">
       ${headV771('packages','ciBriefUnusedTitleV771','Prepaid sessions still unused','Work these customers have already paid for and not yet taken.')}
@@ -56807,7 +56926,8 @@ function ownerBriefHtmlV771(brief,options){
   if(rewardsBundleV774||rewardsErrorV774){
     const rewardTotalsV774=objectV771(rewardsBundleV774?.totals)||{};
     const rewardRowsV774=listV774(rewardsBundleV774?.rewards);
-    const rewardHeadlineV774=`${pluralV774(countV771(rewardTotalsV774.redemptions),'redemption','redemptions')} by ${pluralV774(countV771(rewardTotalsV774.customers),'customer','customers')}, out of ${countV771(rewardTotalsV774.eligible_customers)} who visited.`;
+    const rewardRedemptionsV961=countV771(rewardTotalsV774.redemptions),rewardCustomersV961=countV771(rewardTotalsV774.customers);
+    const rewardHeadlineV774=workspaceTemplateTextV97(rewardRedemptionsV961===1?(rewardCustomersV961===1?'redemptionsByCustomersOutOfVisitedOneOne':'redemptionsByCustomersOutOfVisitedOneMany'):(rewardCustomersV961===1?'redemptionsByCustomersOutOfVisitedManyOne':'redemptionsByCustomersOutOfVisitedManyMany'),{redemptions:rewardRedemptionsV961,customers:rewardCustomersV961,eligible:countV771(rewardTotalsV774.eligible_customers)});
     const rewardPillV774=row=>{
       if(row.paused===true)return '<span class="pill" style="background:#F0A35B1A;color:#F0A35B;font-weight:700">Paused</span>';
       if(row.active===false)return '<span class="pill off">Off</span>';
@@ -57770,7 +57890,7 @@ function biSelectInsightsV892(model){
         ?rhythm
         :(fading>0
           ? (stake?workspaceTemplateTextV97(fading===1?'regularIsOverdueAboutAMonthOne':'regularIsOverdueAboutAMonthMany',{count:fading,v1:stake})
-            :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
+            :`${workspaceTemplateTextV97(fading===1?'regularOverdueTheirUsualVisitOne':'regularOverdueTheirUsualVisitMany',{count:fading})}`)
           :'This customer is overdue against their own visit rhythm.'),
       why2:(withheld&&stake)?workspaceTemplateTextV97('aboutMonthlyRegularSpendMayBeAtRisk',{monthlySpend:stake}):'',
       action:'',
@@ -58102,7 +58222,7 @@ function biHealthHtmlV892(model){
   if(concentration){
     rows.push({
       label:'How much you rely on your top customers',
-      value:`Top ${concentration.count} ${concentration.count===1?'customer':'customers'} = ${concentration.pct}% of known revenue`,
+      value:`${workspaceTemplateTextV97(concentration.count===1?'topCustomerEqualsShareOfKnownRevenueOne':'topCustomerEqualsShareOfKnownRevenueMany',{count:concentration.count,pct:concentration.pct})}`,
       cta:null
     });
   }
@@ -58322,7 +58442,7 @@ function biIdeasV902(model){
   const overdue=biWholeV892(biObjectV892(view.bringBack)?.overdue);
   if(overdue)add({
     text:'Call the regulars who are overdue.',
-    because:`${biPluralV892(overdue,'regular is','regulars are')} overdue their usual visit.`,
+    because:`${workspaceTemplateTextV97(overdue===1?'regularOverdueTheirUsualVisitOne':'regularOverdueTheirUsualVisitMany',{count:overdue})}`,
     cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
   });
 
@@ -62660,10 +62780,15 @@ function billingLifecycleLinesV764(billing,summary,paymentMethod){
     const period=scheduled.cadence==='annual'?'year':'month';
     const startsOn=billingDateV758(scheduled.effective_at);
     const amount=Number(scheduled.amount_cents||0);
-    out.scheduled_line=`${word||'New'} billing starts on ${startsOn||'your next billing date'}`
+    const scheduledLineKeyV961=scheduled.cadence==='annual'
+      ?(startsOn?'annualBillingStartsOnDate':'annualBillingStartsOnNextDate')
+      :scheduled.cadence==='monthly'
+        ?(startsOn?'monthlyBillingStartsOnDate':'monthlyBillingStartsOnNextDate')
+        :(startsOn?'newBillingStartsOnDate':'newBillingStartsOnNextDate');
+    out.scheduled_line=`${workspaceTemplateTextV97(scheduledLineKeyV961,{startsOn:startsOn||''})}`
       +(amount>0?` · ${moneyShortV758(amount)} / ${period}`:'');
     if(currentLabel&&currentLabel!==word){
-      out.scheduled_undo_label=`Keep ${currentLabel.toLowerCase()}`;
+      out.scheduled_undo_label=workspaceTemplateTextV97(currentLabel==='Annual'?'keepAnnualBilling':'keepMonthlyBilling',{});
       out.scheduled_undo_cadence=currentLabel==='Annual'?'annual':'monthly';
     }
   }
@@ -62690,7 +62815,7 @@ function branchSwitchOffConfirmV764(record){
   const on=String(record?.billed_until||'').trim();
   return `Switch off "${record?.branch}"${on&&on!=='—'?` on ${on}`:''}?\n\n`
     +`It keeps working until then. Not charged after.\n`
-    +(String(record?.unit_amount||'').trim()?`You stop paying ${String(record.unit_amount).trim()} for this branch.\n`:'')
+    +(String(record?.unit_amount||'').trim()?`${workspaceTemplateTextV97('youStopPayingForThisBranch',{amount:String(record.unit_amount).trim()})}\n`:'')
     +`Nothing is refunded, and its customers, sales and bookings stay in your reports.`;
 }
 /* Owner ruling 1, second half: the payments list must say WHICH branch and until WHEN. */
@@ -63409,7 +63534,7 @@ async function loadBillingConfig(){
            sub:monthlyCents?'Billed monthly':'Monthly billing is not offered',
            checked:chosen==='monthly',available:monthlyCents>0}
         ],
-        cycle_note:hasSub&&!sameCad?`${billingCadenceWordV764(chosen)} billing starts on the renewal date.`:'',
+        cycle_note:hasSub&&!sameCad?workspaceTemplateTextV97(chosen==='annual'?'annualBillingStartsOnRenewalDate':'monthlyBillingStartsOnRenewalDate',{}):'',
         capacities:ladder.map(value=>({value,label:`${workspaceTemplateHtmlV97('upToCustomerProfiles',{count:value.toLocaleString('en-SG')})}`,selected:value===selectedCapacity})),
         capacity_note:'',
         now_line:unit>0?`${effectiveText}: ${moneyShortV758(total)} / ${period}${own?'':` for ${units} ${units===1?'branch':'branches'}`}`:'',

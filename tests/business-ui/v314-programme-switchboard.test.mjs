@@ -35,6 +35,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 import { dirname, join } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -187,10 +188,16 @@ test('V314 (3) a failed switch never re-publishes an already-live version', () =
   assert.match(studioOverview, /let studioPublishedV314=false;/);
   assert.match(studioOverview, /studioPublishedV314\s*\r?\n?\s*\?\{error:null\}/);
   assert.match(reviewPublish, /'publishedSwitchNotApplied'/);
-  /* nestly_v945 converted the review-publish sentence to a named template. studioOverview raises
-     its own wording ("Press retry.") from a different code path and is still a template literal,
-     so it is still asserted as English here — and will move when that path is converted too. */
-  assert.match(studioOverview, /Published\. The programme switch could not be applied/);
+  /* nestly_v945 converted the review-publish sentence to a named template; nestly_v961 converted
+     studioOverview's own wording, which is what the comment here said would happen. The sentence
+     is no longer in the render path to grep for, so assert BOTH halves: the call site names the
+     key, and the reviewed English behind that key still warns instead of claiming success. A
+     source grep for the key alone would pass against a key that says nothing. */
+  assert.match(studioOverview, /'publishedSwitchNotAppliedRetryJustTheSwitch'/);
+  assert.match(
+    workspaceTemplateRuntime('en').WORKSPACE_TEMPLATE_COPY_V97.publishedSwitchNotAppliedRetryJustTheSwitch.en,
+    /^Published\. The programme switch could not be applied — \{reason\} Press Publish now to retry just the switch\.$/,
+  );
 });
 
 test('V314 (3) the owner Live/paused pill reads the spine, not the settings column', () => {

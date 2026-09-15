@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="260e66d8fd18ff4c65a4c1421b206dc8e537926006381892dbc509deec9780e1"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="d0e10900aec462500b33eb760fba2098d3add53e61167de4519104a496dbcf1c"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6227,7 +6227,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 260e66d8fd18ff4c65a4c1421b206dc8e537926006381892dbc509deec9780e1</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d0e10900aec462500b33eb760fba2098d3add53e61167de4519104a496dbcf1c</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -9256,7 +9256,7 @@ async function growSetupComparisonV301(draftVersionId){
       const name=String(reward?.customer_name||reward?.name||'Reward').trim();
       changes.forEach(change=>pushChange(name,change.label,change.live,change.pending));
     });
-    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`now offered for ${reward.cost} ${diff.unit}`));
+    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`${workspaceTemplateTextV97(diff.unit==='stamps'?'nowOfferedForStamps':'nowOfferedForPoints',{cost:reward.cost})}`));
     diff.rewards.removed.forEach(reward=>pushPlain(reward.name,'no longer offered'));
   }
   if(diff.birthday?.length)diff.birthday.forEach(change=>pushChange('Birthday benefit',change.label,change.live,change.pending));
@@ -11449,7 +11449,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const {data:impact,error:impactError}=await sb.rpc('preview_publish_impact',{p_config_version_id:state.versionId});
     if(!isCurrent())return;
     if(impactError){
-      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} Nothing was published.`;
+      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} ${workspaceTemplateTextV97('nothingWasPublished',{})}`;
       return render();
     }
     const rules=Array.isArray(impact?.rules)?impact.rules:[];
@@ -11462,7 +11462,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:state.versionId});
     if(!isCurrent())return;
     if(publishError){
-      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} Nothing was published.`;
+      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} ${workspaceTemplateTextV97('nothingWasPublished',{})}`;
       return render();
     }
     /* The version just published is no longer a draft, so a further edit has to start a new
@@ -12530,7 +12530,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
              one, so the two click handlers below can show/hide it with the `hidden` attribute —
              no network call, no re-render, no loading flash. */''}
         <li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px"${pending?'':' hidden'}>
-          <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
+          <b>${on?`Turn ${esc(title)} off for customers?`:`${workspaceTemplateTextV97('turnOnForCustomers',{name:title})}`}</b>
           <p class="muted small" style="margin-top:6px">${on
             ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
             :losing.length
@@ -13753,7 +13753,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
-          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
+          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`${workspaceTemplateTextV97('turnOnForCustomers',{name:growPointsRowLabelV326})}`}</b>
           <p class="muted small" style="margin-top:6px">${growPointsOnV326
             ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
             :growPointsLosingV326.length
@@ -15615,7 +15615,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     if(cancelled){button.disabled=false;return;}
     if(!ok){
-      growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
+      growSwitchErrorV322=`${ownerErrorText(error)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;
       growSwitchPendingV322='';return growRerenderV322({quiet:true});
     }
     /* nestly_v429 (B3, site 1): the companion write is GONE. SA-4 — app.on_sale_recorded gates the
@@ -15963,7 +15963,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=false;
     if(!isGrowCurrent())return;
     if(cancelled)return growRerenderV322({quiet:true});
-    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
+    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;return growRerenderV322({quiet:true});}
     /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
        strand a referral denominated in the pot that just closed. The server says when it has. */
     if(data?.referral_reward_kind_now_unpayable===true)
@@ -16365,7 +16365,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const expiryRawV520=growPointsIsStampsV326?'':String($('growPointsAddExpiryV520')?.value||'').trim();
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477,expiryDays:expiryRawV520};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
-    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${workspaceTemplateTextV97(growPointsIsStampsV326?'stampsMustBeAPositiveNumber':'pointsMustBeAPositiveNumber',{})}`;return growRerenderV322({quiet:true});}
     /* nestly_v754: caught here so the owner reads a sentence instead of the server's 22023. The
        server refuses it too — this is the friendly half of the same rule, not the only one. This
        is now a redeem-by day count (see p_claim_expires_after_days below), not
@@ -16432,7 +16432,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_clear_expiry_days:false}));
     }else{
       const spineId=growPointsSpineIdV326;
-      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
+      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`${workspaceTemplateTextV97(growPointsIsStampsV326?'stampCardProgrammeNotFound':'pointsProgrammeNotFound',{})}`;return growRerenderV322({quiet:true});}
       ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
         p_description:description||null,p_image_ref:imageRef||null,
@@ -16621,7 +16621,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {ok,error:switchError}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
     growTiersBusyV331=false;
     if(!isGrowCurrent())return;
-    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
+    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;return growRerenderV322();}
     growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
     growRerenderV322();
   };
@@ -17243,7 +17243,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'260e66d8fd18ff4c65a4c1421b206dc8e537926006381892dbc509deec9780e1',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'d0e10900aec462500b33eb760fba2098d3add53e61167de4519104a496dbcf1c',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

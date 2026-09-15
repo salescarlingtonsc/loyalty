@@ -3,6 +3,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+
+/* nestly_v961: branchBillingSentenceV280 now renders through a named template, so the sentence
+   follows the owner's language instead of being assembled from English. The harness builds its
+   renderer with `new Function`, where a free identifier resolves against globalThis — install the
+   REAL runtime there, never a stub: a stub returns '' for an unknown key and would turn a broken
+   sentence into a passing test. */
+installWorkspaceTemplateGlobals('en');
 
 /* V280 — two reports from the live bar tenant Bistro 999.
    1. "why when add branch = pay for 2 branch? i only added 1 new branch - the older one is

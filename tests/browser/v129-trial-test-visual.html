@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="ea055730813d665146bcdde9ca202af39b0407e63f2b7740df230c25c6c6d6a4"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="0e5f9db927eba9af68e0aa1a661e41a769f1019c96a015f73b9e882241f16251"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6228,7 +6228,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ea055730813d665146bcdde9ca202af39b0407e63f2b7740df230c25c6c6d6a4</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 0e5f9db927eba9af68e0aa1a661e41a769f1019c96a015f73b9e882241f16251</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -9036,7 +9036,7 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
   return {
     heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
-    message:duplicate?`Recorded — current balance: ${pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'} ${unitNounV430}.`
+    message:duplicate?`${workspaceTemplateTextV97(unitNounV430==='stamps'?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints',{balance:pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'})}`
       :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97('noUnitEarnedForThisPurchase',{unitNoun:unitNounV430}),
     pointsEarned,
     pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
@@ -14456,14 +14456,14 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(birthdayTermsSuggest)birthdayTermsSuggest.onclick=()=>{
       const kind=$('birthdayKind').value;
       const benefit=kind==='discount_pct'
-        ?`${Number($('birthdayDiscount').value)||0}% off your visit`
+        ?`${workspaceTemplateTextV97('percentOffYourVisit',{percent:Number($('birthdayDiscount').value)||0})}`
         :($('birthdayItem').value.trim()||'the birthday benefit');
       const when=birthdayMode()==='month'
         ?'during your birthday month'
         :(()=>{
           const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
           if(!before&&!after)return 'on your birthday';
-          if(before&&after)return `from ${before} day${before===1?'':'s'} before to ${after} day${after===1?'':'s'} after your birthday`;
+          if(before&&after)return `${workspaceTemplateTextV97(before===1?(after===1?'birthdayWindowOneBeforeOneAfter':'birthdayWindowOneBeforeManyAfter'):(after===1?'birthdayWindowManyBeforeOneAfter':'birthdayWindowManyBeforeManyAfter'),{before,after})}`;
           return before?workspaceTemplateTextV97(before===1?'inTheDayBeforeYourBirthdayOne':'inTheDayBeforeYourBirthdayMany',{v1:before}):workspaceTemplateTextV97(after===1?'withinDayAfterYourBirthdayOne':'withinDayAfterYourBirthdayMany',{v1:after});
         })();
       $('birthdayTerms').value=[
@@ -18416,7 +18416,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
              one, so the two click handlers below can show/hide it with the `hidden` attribute —
              no network call, no re-render, no loading flash. */''}
         <li class="imp-note" data-grow-switchconfirm-v322="${esc(kind)}" style="margin-top:8px"${pending?'':' hidden'}>
-          <b>${on?`Turn ${esc(title)} off for customers?`:`Turn ${esc(title)} on for customers?`}</b>
+          <b>${on?`Turn ${esc(title)} off for customers?`:`${workspaceTemplateTextV97('turnOnForCustomers',{name:title})}`}</b>
           <p class="muted small" style="margin-top:6px">${on
             ?`Customers stop earning and stop being able to claim from ${esc(title)} straight away. Everything you have set up stays saved and comes back when you turn it on again.`
             :losing.length
@@ -19639,7 +19639,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
-          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
+          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`${workspaceTemplateTextV97('turnOnForCustomers',{name:growPointsRowLabelV326})}`}</b>
           <p class="muted small" style="margin-top:6px">${growPointsOnV326
             ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
             :growPointsLosingV326.length
@@ -21501,7 +21501,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     if(!isGrowCurrent())return;
     if(cancelled){button.disabled=false;return;}
     if(!ok){
-      growSwitchErrorV322=`${ownerErrorText(error)} Nothing was changed.`;
+      growSwitchErrorV322=`${ownerErrorText(error)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;
       growSwitchPendingV322='';return growRerenderV322({quiet:true});
     }
     /* nestly_v429 (B3, site 1): the companion write is GONE. SA-4 — app.on_sale_recorded gates the
@@ -21849,7 +21849,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     growPointsBusyV326=false;
     if(!isGrowCurrent())return;
     if(cancelled)return growRerenderV322({quiet:true});
-    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} Nothing was changed.`;return growRerenderV322({quiet:true});}
+    if(!ok){growPointsErrorV326=`${ownerErrorText(error)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;return growRerenderV322({quiet:true});}
     /* nestly_v429 (B5): turning one pot on turns the other off (R2 exclusivity), so this CTA can
        strand a referral denominated in the pot that just closed. The server says when it has. */
     if(data?.referral_reward_kind_now_unpayable===true)
@@ -22251,7 +22251,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const expiryRawV520=growPointsIsStampsV326?'':String($('growPointsAddExpiryV520')?.value||'').trim();
     growPointsAddDraftV326={name,points:pointsField?.value||'',description,endsOn:endsOnV472,whereItWorks:whereV477,expiryDays:expiryRawV520};
     if(!name){growPointsErrorV326='Name the gift customers will see.';return growRerenderV322({quiet:true});}
-    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${growPointsIsStampsV326?'Stamps':'Points'} must be a positive number.`;return growRerenderV322({quiet:true});}
+    if(!Number.isFinite(points)||points<=0){growPointsErrorV326=`${workspaceTemplateTextV97(growPointsIsStampsV326?'stampsMustBeAPositiveNumber':'pointsMustBeAPositiveNumber',{})}`;return growRerenderV322({quiet:true});}
     /* nestly_v754: caught here so the owner reads a sentence instead of the server's 22023. The
        server refuses it too — this is the friendly half of the same rule, not the only one. This
        is now a redeem-by day count (see p_claim_expires_after_days below), not
@@ -22318,7 +22318,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         p_clear_expiry_days:false}));
     }else{
       const spineId=growPointsSpineIdV326;
-      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`The ${growPointsIsStampsV326?'stamp card':'points'} programme could not be found. Reload and try again.`;return growRerenderV322({quiet:true});}
+      if(!spineId){growPointsBusyV326=false;growPointsErrorV326=`${workspaceTemplateTextV97(growPointsIsStampsV326?'stampCardProgrammeNotFound':'pointsProgrammeNotFound',{})}`;return growRerenderV322({quiet:true});}
       ({data:saveResV433,error}=await sb.rpc('business_create_reward_v326',{
         p_business:S.biz.id,p_programme:spineId,p_name:name,p_points:points,p_credit_cents:0,
         p_description:description||null,p_image_ref:imageRef||null,
@@ -22507,7 +22507,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const {ok,error:switchError}=await writeProgrammeSwitchesV314(S.biz.id,set,{paused:false,key:crypto.randomUUID()});
     growTiersBusyV331=false;
     if(!isGrowCurrent())return;
-    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} Nothing was changed.`;return growRerenderV322();}
+    if(!ok){growTiersErrorV331=`${ownerErrorText(switchError)} ${workspaceTemplateTextV97('nothingWasChanged',{})}`;return growRerenderV322();}
     growTiersAddOpenV331='form';growTiersAddDraftV331={name:'',threshold:'',perkNote:'',benefits:[]};
     growRerenderV322();
   };
@@ -23421,7 +23421,7 @@ async function pbIssueOffers(c,ctx){
   pbOpenIssueModal(c,targets,ctx);
 }
 function pbContactListText(c,targets){
-  const header=`Bring-back list — ${c.name} (${targets.length} customer${targets.length===1?'':'s'})\n${BRAND.productName} does not message customers automatically. These customers are ready to contact manually on WhatsApp.\n\n`;
+  const header=`${workspaceTemplateTextV97(targets.length===1?'bringBackListHeaderOne':'bringBackListHeaderMany',{campaign:c.name,count:targets.length,brand:BRAND.productName})}\n\n`;
   return header+targets.map(t=>`${t.full_name||'Customer'}\t${pbWaNumber(t.phone)}`).join('\n')+'\n';
 }
 function pbResolveExposureRetryChannel(existingChannels,displayedChannel){
@@ -24116,14 +24116,14 @@ function studioEstimate(rule,agg){
     if(t==='grant_credit'||t==='apply_discount_amount'){
       const per=Number(e.amount_cents||0);
       lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('amountEachTimeThisRuleGivesIt',{amount:studioMoney(per)}),
-        est:monthly!=null?`Rough estimate: about ${studioMoney(per*monthly)} per month`:null,
+        est:monthly!=null?`${workspaceTemplateTextV97('roughEstimateAboutPerMonth',{amount:studioMoney(per*monthly)})}`:null,
         note:monthly!=null?'Based on the last 30 days of sales; real cost depends on how often this rule matches once activated.'
           :'No monthly estimate available — it depends on how often this rule matches.'});
     }else if(t==='apply_discount_pct'){
       const pct=Number(e.discount_pct||0);const avg=agg&&agg.avgBill?agg.avgBill:null;
       const perApprox=avg!=null?Math.round(avg*pct/100):null;
       lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('percentOffTheBill',{percent:pct}),
-        est:(monthly!=null&&perApprox!=null)?`Rough estimate: about ${studioMoney(perApprox*monthly)} per month`:null,
+        est:(monthly!=null&&perApprox!=null)?`${workspaceTemplateTextV97('roughEstimateAboutPerMonth',{amount:studioMoney(perApprox*monthly)})}`:null,
         note:(monthly!=null&&perApprox!=null)?workspaceTemplateTextV97('assumesAverageBillOverLast30Days',{averageBill:studioMoney(avg)})
           :'No monthly estimate available — it depends on bill size and how often this rule matches.'});
     }else{
@@ -24525,7 +24525,7 @@ async function growSetupComparisonV301(draftVersionId){
       const name=String(reward?.customer_name||reward?.name||'Reward').trim();
       changes.forEach(change=>pushChange(name,change.label,change.live,change.pending));
     });
-    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`now offered for ${reward.cost} ${diff.unit}`));
+    diff.rewards.added.forEach(reward=>pushPlain(reward.name,`${workspaceTemplateTextV97(diff.unit==='stamps'?'nowOfferedForStamps':'nowOfferedForPoints',{cost:reward.cost})}`));
     diff.rewards.removed.forEach(reward=>pushPlain(reward.name,'no longer offered'));
   }
   if(diff.birthday?.length)diff.birthday.forEach(change=>pushChange('Birthday benefit',change.label,change.live,change.pending));
@@ -26718,7 +26718,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const {data:impact,error:impactError}=await sb.rpc('preview_publish_impact',{p_config_version_id:state.versionId});
     if(!isCurrent())return;
     if(impactError){
-      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} Nothing was published.`;
+      state.error=impactError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(impactError)} ${workspaceTemplateTextV97('nothingWasPublished',{})}`;
       return render();
     }
     const rules=Array.isArray(impact?.rules)?impact.rules:[];
@@ -26731,7 +26731,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const {error:publishError}=await sb.rpc('publish_loyalty_config',{p_version:state.versionId});
     if(!isCurrent())return;
     if(publishError){
-      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} Nothing was published.`;
+      state.error=publishError.code==='42501'?'Only the owner can publish.':`${ownerErrorText(publishError)} ${workspaceTemplateTextV97('nothingWasPublished',{})}`;
       return render();
     }
     /* The version just published is no longer a draft, so a further edit has to start a new
@@ -26943,7 +26943,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
         changes.forEach(change=>pushLineV295(name,change.label,change.live,change.pending));
       });
       rewardDiffV291.rewards.added.forEach(reward=>
-        pushPlainV295(reward.name,`now offered for ${reward.cost} ${unitLabelV295}`));
+        pushPlainV295(reward.name,`${workspaceTemplateTextV97(unitLabelV295==='stamps'?'nowOfferedForStamps':'nowOfferedForPoints',{cost:reward.cost})}`));
       rewardDiffV291.rewards.removed.forEach(reward=>
         pushPlainV295(reward.name,'no longer offered'));
     }
@@ -27738,7 +27738,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       if(!isCurrent())return;
       if(draftForSwitchV314.error){
         cbtn.disabled=false;
-        const readMsg=`Published. The programme switch could not be applied — ${draftForSwitchV314.error.message||'the draft could not be re-read.'} Press Publish now to retry just the switch.`;
+        const readMsg=`${workspaceTemplateTextV97('publishedSwitchNotAppliedRetryJustTheSwitch',{reason:draftForSwitchV314.error.message||workspaceTemplateTextV97('theDraftCouldNotBeReRead',{})})}`;
         $('studioPubErr').innerHTML=`<div class="err">${esc(readMsg)}</div>`;CUI.announce(readMsg,{assertive:true});return;
       }
       const switchV314=await applyPublishedProgrammeSwitchesV314({
@@ -27747,7 +27747,7 @@ async function studioDraftEditor(routeMain,isCurrent,draftVersionId){
       if(!isCurrent())return;
       if(!switchV314.ok){
         cbtn.disabled=false;
-        const switchMsg=`Published. The programme switch could not be applied — ${switchV314.error?.message||'try again.'} Press Publish now to retry just the switch.`;
+        const switchMsg=`${workspaceTemplateTextV97('publishedSwitchNotAppliedRetryJustTheSwitch',{reason:switchV314.error?.message||workspaceTemplateTextV97('tryAgainReason',{})})}`;
         $('studioPubErr').innerHTML=`<div class="err">${esc(switchMsg)}</div>`;CUI.announce(switchMsg,{assertive:true});return;
       }
       close();
@@ -31201,7 +31201,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
   }).format(start);
   const lines=[
     customerName?`Hi ${String(customerName).trim()},`:'Hello,',
-    `This is ${String(businessName||'the team').trim()} about your appointment.`,
+    `${businessName?workspaceTemplateTextV97('thisIsBusinessAboutYourAppointment',{business:String(businessName).trim()}):workspaceTemplateTextV97('thisIsTheTeamAboutYourAppointment',{})}`,
     `Appointment: ${String(serviceName||'General visit').trim()}`,
     workspaceTemplateTextV97('whenSingaporeTime',{when:when}),
     branchName?`Where: ${String(branchName).trim()}`:null,
@@ -31554,6 +31554,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'ea055730813d665146bcdde9ca202af39b0407e63f2b7740df230c25c6c6d6a4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'0e5f9db927eba9af68e0aa1a661e41a769f1019c96a015f73b9e882241f16251',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

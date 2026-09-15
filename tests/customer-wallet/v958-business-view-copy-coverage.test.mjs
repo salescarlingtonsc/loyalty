@@ -141,7 +141,13 @@ test('single-word labels are translated — the class every two-word harvest ski
    two INDEPENDENT plural conditions, which need four keys rather than two. Nine shapes the scan
    was counting are not copy at all — a localStorage key, three CSS selectors, three PostgREST
    strings, a storage URL, and one window that opened mid-expression — and are in the register. */
-const JS_BUILT_SENTENCES_REMAINING_V958 = 21;
+/* nestly_v961 closed the class. The last 21 were the ones a single pair could not express: four
+   sentences carrying two INDEPENDENT plural conditions (four keys each, chosen by a nested ternary
+   at the call site, because pluralV774 takes the English noun as an ARGUMENT and a value is
+   preserved verbatim — translating the noun alone would have left Chinese mid-English); two
+   multi-line sentences whose \n is part of the copy; and the rest single-shape. Zero is now the
+   line: any new English sentence assembled in JS fails here on the next commit. */
+const JS_BUILT_SENTENCES_REMAINING_V958 = 0;
 
 test('sentences built in JS are counted, and the count only ever falls', () => {
   const found = jsBuiltSentences();
