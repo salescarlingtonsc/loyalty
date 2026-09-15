@@ -8837,6 +8837,13 @@
      here, next to the schedule that says when the firm is billed and the promo that says what
      comes off. Provider-billed firms keep using the operations screen; this card stays out of
      their way. */
+  /* nestly_v969: platform_get_prospect_detail_v86 returns the prospect and the COMPANY as
+     separate keys, and only the company carries the trading name. v968 read it off the prospect,
+     which titled every manual invoice "Unnamed firm". */
+  function firmDisplayNameV969(detail){
+    const company=asObject(asObject(detail).company);
+    return company.company_name||company.legal_name||company.trading_name||pt('Unnamed firm');
+  }
   function firmInvoiceCardHtml(schedule,CUI){
     const s=asObject(schedule);
     if(!s.exists||String(s.provider||'')!=='manual')return '';
@@ -9061,7 +9068,8 @@
         raiseInvoice.disabled=true;
         try{
           await manualInvoiceModal(
-            {business_id:businessId,business_name:prospect.company_name||pt('Unnamed firm')},
+            /* the firm's name is on detail.company (sme_companies), not on the prospect row */
+            {business_id:businessId,business_name:firmDisplayNameV969(detail)},
             context,
             {onSaved:async()=>{await reloadPromo()}}
           );
