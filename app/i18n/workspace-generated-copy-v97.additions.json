@@ -9732,6 +9732,666 @@
       "reason": "nestly_v928 — the Record sale screen, whole. This is the screen front-line staff live in, and the one the UX plan writes for: team members who may read little English. It was still almost entirely English under a Chinese workspace. Translated in one pass so no half of a bill reads in one language and the other half in another. Three reachability classes are covered, not one: literal text nodes, ternaries that form a WHOLE text node, and toast() messages — toast runs its own argument through workspaceTranslationV97, so a toast is reachable by this same table even though it is never a text node. Nothing interpolated was added: a string the flat table cannot match would ship as finished work and never render. 'Peekaa' is never translated.",
       "zh-CN": "销售配套",
       "ms": "Jual pakej"
+    },
+    {
+      "source": "Auto-assign shares new bookings across eligible team members. Use Check staff to confirm this time.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "自动指派会将新预约平均分配给符合条件的团队成员。请用「查看员工」确认这个时间。",
+      "ms": "Tugasan automatik membahagikan tempahan baharu antara ahli pasukan yang layak. Guna Semak kakitangan untuk mengesahkan masa ini."
+    },
+    {
+      "source": "Appointment List",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约列表",
+      "ms": "Senarai Janji Temu"
+    },
+    {
+      "source": "Block",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "锁定",
+      "ms": "Sekat"
+    },
+    {
+      "source": "Appointment staff",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约员工",
+      "ms": "Kakitangan janji temu"
+    },
+    {
+      "source": "Download CSV",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "下载 CSV",
+      "ms": "Muat turun CSV"
+    },
+    {
+      "source": "Appointment status",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约状态",
+      "ms": "Status janji temu"
+    },
+    {
+      "source": "All statuses",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "所有状态",
+      "ms": "Semua status"
+    },
+    {
+      "source": "Booked",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "已预约",
+      "ms": "Ditempah"
+    },
+    {
+      "source": "Completed",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "已完成",
+      "ms": "Selesai"
+    },
+    {
+      "source": "Cancelled",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "已取消",
+      "ms": "Dibatalkan"
+    },
+    {
+      "source": "Apply filters",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "应用筛选",
+      "ms": "Guna penapis"
+    },
+    {
+      "source": "Clear filters",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "清除筛选",
+      "ms": "Kosongkan penapis"
+    },
+    {
+      "source": "Next 7 days",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "未来 7 天",
+      "ms": "7 hari akan datang"
+    },
+    {
+      "source": "Past 7 days",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "过去 7 天",
+      "ms": "7 hari lalu"
+    },
+    {
+      "source": "This month",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "本月",
+      "ms": "Bulan ini"
+    },
+    {
+      "source": "Drawing the code…",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "正在生成二维码…",
+      "ms": "Melukis kod…"
+    },
+    {
+      "source": "Customers scan this to reach your booking page.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "顾客扫描此码即可进入您的预约页面。",
+      "ms": "Pelanggan mengimbas ini untuk sampai ke halaman tempahan anda."
+    },
+    {
+      "source": "The QR code could not be drawn. Share the link above instead.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "无法生成二维码。请改为分享上方的链接。",
+      "ms": "Kod QR tidak dapat dilukis. Kongsi pautan di atas sebagai ganti."
+    },
+    {
+      "source": "Mark one team member unavailable in this branch. Customers never see the reason.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "将某位团队成员在本分店标记为不可预约。顾客永远看不到原因。",
+      "ms": "Tandakan seorang ahli pasukan sebagai tidak tersedia di cawangan ini. Pelanggan tidak akan melihat sebabnya."
+    },
+    {
+      "source": "Specific dates",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "指定日期",
+      "ms": "Tarikh tertentu"
+    },
+    {
+      "source": "Every week",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "每周",
+      "ms": "Setiap minggu"
+    },
+    {
+      "source": "Break every week",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "每周休息时段",
+      "ms": "Rehat setiap minggu"
+    },
+    {
+      "source": "Add a break",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "添加休息时段",
+      "ms": "Tambah rehat"
+    },
+    {
+      "source": "First day",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "首日",
+      "ms": "Hari pertama"
+    },
+    {
+      "source": "Last day (optional)",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "末日（选填）",
+      "ms": "Hari terakhir (pilihan)"
+    },
+    {
+      "source": "Leave the last day empty for a single day. A run of days is saved as one blocked day at a time.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "只锁定一天时，末日留空。连续多天会逐天分别保存。",
+      "ms": "Biarkan hari terakhir kosong untuk satu hari sahaja. Rentetan hari disimpan satu hari disekat pada satu masa."
+    },
+    {
+      "source": "All day",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "全天",
+      "ms": "Sepanjang hari"
+    },
+    {
+      "source": "For MC, leave or a day off. Nothing can be booked with them on the days you pick.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "用于病假单（MC）、请假或休息日。在您选择的日子里，无法向他们预约任何服务。",
+      "ms": "Untuk MC, cuti atau hari rehat. Tiada apa boleh ditempah dengan mereka pada hari yang anda pilih."
+    },
+    {
+      "source": "Start",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "开始",
+      "ms": "Mula"
+    },
+    {
+      "source": "End",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "结束",
+      "ms": "Tamat"
+    },
+    {
+      "source": "Reason (optional)",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "原因（选填）",
+      "ms": "Sebab (pilihan)"
+    },
+    {
+      "source": "No team member assigned",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "未指派团队成员",
+      "ms": "Tiada ahli pasukan ditugaskan"
+    },
+    {
+      "source": "Assign an active team member to this branch before blocking time.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "锁定时间之前，请先为本分店指派一位在职团队成员。",
+      "ms": "Tugaskan ahli pasukan yang aktif ke cawangan ini sebelum menyekat masa."
+    },
+    {
+      "source": "No repeating breaks yet.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "尚无每周重复的休息时段。",
+      "ms": "Belum ada rehat berulang."
+    },
+    {
+      "source": "A break must end after it starts.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "休息时段的结束时间必须晚于开始时间。",
+      "ms": "Rehat mesti tamat selepas ia bermula."
+    },
+    {
+      "source": "Pick at least one day for every break, or remove it.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "每个休息时段至少选择一天，否则请将其移除。",
+      "ms": "Pilih sekurang-kurangnya satu hari bagi setiap rehat, atau alih keluarkannya."
+    },
+    {
+      "source": "Pick a date.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "请选择一个日期。",
+      "ms": "Pilih satu tarikh."
+    },
+    {
+      "source": "The last day cannot be before the first day.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "末日不能早于首日。",
+      "ms": "Hari terakhir tidak boleh sebelum hari pertama."
+    },
+    {
+      "source": "End time must be later than start time on the same day.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "同一天内，结束时间必须晚于开始时间。",
+      "ms": "Masa tamat mesti lebih lewat daripada masa mula pada hari yang sama."
+    },
+    {
+      "source": "Auto-assign · fair rotation",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "自动指派 · 公平轮流",
+      "ms": "Tugasan automatik · giliran adil"
+    },
+    {
+      "source": "Count appointments from the last",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "统计最近以下时间段内的预约",
+      "ms": "Kira janji temu dari tempoh terakhir"
+    },
+    {
+      "source": "day",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "天",
+      "ms": "hari"
+    },
+    {
+      "source": "3 days",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "3 天",
+      "ms": "3 hari"
+    },
+    {
+      "source": "week",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "周",
+      "ms": "minggu"
+    },
+    {
+      "source": "month",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "月",
+      "ms": "bulan"
+    },
+    {
+      "source": "This is the window used to decide who has had the fewest appointments.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "这是用来判断谁的预约最少的时间窗口。",
+      "ms": "Inilah tetingkap yang digunakan untuk menentukan siapa yang paling sedikit janji temu."
+    },
+    {
+      "source": "Not booked",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "未预约",
+      "ms": "Tidak ditempah"
+    },
+    {
+      "source": "Nothing has been booked. Pick another time, or give this booking to someone who is free.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "尚未预约任何内容。请另选时间，或把这次预约交给有空的人。",
+      "ms": "Tiada apa ditempah. Pilih masa lain, atau berikan tempahan ini kepada seseorang yang lapang."
+    },
+    {
+      "source": "Free at this time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "此时有空",
+      "ms": "Lapang pada masa ini"
+    },
+    {
+      "source": "Nobody else is free at this time either.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "此时其他人也都没空。",
+      "ms": "Tiada sesiapa lain yang lapang pada masa ini juga."
+    },
+    {
+      "source": "Keep editing",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "继续编辑",
+      "ms": "Teruskan menyunting"
+    },
+    {
+      "source": "Change appointment",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "更改预约",
+      "ms": "Tukar janji temu"
+    },
+    {
+      "source": "Complete & checkout",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "完成并结账",
+      "ms": "Selesai & bayar"
+    },
+    {
+      "source": "Closing this appointment records the visit, so it earns whatever your programmes award.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "结束这次预约会记录一次到店，因此可获得您计划所设定的奖励。",
+      "ms": "Menutup janji temu ini merekodkan kunjungan itu, jadi ia memperoleh apa sahaja yang program anda berikan."
+    },
+    {
+      "source": "Appointment completed",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约已完成",
+      "ms": "Janji temu selesai"
+    },
+    {
+      "source": "Book next visit",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约下次到店",
+      "ms": "Tempah kunjungan seterusnya"
+    },
+    {
+      "source": "No team member is assigned to this branch.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "本分店尚未指派任何团队成员。",
+      "ms": "Tiada ahli pasukan ditugaskan ke cawangan ini."
+    },
+    {
+      "source": "‹ Earlier week",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "‹ 上一周",
+      "ms": "‹ Minggu sebelumnya"
+    },
+    {
+      "source": "Later week ›",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "下一周 ›",
+      "ms": "Minggu berikutnya ›"
+    },
+    {
+      "source": "Checking free times…",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "正在查询空闲时间…",
+      "ms": "Menyemak masa lapang…"
+    },
+    {
+      "source": "Free times could not be read for this week. Try another week, or close and reopen this appointment.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "无法读取本周的空闲时间。请换一周，或关闭后重新打开这次预约。",
+      "ms": "Masa lapang tidak dapat dibaca untuk minggu ini. Cuba minggu lain, atau tutup dan buka semula janji temu ini."
+    },
+    {
+      "source": "Choose a team member to see their free times.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "选择一位团队成员即可查看其空闲时间。",
+      "ms": "Pilih seorang ahli pasukan untuk melihat masa lapang mereka."
+    },
+    {
+      "source": "Blocked time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "锁定的时间",
+      "ms": "Masa disekat"
+    },
+    {
+      "source": "Reason",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "原因",
+      "ms": "Sebab"
+    },
+    {
+      "source": "Actions",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "操作",
+      "ms": "Tindakan"
+    },
+    {
+      "source": "Another branch",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "其他分店",
+      "ms": "Cawangan lain"
+    },
+    {
+      "source": "No blocked time in this window.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "此时间段内没有锁定的时间。",
+      "ms": "Tiada masa disekat dalam tetingkap ini."
+    },
+    {
+      "source": "Date & time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "日期和时间",
+      "ms": "Tarikh & masa"
+    },
+    {
+      "source": "preferred time has passed",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "期望的时间已过",
+      "ms": "masa pilihan telah berlalu"
+    },
+    {
+      "source": "Awaiting confirmation",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "等待确认",
+      "ms": "Menunggu pengesahan"
+    },
+    {
+      "source": "New date & time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "新的日期和时间",
+      "ms": "Tarikh & masa baharu"
+    },
+    {
+      "source": "Move & confirm",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "改期并确认",
+      "ms": "Alih & sahkan"
+    },
+    {
+      "source": "Booking request",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约请求",
+      "ms": "Permintaan tempahan"
+    },
+    {
+      "source": "Not yet confirmed — still holds this slot.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "尚未确认 — 仍然占用这个时段。",
+      "ms": "Belum disahkan — masih memegang slot ini."
+    },
+    {
+      "source": "Change time / staff",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "更改时间 / 员工",
+      "ms": "Tukar masa / kakitangan"
+    },
+    {
+      "source": "Add team members in Settings before scheduling appointments.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "安排预约之前，请先在「设置」中添加团队成员。",
+      "ms": "Tambah ahli pasukan dalam Tetapan sebelum menjadualkan janji temu."
+    },
+    {
+      "source": "Pending",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "待处理",
+      "ms": "Menunggu"
+    },
+    {
+      "source": "Reject",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "拒绝",
+      "ms": "Tolak"
+    },
+    {
+      "source": "Nothing scheduled",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "没有安排",
+      "ms": "Tiada apa dijadualkan"
+    },
+    {
+      "source": "No appointments or blocked time on this day.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "这一天没有预约，也没有锁定的时间。",
+      "ms": "Tiada janji temu atau masa disekat pada hari ini."
+    },
+    {
+      "source": "Branch break",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "分店休息时段",
+      "ms": "Rehat cawangan"
+    },
+    {
+      "source": "Book",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约",
+      "ms": "Tempah"
+    },
+    {
+      "source": "Edit blocked time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "编辑锁定的时间",
+      "ms": "Sunting masa disekat"
+    },
+    {
+      "source": "Block time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "锁定时间",
+      "ms": "Sekat masa"
+    },
+    {
+      "source": "Save changes",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "保存更改",
+      "ms": "Simpan perubahan"
+    },
+    {
+      "source": "Save block",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "保存锁定",
+      "ms": "Simpan sekatan"
+    },
+    {
+      "source": "The original blocked time was put back.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "原来锁定的时间已恢复。",
+      "ms": "Masa disekat yang asal telah dikembalikan."
+    },
+    {
+      "source": "The original blocked time could NOT be put back — check the calendar before leaving this page.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "原来锁定的时间无法恢复 — 离开本页面前请检查日历。",
+      "ms": "Masa disekat yang asal TIDAK dapat dikembalikan — semak kalendar sebelum meninggalkan halaman ini."
+    },
+    {
+      "source": "Choose a customer",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "选择一位顾客",
+      "ms": "Pilih seorang pelanggan"
+    },
+    {
+      "source": "Add a customer first",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "请先添加一位顾客",
+      "ms": "Tambah pelanggan dahulu"
+    },
+    {
+      "source": "No specific service · general visit",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "未指定服务 · 普通到店",
+      "ms": "Tiada perkhidmatan khusus · kunjungan am"
+    },
+    {
+      "source": "That person is not free",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "该员工此时没空",
+      "ms": "Orang itu tidak lapang"
+    },
+    {
+      "source": "Availability checked",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "已检查空闲情况",
+      "ms": "Ketersediaan disemak"
+    },
+    {
+      "source": "Appointments unavailable",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "预约不可用",
+      "ms": "Janji temu tidak tersedia"
+    },
+    {
+      "source": "Calendar unavailable",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "日历不可用",
+      "ms": "Kalendar tidak tersedia"
+    },
+    {
+      "source": "Change time",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "更改时间",
+      "ms": "Tukar masa"
+    },
+    {
+      "source": "Weekly schedule unchanged",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "每周排班未更改",
+      "ms": "Jadual mingguan tidak berubah"
+    },
+    {
+      "source": "That appointment could not be opened. Refresh the calendar and try again.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "无法打开该预约。请刷新日历后重试。",
+      "ms": "Janji temu itu tidak dapat dibuka. Muat semula kalendar dan cuba lagi."
+    },
+    {
+      "source": "Pick a new date and time first",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "请先选择新的日期和时间",
+      "ms": "Pilih tarikh dan masa baharu dahulu"
+    },
+    {
+      "source": "Blocked time was already removed",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "锁定的时间已被移除",
+      "ms": "Masa disekat telah pun dialih keluar"
+    },
+    {
+      "source": "Blocked time removed",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "锁定的时间已移除",
+      "ms": "Masa disekat dialih keluar"
+    },
+    {
+      "source": "Branch access could not be loaded. Your settings were not changed.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "无法加载分店权限。您的设置未被更改。",
+      "ms": "Akses cawangan tidak dapat dimuatkan. Tetapan anda tidak diubah."
+    },
+    {
+      "source": "No appointment access",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "没有预约权限",
+      "ms": "Tiada akses janji temu"
+    },
+    {
+      "source": "This account has no active branch where Appointments is enabled.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "此账户没有任何已启用「预约」的在营分店。",
+      "ms": "Akaun ini tiada cawangan aktif yang mengaktifkan Janji Temu."
+    },
+    {
+      "source": "Branch closed",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "分店休息",
+      "ms": "Cawangan tutup"
+    },
+    {
+      "source": "Working hours not set",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "未设置工作时间",
+      "ms": "Waktu bekerja belum ditetapkan"
+    },
+    {
+      "source": "No assigned team member",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "未指派团队成员",
+      "ms": "Tiada ahli pasukan ditugaskan"
+    },
+    {
+      "source": "Set as a day off every week.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "设为每周固定的休息日。",
+      "ms": "Ditetapkan sebagai hari rehat setiap minggu."
+    },
+    {
+      "source": "No opening hours are recorded for this weekday.",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "这一天没有记录营业时间。",
+      "ms": "Tiada waktu operasi direkodkan untuk hari ini."
+    },
+    {
+      "source": "Check staff",
+      "reason": "nestly_v929 — the Appointments screen, whole: the calendar, the Appointment List and its filters, the Block tab with its weekly breaks and MC/leave days, the booking QR, the auto-assign availability check, the booking-request queue and every refusal and validation message the screen raises. It was still English under a Chinese workspace, and it is the screen a front desk works from all day. Sources are keyed on what the browser actually holds: \\\\u2014 escapes and HTML entities in the source are decoded first, because localizeWorkspaceSubtreeV97 reads node.nodeValue, which is already decoded, and a key holding the escape can never match. The four lowercase window labels (day, 3 days, week, month) are <option> text nodes and occur nowhere else in the workspace, so translating them cannot collide. Nothing interpolated was added.",
+      "zh-CN": "查看员工",
+      "ms": "Semak kakitangan"
     }
   ]
 }

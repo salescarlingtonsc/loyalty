@@ -1644,6 +1644,120 @@ const TILL_V928 = [
   "Sell package",
 ];
 
+/* nestly_v929 — nestly_v929 — the Appointments screen: calendar, list, filters, blocked time, availability and refusals. */
+const APPOINTMENTS_V929 = [
+  "Auto-assign shares new bookings across eligible team members. Use Check staff to confirm this time.",
+  "Appointment List",
+  "Block",
+  "Appointment staff",
+  "Download CSV",
+  "Appointment status",
+  "All statuses",
+  "Booked",
+  "Completed",
+  "Cancelled",
+  "Apply filters",
+  "Clear filters",
+  "Next 7 days",
+  "Past 7 days",
+  "This month",
+  "Drawing the code…",
+  "Customers scan this to reach your booking page.",
+  "The QR code could not be drawn. Share the link above instead.",
+  "Mark one team member unavailable in this branch. Customers never see the reason.",
+  "Specific dates",
+  "Every week",
+  "Break every week",
+  "Add a break",
+  "First day",
+  "Last day (optional)",
+  "Leave the last day empty for a single day. A run of days is saved as one blocked day at a time.",
+  "All day",
+  "For MC, leave or a day off. Nothing can be booked with them on the days you pick.",
+  "Start",
+  "End",
+  "Reason (optional)",
+  "No team member assigned",
+  "Assign an active team member to this branch before blocking time.",
+  "No repeating breaks yet.",
+  "A break must end after it starts.",
+  "Pick at least one day for every break, or remove it.",
+  "Pick a date.",
+  "The last day cannot be before the first day.",
+  "End time must be later than start time on the same day.",
+  "Auto-assign · fair rotation",
+  "Count appointments from the last",
+  "day",
+  "3 days",
+  "week",
+  "month",
+  "This is the window used to decide who has had the fewest appointments.",
+  "Not booked",
+  "Nothing has been booked. Pick another time, or give this booking to someone who is free.",
+  "Free at this time",
+  "Nobody else is free at this time either.",
+  "Keep editing",
+  "Change appointment",
+  "Complete & checkout",
+  "Closing this appointment records the visit, so it earns whatever your programmes award.",
+  "Appointment completed",
+  "Book next visit",
+  "No team member is assigned to this branch.",
+  "‹ Earlier week",
+  "Later week ›",
+  "Checking free times…",
+  "Free times could not be read for this week. Try another week, or close and reopen this appointment.",
+  "Choose a team member to see their free times.",
+  "Blocked time",
+  "Reason",
+  "Actions",
+  "Another branch",
+  "No blocked time in this window.",
+  "Date & time",
+  "preferred time has passed",
+  "Awaiting confirmation",
+  "New date & time",
+  "Move & confirm",
+  "Booking request",
+  "Not yet confirmed — still holds this slot.",
+  "Change time / staff",
+  "Add team members in Settings before scheduling appointments.",
+  "Pending",
+  "Reject",
+  "Nothing scheduled",
+  "No appointments or blocked time on this day.",
+  "Branch break",
+  "Book",
+  "Edit blocked time",
+  "Block time",
+  "Save changes",
+  "Save block",
+  "The original blocked time was put back.",
+  "The original blocked time could NOT be put back — check the calendar before leaving this page.",
+  "Choose a customer",
+  "Add a customer first",
+  "No specific service · general visit",
+  "That person is not free",
+  "Availability checked",
+  "Appointments unavailable",
+  "Calendar unavailable",
+  "Change time",
+  "Weekly schedule unchanged",
+  "That appointment could not be opened. Refresh the calendar and try again.",
+  "Pick a new date and time first",
+  "Blocked time was already removed",
+  "Blocked time removed",
+  "Branch access could not be loaded. Your settings were not changed.",
+  "No appointment access",
+  "This account has no active branch where Appointments is enabled.",
+  "Branch closed",
+  "Working hours not set",
+  "No assigned team member",
+  "Set as a day off every week.",
+  "No opening hours are recorded for this weekday.",
+  "Check staff",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -1744,7 +1858,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -1778,13 +1892,13 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 3088);
+  assert.equal(once.keyCount, 3198);
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 3088 strings per locale/);
+  assert.match(clean, /up to date: 3198 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');
