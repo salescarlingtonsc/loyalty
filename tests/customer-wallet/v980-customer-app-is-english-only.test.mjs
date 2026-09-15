@@ -57,6 +57,23 @@ test('a customer who already saved another language is brought back to English, 
     'the profile load must still pass the stored value through the pinned resolver');
 });
 
+/* Owner, 2026-09-15, asked whether the now-unreachable machinery should be removed:
+   "default is english leave the rest if already built the translation". So it stays. CLAUDE.md's
+   cleanliness rule ("delete orphans") governs code nobody decided to keep — this is code someone
+   decided to keep, and without this test the next tidy-up would quite reasonably delete ~875 lines
+   plus 264 reviewed ledger entries, and re-enabling would stop being one line. */
+test('the dormant customer translation machinery is still here, on purpose',()=>{
+  assert.match(productTruth,/The dormant customer translation machinery is KEPT ON PURPOSE\./,
+    'the decision to keep the machinery must stay recorded next to the ruling it qualifies');
+  // the v954 DOM walker and its observer
+  assert.match(app,/function localizeCustomerSubtreeV954/);
+  assert.match(app,/customerLocalizationObserverV954/);
+  // the four-locale customer dictionary, and the ledger the walker reads
+  assert.match(app,/const CUSTOMER_LOCALES=Object\.freeze\(\['en','zh-CN','ms','ta'\]\)/);
+  for(const locale of ["'zh-CN'",'ms:','ta:'])
+    assert.ok(app.includes(locale),`CUSTOMER_COPY should still carry its ${locale} block`);
+});
+
 test('the business workspace keeps its own localisation, untouched',()=>{
   /* A positive control. The ruling is about the CUSTOMER app; the staff workspace is trilingual by a
      separate, active decision, and these are disjoint identifiers. If this test ever fails, the

@@ -114,6 +114,14 @@ status live in `../qa/TRACEABILITY-MATRIX.md`.
   nestly_v954 the whole wallet was walked into that language. nestly_v980 pins the
   customer locale resolver to English and removes both pickers. The BUSINESS
   workspace is a separate decision and stays trilingual (en / zh-CN / ms).
+- The dormant customer translation machinery is KEPT ON PURPOSE. Owner, 2026-09-15:
+  "default is english leave the rest if already built the translation". So
+  localizeCustomerSubtreeV954 and its observer, the zh-CN / ms / ta blocks of
+  CUSTOMER_COPY, the localised legalLinks tables and the 264 customer entries in
+  app/i18n/workspace-generated-copy-v97.additions.json all stay, unreachable, rather
+  than being deleted as orphans under the cleanliness rule in CLAUDE.md. That rule
+  still governs code nobody decided to keep; this is code someone decided to keep.
+  Do not "tidy" it away. Re-enabling it is one line — the resolver named above.
 
 ## Customer experience
 
