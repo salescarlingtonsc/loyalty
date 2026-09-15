@@ -20196,6 +20196,210 @@
       "reason": "nestly_v938 — the long tail: 263 strings spread thinly across 150-odd workspace helpers, one to six each. The playbook receipt-confirmation panel and its three truthful steps, the birthday-gift editor, per-branch receipt identity (registered name, UEN, GST), billing and Stripe, the business profile photos and links, the Help Centre's own home, search and troubleshooting copy, the logo editor, package session use, branch opening hours and staff rotas, stored value, the studio emergency pause, dashboard cards, the attention list, the WhatsApp confirmation template, receipt printing, reporting scope, and the pagination and sort controls that appear on half the screens. Each string was placed in its surface by looking it up in the generated chunk files: anything that resolved to the customer or auth chunk was left out, because the workspace localizer never walks those and a key it cannot reach is weight every locale carries for nothing. With this wave the business workspace has no untranslated static string left that this table can reach.",
       "zh-CN": "关闭",
       "ms": "Matikan"
+    },
+    {
+      "source": "Peekaa handles account closure for you and replies within 30 days. You can also speak to your assigned consultant.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "Peekaa 会为您处理账户关闭，并在 30 天内回复。您也可以联系为您指派的顾问。",
+      "ms": "Peekaa menguruskan penutupan akaun untuk anda dan membalas dalam 30 hari. Anda juga boleh bercakap dengan perunding yang ditugaskan kepada anda."
+    },
+    {
+      "source": "Request account closure",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "申请关闭账户",
+      "ms": "Minta penutupan akaun"
+    },
+    {
+      "source": "Legally required financial, fraud-prevention and security records may be retained after closure.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "法律要求保留的财务、反欺诈和安全记录在关闭后可能仍会保留。",
+      "ms": "Rekod kewangan, pencegahan penipuan dan keselamatan yang dikehendaki undang-undang mungkin dikekalkan selepas penutupan."
+    },
+    {
+      "source": "Prefer to write yourself?",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "想自己写邮件？",
+      "ms": "Lebih suka menulis sendiri?"
+    },
+    {
+      "source": "Customer rewards code",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "顾客奖励码",
+      "ms": "Kod ganjaran pelanggan"
+    },
+    {
+      "source": "Scan to open rewards, points and past visits at",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "扫码即可查看以下商户的奖励、积分和过往到访：",
+      "ms": "Imbas untuk membuka ganjaran, mata dan kunjungan lalu di"
+    },
+    {
+      "source": "Save image",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "保存图片",
+      "ms": "Simpan imej"
+    },
+    {
+      "source": "The code could not be drawn. Share the link below instead.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "无法生成该码。请改为分享下方的链接。",
+      "ms": "Kod itu tidak dapat dilukis. Kongsi pautan di bawah sebagai ganti."
+    },
+    {
+      "source": "The image could not be saved. Screenshot the code instead.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "无法保存图片。请改为截屏保存该码。",
+      "ms": "Imej itu tidak dapat disimpan. Tangkap skrin kod itu sebagai ganti."
+    },
+    {
+      "source": "Preview the customer app",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "预览顾客应用",
+      "ms": "Pratonton aplikasi pelanggan"
+    },
+    {
+      "source": "What a customer sees after they join and open your firm",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "顾客加入并打开您的商户后看到的内容",
+      "ms": "Apa yang pelanggan lihat selepas mereka menyertai dan membuka firma anda"
+    },
+    {
+      "source": "This is the wallet a customer reaches by clicking into your firm — their name for you, your bio, your photos and links, and their tier, points and rewards.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "这是顾客点进您的商户后看到的钱包 — 他们为您取的名称、您的简介、照片和链接，以及他们的等级、积分和奖励。",
+      "ms": "Inilah dompet yang pelanggan capai dengan mengklik masuk ke firma anda — nama mereka untuk anda, bio anda, foto dan pautan anda, serta peringkat, mata dan ganjaran mereka."
+    },
+    {
+      "source": "Open your public page (real page, new tab)",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "打开您的公开页面（真实页面，新标签页）",
+      "ms": "Buka halaman awam anda (halaman sebenar, tab baharu)"
+    },
+    {
+      "source": "We could not complete the last programme check. Your account is unchanged.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "我们无法完成上一次的计划检查。您的账户未发生任何变化。",
+      "ms": "Kami tidak dapat menyelesaikan pemeriksaan program terakhir. Akaun anda tidak berubah."
+    },
+    {
+      "source": "Retry programme check",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "重试计划检查",
+      "ms": "Cuba semula pemeriksaan program"
+    },
+    {
+      "source": "Check for existing programmes",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "检查是否已有计划",
+      "ms": "Semak program sedia ada"
+    },
+    {
+      "source": "Owner preview",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "店主预览",
+      "ms": "Pratonton pemilik"
+    },
+    {
+      "source": "No customer account is required. This is a read-only preview of the currently published customer programme.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "无需顾客账户。这是当前已发布的顾客计划的只读预览。",
+      "ms": "Tiada akaun pelanggan diperlukan. Ini pratonton baca sahaja bagi program pelanggan yang diterbitkan sekarang."
+    },
+    {
+      "source": "No published rewards, products or services are available to preview yet.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "目前还没有已发布的奖励、产品或服务可供预览。",
+      "ms": "Belum ada ganjaran, produk atau perkhidmatan yang diterbitkan untuk dipratonton."
+    },
+    {
+      "source": "Customer Appointment Request",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "顾客预约请求",
+      "ms": "Permintaan Janji Temu Pelanggan"
+    },
+    {
+      "source": "Customer actions were already saved",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "顾客操作此前已保存",
+      "ms": "Tindakan pelanggan telah pun disimpan"
+    },
+    {
+      "source": "Customer actions saved",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "顾客操作已保存",
+      "ms": "Tindakan pelanggan disimpan"
+    },
+    {
+      "source": "Could not load your live programme state",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "无法加载您正在运行的计划状态",
+      "ms": "Tidak dapat memuatkan keadaan program aktif anda"
+    },
+    {
+      "source": "This preview draws your customer app from the programmes you actually have running. That could not be read just now, so nothing is drawn — Peekaa will not show you a made-up programme stack and call it what your customers see.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "此预览会根据您实际在运行的计划来绘制顾客应用。刚才无法读取这些计划，因此没有绘制任何内容 — Peekaa 不会凭空编一套计划，再说这就是您顾客看到的样子。",
+      "ms": "Pratonton ini melukis aplikasi pelanggan anda daripada program yang anda benar-benar jalankan. Itu tidak dapat dibaca sebentar tadi, jadi tiada apa dilukis — Peekaa tidak akan menunjukkan susunan program rekaan dan mengatakan itulah yang pelanggan anda lihat."
+    },
+    {
+      "source": "Your business profile as customers see it, drawn by the customer app's own renderer.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "您的商户档案在顾客眼中的样子，由顾客应用自身的渲染器绘制。",
+      "ms": "Profil perniagaan anda seperti yang pelanggan lihat, dilukis oleh perender aplikasi pelanggan itu sendiri."
+    },
+    {
+      "source": "Manage your branch plans and billing.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "管理您的分店套餐和账单。",
+      "ms": "Urus pelan cawangan dan pengebilan anda."
+    },
+    {
+      "source": "Choose which services and products can be selected at checkout.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "选择结账时可以选取哪些服务和产品。",
+      "ms": "Pilih perkhidmatan dan produk yang boleh dipilih semasa pembayaran."
+    },
+    {
+      "source": "Manage staff members, invites and per-module access.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "管理员工、邀请以及各模块的权限。",
+      "ms": "Urus ahli kakitangan, jemputan dan akses bagi setiap modul."
+    },
+    {
+      "source": "This signed-in account has staff access, but no registered customer profile or linked customer programme. No empty wallet has been shown.",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "当前登录的账户拥有员工权限，但没有已注册的顾客档案或关联的顾客计划。系统没有显示一个空钱包。",
+      "ms": "Akaun yang dilog masuk ini mempunyai akses kakitangan, tetapi tiada profil pelanggan berdaftar atau program pelanggan berpaut. Tiada dompet kosong ditunjukkan."
+    },
+    {
+      "source": "Open a staff workspace",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "打开员工工作区",
+      "ms": "Buka ruang kerja kakitangan"
+    },
+    {
+      "source": "Closure request received",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "关闭申请已收到",
+      "ms": "Permintaan penutupan diterima"
+    },
+    {
+      "source": "Closure request reviewed",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "关闭申请已审核",
+      "ms": "Permintaan penutupan disemak"
+    },
+    {
+      "source": "Company bio",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "公司简介",
+      "ms": "Bio syarikat"
+    },
+    {
+      "source": "What customers see as you edit",
+      "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
+      "zh-CN": "您编辑时顾客会看到的内容",
+      "ms": "Apa yang pelanggan lihat semasa anda menyunting"
     }
   ]
 }
