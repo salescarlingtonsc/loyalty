@@ -264,7 +264,11 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v934: +240 — Programmes (growPage), the service-mapping board, and the long copy a
        110-character harvest cap had hidden across every earlier wave. */
         /* nestly_v935: +217 — the rewards and tiers editor, the setup wizard, and the Programmes dialogs. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,4226,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v936: +185 — Reports, router refusals, Retention, reversal, the Studio publish gate,
+       WhatsApp automation, booking rules, staff add, erase-customer, the sort menu and the playbook
+       wizard. Two more labels are curated zh-only in WORKSPACE_COPY_V97: 'Menu' and 'Bar / Pub'
+       read identically in Bahasa Melayu, which the ledger rightly refuses. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,4411,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
