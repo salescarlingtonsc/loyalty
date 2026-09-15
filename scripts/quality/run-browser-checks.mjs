@@ -93,6 +93,15 @@ const CHECKS = [
     script: 'tests/browser/verify-v912-shell-reuse.mjs',
     standalone: true,
   },
+  /* nestly_v972: the mobile dock is left alone while CSS hides it, and rebuilt the moment a
+     resize reveals it. Every part of that is a computed style or a node identity at two
+     viewports — nothing a source grep can see, and the failure it guards (a phone showing the
+     previous page's active tab) is worse than the 171 nodes per navigation it saves. Standalone
+     for the same reason as the two above: it boots the real app and needs app/ as its docroot. */
+  {
+    script: 'tests/browser/verify-v972-idle-dock.mjs',
+    standalone: true,
+  },
 ];
 
 function resolvePlaywright() {

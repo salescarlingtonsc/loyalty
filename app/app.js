@@ -23703,6 +23703,47 @@ function shellStaticChromeSignatureV912(){
      pure function of state. */
   return [brandWordmark(),buildIdentityHtml(),globalActionsHtml(),mobileSearchShellHtml()].join('\u0000');
 }
+/* nestly_v972 — the dock is not rebuilt while CSS is hiding it.
+   .staff-mobile-dock is `display:none` by default and `display:grid` only inside the
+   `@media(max-width:960px)` block, so on any desktop width nobody can see it. v912 replaced it on
+   every navigation anyway, because it is page-dependent: it carries the active quick-action and a
+   FULL SECOND COPY of the nav rail (navHtml(page,'mobile-nav')). Measured, that was 171 element
+   nodes destroyed and rebuilt per navigation — the largest single piece of chrome churn left
+   after v912 — plus the cost of building the markup string, for something invisible.
+   The breakpoint is NOT repeated here. Asking for the element's computed display keeps the media
+   query the single authority for when the dock exists to a user; a hardcoded 960 in JavaScript
+   would be a second place to change and the one that gets forgotten. */
+let mobileDockStaleV972=false,mobileDockWatcherWiredV972=false;
+const mobileDockDisplayedV972=()=>{
+  const dock=root.querySelector('.staff-mobile-dock');
+  if(!dock)return false;
+  try{return globalThis.getComputedStyle(dock).display!=='none'}catch(e){return true}
+};
+/* Rebuild + rewire as one unit: wireStaffMobileActions binds the More drawer with
+   addEventListener, so it must run when, and only when, the dock is fresh nodes. */
+function renderMobileDockV972(page){
+  if(!replaceShellRegionV912('.staff-mobile-dock',staffMobileActionsHtml(page)))return false;
+  mobileDockStaleV972=false;
+  wireStaffMobileActions();
+  wireWorkspaceLanguageV97();
+  localizeWorkspaceSubtreeV97();
+  return true;
+}
+/* Bound from renderShell rather than at load: a listener registered by a load-time block becomes
+   a core root in the bundle splitter, and everything it reaches follows it into the chunk every
+   customer downloads. Coalesced to one frame so a drag-resize does not run this per pixel. */
+function watchMobileDockV972(){
+  if(mobileDockWatcherWiredV972||!globalThis.addEventListener)return;
+  mobileDockWatcherWiredV972=true;
+  let framedV972=0;
+  globalThis.addEventListener('resize',()=>{
+    if(framedV972)return;
+    framedV972=requestAnimationFrame(()=>{
+      framedV972=0;
+      if(mobileDockStaleV972&&mobileDockDisplayedV972())renderMobileDockV972(currentPage);
+    });
+  });
+}
 function replaceShellRegionV912(selector,html){
   const node=root.querySelector(selector);
   if(!node)return false;
@@ -23722,6 +23763,9 @@ function renderShell(page){
   /* Every region a reuse has to touch is required to be present before one is attempted, so a
      shell left half-built by an earlier failure falls back to the full rebuild rather than
      painting into holes. */
+  /* The dock is always present after a full rebuild (it is in the template), so the default is
+     "rendered"; only the reuse path can decline it. */
+  let mobileDockRenderedV972=true;
   const reuseShellV912=preserveWorkspaceScroll
     &&chromeSignatureV912===shellChromeSignatureV912
     &&Boolean($('main')&&$('navwrap')&&$('helpTriggerV904')&&$('profwrap')&&$('bellwrap')
@@ -23748,8 +23792,12 @@ function renderShell(page){
     replaceShellRegionV912('#helpTriggerV904',helpTriggerHtmlV904(page));
     /* The dock carries its own copy of the rail (navHtml(page,'mobile-nav')) and the mobile
        language picker, so replacing it keeps both current — and hands wireStaffMobileActions and
-       wireWorkspaceLanguageV97 fresh nodes, which is what makes re-running them safe. */
-    replaceShellRegionV912('.staff-mobile-dock',staffMobileActionsHtml(page));
+       wireWorkspaceLanguageV97 fresh nodes, which is what makes re-running them safe.
+       nestly_v972: only while a user can actually SEE it. Above the dock's media query it is
+       display:none, and rebuilding it there was 171 nodes per navigation for nothing. Marked
+       stale instead, and rebuilt by watchMobileDockV972 the moment a resize reveals it. */
+    if(mobileDockDisplayedV972())replaceShellRegionV912('.staff-mobile-dock',staffMobileActionsHtml(page));
+    else{mobileDockRenderedV972=false;mobileDockStaleV972=true}
     /* V452, restored for this path. route() calls resetPopoverStateV452(), which sets
        profileOpen and bellOpen to false and NOTHING ELSE — its own comment says why: "The shell
        is about to be rebuilt, so only the STATE has to change here." On a reuse the shell is not
@@ -23793,6 +23841,7 @@ function renderShell(page){
   </div>`;
     shellChromeSignatureV912=chromeSignatureV912;
     branchScopeMarkupV912='';
+    mobileDockStaleV972=false;   // the template just rendered it for this page
   }
   const main=$('main');
   const side=root.querySelector('.side');
@@ -23818,8 +23867,12 @@ function renderShell(page){
      touches it, so skipping it leaves the sheet wired exactly once. Every other function here
      assigns .onclick/.onchange, which overwrite, and each is handed fresh nodes anyway. */
   if(!reuseShellV912)wireMobileSearchShell();
-  wireStaffMobileActions();
+  /* nestly_v972: same rule, for the same reason — this binds the More drawer with
+     addEventListener, so it must run exactly when the dock is fresh nodes and never over a dock
+     that was deliberately left alone. */
+  if(mobileDockRenderedV972)wireStaffMobileActions();
   wireWorkspaceLanguageV97();
+  watchMobileDockV972();
   wireBell(page);
   wireBookingRequestsBadgeV329();
   refreshPendingBookingRequestCountV329();
