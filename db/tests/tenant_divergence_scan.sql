@@ -50,6 +50,9 @@
 --   D21  RUNTIME  a promo redemption removed while its payment-provider coupon was already
 --                 applied — the state nestly_v964's guard exists to prevent. The discount stays
 --                 spendable at the provider with nothing on our side expecting it.
+--   D22  RUNTIME  a subscription naming a payment provider the platform does not bill through
+--                 (nestly_v984). Readers disagree about what such a row means, so the firm's plan,
+--                 card and promo eligibility stop agreeing with each other.
 --                 (D16-D20 predate this legend and are documented at their own definitions.)
 
 begin;
@@ -703,6 +706,43 @@ select r.business_id,
       voided the coupon at the provider records that here, and the discount is then unspendable. */
    and coalesce(r.removed_reason,'') not like 'provider-coupon-voided:%';
 
+-- D22 (nestly_v984) — a subscription naming a payment provider the platform does not bill through.
+--
+-- nestly_v792 named the authority — app.platform_billing_provider_v792(), read from the active tier
+-- catalogue — and ruled that "a subscription left behind on a retired provider reads as unpaid".
+-- The trouble is that only SOME readers were taught the rule. On 2026-09-16 six subscriptions still
+-- said 'razorpay' while the platform billed through Stripe, and the estate answered three ways at
+-- once: get_business_billing_v786 said no plan, get_business_billing_v758 hid the card, and
+-- business_redeem_promo_code_v961 raised 'promo_razorpay_unsupported' — so those firms could not
+-- redeem a promo code, for a reason no screen explained.
+--
+-- This keys on the AUTHORITY rather than on any provider name, so it does not have to be rewritten
+-- the next time the platform switches: whatever the tier catalogue says today is the only provider
+-- a subscription may name. 'manual' is not a provider and is deliberately allowed — it is what a
+-- firm that is hand-billed or not yet paying reads, and v967 gives it a promo path of its own.
+--
+-- HOW TO CLOSE ONE. Decide which is true and make the row say it: the firm is really billed by the
+-- platform's provider (re-point it, with the provider ids that provider issued), or it is not
+-- (set 'manual' and clear the provider ids, as nestly_v984 did for the six razorpay rows). A row
+-- carrying another provider's ids is the specific shape that produced v792's live failure —
+-- "No such customer: 'cust_TXtuRBwVvgDij2'" — a Razorpay id handed to Stripe Checkout.
+insert into _scan
+select s.business_id,
+       coalesce(b.name, '(unknown business)'),
+       'D22',
+       'RUNTIME-DANGEROUS',
+       'subscription names billing_provider '||coalesce(s.billing_provider,'<null>')
+       ||' but the platform bills through '||app.platform_billing_provider_v792()
+       ||coalesce(' -- carrying provider ids '||nullif(concat_ws(', ',
+            nullif('customer '||coalesce(s.provider_customer_id,''), 'customer '),
+            nullif('subscription '||coalesce(s.provider_subscription_id,''), 'subscription '),
+            nullif('base item '||coalesce(s.provider_base_item_id,''), 'base item ')), ''), '')
+       ||' -- plan, card and promo eligibility do not agree for this firm'
+  from public.subscriptions s
+  left join public.businesses b on b.id = s.business_id
+ where coalesce(s.billing_provider,'') <> 'manual'
+   and coalesce(s.billing_provider,'') <> app.platform_billing_provider_v792();
+
 -- ---------------------------------------------------------------------------------------------
 -- OUTPUT
 -- ---------------------------------------------------------------------------------------------
@@ -738,7 +778,7 @@ select 'SUMMARY', null, null, 'ZZ05 '||c.check_id, c.severity,
     ('D06','RUNTIME-DANGEROUS'),('D07','RUNTIME-DANGEROUS'),('D08','RUNTIME-DANGEROUS'),('D16','RUNTIME-DANGEROUS'),('D17','RUNTIME-DANGEROUS'),('D18','RUNTIME-DANGEROUS'),('D19','RUNTIME-DANGEROUS'),('D20','RUNTIME-DANGEROUS'),('D17b','HISTORICAL-ONLY'),
     ('D09','RUNTIME-DANGEROUS'),('D10','HISTORICAL-ONLY'),('D11','RUNTIME-DANGEROUS'),
     ('D12','HISTORICAL-ONLY'),('D13','RUNTIME-DANGEROUS'),('D14','RUNTIME-DANGEROUS'),
-    ('D15','RUNTIME-DANGEROUS'),('D21','RUNTIME-DANGEROUS')
+    ('D15','RUNTIME-DANGEROUS'),('D21','RUNTIME-DANGEROUS'),('D22','RUNTIME-DANGEROUS')
   ) c(check_id, severity)
 
  order by 1 desc, 4, 3;

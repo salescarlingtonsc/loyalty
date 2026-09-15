@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 693,
-  "itemCount": 738,
+  "pendingCount": 694,
+  "itemCount": 739,
   "items": [
     {
       "order": 1,
@@ -7387,6 +7387,16 @@
       "path": "supabase/migrations/20261017050000_nestly_v984_promo_records_money_that_moved.sql",
       "octetLength": 9689,
       "sha256": "a7ec6be50299880a3822b645ba9ec5894062b34ee3bc6bbfc686dc49b26917be",
+      "provenance": "local-source"
+    },
+    {
+      "order": 739,
+      "kind": "pending",
+      "version": "20261018000000",
+      "name": "nestly_v984_razorpay_is_retired",
+      "path": "supabase/migrations/20261018000000_nestly_v984_razorpay_is_retired.sql",
+      "octetLength": 10957,
+      "sha256": "a959258569f9c3ac4beec71639fc8fce4d9b02246a883f943fd23c9cccb9a967",
       "provenance": "local-source"
     }
   ]

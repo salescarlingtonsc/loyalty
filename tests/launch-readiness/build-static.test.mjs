@@ -19,10 +19,10 @@ test('release artifact contract contains the public pages and offline fallback',
     'landing.html',
     'offline.html',
     'privacy.html',
-    /* nestly_v782: c8b08111 / 3a5476c0 moved billing from Stripe to Razorpay, and Razorpay
-       Checkout deliberately runs on its own page so the app shell's CSP never allows a
-       third-party script origin. It is a shipped release artifact with its own vercel header. */
-    'razorpay-checkout.html',
+    /* nestly_v984: 'razorpay-checkout.html' was here until Razorpay was retired (owner,
+       2026-09-16). The page, its vercel.json header rule and its entry in
+       scripts/quality/build-static.mjs are all gone together — this list and that one must stay
+       in step, which is the whole point of this test. */
     'support.html',
     'terms.html'
   ]);

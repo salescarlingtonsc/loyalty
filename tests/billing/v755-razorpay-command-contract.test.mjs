@@ -213,23 +213,19 @@ test('the return origin is validated and the success/cancel routes are unchanged
   assert.match(commandSource, /\/#\/settings\?billing=canceled/);
 });
 
-test('the checkout page loads Razorpay under its own CSP and carries no secret', async () => {
-  const page = await read('app/razorpay-checkout.html');
-  assert.match(page, /script-src 'self' https:\/\/checkout\.razorpay\.com/);
-  assert.match(page, /frame-src https:\/\/api\.razorpay\.com https:\/\/checkout\.razorpay\.com/);
-  assert.match(page, /connect-src https:\/\/lumberjack\.razorpay\.com https:\/\/api\.razorpay\.com/);
-  assert.match(page, /src="https:\/\/checkout\.razorpay\.com\/v1\/checkout\.js"/);
-  assert.match(page, /Pay securely with Razorpay/);
-  /* The CSP grants no 'unsafe-inline', so the opener MUST live in an external same-origin file.
-     The first live run shipped it inline and the page sat on "Opening Razorpay…" forever. */
-  assert.doesNotMatch(page, /<script>/, 'no inline <script> block: the CSP would block it');
-  assert.match(page, /<script src="\/razorpay-checkout\.js"><\/script>/);
-  assert.match(page, /script-src 'self' https:\/\/checkout\.razorpay\.com https:\/\/cdn\.razorpay\.com/);
-  const opener = await read('app/razorpay-checkout.js');
-  assert.match(opener, /subscription_id: subscriptionId/);
-  assert.match(opener, /redirect: true/);
-  assert.doesNotMatch(page + opener, /key_secret|KEY_SECRET|rzp_(?:test|live)_/);
-  // app/index.html's CSP must not be widened for a third-party payment script.
+/* nestly_v984 (2026-09-16) replaced this test. It used to assert the shape of the Razorpay
+   checkout page — its own CSP, its external opener, its absence of a key secret. The owner retired
+   Razorpay, the page was deleted, and the only part of the original assertion that still describes
+   a rule worth holding is the last one: app/index.html's CSP must not be widened for a third-party
+   payment script. That is kept, and the page's absence is now the assertion. */
+test('the Razorpay checkout page is gone, and the app CSP was never widened for it', async () => {
+  for (const orphan of ['app/razorpay-checkout.html', 'app/razorpay-checkout.js']) {
+    await assert.rejects(
+      () => read(orphan),
+      /ENOENT/,
+      `${orphan} is back. Razorpay is retired (nestly_v984); nothing routes to this page.`,
+    );
+  }
   const app = await read('app/index.html');
   assert.doesNotMatch(app, /razorpay/i);
 });

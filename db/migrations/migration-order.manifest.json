@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 737,
-  "executableCount": 723,
+  "itemCount": 738,
+  "executableCount": 724,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -6971,6 +6971,14 @@
       "semanticVersion": "v984",
       "proposedDeployVersion": "20261017050000",
       "sha256": "a7ec6be50299880a3822b645ba9ec5894062b34ee3bc6bbfc686dc49b26917be"
+    },
+    {
+      "order": 738,
+      "kind": "executable",
+      "path": "db/migrations/20261018_nestly_v984_razorpay_is_retired.sql",
+      "semanticVersion": "v984",
+      "proposedDeployVersion": "20261018000000",
+      "sha256": "a959258569f9c3ac4beec71639fc8fce4d9b02246a883f943fd23c9cccb9a967"
     }
   ]
 }

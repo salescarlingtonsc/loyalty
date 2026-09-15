@@ -240,12 +240,12 @@ test('every security header block survives the rewrite change untouched', () => 
   const sources = vercel.headers.map((block) => block.source);
   assert.deepEqual(sources, [
     '/(.*)',
-    /* nestly_v755: the Razorpay checkout page needs the three Razorpay origins, and a header CSP
-       and a meta CSP are both enforced as an INTERSECTION — so the exemption has to be a
-       per-path header block. It sits AFTER '/(.*)' because Vercel lets a later matching entry
-       win for the same header key, and it is the ONLY path that admits a third-party payment
-       script; the site-wide block above is unchanged. */
-    '/razorpay-checkout.html',
+    /* nestly_v984: '/razorpay-checkout.html' stood here. v755 had given it a per-path header block
+       because it was the ONE path that admitted a third-party payment script, and a header CSP and
+       a meta CSP are enforced as an INTERSECTION so the exemption could not live in the meta tag.
+       Razorpay is retired (owner, 2026-09-16), the page is deleted, and with it the only CSP
+       exemption on this site: every path now takes the site-wide block above. Deliberate list
+       SHRINKAGE — the security posture tightened, which is why this list is asserted exactly. */
     '/sw.js',
     '/runtime-config.js',
     '/runtime-config-loader.js',

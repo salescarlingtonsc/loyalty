@@ -308,14 +308,12 @@ test('a subscription whose card is unknown asks the provider once, not once per 
     'the workspace is marked as asked BEFORE the request, so a failure cannot re-fire on re-render');
 });
 
-test('the checkout page opens the card-change sheet without an amount', () => {
-  const checkout = readFileSync(resolve(root, 'app/razorpay-checkout.js'), 'utf8');
-  assert.match(checkout, /var cardChange = params\.get\('card_change'\) === '1';/);
-  assert.match(checkout, /if \(cardChange\) options\.subscription_card_change = 1;/);
-  assert.match(checkout, /else options\.description = description;/);
-  // no amount is passed in either mode: a subscription checkout is priced by the plan
-  assert.doesNotMatch(checkout, /amount:/);
-});
+/* nestly_v984 removed the test that stood here. It read app/razorpay-checkout.js and asserted the
+   card-change sheet was opened without an amount. The owner retired Razorpay (2026-09-16) and that
+   file is deleted, so the test had no subject left. The file's absence is now asserted by
+   tests/billing/v984-razorpay-is-retired.test.mjs and by the rewritten checkout test in
+   tests/billing/v755-razorpay-command-contract.test.mjs. Stripe's own card-change path is covered
+   by the v791/v798 suites and is untouched by that retirement. */
 
 /* ---------------------------------------------------------------- a command never navigates away */
 

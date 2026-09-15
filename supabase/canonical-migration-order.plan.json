@@ -4432,6 +4432,12 @@
       "version": "20261017050000",
       "name": "nestly_v984_promo_records_money_that_moved",
       "sourcePath": "db/migrations/20261016_nestly_v984_promo_records_money_that_moved.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261018000000",
+      "name": "nestly_v984_razorpay_is_retired",
+      "sourcePath": "db/migrations/20261018_nestly_v984_razorpay_is_retired.sql"
     }
   ]
 }
