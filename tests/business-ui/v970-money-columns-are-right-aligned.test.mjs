@@ -57,6 +57,27 @@ test('every money cell in every table is right-aligned',()=>{
     `${offenders.length} money cells are not right-aligned:\n  `+offenders.join('\n  '));
 });
 
+/* A second rule, because the first one can only see a cell whose money is spelled out inside it.
+   "Your branches side by side" builds its amount in a helper — <td data-label="Revenue">${esc(
+   revenueCellV778(row))}</td> — so the call-based scan walked straight past it and it shipped as the
+   one left-aligned Revenue column on a page where sixteen others had just been squared up. A money
+   column is identifiable by its LABEL however its text is produced, so this holds the label. */
+const MONEY_COLUMN_LABELS=['Revenue','Outstanding','Cash collected','Identified customer revenue',
+  'Revenue per visit','Average transaction value','Value'];
+
+test('a cell in a money column is right-aligned however its text is produced',()=>{
+  const offenders=[];
+  for(const label of MONEY_COLUMN_LABELS){
+    const cell=new RegExp(`<td data-label="${label}"([^>]*)>`,'g');
+    for(const match of app.matchAll(cell)){
+      if(RIGHT_ALIGNED.test(match[1]))continue;
+      offenders.push(`app.js:${app.slice(0,match.index).split('\n').length}  ${match[0]}`);
+    }
+  }
+  assert.deepEqual(offenders,[],
+    `${offenders.length} cells sit in a money column without its alignment:\n  `+offenders.join('\n  '));
+});
+
 test('a money column right-aligns its header too, so the figures sit under their own label',()=>{
   /* A right-aligned column under a left-aligned header reads as two columns. Checked on the
      Business Intelligence brief, which is where the whole class lived. */

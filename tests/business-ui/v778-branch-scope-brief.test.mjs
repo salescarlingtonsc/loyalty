@@ -59,8 +59,11 @@ const sectionOf = (html, className) => {
   const close = html.indexOf('</section>', at);
   return html.slice(open, close + '</section>'.length);
 };
+/* nestly_v970: a money cell now carries class="num", so this reader allows attributes after the
+   label the way detailsOf below already has to. Matching a bare tag made it silently return [] —
+   an empty deepEqual against a non-empty expectation, which is at least loud. */
 const rowsOf = (section, label) =>
-  (section.match(new RegExp(`<td data-label="${label}">[\\s\\S]*?</td>`, 'g')) || []).map(textOf);
+  (section.match(new RegExp(`<td data-label="${label}"[^>]*>[\\s\\S]*?</td>`, 'g')) || []).map(textOf);
 /* The second row of each branch is one cell spanning the five columns above it, so it carries
    more attributes than rowsOf's exact-match label and needs its own reader. */
 const detailsOf = (section) =>
@@ -229,8 +232,11 @@ test('V778 block L names each branch by its code and states the firm total above
 
 test('V778 block L compares five columns and nothing else', () => {
   const section = sectionOf(render(FULL), L);
-  const heads = section.match(/<th>[^<]*<\/th>/g) || [];
-  assert.deepEqual(heads, ['<th>Branch</th>', '<th>Valid visits</th>', '<th>Revenue</th>',
+  /* nestly_v970: the Revenue header carries class="num" now — this table's amounts were the last
+     left-aligned money column on the page. The assertion is about WHICH five columns exist, so it
+     matches the header tag with its attributes rather than pinning a bare <th>. */
+  const heads = section.match(/<th[^>]*>[^<]*<\/th>/g) || [];
+  assert.deepEqual(heads, ['<th>Branch</th>', '<th>Valid visits</th>', '<th class="num">Revenue</th>',
     '<th>Customers</th>', '<th>New customers</th>'],
     'eleven columns broke words mid-syllable at 1100px; the rest reads as prose underneath');
   assert.deepEqual(rowsOf(section, 'Valid visits'), ['20 · 40% of all', '18 · 36% of all', '12 · 24% of all']);

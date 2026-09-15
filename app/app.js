@@ -55649,11 +55649,11 @@ function ownerBriefHtmlV771(brief,options){
       ${headV771('branch','ciBriefBranchesTitleV778','Your branches side by side','The same '+periodDaysV771+' days, one row for each branch.')}
       ${comparisonErrorV778?errorRowV771('Your branches side by side could not load.',comparisonErrorV778):`
       ${firmV778?`<p class="small" style="margin:10px 0 2px">${esc(`Across all branches: ${countV771(firmV778.visits)} valid visits · ${money(countV771(firmV778.revenue_cents))} · ${countV771(firmV778.customers)} customers.`)}</p>`:''}
-      <div class="cui-table-wrap" role="region" aria-label="Your branches side by side"><table class="cui-table" data-responsive="true"><thead><tr><th>Branch</th><th>Valid visits</th><th>Revenue</th><th>Customers</th><th>New customers</th></tr></thead><tbody>${comparisonRowsV778.map(row=>{
+      <div class="cui-table-wrap" role="region" aria-label="Your branches side by side"><table class="cui-table" data-responsive="true"><thead><tr><th>Branch</th><th>Valid visits</th><th class="num">Revenue</th><th>Customers</th><th>New customers</th></tr></thead><tbody>${comparisonRowsV778.map(row=>{
         const detail=detailLineV778(row);
         return `<tr><td data-label="Branch"><b>${esc(branchNameV778(row))}</b></td>
         <td data-label="Valid visits">${esc(visitsCellV778(row))}</td>
-        <td data-label="Revenue">${esc(revenueCellV778(row))}</td>
+        <td data-label="Revenue" class="num">${esc(revenueCellV778(row))}</td>
         <td data-label="Customers">${countV771(row.customers)}</td>
         <td data-label="New customers">${countV771(row.new_customers)}</td></tr>${detail
           ?`<tr><td data-label="Details" class="muted small ci-branch-detail-v778" colspan="5">${esc(detail)}</td></tr>`
