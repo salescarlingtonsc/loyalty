@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="58c23a801aca19973e9194554bdcb7f9fa566ac68110c5c370157f6cf4502ce2"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="c61242820e5e81dc7c4909222359c4aff3d9bd1d4570381e2bfae8d08e90adfa"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 58c23a801aca19973e9194554bdcb7f9fa566ac68110c5c370157f6cf4502ce2</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · c61242820e5e81dc7c4909222359c4aff3d9bd1d4570381e2bfae8d08e90adfa</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8946,7 +8946,7 @@ function activitySaleBreakdownV541(h,earnedPoints=0){
   /* The lines are not guaranteed to add up to the sale: a discount line, a rounding, or a sale
      recorded with an amount typed over the cart would all differ. Saying so beats a silent gap. */
   const mismatch=Number.isFinite(linesTotal)&&Math.abs(linesTotal-saleCents)>0
-    ?`<p class="muted small" style="margin-top:6px">The lines add up to ${esc(money(linesTotal))}, and this sale was recorded as ${esc(money(saleCents))}.</p>`
+    ?`<p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('linesDoNotMatchSale',{lines:money(linesTotal),sale:money(saleCents)})}</p>`
     :'';
   return `<div class="c360-act-breakdown-v541">
     <table class="cui-table" data-responsive="true"><thead><tr>
@@ -10704,7 +10704,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'58c23a801aca19973e9194554bdcb7f9fa566ac68110c5c370157f6cf4502ce2',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'c61242820e5e81dc7c4909222359c4aff3d9bd1d4570381e2bfae8d08e90adfa',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

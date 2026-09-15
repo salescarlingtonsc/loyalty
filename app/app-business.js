@@ -4405,7 +4405,7 @@ async function loadReversalWorkflows(clientId=null,limit=100,mode='all'){
 }
 function reversalResultHtml(kind,result){
   if(!result)return '';
-  if(kind==='sale'&&result.no_money_refund)return `<div class="imp-note"><b>Session use undone.</b> No payment refund was created. ${Number(result.restored_sessions||1)} package session added back.</div>`;
+  if(kind==='sale'&&result.no_money_refund)return `<div class="imp-note"><b>Session use undone.</b>${workspaceTemplateHtmlV97('noRefundSessionAddedBack',{sessions:Number(result.restored_sessions||1)})}</div>`;
   if(kind==='sale')return `<div class="imp-note"><b>Reversal completed.</b> ${money(Number(result.reversed_cents||0))} reversed · ${money(Number(result.refunded_payment_cents||0))} refunded${result.replayed?' · exact replay verified':''}.</div>`;
   /* nestly_v802 (F059): a stamp gift restores no points. What comes back is the CLAIM, and with
      it the slot on the card — and the card itself when the gift sat on the final stamp and closed
@@ -4784,7 +4784,7 @@ function openSaleAmountCorrectionDialog(item,onDone){
        line below is a report of what the ledger now holds, not a promise about it. */
     const pointsRemovedV663=Number(data?.points_removed||0),pointsEarnedV663=Number(data?.points_earned||0);
     const loyaltyLineV663=pointsRemovedV663||pointsEarnedV663
-      ?`<p class="small" style="margin-top:6px">Customer points were adjusted with it: ${pointsRemovedV663} removed from the original, ${pointsEarnedV663} earned on the replacement.</p>`
+      ?`<p class="small" style="margin-top:6px">${workspaceTemplateHtmlV97('pointsAdjustedWithCorrection',{removed:pointsRemovedV663,earned:pointsEarnedV663})}</p>`
       :'';
     $('saleCorrectionOutcome').innerHTML=`<div class="imp-note"><b>${data?.replayed?'Correction verified':'Amount corrected'}.</b> Original ${money(Number(data?.original_amount_cents||item.amount_cents))}; replacement ${money(Number(data?.corrected_amount_cents||cents))}.${loyaltyLineV663}</div>`;
     submit.disabled=true;submit.textContent='Completed';$('saleCorrectionCancel').textContent='Done';
@@ -5332,7 +5332,7 @@ async function openDashboardMetricRowsV388(options){
       /* V470: this used to say "Open <button> below for the rest" — the button it pointed at is
          gone, so it names the page instead. The rule it exists for is unchanged: a list shorter
          than its own tile must say so rather than quietly contradict the number. */
-      if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${DASHBOARD_INACTIVE_PAGE_V406}. Open Customers for the rest.</p>`);
+      if(cappedV406)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('showingFirstInactiveCap',{count:DASHBOARD_INACTIVE_PAGE_V406})}</p>`);
       return;
     }
     const {data,error}=await fetchAllRowsResult(()=>{
@@ -8340,7 +8340,7 @@ function activitySaleBreakdownV541(h,earnedPoints=0){
   /* The lines are not guaranteed to add up to the sale: a discount line, a rounding, or a sale
      recorded with an amount typed over the cart would all differ. Saying so beats a silent gap. */
   const mismatch=Number.isFinite(linesTotal)&&Math.abs(linesTotal-saleCents)>0
-    ?`<p class="muted small" style="margin-top:6px">The lines add up to ${esc(money(linesTotal))}, and this sale was recorded as ${esc(money(saleCents))}.</p>`
+    ?`<p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('linesDoNotMatchSale',{lines:money(linesTotal),sale:money(saleCents)})}</p>`
     :'';
   return `<div class="c360-act-breakdown-v541">
     <table class="cui-table" data-responsive="true"><thead><tr>
@@ -10438,7 +10438,7 @@ async function tillPage(){
     const bringbackOffer=catalog.customerBringbackOffer||null;
     const bringbackBanner=bringbackOffer
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Bring-back voucher</b>
-        <p class="small" style="margin:5px 0">${esc(bringbackOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="small" style="margin:5px 0">${workspaceTemplateHtmlV97('itemIsFreeForCustomer',{item:bringbackOffer.reward_label||'Free item'})}</p>
         <p class="muted small" style="margin:5px 0">${workspaceTemplateHtmlV97('bringbackSentAfterDays',{days:Math.max(0,Number(bringbackOffer.away_days)||0)})}</p>
         <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
       :'';
@@ -11778,7 +11778,7 @@ async function tillPage(){
           ?`<p class="ok small" role="status" style="margin-top:10px"><span>${esc(d.welcomeOfferGivenV215)}</span> given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
-              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
+              <p class="small" style="margin:5px 0">${workspaceTemplateHtmlV97('saleMeetsMinimumItemFree',{item:d.welcomeOfferV215.label})}</p>
               <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
@@ -13225,7 +13225,7 @@ const growWhyList=(reasoning)=>(reasoning||[]).length
 const growLiftNote=(programType)=>{
   const lift=GROWREC().estimateRetentionLift(programType);
   if(lift.lowPct==null)return `<div class="imp-note">${esc(lift.disclaimer)}</div>`;
-  return `<div class="imp-note"><b>Come-back rate: about ${lift.lowPct}–${lift.highPct}% better.</b><br>${esc(lift.disclaimer)}</div>`;
+  return `<div class="imp-note"><b>${workspaceTemplateHtmlV97('comeBackRateBetter',{low:lift.lowPct,high:lift.highPct})}</b><br>${esc(lift.disclaimer)}</div>`;
 };
 const growEstimateNote='All figures are estimates from your own prices. Change any number before you save — you decide.';
 /* One error/denied renderer so all three surfaces read the same. */
@@ -19118,7 +19118,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
     <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
     <b>Add reward</b>
-    <span class="muted small">Create new gifts for your customers to redeem with ${growPointsUnitV326}s.</span>
+    <span class="muted small">${workspaceTemplateHtmlV97('createGiftsRedeemWithUnit',{unit:growPointsUnitV326})}</span>
   </li>`:'';
   /* V359 (owner: "adding or editing the fields will be auto publish (with a save button that
      already exist) - dont need the wizard go live steps"). The earning rule is edited HERE now,
@@ -19156,7 +19156,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <p class="grow-setup-sentence-v301" data-grow-earn-reward-expiry-days-v464${Number(snapshot.loyalty?.stamp_reward_expiry_days)>0?'':' hidden'}><label class="muted small" for="growEarnRewardExpiryDaysV464">Days from when the reward is earned</label><br><input id="growEarnRewardExpiryDaysV464" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:140px" value="${esc(String(snapshot.loyalty?.stamp_reward_expiry_days||''))}" placeholder="e.g. 30"></p>
     <p class="muted small" style="margin-top:8px" data-grow-earn-reward-expiry-help-v464>Rewards expire this many days after they are earned. Leave it blank and they never expire. Rewards your customers have already earned keep the rule they were earned under.</p>
     <p class="muted small" style="margin-top:8px">Changes apply to new Stamp Cards. Customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.</p>`
-      :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">Points per ${esc(S.biz?.currency||'SGD')} 1 spent</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>
+      :`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnPointsV359">${workspaceTemplateHtmlV97('pointsPerCurrencyOne',{currency:S.biz?.currency||'SGD'})}</label><br><input id="growEarnPointsV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(String(snapshot.loyalty?.earn_points_per_dollar??1))}" placeholder="e.g. 1"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnExpiryModeV359">When points expire</label><br>
       <select id="growEarnExpiryModeV359" class="grow-setup-input-v301" style="width:100%;max-width:260px">
         <option value="none"${(snapshot.loyalty?.expiry_mode||'none')!=='fixed'?' selected':''}>Never expire</option>
@@ -19216,8 +19216,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
       ${growRedemptionBandV521}
-      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">These gifts are available for your customers to redeem with their ${growPointsUnitV326}s.</p></div>`
-        :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">Showing gifts retired in the last ${GROW_HISTORY_WINDOW_YEARS_V375} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.</p></div>`}
+      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">${workspaceTemplateHtmlV97('giftsAvailableWithUnit',{unit:growPointsUnitV326})}</p></div>`
+        :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">${workspaceTemplateHtmlV97('showingGiftsRetiredYears',{years:GROW_HISTORY_WINDOW_YEARS_V375})}</p></div>`}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
         ${growPointsManageTabV326==='published'
           ?(growPointsPublishedV326.length?growPointsPublishedV326.map(reward=>growPointsGiftRowV326(reward)).join(''):'<li class="muted small" style="cursor:default">No gift yet — add one below.</li>')
@@ -19254,7 +19254,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${CUI.icon('retention',{size:20})}</span>
       <span class="grow-tier-card-body-v351">
         <b data-merchant-content>${esc(campaign.name)}</b>
-        <span class="muted small" data-merchant-content>Away ${Math.max(0,Number(campaign.away_days)||0)} days → ${esc(campaign.reward_label)}</span>
+        <span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97('awayDaysToReward',{days:Math.max(0,Number(campaign.away_days)||0),reward:campaign.reward_label})}</span>
         <span class="muted small">${expiry?`Voucher expires ${expiry} days after it is sent`:'Voucher does not expire'}</span>
       </span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
@@ -19398,7 +19398,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${canSetupWinback?`<div class="grow-bb-templates-v364" style="margin-top:12px">
         <p class="muted small" style="margin:0 0 6px">Quick start — customers who have not visited for:</p>
         <div class="row" style="gap:8px;flex-wrap:wrap">
-          ${[30,60,90].map(days=>`<button type="button" class="btn ghost sm" data-grow-bb-template-v364="${days}">Away over ${days} days</button>`).join('')}
+          ${[30,60,90].map(days=>`<button type="button" class="btn ghost sm" data-grow-bb-template-v364="${days}">${workspaceTemplateHtmlV97('awayOverDays',{days:days})}</button>`).join('')}
         </div></div>`:''}
       <ul class="grow-setup-rewardlist-v301" data-grow-bb-summary-v361>
         <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${growBbRowsV361.length} campaign${growBbRowsV361.length===1?'':'s'} configured</p></span>

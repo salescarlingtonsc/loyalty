@@ -16,6 +16,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v943: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   The REAL runtime is installed as a global, never a stub, because these harnesses build their
+   renderer with eval/new Function and a stub would let a template with a missing key or a dropped
+   value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 /* The status vocabulary is a top-level constant in app.js. Slice the REAL definitions in

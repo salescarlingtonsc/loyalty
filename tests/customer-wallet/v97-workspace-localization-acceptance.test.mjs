@@ -497,8 +497,11 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      ("stamp" / "points"), the eligibility group ("branches" / "services" / "products") — and a
      template value is preserved verbatim by design, so passing one would have left an English noun
      sitting inside a Chinese sentence. One key per noun, chosen by a ternary at the call site, is
-     the only shape that reads correctly in all three locales. 161 + 30 - 4 + 11 = 198. */
-  assert.equal(keys.length,198,'mixed-interface interpolation inventory changed without review');
+     the only shape that reads correctly in all three locales. 161 + 30 - 4 + 11 = 198.
+     nestly_v943 adds 14 more of the same class — the reversal and sale-correction receipts, the
+     overdue-customer cadence line, the gift catalogue's unit sentences, and the bring-back rows.
+     198 + 14 = 212. */
+  assert.equal(keys.length,212,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

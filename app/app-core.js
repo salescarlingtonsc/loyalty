@@ -7855,8 +7855,29 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   showingMostRecentReturns:Object.freeze({en:"Showing the {shown} most recent returns of {total}.",'zh-CN':"显示 {total} 次回头中最近的 {shown} 次。",ms:"Menunjukkan {shown} pulangan terbaharu daripada {total}."}),
   nobodyEndedBreak:Object.freeze({en:"Nobody has ended a {days}+ day break in the last 30 days.",'zh-CN':"最近 30 天内没有人结束超过 {days} 天的沉寂期。",ms:"Tiada sesiapa menamatkan rehat {days}+ hari dalam 30 hari lalu."}),
   takeGiftOffStamp:Object.freeze({en:"Take this gift off stamp {stamp}?",'zh-CN':"要把这份礼物从第 {stamp} 枚印花上移除吗？",ms:"Keluarkan hadiah ini daripada setem {stamp}?"}),
+  /* nestly_v943 — fourteen more embedded-value sentences, the same class v942 opened: the runtime
+     value sits inside the sentence and the words either side move when the language does. */
+  noRefundSessionAddedBack:Object.freeze({en:"No payment refund was created. {sessions} package session added back.",'zh-CN':"未创建退款。已退回 {sessions} 次配套次数。",ms:"Tiada bayaran balik dicipta. {sessions} sesi pakej dikembalikan."}),
+  pointsAdjustedWithCorrection:Object.freeze({en:"Customer points were adjusted with it: {removed} removed from the original, {earned} earned on the replacement.",'zh-CN':"顾客积分已随之调整：原记录扣除 {removed}，替代记录获得 {earned}。",ms:"Mata pelanggan dilaraskan bersamanya: {removed} ditolak daripada yang asal, {earned} diperoleh pada gantian."}),
+  showingFirstInactiveCap:Object.freeze({en:"Showing the first {count}. Open Customers for the rest.",'zh-CN':"仅显示前 {count} 位。其余请在「顾客」中查看。",ms:"Menunjukkan {count} yang pertama. Buka Pelanggan untuk selebihnya."}),
+  lastVisitCadenceValue:Object.freeze({en:"Last visit {ago} ago · usually every ~{cadence}d · {monthly}/mo",'zh-CN':"最近到访：{ago}前 · 通常约每 {cadence} 天 · {monthly}/月",ms:"Kunjungan terakhir {ago} lalu · biasanya setiap ~{cadence}h · {monthly}/bln"}),
+  linesDoNotMatchSale:Object.freeze({en:"The lines add up to {lines}, and this sale was recorded as {sale}.",'zh-CN':"各行合计为 {lines}，而这笔交易记录的金额是 {sale}。",ms:"Baris berjumlah {lines}, dan jualan ini direkodkan sebagai {sale}."}),
+  itemIsFreeForCustomer:Object.freeze({en:"{item} is free for this customer.",'zh-CN':"{item}对这位顾客免费。",ms:"{item} percuma untuk pelanggan ini."}),
+  saleMeetsMinimumItemFree:Object.freeze({en:"This sale meets the minimum, so {item} is free — the welcome gift has not been claimed yet.",'zh-CN':"这笔交易已达最低消费，因此{item}免费 — 迎新礼物尚未领取。",ms:"Jualan ini memenuhi minimum, jadi {item} percuma — hadiah selamat datang belum dituntut."}),
+  comeBackRateBetter:Object.freeze({en:"Come-back rate: about {low}–{high}% better.",'zh-CN':"回头率：约高出 {low}–{high}%。",ms:"Kadar kembali: kira-kira {low}–{high}% lebih baik."}),
+  createGiftsRedeemWithUnit:Object.freeze({en:"Create new gifts for your customers to redeem with {unit}s.",'zh-CN':"创建新的礼物，供顾客用{unit}兑换。",ms:"Cipta hadiah baharu untuk pelanggan anda tebus dengan {unit}."}),
+  pointsPerCurrencyOne:Object.freeze({en:"Points per {currency} 1 spent",'zh-CN':"每消费 1 {currency} 可得积分",ms:"Mata bagi setiap {currency} 1 dibelanjakan"}),
+  giftsAvailableWithUnit:Object.freeze({en:"These gifts are available for your customers to redeem with their {unit}s.",'zh-CN':"这些礼物可供顾客用其{unit}兑换。",ms:"Hadiah ini tersedia untuk pelanggan anda tebus dengan {unit} mereka."}),
+  showingGiftsRetiredYears:Object.freeze({en:"Showing gifts retired in the last {years} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.",'zh-CN':"显示最近 {years} 年内下架的礼物。没有任何内容被删除 — 更早的礼物仍有记录，顾客已完成的每一次兑换也都完整保留。",ms:"Menunjukkan hadiah yang ditamatkan dalam {years} tahun lalu. Tiada apa dipadam — hadiah lama kekal direkodkan, dan setiap penebusan yang pelanggan telah buat disimpan sepenuhnya."}),
+  awayDaysToReward:Object.freeze({en:"Away {days} days → {reward}",'zh-CN':"离开 {days} 天 → {reward}",ms:"Tidak datang {days} hari → {reward}"}),
+  awayOverDays:Object.freeze({en:"Away over {days} days",'zh-CN':"离开超过 {days} 天",ms:"Tidak datang lebih {days} hari"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v943 — fourteen more embedded-value sentences. */
+  'noRefundSessionAddedBack','pointsAdjustedWithCorrection','showingFirstInactiveCap','lastVisitCadenceValue',
+  'linesDoNotMatchSale','itemIsFreeForCustomer','saleMeetsMinimumItemFree','comeBackRateBetter',
+  'createGiftsRedeemWithUnit','pointsPerCurrencyOne','giftsAvailableWithUnit','showingGiftsRetiredYears',
+  'awayDaysToReward','awayOverDays',
   /* nestly_v942: one key per translatable noun, because a template VALUE is preserved verbatim
      and an English noun inside it would survive into 中文. */
   'tiersBasedOnLifetimeVisits','tiersBasedOnLifetimeSpent','tiersBasedOnLifetimePoints',
@@ -8037,7 +8058,7 @@ async function loadAttentionListV571(root,branchId=null,hostId='growBbAttentionV
     return `<li class="attention-row-v548" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line,#eee)">
       <div style="flex:1;min-width:0">
         <b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.full_name||'Customer')}</b>
-        <span class="muted small">Last visit ${dayWord(r.last_visit_days)} ago · usually every ~${esc(String(Math.round(Number(r.cadence_days)||0)))}d · ${esc(money(r.monthly_value_cents))}/mo</span>
+        <span class="muted small">${workspaceTemplateHtmlV97('lastVisitCadenceValue',{ago:dayWord(r.last_visit_days),cadence:String(Math.round(Number(r.cadence_days)||0)),monthly:money(r.monthly_value_cents)})}</span>
       </div>
       <span class="pill" style="background:${st.tone}1A;color:${st.tone};font-weight:700;white-space:nowrap">${st.label}</span>
       ${wa?`<a class="btn sm secondary" href="${wa}" target="_blank" rel="noopener" data-merchant-content data-attention-outreach="${esc(r.client_id)}" aria-label="Message ${esc(r.full_name||'customer')} on WhatsApp">Message</a>`:''}

@@ -14,6 +14,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v943: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   The REAL runtime is installed as a global, never a stub, because these harnesses build their
+   renderer with eval/new Function and a stub would let a template with a missing key or a dropped
+   value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -556,7 +563,10 @@ test('V541 lines that do not add up to the sale are called out, not hidden', () 
   const rows = fixtureV541();
   rows[0].amount = 100000;               // a discount, a rounding, or a typed-over amount
   const text = visibleText(A.renderHistPage(seedEarnedV541(rows), 50));
-  assert.match(text, /The lines add up to SGD 1120\.00, and this sale was recorded as SGD 1000\.00/,
+  /* nestly_v943: the sentence is a named template now, so its two amounts arrive in their own
+     value spans and visibleText leaves a space where each tag was. The words and both figures are
+     still asserted, in order — only the whitespace between them is allowed to vary. */
+  assert.match(text, /The lines add up to\s+SGD 1120\.00\s*, and this sale was recorded as\s+SGD 1000\.00/,
     'a silent gap between the lines and the sale is how a reconciliation goes wrong');
 });
 

@@ -12,6 +12,13 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { installWorkspaceTemplateGlobals, workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v943: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   The REAL runtime is installed as a global, never a stub, because these harnesses build their
+   renderer with eval/new Function and a stub would let a template with a missing key or a dropped
+   value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -58,7 +65,10 @@ function makeHarness({ rpcResult, role = 'owner', canRead = true }) {
     canReadModule: () => canRead,
     S: { myRole: role, biz: { id: 'biz-1', name: 'Kaya & Co', currency: 'SGD' } },
     sb: { rpc: async (fn, args) => { calls.push({ fn, args }); return rpcResult; } },
-    $: () => null
+    $: () => null,
+    /* nestly_v943: the row carries a named template now, and a vm context sees none of this
+       process's globals — so the real runtime goes in with the other helpers. */
+    ...workspaceTemplateRuntime(),
   };
   const context = vm.createContext(sandbox);
   const exportsRef = {};
@@ -100,8 +110,13 @@ test('V548 the card prints the server judgement: names, rhythm line, status chip
   assert.ok(html.includes('Amanda &lt;Lim&gt;'), 'names are escaped, never raw');
   assert.ok(html.includes('3 customers overdue'), 'overdue headline = overdue + slipping');
   assert.ok(html.includes('SGD 784.00'), 'at-risk money comes from the summary, not re-added client-side');
-  assert.ok(html.includes('Last visit 45d ago'), "Jane's lapse is the server's number");
-  assert.ok(html.includes('usually every ~30d'), "Jane's rhythm is the server's cadence");
+  /* nestly_v943: the rhythm line is a named template now, so its three figures arrive in their
+     own value spans rather than inside one string. Each is still asserted, by the name the
+     template gives it, which says WHICH number it is rather than merely that it appears. */
+  const cadenceValue = (name) =>
+    new RegExp(`data-workspace-value="${name}"[^>]*>([^<]*)<`).exec(html)?.[1];
+  assert.equal(cadenceValue('ago'), '45d', "Jane's lapse is the server's number");
+  assert.equal(cadenceValue('cadence'), '30', "Jane's rhythm is the server's cadence");
   assert.ok(html.includes('Overdue') && html.includes('Slipping away') && html.includes('Due back'),
     'all three status chips render from the status map');
   assert.ok(html.includes('9 customers visited once'), 'the one-time count reaches the card');
