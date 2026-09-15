@@ -83,7 +83,7 @@ test('the picker shows bundles with what is inside them', () => {
   assert.match(app, /<b class="small" style="display:block;margin-top:14px">Bundles<\/b>/);
   assert.match(app, /data-add-bundle="\$\{esc\(bundle\.id\)\}"/);
   assert.match(app, /bundle\.items\.map\(item=>item\.name\)\.join\(' \+ '\)/);
-  assert.match(app, /A bundle adds each of its services at the bundle price\./);
+  assert.match(app, /A bundle is charged once at its own price/);
   /* V216 inserted per-group headings and V373 moved the full catalogue into the Add item sheet,
      so this no longer pins one exact string. The intent is unchanged and still asserted: a bundle
      is found with the services it is made of — the sheet's Services tab, directly after the

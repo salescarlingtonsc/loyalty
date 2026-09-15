@@ -137,7 +137,8 @@ test('V319 promotions leave the programmes card for a box of their own', () => {
   const build=section('const limitedOfferRowsV319=','if(referralProgrammeV294)');
   /* Same rows, same shape, same source — only the card they land in changed. */
   assert.match(build,/promotionsV294\|\|\[\]/);
-  assert.match(build,/filter\(item=>item\?\.active===true\)/);
+  assert.match(build,/filter\(item=>promotionLifecycleV186\(item\)\.live\)/,
+    'F12: ended offers must not render here — reuse the one live predicate, never a new date test');
   assert.match(build,/slice\(0,6\)/);
   assert.match(build,/programmeRowHtmlV294\(item\.name\|\|'Promotion'/);
   /* And they are no longer pushed into the programmes list. */

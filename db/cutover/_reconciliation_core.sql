@@ -178,6 +178,15 @@ immutable_sales_flags_section as (
     )
   ) as data
 ),
+-- nestly: public.client_points_balance is the RAW, UNSCOPED ledger sum and must stay that way.
+-- balance_mismatch_count below asserts view == sum(points_ledger) per (business_id, client_id), and
+-- compare-cutover-inventories.mjs raises P0_FINANCIAL the moment it is non-zero. The PRODUCT balance
+-- is deliberately a different number: app.client_points_balance_v409 scopes to the live programme
+-- (v312 scope switch, v381 live resolver), so a tenant holding a parked pot reads lower on screen
+-- than this view. nestly_v871, Cubbly SPA client 268cb96d: 1150 live + 801 parked = 1951 here.
+-- Do NOT re-scope this view to agree with the screen. It breaks this gate, and both resolvers are
+-- revoked from anon/authenticated (v312, v599), so a security_invoker view calling them would raise
+-- 42501 for every PostgREST caller.
 points_reconciliation_section as (
   select jsonb_build_object(
     'points_ledger_exists', to_regclass('public.points_ledger') is not null,

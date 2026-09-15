@@ -566,7 +566,7 @@ test('V774 block J ranks the week and the two-hour blocks from the reader, and h
      and the block says once which of the two it is. */
   assert.ok(!/<th>Visits<\/th>/.test(section) && !/data-label="Visits"/.test(section));
   assert.ok(section.includes('<th>Valid visits</th>'));
-  assert.ok(text.includes("That is the Dashboard's counter, not the Paid visits column above."));
+  assert.ok(text.includes("Several sales by one customer on the same day count separately here, so this is neither the Dashboard's counter, which counts that customer once for the day, nor the Paid visits column above."));
   const perDay = rowsOf(section, 'Visits per day');
   assert.deepEqual(perDay, ['1.3', '0.8', '0.8', '0.5', '0.3', '0.0', '0.0'],
     'per_occurrence to one decimal, straight from the reader');

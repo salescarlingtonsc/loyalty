@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="e07dd85bdef79dde048befe12cee7ec2a23013fe0920ab9c6ff83080ec28bee4"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="da030d8d43b00c1d780a620c04f881842ee6737f5d7a1fd86bba38c065382009"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6188,7 +6188,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · e07dd85bdef79dde048befe12cee7ec2a23013fe0920ab9c6ff83080ec28bee4</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · da030d8d43b00c1d780a620c04f881842ee6737f5d7a1fd86bba38c065382009</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7240,10 +7240,10 @@ async function clientsPage(){
     const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend ${sortGlyph}</button></th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th class="num"><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
-        <td>${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
+        <td class="num">${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
         <td class="num">${esc(money(Number(c.lifetime_spend_cents)||0))}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
@@ -7994,7 +7994,15 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
      rows are unchanged — same name, same one-line description, same Live pill — they simply move
      into their own card below, matching the Limited Offer category the same owner named on the
      Programmes rail the same day. */
-  const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>item?.active===true).slice(0,6)
+  /* F12: `active` is the PUBLISH flag, not the running state — an offer stays active===true after
+     its ends_at has passed, so this card kept printing ended promotions with a green On pill while
+     Limited Offer ("0 of 10 live now"), the Overview table and every customer surface had already
+     dropped them. promotionLifecycleV186 is the one predicate those surfaces publish against — see
+     the V288 note on growProgrammeEntriesV271, and the date-first rule growOfferBucketV324 buckets
+     by — so reuse it rather than adding a second date comparison here. The hardcoded `true` pill
+     below stays correct: after this filter only live rows reach it, and a scheduled offer is
+     excluded for the same reason V288 excluded it from Ongoing programmes. */
+  const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>promotionLifecycleV186(item).live).slice(0,6)
     .map(item=>programmeRowHtmlV294(item.name||'Promotion',String(item.description||item.tagline||'A current offer customers can see.').slice(0,140),true));
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
     /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
@@ -9517,7 +9525,17 @@ async function tillPage(){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Peekaa administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
-  selectedBranchId=tillBranchId;
+  /* F5: tillBranchId is the branch this counter OPERATES at — every RPC below passes it
+     explicitly — and selectedBranchId is the workspace's VIEWING scope, the top bar select whose
+     own title reads "This changes the workspace view. Operational actions still use one selected
+     branch." Copying one into the other meant that merely ARRIVING here (the customer profile's
+     "Record sale" button, the workspace header's sale shortcut) moved a top bar that said "All
+     branches" onto one branch with no user action, and every report read behind it narrowed with
+     it. Only an owner or manager may hold "All branches"; an employee is never offered
+     consolidated (see hydrateProfileBranchSelectorV158) and still needs a branch filled in, so
+     theirs is unchanged. The tBranch picker below still writes the scope — that is a deliberate
+     choice, not arrival. */
+  if(!canSeeAllTillBranches)selectedBranchId=tillBranchId;
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
@@ -10690,7 +10708,7 @@ async function tillPage(){
      when the firm has no bundles. Same tiles and the same data-add-bundle attribute, so the
      existing add handler owns it — no second way to put a bundle in the cart. */
   function tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles=[]){
-    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle is charged once at its own price — that price is split across its items on the receipt and for commission.</p>`:''}`;
   }
   /* V211/V257: package plans on sale. Each is an EXTRA line with its own idempotency key, so the
      badge counts lines, not quantity. */
@@ -11493,7 +11511,7 @@ async function tillPage(){
       const bundles=(catalog.bundles||[]).filter(match);
       panel=`${services.length?`<div class="till-cart-catalog">${tillCatalogueTilesV373(services.map(item=>({type:'service',item})))}</div>`:'<p class="muted small">No services match.</p>'}
         ${bundles.length?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${tillBundleTilesV373(bundles)}</div>
-          <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+          <p class="muted small" style="margin-top:6px">A bundle is charged once at its own price — that price is split across its items on the receipt and for commission.</p>`:''}`;
     }else if(active==='products'){
       const products=(catalog.products||[]).filter(match);
       panel=products.length
@@ -12108,7 +12126,7 @@ async function tillPage(){
           ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
-              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
               <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
@@ -28434,7 +28452,17 @@ async function svRunTopupFlow({branches,state,testOnly}){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Peekaa administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
-  selectedBranchId=tillBranchId;
+  /* F5: tillBranchId is the branch this counter OPERATES at — every RPC below passes it
+     explicitly — and selectedBranchId is the workspace's VIEWING scope, the top bar select whose
+     own title reads "This changes the workspace view. Operational actions still use one selected
+     branch." Copying one into the other meant that merely ARRIVING here (the customer profile's
+     "Record sale" button, the workspace header's sale shortcut) moved a top bar that said "All
+     branches" onto one branch with no user action, and every report read behind it narrowed with
+     it. Only an owner or manager may hold "All branches"; an employee is never offered
+     consolidated (see hydrateProfileBranchSelectorV158) and still needs a branch filled in, so
+     theirs is unchanged. The tBranch picker below still writes the scope — that is a deliberate
+     choice, not arrival. */
+  if(!canSeeAllTillBranches)selectedBranchId=tillBranchId;
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
@@ -29607,7 +29635,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
      when the firm has no bundles. Same tiles and the same data-add-bundle attribute, so the
      existing add handler owns it — no second way to put a bundle in the cart. */
   function tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles=[]){
-    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle is charged once at its own price — that price is split across its items on the receipt and for commission.</p>`:''}`;
   }
   /* V211/V257: package plans on sale. Each is an EXTRA line with its own idempotency key, so the
      badge counts lines, not quantity. */
@@ -30410,7 +30438,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const bundles=(catalog.bundles||[]).filter(match);
       panel=`${services.length?`<div class="till-cart-catalog">${tillCatalogueTilesV373(services.map(item=>({type:'service',item})))}</div>`:'<p class="muted small">No services match.</p>'}
         ${bundles.length?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${tillBundleTilesV373(bundles)}</div>
-          <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+          <p class="muted small" style="margin-top:6px">A bundle is charged once at its own price — that price is split across its items on the receipt and for commission.</p>`:''}`;
     }else if(active==='products'){
       const products=(catalog.products||[]).filter(match);
       panel=products.length
@@ -31025,7 +31053,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
           ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
-              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
               <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
@@ -31469,6 +31497,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'e07dd85bdef79dde048befe12cee7ec2a23013fe0920ab9c6ff83080ec28bee4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'da030d8d43b00c1d780a620c04f881842ee6737f5d7a1fd86bba38c065382009',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

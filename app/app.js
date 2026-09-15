@@ -4604,7 +4604,7 @@ function appSurfaceForRouteV185(hash,{signedIn=false}={}){
    is not English, so they ship as their own chunk. Until it arrives, translation returns the
    English source — which is exactly what the 'en' path does — so a slow or failed load degrades
    to English rather than to a broken screen. */
-/* nestly_v913: it now REPORTS whether the tables arrived. It used to swallow the failure and
+/* nestly_v920: it now REPORTS whether the tables arrived. It used to swallow the failure and
    return null, which was fine for the "degrade to English" promise above but left both callers
    unable to tell a loaded table from a failed one — and loadWorkspaceLocaleV97 was caching the
    locale as resolved either way, so a single dropped request meant an English workspace for the
@@ -4701,7 +4701,7 @@ async function route(){
      tests pin `disposeCurrentRoute()` to within 320 characters of `async function route(){`,
      and inserting a commented call above it pushed dispose out of that window. Only the STATE
      changes here; see resetPopoverStateV452 for why route() must not reach a renderer.
-     nestly_v912: this used to say "the shell is about to be rebuilt, so only the STATE has to
+     nestly_v920: this used to say "the shell is about to be rebuilt, so only the STATE has to
      change here". That is no longer true — renderShell reuses the shell when the chrome has not
      changed — and relying on it is exactly how the first cut of v906 left an open account menu
      painted over the page you navigated to. The reuse branch now regenerates #bellwrap and
@@ -21035,7 +21035,7 @@ function profileBranchScopeLabelV158(){
 async function hydrateProfileBranchSelectorV158(page){
   const mount=$('profileBranchScopeV158');
   if(!mount)return;
-  /* nestly_v912: the top bar is no longer thrown away on every navigation, so this no longer may
+  /* nestly_v920: the top bar is no longer thrown away on every navigation, so this no longer may
      blank itself back to a loading pill on every navigation either — that flash, twice a minute
      whenever the 120s branch cache had expired, was one of the things that read as a page load.
      The READ below still happens every time it is wired, so the list cannot go stale; only the
@@ -21074,7 +21074,7 @@ async function hydrateProfileBranchSelectorV158(page){
       select.onchange=()=>{
         selectedBranchId=select.value||null;
         profileOpen=false;
-        /* nestly_v912: currentPage, not the `page` this closure was created with. The top bar can
+        /* nestly_v920: currentPage, not the `page` this closure was created with. The top bar can
            now outlive the render that wired it, so a captured page would repaint the module the
            owner was on when they last opened this menu rather than the one they are on now. */
         renderShell(currentPage);
@@ -22795,7 +22795,7 @@ async function loadWorkspaceLocaleV97(isCurrent=()=>true){
   if(!error&&data){workspaceLocale=normalizeWorkspaceLocaleV97(data.locale);workspaceLocaleVersion=Number(data.version||0)}
   /* v185: fetch the translation tables before the first workspace render, so a zh-CN or ms
      workspace never paints an English frame first. English users never download them. */
-  /* nestly_v913 — THE BUG THIS ORDER CAUSED. workspaceLocaleLoadedFor used to be set on the line
+  /* nestly_v920 — THE BUG THIS ORDER CAUSED. workspaceLocaleLoadedFor used to be set on the line
      ABOVE the table fetch, and the fetch swallowed its own failure. So one dropped request left a
      zh-CN owner with: the preference correctly read as zh-CN, the picker correctly showing 中文,
      the whole workspace in English, no message, and — because this function returns at the
@@ -22813,7 +22813,7 @@ async function setWorkspaceLocaleV97(locale){
   if(next===previous)return true;
   /* v185: switching INTO a translated language must wait for the tables, otherwise the first
      re-render after the switch would repaint the same English copy the user just moved away from. */
-  /* nestly_v913: and if they do not arrive, say so. Switching to 中文 and being handed the same
+  /* nestly_v920: and if they do not arrive, say so. Switching to 中文 and being handed the same
      English screen with no explanation is the failure the owner actually reported. */
   if(next!=='en'&&!await loadWorkspaceI18nV185()){
     toast('The language pack could not be loaded. Check your connection and try again.');
@@ -22835,7 +22835,7 @@ function wireWorkspaceLanguageV97(){
   wirePicker($('workspaceLanguageMobileV151'));
 }
 
-/* nestly_v912 — a navigation moves the PAGE, not the room it is in.
+/* nestly_v920 — a navigation moves the PAGE, not the room it is in.
 
    Every hash change used to run `root.innerHTML=` over the whole shell: the sidebar, the logo,
    the nav rail, the app bar, the global search, the branch scope, the bell, the profile menu and
@@ -22976,7 +22976,7 @@ function renderShell(page){
   customerUiObserver=CUI.mountMain(main);
   wireNav();
   wireGlobalActions();
-  /* nestly_v912: the only wire* function that is NOT safe to re-run over nodes it has already
+  /* nestly_v920: the only wire* function that is NOT safe to re-run over nodes it has already
      wired — it binds the sheet's backdrop with addEventListener rather than an .on* property, so
      a second run would stack a second handler. Its markup is page-independent and a reuse never
      touches it, so skipping it leaves the sheet wired exactly once. Every other function here
@@ -23845,7 +23845,7 @@ const DASHBOARD_INACTIVE_PAGE_V406=100;
    It is pure data — labels, definitions, routes, button copy, scope — with no closure dependency,
    so it belongs at module scope where BOTH readers can actually see it. */
 const DASHBOARD_METRIC_DEFINITIONS_V405={
-  visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals. Each qualifying sale counts once — several sales by one customer in a day count separately, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v548: visits are sale records, not distinct physical visits — say so */
+  visits:{label:'Valid visits',definition:'Sale records marked as visits in this period, not counting reversals, counted one per customer per day — several sales by one customer in a day count as one visit, a walk-in with no customer record counts each time, and zero-price records such as package sessions and redeemed gifts are included.',action:'View sales',buttonLabel:'View visits',scope:'branch'}, /* nestly_v714/v865 supersede nestly_v548 here: the tile, this dialog (groupVisitDaysV719) and the weekday chart all count ONE customer on ONE Singapore day as one visit — only a walk-in with no customer record counts per sale — so the definition says that, not the old "visits are sale records" */
   revenue:{label:'Peekaa recorded revenue',definition:'Net revenue from sale records in this selected period, after recorded reversals.',action:'View sales',buttonLabel:'View revenue',scope:'branch'},
   new:{label:'New customer members',definition:'Customer membership or customer records created during the selected period. This figure is business-wide unless the record has an auditable branch attribution.',action:'View customers',buttonLabel:'See new customers',scope:'business'},
   /* V287: this tile counted 30-59 PLUS 60+ and then drilled through to the 30-59 bucket
@@ -25648,10 +25648,10 @@ async function clientsPage(){
     const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend ${sortGlyph}</button></th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th class="num"><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend ${sortGlyph}</button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
-        <td>${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
+        <td class="num">${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
         <td class="num">${esc(money(Number(c.lifetime_spend_cents)||0))}</td></tr>`).join('')}</table></div>
       <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97('customerPagination',{total,page:clientPage+1,pages})}</span><span class="spacer"></span>
         <button class="btn ghost sm" id="clPrev" ${clientPage===0?'disabled':''}>Previous</button>
@@ -26403,7 +26403,15 @@ async function clientDetail(id){
      rows are unchanged — same name, same one-line description, same Live pill — they simply move
      into their own card below, matching the Limited Offer category the same owner named on the
      Programmes rail the same day. */
-  const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>item?.active===true).slice(0,6)
+  /* F12: `active` is the PUBLISH flag, not the running state — an offer stays active===true after
+     its ends_at has passed, so this card kept printing ended promotions with a green On pill while
+     Limited Offer ("0 of 10 live now"), the Overview table and every customer surface had already
+     dropped them. promotionLifecycleV186 is the one predicate those surfaces publish against — see
+     the V288 note on growProgrammeEntriesV271, and the date-first rule growOfferBucketV324 buckets
+     by — so reuse it rather than adding a second date comparison here. The hardcoded `true` pill
+     below stays correct: after this filter only live rows reach it, and a scheduled offer is
+     excluded for the same reason V288 excluded it from Ongoing programmes. */
+  const limitedOfferRowsV319=(promotionsV294||[]).filter(item=>promotionLifecycleV186(item).live).slice(0,6)
     .map(item=>programmeRowHtmlV294(item.name||'Promotion',String(item.description||item.tagline||'A current offer customers can see.').slice(0,140),true));
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
     /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
@@ -27926,7 +27934,17 @@ async function tillPage(){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Record sale',subtitle:'A staff identity and branch with Record sale access are required before taking payment.',iconName:'till',canWrite:false,moduleLabel:'Record sale'})}${CUI.card({title:'Record sale is not available',description:'Ask an owner or Peekaa administrator to review this staff member and branch module policy.',body:'<p class="muted small">No purchase, redemption, or package use was recorded.</p>'})}`;
     return;
   }
-  selectedBranchId=tillBranchId;
+  /* F5: tillBranchId is the branch this counter OPERATES at — every RPC below passes it
+     explicitly — and selectedBranchId is the workspace's VIEWING scope, the top bar select whose
+     own title reads "This changes the workspace view. Operational actions still use one selected
+     branch." Copying one into the other meant that merely ARRIVING here (the customer profile's
+     "Record sale" button, the workspace header's sale shortcut) moved a top bar that said "All
+     branches" onto one branch with no user action, and every report read behind it narrowed with
+     it. Only an owner or manager may hold "All branches"; an employee is never offered
+     consolidated (see hydrateProfileBranchSelectorV158) and still needs a branch filled in, so
+     theirs is unchanged. The tBranch picker below still writes the scope — that is a deliberate
+     choice, not arrival. */
+  if(!canSeeAllTillBranches)selectedBranchId=tillBranchId;
   typeof recordProductInteractionV100==='function'&&recordProductInteractionV100('merchant.counter_action_opened',S.biz.id,{
     branchId:tillBranchId,
     context:{action_key:'quick_earn',entry_point:'workspace_route',locale:workspaceLocale,surface_version:'v100'}
@@ -29099,7 +29117,7 @@ async function tillPage(){
      when the firm has no bundles. Same tiles and the same data-add-bundle attribute, so the
      existing add handler owns it — no second way to put a bundle in the cart. */
   function tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles=[]){
-    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+    return `${tillGroupHeadingV216('Services',shownServices.length)}${shownServices.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownServices)}</div>`:''}${tillGroupHeadingV216('Products',shownProducts.length)}${shownProducts.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillCatalogueTilesV373(shownProducts)}</div>`:''}${tillGroupHeadingV216('Bundles',shownBundles.length)}${shownBundles.length?`<div class="till-cart-catalog till-quick-grid-v373">${tillBundleTilesV373(shownBundles)}</div><p class="muted small" style="margin-top:6px">A bundle is charged once at its own price — that price is split across its items on the receipt and for commission.</p>`:''}`;
   }
   /* V211/V257: package plans on sale. Each is an EXTRA line with its own idempotency key, so the
      badge counts lines, not quantity. */
@@ -29902,7 +29920,7 @@ async function tillPage(){
       const bundles=(catalog.bundles||[]).filter(match);
       panel=`${services.length?`<div class="till-cart-catalog">${tillCatalogueTilesV373(services.map(item=>({type:'service',item})))}</div>`:'<p class="muted small">No services match.</p>'}
         ${bundles.length?`<b class="small" style="display:block;margin-top:14px">Bundles</b><div class="till-cart-catalog">${tillBundleTilesV373(bundles)}</div>
-          <p class="muted small" style="margin-top:6px">A bundle adds each of its services at the bundle price.</p>`:''}`;
+          <p class="muted small" style="margin-top:6px">A bundle is charged once at its own price — that price is split across its items on the receipt and for commission.</p>`:''}`;
     }else if(active==='products'){
       const products=(catalog.products||[]).filter(match);
       panel=products.length
@@ -30517,7 +30535,7 @@ async function tillPage(){
           ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
-              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free for this first-time customer.</p>
+              <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
               <button type="button" class="btn primary sm" id="tWelcomeReceiptRedeemV215">Give ${esc(d.welcomeOfferV215.label)}</button></div>`
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
@@ -46978,7 +46996,12 @@ async function giftcardsPage(){
     routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'A branch with Gift cards or Till access is required.',iconName:'giftcard',canWrite:false,moduleLabel:'Gift cards'})}${CUI.card({title:'Additional access required',description:'Ask an owner or Peekaa administrator to review this staff member’s branch modules.'})}`;
     return;
   }
-  selectedBranchId=giftBranchId;
+  /* F5 (same rule as Record sale): giftBranchId is the branch this page OPERATES at and every
+     RPC below passes it explicitly. Writing it into selectedBranchId — the workspace's VIEWING
+     scope — made simply opening Gift cards move a top bar that said "All branches" onto one
+     branch with no user action. An employee is never offered consolidated, so theirs is still
+     filled in here; an owner or manager keeps the scope they chose. */
+  if(!canSeeAllBranches)selectedBranchId=giftBranchId;
   const preferenceState=checkoutPreferencesStateV102(preferencesResult);
   const preferencesAvailable=preferenceState.available;
   const giftCardsEnabled=preferenceState.giftCardSalesEnabled;
@@ -47335,7 +47358,13 @@ async function appointmentsPage(){
   const visibleBranches=assignedBranches.filter(branch=>projectionCanRead(branchProjection[branch.id],'appointments'));
   let branchId=visibleBranches.some(b=>b.id===selectedBranchId)?selectedBranchId:
     (visibleBranches.find(b=>b.is_default)?.id||visibleBranches[0]?.id||'');
-  if(branchId)selectedBranchId=branchId;
+  /* F5 (same rule as Record sale): branchId is the branch this calendar OPERATES on, and the
+     rest of this page reads that local. Writing it into selectedBranchId — the workspace's
+     VIEWING scope — made opening Appointments (the customer profile's "New appointment" button)
+     move a top bar that said "All branches" onto one branch with no user action. An employee is
+     never offered consolidated, so theirs is still filled in; the apBranch / calendarBranch
+     pickers still set the scope, because they re-run this page and read it back. */
+  if(branchId&&!canSeeAll)selectedBranchId=branchId;
   const selectedProjection=branchProjection[branchId]||null;
   canWrite=projectionCanWrite(selectedProjection,'appointments');
   canComplete=canWrite&&projectionCanWrite(selectedProjection,'till')&&hasRoleCapability('create_sales');
@@ -52791,9 +52820,30 @@ async function reminderNotificationPageV606(){
     <div id="growBbWhatsappStripV551"></div>`;
   if(!isCurrent())return;
   await Promise.all([
-    loadGrowWaAutomationCardV583(routeMain).catch(()=>{}),
-    loadGrowBbWhatsappStripV551(routeMain).catch(()=>{})
+    loadGrowWaAutomationCardV583(routeMain).catch(err=>console.error('remindernotify: WhatsApp automation card failed to load',err)),
+    loadGrowBbWhatsappStripV551(routeMain).catch(err=>console.error('remindernotify: WhatsApp delivery strip failed to load',err))
   ]);
+  if(!isCurrent())return;
+  /* F14 (audit): this page's entire body is those two cards, and both paint nothing while
+     HIDE_WHATSAPP_API_SURFACES_V824 is true (nestly_v824) — so the rail row F013 restored
+     opened a title over an empty screen, with nothing in the console to explain it. The row,
+     the route and the v824 hide all stay exactly as ruled; the page states why it is empty
+     instead. A loader that fails once the hide is lifted lands here too, with its reason
+     logged above rather than swallowed.
+     The copy claims only what this page governs. Peekaa has NOT stopped messaging customers:
+     customer-push-dispatch still sends booking_request_received, appointment_time_changed,
+     reward_ready and value_expiry (supabase/functions/_shared/customer-push.ts), so a blanket
+     "Peekaa is not sending messages" would be false on the one page whose subtitle promises
+     what Peekaa sends. It also names no delivery platform, per the v583 rule and the v824 hide. */
+  const waHostV606=routeMain.querySelector('#growWaAutomationCardV583');
+  const bbHostV606=routeMain.querySelector('#growBbWhatsappStripV551');
+  if(waHostV606&&!waHostV606.innerHTML&&!(bbHostV606&&bbHostV606.innerHTML)){
+    waHostV606.innerHTML=`<section class="card" style="margin-top:12px">${HIDE_WHATSAPP_API_SURFACES_V824
+      ?CUI.emptyState({iconName:'bell',title:'Nothing to set up here yet',
+        body:'The automatic messages this page controls are switched off across Peekaa right now, so there is nothing here for you to change. This page fills in as soon as there is a setting for you to control.'})
+      :CUI.emptyState({iconName:'info',title:'Reminder settings could not be loaded',
+        body:'Nothing has been changed. Reload the page to try again.'})}</section>`;
+  }
 }
 /* nestly_v606 (owner mark: the opening-hours grid ringed with an arrow to Branches — "branch
    opening hour should put here"). Hours belong to a BRANCH. They were edited on Customer Action,
@@ -55151,7 +55201,7 @@ function ownerBriefHtmlV771(brief,options){
         <td data-label="Valid visits">${countV771(row.visits)}</td>
         <td data-label="Share of visits">${esc(shareTextV774(row.share))}</td></tr>`).join('')}</tbody></table></div>`
         :'<div class="empty">No visits recorded at any time of day in this period.</div>'}
-      ${noteLineV774('Valid visits count every completed sale your settings count as a visit, including the zero-price ones such as package sessions. That is the Dashboard\'s counter, not the Paid visits column above.')}
+      ${noteLineV774('Valid visits count every completed sale your settings count as a visit, including the zero-price ones such as package sessions. Several sales by one customer on the same day count separately here, so this is neither the Dashboard\'s counter, which counts that customer once for the day, nor the Paid visits column above.')}
       ${noteLineV774(rhythmV774?.open_block_rule)}
       ${ageBlockRowsV774.length?`<p class="small" style="margin:12px 0 2px"><b>Who comes when</b></p>
       <div class="cui-table-wrap" role="region" aria-label="Who comes when"><table class="cui-table" data-responsive="true"><thead><tr><th>Time</th><th>Who came</th></tr></thead><tbody>${ageBlockRowsV774.map(entry=>
@@ -55662,6 +55712,24 @@ function biMoneyV892(value,currency){
   try{return RevenueTruthUI.money(amount,code);}catch(_error){return `${code} ${(amount/100).toFixed(2)}`;}
 }
 function biWholeV892(value){const parsed=biFiniteV892(value);return parsed===null?null:Math.round(parsed);}
+/* nestly_v920 (audit finding F11: "87% collected" printed on SGD 3,836.00 of SGD 4,436.00, which
+   is 86.4743%). app.rate_block_v1 already rounds pct to ONE DECIMAL, so rounding that again to a
+   whole percent rounds TWICE: 86.4743 → 86.5 → 87, a whole point above the truth, on a card whose
+   own next line says SGD 600.00 is not yet collected. The whole percent is taken from the block's
+   own numerator and denominator instead — one rounding of the server's own divide, the same shape
+   the concentration row already uses at biModelV892.
+   The server's pct is the GATE, never merely a fallback: app.rate_block_floor_gated_v683
+   suppresses a below-floor rate by nulling pct while leaving numerator and denominator exactly as
+   computed, and the standing ruling on this block is that no suppression is re-decided in the
+   browser — where a fact is absent it stays absent. Gating on pct keeps every absence byte
+   identical to before; the only changed output is the double-rounding itself. */
+function biRatePctWholeV920(block){
+  const parsed=biObjectV892(block);
+  if(!parsed||biFiniteV892(parsed.pct)===null)return null;
+  const numerator=biFiniteV892(parsed.numerator),denominator=biFiniteV892(parsed.denominator);
+  if(numerator===null||denominator===null||denominator<=0)return biWholeV892(parsed.pct);
+  return Math.round(numerator/denominator*100);
+}
 function biPluralV892(count,one,many){return `${count} ${count===1?one:many}`;}
 /* The ONLY arithmetic on a comparison, and it is the one compareV771 already does: a percentage
    change between two totals the server computed. A missing or non-positive earlier total means
@@ -55810,7 +55878,7 @@ function biModelV892(bundles){
     revenue:{now:revenueNow,change:biChangePctV892(revenueNow,revenuePrev)},
     collected:{
       now:biFiniteV892(cashTotals.collected_cents),
-      sharePct:biWholeV892(biObjectV892(cashTotals.collected_share)?.pct)
+      sharePct:biRatePctWholeV920(cashTotals.collected_share)
     },
     customers:{now:buyersNow,change:biChangePctV892(buyersNow,buyersPrev)},
     newCustomers:{now:joinersNow,change:biChangePctV892(joinersNow,joinersPrev)},
@@ -59375,6 +59443,20 @@ const SETTINGS_TABS_MOVED_TO_CUSTOMER_INTERFACE_V269=['workspace','programme','f
    SECTION that absorbed it instead of the top of the page. Same destinations as before — the
    surface and its owner gate are unchanged — just one level more precise. */
 const SETTINGS_TAB_CUSTOMER_INTERFACE_VIEW_V296={workspace:'brand',programme:'programme',fields:'interface',data:'interface'};
+/* nestly_v920 (F15): the page heading was fixed markup, so every tab of this page was titled
+   "Subscription" with the billing subtitle — true only of the modules/plan tab. settingsActiveTab
+   survives a route change (staffMembersPage sets it to 'team'), so opening Subscription from the
+   rail after Staff Members showed the staff roster, company invite and module templates under
+   "Manage your branch plans and billing", and selectSettingsTab then replaceState()d the address
+   to '#/settings?tab=team' to match; '?tab=catalogue' did the same over the checkout catalogue.
+   One heading per tab, resolved where the topbar is built — the same thing customerInterfacePage
+   already does with ciPageTitleV368. staffMembersPage replaces this whole topbar with its own
+   "Staff Members" title after settingsPage() returns, so the canonical staff door is unchanged. */
+const SETTINGS_TAB_HEADINGS_V920={
+  modules:{title:'Subscription',subtitle:'Manage your branch plans and billing.'},
+  catalogue:{title:'Checkout catalogue',subtitle:'Choose which services and products can be selected at checkout.'},
+  team:{title:'Team & permissions',subtitle:'Manage staff members, invites and per-module access.'}
+};
 async function settingsPage(){
   if(S.myRole!=='owner')return ownerOnlyDeniedCardV285('Settings','settings');
   const requestedSettingsTab=new URLSearchParams(String(location.hash||'').split('?')[1]||'').get('tab');
@@ -59406,7 +59488,8 @@ async function settingsPage(){
   const moduleRuleByKey=Object.fromEntries((moduleRules||[]).map(r=>[r.module_key,r]));
   const dependencyText=m=>(moduleRuleByKey[m]?.requires_modules||[])
     .map(k=>MODULES[k]?.[1]||k).join(', ');
-  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>Subscription</h1><p class="muted small">Manage your branch plans and billing.</p></div></div></div>
+  const settingsHeadingV920=SETTINGS_TAB_HEADINGS_V920[settingsActiveTab]||SETTINGS_TAB_HEADINGS_V920.modules;
+  M().innerHTML=`<div class="settings-page"><div class="topbar"><div class="cui-page-title">${CUI.icon('settings',{size:24})}<div><h1>${esc(settingsHeadingV920.title)}</h1><p class="muted small">${esc(settingsHeadingV920.subtitle)}</p></div></div></div>
     <div class="settings-tabs" data-workspace-i18n role="tablist" aria-label="Settings sections">
       <!-- V269: Workspace & brand, Customer programme and Customer interface are gone from here.
            They are sections of the Customer Interface module now; see customerInterfacePageV243. -->

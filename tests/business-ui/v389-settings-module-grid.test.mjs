@@ -20,6 +20,8 @@ test('the Subscription page shows the plan, not a read-only list of entitlements
   assert.doesNotMatch(app,/<b>Modules<\/b>/,'and so is its heading');
   assert.doesNotMatch(app,/id="sellsServices"/,'"What do you sell?" went with it');
   assert.doesNotMatch(app,/id="salesMixSave"/);
-  assert.match(app,/<h1>Subscription<\/h1>/,'the page is named for what it now holds');
+  /* nestly_v920: the heading is resolved per tab now (SETTINGS_TAB_HEADINGS_V920), so the name
+     lives in that table rather than in the markup. The plan tab is still called Subscription. */
+  assert.match(app,/modules:\{title:'Subscription',subtitle:'Manage your branch plans and billing\.'\}/,'the plan tab is named for what it now holds');
   assert.match(app,/id="billingWrap"/,'and the plan is what it holds');
 });
