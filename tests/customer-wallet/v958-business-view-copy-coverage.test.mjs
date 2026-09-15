@@ -422,3 +422,19 @@ test('the word-producing helper list still names functions this app has', () => 
       `${helper} is checked for but no longer exists in app.js — rename it here or drop it.`);
   }
 });
+
+test('no reviewed template ships its own escape sequence to the reader', () => {
+  /* nestly_v963: uCUDStopsBeingNamed's English was DOUBLE-escaped — "\\u201C{named}\\u201D …" — so
+     the owner read a literal “ on screen while the zh and ms rows had real curly quotes. It
+     had been that way long enough for the key name to fossilise the mangling. Nothing else in this
+     file could see it: the row was present, in three locales, with matching placeholders. What was
+     wrong was the one thing no count checks — what the string SAYS after JS has parsed it. */
+  const table = app.slice(app.indexOf('const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({'));
+  const offenders = [];
+  for (const row of table.matchAll(/^ {2}([A-Za-z0-9_]+):Object\.freeze\(\{en:("(?:[^"\\]|\\.)*")/gm)) {
+    if (/\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}/.test(JSON.parse(row[2]))) offenders.push(row[1]);
+  }
+  assert.deepEqual(offenders, [],
+    `a template's English still contains a literal escape sequence AFTER parsing, which means the\n`
+    + `reader sees the backslash on screen. Write the character itself:\n  ` + offenders.join('\n  '));
+});
