@@ -1758,6 +1758,113 @@ const APPOINTMENTS_V929 = [
   "Check staff",
 ];
 
+/* nestly_v930 — nestly_v930 — the Bottles shelf and the Bottle keep setup screen. */
+const BOTTLES_V930 = [
+  "Search bottles",
+  "Expiring soon",
+  "New customer?",
+  "Add them in Customers",
+  "first.",
+  "Bottle",
+  "Not on the list — type it",
+  "No bottles in your catalogue yet, so the size has to be typed.",
+  "No bottles in your catalogue yet, so the size has to be typed. Ask the owner to add them in Bottle keep.",
+  "Add your bottles in Bottle keep",
+  "Bottle name",
+  "Size (ml)",
+  "How full (%)",
+  "Where is it?",
+  "Not recorded",
+  "No storage places yet — a bottle with no shelf is a bottle you will hunt for.",
+  "Add your shelves",
+  "How many bottles",
+  "Same bottle, unopened. Each one gets its own tag, so they can be poured, moved and sent out separately.",
+  "Keep until",
+  "Remind them by",
+  "Bought on",
+  "No customer matches that",
+  "Name the bottle, or pick it from the list.",
+  "How full must be a whole number from 0 to 100.",
+  "Size must be a whole number of millilitres.",
+  "Park between 1 and 20 bottles at a time.",
+  "Choose the date the bottle is kept until.",
+  "How full",
+  "Set",
+  "Where is it",
+  "To storage",
+  "This bottle has expired. Give it more time, agree a new date, or take it off the shelf.",
+  "Edit expiry",
+  "Move",
+  "Add note",
+  "Remind customer",
+  "Transfer",
+  "Save expiry",
+  "Move to",
+  "Move bottle",
+  "Save date",
+  "Transfer to",
+  "Transfer bottle",
+  "Every change to this bottle, oldest at the bottom.",
+  "Nothing recorded yet.",
+  "This is not \"Retrieved\"",
+  "Choose who the bottle goes to.",
+  "That is where it already is. Pick a different place.",
+  "Type the note first.",
+  "Give it more time, or take it off the shelf",
+  "Keep it longer, move it, send it out",
+  "Looking up this customer…",
+  "Code not recognised — search for them",
+  "Customer found — newly joined here",
+  "Loading the shelf…",
+  "Bottles unavailable",
+  "Every bottle your customers left with you.",
+  "No bottles here",
+  "Remove this bottle from the list?",
+  "Storage places",
+  "New storage place",
+  "Keep window",
+  "How many days a parked bottle stays the customer's before it expires. 30 days is standard.",
+  "Days",
+  "Every bottle parked from now on uses this number. Bottles already on the shelf keep the date they were given.",
+  "Storage capacity",
+  "Customer reminders",
+  "Tier keep windows",
+  "Give your best customers longer. A tier left blank uses the keep window above.",
+  "Save tier windows",
+  "Bottle catalogue",
+  "Add bottle",
+  "Save bottle keep",
+  "Storage place name",
+  "In use",
+  "Open Programmes",
+  "The bottle catalogue could not be loaded. Staff can still type a bottle name when parking.",
+  "A bottle is between 100ml and 5000ml. Clear the box if it is not a bottle.",
+  "Name the bottle first.",
+  "Give a price of 0 or more.",
+  "Give the size in millilitres, between 100 and 5000.",
+  "The keep window must be a whole number between 1 and 365 days.",
+  "Storage capacity must be a whole number between 1 and 10000 bottles.",
+  "Every storage place needs a name. Fill it in, or remove the row.",
+  "Shelves saved",
+  "Tier windows saved",
+  "Bottle added",
+  "Type a name first",
+  "Keep the name under 60 characters",
+  "That place is already on the list",
+  "Bottle keep saved",
+  "No longer a bottle",
+  "Bottle saved",
+  "Loading your keep window…",
+  "Bottle keep unavailable",
+  "How long you keep a bottle, and where you put it.",
+  "No storage places yet",
+  "Add at least one so staff can say where a bottle is.",
+  "No tiers yet",
+  "Set up spending tiers in Programmes, then come back to give each one its own keep window.",
+  "No products yet",
+  "Add a bottle above and staff can pick it when parking.",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -1858,7 +1965,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -1892,13 +1999,13 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 3198);
+  assert.equal(once.keyCount, 3301);
 });
 
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 3198 strings per locale/);
+  assert.match(clean, /up to date: 3301 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');
