@@ -11880,6 +11880,1050 @@
       "reason": "nestly_v931 — three complete screens: Promotions (the three-step offer builder, every validation it raises, the customer preview and the published/scheduled/draft shelf), Packages (the catalogue, the customise sheet, and the customer-package side with its session history and undo) and Services (services, variations, buffers, commission override, and bundles). Whole screens, not layers: a screen with Chinese headings over English validation messages is worse than an English one, because the reader stops trusting either. Two 'reason:' values in the Promotions code are internal audit strings that never reach a screen, and were left out — the property scan that finds schedule reasons also finds those, and a key nothing renders is dead weight in a table every locale carries.",
       "zh-CN": "若想以一个合并价格一起出售多项服务，请创建捆绑包。",
       "ms": "Cipta himpunan apabila anda mahu menjual beberapa perkhidmatan bersama pada satu harga gabungan."
+    },
+    {
+      "source": "Feedback is temporarily unavailable. The rest of this customer profile remains current.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "反馈功能暂时不可用。此顾客档案的其余部分仍是最新的。",
+      "ms": "Maklum balas tidak tersedia buat sementara waktu. Selebihnya profil pelanggan ini kekal terkini."
+    },
+    {
+      "source": "Reload profile",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "重新加载档案",
+      "ms": "Muat semula profil"
+    },
+    {
+      "source": "Birthday benefit temporarily unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "生日福利暂时不可用",
+      "ms": "Faedah hari lahir tidak tersedia buat sementara waktu"
+    },
+    {
+      "source": "The rest of this customer profile remains current. No birthday status is inferred.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "此顾客档案的其余部分仍是最新的。系统不会推测生日状态。",
+      "ms": "Selebihnya profil pelanggan ini kekal terkini. Tiada status hari lahir diandaikan."
+    },
+    {
+      "source": "Loyalty balances and reward availability are temporarily unavailable. Peekaa has not replaced them with zero.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "忠诚度余额和奖励可用情况暂时不可用。Peekaa 没有用零来代替它们。",
+      "ms": "Baki kesetiaan dan ketersediaan ganjaran tidak tersedia buat sementara waktu. Peekaa tidak menggantikannya dengan sifar."
+    },
+    {
+      "source": "Earn:",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "赚取：",
+      "ms": "Perolehan:"
+    },
+    {
+      "source": "Redeem now!",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "立即兑换！",
+      "ms": "Tebus sekarang!"
+    },
+    {
+      "source": "Nothing ready to redeem yet",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "暂时没有可兑换的项目",
+      "ms": "Belum ada apa-apa sedia untuk ditebus"
+    },
+    {
+      "source": "Open Record sale scanner",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "打开「记录销售」扫码器",
+      "ms": "Buka pengimbas Rekod jualan"
+    },
+    {
+      "source": "Balance and earning",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "余额与赚取",
+      "ms": "Baki dan perolehan"
+    },
+    {
+      "source": "Balance:",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "余额：",
+      "ms": "Baki:"
+    },
+    {
+      "source": "Rewards are not set up yet. The owner can create them from Grow.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "尚未设置奖励。店主可在「成长」中创建。",
+      "ms": "Ganjaran belum disediakan. Pemilik boleh menciptanya dari Kembang."
+    },
+    {
+      "source": "Programme paused — sales are not earning points right now. Points already earned stay in the history.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "计划已暂停 — 目前交易不会产生积分。已赚取的积分仍保留在记录中。",
+      "ms": "Program dijeda — jualan tidak memperoleh mata sekarang. Mata yang telah diperoleh kekal dalam sejarah."
+    },
+    {
+      "source": "Limited offers",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "限时优惠",
+      "ms": "Tawaran terhad"
+    },
+    {
+      "source": "Current promotions everyone can use",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "人人可用的当前促销",
+      "ms": "Promosi semasa yang boleh digunakan semua orang"
+    },
+    {
+      "source": "Rewards and perks given",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已给予的奖励和福利",
+      "ms": "Ganjaran dan faedah yang diberi"
+    },
+    {
+      "source": "Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已给予这位顾客的免费奖励。退回其中一项会让它重新可用；不涉及任何金钱。",
+      "ms": "Ganjaran percuma yang telah diberi kepada pelanggan ini. Memulangkan satu menjadikannya tersedia semula untuk mereka; tiada wang berpindah."
+    },
+    {
+      "source": "Give back",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "退回",
+      "ms": "Pulangkan"
+    },
+    {
+      "source": "All types",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "所有类型",
+      "ms": "Semua jenis"
+    },
+    {
+      "source": "All team members",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "所有团队成员",
+      "ms": "Semua ahli pasukan"
+    },
+    {
+      "source": "No team member",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "未指派团队成员",
+      "ms": "Tiada ahli pasukan"
+    },
+    {
+      "source": "Sort by",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "排序方式",
+      "ms": "Isih mengikut"
+    },
+    {
+      "source": "Activity history",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "活动记录",
+      "ms": "Sejarah aktiviti"
+    },
+    {
+      "source": "Some profile figures are unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "部分档案数据不可用",
+      "ms": "Sebahagian angka profil tidak tersedia"
+    },
+    {
+      "source": "Staff view scope",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "员工可见范围",
+      "ms": "Skop paparan kakitangan"
+    },
+    {
+      "source": "Correction actions are temporarily unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "更正操作暂时不可用",
+      "ms": "Tindakan pembetulan tidak tersedia buat sementara waktu"
+    },
+    {
+      "source": "Edit customer",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "编辑顾客",
+      "ms": "Sunting pelanggan"
+    },
+    {
+      "source": "Personal details erased.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "个人资料已抹除。",
+      "ms": "Butiran peribadi dipadam."
+    },
+    {
+      "source": "Erase customer data",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "抹除顾客数据",
+      "ms": "Padam data pelanggan"
+    },
+    {
+      "source": "Owner only. This cannot be undone.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "仅限店主。此操作无法撤销。",
+      "ms": "Pemilik sahaja. Ini tidak boleh dibatalkan."
+    },
+    {
+      "source": "Sales and reward figures are hidden because this role does not have access to those modules.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "销售和奖励数据已隐藏，因为此角色没有这些模块的权限。",
+      "ms": "Angka jualan dan ganjaran disembunyikan kerana peranan ini tiada akses kepada modul tersebut."
+    },
+    {
+      "source": "Available Customer Programmes",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "可用的顾客计划",
+      "ms": "Program Pelanggan Yang Tersedia"
+    },
+    {
+      "source": "What happened",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "发生了什么",
+      "ms": "Apa yang berlaku"
+    },
+    {
+      "source": "Points history",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "积分记录",
+      "ms": "Sejarah mata"
+    },
+    {
+      "source": "Customer consent",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "顾客同意",
+      "ms": "Persetujuan pelanggan"
+    },
+    {
+      "source": "Choose the branch using this session",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "选择使用这次次数的分店",
+      "ms": "Pilih cawangan yang menggunakan sesi ini"
+    },
+    {
+      "source": "Customer updated",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "顾客已更新",
+      "ms": "Pelanggan dikemas kini"
+    },
+    {
+      "source": "Consent recorded",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "同意已记录",
+      "ms": "Persetujuan direkodkan"
+    },
+    {
+      "source": "Consent withdrawn — recorded",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "同意已撤回 — 已记录",
+      "ms": "Persetujuan ditarik balik — direkodkan"
+    },
+    {
+      "source": "Customer profile unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "顾客档案不可用",
+      "ms": "Profil pelanggan tidak tersedia"
+    },
+    {
+      "source": "The complete customer profile could not be confirmed. No partial totals are shown.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法确认完整的顾客档案。不显示任何不完整的合计。",
+      "ms": "Profil pelanggan yang lengkap tidak dapat disahkan. Tiada jumlah separa ditunjukkan."
+    },
+    {
+      "source": "Loading points history",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "正在加载积分记录",
+      "ms": "Memuatkan sejarah mata"
+    },
+    {
+      "source": "Points history unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "积分记录不可用",
+      "ms": "Sejarah mata tidak tersedia"
+    },
+    {
+      "source": "No points movements yet",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "尚无积分变动",
+      "ms": "Belum ada pergerakan mata"
+    },
+    {
+      "source": "Nothing has been earned, redeemed, expired or adjusted for this customer.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "这位顾客尚未有任何赚取、兑换、过期或调整记录。",
+      "ms": "Tiada apa yang diperoleh, ditebus, tamat tempoh atau dilaraskan untuk pelanggan ini."
+    },
+    {
+      "source": "All",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "全部",
+      "ms": "Semua"
+    },
+    {
+      "source": "Inactive 90+ days",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "超过 90 天未到访",
+      "ms": "Tidak aktif 90+ hari"
+    },
+    {
+      "source": "Show customers by last visit",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "按最近到访筛选顾客",
+      "ms": "Tunjuk pelanggan mengikut kunjungan terakhir"
+    },
+    {
+      "source": "Never visited",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "从未到访",
+      "ms": "Tidak pernah berkunjung"
+    },
+    {
+      "source": "Name A–Z",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "姓名 A–Z",
+      "ms": "Nama A–Z"
+    },
+    {
+      "source": "Last visit newest",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "最近到访由新到旧",
+      "ms": "Kunjungan terakhir terbaharu"
+    },
+    {
+      "source": "Date joined newest",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "加入日期由新到旧",
+      "ms": "Tarikh menyertai terbaharu"
+    },
+    {
+      "source": "Lifetime spend high to low",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "累计消费由高到低",
+      "ms": "Perbelanjaan sepanjang hayat tinggi ke rendah"
+    },
+    {
+      "source": "Export this audience",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "导出此顾客群",
+      "ms": "Eksport khalayak ini"
+    },
+    {
+      "source": "Clear filter",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "清除筛选",
+      "ms": "Kosongkan penapis"
+    },
+    {
+      "source": "(optional · helps your reports)",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "（选填 · 有助于您的报告）",
+      "ms": "(pilihan · membantu laporan anda)"
+    },
+    {
+      "source": "Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "积分不可用，因为无法确认完整的「忠诚度」权限。系统不会推断为零。",
+      "ms": "Mata tidak tersedia kerana akses Kesetiaan yang lengkap tidak dapat disahkan. Tiada sifar diandaikan."
+    },
+    {
+      "source": "Retention CSV downloaded",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "回头率 CSV 已下载",
+      "ms": "CSV pengekalan dimuat turun"
+    },
+    {
+      "source": "Every sale you have recorded. Fix or cancel one here.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "您记录过的每一笔交易。可在此更正或取消。",
+      "ms": "Setiap jualan yang anda rekodkan. Betulkan atau batalkan satu di sini."
+    },
+    {
+      "source": "Sales ledger",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "销售流水",
+      "ms": "Lejar jualan"
+    },
+    {
+      "source": "A sale is never deleted. Cancel one and both rows stay, so the numbers always add up.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "交易永远不会被删除。取消后两条记录都会保留，因此数字始终对得上。",
+      "ms": "Jualan tidak pernah dipadam. Batalkan satu dan kedua-dua baris kekal, jadi angkanya sentiasa menjadi."
+    },
+    {
+      "source": "Sales could not be loaded. Nothing was changed.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法加载销售记录。没有任何内容被更改。",
+      "ms": "Jualan tidak dapat dimuatkan. Tiada apa yang diubah."
+    },
+    {
+      "source": "All staff",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "所有员工",
+      "ms": "Semua kakitangan"
+    },
+    {
+      "source": "Sale type",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "交易类型",
+      "ms": "Jenis jualan"
+    },
+    {
+      "source": "All states",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "所有状态",
+      "ms": "Semua keadaan"
+    },
+    {
+      "source": "Paid",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已付款",
+      "ms": "Dibayar"
+    },
+    {
+      "source": "Record status",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "记录状态",
+      "ms": "Status rekod"
+    },
+    {
+      "source": "Audit details",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "审计详情",
+      "ms": "Butiran audit"
+    },
+    {
+      "source": "Load more",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "加载更多",
+      "ms": "Muat lagi"
+    },
+    {
+      "source": "No sales match these filters",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "没有符合这些筛选条件的交易",
+      "ms": "Tiada jualan sepadan dengan penapis ini"
+    },
+    {
+      "source": "Sales access needed",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "需要销售权限",
+      "ms": "Akses jualan diperlukan"
+    },
+    {
+      "source": "Ask the owner for Sales access to see this ledger. This is a permission limit, not an empty ledger.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请向店主申请「销售」权限以查看此流水。这是权限限制，并非流水为空。",
+      "ms": "Minta akses Jualan daripada pemilik untuk melihat lejar ini. Ini had kebenaran, bukan lejar yang kosong."
+    },
+    {
+      "source": "Try a wider date range or clear filters. Use Record sale when you need to create a new sale.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请尝试更宽的日期范围或清除筛选。需要新建交易时，请使用「记录销售」。",
+      "ms": "Cuba julat tarikh yang lebih luas atau kosongkan penapis. Guna Rekod jualan apabila anda perlu mencipta jualan baharu."
+    },
+    {
+      "source": "Cash-basis revenue",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "收付实现制营收",
+      "ms": "Hasil asas tunai"
+    },
+    {
+      "source": "Earned and settled in the selected period.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "在所选期间内赚取并已结清。",
+      "ms": "Diperoleh dan diselesaikan dalam tempoh yang dipilih."
+    },
+    {
+      "source": "Accrual revenue",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "权责发生制营收",
+      "ms": "Hasil akruan"
+    },
+    {
+      "source": "Earned including unpaid amounts.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "包含未付款金额的已赚取部分。",
+      "ms": "Diperoleh termasuk amaun yang belum dibayar."
+    },
+    {
+      "source": "Cash result after expenses",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "扣除支出后的现金结果",
+      "ms": "Hasil tunai selepas perbelanjaan"
+    },
+    {
+      "source": "Accrual revenue vs expenses by month",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "按月对比权责发生制营收与支出",
+      "ms": "Hasil akruan lawan perbelanjaan mengikut bulan"
+    },
+    {
+      "source": "Charts could not load. The verified P&L totals remain available.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法加载图表。已核实的损益合计仍然可用。",
+      "ms": "Carta tidak dapat dimuatkan. Jumlah Untung Rugi yang disahkan masih tersedia."
+    },
+    {
+      "source": "Selected-branch expenses",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "所选分店的支出",
+      "ms": "Perbelanjaan cawangan terpilih"
+    },
+    {
+      "source": "All business expenses",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "全商户支出",
+      "ms": "Semua perbelanjaan perniagaan"
+    },
+    {
+      "source": "Business-wide overhead excluded.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "不含全商户的间接费用。",
+      "ms": "Overhed seluruh perniagaan dikecualikan."
+    },
+    {
+      "source": "All recorded expenses in scope.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "范围内所有已记录的支出。",
+      "ms": "Semua perbelanjaan yang direkodkan dalam skop."
+    },
+    {
+      "source": "Choose a range",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "选择一个范围",
+      "ms": "Pilih julat"
+    },
+    {
+      "source": "Choose a date range and run the P&L to compare sales and expenses.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "选择日期范围并运行损益表，以对比销售与支出。",
+      "ms": "Pilih julat tarikh dan jalankan Untung Rugi untuk membandingkan jualan dan perbelanjaan."
+    },
+    {
+      "source": "Scope changed",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "范围已更改",
+      "ms": "Skop berubah"
+    },
+    {
+      "source": "Run this report again before exporting.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "导出之前请重新运行此报告。",
+      "ms": "Jalankan laporan ini semula sebelum mengeksport."
+    },
+    {
+      "source": "Choose a valid range",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请选择有效的范围",
+      "ms": "Pilih julat yang sah"
+    },
+    {
+      "source": "P&L unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "损益表不可用",
+      "ms": "Untung Rugi tidak tersedia"
+    },
+    {
+      "source": "P&L, Sales, Expenses, or branch access is not complete for this scope.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "此范围内的「损益表」、「销售」、「支出」或分店权限不完整。",
+      "ms": "Akses Untung Rugi, Jualan, Perbelanjaan atau cawangan tidak lengkap untuk skop ini."
+    },
+    {
+      "source": "Finance access needed",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "需要财务权限",
+      "ms": "Akses kewangan diperlukan"
+    },
+    {
+      "source": "No expenses recorded in this scope",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "此范围内没有记录任何支出",
+      "ms": "Tiada perbelanjaan direkodkan dalam skop ini"
+    },
+    {
+      "source": "Record expenses to keep your P&L accurate.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "记录支出，让您的损益表保持准确。",
+      "ms": "Rekod perbelanjaan untuk memastikan Untung Rugi anda tepat."
+    },
+    {
+      "source": "Add a wider range to see month-by-month",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "扩大范围即可查看逐月数据",
+      "ms": "Tambah julat yang lebih luas untuk melihat bulan demi bulan"
+    },
+    {
+      "source": "Pick a range covering two or more months and run again.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请选择跨越两个月或以上的范围，然后重新运行。",
+      "ms": "Pilih julat yang meliputi dua bulan atau lebih dan jalankan semula."
+    },
+    {
+      "source": "Expenses access could not be checked.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法检查「支出」权限。",
+      "ms": "Akses Perbelanjaan tidak dapat disemak."
+    },
+    {
+      "source": "Expense branches could not be loaded.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法加载支出所属的分店。",
+      "ms": "Cawangan perbelanjaan tidak dapat dimuatkan."
+    },
+    {
+      "source": "Expense list",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "支出列表",
+      "ms": "Senarai perbelanjaan"
+    },
+    {
+      "source": "Record one cost. It appears in P&L after saving.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "记录一笔成本。保存后会出现在损益表中。",
+      "ms": "Rekod satu kos. Ia muncul dalam Untung Rugi selepas disimpan."
+    },
+    {
+      "source": "Expense scope",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "支出范围",
+      "ms": "Skop perbelanjaan"
+    },
+    {
+      "source": "Business-wide overhead",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "全商户间接费用",
+      "ms": "Overhed seluruh perniagaan"
+    },
+    {
+      "source": "Recorded costs with branch or business-wide scope.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "按分店或全商户范围记录的成本。",
+      "ms": "Kos direkodkan dengan skop cawangan atau seluruh perniagaan."
+    },
+    {
+      "source": "Scope",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "范围",
+      "ms": "Skop"
+    },
+    {
+      "source": "Unavailable — invalid currency conversion metadata",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "不可用 — 货币换算信息无效",
+      "ms": "Tidak tersedia — metadata penukaran mata wang tidak sah"
+    },
+    {
+      "source": "Voided",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已作废",
+      "ms": "Dibatalkan"
+    },
+    {
+      "source": "Correct this expense",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "更正这笔支出",
+      "ms": "Betulkan perbelanjaan ini"
+    },
+    {
+      "source": "Save correction",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "保存更正",
+      "ms": "Simpan pembetulan"
+    },
+    {
+      "source": "Expense corrected",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "支出已更正",
+      "ms": "Perbelanjaan dibetulkan"
+    },
+    {
+      "source": "Expenses unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "支出不可用",
+      "ms": "Perbelanjaan tidak tersedia"
+    },
+    {
+      "source": "Finance or Expenses access is not complete across every active branch.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "并非所有在营分店都具备完整的「财务」或「支出」权限。",
+      "ms": "Akses Kewangan atau Perbelanjaan tidak lengkap di setiap cawangan aktif."
+    },
+    {
+      "source": "No expenses recorded yet",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "尚未记录任何支出",
+      "ms": "Belum ada perbelanjaan direkodkan"
+    },
+    {
+      "source": "Record business expenses to keep your P&L accurate.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "记录商户支出，让您的损益表保持准确。",
+      "ms": "Rekod perbelanjaan perniagaan untuk memastikan Untung Rugi anda tepat."
+    },
+    {
+      "source": "Recorded sales and adjustments for one Singapore day, with valid-visit totals",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "某个新加坡日期内已记录的交易和调整，附有效到访合计",
+      "ms": "Jualan dan pelarasan yang direkodkan bagi satu hari Singapura, dengan jumlah kunjungan sah"
+    },
+    {
+      "source": "Signed revenue by kind",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "按类型分列的带正负号营收",
+      "ms": "Hasil bertanda mengikut jenis"
+    },
+    {
+      "source": "reversal of an earlier sale",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "对一笔早前交易的冲正",
+      "ms": "pembatalan jualan terdahulu"
+    },
+    {
+      "source": "Total of listed rows (signed)",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "所列各行的合计（带正负号）",
+      "ms": "Jumlah baris tersenarai (bertanda)"
+    },
+    {
+      "source": "Of which revenue (per sale policy)",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "其中营收（按交易政策）",
+      "ms": "Daripadanya hasil (mengikut dasar jualan)"
+    },
+    {
+      "source": "Charts could not load. The verified report totals and rows remain available.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法加载图表。已核实的报告合计和明细仍然可用。",
+      "ms": "Carta tidak dapat dimuatkan. Jumlah dan baris laporan yang disahkan masih tersedia."
+    },
+    {
+      "source": "Daily report is ready to run",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每日报告已可运行",
+      "ms": "Laporan harian sedia untuk dijalankan"
+    },
+    {
+      "source": "Pick a Singapore business date, then generate the report.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "选择一个新加坡营业日期，然后生成报告。",
+      "ms": "Pilih tarikh perniagaan Singapura, kemudian jana laporan itu."
+    },
+    {
+      "source": "Generate this report again before exporting.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "导出之前请重新生成此报告。",
+      "ms": "Jana laporan ini semula sebelum mengeksport."
+    },
+    {
+      "source": "Choose a valid date",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请选择有效的日期",
+      "ms": "Pilih tarikh yang sah"
+    },
+    {
+      "source": "Daily report unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每日报告不可用",
+      "ms": "Laporan harian tidak tersedia"
+    },
+    {
+      "source": "Daily report is unavailable because Daily report or Sales access is not complete for this branch scope.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每日报告不可用，因为此分店范围内的「每日报告」或「销售」权限不完整。",
+      "ms": "Laporan harian tidak tersedia kerana akses Laporan harian atau Jualan tidak lengkap untuk skop cawangan ini."
+    },
+    {
+      "source": "Daily report totals unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每日报告合计不可用",
+      "ms": "Jumlah laporan harian tidak tersedia"
+    },
+    {
+      "source": "Daily report totals are unavailable for this branch scope.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "此分店范围内的每日报告合计不可用。",
+      "ms": "Jumlah laporan harian tidak tersedia untuk skop cawangan ini."
+    },
+    {
+      "source": "No sales this day",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "这一天没有交易",
+      "ms": "Tiada jualan pada hari ini"
+    },
+    {
+      "source": "Staff revenue draws here once a sale is recorded for the date.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "该日期一旦有交易记录，员工营收就会绘制在这里。",
+      "ms": "Hasil kakitangan dilukis di sini sebaik sahaja jualan direkodkan untuk tarikh itu."
+    },
+    {
+      "source": "The revenue mix draws here once a sale is recorded for the date.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "该日期一旦有交易记录，营收构成就会绘制在这里。",
+      "ms": "Gabungan hasil dilukis di sini sebaik sahaja jualan direkodkan untuk tarikh itu."
+    },
+    {
+      "source": "No sales recorded on this day",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "这一天没有记录任何交易",
+      "ms": "Tiada jualan direkodkan pada hari ini"
+    },
+    {
+      "source": "Daily sales will appear here after staff record a sale for the selected date.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "员工为所选日期记录交易后，当日销售会出现在这里。",
+      "ms": "Jualan harian akan muncul di sini selepas kakitangan merekod jualan untuk tarikh yang dipilih."
+    },
+    {
+      "source": "Every product and service sold, who bought it, and which team member it pays.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "售出的每一项产品和服务、买家是谁，以及佣金归属哪位团队成员。",
+      "ms": "Setiap produk dan perkhidmatan yang dijual, siapa yang membelinya, dan ahli pasukan mana yang dibayar."
+    },
+    {
+      "source": "This year",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "本年",
+      "ms": "Tahun ini"
+    },
+    {
+      "source": "Show",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "显示",
+      "ms": "Tunjuk"
+    },
+    {
+      "source": "By line",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "按销售行",
+      "ms": "Mengikut baris"
+    },
+    {
+      "source": "By sale",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "按交易",
+      "ms": "Mengikut jualan"
+    },
+    {
+      "source": "Item kind",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "项目类型",
+      "ms": "Jenis item"
+    },
+    {
+      "source": "Customer record unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "顾客记录不可用",
+      "ms": "Rekod pelanggan tidak tersedia"
+    },
+    {
+      "source": "Counted",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已计入",
+      "ms": "Dikira"
+    },
+    {
+      "source": "Team comparison",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "团队对比",
+      "ms": "Perbandingan pasukan"
+    },
+    {
+      "source": "Who sells more, and who sells bigger.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "谁卖得更多，谁卖得更大单。",
+      "ms": "Siapa menjual lebih banyak, dan siapa menjual lebih besar."
+    },
+    {
+      "source": "Avg per sale",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每单平均",
+      "ms": "Purata setiap jualan"
+    },
+    {
+      "source": "Biggest sale",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "最大单",
+      "ms": "Jualan terbesar"
+    },
+    {
+      "source": "Amount sold",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "售出金额",
+      "ms": "Amaun dijual"
+    },
+    {
+      "source": "Effective rate",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "实际比例",
+      "ms": "Kadar berkesan"
+    },
+    {
+      "source": "Mix",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "构成",
+      "ms": "Gabungan"
+    },
+    {
+      "source": "Total counted",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已计入合计",
+      "ms": "Jumlah dikira"
+    },
+    {
+      "source": "One sale line pays one team member. Reversed sales are shown for traceability and excluded from every total.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每一行销售仅归属一位团队成员。已冲正的交易为便于追溯而显示，但不计入任何合计。",
+      "ms": "Satu baris jualan membayar satu ahli pasukan. Jualan yang dibatalkan ditunjukkan untuk kebolehkesanan dan dikecualikan daripada setiap jumlah."
+    },
+    {
+      "source": "Staff commission could not be loaded.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "无法加载员工佣金。",
+      "ms": "Komisen kakitangan tidak dapat dimuatkan."
+    },
+    {
+      "source": "Run the report to refresh staff commission for the new dates.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "运行报告以按新日期刷新员工佣金。",
+      "ms": "Jalankan laporan untuk menyegarkan komisen kakitangan bagi tarikh baharu."
+    },
+    {
+      "source": "Choose a valid date range",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请选择有效的日期范围",
+      "ms": "Pilih julat tarikh yang sah"
+    },
+    {
+      "source": "Finance access required",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "需要财务权限",
+      "ms": "Akses kewangan diperlukan"
+    },
+    {
+      "source": "Ask the owner for finance access to see staff commission.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "请向店主申请财务权限以查看员工佣金。",
+      "ms": "Minta akses kewangan daripada pemilik untuk melihat komisen kakitangan."
+    },
+    {
+      "source": "Staff commission unavailable",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "员工佣金不可用",
+      "ms": "Komisen kakitangan tidak tersedia"
+    },
+    {
+      "source": "Staff commission is unavailable because its module or Sales access is not complete across every active branch.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "员工佣金不可用，因为并非所有在营分店都具备该模块或「销售」权限。",
+      "ms": "Komisen kakitangan tidak tersedia kerana modulnya atau akses Jualan tidak lengkap di setiap cawangan aktif."
+    },
+    {
+      "source": "These rows cover identified customers only. They do not represent anonymous or total business revenue.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "这些行仅涵盖已识别的顾客，并不代表匿名顾客或商户的总营收。",
+      "ms": "Baris ini meliputi pelanggan yang dikenal pasti sahaja. Ia tidak mewakili hasil tanpa nama atau jumlah hasil perniagaan."
+    },
+    {
+      "source": "Purchase, visit and linked-customer revenue facts open into the customer’s complete ledger.",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "消费、到访和关联顾客的营收数据，可展开为该顾客的完整账目。",
+      "ms": "Fakta hasil pembelian, kunjungan dan pelanggan berpaut terbuka kepada lejar lengkap pelanggan itu."
+    },
+    {
+      "source": "counts only visits that charged an amount, so it is deliberately lower than the Dashboard’s",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "仅统计产生了收费的到访，因此刻意低于仪表板的",
+      "ms": "hanya mengira kunjungan yang mengenakan bayaran, jadi ia sengaja lebih rendah daripada angka Papan pemuka,"
+    },
+    {
+      "source": "Who to call, who matters most, and who they are",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "该联系谁、谁最重要，以及他们是谁",
+      "ms": "Siapa yang perlu dihubungi, siapa yang paling penting, dan siapa mereka"
+    },
+    {
+      "source": "What came in, what was paid, and what is still owed",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "进账多少、已付多少，以及还欠多少",
+      "ms": "Apa yang masuk, apa yang dibayar, dan apa yang masih terhutang"
+    },
+    {
+      "source": "Who comes back, and where you lose them",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "谁会回头，以及在哪一步流失他们",
+      "ms": "Siapa yang kembali, dan di mana anda kehilangan mereka"
+    },
+    {
+      "source": "Your best sellers, and what brings people back",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "您最畅销的项目，以及什么让顾客回头",
+      "ms": "Penjual terbaik anda, dan apa yang membawa orang kembali"
+    },
+    {
+      "source": "Who gets customers coming back",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "谁能让顾客回头",
+      "ms": "Siapa yang membuat pelanggan kembali"
+    },
+    {
+      "source": "How people find you, and who you may contact",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "人们如何找到您，以及您可以联系谁",
+      "ms": "Bagaimana orang menemui anda, dan siapa yang boleh anda hubungi"
+    },
+    {
+      "source": "How many people who look go on to book",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "有多少浏览者最终完成预约",
+      "ms": "Berapa ramai yang melihat lalu menempah"
+    },
+    {
+      "source": "Which rewards customers actually use",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "顾客真正使用的是哪些奖励",
+      "ms": "Ganjaran mana yang pelanggan benar-benar guna"
+    },
+    {
+      "source": "Which days and hours are busy, and which are quiet",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "哪些日子和时段忙碌，哪些清闲",
+      "ms": "Hari dan jam mana yang sibuk, dan mana yang lengang"
+    },
+    {
+      "source": "Sessions paid for but not used yet",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "已付费但尚未使用的次数",
+      "ms": "Sesi yang dibayar tetapi belum digunakan"
+    },
+    {
+      "source": "How each branch is doing",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "各分店的表现如何",
+      "ms": "Bagaimana prestasi setiap cawangan"
+    },
+    {
+      "source": "Information Peekaa is missing",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "Peekaa 缺少的信息",
+      "ms": "Maklumat yang Peekaa tiada"
+    },
+    {
+      "source": "The numbers behind each finding",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "每项结论背后的数字",
+      "ms": "Angka di sebalik setiap penemuan"
+    },
+    {
+      "source": "Answers worked out from last night’s numbers",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "依据昨夜数据得出的答案",
+      "ms": "Jawapan yang dikira daripada angka malam tadi"
+    },
+    {
+      "source": "No contact shown",
+      "reason": "nestly_v932 — eight complete screens on the customer and money side: the customer profile and its points history, the customer list and its audience filters, the Sales ledger, P&L, Expenses, the Daily report, Staff commission and Business Intelligence. Each screen whole. The refusal and degraded-data messages are translated with the rest, deliberately: they are the sentences that tell a reader Peekaa is missing something rather than that the figure is zero, and a reader who cannot read them concludes the zero is real. Two three-node sentences (the Business Intelligence note around its two bold control names, and the customer-profile Earn/Balance lines) were checked node by node so the translated halves join in the right order in both locales.",
+      "zh-CN": "未显示联系方式",
+      "ms": "Tiada maklumat hubungan ditunjukkan"
     }
   ]
 }

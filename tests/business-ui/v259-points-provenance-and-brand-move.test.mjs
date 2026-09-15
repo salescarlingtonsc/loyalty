@@ -29,6 +29,18 @@ function section(start, end) {
 }
 
 const clientDetail = section('async function clientDetail(id){', 'function renderHistPage(history,n,offsetV468=0){');
+
+/* nestly_v932: app.js also carries WORKSPACE_GENERATED_COPY_V97, a translation catalogue whose KEYS
+   are the English sentences this file counts. A key is a lookup, not a second definition of the
+   copy — counting one would turn "this sentence is defined once" into "this sentence may never be
+   translated", which is the opposite of what V259 is protecting. Count the code, not the catalogue. */
+const appCode = (() => {
+  const open = app.indexOf('const WORKSPACE_GENERATED_COPY_V97=Object.freeze(');
+  assert.ok(open >= 0, 'missing WORKSPACE_GENERATED_COPY_V97');
+  const close = app.indexOf(');\nconst workspaceTextSourcesV97', open);
+  assert.ok(close > open, 'missing the catalogue closing anchor');
+  return app.slice(0, open) + app.slice(close);
+})();
 const settings = section('async function settingsPage(){', '/* ---------- billing (read-only) ---------- */');
 const brandPanel = section('function workspaceBrandPanelHtmlV259(){', 'function wireWorkspaceBrandV259(){');
 const brandWiring = section('function wireWorkspaceBrandV259(){', '/* The public page a customer meets before joining.');
@@ -108,7 +120,7 @@ test('V259 the paused line renders only when the programme is not live', () => {
   assert.match(clientDetail, /Programme paused — sales are not earning points right now\./);
   // the empty string is the other branch: an active programme prints nothing at all
   assert.match(clientDetail, /Points already earned stay in the history\.<\/p>'\s*\n?\s*:'';/);
-  assert.equal((app.match(/Programme paused — sales are not earning points right now\./g) || []).length, 1,
+  assert.equal((appCode.match(/Programme paused — sales are not earning points right now\./g) || []).length, 1,
     'one sentence, one definition — the card and the dialog render the same string');
   assert.match(clientDetail, /\$\{pointsPausedNoteV259\}\$\{pointsExpiryMarkup\}/);
 });
