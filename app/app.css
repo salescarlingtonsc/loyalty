@@ -526,7 +526,7 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .inline-status{display:inline-flex;align-items:center;gap:6px}
 .cui-fade-in{animation:cui-fade-in var(--motion-ui) var(--ease) both}
-.cui-route-state.cui-fade-in{animation-delay:180ms}
+.cui-route-state.cui-fade-in{animation-delay:260ms}
 @keyframes cui-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cui-skeleton-line{display:block;width:var(--skel-w,100%);height:12px;border-radius:999px;background:linear-gradient(90deg,#EEE9E2,var(--card),#EEE9E2);background-size:220% 100%;animation:cui-skeleton 1.15s linear infinite}
 .cui-skeleton-line.short{height:10px}.cui-skeleton-line.label{height:10px;margin-bottom:8px}.cui-skeleton-line.control{height:44px;border-radius:var(--r-sm)}.cui-skeleton-line.button{height:44px;border-radius:999px;margin-top:4px}

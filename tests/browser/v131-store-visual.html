@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b889f5ef9e618b234d435b4cb1514eaabb9710a3c14fe6b348c6bbb97f3822fc"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="53e166fe5e1e5bf44f8136d27df3af5545a55d2222861f11696ebebb1481f7d2"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -840,7 +840,8 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
 .customer-link{display:inline-flex;align-items:center;min-height:44px;color:var(--coral);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .inline-status{display:inline-flex;align-items:center;gap:6px}
 .cui-fade-in{animation:cui-fade-in var(--motion-ui) var(--ease) both}
-/* nestly_v914 — a render that finishes inside 180ms is not a wait, and must not be dressed as one.
+/* nestly_v914 — a render that finishes inside the delay below is not a wait, and must not be
+   dressed as one.  (nestly_v958: the delay is 260ms, raised from 180ms — measurement below.)
 
    The owner's v888 ruling stands and is untouched: the animated Peekaa mark appears in
    CUI.loadingState, which is the one component every route waits in, and
@@ -851,16 +852,34 @@ td[data-label="SKU"],td[data-label="Sell for"],td[data-label="Stock"]{white-spac
    screen on every single visit, however fast the data came back. That is what reads as a page
    load.
 
-   The whole route state — mark, page header and skeleton — is held at its own `from` keyframe for
-   180ms by delaying the fade it already carries. `both` is already on that shorthand, so the
-   backwards fill holds opacity:0 through the delay rather than flashing visible first. If the page
-   paints its content inside 180ms the node is replaced before the delay elapses and nobody ever
-   sees a loading screen; if the wait is real, the mark arrives exactly as ruled.
+   The whole route state — mark, page header and skeleton — is held at its own `from` keyframe by
+   delaying the fade it already carries. `both` is already on that shorthand, so the backwards fill
+   holds opacity:0 through the delay rather than flashing visible first. If the page paints its
+   content inside the delay the node is replaced before it elapses and nobody ever sees a loading
+   screen; if the wait is real, the mark arrives exactly as ruled.
 
-   Scoped to .cui-route-state, so every other user of .cui-fade-in is untouched. 180ms sits under
-   the ~200ms threshold at which a delay stops reading as instant. To revert, delete this one
-   declaration. */
-.cui-route-state.cui-fade-in{animation-delay:180ms}
+   WHY 260ms, AND NOT THE ORIGINAL 180. 180 was picked from the textbook ~200ms threshold, before
+   anything had been measured. It was then measured, against the real bundles in a real browser at
+   this estate's OWN production latency (median 202ms per round trip to
+   gadpooereceldfpfxsod.supabase.co): after v948 collapsed their read waves, Record sale commits at
+   215ms and Appointments at 223ms — both just PAST 180, so the state was being revealed for the
+   last ~40ms of the wait and reaching a measured 36% opacity. A 36% flash of the boot mark is
+   exactly the "it looks like it reloaded" this declaration exists to remove, and 180 was landing
+   on the wrong side of the app's own one-round-trip floor by about twenty milliseconds.
+
+   260 clears that floor with margin (the two heaviest pages finish ~40ms inside it) while staying
+   well under the ~1s at which a person starts wondering whether anything happened. The cost is
+   real and worth naming: on a page that IS genuinely slow, the content area now stays empty for
+   260ms instead of 180 before the skeleton appears. That is 80ms more of nothing on the pages that
+   were already the slow ones.
+
+   This number is a function of how long ONE round trip takes. If the estate's latency changes
+   materially, or a page is made to need two waves again, re-measure rather than re-guess —
+   scratchpad/measure-feel.KEEP.mjs reports commit time and the peak opacity the state reaches.
+
+   Scoped to .cui-route-state, so every other user of .cui-fade-in is untouched. To revert, delete
+   this one declaration. */
+.cui-route-state.cui-fade-in{animation-delay:260ms}
 @keyframes cui-fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .cui-skeleton-line{display:block;width:var(--skel-w,100%);height:12px;border-radius:999px;background:linear-gradient(90deg,#EEE9E2,var(--card),#EEE9E2);background-size:220% 100%;animation:cui-skeleton 1.15s linear infinite}
 .cui-skeleton-line.short{height:10px}.cui-skeleton-line.label{height:10px;margin-bottom:8px}.cui-skeleton-line.control{height:44px;border-radius:var(--r-sm)}.cui-skeleton-line.button{height:44px;border-radius:999px;margin-top:4px}

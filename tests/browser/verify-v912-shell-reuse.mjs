@@ -227,10 +227,13 @@ try {
      it on EVERY visit however fast the data came back. The v888 ruling (the mark appears wherever
      there is a wait) is untouched: the markup is unchanged and v888-boot-mark-moves.test.mjs
      still pins it. What is pinned HERE is that a render too fast to be a wait is not dressed as
-     one — the route state is held at opacity 0 for 180ms, so it is never seen unless the wait is
-     real. Captured with a MutationObserver installed BEFORE the navigation, because the whole
+     one — the route state is held at opacity 0 for 260ms, so it is never seen unless the wait is
+     real. 260 rather than the original 180 because it was MEASURED: at this estate's own latency
+     (~202ms per round trip) the two heaviest pages commit at 215-223ms, so 180 revealed the state
+     for the last ~40ms and it reached 36% opacity — a visible flash of the boot mark on exactly
+     the pages this exists to protect. Captured with a MutationObserver installed BEFORE the navigation, because the whole
      point is that the node may be replaced before anyone could poll for it. */
-  say('9. a loading state that appears is held invisible for its first 180ms');
+  say('9. a loading state that appears is held invisible for its first 260ms');
   await page.evaluate(() => {
     window.__v913 = null;
     const seen = new MutationObserver(records => {
@@ -263,8 +266,8 @@ try {
   }
   await page.evaluate(() => window.__v913stop?.());
   assertTrue(!!seenState, `a route loading state was observed on one of ${targets.slice(0, 5).join(', ')}`);
-  assertTrue(seenState.delay === '0.18s' || seenState.delay === '180ms',
-    `it is held for 180ms before it may paint (animation-delay ${seenState.delay})`);
+  assertTrue(seenState.delay === '0.26s' || seenState.delay === '260ms',
+    `it is held for 260ms before it may paint (animation-delay ${seenState.delay})`);
   assertTrue(seenState.fill === 'both' || seenState.fill.includes('both'),
     `with backwards fill, so the delay holds opacity 0 rather than flashing visible first (${seenState.fill})`);
   assertTrue(seenState.opacity === 0, `and it measured invisible at the moment it was inserted (opacity ${seenState.opacity})`);
