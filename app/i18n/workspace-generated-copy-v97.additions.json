@@ -5726,10 +5726,10 @@
       "ms": "Tiada aktiviti perolehan direkodkan dalam skop ini lagi."
     },
     {
-      "source": "Join &amp; booking funnel",
+      "source": "Join & booking funnel",
       "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
       "zh-CN": "加入与预订漏斗",
-      "ms": "Corong penyertaan &amp; tempahan"
+      "ms": "Corong penyertaan & tempahan"
     },
     {
       "source": "How customers move through sign-up and booking",
@@ -6678,6 +6678,918 @@
       "reason": "nestly_v924 wave 7 — the first MODULE wave, not Help: the Dashboard, Business Intelligence, and the app bar and account menu. These are the screens the owner was looking at when they reported the workspace still reading English after v921 fixed the picker. The brand name Peekaa is never translated (owner instruction, 2026-09-15); every entry naming it carries it through into both locales unchanged.",
       "zh-CN": "正在改善",
       "ms": "Bertambah baik"
+    },
+    {
+      "source": "Requests customers have sent you, waiting for a yes or no.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客发来的请求，等待您同意或拒绝。",
+      "ms": "Permintaan yang pelanggan hantar kepada anda, menunggu ya atau tidak."
+    },
+    {
+      "source": "When customers can book themselves, their requests land here. Nothing is held until you decide — approve it, decline it, or offer a different time.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "当顾客可以自行预订时，他们的请求会出现在这里。在您决定之前不会保留任何名额 — 可批准、拒绝，或提供其他时间。",
+      "ms": "Apabila pelanggan boleh menempah sendiri, permintaan mereka tiba di sini. Tiada apa ditahan sehingga anda membuat keputusan — luluskan, tolak, atau tawarkan masa lain."
+    },
+    {
+      "source": "Serve & sell → Bookings",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "服务与销售 → 预订",
+      "ms": "Layan & jual → Tempahan"
+    },
+    {
+      "source": "See booking requests with what the customer asked for",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "查看预订请求及顾客的具体要求",
+      "ms": "Lihat permintaan tempahan dengan apa yang pelanggan minta"
+    },
+    {
+      "source": "Approve a request",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "批准请求",
+      "ms": "Luluskan permintaan"
+    },
+    {
+      "source": "Decline a request",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "拒绝请求",
+      "ms": "Tolak permintaan"
+    },
+    {
+      "source": "Offer a different time and confirm in one step",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "一步内提供其他时间并确认",
+      "ms": "Tawarkan masa lain dan sahkan dalam satu langkah"
+    },
+    {
+      "source": "See change requests on bookings already made",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "查看已有预订的更改请求",
+      "ms": "Lihat permintaan perubahan pada tempahan sedia ada"
+    },
+    {
+      "source": "Copy your booking link",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "复制您的预订链接",
+      "ms": "Salin pautan tempahan anda"
+    },
+    {
+      "source": "When the customer sent the request.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客发送请求的时间。",
+      "ms": "Bila pelanggan menghantar permintaan itu."
+    },
+    {
+      "source": "Requested / Preferred",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "请求 / 首选",
+      "ms": "Diminta / Diutamakan"
+    },
+    {
+      "source": "The date and time they asked for.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们要求的日期和时间。",
+      "ms": "Tarikh dan masa yang mereka minta."
+    },
+    {
+      "source": "How many people, for table bookings.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "人数，适用于餐桌预订。",
+      "ms": "Berapa orang, untuk tempahan meja."
+    },
+    {
+      "source": "What sort of request it is.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "这是哪一类请求。",
+      "ms": "Jenis permintaan itu."
+    },
+    {
+      "source": "Whether it is still waiting, approved or declined.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "是仍在等待、已批准还是已拒绝。",
+      "ms": "Sama ada ia masih menunggu, diluluskan atau ditolak."
+    },
+    {
+      "source": "Customers asking to move a booking they already have.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客要求更改已有预订的时间。",
+      "ms": "Pelanggan yang meminta untuk mengalihkan tempahan sedia ada mereka."
+    },
+    {
+      "source": "Your public booking link, to put on your own page or send to a customer.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的公开预订链接，可放在自己的页面上或发送给顾客。",
+      "ms": "Pautan tempahan awam anda, untuk diletakkan pada halaman anda sendiri atau dihantar kepada pelanggan."
+    },
+    {
+      "source": "Approve or decline a booking request",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "批准或拒绝预订请求",
+      "ms": "Luluskan atau tolak permintaan tempahan"
+    },
+    {
+      "source": "The customer sees the answer in their own app. A time that has already passed cannot be approved — offer a new one instead.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客会在自己的应用中看到答复。已过去的时间无法批准 — 请改为提供新的时间。",
+      "ms": "Pelanggan melihat jawapan dalam aplikasi mereka sendiri. Masa yang telah berlalu tidak boleh diluluskan — tawarkan yang baharu sebaliknya."
+    },
+    {
+      "source": "Open Bookings.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「预订」。",
+      "ms": "Buka Tempahan."
+    },
+    {
+      "source": "Read what the customer asked for, and check you can do it.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "阅读顾客的要求，并确认您能做到。",
+      "ms": "Baca apa yang pelanggan minta, dan pastikan anda boleh melakukannya."
+    },
+    {
+      "source": "Press Approve to confirm the time they asked for, or Decline if you cannot.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "按「批准」确认他们要求的时间，若无法做到则按「拒绝」。",
+      "ms": "Tekan Luluskan untuk mengesahkan masa yang mereka minta, atau Tolak jika anda tidak boleh."
+    },
+    {
+      "source": "To offer a different time, set the new date and time and press Move & confirm.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "如需提供其他时间，请设置新的日期和时间并按「改期并确认」。",
+      "ms": "Untuk menawarkan masa lain, tetapkan tarikh dan masa baharu dan tekan Alih & sahkan."
+    },
+    {
+      "source": "A request is not a booking. Nothing is held for the customer until you approve it.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "请求不等于预订。在您批准之前，不会为顾客保留任何名额。",
+      "ms": "Permintaan bukan tempahan. Tiada apa ditahan untuk pelanggan sehingga anda meluluskannya."
+    },
+    {
+      "source": "Requests only appear if you have turned customer booking on in Customer Interface.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "只有在「顾客界面」中开启顾客预订后，请求才会出现。",
+      "ms": "Permintaan hanya muncul jika anda telah menghidupkan tempahan pelanggan dalam Antara Muka Pelanggan."
+    },
+    {
+      "source": "The number on the sidebar tells you how many are waiting.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "侧边栏上的数字显示有多少请求在等待。",
+      "ms": "Nombor pada bar sisi memberitahu anda berapa banyak yang menunggu."
+    },
+    {
+      "source": "A request that is past its time is marked Time has passed and can no longer be approved as-is.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "已过时间的请求会标记为「时间已过」，无法按原样批准。",
+      "ms": "Permintaan yang telah melepasi masanya ditanda Masa telah berlalu dan tidak boleh diluluskan seadanya."
+    },
+    {
+      "source": "No requests ever arrive",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "从未收到任何请求",
+      "ms": "Tiada permintaan pernah tiba"
+    },
+    {
+      "source": "Customer booking is switched off in Customer Interface.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "「顾客界面」中的顾客预订已关闭。",
+      "ms": "Tempahan pelanggan dimatikan dalam Antara Muka Pelanggan."
+    },
+    {
+      "source": "Customers have not been given your booking link or QR.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "尚未向顾客提供您的预订链接或二维码。",
+      "ms": "Pelanggan belum diberikan pautan tempahan atau QR anda."
+    },
+    {
+      "source": "You are looking at the wrong branch.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您查看的是错误的分店。",
+      "ms": "Anda sedang melihat cawangan yang salah."
+    },
+    {
+      "source": "Open Customer Interface -> Appointment Setting and check booking is on.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「顾客界面」->「预约设置」，确认预订已开启。",
+      "ms": "Buka Antara Muka Pelanggan -> Tetapan Janji Temu dan semak tempahan dihidupkan."
+    },
+    {
+      "source": "Use Copy portal link and share it, or display your business QR.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "使用「复制门户链接」并分享，或展示您的商家二维码。",
+      "ms": "Gunakan Salin pautan portal dan kongsikannya, atau paparkan QR perniagaan anda."
+    },
+    {
+      "source": "What happens to the customer when I approve?",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "我批准后顾客会怎样？",
+      "ms": "Apa berlaku kepada pelanggan apabila saya meluluskan?"
+    },
+    {
+      "source": "It becomes a real appointment or booking, and the customer sees it confirmed in their app.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "它会变成正式的预约或预订，顾客会在应用中看到确认。",
+      "ms": "Ia menjadi janji temu atau tempahan sebenar, dan pelanggan melihatnya disahkan dalam aplikasi mereka."
+    },
+    {
+      "source": "Can I approve a request for a different time?",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "我可以按其他时间批准请求吗？",
+      "ms": "Bolehkah saya meluluskan permintaan untuk masa yang berbeza?"
+    },
+    {
+      "source": "Yes. Set the time you can do and press Move & confirm — it moves and confirms in one step.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "可以。设置您能安排的时间并按「改期并确认」 — 一步完成改期和确认。",
+      "ms": "Boleh. Tetapkan masa yang anda mampu dan tekan Alih & sahkan — ia mengalih dan mengesahkan dalam satu langkah."
+    },
+    {
+      "source": "People waiting now, and what happens when a place comes free.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "当前正在等候的顾客，以及有空位时的处理方式。",
+      "ms": "Orang yang menunggu sekarang, dan apa berlaku apabila tempat kosong."
+    },
+    {
+      "source": "The queue of people waiting for a place. Add a walk-in, call them when you are ready, and seat or book them.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "等候席位的顾客队列。添加散客，准备好时叫号，然后安排入座或预约。",
+      "ms": "Barisan orang yang menunggu tempat. Tambah pelanggan datang terus, panggil mereka apabila anda sedia, dan dudukkan atau tempah untuk mereka."
+    },
+    {
+      "source": "Serve & sell → Waitlist",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "服务与销售 → 候补名单",
+      "ms": "Layan & jual → Senarai menunggu"
+    },
+    {
+      "source": "Add a walk-in to the queue",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "将散客加入队列",
+      "ms": "Tambah pelanggan datang terus ke barisan"
+    },
+    {
+      "source": "Mark someone as Called",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "将某人标记为已叫号",
+      "ms": "Tandakan seseorang sebagai Dipanggil"
+    },
+    {
+      "source": "Seat a walk-in now",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "立即为散客安排入座",
+      "ms": "Dudukkan pelanggan datang terus sekarang"
+    },
+    {
+      "source": "Turn a walk-in into a booking",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "将散客转为预订",
+      "ms": "Tukar pelanggan datang terus kepada tempahan"
+    },
+    {
+      "source": "Remove someone from the queue",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "将某人移出队列",
+      "ms": "Keluarkan seseorang daripada barisan"
+    },
+    {
+      "source": "How many people are in the queue.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "队列中有多少人。",
+      "ms": "Berapa orang dalam barisan."
+    },
+    {
+      "source": "Name / Phone",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "姓名 / 电话",
+      "ms": "Nama / Telefon"
+    },
+    {
+      "source": "Who is waiting and how to reach them.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "谁在等候，以及如何联系他们。",
+      "ms": "Siapa yang menunggu dan cara menghubungi mereka."
+    },
+    {
+      "source": "Wanted date & time",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "期望的日期与时间",
+      "ms": "Tarikh & masa yang dikehendaki"
+    },
+    {
+      "source": "When they asked for, or No preference.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们要求的时间，或「无偏好」。",
+      "ms": "Masa yang mereka minta, atau Tiada pilihan."
+    },
+    {
+      "source": "Party size",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "人数",
+      "ms": "Saiz kumpulan"
+    },
+    {
+      "source": "For table seating.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "用于餐桌入座。",
+      "ms": "Untuk tempat duduk meja."
+    },
+    {
+      "source": "You have called them; they have not been seated yet.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您已叫号；他们尚未入座。",
+      "ms": "Anda telah memanggil mereka; mereka belum didudukkan."
+    },
+    {
+      "source": "This entry came from a booking request.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "此条目来自一项预订请求。",
+      "ms": "Entri ini datang daripada permintaan tempahan."
+    },
+    {
+      "source": "Add a walk-in to the waitlist",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "将散客加入候补名单",
+      "ms": "Tambah pelanggan datang terus ke senarai menunggu"
+    },
+    {
+      "source": "Serve & sell → Waitlist → Add walk-in",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "服务与销售 → 候补名单 → 添加散客",
+      "ms": "Layan & jual → Senarai menunggu → Tambah pelanggan datang terus"
+    },
+    {
+      "source": "A waitlist entry is not a sale and not an appointment. It only records that someone is waiting.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "候补名单条目既不是交易也不是预约。它只记录有人在等候。",
+      "ms": "Entri senarai menunggu bukan jualan dan bukan janji temu. Ia hanya merekodkan bahawa seseorang sedang menunggu."
+    },
+    {
+      "source": "Open Waitlist.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「候补名单」。",
+      "ms": "Buka Senarai menunggu."
+    },
+    {
+      "source": "Press Add walk-in.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "按「添加散客」。",
+      "ms": "Tekan Tambah pelanggan datang terus."
+    },
+    {
+      "source": "Add the phone number so you can call them.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "添加电话号码，以便叫号时联系。",
+      "ms": "Tambah nombor telefon supaya anda boleh memanggil mereka."
+    },
+    {
+      "source": "Set the party size or the service if it applies.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "如适用，请设置人数或服务项目。",
+      "ms": "Tetapkan saiz kumpulan atau perkhidmatan jika berkenaan."
+    },
+    {
+      "source": "Press Add.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "按「添加」。",
+      "ms": "Tekan Tambah."
+    },
+    {
+      "source": "Seat or book someone from the waitlist",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "为候补名单中的顾客安排入座或预约",
+      "ms": "Dudukkan atau tempah untuk seseorang daripada senarai menunggu"
+    },
+    {
+      "source": "An entry that came from a booking request must be answered with Confirm or Decline in Bookings, not seated here.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "来自预订请求的条目必须在「预订」中以「确认」或「拒绝」答复，而不是在此安排入座。",
+      "ms": "Entri yang datang daripada permintaan tempahan mesti dijawab dengan Sahkan atau Tolak dalam Tempahan, bukan didudukkan di sini."
+    },
+    {
+      "source": "Press Call when you have called them.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "叫号后按「呼叫」。",
+      "ms": "Tekan Panggil apabila anda telah memanggil mereka."
+    },
+    {
+      "source": "Press Seat now when they sit down, or Book to put them in the calendar.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客入座时按「立即入座」，或按「预约」将其加入日历。",
+      "ms": "Tekan Dudukkan sekarang apabila mereka duduk, atau Tempah untuk memasukkan mereka ke dalam kalendar."
+    },
+    {
+      "source": "Book carries what you already know — the wanted time and the service — into a new appointment.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "「预约」会把已知信息 — 期望时间和服务项目 — 带入新的预约。",
+      "ms": "Tempah membawa apa yang anda sudah tahu — masa yang dikehendaki dan perkhidmatan — ke dalam janji temu baharu."
+    },
+    {
+      "source": "Waitlist works with Bookings. If Bookings is off for your business, the Waitlist screen is not available either.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "候补名单与预订配合使用。如果您的商家关闭了「预订」，「候补名单」页面也无法使用。",
+      "ms": "Senarai menunggu berfungsi bersama Tempahan. Jika Tempahan dimatikan untuk perniagaan anda, skrin Senarai menunggu juga tidak tersedia."
+    },
+    {
+      "source": "Nothing on this screen records money. Record the sale at Record sale when they are served.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "此页面不记录任何金额。顾客接受服务后，请在「记录销售」中记录交易。",
+      "ms": "Tiada apa pada skrin ini merekodkan wang. Rekodkan jualan di Rekod jualan apabila mereka dilayan."
+    },
+    {
+      "source": "Waitlist is not in my sidebar",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "侧边栏中没有「候补名单」",
+      "ms": "Senarai menunggu tiada dalam bar sisi saya"
+    },
+    {
+      "source": "Bookings is not switched on for your business, and the Waitlist depends on it.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的商家未开启「预订」，而「候补名单」依赖于它。",
+      "ms": "Tempahan tidak dihidupkan untuk perniagaan anda, dan Senarai menunggu bergantung padanya."
+    },
+    {
+      "source": "Your account does not have either module.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的账户没有这两个模块的权限。",
+      "ms": "Akaun anda tiada kedua-dua modul itu."
+    },
+    {
+      "source": "Ask the owner to check Bookings is on.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "请店主确认「预订」已开启。",
+      "ms": "Minta pemilik menyemak Tempahan dihidupkan."
+    },
+    {
+      "source": "If the owner cannot switch it on, Bookings is not in your plan.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "如果店主也无法开启，说明「预订」不在您的套餐内。",
+      "ms": "Jika pemilik tidak dapat menghidupkannya, Tempahan bukan sebahagian daripada pelan anda."
+    },
+    {
+      "source": "What your customers see",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客所见",
+      "ms": "Apa yang pelanggan anda lihat"
+    },
+    {
+      "source": "The customer side of Peekaa, so you can answer their questions.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "Peekaa 的顾客端，帮助您解答他们的疑问。",
+      "ms": "Bahagian pelanggan Peekaa, supaya anda boleh menjawab soalan mereka."
+    },
+    {
+      "source": "Customers use a separate Peekaa app on their phone. They join one business at a time by scanning that business's QR, then see their points, rewards, packages, visits and purchases for that business.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客在手机上使用另一个 Peekaa 应用。他们通过扫描商家二维码逐一加入，然后即可查看该商家的积分、奖励、配套、到访和消费记录。",
+      "ms": "Pelanggan menggunakan aplikasi Peekaa yang berasingan pada telefon mereka. Mereka menyertai satu perniagaan pada satu masa dengan mengimbas QR perniagaan itu, kemudian melihat mata, ganjaran, pakej, kunjungan dan pembelian mereka bagi perniagaan tersebut."
+    },
+    {
+      "source": "How a customer joins you",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客如何加入您的方案",
+      "ms": "Bagaimana pelanggan menyertai anda"
+    },
+    {
+      "source": "They scan your business QR, or open your join link.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们扫描您的商家二维码，或打开您的加入链接。",
+      "ms": "Mereka mengimbas QR perniagaan anda, atau membuka pautan sertai anda."
+    },
+    {
+      "source": "They create an account with their mobile number and a password, or sign in if they already have one.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们用手机号码和密码创建账户；如已有账户则直接登录。",
+      "ms": "Mereka mencipta akaun dengan nombor telefon bimbit dan kata laluan, atau log masuk jika sudah ada."
+    },
+    {
+      "source": "Your programme is added to their app automatically. They never have to scan the same code twice.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的方案会自动加入他们的应用。同一个二维码无需扫描两次。",
+      "ms": "Program anda ditambah ke aplikasi mereka secara automatik. Mereka tidak perlu mengimbas kod yang sama dua kali."
+    },
+    {
+      "source": "What they can do",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们可以做什么",
+      "ms": "Apa yang mereka boleh buat"
+    },
+    {
+      "source": "See their points or stamps, and how far they are from the next reward.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "查看自己的积分或印花，以及距离下一项奖励还差多少。",
+      "ms": "Lihat mata atau setem mereka, dan sejauh mana mereka daripada ganjaran seterusnya."
+    },
+    {
+      "source": "Claim a reward, which produces a time-limited QR for your counter to scan.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "兑换奖励，系统会生成一个限时二维码供您的柜台扫描。",
+      "ms": "Tuntut ganjaran, yang menghasilkan QR terhad masa untuk diimbas oleh kaunter anda."
+    },
+    {
+      "source": "See every purchase and points movement, with the date, amount and branch.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "查看每一笔消费和积分变动，含日期、金额和分店。",
+      "ms": "Lihat setiap pembelian dan pergerakan mata, dengan tarikh, jumlah dan cawangan."
+    },
+    {
+      "source": "See packages they have bought and sessions they have left.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "查看已购买的配套及剩余次数。",
+      "ms": "Lihat pakej yang mereka beli dan sesi yang tinggal."
+    },
+    {
+      "source": "Request a booking, if you have turned customer booking on.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "如果您已开启顾客预订，他们可以发起预订请求。",
+      "ms": "Minta tempahan, jika anda telah menghidupkan tempahan pelanggan."
+    },
+    {
+      "source": "Share their referral code, if Referrals is running.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "如果「推荐好友」正在运行，他们可以分享自己的推荐码。",
+      "ms": "Kongsi kod rujukan mereka, jika Rujukan sedang berjalan."
+    },
+    {
+      "source": "What they cannot do",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们不能做什么",
+      "ms": "Apa yang mereka tidak boleh buat"
+    },
+    {
+      "source": "Search for and join businesses on their own. A business-issued QR or link is the only way in.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "自行搜索并加入商家。只有商家提供的二维码或链接才能加入。",
+      "ms": "Mencari dan menyertai perniagaan sendiri. QR atau pautan yang dikeluarkan perniagaan adalah satu-satunya jalan masuk."
+    },
+    {
+      "source": "Change their own points or claim a reward without your counter confirming it.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "自行更改积分，或在未经您柜台确认的情况下兑换奖励。",
+      "ms": "Mengubah mata mereka sendiri atau menuntut ganjaran tanpa pengesahan kaunter anda."
+    },
+    {
+      "source": "A customer only sees sections you have actually set up. If you have no birthday benefit, nothing about birthdays appears in their app.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客只会看到您确实设置过的部分。如果没有生日优惠，他们的应用中不会出现任何与生日相关的内容。",
+      "ms": "Pelanggan hanya melihat bahagian yang anda benar-benar sediakan. Jika anda tiada faedah hari jadi, tiada apa tentang hari jadi muncul dalam aplikasi mereka."
+    },
+    {
+      "source": "The customer app is English only at this stage.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客应用目前仅提供英文。",
+      "ms": "Aplikasi pelanggan hanya dalam bahasa Inggeris pada peringkat ini."
+    },
+    {
+      "source": "Claiming a reward does not spend it. Nothing changes until your staff scan the QR at Record sale.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "兑换奖励本身不会消耗它。在您的员工于「记录销售」中扫描二维码之前，一切不变。",
+      "ms": "Menuntut ganjaran tidak membelanjakannya. Tiada apa berubah sehingga kakitangan anda mengimbas QR itu di Rekod jualan."
+    },
+    {
+      "source": "A customer cannot sign in to their Peekaa account",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客无法登录其 Peekaa 账户",
+      "ms": "Pelanggan tidak boleh log masuk ke akaun Peekaa mereka"
+    },
+    {
+      "source": "They are typing a different mobile number from the one they signed up with.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们输入的手机号码与注册时使用的不同。",
+      "ms": "Mereka menaip nombor telefon bimbit yang berbeza daripada yang digunakan semasa mendaftar."
+    },
+    {
+      "source": "They have forgotten their password.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们忘记了密码。",
+      "ms": "Mereka terlupa kata laluan mereka."
+    },
+    {
+      "source": "They have not created an account yet — scanning your QR is only the first step.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们尚未创建账户 — 扫描您的二维码只是第一步。",
+      "ms": "Mereka belum mencipta akaun — mengimbas QR anda hanyalah langkah pertama."
+    },
+    {
+      "source": "Ask them to use the mobile number they gave you, with no country code.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "请他们使用留给您的手机号码，不要加国家代码。",
+      "ms": "Minta mereka menggunakan nombor telefon bimbit yang mereka berikan kepada anda, tanpa kod negara."
+    },
+    {
+      "source": "On the sign-in screen they can choose to recover the account; a one-time code is sent to that number.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "在登录页面他们可以选择找回账户；系统会向该号码发送一次性验证码。",
+      "ms": "Pada skrin log masuk mereka boleh memilih untuk memulihkan akaun; satu kod sekali guna dihantar ke nombor itu."
+    },
+    {
+      "source": "If they have never signed up, ask them to scan your business QR and create the account.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "如果他们从未注册，请他们扫描您的商家二维码并创建账户。",
+      "ms": "Jika mereka tidak pernah mendaftar, minta mereka mengimbas QR perniagaan anda dan mencipta akaun."
+    },
+    {
+      "source": "A customer says they cannot find my business in their app",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客说在应用中找不到我的商家",
+      "ms": "Pelanggan berkata mereka tidak dapat mencari perniagaan saya dalam aplikasi mereka"
+    },
+    {
+      "source": "They have not scanned your QR yet. Customers cannot search for businesses.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们尚未扫描您的二维码。顾客无法搜索商家。",
+      "ms": "Mereka belum mengimbas QR anda. Pelanggan tidak boleh mencari perniagaan."
+    },
+    {
+      "source": "They scanned a different business's code.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "他们扫描的是另一家商家的二维码。",
+      "ms": "Mereka mengimbas kod perniagaan lain."
+    },
+    {
+      "source": "Your sign-up QR has been replaced since they saved it.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的注册二维码在他们保存后已被更换。",
+      "ms": "QR pendaftaran anda telah diganti sejak mereka menyimpannya."
+    },
+    {
+      "source": "Show them your business QR at the counter and ask them to scan it.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "在柜台出示您的商家二维码，请他们扫描。",
+      "ms": "Tunjukkan QR perniagaan anda di kaunter dan minta mereka mengimbasnya."
+    },
+    {
+      "source": "The owner can find it in the account menu under My Business QR.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "店主可在账户菜单的「我的商家二维码」中找到。",
+      "ms": "Pemilik boleh menemuinya dalam menu akaun di bawah QR Perniagaan Saya."
+    },
+    {
+      "source": "Can a customer use one account at several businesses?",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客可以用同一个账户在多家商家使用吗？",
+      "ms": "Bolehkah pelanggan menggunakan satu akaun di beberapa perniagaan?"
+    },
+    {
+      "source": "Yes. Each business they scan is added as a separate programme in the same account, with its own points and rewards.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "可以。他们扫描的每家商家都会作为独立方案加入同一账户，各自拥有积分和奖励。",
+      "ms": "Boleh. Setiap perniagaan yang mereka imbas ditambah sebagai program berasingan dalam akaun yang sama, dengan mata dan ganjarannya sendiri."
+    },
+    {
+      "source": "Can I add points to a customer myself?",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "我可以自己为顾客添加积分吗？",
+      "ms": "Bolehkah saya menambah mata kepada pelanggan sendiri?"
+    },
+    {
+      "source": "The owner can make a manual adjustment on the customer's profile. Ordinary earning happens automatically when a sale is recorded.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "店主可以在顾客资料中进行手动调整。常规积分会在记录交易时自动产生。",
+      "ms": "Pemilik boleh membuat pelarasan manual pada profil pelanggan. Perolehan biasa berlaku secara automatik apabila jualan direkodkan."
+    },
+    {
+      "source": "Your business profile, your booking rules and your sign-up QR.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的商家资料、预订规则和注册二维码。",
+      "ms": "Profil perniagaan, peraturan tempahan dan QR pendaftaran anda."
+    },
+    {
+      "source": "Everything that decides what your customers see and what they are allowed to do. Change it here and it changes in their app.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "决定顾客看到什么、可以做什么的全部设置。在此更改后，他们的应用中也会随之变化。",
+      "ms": "Segala yang menentukan apa yang pelanggan anda lihat dan apa yang mereka dibenarkan lakukan. Ubah di sini dan ia berubah dalam aplikasi mereka."
+    },
+    {
+      "source": "Set your business profile — name, logo, colours and images",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "设置商家资料 — 名称、标志、颜色和图片",
+      "ms": "Tetapkan profil perniagaan anda — nama, logo, warna dan imej"
+    },
+    {
+      "source": "Preview what customers see",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "预览顾客所见内容",
+      "ms": "Pratonton apa yang pelanggan lihat"
+    },
+    {
+      "source": "Set whether customers can book, and the rules for it",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "设置顾客能否预订及相关规则",
+      "ms": "Tetapkan sama ada pelanggan boleh menempah, dan peraturannya"
+    },
+    {
+      "source": "Set what customers are permitted to do",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "设置顾客被允许执行的操作",
+      "ms": "Tetapkan apa yang pelanggan dibenarkan lakukan"
+    },
+    {
+      "source": "Get your business QR",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "获取您的商家二维码",
+      "ms": "Dapatkan QR perniagaan anda"
+    },
+    {
+      "source": "Your name, logo, images and colours, with a live preview of the customer's phone.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "您的名称、标志、图片和颜色，并附顾客手机的实时预览。",
+      "ms": "Nama, logo, imej dan warna anda, dengan pratonton langsung telefon pelanggan."
+    },
+    {
+      "source": "What customers may do — including whether they can request bookings.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客可以执行的操作 — 包括能否发起预订请求。",
+      "ms": "Apa yang pelanggan boleh lakukan — termasuk sama ada mereka boleh meminta tempahan."
+    },
+    {
+      "source": "The rules for customer booking: what they may request and how far ahead.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客预订的规则：可以请求什么，以及可提前多久。",
+      "ms": "Peraturan tempahan pelanggan: apa yang boleh mereka minta dan berapa awal."
+    },
+    {
+      "source": "Live preview",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "实时预览",
+      "ms": "Pratonton langsung"
+    },
+    {
+      "source": "The customer's phone, beside the form, updating as you edit.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "表单旁的顾客手机预览，随您的编辑实时更新。",
+      "ms": "Telefon pelanggan, di sebelah borang, dikemas kini semasa anda mengedit."
+    },
+    {
+      "source": "Branch contact details",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "分店联系方式",
+      "ms": "Butiran hubungan cawangan"
+    },
+    {
+      "source": "The address and phone customers see, per branch.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客看到的地址和电话，按分店分别设置。",
+      "ms": "Alamat dan telefon yang pelanggan lihat, bagi setiap cawangan."
+    },
+    {
+      "source": "Set your business profile",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "设置商家资料",
+      "ms": "Tetapkan profil perniagaan anda"
+    },
+    {
+      "source": "Customer Interface → Business Profile",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客界面 → 商家资料",
+      "ms": "Antara Muka Pelanggan → Profil Perniagaan"
+    },
+    {
+      "source": "The preview is what your customers will actually see. Nothing is published to them until you save.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "预览即顾客实际看到的内容。在您保存之前，不会向他们发布任何内容。",
+      "ms": "Pratonton itulah yang pelanggan anda akan lihat sebenarnya. Tiada apa diterbitkan kepada mereka sehingga anda menyimpan."
+    },
+    {
+      "source": "Open Customer Interface.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「顾客界面」。",
+      "ms": "Buka Antara Muka Pelanggan."
+    },
+    {
+      "source": "Open Business Profile.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「商家资料」。",
+      "ms": "Buka Profil Perniagaan."
+    },
+    {
+      "source": "Upload your logo and any programme images.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "上传您的标志和方案图片。",
+      "ms": "Muat naik logo anda dan mana-mana imej program."
+    },
+    {
+      "source": "Set your colours.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "设置您的配色。",
+      "ms": "Tetapkan warna anda."
+    },
+    {
+      "source": "Check the live preview beside the form.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "查看表单旁的实时预览。",
+      "ms": "Semak pratonton langsung di sebelah borang."
+    },
+    {
+      "source": "Account menu → My Business QR",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "账户菜单 → 我的商家二维码",
+      "ms": "Menu akaun → QR Perniagaan Saya"
+    },
+    {
+      "source": "This is the only way a customer can join you. They cannot search for your business. You can replace the QR if it is ever misused — the old one then stops working.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "这是顾客加入您方案的唯一途径。他们无法搜索到您的商家。若二维码被滥用，您可以更换 — 旧码随即失效。",
+      "ms": "Inilah satu-satunya cara pelanggan boleh menyertai anda. Mereka tidak boleh mencari perniagaan anda. Anda boleh menggantikan QR itu jika ia disalahgunakan — yang lama kemudian berhenti berfungsi."
+    },
+    {
+      "source": "Open the account menu at the top right.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开右上角的账户菜单。",
+      "ms": "Buka menu akaun di penjuru kanan atas."
+    },
+    {
+      "source": "Choose My Business QR.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "选择「我的商家二维码」。",
+      "ms": "Pilih QR Perniagaan Saya."
+    },
+    {
+      "source": "Print it, or display it on a screen at the counter.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "将其打印出来，或在柜台屏幕上展示。",
+      "ms": "Cetaknya, atau paparkannya pada skrin di kaunter."
+    },
+    {
+      "source": "Customers scan it, create an account, and your programme is added automatically.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客扫描后创建账户，您的方案即自动加入。",
+      "ms": "Pelanggan mengimbasnya, mencipta akaun, dan program anda ditambah secara automatik."
+    },
+    {
+      "source": "Let customers book themselves",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "让顾客自行预订",
+      "ms": "Benarkan pelanggan menempah sendiri"
+    },
+    {
+      "source": "Customer Interface → Appointment Setting",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客界面 → 预约设置",
+      "ms": "Antara Muka Pelanggan → Tetapan Janji Temu"
+    },
+    {
+      "source": "Customer requests arrive under Bookings for you to approve or decline. Nothing is held until you decide.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客的请求会出现在「预订」中，等待您批准或拒绝。在您决定前不会保留任何名额。",
+      "ms": "Permintaan pelanggan tiba di bawah Tempahan untuk anda luluskan atau tolak. Tiada apa ditahan sehingga anda membuat keputusan."
+    },
+    {
+      "source": "Open Appointment Setting.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「预约设置」。",
+      "ms": "Buka Tetapan Janji Temu."
+    },
+    {
+      "source": "Switch customer booking on.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "开启顾客预订。",
+      "ms": "Hidupkan tempahan pelanggan."
+    },
+    {
+      "source": "Set the rules for what they may request.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "设置他们可以请求的内容规则。",
+      "ms": "Tetapkan peraturan untuk apa yang boleh mereka minta."
+    },
+    {
+      "source": "Customers never see a section you have not set up. If there is no birthday benefit, nothing about birthdays appears in their app.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客绝不会看到您未设置的部分。如果没有生日优惠，他们的应用中不会出现任何与生日相关的内容。",
+      "ms": "Pelanggan tidak pernah melihat bahagian yang belum anda sediakan. Jika tiada faedah hari jadi, tiada apa tentang hari jadi muncul dalam aplikasi mereka."
+    },
+    {
+      "source": "A customer can only join through your QR or link. There is no public directory.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客只能通过您的二维码或链接加入。不存在公开目录。",
+      "ms": "Pelanggan hanya boleh menyertai melalui QR atau pautan anda. Tiada direktori awam."
+    },
+    {
+      "source": "My logo or images are not showing for customers",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客看不到我的标志或图片",
+      "ms": "Logo atau imej saya tidak dipaparkan kepada pelanggan"
+    },
+    {
+      "source": "The change was not saved.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "更改未保存。",
+      "ms": "Perubahan itu tidak disimpan."
+    },
+    {
+      "source": "The customer's app is showing a cached copy.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "顾客的应用显示的是缓存版本。",
+      "ms": "Aplikasi pelanggan memaparkan salinan cache."
+    },
+    {
+      "source": "Open Business Profile and check the preview shows what you expect, then save again.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "打开「商家资料」，确认预览显示符合预期，然后再次保存。",
+      "ms": "Buka Profil Perniagaan dan semak pratonton memaparkan apa yang anda jangkakan, kemudian simpan semula."
+    },
+    {
+      "source": "Ask the customer to reload their Peekaa page.",
+      "reason": "nestly_v925 wave 8 — Help Centre article prose, complete guides: Bookings, Waitlist, What your customers see, and Customer Interface. The generated table was machine-translated in ONE pass at v97 and never regenerated, so the Help Centre rendered entirely English. Translated a WHOLE guide at a time. The brand name Peekaa is never translated (owner instruction 2026-09-15).",
+      "zh-CN": "请顾客重新加载其 Peekaa 页面。",
+      "ms": "Minta pelanggan memuatkan semula halaman Peekaa mereka."
     }
   ]
 }

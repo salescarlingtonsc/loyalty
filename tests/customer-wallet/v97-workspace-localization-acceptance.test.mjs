@@ -245,7 +245,10 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
        guide that said 只读 or 'Read' was naming something the reader would never see. */
         /* 2337 -> 2578: nestly_v924 wave 7 — the first MODULE wave: Dashboard, Business Intelligence
        and the global chrome. The brand name Peekaa is deliberately never translated. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,2578,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* 2578 -> 2731: nestly_v925 wave 8 — the Bookings, Waitlist, What your customers see and
+       Customer Interface guides, and one shipped key un-escaped: an HTML-escaped source can
+       never match node.nodeValue, which is decoded text. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,2731,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
