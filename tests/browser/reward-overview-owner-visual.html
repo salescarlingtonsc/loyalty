@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="18355572643a7ac3cfc75ced8f527d113750d3ef34b6ca7fab682d63c4c3799c"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="e4704ed2a2287c04411da84dbf73ee6545fc324de2ff83c1fdf8ab1dabf2d719"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 18355572643a7ac3cfc75ced8f527d113750d3ef34b6ca7fab682d63c4c3799c</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · e4704ed2a2287c04411da84dbf73ee6545fc324de2ff83c1fdf8ab1dabf2d719</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -17142,7 +17142,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
           <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: <span>${esc(money(template.budget))}</span></span></p>
         </button>`).join('')}</div>
-        <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
+        <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('suggestionsUseYourPrices',{caveat:prices.length?'':' (none yet, so sector defaults are shown)'})}</p>`;
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
         const template=templates[Number(button.dataset.rewardTemplate)];
         if(!template)return;
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'18355572643a7ac3cfc75ced8f527d113750d3ef34b6ca7fab682d63c4c3799c',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'e4704ed2a2287c04411da84dbf73ee6545fc324de2ff83c1fdf8ab1dabf2d719',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

@@ -23,6 +23,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v947: a renderer here now carries a named template for a sentence that mixes reviewed
+   English with a runtime value — one text node, which the flat catalogue can never reach. A vm
+   context sees none of this process's globals, so the REAL runtime goes into the sandbox with the
+   other helpers. Never a stub. */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -40,7 +45,7 @@ const block = app.slice(fnStart, fnEnd);
 /* The stubs are the five names the renderer is allowed to reach for. If it ever grows a sixth,
    this harness fails with a ReferenceError rather than silently testing a different function. */
 function render(brief) {
-  const sandbox = {
+  const sandbox = { ...workspaceTemplateRuntime(),
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     money: (c) => 'SGD ' + ((c || 0) / 100).toFixed(2),
     walletDate: (v) => `WD:${v}`,
@@ -266,7 +271,9 @@ test('V771 block B keeps Call and Open side by side in one action cell', () => {
 test('V771 block B counts overdue customers in the singular and the plural', () => {
   const one = sectionOf(render(FULL), 'ci-brief-bringback-v771');
   assert.ok(one.includes('<b>1 customer overdue</b>'), 'one is a customer, not customers');
-  assert.ok(one.includes('about SGD 120.00 a month of regular spend at risk'));
+  /* nestly_v947: the at-risk clause is a named template now, so the amount arrives in its own
+     value span. The sentence and the figure are both still pinned. */
+  assert.match(one, /about <span[^>]*>SGD 120\.00<\/span> a month of regular spend at risk/);
 
   const two = sectionOf(render({
     ...FULL,

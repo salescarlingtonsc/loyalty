@@ -22956,8 +22956,25 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   alsoAllowedChannels:Object.freeze({en:"Also allowed: push {push}, in-app {inApp}, call {call} (out of {total} customers)",'zh-CN':"同时允许：推送 {push}、应用内 {inApp}、电话 {call}（共 {total} 位顾客）",ms:"Turut dibenarkan: tolak {push}, dalam aplikasi {inApp}, panggilan {call} (daripada {total} pelanggan)"}),
   stageWindowTimeBasis:Object.freeze({en:"Each stage is measured over a {days}-day window from the customer\u0027s own prior visit, based on {basis}.",'zh-CN':"每个阶段均以顾客上一次到访起算的 {days} 天窗口来衡量，依据为 {basis}。",ms:"Setiap peringkat diukur dalam tetingkap {days} hari dari kunjungan pelanggan itu sendiri sebelumnya, berdasarkan {basis}."}),
   stageReturnedOfTotal:Object.freeze({en:"{num} of {den} returned ({pct})",'zh-CN':"{den} 位中有 {num} 位回头（{pct}）",ms:"{num} daripada {den} kembali ({pct})"}),
+  /* nestly_v947 — nine more embedded-value sentences: the sale-correction receipt, the reward-cost
+     suggestion caveat, the calendar time ranges, scheduled capacity, and the Business Intelligence
+     coverage lines. offersLiveOfMax serves BOTH places the publish cap is stated — the same
+     sentence in two renderers, one key. */
+  originalAndReplacement:Object.freeze({en:"Original {original}; replacement {replacement}.{loyalty}",'zh-CN':"原金额 {original}；替代金额 {replacement}。{loyalty}",ms:"Asal {original}; gantian {replacement}.{loyalty}"}),
+  suggestionsUseYourPrices:Object.freeze({en:"Suggestions use your own service prices{caveat}. You review and can change everything before publishing.",'zh-CN':"建议依据您自己的服务价格{caveat}。发布前您可以审核并修改全部内容。",ms:"Cadangan menggunakan harga perkhidmatan anda sendiri{caveat}. Anda menyemak dan boleh mengubah segalanya sebelum menerbitkan."}),
+  timeRangeSingaporeTime:Object.freeze({en:"{start}–{end} · Singapore time",'zh-CN':"{start}–{end} · 新加坡时间",ms:"{start}–{end} · waktu Singapura"}),
+  minutesBookedOfAvailable:Object.freeze({en:"{booked} of {available} min booked{pct}",'zh-CN':"已预约 {booked} 分钟，共 {available} 分钟{pct}",ms:"{booked} daripada {available} min ditempah{pct}"}),
+  demographicsKnownCoverage:Object.freeze({en:"Demographics known for {num} of {den} identified customers ({pct}).",'zh-CN':"{den} 位已识别顾客中，有 {num} 位登记了人口统计信息（{pct}）。",ms:"Demografi diketahui bagi {num} daripada {den} pelanggan yang dikenal pasti ({pct})."}),
+  revenueExplainedByDemographics:Object.freeze({en:"Revenue explained by known demographics: {num} of {den} ({pct}).",'zh-CN':"可由已知人口统计信息解释的营收：{den} 中的 {num}（{pct}）。",ms:"Hasil yang dijelaskan oleh demografi yang diketahui: {num} daripada {den} ({pct})."}),
+  timeBasisIs:Object.freeze({en:"Time basis: {basis}.",'zh-CN':"时间依据：{basis}。",ms:"Asas masa: {basis}."}),
+  aboutMonthlySpendAtRisk:Object.freeze({en:"· about {amount} a month of regular spend at risk",'zh-CN':"· 约有每月 {amount} 的常规消费面临流失风险",ms:"· kira-kira {amount} sebulan perbelanjaan biasa berisiko"}),
+  offersLiveOfMax:Object.freeze({en:"{used} of {max} offers live",'zh-CN':"{max} 个进行中优惠名额已用 {used} 个",ms:"{used} daripada {max} tawaran aktif"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v947 — nine more embedded-value sentences. */
+  'originalAndReplacement','suggestionsUseYourPrices','timeRangeSingaporeTime','minutesBookedOfAvailable',
+  'demographicsKnownCoverage','revenueExplainedByDemographics','timeBasisIs','aboutMonthlySpendAtRisk',
+  'offersLiveOfMax',
   /* nestly_v946 — twelve more embedded-value sentences. */
   'givebackOfPricePerVisit','spendPerStampCurrencyTwo','newStartMustBeFuture','blockedTimeUnreadableForWindow',
   'storageCapacityInUse','keptForDays','expiresOnAfterDays','recordedAtBranchPaysNow',
@@ -23901,7 +23918,7 @@ function openSaleAmountCorrectionDialog(item,onDone){
     const loyaltyLineV663=pointsRemovedV663||pointsEarnedV663
       ?`<p class="small" style="margin-top:6px">${workspaceTemplateHtmlV97('pointsAdjustedWithCorrection',{removed:pointsRemovedV663,earned:pointsEarnedV663})}</p>`
       :'';
-    $('saleCorrectionOutcome').innerHTML=`<div class="imp-note"><b>${data?.replayed?'Correction verified':'Amount corrected'}.</b> Original ${money(Number(data?.original_amount_cents||item.amount_cents))}; replacement ${money(Number(data?.corrected_amount_cents||cents))}.${loyaltyLineV663}</div>`;
+    $('saleCorrectionOutcome').innerHTML=`<div class="imp-note"><b>${data?.replayed?'Correction verified':'Amount corrected'}.</b>${workspaceTemplateHtmlV97('originalAndReplacement',{original:money(Number(data?.original_amount_cents||item.amount_cents)),replacement:money(Number(data?.corrected_amount_cents||cents)),loyalty:loyaltyLineV663})}</div>`;
     submit.disabled=true;submit.textContent='Completed';$('saleCorrectionCancel').textContent='Done';
     saleCorrectionAttempts.delete(item.id);
     if(typeof onDone==='function'){refreshed=true;onDone()}
@@ -35700,9 +35717,9 @@ async function promotionsPage(selectedPromotionId=null){
          enforces and the number an owner can change by moving an offer to draft. The old copy
          called it a "launch slot" (a lifetime allowance that drafting could never free) and then
          promised "no more than two current offers at once", which was never true of anything. */''}
-    <section class="card"><div class="promotion-quota"><div><b>${quotaUsed} of ${max} offers live</b>
+    <section class="card"><div class="promotion-quota"><div><b>${workspaceTemplateHtmlV97('offersLiveOfMax',{used:quotaUsed,max})}</b>
       <p class="muted small" style="margin-top:4px">Customers see every live offer on your business page, and one of them on their Home screen. ${atLiveCapV462?'You are at the limit — move one back to draft before publishing another.':`You can publish ${Math.max(0,max-quotaUsed)} more.`} Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}.</p></div>
-      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${quotaUsed} of ${max} offers live" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
+      <div class="promotion-quota-meter" data-workspace-i18n aria-label="${workspaceTemplateHtmlV97('offersLiveOfMax',{used:quotaUsed,max})}" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
       ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
       ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true,selectedId:selected?.id||''})}
     </section>
@@ -41853,7 +41870,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
           <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: <span>${esc(money(template.budget))}</span></span></p>
         </button>`).join('')}</div>
-        <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
+        <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('suggestionsUseYourPrices',{caveat:prices.length?'':' (none yet, so sector defaults are shown)'})}</p>`;
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
         const template=templates[Number(button.dataset.rewardTemplate)];
         if(!template)return;
@@ -48862,7 +48879,7 @@ async function appointmentsPage(){
     dialog.innerHTML=`<div class="modal-card"><div class="row appointment-detail-head"><div><h2 id="appointmentDetailTitle" data-merchant-content>${esc(client.full_name||'Appointment')}</h2><p class="muted small" style="margin-top:4px">${esc(sgt(item.starts_at)?.slice(0,10)||'')} · ${esc(appointmentTimeRange(item))} · ${duration} min</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentDialogClose" aria-label="Close appointment details">Close</button></div>
       <div class="appointment-detail-grid"><section aria-labelledby="appointmentServiceTitle"><h3 id="appointmentServiceTitle">Service</h3><dl class="appointment-detail-list"><div><dt>Service</dt><dd data-merchant-content>${esc(service.name||'General visit')}</dd></div><div><dt>Duration</dt><dd>${duration} minutes</dd></div><div><dt>Booked price</dt><dd>${bookedPriceCents===null?'Not available':esc(money(bookedPriceCents))}</dd></div><div><dt>Appointment note</dt><dd data-merchant-content>${esc(item.note||'None')}</dd></div></dl></section>
       <section aria-labelledby="appointmentClientTitle"><h3 id="appointmentClientTitle">Customer</h3><dl class="appointment-detail-list"><div><dt>Name</dt><dd data-merchant-content>${esc(client.full_name||'Not available')}</dd></div><div><dt>Phone</dt><dd data-merchant-content>${esc(client.phone||client.phone_norm||'Not available')}</dd></div><div><dt>Email</dt><dd data-merchant-content>${esc(client.email||'Not available')}</dd></div><div><dt>Date of birth</dt><dd data-merchant-content>${esc(client.birth_date||'Not available')}</dd></div></dl><div class="appointment-detail-section"><h3>Customer notes</h3><p data-merchant-content>${esc(client.notes||'None')}</p></div></section></div>
-      <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${esc(sgt(item.starts_at))}–${esc(calendarClock(item.ends_at))} · Singapore time</dd></div></dl></section>
+      <section class="appointment-detail-section" aria-labelledby="appointmentScheduleTitle"><h3 id="appointmentScheduleTitle">Schedule</h3><dl class="appointment-detail-list"><div><dt>Branch</dt><dd data-merchant-content>${esc(branchName)}</dd></div><div><dt>Staff</dt><dd data-merchant-content>${esc(staffName[item.staff_id]||'Unassigned')}</dd></div><div><dt>Status</dt><dd>${esc(item.status.replace('_',' '))}</dd></div><div><dt>Time</dt><dd>${workspaceTemplateHtmlV97('timeRangeSingaporeTime',{start:sgt(item.starts_at),end:calendarClock(item.ends_at)})}</dd></div></dl></section>
       <div class="appointment-detail-actions">${callNumber?`<a class="btn ghost" href="tel:${callNumber}">${CUI.icon('phone',{size:16})} Call</a>`:''}${whatsAppUrl?`<a class="btn ghost" id="appointmentWhatsApp" href="${esc(whatsAppUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:16,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}${item.status==='booked'&&canWrite?`${outcomeIsDue?`<button type="button" class="btn ghost statusAction" data-status="no_show">${CUI.icon('close',{size:16})} No-show</button>`:''}<button type="button" class="btn danger statusAction" data-status="cancelled">${CUI.icon('close',{size:16})} Cancel</button>`:`<span class="pill ${item.status==='completed'?'ok':'off'}">${esc(item.status.replace('_',' '))}</span>`}</div>
       ${/* V375 (owner, photo 14: "Change Appointment" and "Complete & Checkout" ringed with arrows
            down onto a tab strip, and "minimise this" written across the amend form). The two
@@ -54678,7 +54695,7 @@ function ciOpportunityCapacityHtmlV716(capacity){
   if(!c||!c.status||c.status==='not_applicable')return '';
   if(c.status==='ok'){
     const pctText=(c.pct===null||c.pct===undefined)?'':` (${esc(String(c.pct))}%)`;
-    return `<div><span>Capacity</span><strong>${Number(c.booked_minutes)||0} of ${Number(c.available_minutes)||0} min booked${pctText}</strong></div>`;
+    return `<div><span>Capacity</span><strong>${workspaceTemplateHtmlV97('minutesBookedOfAvailable',{booked:Number(c.booked_minutes)||0,available:Number(c.available_minutes)||0,pct:pctText})}</strong></div>`;
   }
   return `<div><span>Capacity</span><strong>${esc(c.reason||'Not available.')}</strong></div>`;
 }
@@ -54945,8 +54962,8 @@ function demographicsPanelHtmlV679(payload){
     <h2 id="ciDemographicsHeadingV679">Demographics</h2></div></div>
     ${(cells.length||unclassifiedCustomers)?`<div class="cui-table-wrap" role="region" aria-label="Demographics"><table class="cui-table"><thead><tr><th>Age band</th><th>Gender</th><th>Customers</th><th>Revenue</th><th>Cell visits</th><th>Average transaction value</th></tr></thead><tbody>${rows}<tr><td data-label="Age band">Unclassified</td><td data-label="Gender">—</td><td data-label="Customers">${unclassifiedCustomers}</td><td data-label="Revenue">${esc(money(unclassifiedRevenue))}</td><td data-label="Cell visits">—</td><td data-label="Average transaction value">—</td></tr></tbody></table></div>`
       :'<div class="empty">No identified customers in this scope yet.</div>'}
-    <p class="muted small" style="margin-top:10px">Demographics known for ${demCoverage.num} of ${demCoverage.den} identified customers (${demCoverage.pctText}).</p>
-    <p class="muted small">Revenue explained by known demographics: ${esc(money(revCoverage.num))} of ${esc(money(revCoverage.den))} (${revCoverage.pctText}).</p>
+    <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('demographicsKnownCoverage',{num:demCoverage.num,den:demCoverage.den,pct:demCoverage.pctText})}</p>
+    <p class="muted small">${workspaceTemplateHtmlV97('revenueExplainedByDemographics',{num:money(revCoverage.num),den:money(revCoverage.den),pct:revCoverage.pctText})}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
     ${ciFreshnessCaptionHtmlV734(p)}
   </section>`;
@@ -54982,7 +54999,7 @@ function behaviourPanelHtmlV679(payload){
       <article class="revenue-truth-metric"><span>Most valuable day (by revenue per visit)</span><strong>${mostValuableLine}</strong></article>
     </div>
     ${weekdays.length?`<div class="cui-table-wrap" role="region" aria-label="Weekday behaviour"><table class="cui-table"><thead><tr><th>Weekday</th><th>Weekday visits</th><th>Revenue</th><th>Revenue per visit</th><th>Occurrences in range</th><th>Visited on</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No weekday activity in this scope yet.</div>'}
-    <p class="muted small" style="margin-top:10px">Time basis: ${esc(p.time_basis||'sale_occurred_at')}.</p>
+    <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('timeBasisIs',{basis:p.time_basis||'sale_occurred_at'})}</p>
     <p class="muted small">${esc(p.basis_note||'')}</p>
     ${ciMeasuredSinceInlineV679(p.observed_since)}
     ${ciFreshnessCaptionHtmlV734(p)}
@@ -55279,7 +55296,7 @@ function ownerBriefHtmlV771(brief,options){
     bringBackV771=`<section class="ci-brief-bringback-v771" aria-labelledby="ciBriefBringBackTitleV771" style="margin-top:18px">
       ${headV771('phone','ciBriefBringBackTitleV771','Customers to bring back','Each person judged against their own visit rhythm, not a fixed rule.')}
       ${attentionErrorV771?errorRowV771('Customers to bring back could not load.',attentionErrorV771):`
-      ${fadingV771>0?`<p style="margin:8px 0 2px"><b>${fadingV771} customer${fadingV771===1?'':'s'} overdue</b> · about ${esc(money(atRiskV771))} a month of regular spend at risk</p>`:''}
+      ${fadingV771>0?`<p style="margin:8px 0 2px"><b>${fadingV771} customer${fadingV771===1?'':'s'} overdue</b>${workspaceTemplateHtmlV97('aboutMonthlySpendAtRisk',{amount:money(atRiskV771)})}</p>`:''}
       ${attentionRowsV771.length?`<div class="cui-table-wrap" role="region" aria-label="Customers to bring back"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Usually comes every</th><th>Last visit</th><th>Status</th><th>Action</th></tr></thead><tbody>${attentionRowsV771.map(bringBackRowV771).join('')}</tbody></table></div>`
         :'<div class="empty">Nobody is overdue against their own visit rhythm right now.</div>'}
       ${oneTimeV771>0?`<p class="muted small" style="margin-top:10px">${oneTimeV771} customer${oneTimeV771===1?'':'s'} visited once in the last year and never came back.</p>`:''}`}

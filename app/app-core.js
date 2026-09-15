@@ -7951,8 +7951,25 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   alsoAllowedChannels:Object.freeze({en:"Also allowed: push {push}, in-app {inApp}, call {call} (out of {total} customers)",'zh-CN':"同时允许：推送 {push}、应用内 {inApp}、电话 {call}（共 {total} 位顾客）",ms:"Turut dibenarkan: tolak {push}, dalam aplikasi {inApp}, panggilan {call} (daripada {total} pelanggan)"}),
   stageWindowTimeBasis:Object.freeze({en:"Each stage is measured over a {days}-day window from the customer\u0027s own prior visit, based on {basis}.",'zh-CN':"每个阶段均以顾客上一次到访起算的 {days} 天窗口来衡量，依据为 {basis}。",ms:"Setiap peringkat diukur dalam tetingkap {days} hari dari kunjungan pelanggan itu sendiri sebelumnya, berdasarkan {basis}."}),
   stageReturnedOfTotal:Object.freeze({en:"{num} of {den} returned ({pct})",'zh-CN':"{den} 位中有 {num} 位回头（{pct}）",ms:"{num} daripada {den} kembali ({pct})"}),
+  /* nestly_v947 — nine more embedded-value sentences: the sale-correction receipt, the reward-cost
+     suggestion caveat, the calendar time ranges, scheduled capacity, and the Business Intelligence
+     coverage lines. offersLiveOfMax serves BOTH places the publish cap is stated — the same
+     sentence in two renderers, one key. */
+  originalAndReplacement:Object.freeze({en:"Original {original}; replacement {replacement}.{loyalty}",'zh-CN':"原金额 {original}；替代金额 {replacement}。{loyalty}",ms:"Asal {original}; gantian {replacement}.{loyalty}"}),
+  suggestionsUseYourPrices:Object.freeze({en:"Suggestions use your own service prices{caveat}. You review and can change everything before publishing.",'zh-CN':"建议依据您自己的服务价格{caveat}。发布前您可以审核并修改全部内容。",ms:"Cadangan menggunakan harga perkhidmatan anda sendiri{caveat}. Anda menyemak dan boleh mengubah segalanya sebelum menerbitkan."}),
+  timeRangeSingaporeTime:Object.freeze({en:"{start}–{end} · Singapore time",'zh-CN':"{start}–{end} · 新加坡时间",ms:"{start}–{end} · waktu Singapura"}),
+  minutesBookedOfAvailable:Object.freeze({en:"{booked} of {available} min booked{pct}",'zh-CN':"已预约 {booked} 分钟，共 {available} 分钟{pct}",ms:"{booked} daripada {available} min ditempah{pct}"}),
+  demographicsKnownCoverage:Object.freeze({en:"Demographics known for {num} of {den} identified customers ({pct}).",'zh-CN':"{den} 位已识别顾客中，有 {num} 位登记了人口统计信息（{pct}）。",ms:"Demografi diketahui bagi {num} daripada {den} pelanggan yang dikenal pasti ({pct})."}),
+  revenueExplainedByDemographics:Object.freeze({en:"Revenue explained by known demographics: {num} of {den} ({pct}).",'zh-CN':"可由已知人口统计信息解释的营收：{den} 中的 {num}（{pct}）。",ms:"Hasil yang dijelaskan oleh demografi yang diketahui: {num} daripada {den} ({pct})."}),
+  timeBasisIs:Object.freeze({en:"Time basis: {basis}.",'zh-CN':"时间依据：{basis}。",ms:"Asas masa: {basis}."}),
+  aboutMonthlySpendAtRisk:Object.freeze({en:"· about {amount} a month of regular spend at risk",'zh-CN':"· 约有每月 {amount} 的常规消费面临流失风险",ms:"· kira-kira {amount} sebulan perbelanjaan biasa berisiko"}),
+  offersLiveOfMax:Object.freeze({en:"{used} of {max} offers live",'zh-CN':"{max} 个进行中优惠名额已用 {used} 个",ms:"{used} daripada {max} tawaran aktif"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v947 — nine more embedded-value sentences. */
+  'originalAndReplacement','suggestionsUseYourPrices','timeRangeSingaporeTime','minutesBookedOfAvailable',
+  'demographicsKnownCoverage','revenueExplainedByDemographics','timeBasisIs','aboutMonthlySpendAtRisk',
+  'offersLiveOfMax',
   /* nestly_v946 — twelve more embedded-value sentences. */
   'givebackOfPricePerVisit','spendPerStampCurrencyTwo','newStartMustBeFuture','blockedTimeUnreadableForWindow',
   'storageCapacityInUse','keptForDays','expiresOnAfterDays','recordedAtBranchPaysNow',

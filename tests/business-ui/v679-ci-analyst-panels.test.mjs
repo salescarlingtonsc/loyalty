@@ -185,7 +185,8 @@ test('V679 demographics: an evidence-ok cell shows its real ATV; a below-floor c
 
 test('V679 demographics: coverage is rendered verbatim-style with its numerator and denominator', () => {
   const html = render(DEMOGRAPHICS_R1).demographics(DEMOGRAPHICS_R1);
-  assert.ok(html.includes('Demographics known for 7 of 9 identified customers (77.8%)'));
+  /* nestly_v947: a named template now — the three figures arrive in their own value spans. */
+  assert.match(html, /Demographics known for <span[^>]*>7<\/span> of <span[^>]*>9<\/span> identified customers \(<span[^>]*>77\.8%<\/span>\)/);
 });
 
 test('V679 demographics: the unclassified bucket is always present', () => {

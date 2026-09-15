@@ -38,6 +38,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v947: a renderer here now carries a named template for a sentence that mixes reviewed
+   English with a runtime value — one text node, which the flat catalogue can never reach. A vm
+   context sees none of this process's globals, so the REAL runtime goes into the sandbox with the
+   other helpers. Never a stub. */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -58,7 +63,7 @@ const freshnessBlock = app.slice(freshnessStart, freshnessEnd);
 
 function renderOpportunities(payload) {
   const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const sandbox = {
+  const sandbox = { ...workspaceTemplateRuntime(),
     esc,
     walletDate: (v) => `WD:${v}`,
     ciEmptyPanelV679: (headingId, eyebrow, title, message) => `<section class="revenue-truth-section" aria-labelledby="${headingId}">

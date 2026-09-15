@@ -109,7 +109,7 @@ test('quota and recovery states are explicit without silently deleting offers',(
   /* V462 (owner ruling R2c): the slots figure is the LIVE count now, not a lifetime allowance —
      "launch offer slots" was a number moving an offer to draft could never free, which would have
      made the demote dialog a lie. The two-offer promise underneath it was never true of anything. */
-  assert.match(page,/\$\{quotaUsed\} of \$\{max\} offers live/);
+  assert.match(page,/'offersLiveOfMax'/);
   assert.doesNotMatch(page,/launch offer slots used/);
   assert.match(page,/Complimentary first-time publishing ends/);
   assert.match(page,/Customers see every live offer on your business page, and one of them on their Home screen\./);

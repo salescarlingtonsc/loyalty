@@ -512,8 +512,12 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      refusals, and the branch and referral money labels. 242 + 25 = 267.
      nestly_v946 adds 12: the reward-cost recommendation, the appointment reschedule guard, the
      bottle keep windows and storage capacity, the bespoke-package receipt note, the branch ordinal
-     and the Business Intelligence stage and channel lines. 267 + 12 = 279. */
-  assert.equal(keys.length,279,'mixed-interface interpolation inventory changed without review');
+     and the Business Intelligence stage and channel lines. 267 + 12 = 279.
+     nestly_v947 adds 9: the sale-correction receipt, the reward-cost suggestion caveat, the
+     calendar time ranges, scheduled capacity, and the Business Intelligence coverage lines.
+     offersLiveOfMax serves BOTH places the publish cap is stated — the same sentence in two
+     renderers, one key, which is what this inventory is for. 279 + 9 = 288. */
+  assert.equal(keys.length,288,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

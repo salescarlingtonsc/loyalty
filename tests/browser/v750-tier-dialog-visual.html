@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="658c4253a343d915a716e38b6fcd16c61b77f07b6a8c80045c800b2c0e84c2c5"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="1e02ed12cc5e458b074c1a061f31cef5288e8581943bcd4128cbc93886fb8422"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 658c4253a343d915a716e38b6fcd16c61b77f07b6a8c80045c800b2c0e84c2c5</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 1e02ed12cc5e458b074c1a061f31cef5288e8581943bcd4128cbc93886fb8422</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -16858,7 +16858,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
           <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: <span>${esc(money(template.budget))}</span></span></p>
         </button>`).join('')}</div>
-        <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
+        <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('suggestionsUseYourPrices',{caveat:prices.length?'':' (none yet, so sector defaults are shown)'})}</p>`;
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
         const template=templates[Number(button.dataset.rewardTemplate)];
         if(!template)return;
