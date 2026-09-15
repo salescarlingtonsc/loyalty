@@ -42168,13 +42168,25 @@ function promoValueTextV961(state){
 function promoCardHtmlV961(state){
   if(state.has_promo){
     const consumed=!!state.consumed_at;
+    /* nestly_v962: a card-billed firm's discount is a real Stripe coupon, and until Stripe has it
+       the merchant is NOT yet owed the money. Saying "applied" before that would be a promise the
+       card would not keep, so the three states are distinguished. */
+    const onStripe=String(state.provider||'')==='stripe';
+    const waitingOnStripe=onStripe&&!state.provider_applied_at;
+    const stripeFailed=waitingOnStripe&&!!state.provider_error;
     return `<div class="card" style="padding:18px;margin-top:12px">
       <div class="row" style="align-items:center;gap:8px;flex-wrap:wrap">
-        <b>Promo code</b><span class="pill ${consumed?'off':'ok'}">${esc(String(state.code||''))}</span>
+        <b>Promo code</b><span class="pill ${consumed?'off':waitingOnStripe?'new':'ok'}">${esc(String(state.code||''))}</span>
       </div>
       <p class="muted small" style="margin-top:6px">${consumed
         ? `${esc(promoValueTextV961(state))} came off your first payment.`
-        : `${esc(promoValueTextV961(state))} your first payment. It is applied when that payment is taken.`}</p>
+        : stripeFailed
+          ? `${esc(promoValueTextV961(state))} is saved against your account, but it has not reached your card yet. Peekaa is on it — you will not be charged the full amount without it.`
+          : waitingOnStripe
+            ? `${esc(promoValueTextV961(state))} your next payment. Setting it up on your card now.`
+            : onStripe
+              ? `${esc(promoValueTextV961(state))} your next payment. It is set up on your card.`
+              : `${esc(promoValueTextV961(state))} your first payment. It is applied when that payment is taken.`}</p>
     </div>`;
   }
   if(!state.can_redeem)return '';
@@ -42188,6 +42200,22 @@ function promoCardHtmlV961(state){
     </div>
     <p class="muted small" id="promoStatusV961" role="status" aria-live="polite" style="margin-top:8px"></p>
   </div>`;
+}
+/* nestly_v962 — mint the apply_promo_coupon command and run it. Deliberately its own tiny runner
+   rather than the plan card's execute(): that one owns the plan buttons and the billing status
+   line, and a promo has neither. A failure is not thrown — the redemption stands, the card says
+   the discount has not reached the card yet, and the same command can be run again. */
+async function applyPromoCouponV962(businessId){
+  try{
+    const key=crypto.randomUUID();
+    const {data:command,error:commandError}=await sb.rpc('request_billing_command_v124',{
+      p_business:businessId,p_command_type:'apply_promo_coupon',
+      p_cadence:null,p_customer_capacity:null,p_idempotency_key:key
+    });
+    if(commandError||!command?.command_id)return false;
+    const run=await sb.functions.invoke('stripe-billing-command',{body:{command_id:command.command_id}});
+    return !run.error;
+  }catch(error){return false}
 }
 async function loadPromoCardV961(businessId){
   const host=document.getElementById('promoCardV961');
@@ -42216,6 +42244,13 @@ async function loadPromoCardV961(businessId){
           ? 'You have already used a promo code.'
           : 'That code cannot be used. Check it and try again.';
       return;
+    }
+    /* nestly_v962: a stripe firm's code is only half-redeemed until a real coupon exists on the
+       subscription. The redemption itself is already saved, so a failure here degrades to "saved
+       but not on your card yet" rather than losing the code. */
+    if(result.data&&result.data.needs_provider_coupon===true){
+      status.textContent='Setting your discount up on your card…';
+      await applyPromoCouponV962(businessId);
     }
     await loadPromoCardV961(businessId);
     const refreshed=document.getElementById('promoStatusV961');

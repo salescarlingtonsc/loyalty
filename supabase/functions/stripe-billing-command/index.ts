@@ -581,6 +581,86 @@ Deno.serve(async (req) => {
       }
       providerCallStarted = false;
       providerObjectId = subscriptionId;
+    } else if (!providerResolved && commandType === 'apply_promo_coupon') {
+      /* nestly_v962 — a promo code becomes a REAL Stripe coupon on this subscription, so the next
+         invoice is genuinely smaller. The amount is NOT carried on the command (billing_commands
+         holds a cadence and a capacity, never money); it is read from the redemption the merchant
+         already holds, which is the single authority for what they were promised. */
+      if (!subscriptionId) throw new Error('Stripe subscription is not linked');
+      const { data: intent, error: intentError } = await admin.rpc(
+        'promo_provider_intent_v962',
+        { p_business: businessId },
+      );
+      if (intentError) throw new Error('promo intent read rejected');
+      if (!intent || intent.has_intent !== true) {
+        throw new Error('no promo code is waiting to be applied');
+      }
+      const redemptionId = String(intent.redemption_id);
+      const isPercent = String(intent.discount_kind) === 'percent';
+      providerCallStarted = true;
+      try {
+        await enforceProviderNoTaxV125(stripe, subscriptionId, idempotencyKey);
+        /* duration 'once' is the owner's ruling and v961's promise: a promo code comes off ONE
+           invoice, whichever provider is charging. */
+        const coupon = await stripe.coupons.create(
+          {
+            duration: 'once',
+            name: `Peekaa promo ${String(intent.code || '').slice(0, 40)}`,
+            ...(isPercent
+              ? { percent_off: Number(intent.percent_bps) / 100 }
+              : {
+                amount_off: Number(intent.amount_cents),
+                currency: String(intent.currency || 'SGD').toLowerCase(),
+              }),
+            metadata: {
+              peekaa_business_id: businessId,
+              peekaa_redemption_id: redemptionId,
+              peekaa_promo_code: String(intent.code || ''),
+            },
+          },
+          { idempotencyKey: `${idempotencyKey}-coupon` },
+        );
+        /* Stripe removed the singular `coupon` parameter in the 2025-03-31 API version in favour
+           of `discounts`. This account pins no explicit apiVersion, so the modern form is tried
+           first and the legacy one only if Stripe rejects that parameter — with its OWN
+           idempotency key, because reusing one with different parameters is itself an error. */
+        try {
+          await stripe.subscriptions.update(
+            subscriptionId,
+            { discounts: [{ coupon: coupon.id }] } as never,
+            { idempotencyKey: `${idempotencyKey}-discount` },
+          );
+        } catch (discountError) {
+          const message = discountError instanceof Error ? discountError.message : '';
+          if (!/discounts/i.test(message)) throw discountError;
+          await stripe.subscriptions.update(
+            subscriptionId,
+            { coupon: coupon.id } as never,
+            { idempotencyKey: `${idempotencyKey}-coupon-legacy` },
+          );
+        }
+        const verified = await stripe.subscriptions.retrieve(subscriptionId);
+        if (!stripeSubscriptionHasNoTaxV125(verified)) {
+          throw new Error('Stripe subscription retained a tax configuration');
+        }
+        const { error: appliedError } = await admin.rpc('promo_provider_applied_v962', {
+          p_redemption: redemptionId,
+          p_coupon_id: coupon.id,
+          p_error: null,
+        });
+        if (appliedError) throw new Error('promo application write rejected');
+        providerObjectId = coupon.id;
+        providerCallStarted = false;
+      } catch (couponError) {
+        /* The merchant must never be left believing a discount is live when it is not. The failure
+           is written onto the redemption before it is rethrown, so both surfaces can say so. */
+        await admin.rpc('promo_provider_applied_v962', {
+          p_redemption: redemptionId,
+          p_coupon_id: null,
+          p_error: couponError instanceof Error ? couponError.message : 'unknown provider error',
+        });
+        throw couponError;
+      }
     } else if (!providerResolved) {
       throw new Error('billing command is not executable');
     }
