@@ -100,3 +100,31 @@ export function reconcileTemplateStatuses(metaRows, registry) {
 
   return { observations, absentAtMeta, unrecognised, ignored };
 }
+
+/* nestly_v973 — the two refusals that stand between a bad read and a paused lane, lifted out of
+ * the handler so they can be EXECUTED by a test rather than greped for.
+ *
+ * v900 shipped both guards inside whatsapp-admin-templates' Deno.serve body, and covered them with
+ * assertions that matched the FUNCTION'S SOURCE TEXT. That is the vacuous shape this repo has been
+ * bitten by before: the grep stays green while the behaviour rots, and it cannot tell a guard that
+ * works from a guard that was moved, renamed or inverted. This function is the decision; the
+ * handler now does nothing but I/O around it.
+ *
+ * `httpOk`   - did Meta actually answer 2xx.
+ * `metaRows` - Meta's UNFILTERED template list (v900: never the TEMPLATES-filtered subset).
+ * `registry` - the rows whatsapp_template_registry_v551 currently holds.
+ */
+export function planTemplateReconcile({ httpOk, metaRows, registry }) {
+  // A reconcile off a FAILED read would see no templates, conclude they had all vanished, and
+  // pause the entire lane — the one outcome worse than the drift reconcile exists to fix.
+  if (!httpOk) return { ok: false, reason: 'meta_read_failed' };
+
+  // A 200 carrying an empty list is not evidence of mass deletion either. It is far more likely a
+  // scoping or permission oddity on the read, and it gets the same refusal.
+  const rows = Array.isArray(metaRows) ? metaRows : [];
+  if (rows.length === 0) return { ok: false, reason: 'meta_returned_no_templates' };
+
+  if (!Array.isArray(registry)) return { ok: false, reason: 'registry_read_failed' };
+
+  return { ok: true, ...reconcileTemplateStatuses(rows, registry) };
+}

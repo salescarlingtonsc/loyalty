@@ -27,6 +27,7 @@ import {
   sha256Hex,
 } from '../_shared/gateway.ts';
 import {
+  classifyCreateUserFailure,
   otpDigestInput,
   publicVerifyResponse,
   validOtpCode,
@@ -112,9 +113,12 @@ Deno.serve(async (req) => {
       phone_confirm: true,
     });
     if (createError) {
-      const reason = String((createError as { code?: string }).code || '').toLowerCase();
-      const message = String(createError.message || '').toLowerCase();
-      if (reason === 'phone_exists' || message.includes('already been registered') || message.includes('already exists')) {
+      /* nestly_v973: which refusal this is now lives in classifyCreateUserFailure, where a test can
+         execute it against the several wordings GoTrue has used. Inline, it was covered only by a
+         source-text match — and getting it wrong strands a returning customer on a generic error
+         that tells them nothing about the account they already have. */
+      const reason = classifyCreateUserFailure(createError);
+      if (reason === 'account_exists') {
         log('refused', { challenge_id: challengeId, reason: 'account_exists' });
         return answer(req, { ok: false, reason: 'account_exists' });
       }

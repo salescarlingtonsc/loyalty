@@ -161,3 +161,31 @@ export function publicVerifyResponse(result) {
   }
   return { status: 503, body: { error: 'WhatsApp verification is unavailable right now.' } };
 }
+
+/* nestly_v973 — what GoTrue's refusal to create the account means, lifted out of the handler.
+ *
+ * This branch decides whether somebody who already has an account is told so ("An account already
+ * exists for this number. Please sign in.") or fobbed off with a generic 503 — and it was the one
+ * piece of whatsapp-otp-verify with no executed coverage at all, because it lived inline in the
+ * Deno.serve body and was only ever asserted against by source-text matching.
+ *
+ * It is deliberately generous about HOW GoTrue says it. The structured `code` is the reliable
+ * signal on current versions, but the message has carried the same fact in several wordings across
+ * releases, and getting this wrong strands a returning customer on an error that tells them
+ * nothing. Everything unrecognised stays 'unavailable' — the safe, uninformative answer.
+ */
+export function classifyCreateUserFailure(error) {
+  if (!error) return null;
+  const code = String(error.code ?? '').trim().toLowerCase();
+  const message = String(error.message ?? '').trim().toLowerCase();
+  const status = Number(error.status ?? 0);
+
+  if (code === 'phone_exists' || code === 'user_already_exists') return 'account_exists';
+  if (status === 422 && message.includes('already')) return 'account_exists';
+  if (message.includes('already been registered')
+    || message.includes('already exists')
+    || message.includes('already registered')) {
+    return 'account_exists';
+  }
+  return 'unavailable';
+}

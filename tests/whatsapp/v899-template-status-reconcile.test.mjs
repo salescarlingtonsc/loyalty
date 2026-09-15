@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 import {
+  planTemplateReconcile,
   reconcileTemplateStatuses,
   registryStatusForMeta,
 } from '../../supabase/functions/_shared/whatsapp-template-status-boundaries.mjs';
@@ -116,43 +117,99 @@ test('malformed input cannot produce a write', () => {
     'a Meta row with no name names no registry row');
 });
 
-test('nestly_v900: a registered template this function never submits is not "absent from Meta"', () => {
-  const source = readRepoFile('supabase/functions/whatsapp-admin-templates/index.ts');
-  /* THE BUG, encoded. The first live reconcile paused peekaa_bring_back_v1 — a template Meta had
-     approved — because the Meta list handed to the reconciler had already been filtered down to
+test('nestly_v900/v973: a registered template this plane never submits is not "absent from Meta"', () => {
+  /* THE BUG, EXECUTED — not greped for. The first live reconcile paused peekaa_bring_back_v1, a
+     template Meta had approved, because the Meta list reaching the reconciler had been filtered to
      this function's TEMPLATES array, and bring_back is registered by migration v551 and has never
-     been in it. "Not in our submission catalogue" was reading as "deleted at Meta". */
-  assert.match(source, /reconcileTemplateStatuses\(allMetaRows, registry\)/,
-    'reconcile must be given what Meta actually said, not the TEMPLATES-filtered subset');
-  assert.ok(!/reconcileTemplateStatuses\(rows,/.test(source),
-    'the filtered list must never be the reconcile input again');
-  // The filtered list is still right for the read-only status response.
-  assert.match(source, /const rows = allMetaRows\.filter\(\(d\) => names\.includes/);
-  // And an empty 200 must not be read as "everything was deleted".
-  assert.match(source, /allMetaRows\.length === 0[\s\S]{0,300}meta_returned_no_templates/);
+     been in it. "Not in our submission catalogue" read as "deleted at Meta".
+     The registry below is production's shape; the Meta list is what the Graph API really returns,
+     including the demo template nobody registered. */
+  const registry = [
+    { template_key: 'bring_back_v1', meta_name: 'peekaa_bring_back_v1', status: 'approved' },
+    { template_key: 'appointment_reminder', meta_name: 'peekaa_appt_reminder', status: 'approved' },
+    { template_key: 'signup_otp', meta_name: 'peekaa_signup_otp', status: 'draft' },
+  ];
+  const plan = planTemplateReconcile({
+    httpOk: true,
+    metaRows: [
+      { name: 'peekaa_bring_back_v1', status: 'APPROVED', id: '276' },
+      { name: 'peekaa_appt_reminder', status: 'APPROVED', id: '160' },
+      { name: 'hello_world', status: 'APPROVED', id: '001' },
+    ],
+    registry,
+  });
+
+  assert.equal(plan.ok, true);
+  assert.deepEqual(plan.absentAtMeta, [], 'nothing Meta listed may be paused as absent');
+  assert.ok(!plan.observations.some((o) => o.status === 'paused'),
+    'the v900 regression: no approved template may come back paused');
+  assert.deepEqual(plan.ignored, ['hello_world'], "Meta's demo template is not ours to gate");
+  assert.ok(!plan.observations.some((o) => o.meta_name === 'peekaa_signup_otp'),
+    'a draft template absent from Meta is unsent, not missing');
 });
 
-test('nestly_v900: the mapping pauses on absence only when Meta really did not list it', () => {
-  // Exactly the production shape: bring_back registered and approved, and Meta DOES list it.
+test('nestly_v973: a failed Meta read refuses, and writes nothing', () => {
+  const registry = [{ template_key: 'bring_back_v1', meta_name: 'peekaa_bring_back_v1', status: 'approved' }];
+  // The destructive shape: an errored Graph call returns no rows, every template looks absent, and
+  // a naive reconcile pauses the whole lane. Executed, not asserted about the source.
+  const refused = planTemplateReconcile({ httpOk: false, metaRows: [], registry });
+  assert.deepEqual(refused, { ok: false, reason: 'meta_read_failed' });
+  assert.equal(refused.observations, undefined, 'a refusal must carry nothing writable');
+
+  // Even if the failed call somehow carried rows, a non-2xx is still not evidence.
+  assert.deepEqual(
+    planTemplateReconcile({ httpOk: false, metaRows: [{ name: 'peekaa_bring_back_v1', status: 'DELETED' }], registry }),
+    { ok: false, reason: 'meta_read_failed' },
+  );
+});
+
+test('nestly_v973: a 200 with an empty list refuses too', () => {
+  const registry = [{ template_key: 'bring_back_v1', meta_name: 'peekaa_bring_back_v1', status: 'approved' }];
+  for (const metaRows of [[], null, undefined]) {
+    const refused = planTemplateReconcile({ httpOk: true, metaRows, registry });
+    assert.deepEqual(refused, { ok: false, reason: 'meta_returned_no_templates' },
+      'an empty list is a scoping oddity, never mass deletion');
+  }
+  // A registry that failed to read is its own refusal, and also writes nothing.
+  assert.deepEqual(
+    planTemplateReconcile({ httpOk: true, metaRows: [{ name: 'x', status: 'APPROVED' }], registry: null }),
+    { ok: false, reason: 'registry_read_failed' },
+  );
+});
+
+test('nestly_v973: a template Meta really did delete still gets paused', () => {
+  // The guards must not have made reconcile toothless: a NON-empty list that omits a live template
+  // is the real deletion signal, and it must still close the gate.
   const registry = [
     { template_key: 'bring_back_v1', meta_name: 'peekaa_bring_back_v1', status: 'approved' },
     { template_key: 'appointment_reminder', meta_name: 'peekaa_appt_reminder', status: 'approved' },
   ];
-  const plan = reconcileTemplateStatuses([
-    { name: 'peekaa_bring_back_v1', status: 'APPROVED', id: '276' },
-    { name: 'peekaa_appt_reminder', status: 'APPROVED', id: '160' },
-  ], registry);
-  assert.deepEqual(plan.absentAtMeta, [], 'nothing Meta listed may be treated as absent');
-  assert.ok(plan.observations.every((o) => o.status === 'approved'));
+  const plan = planTemplateReconcile({
+    httpOk: true,
+    metaRows: [{ name: 'peekaa_bring_back_v1', status: 'APPROVED', id: '276' }],
+    registry,
+  });
+  assert.equal(plan.ok, true);
+  assert.deepEqual(plan.absentAtMeta, ['peekaa_appt_reminder']);
+  assert.deepEqual(
+    plan.observations.find((o) => o.meta_name === 'peekaa_appt_reminder'),
+    { meta_name: 'peekaa_appt_reminder', status: 'paused', meta_template_id: null },
+  );
 });
 
-test('the admin plane refuses to reconcile from a failed Meta read', () => {
+test('nestly_v973: the handler delegates the decision rather than re-implementing it', () => {
+  /* The ONLY thing a source check may legitimately assert is WIRING — that the handler routes
+     through the boundary the tests above execute. Behaviour is proven by executing that boundary,
+     never by matching this file's text. v900's version of this test asserted the behaviour itself
+     by grep, and went red the moment the same logic moved one file left. */
   const source = readRepoFile('supabase/functions/whatsapp-admin-templates/index.ts');
-  // The dangerous shape: an errored Graph call returns no rows, every template then looks absent,
-  // and a naive reconcile pauses the entire lane.
-  assert.match(source, /if \(!r\.ok\) \{[\s\S]{0,400}meta_read_failed/);
-  assert.match(source, /internal_whatsapp_template_reconcile_v899/);
-  // And the read-only action must still be read-only.
+  assert.match(source, /import \{ planTemplateReconcile \}/,
+    'the handler must import the decision, not carry a copy of it');
+  assert.ok(!/reconcileTemplateStatuses\(/.test(source),
+    'the handler must not call the low-level mapper directly, bypassing the guards');
+  assert.equal((source.match(/planTemplateReconcile\(/g) || []).length, 3,
+    'both refusals and the plan all go through the one decision');
+  // The read-only status action must stay read-only: it still answers from the filtered list.
   assert.match(source, /if \(action !== 'reconcile'\) \{\n\s*return Response\.json\(\{ action, http: r\.status, templates: rows/);
 });
 

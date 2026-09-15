@@ -13,6 +13,7 @@ import { dirname, resolve } from 'node:path';
 
 import {
   buildOtpTemplateSend,
+  classifyCreateUserFailure,
   generateOtpCode,
   normaliseSgPhone,
   otpDigestInput,
@@ -131,6 +132,38 @@ test('the public answers never say whether an account exists', () => {
   assert.equal(publicVerifyResponse({ ok: false, reason: 'too_many_attempts' }).status, 429);
   assert.equal(publicVerifyResponse({ ok: false, reason: 'challenge_invalid' }).status, 400);
   assert.equal(publicVerifyResponse({ ok: false, reason: 'account_exists' }).status, 409);
+});
+
+test('nestly_v973: a customer who already has an account is told so, not fobbed off', () => {
+  /* This branch decides between "An account already exists for this number. Please sign in." and a
+     generic 503. It had no executed coverage at all until v973 — it lived inline in the handler and
+     was only ever matched by source text. Getting it wrong strands a returning customer.
+     GoTrue has carried this fact in several shapes across releases; all of them must land. */
+  assert.equal(classifyCreateUserFailure({ code: 'phone_exists' }), 'account_exists');
+  assert.equal(classifyCreateUserFailure({ code: 'user_already_exists' }), 'account_exists');
+  assert.equal(classifyCreateUserFailure({ code: 'PHONE_EXISTS' }), 'account_exists', 'case is theirs, not ours');
+  assert.equal(classifyCreateUserFailure({ message: 'Phone number has already been registered' }), 'account_exists');
+  assert.equal(classifyCreateUserFailure({ message: 'User already exists' }), 'account_exists');
+  assert.equal(classifyCreateUserFailure({ message: 'A user with this phone is already registered' }), 'account_exists');
+  assert.equal(classifyCreateUserFailure({ status: 422, message: 'Phone already taken' }), 'account_exists');
+
+  // Everything else stays the safe, uninformative answer — a weak-password refusal must NOT tell
+  // an unauthenticated caller that the number is on file.
+  assert.equal(classifyCreateUserFailure({ code: 'weak_password', message: 'Password is too weak' }), 'unavailable');
+  assert.equal(classifyCreateUserFailure({ message: 'Database error creating new user' }), 'unavailable');
+  assert.equal(classifyCreateUserFailure({ status: 500 }), 'unavailable');
+  assert.equal(classifyCreateUserFailure({}), 'unavailable');
+  // No error at all is not a failure to classify.
+  assert.equal(classifyCreateUserFailure(null), null);
+  assert.equal(classifyCreateUserFailure(undefined), null);
+});
+
+test('nestly_v973: the verify handler delegates that classification', () => {
+  const source = readRepoFile('supabase/functions/whatsapp-otp-verify/index.ts');
+  assert.match(source, /classifyCreateUserFailure\(createError\)/,
+    'the handler must route through the boundary the test above executes');
+  assert.ok(!/already been registered/.test(source),
+    'no second copy of the wording list may live in the handler');
 });
 
 test('the browser gate is a runtime-config key, not a window flag nobody writes', () => {

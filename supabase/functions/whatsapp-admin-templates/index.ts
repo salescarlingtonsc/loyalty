@@ -23,7 +23,7 @@
  * NEVER LOGGED: the access token. Responses carry Meta's status fields only.
  */
 import { createClient } from 'npm:@supabase/supabase-js@2.110.7';
-import { reconcileTemplateStatuses } from '../_shared/whatsapp-template-status-boundaries.mjs';
+import { planTemplateReconcile } from '../_shared/whatsapp-template-status-boundaries.mjs';
 
 const GRAPH = 'https://graph.facebook.com/v23.0';
 const WABA_ID = '1725929281961827';
@@ -195,22 +195,21 @@ Deno.serve(async (req) => {
     return Response.json({ action, http: r.status, templates: rows, error: metaErr(body) });
   }
 
-  /* nestly_v899. A reconcile that ran on a FAILED read would conclude that every template had
-     vanished from Meta and pause the lot, which is the one outcome worse than the drift it exists
-     to fix. So: refuse unless Meta actually answered. */
+  /* nestly_v973: the refusals (failed read, empty list) and the reconcile plan are ONE decision,
+     and it lives in planTemplateReconcile where a test can execute it. v899/v900 had them inline
+     here, covered only by assertions that matched this file's source text — green greps over
+     behaviour nobody ran. Read the guards' reasoning there, not here. */
   if (!r.ok) {
+    const refused = planTemplateReconcile({ httpOk: false, metaRows: allMetaRows, registry: [] });
     return Response.json(
-      { action, http: r.status, reconciled: false, reason: 'meta_read_failed', error: metaErr(body) },
+      { action, http: r.status, reconciled: false, reason: refused.reason, error: metaErr(body) },
       { status: 502 },
     );
   }
-
-  /* An empty list from a 200 is not evidence that every template was deleted — it is far more
-     likely a scoping or permission oddity on the read. Pausing the entire lane on that reading is
-     the same destructive mistake as reconciling from a failed call, so it gets the same refusal. */
   if (allMetaRows.length === 0) {
+    const refused = planTemplateReconcile({ httpOk: true, metaRows: [], registry: [] });
     return Response.json(
-      { action, http: r.status, reconciled: false, reason: 'meta_returned_no_templates' },
+      { action, http: r.status, reconciled: false, reason: refused.reason },
       { status: 502 },
     );
   }
@@ -227,16 +226,17 @@ Deno.serve(async (req) => {
     return Response.json({ action, reconciled: false, reason: 'registry_read_failed' }, { status: 503 });
   }
 
-  /* nestly_v900, and this line is the whole of the bug it fixes. Reconcile used to be handed
+  /* nestly_v900, and this argument is the whole of the bug it fixes. Reconcile used to be handed
      `rows` — Meta's list ALREADY filtered down to the TEMPLATES array above. That array is this
      function's submission catalogue, not the registry: peekaa_bring_back_v1 is registered by
      migration v551 and has never appeared in it. So the first live reconcile saw a Meta list with
      bring_back missing, concluded it had been deleted at Meta, and paused a template Meta had
      approved. Fail-closed, and caught within a minute, but wrong.
-     `allMetaRows` is what Meta actually said. reconcileTemplateStatuses already ignores names the
-     registry does not hold, so the registry — the thing being reconciled — decides what matters,
-     and "absent from Meta" now means absent from META. */
-  const plan = reconcileTemplateStatuses(allMetaRows, registry);
+     `allMetaRows` is what Meta actually said, and the registry decides what matters. */
+  const plan = planTemplateReconcile({ httpOk: true, metaRows: allMetaRows, registry });
+  if (!plan.ok) {
+    return Response.json({ action, reconciled: false, reason: plan.reason }, { status: 503 });
+  }
   const { data: result, error: writeError } = await admin.rpc(
     'internal_whatsapp_template_reconcile_v899',
     { p_observations: plan.observations },
