@@ -67,7 +67,7 @@ test('package earning is owner-configurable and checkout points come from writer
 
 test('recommender is sector-aware and allows a custom target beyond eight percent',()=>{
   const loyalty=section('async function loyaltyPage(','async function referralsPage(){');
-  assert.match(loyalty,/Suggested starting range for \$\{esc\(sectorProfile\.label\)\}/);
+  assert.match(loyalty,/workspaceTemplateHtmlV97\('suggestedRangeForSector'/);
   assert.match(loyalty,/type="range" min="0\.5" max="30"/);
   assert.match(loyalty,/type="number" min="0\.5" max="50"/);
   assert.doesNotMatch(loyalty,/Typical café 2–8%/);

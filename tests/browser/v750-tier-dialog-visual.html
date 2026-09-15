@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="72fe405389753bf163a04056ae04a8c4ae83cf3640c0cb8a34b0ab0b2d57db4b"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="aed727ec88eab05952450af8398cd035c4f3b29cf03c56aa6f97a110e9bb6eff"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 72fe405389753bf163a04056ae04a8c4ae83cf3640c0cb8a34b0ab0b2d57db4b</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · aed727ec88eab05952450af8398cd035c4f3b29cf03c56aa6f97a110e9bb6eff</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -7410,13 +7410,13 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
       </div><span class="spacer"></span>
       <div class="v150-segment" role="group" aria-label="Away threshold">${[30,60,90].map(days=>`<button type="button" data-comeback-days="${days}" aria-pressed="${days===awayDays}">${days}+ days</button>`).join('')}</div></div>
       <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
-        <div class="card kpi grow-comeback-kpi-v401"><div class="l">${CUI.icon('retention',{size:16})}<span>Away ${awayDays}+ days now</span></div><div class="v">${away}</div></div>
+        <div class="card kpi grow-comeback-kpi-v401"><div class="l">${CUI.icon('retention',{size:16})}<span>${workspaceTemplateHtmlV97('awayDaysNow',{days:awayDays})}</span></div><div class="v">${away}</div></div>
         <div class="card kpi grow-comeback-kpi-v401 is-returned-v401"><div class="l">${CUI.icon('check',{size:16})}<span>Came back in the last 30 days</span></div><div class="v" style="color:var(--green)">${Number(returned.total_returned||0)}</div></div>
       </div>
       ${rows.length?`<div style="margin-top:14px"><b class="small">Returned recently</b>
-        ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">Away ${Number(row.away_days||0)} days · back ${esc(sgt(row.returned_at)||'')}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
-        ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">Showing the ${Math.min(8,rows.length)} most recent returns of ${Number(returned.total_returned||0)}.</p>`:''}</div>`
-      :`<p class="muted small" style="margin-top:12px">Nobody has ended a ${awayDays}+ day break in the last 30 days.</p>`}
+        ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">${workspaceTemplateHtmlV97('awayDaysBackOn',{days:Number(row.away_days||0),when:sgt(row.returned_at)||''})}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
+        ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('showingMostRecentReturns',{shown:Math.min(8,rows.length),total:Number(returned.total_returned||0)})}</p>`:''}</div>`
+      :`<p class="muted small" style="margin-top:12px">${workspaceTemplateHtmlV97('nobodyEndedBreak',{days:awayDays})}</p>`}
     </div>`;
     releaseV408();
     host.querySelectorAll('[data-comeback-days]').forEach(button=>button.onclick=()=>paint(Number(button.dataset.comebackDays)||60));
@@ -13311,7 +13311,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growPointsEditingV326&&growStampsPickedV416&&canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(growPointsEditingV326)}">Delete</button>`:''}
       <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
-      <b>Take this gift off stamp ${growStampsPickedV416}?</b>
+      <b>${workspaceTemplateHtmlV97('takeGiftOffStamp',{stamp:growStampsPickedV416})}</b>
       <p class="muted small" style="margin-top:6px">${
         /* F038, closed by nestly_v805. business_delete_reward_v326 no longer flips the LIVE
            loyalty_rewards row for a stamp gift: it withdraws the gift version-forward through the

@@ -8,6 +8,13 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
+import { installWorkspaceTemplateGlobals, workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v942: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   These harnesses build their renderer with `new Function`, so the helper has to be reachable as a
+   global; the REAL implementation is installed, never a stub, because a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const appJs = await readFile(path.join(root, 'app/app.js'), 'utf8');
@@ -433,6 +440,9 @@ test('F010 the New-customers drill-down states its own cap instead of silently t
       table: (head, rowsHtml) => { tableCalls.push(rowsHtml.length); return '<table></table>'; },
       customerCellV408: id => `<b>${id}</b>`,
       esc, sgLedgerDateV154: () => ({ date: '01/08/2026' }),
+      /* nestly_v942: the cap note is a named template now, and runInNewContext does not see this
+         process's globals — so the real runtime goes into the context like every other helper. */
+      ...workspaceTemplateRuntime(),
     };
     // Patch the chain's terminal await target: sb.from(...).select(...)... resolves via awaiting
     // the chainable itself, so give it a `then` that fulfils with the supplied rows.
@@ -449,7 +459,7 @@ test('F010 the New-customers drill-down states its own cap instead of silently t
 
   const atCap = await run(Array.from({ length: 500 }, (_, i) => ({ id: `c${i}`, created_at: '2026-08-01' })));
   assert.equal(atCap.notes.length, 1);
-  assert.match(atCap.notes[0], /Showing the first 500\. Open Customers for the rest\./);
+  assert.match(atCap.notes[0], /Showing the first <span data-workspace-value="count"[^>]*>500<\/span>\. Open Customers for the rest\./);
 });
 
 /* ---------------------------------------------------------------- F011 */

@@ -91,7 +91,7 @@ test('F037 growStampsSetLengthV422 clears the busy flag even when the owner has 
    controls and carries no F038 copy assertion, so nothing there needs to move with this. */
 
 test('F038 the delete confirmation promises what the server now does: next card only', () => {
-  const src = section('<b>Take this gift off stamp', '</p>');
+  const src = section("<b>${workspaceTemplateHtmlV97('takeGiftOffStamp'", '</p>');
   assert.doesNotMatch(src, /stops paying out for everyone right away/i,
     'the pre-v805 "immediately for everyone" copy must be gone — it now understates the fix');
   assert.match(src, /keep this gift until they finish/i,

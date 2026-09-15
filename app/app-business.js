@@ -3817,8 +3817,8 @@ function openStampsExclusivityPopupV363(losingNames,onProceed,openingName='the S
   const names=(losingNames||[]).filter(Boolean);
   const list=names.length>1?`${names.slice(0,-1).join(', ')} and ${names[names.length-1]}`:(names[0]||'your other programmes');
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="stampsExclusivityPopupV363" role="dialog" aria-modal="true" aria-labelledby="stampsExclusivityTitleV363" tabindex="-1"><div class="modal-card" style="max-width:460px">
-    <h2 id="stampsExclusivityTitleV363">Set up ${esc(openingName)}?</h2>
-    <p class="muted" style="margin-top:8px">${esc(openingName.charAt(0).toUpperCase()+openingName.slice(1))} runs on its own. Turning it on will switch ${esc(list)} off for your customers.</p>
+    <h2 id="stampsExclusivityTitleV363">${workspaceTemplateHtmlV97('setUpProgrammeQuestion',{programme:openingName})}</h2>
+    <p class="muted" style="margin-top:8px">${workspaceTemplateHtmlV97('programmeRunsAloneSwitchesOff',{programme:openingName.charAt(0).toUpperCase()+openingName.slice(1),others:list})}</p>
     <p class="muted small" style="margin-top:8px">Nothing changes yet — everything ${names.length>1?'they have':'it has'} collected stays saved, and you can come back at any time.</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
       <button class="btn" id="stampsExclusivityYesV363" type="button">Yes, continue</button>
@@ -5306,7 +5306,7 @@ async function openDashboardMetricRowsV388(options){
       if(!stillOpen())return;
       if(error)return failed(ownerErrorText(error));
       body.innerHTML=table(['Customer','Joined'],(data||[]).map(row=>`<tr><td data-label="Customer">${customerCellV408(row.id,row.full_name||'—',row.phone)}</td><td data-label="Joined">${esc(sgLedgerDateV154(row.created_at).date)}</td></tr>`));
-      if((data||[]).length>=NEW_CUSTOMERS_DIALOG_CAP_V579)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">Showing the first ${NEW_CUSTOMERS_DIALOG_CAP_V579}. Open Customers for the rest.</p>`);
+      if((data||[]).length>=NEW_CUSTOMERS_DIALOG_CAP_V579)body.insertAdjacentHTML('beforeend',`<p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('showingFirstOpenCustomers',{count:NEW_CUSTOMERS_DIALOG_CAP_V579})}</p>`);
       return;
     }
     if(key==='inactive'){
@@ -5502,7 +5502,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const isCurrentScheduleV252=()=>root.isConnected&&epochV252===dashboardScheduleEpochV252;
   host.innerHTML=isTodayV252
     ?'<p class="muted small">Loading today\u2019s schedule\u2026</p>'
-    :`<p class="muted small">Loading the schedule for ${esc(dayLabelV252)}\u2026</p>`;
+    :`<p class="muted small">${workspaceTemplateHtmlV97('loadingScheduleForDay',{day:dayLabelV252})}</p>`;
   const from=sgDateBoundary(day),to=sgDateBoundary(day,1);
   let query=sb.from('appointments')
     /* nestly_v884: bundle name rides along so a bundle booking never reads as a general visit. */
@@ -5529,7 +5529,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   if(!rows.length){
     host.innerHTML=isTodayV252
       ?'<p class="muted small">Nothing booked for today — a free day, or a day to fill.</p>'
-      :`<p class="muted small">Nothing booked on ${esc(dayLabelV252)} — a free day, or a day to fill.</p>`;
+      :`<p class="muted small">${workspaceTemplateHtmlV97('nothingBookedOnDay',{day:dayLabelV252})}</p>`;
     return;
   }
   const shown=rows.slice(0,DASHBOARD_SCHEDULE_CHIP_LIMIT_V180);
@@ -7466,7 +7466,7 @@ async function clientDetail(id){
         ${earnLineV567}
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:16})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
-      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct ${esc(unit==="stamps"?"stamp":"points")} balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited. ${/* nestly_v512: the control writes to whichever programme is RUNNING, so the word has to follow it — on a stamp card this said "points" over a control that now moves stamps. */""}</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>${workspaceTemplateHtmlV97(unit==="stamps"?'correctStampBalance':'correctPointsBalance',{})}</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited. ${/* nestly_v512: the control writes to whichever programme is RUNNING, so the word has to follow it — on a stamp card this said "points" over a control that now moves stamps. */""}</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else if(prog){
     /* V259: a programme that EXISTS but is paused is not the same thing as one that was never
        built. Saying "not set up yet" about a paused programme is what sent the owner looking for
@@ -8796,7 +8796,7 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
       <span class="c360-summary-label-v294" data-merchant-content>${esc(entry.planName)}</span>
       <span class="c360-summary-value-v294"><span class="pill ${entry.exhausted?'off':'on'}">${entry.exhausted?'No sessions left':`${entry.remaining} left`}</span></span>
     </div>
-    <p class="small" style="margin-top:8px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
+    <p class="small" style="margin-top:8px"><b>${workspaceTemplateHtmlV97('sessionsUsedOfTotal',{used:entry.used,total:entry.sessions})}</b> · ${entry.remaining} left</p>
     <p class="muted small" style="margin-top:4px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
     <p class="muted small" style="margin-top:4px">Last used <span>${lastUsedAt?packageUseWhenTextV495({at:lastUsedAt},staffName,branchName):'— never'}</span></p>
     ${caveats.map(text=>`<p class="muted small" style="margin-top:6px">${esc(text)}</p>`).join('')}
@@ -10428,7 +10428,7 @@ async function tillPage(){
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
         <p class="small" style="margin:5px 0"><span>${esc(welcomeOffer.reward_label||'Free item')}</span> is free for this customer.</p>
         ${welcomeMin
-          ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
+          ?`<p class="muted small" style="margin:5px 0">${workspaceTemplateHtmlV97('welcomeGiftNeedsMinimum',{minimum:money(welcomeMin)})}</p>`
           :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
             <button type="button" class="btn primary sm" id="tWelcomeRedeemV215">Give ${esc(welcomeOffer.reward_label||'the free item')}</button>`}</div>`
       :'';
@@ -10439,7 +10439,7 @@ async function tillPage(){
     const bringbackBanner=bringbackOffer
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Bring-back voucher</b>
         <p class="small" style="margin:5px 0">${esc(bringbackOffer.reward_label||'Free item')} is free for this customer.</p>
-        <p class="muted small" style="margin:5px 0">Sent because they had not visited for ${Math.max(0,Number(bringbackOffer.away_days)||0)} days. Nothing is charged.</p>
+        <p class="muted small" style="margin:5px 0">${workspaceTemplateHtmlV97('bringbackSentAfterDays',{days:Math.max(0,Number(bringbackOffer.away_days)||0)})}</p>
         <button type="button" class="btn primary sm" id="tBringbackRedeemV362" data-grant="${esc(bringbackOffer.grant_id)}">Give ${esc(bringbackOffer.reward_label||'the free item')}</button></div>`
       :'';
     /* nestly_v420 (owner, photo 4: "referral why only points option? can also be free gift").
@@ -10900,7 +10900,7 @@ async function tillPage(){
         <label class="sr-only" for="tillItemSearchV392">Search services, products and bundles</label>
         <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services, products and bundles" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
       </div>
-      ${(queryV392&&!shown.length)?`<p class="muted small" style="margin:10px 0">Nothing in this branch's checkout catalogue matches “${esc(tillItemSearchV392)}”. Try More items, or type an amount below.</p>`:''}
+      ${(queryV392&&!shown.length)?`<p class="muted small" style="margin:10px 0">${workspaceTemplateHtmlV97('noCatalogueMatchForSearch',{search:tillItemSearchV392})}</p>`:''}
       ${tillQuickGroupsHtmlV373(shownServices,shownProducts,shownBundles)}
       <div class="till-cart-catalog till-quick-grid-v373">${addTile}</div>
       ${tillManualAmountRowHtmlV375()}`;
@@ -10961,7 +10961,7 @@ async function tillPage(){
      this tab is where its answer lives instead of trailing the items. */
   function tillBenefitsPanelHtmlV374(rewards){
     const ladder=(!walkin&&Array.isArray(catalog.customerTierBenefits?.benefits)&&catalog.customerTierBenefits.benefits.length)
-      ?`<button type="button" class="btn ghost sm" id="tAllBenefitsV373" style="width:100%;margin-top:12px">View all ${esc(catalog.customerTierBenefits?.tier?.label||'tier')} benefits</button>`
+      ?`<button type="button" class="btn ghost sm" id="tAllBenefitsV373" style="width:100%;margin-top:12px">${workspaceTemplateHtmlV97('viewAllTierBenefits',{tier:catalog.customerTierBenefits?.tier?.label||'tier'})}</button>`
       :'';
     if(!rewards.html)
       return `${CUI.emptyState({iconName:'loyalty',title:'Nothing to give on this sale',body:'This customer has no reward, voucher or tier benefit that can be given right now.'})}${ladder}`;
@@ -11769,7 +11769,7 @@ async function tillPage(){
           :d.pointsEarned>0
           ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
-          ?`<p class="muted">Recorded — current balance: ${d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—'} ${tillUnitNounV430(catalog)}.</p>`
+          ?`<p class="muted">${workspaceTemplateHtmlV97('recordedCurrentBalance',{balance:d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—',unit:tillUnitNounV430(catalog)})}</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
@@ -11788,7 +11788,7 @@ async function tillPage(){
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         ${d.walkin?'':`<div class="receipt-qr-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)">
           <div id="receiptWalletQr" style="display:flex;justify-content:center"></div>
-          <p class="muted small" style="margin-top:8px">Scan to open your rewards, points and past visits at ${esc(S.biz.name)}.</p>
+          <p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('scanToOpenRewardsAt',{business:S.biz.name})}</p>
         </div>`}
         <button class="btn ghost no-print" id="tPrintReceiptV142" style="width:100%;margin-top:16px;padding:14px">Print receipt</button>
         <button class="btn no-print" id="tNext" style="width:100%;margin-top:10px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
@@ -13540,7 +13540,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     return n?`${n} ${k}${n===1?'':'s'}`:`all ${k}s`;
   }).join(' · ');
   const renderEligibilityGroup=(key,label,items,selected)=>`<div class="eligibility-group">
-    <b>${label}</b><p class="muted small help">Leave blank for all ${label.toLowerCase()}.</p>
+    <b>${label}</b><p class="muted small help">${workspaceTemplateHtmlV97(key==='branch'?'leaveBlankForAllBranches':key==='service'?'leaveBlankForAllServices':'leaveBlankForAllProducts',{})}</p>
     ${(items.length?items.map(x=>`<label><input type="checkbox" data-reward-elig="${key}" value="${x.id}" ${selected.has(x.id)?'checked':''}>${esc(x.name)}</label>`).join(''):'<p class="muted small" style="margin-top:8px">None added yet.</p>')}
   </div>`;
   /* nestly_v773: the "Branch settings" editor is gone — rewards are the same at every branch. */
@@ -13588,7 +13588,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ${rewardIdentityLineV271(r)}
         ${r.claim_available_from||r.claim_available_until?`<div class="muted small" style="margin-top:4px">${r.claim_available_from?`Starts ${esc(walletDate(r.claim_available_from,true))}`:'Available now'}${r.claim_available_until?` · Ends ${esc(walletDate(r.claim_available_until,true))}`:''}</div>`:''}
         ${r.description?`<div class="muted small" style="margin-top:4px">${esc(r.description)}</div>`:''}
-        ${rewardTierGateLabelV176(r)?`<div class="muted small" style="margin-top:4px">🔒 ${esc(rewardTierGateLabelV176(r))} and above</div>`:''}</div>
+        ${rewardTierGateLabelV176(r)?`<div class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('tierGateAndAbove',{tier:rewardTierGateLabelV176(r)})}</div>`:''}</div>
         <span class="spacer"></span><span class="pill ${state.tone}">${state.label}</span>
         ${canManageLoyalty?`<button class="btn ghost sm rwEdit" data-reward-id="${esc(rewardId(r))}">Edit</button>`:''}</div></div>`;
   const rewardRows=(label)=>{
@@ -13645,8 +13645,8 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <option value="spend" ${tierBasisValueV258==='spend'?'selected':''}>Lifetime spend ($)</option>
       <option value="points_earned" ${tierBasisValueV258==='points_earned'?'selected':''}>Lifetime points earned</option></select>
     ${tierBasisValueV258==='points_earned'?'<p class="muted small" id="ltbHelpV258" style="margin-top:6px">Tiers count lifetime points earned — spending points never lowers a tier.</p>':''}
-    ${loyaltySelectionV230==='tiers'?`<p class="muted small" style="margin-top:10px"><b>How customers move up.</b> Earn ${p?.earn_points_per_dollar??1} points per $1. Points accumulate for life and unlock higher tiers at each threshold.</p>`:''}
-    <p class="muted small" style="margin-top:6px">Tiers are based on lifetime ${esc(tierBasisWordV235)} — spending points never drops anyone down.</p>
+    ${loyaltySelectionV230==='tiers'?`<p class="muted small" style="margin-top:10px"><b>How customers move up.</b>${workspaceTemplateHtmlV97('earnPointsPerDollarTiers',{rate:p?.earn_points_per_dollar??1})}</p>`:''}
+    <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(tierBasisValueV258==='visits'?'tiersBasedOnLifetimeVisits':tierBasisValueV258==='spend'?'tiersBasedOnLifetimeSpent':'tiersBasedOnLifetimePoints',{})}</p>
     ${tiers.length?tiers.map(t=>{const state=tierBoundary(t),benefits=tierBenefitLines(t);return `<div class="reward-item" style="margin-top:8px"><div class="meta"><div>
       <b>${esc(t.name)}</b><p class="muted small" style="margin-top:4px">${esc(tierRequirementLineV235(t))}${Number(t.points_multiplier)>1?` · earns ${t.points_multiplier}× ${unit}`:''}</p>
       ${benefits.length?`<ul class="rec-why" style="margin-top:8px">${benefits.map(benefit=>`<li>${esc(benefit)}${tierPointPricedBenefitV238(benefit)?'<p class="loyalty-flag-v235" style="margin-top:6px">This benefit still charges points, which a tiered programme never spends. Edit the tier to reword it.</p>':''}</li>`).join('')}</ul>`:'<p class="muted small" style="margin-top:6px">No benefits added yet.</p>'}
@@ -13831,7 +13831,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         ?(loyaltyEntryContextV294==='points'
           ?`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}${customerPreviewV235}
             <p class="muted small" style="margin-top:14px">Tiers run alongside this programme — edit them from the Tiered membership card in Programmes.</p>`
-          :`<b>Reward catalogue and tiers</b><p class="muted small" style="margin-top:6px">Both run together: points buy rewards, and tiers count lifetime ${esc(tierBasisWordV235)}. Spending points never moves anyone down a tier.</p>${rewardRows('Your rewards')}${tierRows()}${customerPreviewV235}`)
+          :`<b>Reward catalogue and tiers</b><p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(tierBasisValueV258==='visits'?'bothRunTogetherLifetimeVisits':tierBasisValueV258==='spend'?'bothRunTogetherLifetimeSpent':'bothRunTogetherLifetimePoints',{})}</p>${rewardRows('Your rewards')}${tierRows()}${customerPreviewV235}`)
         :`<b>Reward catalogue</b><p class="muted small" style="margin-top:6px">Customers spend points on rewards you define.</p>${rewardRows('Your rewards')}${customerPreviewV235}
           <p class="muted small" style="margin-top:14px">Tiers are off in this model — choose Tiered membership above to run them instead. Saved tiers are kept.</p>`}
     </div></div>${birthdayEditor}`;
@@ -13908,7 +13908,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       givebackMeter.innerHTML=`<div class="gb-meter-head"><span class="gb-meter-figure">${esc(growPctText(pct))}</span><span class="pill ${pillTone}">${esc(label)}</span></div>
         <div class="gb-meter-bar"><span class="gb-meter-fill" style="width:${Math.min(100,Math.max(2,pct/20*100)).toFixed(1)}%"></span></div>
         <div class="gb-scale"><span>0%</span><span>20% or more</span></div>
-        <p class="small">At these numbers you give back <b>${esc(growMoney(Math.round(pct*100)))}</b> for every ${esc(money(10000))} spent. <span class="muted">Choose a level the business can sustain.</span></p>
+        <p class="small">At these numbers you give back <b>${esc(growMoney(Math.round(pct*100)))}</b>${workspaceTemplateHtmlV97('forEveryAmountSpent',{amount:money(10000)})}<span class="muted">Choose a level the business can sustain.</span></p>
         ${pct>15?'<p class="small" style="color:var(--red)">Unusually generous — double-check this is intended. You can still save it.</p>':''}`;
     };
     ['le','lr','lc'].forEach(id=>{const input=$(id);if(input)input.addEventListener('input',renderGivebackMeter)});
@@ -13990,7 +13990,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           <label for="growRecTarget" style="margin-top:14px">How much do you want to give back? <span id="growRecTargetOut">${sectorProfile.start.toFixed(2)}%</span></label>
           <div class="row" style="align-items:center;gap:12px"><input id="growRecTarget" type="range" min="0.5" max="30" step="0.5" value="${sectorProfile.start}" style="flex:1">
             <input id="growRecTargetNumber" type="number" min="0.5" max="50" step="0.5" value="${sectorProfile.start}" aria-label="Give-back percentage" style="width:100px"></div>
-          <div class="gb-scale"><span>0.5%</span><span>Suggested starting range for ${esc(sectorProfile.label)}: ${sectorProfile.low}–${sectorProfile.high}%</span><span>30% slider · type up to 50%</span></div>
+          <div class="gb-scale"><span>0.5%</span><span>${workspaceTemplateHtmlV97('suggestedRangeForSector',{sector:sectorProfile.label,low:sectorProfile.low,high:sectorProfile.high})}</span><span>30% slider · type up to 50%</span></div>
           <p class="muted small" style="margin-top:6px">This is Peekaa setup guidance, not an external market benchmark. You can choose outside the range.</p>
           <div id="growRecOut" style="margin-top:12px"></div>
         </div>`;
@@ -14408,7 +14408,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           ${rewardPurchaseFieldAvailableV340?`<div class="full"><label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px"><input id="rwRequiresPurchaseV340" type="checkbox" style="width:auto;margin-top:2px" ${r.requires_purchase===true?'checked':''}> Customer must also make a purchase to claim this</label><p class="muted small help">Leave this off and customers are told <b>“No purchase required”</b>. Your counter enforces the condition either way — the app never blocks a redemption on it, so only tick this if your team really will ask for a purchase.</p></div>`:''}
           ${tiers.length?`<div><label for="rwMinTier">Who can redeem this</label><select id="rwMinTier">
             <option value="">Everyone</option>
-            ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${esc(t.name)} and above (from ${t.threshold})</option>`).join('')}
+            ${tiers.map(t=>`<option value="${esc(String(t.tier_id||t.id))}" ${String(r.min_tier_id||'')===String(t.tier_id||t.id)?'selected':''}>${workspaceTemplateHtmlV97('tierAndAboveFrom',{tier:t.name,threshold:t.threshold})}</option>`).join('')}
           </select><p class="muted small help">Members below the tier still see this reward, locked, with the tier they need. That is what makes climbing worth it.</p></div>`:''}
           <div><label for="rwFrom">Effective from (Singapore time)</label><input id="rwFrom" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_from))}"></div>
           <div><label for="rwUntil">Ends at (Singapore time)</label><input id="rwUntil" type="datetime-local" value="${esc(boundaryInputValue(r.claim_available_until))}"></div>
@@ -14454,7 +14454,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       if(!(budget>0)||!(pointCostCents>0)){$('rwPointsMath').textContent='Enter the company cost budget to calculate the required whole points.';return}
       if(rwCostManualV293)return;
       const points=Math.max(1,Math.ceil((budget*100)/pointCostCents));$('rwCost').value=String(points);
-      $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${esc(money(Math.round(budget*100)))} ÷ ${esc(pointCostLabelV262(pointCostCents))} per point, rounded up.</span>`;
+      $('rwPointsMath').innerHTML=`<b>${points} points</b><br><span class="small">${workspaceTemplateHtmlV97('budgetDividedByPointCost',{budget:money(Math.round(budget*100)),cost:pointCostLabelV262(pointCostCents)})}</span>`;
     };
     const syncCatalogueSource=()=>{
       const item=rewardCatalogueByKey.get($('rwCatalogueSource').value);
@@ -15334,13 +15334,13 @@ async function renderComebackCardV300({isCurrent=()=>true}={}){
       </div><span class="spacer"></span>
       <div class="v150-segment" role="group" aria-label="Away threshold">${[30,60,90].map(days=>`<button type="button" data-comeback-days="${days}" aria-pressed="${days===awayDays}">${days}+ days</button>`).join('')}</div></div>
       <div class="kpis" style="margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
-        <div class="card kpi grow-comeback-kpi-v401"><div class="l">${CUI.icon('retention',{size:16})}<span>Away ${awayDays}+ days now</span></div><div class="v">${away}</div></div>
+        <div class="card kpi grow-comeback-kpi-v401"><div class="l">${CUI.icon('retention',{size:16})}<span>${workspaceTemplateHtmlV97('awayDaysNow',{days:awayDays})}</span></div><div class="v">${away}</div></div>
         <div class="card kpi grow-comeback-kpi-v401 is-returned-v401"><div class="l">${CUI.icon('check',{size:16})}<span>Came back in the last 30 days</span></div><div class="v" style="color:var(--green)">${Number(returned.total_returned||0)}</div></div>
       </div>
       ${rows.length?`<div style="margin-top:14px"><b class="small">Returned recently</b>
-        ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">Away ${Number(row.away_days||0)} days · back ${esc(sgt(row.returned_at)||'')}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
-        ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">Showing the ${Math.min(8,rows.length)} most recent returns of ${Number(returned.total_returned||0)}.</p>`:''}</div>`
-      :`<p class="muted small" style="margin-top:12px">Nobody has ended a ${awayDays}+ day break in the last 30 days.</p>`}
+        ${rows.slice(0,8).map(row=>`<div class="wallet-line"><div><b>${esc(row.full_name||'Customer')}</b><p class="muted small" style="margin-top:3px">${workspaceTemplateHtmlV97('awayDaysBackOn',{days:Number(row.away_days||0),when:sgt(row.returned_at)||''})}</p></div><span class="spacer"></span><a class="btn ghost sm" href="#/client/${esc(row.id||'')}">Open</a></div>`).join('')}
+        ${returned.truncated||rows.length>8?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('showingMostRecentReturns',{shown:Math.min(8,rows.length),total:Number(returned.total_returned||0)})}</p>`:''}</div>`
+      :`<p class="muted small" style="margin-top:12px">${workspaceTemplateHtmlV97('nobodyEndedBreak',{days:awayDays})}</p>`}
     </div>`;
     releaseV408();
     host.querySelectorAll('[data-comeback-days]').forEach(button=>button.onclick=()=>paint(Number(button.dataset.comebackDays)||60));
@@ -19077,7 +19077,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growPointsEditingV326&&growStampsPickedV416&&canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-points-gift-delete-v326="${esc(growPointsEditingV326)}">Delete</button>`:''}
       <span class="spacer"></span><button type="button" class="btn sm" data-grow-points-add-save-v326="1"${growPointsBusyV326?' disabled':''}>${growPointsEditingV326?'Save changes':'Save gift'}</button></div>
     ${growPointsEditingV326&&growStampsPickedV416?`<div class="imp-note" data-grow-points-gift-deleteconfirm-v326="${esc(growPointsEditingV326)}" style="margin-top:10px"${growPointsDeletePendingV326===String(growPointsEditingV326)?'':' hidden'}>
-      <b>Take this gift off stamp ${growStampsPickedV416}?</b>
+      <b>${workspaceTemplateHtmlV97('takeGiftOffStamp',{stamp:growStampsPickedV416})}</b>
       <p class="muted small" style="margin-top:6px">${
         /* F038, closed by nestly_v805. business_delete_reward_v326 no longer flips the LIVE
            loyalty_rewards row for a stamp gift: it withdraws the gift version-forward through the

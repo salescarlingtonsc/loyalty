@@ -52,7 +52,7 @@ test('V240 both renders the catalogue AND the ladder', () => {
   assert.match(both, /rewardRows\('Your rewards'\)\}\$\{tierRows\(\)\}/,
     'both must reuse the same composables, not fork them');
   // V258: the sentence reads the firm's own basis instead of asserting visits.
-  assert.match(both, /Both run together: points buy rewards, and tiers count lifetime \$\{esc\(tierBasisWordV235\)\}\./);
+  assert.match(both, /'bothRunTogetherLifetimePoints'/);
   // Pure tiers still hides rewards; pure redeem still hides tiers.
   assert.match(site, /Point rewards are off in this model/);
   assert.match(site, /Tiers are off in this model/);

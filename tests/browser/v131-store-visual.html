@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b41818660900ac64b120f60521c1bfe324ced24280c898721f70f593b120285c"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="ffc56c58373816444351baee07c3e924f8ac80ab436760ce65a240f4b67b08b5"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6774,7 +6774,7 @@ async function wireAccountDeletionButton(){
   if(!request?.status)return;
   if(['pending','processing'].includes(request.status)){
     const due=request.response_due_at?sgt(request.response_due_at):'within 30 days';
-    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">Peekaa is reviewing it and will reply by ${esc(due)}. Nothing further is needed from you.</p></div>`;
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">${workspaceTemplateHtmlV97('demoReplyBy',{due:due})}</p></div>`;
     return;
   }
   if(request.status==='completed'){

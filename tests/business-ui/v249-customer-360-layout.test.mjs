@@ -90,7 +90,10 @@ test('V249 the expiry note and both collapsibles live inside the POINTS card, on
   /* nestly_v512: the summary follows the RUNNING unit — the control writes to whichever
      programme is live, so a stamp-card business reads "Correct stamp balance". Matched as a
      plain substring because the source now holds a template expression, not literal text. */
-  assert.equal(app.split('Correct ${esc(unit==="stamps"?"stamp":"points")} balance').length - 1, 1);
+  /* nestly_v942: the summary is a named template now, so its key appears twice in the bundle —
+     once in WORKSPACE_TEMPLATE_COPY_V97 and once where it renders. Count the RENDER, which is what
+     "moved, not copied" was ever about. */
+  assert.equal(app.split(`workspaceTemplateHtmlV97(unit==="stamps"?'correctStampBalance'`).length - 1, 1);
   assert.equal((app.match(/id="adjV"/g) || []).length, 1);
   assert.equal((app.match(/id="adjGo"/g) || []).length, 1);
   assert.equal((app.match(/c360-points-expiry/g) || []).length, 1);
@@ -100,8 +103,8 @@ test('V249 the expiry note and both collapsibles live inside the POINTS card, on
   assert.ok(panelStart > 0, 'the moved collapsibles are assigned to the points panel');
   const panel = profile.slice(panelStart, profile.indexOf('  }else{', panelStart));
   assert.match(panel, /<summary>Balance and earning<\/summary>/);
-  assert.ok(panel.includes('Correct ${esc(unit==="stamps"?"stamp":"points")} balance'), "the adjust collapsible is inside the points panel");
-  assert.ok(panel.indexOf('Balance and earning') < panel.indexOf('} balance</summary>'),
+  assert.ok(panel.includes("'correctPointsBalance'"), "the adjust collapsible is inside the points panel");
+  assert.ok(panel.indexOf('Balance and earning') < panel.indexOf("'correctPointsBalance'"),
     'balance and earning comes first, as drawn');
   // Their handlers and gates are untouched: owner-only, loyalty-write-only adjustment.
   assert.match(panel, /S\.myRole==='owner'&&canWriteLoyalty\?`<details/);

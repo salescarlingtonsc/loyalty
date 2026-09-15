@@ -144,7 +144,7 @@ test('a chosen day is stale-guarded and never rendered as an unexplained blank',
   assert.ok(scheduleLoader.includes('epochV252===dashboardScheduleEpochV252'),
     'a slower earlier day must not paint over the day being viewed');
   assert.ok(scheduleLoader.includes('if(!isCurrentScheduleV252())return'), 'the guard runs after the await');
-  assert.ok(scheduleLoader.includes('Nothing booked on ${esc(dayLabelV252)}'),
+  assert.ok(scheduleLoader.includes("workspaceTemplateHtmlV97('nothingBookedOnDay',{day:dayLabelV252})"),
     'an empty day gets a short muted line, not a blank');
   assert.ok(scheduleLoader.includes('dashboardScheduleRetry') && scheduleLoader.includes('loadDashboardScheduleGlanceV180(root,branchId,day)'),
     'a failed read stays retryable on the SAME day, and is never shown as an empty schedule');

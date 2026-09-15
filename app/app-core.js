@@ -4116,7 +4116,7 @@ async function renderCustomerOfferLandingV290(offerId){
       ${offer.description&&offer.description!==offer.tagline?`<p class="muted small" data-merchant-content style="margin-top:8px">${esc(offer.description)}</p>`:''}
       <p class="muted small" style="margin-top:12px">${esc([validity,liveState].filter(Boolean).join(' · '))}</p>
       <div class="row" style="margin-top:16px">
-        ${linked?`<a class="btn" href="#/wallet/${encodeURIComponent(slug)}">Open ${esc(offer.business_name||'business')} rewards</a>`
+        ${linked?`<a class="btn" href="#/wallet/${encodeURIComponent(slug)}">${workspaceTemplateHtmlV97('openBusinessRewards',{business:offer.business_name||'business'})}</a>`
           :slug?`<a class="btn" href="#/b/${encodeURIComponent(slug)}">${esc(`View ${offer.business_name||'the business'}`)}</a>`:''}
         <a class="btn ghost sm" href="#/wallet">Home</a>
       </div>
@@ -4920,7 +4920,7 @@ function customerProgrammeTierPanelV230({tier={},loyalty={},presentation={}}){
   const basis=String(tier.basis||'visits');
   const counted=basis==='points_earned'
     ?`<p class="customer-programme-balance"><b>${esc(balance)}</b> <span class="muted">${esc(unitLabel)} earned</span></p>
-       <p class="muted small" style="margin-top:6px">Your ${esc(unitLabel)} count toward membership here — they are not spent.</p>`
+       <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('unitsCountTowardMembership',{unit:unitLabel})}</p>`
     :'';
   return `${counted}${customerTierPanelMarkupV194(tier)}`;
 }
@@ -7121,7 +7121,7 @@ async function wireAccountDeletionButton(){
   if(!request?.status)return;
   if(['pending','processing'].includes(request.status)){
     const due=request.response_due_at?sgt(request.response_due_at):'within 30 days';
-    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">Peekaa is reviewing it and will reply by ${esc(due)}. Nothing further is needed from you.</p></div>`;
+    host.innerHTML=`<div class="imp-note" style="margin-top:14px"><b>Closure request received</b><p class="small" style="margin-top:6px">${workspaceTemplateHtmlV97('demoReplyBy',{due:due})}</p></div>`;
     return;
   }
   if(request.status==='completed'){
@@ -7570,6 +7570,17 @@ function humanErrorV295(error,fallback='That did not go through. Please try agai
   return machineCode?translate(fallback):translate(raw);
 }
 const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
+  tiersBasedOnLifetimeVisits:Object.freeze({en:"Tiers are based on lifetime visits — spending points never drops anyone down.",'zh-CN':"等级以累计到访次数为依据 — 消耗积分绝不会让任何人降级。",ms:"Peringkat berasaskan kunjungan sepanjang hayat — membelanjakan mata tidak pernah menurunkan sesiapa."}),
+  tiersBasedOnLifetimeSpent:Object.freeze({en:"Tiers are based on lifetime spent — spending points never drops anyone down.",'zh-CN':"等级以累计消费额为依据 — 消耗积分绝不会让任何人降级。",ms:"Peringkat berasaskan perbelanjaan sepanjang hayat — membelanjakan mata tidak pernah menurunkan sesiapa."}),
+  tiersBasedOnLifetimePoints:Object.freeze({en:"Tiers are based on lifetime points — spending points never drops anyone down.",'zh-CN':"等级以累计积分为依据 — 消耗积分绝不会让任何人降级。",ms:"Peringkat berasaskan mata sepanjang hayat — membelanjakan mata tidak pernah menurunkan sesiapa."}),
+  bothRunTogetherLifetimeVisits:Object.freeze({en:"Both run together: points buy rewards, and tiers count lifetime visits. Spending points never moves anyone down a tier.",'zh-CN':"两者并行：积分用于兑换奖励，等级按累计到访次数计算。消耗积分绝不会让任何人降级。",ms:"Kedua-duanya berjalan bersama: mata membeli ganjaran, dan peringkat mengira kunjungan sepanjang hayat. Membelanjakan mata tidak pernah menurunkan sesiapa satu peringkat."}),
+  bothRunTogetherLifetimeSpent:Object.freeze({en:"Both run together: points buy rewards, and tiers count lifetime spent. Spending points never moves anyone down a tier.",'zh-CN':"两者并行：积分用于兑换奖励，等级按累计消费额计算。消耗积分绝不会让任何人降级。",ms:"Kedua-duanya berjalan bersama: mata membeli ganjaran, dan peringkat mengira perbelanjaan sepanjang hayat. Membelanjakan mata tidak pernah menurunkan sesiapa satu peringkat."}),
+  bothRunTogetherLifetimePoints:Object.freeze({en:"Both run together: points buy rewards, and tiers count lifetime points. Spending points never moves anyone down a tier.",'zh-CN':"两者并行：积分用于兑换奖励，等级按累计积分计算。消耗积分绝不会让任何人降级。",ms:"Kedua-duanya berjalan bersama: mata membeli ganjaran, dan peringkat mengira mata sepanjang hayat. Membelanjakan mata tidak pernah menurunkan sesiapa satu peringkat."}),
+  correctStampBalance:Object.freeze({en:"Correct stamp balance",'zh-CN':"更正印花余额",ms:"Betulkan baki setem"}),
+  correctPointsBalance:Object.freeze({en:"Correct points balance",'zh-CN':"更正积分余额",ms:"Betulkan baki mata"}),
+  leaveBlankForAllBranches:Object.freeze({en:"Leave blank for all branches.",'zh-CN':"留空即表示全部分店。",ms:"Biarkan kosong untuk semua cawangan."}),
+  leaveBlankForAllServices:Object.freeze({en:"Leave blank for all services.",'zh-CN':"留空即表示全部服务。",ms:"Biarkan kosong untuk semua perkhidmatan."}),
+  leaveBlankForAllProducts:Object.freeze({en:"Leave blank for all products.",'zh-CN':"留空即表示全部产品。",ms:"Biarkan kosong untuk semua produk."}),
   /* nestly_v752: the birthday benefit editor's read-only "Wording customers see" preview, derived
      server-side (app.v657_discount_label / app.v369_benefit_label) from the structured fields —
      never typed. The sentence itself arrives already in the owner's own words for THEIR benefit
@@ -7812,8 +7823,56 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   ofStampsTotal:Object.freeze({en:"of {total} stamps",'zh-CN':"共 {total} 枚印花",ms:"daripada {total} setem"}),
   upToCustomerProfiles:Object.freeze({en:"Up to {count} customer profiles",'zh-CN':"最多 {count} 个顾客档案",ms:"Sehingga {count} profil pelanggan"}),
   budgetCapCurrency:Object.freeze({en:"Budget cap ({currency}, 0 = none)",'zh-CN':"预算上限（{currency}，0 = 不设限）",ms:"Had bajet ({currency}, 0 = tiada)"}),
+  /* nestly_v942 — thirty sentences whose runtime value sits INSIDE them, where splitting the node
+     cannot work because the words either side have to move when the language does. "Set up
+     {programme}?" becomes 要设置{programme}吗？ with the question particle at the end; "Tiers are
+     based on lifetime {basis}" puts the basis before its noun in Chinese and after it in Malay.
+     Each was a template literal rendering as ONE text node, which the flat catalogue — keyed on
+     whole nodes — can never match, so each reached a zh-CN or ms reader in English. */
+  openBusinessRewards:Object.freeze({en:"Open {business} rewards",'zh-CN':"打开 {business} 的奖励",ms:"Buka ganjaran {business}"}),
+  unitsCountTowardMembership:Object.freeze({en:"Your {unit} count toward membership here — they are not spent.",'zh-CN':"您的{unit}在此计入会员资格 — 不会被消耗。",ms:"{unit} anda dikira untuk keahlian di sini — ia tidak dibelanjakan."}),
+  demoReplyBy:Object.freeze({en:"Peekaa is reviewing it and will reply by {due}. Nothing further is needed from you.",'zh-CN':"Peekaa 正在审核，将于 {due} 前回复。您无需再做任何事。",ms:"Peekaa sedang menyemaknya dan akan membalas menjelang {due}. Tiada apa lagi diperlukan daripada anda."}),
+  setUpProgrammeQuestion:Object.freeze({en:"Set up {programme}?",'zh-CN':"要设置{programme}吗？",ms:"Sediakan {programme}?"}),
+  programmeRunsAloneSwitchesOff:Object.freeze({en:"{programme} runs on its own. Turning it on will switch {others} off for your customers.",'zh-CN':"{programme}独立运行。开启它会为您的顾客关闭{others}。",ms:"{programme} berjalan sendiri. Menghidupkannya akan mematikan {others} untuk pelanggan anda."}),
+  showingFirstOpenCustomers:Object.freeze({en:"Showing the first {count}. Open Customers for the rest.",'zh-CN':"仅显示前 {count} 位。其余请在「顾客」中查看。",ms:"Menunjukkan {count} yang pertama. Buka Pelanggan untuk selebihnya."}),
+  loadingScheduleForDay:Object.freeze({en:"Loading the schedule for {day}…",'zh-CN':"正在加载 {day} 的排程…",ms:"Memuatkan jadual untuk {day}…"}),
+  nothingBookedOnDay:Object.freeze({en:"Nothing booked on {day} — a free day, or a day to fill.",'zh-CN':"{day} 没有任何预约 — 可以是休息的一天，也可以是待填满的一天。",ms:"Tiada apa ditempah pada {day} — hari lapang, atau hari untuk diisi."}),
+  sessionsUsedOfTotal:Object.freeze({en:"{used} of {total} used",'zh-CN':"已使用 {used} / {total}",ms:"{used} daripada {total} digunakan"}),
+  welcomeGiftNeedsMinimum:Object.freeze({en:"Needs at least {minimum} on this sale. Ring the sale up first — the free item is offered on the receipt.",'zh-CN':"这笔交易至少需要 {minimum}。请先把交易录入 — 免费项目会在收据上提供。",ms:"Memerlukan sekurang-kurangnya {minimum} pada jualan ini. Daftarkan jualan dahulu — item percuma ditawarkan pada resit."}),
+  bringbackSentAfterDays:Object.freeze({en:"Sent because they had not visited for {days} days. Nothing is charged.",'zh-CN':"因为他们已有 {days} 天未到访而发送。不收取任何费用。",ms:"Dihantar kerana mereka tidak datang selama {days} hari. Tiada apa-apa dicaj."}),
+  noCatalogueMatchForSearch:Object.freeze({en:"Nothing in this branch\u0027s checkout catalogue matches “{search}”. Try More items, or type an amount below.",'zh-CN':"本分店的结账目录中没有与「{search}」匹配的内容。请试试「更多项目」，或在下方输入金额。",ms:"Tiada apa dalam katalog pembayaran cawangan ini sepadan dengan “{search}”. Cuba Lagi item, atau taip amaun di bawah."}),
+  viewAllTierBenefits:Object.freeze({en:"View all {tier} benefits",'zh-CN':"查看{tier}的全部福利",ms:"Lihat semua faedah {tier}"}),
+  recordedCurrentBalance:Object.freeze({en:"Recorded — current balance: {balance} {unit}.",'zh-CN':"已记录 — 当前余额：{balance} {unit}。",ms:"Direkodkan — baki semasa: {balance} {unit}."}),
+  scanToOpenRewardsAt:Object.freeze({en:"Scan to open your rewards, points and past visits at {business}.",'zh-CN':"扫码即可查看您在 {business} 的奖励、积分和过往到访。",ms:"Imbas untuk membuka ganjaran, mata dan kunjungan lalu anda di {business}."}),
+  tierGateAndAbove:Object.freeze({en:"🔒 {tier} and above",'zh-CN':"🔒 {tier}及以上",ms:"🔒 {tier} dan ke atas"}),
+  earnPointsPerDollarTiers:Object.freeze({en:"Earn {rate} points per $1. Points accumulate for life and unlock higher tiers at each threshold.",'zh-CN':"每消费 1 元可得 {rate} 积分。积分终身累计，达到各门槛即可解锁更高等级。",ms:"Peroleh {rate} mata bagi setiap $1. Mata terkumpul sepanjang hayat dan membuka peringkat lebih tinggi pada setiap ambang."}),
+  forEveryAmountSpent:Object.freeze({en:"for every {amount} spent.",'zh-CN':"每消费 {amount}。",ms:"bagi setiap {amount} dibelanjakan."}),
+  suggestedRangeForSector:Object.freeze({en:"Suggested starting range for {sector}: {low}–{high}%",'zh-CN':"{sector}的建议起始区间：{low}–{high}%",ms:"Julat permulaan yang dicadangkan untuk {sector}: {low}–{high}%"}),
+  tierAndAboveFrom:Object.freeze({en:"{tier} and above (from {threshold})",'zh-CN':"{tier}及以上（自 {threshold} 起）",ms:"{tier} dan ke atas (dari {threshold})"}),
+  budgetDividedByPointCost:Object.freeze({en:"{budget} ÷ {cost} per point, rounded up.",'zh-CN':"{budget} ÷ 每积分 {cost}，向上取整。",ms:"{budget} ÷ {cost} setiap mata, dibundarkan ke atas."}),
+  awayDaysNow:Object.freeze({en:"Away {days}+ days now",'zh-CN':"目前已离开 {days} 天以上",ms:"Tidak datang {days}+ hari sekarang"}),
+  awayDaysBackOn:Object.freeze({en:"Away {days} days · back {when}",'zh-CN':"离开 {days} 天 · 于 {when} 回来",ms:"Tidak datang {days} hari · kembali {when}"}),
+  showingMostRecentReturns:Object.freeze({en:"Showing the {shown} most recent returns of {total}.",'zh-CN':"显示 {total} 次回头中最近的 {shown} 次。",ms:"Menunjukkan {shown} pulangan terbaharu daripada {total}."}),
+  nobodyEndedBreak:Object.freeze({en:"Nobody has ended a {days}+ day break in the last 30 days.",'zh-CN':"最近 30 天内没有人结束超过 {days} 天的沉寂期。",ms:"Tiada sesiapa menamatkan rehat {days}+ hari dalam 30 hari lalu."}),
+  takeGiftOffStamp:Object.freeze({en:"Take this gift off stamp {stamp}?",'zh-CN':"要把这份礼物从第 {stamp} 枚印花上移除吗？",ms:"Keluarkan hadiah ini daripada setem {stamp}?"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v942: one key per translatable noun, because a template VALUE is preserved verbatim
+     and an English noun inside it would survive into 中文. */
+  'tiersBasedOnLifetimeVisits','tiersBasedOnLifetimeSpent','tiersBasedOnLifetimePoints',
+  'bothRunTogetherLifetimeVisits','bothRunTogetherLifetimeSpent','bothRunTogetherLifetimePoints',
+  'correctStampBalance','correctPointsBalance','leaveBlankForAllBranches',
+  'leaveBlankForAllServices','leaveBlankForAllProducts',
+  /* nestly_v942 — thirty embedded-value sentences. See the block of the same name in
+     WORKSPACE_TEMPLATE_COPY_V97. */
+  'openBusinessRewards','unitsCountTowardMembership','demoReplyBy','setUpProgrammeQuestion',
+  'programmeRunsAloneSwitchesOff','showingFirstOpenCustomers','loadingScheduleForDay','nothingBookedOnDay',
+  'sessionsUsedOfTotal','welcomeGiftNeedsMinimum','bringbackSentAfterDays',
+  'noCatalogueMatchForSearch','viewAllTierBenefits','recordedCurrentBalance','scanToOpenRewardsAt',
+  'tierGateAndAbove','earnPointsPerDollarTiers',
+  'forEveryAmountSpent','suggestedRangeForSector','tierAndAboveFrom',
+  'budgetDividedByPointCost','awayDaysNow','awayDaysBackOn','showingMostRecentReturns',
+  'nobodyEndedBreak','takeGiftOffStamp',
   /* nestly_v940 — the first interpolation wave. See the block of the same name in
      WORKSPACE_TEMPLATE_COPY_V97 for why only these fourteen needed a template. */
   'referralPageCount','referralsPageCount','membershipPageCount','membershipsPageCount',

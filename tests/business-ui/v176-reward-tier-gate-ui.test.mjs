@@ -80,7 +80,7 @@ test('a locked reward offers no redeem button', () => {
 
 test('the owner reward list shows the gate at a glance, with a deleted-tier fallback', () => {
   assert.ok(app.includes('const rewardTierGateLabelV176='), 'no owner-side gate label helper');
-  assert.ok(app.includes('🔒 ${esc(rewardTierGateLabelV176(r))} and above'),
+  assert.ok(app.includes("workspaceTemplateHtmlV97('tierGateAndAbove',{tier:rewardTierGateLabelV176(r)})"),
     'the owner list must show which tier a reward is behind');
   const start = app.indexOf('const rewardTierGateLabelV176=');
   const src = app.slice(start, start + 500);

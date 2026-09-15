@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="da43483d03f22424d8914fbe6d11aee14cbed097e8e2d2cd7763b5870a1d6b11"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="58c23a801aca19973e9194554bdcb7f9fa566ac68110c5c370157f6cf4502ce2"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · da43483d03f22424d8914fbe6d11aee14cbed097e8e2d2cd7763b5870a1d6b11</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 58c23a801aca19973e9194554bdcb7f9fa566ac68110c5c370157f6cf4502ce2</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -8072,7 +8072,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         ${earnLineV567}
         ${nextExp?`<p class="muted small inline-status" style="margin-top:8px">${CUI.icon('waitlist',{size:16})}<span>${nextExp.remaining} ${unit} expire ${nextExp.expires_at.slice(0,10)}</span></p>`:''}
       </details>
-      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>Correct ${esc(unit==="stamps"?"stamp":"points")} balance</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited. ${/* nestly_v512: the control writes to whichever programme is RUNNING, so the word has to follow it — on a stamp card this said "points" over a control that now moves stamps. */""}</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
+      ${S.myRole==='owner'&&canWriteLoyalty?`<details class="c360-reward-adjust"><summary>${workspaceTemplateHtmlV97(unit==="stamps"?'correctStampBalance':'correctPointsBalance',{})}</summary><p class="muted small" style="margin-top:7px">Use only to correct a mistake. Every change requires a reason and is audited. ${/* nestly_v512: the control writes to whichever programme is RUNNING, so the word has to follow it — on a stamp card this said "points" over a control that now moves stamps. */""}</p><div class="row" style="margin-top:8px"><input id="adjV" type="number" ${workspaceTemplateAttributeV97('placeholder','adjustLoyalty',{unit})} style="max-width:120px"><input id="adjR" placeholder="reason (audited)"><button class="btn ghost sm" id="adjGo">Adjust</button></div></details>`:''}`;
   }else if(prog){
     /* V259: a programme that EXISTS but is paused is not the same thing as one that was never
        built. Saying "not set up yet" about a paused programme is what sent the owner looking for
@@ -10704,7 +10704,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'da43483d03f22424d8914fbe6d11aee14cbed097e8e2d2cd7763b5870a1d6b11',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'58c23a801aca19973e9194554bdcb7f9fa566ac68110c5c370157f6cf4502ce2',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

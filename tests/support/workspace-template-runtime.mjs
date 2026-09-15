@@ -58,3 +58,16 @@ export function workspaceTemplateRuntime(locale = 'en') {
       workspaceTemplateInnerHtmlV97,workspaceTemplateHtmlV97};`, context);
   return { workspaceLocale: locale, ...context.__runtime };
 }
+
+/**
+ * Put the named-template helpers on globalThis for harnesses that build their renderer with
+ * `new Function` or `eval`, where a free identifier resolves against the global object and there
+ * is no sandbox to spread into. In production these helpers are module-level bindings visible to
+ * every render function; this is the minimal faithful stand-in for that, and it is still the REAL
+ * implementation rather than a stub.
+ */
+export function installWorkspaceTemplateGlobals(locale = 'en') {
+  const runtime = workspaceTemplateRuntime(locale);
+  for (const [name, value] of Object.entries(runtime)) globalThis[name] = value;
+  return runtime;
+}

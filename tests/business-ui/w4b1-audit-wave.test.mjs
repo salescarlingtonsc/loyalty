@@ -72,7 +72,7 @@ test('F021 legacySaleReceiptV145 never asserts "no extra points added" on a repl
 test('F021 the cart receipt (posReceiptV142) duplicate branch shows the same honest copy', () => {
   const block = section("<h2 style=\"margin:8px 0 4px\">${d.duplicate?'Recorded'", '${d.hasSale?`<ul class="till-receipt-lines"');
   assert.doesNotMatch(block, /no extra points added/i);
-  assert.match(block, /Recorded — current balance/);
+  assert.match(block, /workspaceTemplateHtmlV97\('recordedCurrentBalance'/);
   assert.match(block, /d\.pointsTotal/);
 });
 

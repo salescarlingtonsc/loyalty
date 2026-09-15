@@ -79,7 +79,7 @@ test('V215 till surfaces the offer and follows the server contract for minimum s
      unchanged, so it follows the code rather than the old marker. */
   const picker = app.slice(app.indexOf('const welcomeOffer=catalog.customerWelcomeOffer||null;'),
     app.indexOf('const bringbackOffer=catalog.customerBringbackOffer||null;'));
-  assert.match(picker, /Ring the sale up first — the free item is offered on the receipt/);
+  assert.match(picker, /workspaceTemplateHtmlV97\('welcomeGiftNeedsMinimum'/);
   assert.match(picker, /welcomeMin\s*\?/);
   const zeroBranch = picker.slice(picker.indexOf('No minimum spend. Nothing is charged.'));
   assert.match(zeroBranch, /id="tWelcomeRedeemV215"/);

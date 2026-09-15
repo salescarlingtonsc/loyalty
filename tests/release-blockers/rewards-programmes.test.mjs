@@ -24,6 +24,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v942: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   These harnesses build their renderer with `new Function`, so the helper has to be reachable as a
+   global; the REAL implementation is installed, never a stub, because a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');

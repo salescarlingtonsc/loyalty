@@ -170,9 +170,9 @@ test('the programme overview and customer preview speak plain language', () => {
   // Tier cards: requirement in words, benefits as bullets, the lifetime note said once above.
   assert.match(loyalty, /if\(!threshold\)return 'Starting tier';/);
   assert.match(loyalty, /return `Unlock at \$\{threshold\.toLocaleString\('en-SG'\)\} \$\{tierBasisWordV235\}`;/);
-  assert.match(loyalty, /Tiers are based on lifetime \$\{esc\(tierBasisWordV235\)\} — spending points never drops anyone down\./);
+  assert.match(loyalty, /'tiersBasedOnLifetimePoints'/);
   assert.doesNotMatch(app, /lifetime, so redeeming never drops a tier/);
-  assert.match(loyalty, /<b>How customers move up\.<\/b> Earn \$\{p\?\.earn_points_per_dollar\?\?1\} points per \$1\./);
+  assert.match(loyalty, /<b>How customers move up\.<\/b>\s*\$\{workspaceTemplateHtmlV97\('earnPointsPerDollarTiers'/);
   assert.match(loyalty, /const customerPreviewV235=loyaltySelectionV230==='tiers'/);
   assert.match(loyalty, /<b>What your customers see<\/b>/);
 });

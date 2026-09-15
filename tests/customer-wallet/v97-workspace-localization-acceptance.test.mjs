@@ -482,8 +482,23 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      parity line, "of {total} stamps", "Up to {count} customer profiles" and the playbook budget
      cap, whose "0 = none" sits after the currency. English inflects a paged count for number and
      Chinese and Malay do not, so those twin keys carry the same sentence in those two locales —
-     the shape switchOtherWorkspace / switchOtherWorkspaces has had since v97. 147 + 14 = 161. */
-  assert.equal(keys.length,161,'mixed-interface interpolation inventory changed without review');
+     the shape switchOtherWorkspace / switchOtherWorkspaces has had since v97. 147 + 14 = 161.
+     nestly_v941 adds none: its 55 sentences all carried their value at one END, so the call site
+     wraps the VALUE in a span and the reviewed English is a text node the flat catalogue already
+     reaches. That is the cheaper route and it is taken wherever it works, which is why this
+     inventory grows far more slowly than the interpolation backlog shrinks.
+     nestly_v942 adds 30. These are the ones where the value sits INSIDE the sentence and the words
+     either side have to move when the language does: "Set up {programme}?" becomes
+     要设置{programme}吗？ with the question particle at the end, and "Tiers are based on lifetime
+     {basis}" puts the basis before its noun in Chinese and after it in Malay. A span cannot fix
+     word order, so these are templates.
+     Four of those thirty were then split again, into eleven. Their interpolated value was not data
+     but a translatable NOUN — the tier basis ("visits" / "spent" / "points"), the balance unit
+     ("stamp" / "points"), the eligibility group ("branches" / "services" / "products") — and a
+     template value is preserved verbatim by design, so passing one would have left an English noun
+     sitting inside a Chinese sentence. One key per noun, chosen by a ternary at the call site, is
+     the only shape that reads correctly in all three locales. 161 + 30 - 4 + 11 = 198. */
+  assert.equal(keys.length,198,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
