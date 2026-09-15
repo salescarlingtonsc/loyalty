@@ -33,7 +33,7 @@ test('the owner sees draft state and explicitly publishes it', async () => {
      (photo 2, the banner ringed: "remove the circled area"). A generated recommendation still
      gets its own line above the editor — that is what is checked now — but it no longer tells
      the owner the page is withholding their edit, because it is not. */
-  assert.match(app, /Suggested for you\.<\/b> \$\{esc\(recommendation\.rationale\)\}/);
+  assert.match(app, /Suggested for you\.<\/b> <span>\$\{esc\(recommendation\.rationale\)\}<\/span>/);
   assert.match(app, /configuration_status:'published'/);
   assert.match(app, /<button class="btn" id="lsave">Save changes<\/button>/);
   assert.match(app, /Review &amp; publish/);

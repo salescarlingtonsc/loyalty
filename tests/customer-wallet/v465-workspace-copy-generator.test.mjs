@@ -3506,6 +3506,65 @@ const SPLIT_LABELS_V940 = [
   "Stamps high to low",
 ];
 
+/* nestly_v941 — nestly_v941 — 56 more split interpolated labels. */
+const SPLIT_LABELS_V941 = [
+  "did not approve app access for this account. Ask them to send you a new invite if this is wrong.",
+  "has been asked to approve your access. You will get in as soon as they grant it.",
+  "is not set up for this account",
+  "is not open yet",
+  "could not load",
+  "wants to book.",
+  "records the correction, it does not move money.",
+  "The refund was not created.",
+  "reverses it and records a corrected replacement together, so customer points and financial records stay synchronized.",
+  "Allowed by customer ·",
+  "The team never sees the customer’s birthday date or validity window.",
+  "given back",
+  "is free for this customer.",
+  "Any one of:",
+  "more under More items",
+  "given free — welcome offer used.",
+  "— customers are not earning right now.",
+  "Review every number below — Save puts it live for customers.",
+  "live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.",
+  "Set up",
+  "for the customer who referred",
+  "for the friend",
+  "Suggested cost to you:",
+  "Could not load playbooks.",
+  "Could not load results.",
+  "Could not prepare the playbook.",
+  "Could not count matching customers.",
+  "Could not create:",
+  "It’s saved as a draft — press Retry start.",
+  "runs on its own",
+  "No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.",
+  "No sellable plans for this customer at this branch.",
+  "has not verified this payment",
+  "Type any amount you like when you issue a card.",
+  "is already busy then",
+  "is checked out.",
+  "Keep days for",
+  "Size in millilitres for",
+  "needs a whole number between 1 and 365 days, or an empty box.",
+  "Resolved as booked",
+  "Complete export could not be created. No partial CSV was downloaded.",
+  "Complete export stopped before downloading. No partial CSV was downloaded.",
+  "at risk",
+  "By method:",
+  "— for reference only; do not quote this while the verdict is \"not enough signal\".",
+  "appointments in this period.",
+  "No zero is inferred.",
+  "of identified customers in this period.",
+  "customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.",
+  "used in P&L",
+  "Only recorded eligible payments count toward cash-basis revenue.",
+  "works their own hours but has no open day. Add a day, or untick \"Works their own hours\" to follow the shop hours.",
+  "has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.",
+  ". Turn it on and this preview — and your customers’ app — will show the button.",
+  "Confirm new total",
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -3606,7 +3665,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -3640,7 +3699,7 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 4894);
+  assert.equal(once.keyCount, 4949);
 });
 
 /* nestly_v933. The generator applies `table[locale][entry.source] = value`, which ADDS a key when
@@ -3668,7 +3727,7 @@ test('every ledger entry adds a key — none rewrites a translation the ledger d
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 4894 strings per locale/);
+  assert.match(clean, /up to date: 4949 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

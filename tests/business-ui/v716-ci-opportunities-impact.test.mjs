@@ -341,7 +341,7 @@ test('V716 opportunitiesPanelHtmlV685: impact.retention_risk ok renders at_risk_
       retention_risk: { status: 'ok', at_risk_n: 12 } } };
   const html = renderOpportunities({ ...V716_PAYLOAD, ranked: [withRisk] });
   assert.ok(html.includes('Retention risk'));
-  assert.ok(html.includes('12 at risk'), 'at_risk_n=12 must render verbatim');
+  assert.ok(html.includes('<span>12</span> at risk'), 'at_risk_n=12 must render verbatim');
 });
 
 test('V716 opportunitiesPanelHtmlV685: impact.retention_risk not_applicable renders no Retention risk row', () => {

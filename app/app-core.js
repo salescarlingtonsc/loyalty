@@ -2073,7 +2073,7 @@ async function route(){
         /* A declined teammate has nothing to retry: only a fresh invite changes this answer,
            so this card carries no button that would just re-read the same refusal. */
         if(personaAccessStateV569==='rejected'){
-          root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Access not granted</h1><p class="muted small" style="margin-top:8px">${businessNameV569} did not approve app access for this account. Ask them to send you a new invite if this is wrong.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+          root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Access not granted</h1><p class="muted small" style="margin-top:8px"><span>${businessNameV569}</span> did not approve app access for this account. Ask them to send you a new invite if this is wrong.</p>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
           $('main').focus();
           wireAccountDeletionButton();
           return;
@@ -2084,7 +2084,7 @@ async function route(){
            re-read (loadPersonasV370's own {refresh:true} bypass) and only routes on a genuinely
            approved answer; a still-pending answer stays on this card rather than flashing success. */
         const renderWaitingV569=note=>{
-          root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Waiting for approval</h1><p class="muted small" style="margin-top:8px">${businessNameV569} has been asked to approve your access. You will get in as soon as they grant it.</p>${note?`<p class="muted small" id="workspaceApprovalNote" style="margin-top:8px">${esc(note)}</p>`:''}<button class="btn" id="workspaceApprovalRetry" style="margin-top:16px">Check again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+          root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:420px;max-width:100%;text-align:center" aria-labelledby="workspaceUnavailableTitle"><h1 id="workspaceUnavailableTitle" style="font-size:24px">Waiting for approval</h1><p class="muted small" style="margin-top:8px"><span>${businessNameV569}</span> has been asked to approve your access. You will get in as soon as they grant it.</p>${note?`<p class="muted small" id="workspaceApprovalNote" style="margin-top:8px">${esc(note)}</p>`:''}<button class="btn" id="workspaceApprovalRetry" style="margin-top:16px">Check again</button>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
           $('main').focus();
           wireAccountDeletionButton();
           $('workspaceApprovalRetry').onclick=async()=>{
@@ -3924,7 +3924,7 @@ function renderNoCustomerDestination(staffWorkspaces=[]){
   const workspaces=sortStaffWorkspaces(staffWorkspaces);
   const relationshipRetry=customerRelationshipSyncCanRecover();
   root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:520px;max-width:100%" aria-labelledby="noCustomerTitle">
-    <div class="logo">${brandWordmark()}</div><h1 id="noCustomerTitle" style="font-size:1.55rem;margin-top:16px">${esc(BRAND.customerLabel)} is not set up for this account</h1>
+    <div class="logo">${brandWordmark()}</div><h1 id="noCustomerTitle" style="font-size:1.55rem;margin-top:16px"><span>${esc(BRAND.customerLabel)}</span> is not set up for this account</h1>
     <p class="muted" style="margin-top:7px;line-height:1.55">This signed-in account has staff access, but no registered customer profile or linked customer programme. No empty wallet has been shown.</p>
     ${relationshipRetry?`<div class="row" style="margin-top:16px">${customerRelationshipCheckActionHtml()}</div>`:''}
     ${workspaces.length?`<div style="margin-top:16px"><b>Open a staff workspace</b><div class="row" style="margin-top:10px">${workspaces.map(workspace=>`<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></div>`:''}
@@ -4290,7 +4290,7 @@ function renderCustomerWalletUnavailable(message='Customer wallet access is not 
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2><span>${esc(BRAND.customerLabel)}</span> is not open yet</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
     </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();
@@ -4301,7 +4301,7 @@ function renderCustomerCapabilityRetry(message,reason=''){
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2><span>${esc(BRAND.customerLabel)}</span> could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
       ${reason?`<p class="muted small" style="margin-top:6px">${esc(reason)}</p>`:''}
       <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
@@ -8271,10 +8271,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
             <div class="muted small" style="margin-top:2px">Pay <b>${money(Number(pl.price_cents||0))}</b>${Number(pl.bonus_cents||0)>0?` · bonus <b>${money(Number(pl.bonus_cents))}</b>`:''} · total value <b>${money(Number(pl.total_usable_cents||0))}</b></div>
             <div class="muted small">Paid value expiry: ${esc(expiryWords(pl.paid_expiry_days))}${Number(pl.bonus_cents||0)>0?` · bonus expiry: ${esc(expiryWords(pl.bonus_expiry_days))}`:''}</div>
             ${blockersHtml(pl.blockers)}</div></label>`;
-      }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. ${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</p>`;
+      }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. <span>${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</span></p>`;
       const methodSel=`<div><label for="svtMethod" class="muted small">Payment method</label><br><select id="svtMethod" style="max-width:220px"${testOnly?' disabled':''}>${methodOpts.map(([v,l])=>`<option value="${v}"${v===st.method?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
       const refField=needsReference()?`<div><label for="svtRef" class="muted small">Payment reference (required)</label><br><input id="svtRef" type="text" value="${esc(st.reference)}" placeholder="e.g. terminal approval code" style="max-width:260px"></div>`:'';
-      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b>${esc(BRAND.productName)} has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
+      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b><span>${esc(BRAND.productName)}</span> has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
       body=`<div class="cui-card-head"><h3>${esc(st.cust.full_name||'Customer')} · ${esc(st.cust.phone||'')}</h3><p>Choose the plan and payment. Amounts are set by the plan and cannot be edited here.</p></div>
         ${planRadios}
         <div class="row" style="gap:10px;flex-wrap:wrap;align-items:end;margin-top:14px">${methodSel}${refField}</div>

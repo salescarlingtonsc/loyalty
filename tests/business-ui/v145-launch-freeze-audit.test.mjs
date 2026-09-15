@@ -640,7 +640,7 @@ test('waitlist terminal booked rows are labelled as conversions, never proven se
   const waitlist=section('async function waitlistPage(){','/* ---------- inventory ---------- */');
   /* nestly_v571 (owner: "Add filter time here" — Today / Yesterday / date–date). The tile now
      names the period it is counting, so the word "today" is only one of its possible endings. */
-  assert.match(waitlist,/Resolved as booked \$\{esc\(waitlistPeriodLabelV571\(\)\)\}/);
+  assert.match(waitlist,/Resolved as booked <span>\$\{esc\(waitlistPeriodLabelV571\(\)\)\}<\/span>/);
   assert.match(waitlist,/const waitlistPeriodV571=\{mode:'today'/,'today is still the default');
   /* nestly_v571 (owner mark: the disclaimer sentence scribbled out, "remove this wording"). The
      invariant it existed to protect is that the tile must never claim physical seating — that is

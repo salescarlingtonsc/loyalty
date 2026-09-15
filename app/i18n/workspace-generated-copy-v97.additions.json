@@ -20568,6 +20568,336 @@
       "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
       "zh-CN": "印花由高到低",
       "ms": "Setem tinggi ke rendah"
+    },
+    {
+      "source": "did not approve app access for this account. Ask them to send you a new invite if this is wrong.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "未批准此账户的应用访问权限。如有误，请让他们重新发送邀请。",
+      "ms": "tidak meluluskan akses aplikasi untuk akaun ini. Minta mereka menghantar jemputan baharu jika ini tidak betul."
+    },
+    {
+      "source": "has been asked to approve your access. You will get in as soon as they grant it.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "已收到批准您访问权限的请求。一经批准，您即可进入。",
+      "ms": "telah diminta untuk meluluskan akses anda. Anda akan masuk sebaik sahaja mereka memberikannya."
+    },
+    {
+      "source": "is not set up for this account",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "尚未为此账户设置",
+      "ms": "belum disediakan untuk akaun ini"
+    },
+    {
+      "source": "is not open yet",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "尚未开放",
+      "ms": "belum dibuka"
+    },
+    {
+      "source": "could not load",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法加载",
+      "ms": "tidak dapat dimuatkan"
+    },
+    {
+      "source": "wants to book.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "想要预约。",
+      "ms": "mahu menempah."
+    },
+    {
+      "source": "records the correction, it does not move money.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "只记录更正，不会转移任何款项。",
+      "ms": "merekodkan pembetulan itu, ia tidak menggerakkan wang."
+    },
+    {
+      "source": "The refund was not created.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "未创建退款。",
+      "ms": "Bayaran balik tidak dicipta."
+    },
+    {
+      "source": "reverses it and records a corrected replacement together, so customer points and financial records stay synchronized.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "会同时冲正原记录并写入更正后的替代记录，因此顾客积分与财务记录保持同步。",
+      "ms": "membatalkannya dan merekodkan gantian yang dibetulkan bersama-sama, supaya mata pelanggan dan rekod kewangan kekal segerak."
+    },
+    {
+      "source": "Allowed by customer ·",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "顾客已允许 ·",
+      "ms": "Dibenarkan oleh pelanggan ·"
+    },
+    {
+      "source": "The team never sees the customer’s birthday date or validity window.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "团队永远看不到顾客的生日日期或有效期。",
+      "ms": "Pasukan tidak pernah melihat tarikh hari lahir pelanggan atau tempoh sahnya."
+    },
+    {
+      "source": "given back",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "退回于",
+      "ms": "dipulangkan"
+    },
+    {
+      "source": "is free for this customer.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "对这位顾客免费。",
+      "ms": "percuma untuk pelanggan ini."
+    },
+    {
+      "source": "Any one of:",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "以下任选其一：",
+      "ms": "Mana-mana satu daripada:"
+    },
+    {
+      "source": "more under More items",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "项在「更多项目」中",
+      "ms": "lagi di bawah Lagi item"
+    },
+    {
+      "source": "given free — welcome offer used.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "免费赠送 — 已使用迎新优惠。",
+      "ms": "diberi percuma — tawaran selamat datang digunakan."
+    },
+    {
+      "source": "— customers are not earning right now.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "— 顾客目前不会赚取任何积分。",
+      "ms": "— pelanggan tidak memperoleh apa-apa sekarang."
+    },
+    {
+      "source": "Review every number below — Save puts it live for customers.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "请核对下方每一个数字 — 保存后即对顾客生效。",
+      "ms": "Semak setiap angka di bawah — Simpan menjadikannya aktif untuk pelanggan."
+    },
+    {
+      "source": "live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "个进行中的优惠是本商户的上限。若要发布这一个，请选择一个优惠退回草稿。顾客将不再看到您选中的那一个；它不会被删除，日后仍可重新发布。",
+      "ms": "tawaran aktif ialah had bagi perniagaan ini. Untuk menerbitkan yang ini, pilih satu tawaran untuk dialihkan semula ke draf. Pelanggan berhenti melihat yang anda pilih; tiada apa mengenainya dipadam dan anda boleh menerbitkannya semula kemudian."
+    },
+    {
+      "source": "Set up",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "设置",
+      "ms": "Sediakan"
+    },
+    {
+      "source": "for the customer who referred",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "给推荐人",
+      "ms": "untuk pelanggan yang merujuk"
+    },
+    {
+      "source": "for the friend",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "给好友",
+      "ms": "untuk rakan itu"
+    },
+    {
+      "source": "Suggested cost to you:",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "建议由您承担的成本：",
+      "ms": "Cadangan kos kepada anda:"
+    },
+    {
+      "source": "Could not load playbooks.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法加载行动方案。",
+      "ms": "Tidak dapat memuatkan buku panduan."
+    },
+    {
+      "source": "Could not load results.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法加载结果。",
+      "ms": "Tidak dapat memuatkan keputusan."
+    },
+    {
+      "source": "Could not prepare the playbook.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法准备该行动方案。",
+      "ms": "Tidak dapat menyediakan buku panduan itu."
+    },
+    {
+      "source": "Could not count matching customers.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法统计符合条件的顾客。",
+      "ms": "Tidak dapat mengira pelanggan yang sepadan."
+    },
+    {
+      "source": "Could not create:",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法创建：",
+      "ms": "Tidak dapat mencipta:"
+    },
+    {
+      "source": "It’s saved as a draft — press Retry start.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "已保存为草稿 — 请按「重试启动」。",
+      "ms": "Ia disimpan sebagai draf — tekan Cuba mula semula."
+    },
+    {
+      "source": "runs on its own",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "独立运行",
+      "ms": "berjalan sendiri"
+    },
+    {
+      "source": "No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "在能够读取服务器实时状态之前不显示任何控件 — 不会假定任何内容处于运行、正常或可用状态。",
+      "ms": "Tiada kawalan ditunjukkan sehingga keadaan pelayan langsung dapat dibaca — tiada apa diandaikan aktif, bersih atau boleh diguna."
+    },
+    {
+      "source": "No sellable plans for this customer at this branch.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "本分店没有可向这位顾客出售的方案。",
+      "ms": "Tiada pelan yang boleh dijual untuk pelanggan ini di cawangan ini."
+    },
+    {
+      "source": "has not verified this payment",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "尚未核实这笔付款",
+      "ms": "belum mengesahkan bayaran ini"
+    },
+    {
+      "source": "Type any amount you like when you issue a card.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "发卡时可以输入任意金额。",
+      "ms": "Taip apa-apa amaun yang anda mahu semasa menerbitkan kad."
+    },
+    {
+      "source": "is already busy then",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "当时已有安排",
+      "ms": "sudah sibuk pada waktu itu"
+    },
+    {
+      "source": "is checked out.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "已结账。",
+      "ms": "telah membayar."
+    },
+    {
+      "source": "Keep days for",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "保管天数：",
+      "ms": "Hari simpanan untuk"
+    },
+    {
+      "source": "Size in millilitres for",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "容量（毫升）：",
+      "ms": "Saiz dalam mililiter untuk"
+    },
+    {
+      "source": "needs a whole number between 1 and 365 days, or an empty box.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "需要填写 1 到 365 之间的整数天数，或留空。",
+      "ms": "memerlukan nombor bulat antara 1 dan 365 hari, atau kotak kosong."
+    },
+    {
+      "source": "Resolved as booked",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "已确认为已预约",
+      "ms": "Diselesaikan sebagai ditempah"
+    },
+    {
+      "source": "Complete export could not be created. No partial CSV was downloaded.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "无法生成完整导出。未下载任何不完整的 CSV。",
+      "ms": "Eksport lengkap tidak dapat dicipta. Tiada CSV separa dimuat turun."
+    },
+    {
+      "source": "Complete export stopped before downloading. No partial CSV was downloaded.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "完整导出在下载前已停止。未下载任何不完整的 CSV。",
+      "ms": "Eksport lengkap berhenti sebelum dimuat turun. Tiada CSV separa dimuat turun."
+    },
+    {
+      "source": "at risk",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "面临流失风险",
+      "ms": "berisiko"
+    },
+    {
+      "source": "By method:",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "按方式：",
+      "ms": "Mengikut kaedah:"
+    },
+    {
+      "source": "— for reference only; do not quote this while the verdict is \"not enough signal\".",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "— 仅供参考；在结论为「信号不足」期间，请勿引用此数字。",
+      "ms": "— untuk rujukan sahaja; jangan petik ini semasa keputusannya \"belum cukup isyarat\"."
+    },
+    {
+      "source": "appointments in this period.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "个预约在此期间内。",
+      "ms": "janji temu dalam tempoh ini."
+    },
+    {
+      "source": "No zero is inferred.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "不会推断为零。",
+      "ms": "Tiada sifar diandaikan."
+    },
+    {
+      "source": "of identified customers in this period.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "为此期间内已识别的顾客。",
+      "ms": "daripada pelanggan yang dikenal pasti dalam tempoh ini."
+    },
+    {
+      "source": "customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "位顾客在本统计期间内购买了不止一次。此处采用冲正或退款后仍保有正值的合格已完成消费；并非由到访次数推断。",
+      "ms": "pelanggan membeli lebih daripada sekali dalam tempoh jawapan ini. Ini menggunakan pembelian selesai yang layak dan masih bernilai positif selepas pembatalan atau bayaran balik; ia tidak disimpulkan daripada kunjungan."
+    },
+    {
+      "source": "used in P&L",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "用于损益表",
+      "ms": "digunakan dalam Untung Rugi"
+    },
+    {
+      "source": "Only recorded eligible payments count toward cash-basis revenue.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "只有已记录的合格付款才计入收付实现制营收。",
+      "ms": "Hanya bayaran layak yang direkodkan dikira ke arah hasil asas tunai."
+    },
+    {
+      "source": "works their own hours but has no open day. Add a day, or untick \"Works their own hours\" to follow the shop hours.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "按本人自己的工时上班，但没有任何开放日。请添加一天，或取消勾选「按本人自己的工时」以沿用店铺营业时间。",
+      "ms": "bekerja mengikut waktu sendiri tetapi tiada hari dibuka. Tambah satu hari, atau nyahtanda \"Bekerja mengikut waktu sendiri\" untuk mengikut waktu kedai."
+    },
+    {
+      "source": "has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "已注册，正在等待您放行。批准后，他们会获得已为其设置好的模块。",
+      "ms": "telah mendaftar dan sedang menunggu anda membenarkannya masuk. Meluluskannya memberi mereka modul yang telah ditetapkan untuk mereka."
+    },
+    {
+      "source": ". Turn it on and this preview — and your customers’ app — will show the button.",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "。开启后，此预览以及顾客的应用都会显示该按钮。",
+      "ms": ". Hidupkannya dan pratonton ini — dan aplikasi pelanggan anda — akan menunjukkan butang itu."
+    },
+    {
+      "source": "Confirm new total",
+      "reason": "nestly_v941 — the reviewed half of 56 more interpolated sentences, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. A sentence mixing English with a value renders as ONE node, which is exactly what a catalogue keyed on whole nodes can never match, so each of these reached a zh-CN or ms reader in English. Splitting was chosen over a named template wherever the value sits at one END: it needs no reviewed template, no inventory entry and no helper, so the harnesses that slice a single render function out of app.js and run it in a vm keep working. Several keys therefore read as clauses rather than sentences -- 'wants to book.', 'is free for this customer.', 'at risk' -- because the value is the subject that precedes them, and each translation is written to sit in that fixed position in its own language rather than to stand alone.",
+      "zh-CN": "确认新总额",
+      "ms": "Sahkan jumlah baharu"
     }
   ]
 }

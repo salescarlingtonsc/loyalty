@@ -214,7 +214,7 @@ const makeWaitingCard = answers => {
 test('a not-yet-approved teammate is told they are waiting, not that nothing is there', () => {
   const { root } = makeWaitingCard([]);
   assert.match(root.innerHTML, /Waiting for approval/);
-  assert.match(root.innerHTML, /Kopi Lab has been asked to approve your access/);
+  assert.match(root.innerHTML, /<span>Kopi Lab<\/span> has been asked to approve your access/);
   assert.match(root.innerHTML, /id="workspaceApprovalRetry"[^>]*>Check again</);
   /* The card keeps everything the block it replaces carried. */
   assert.match(root.innerHTML, /data-account-deletion/);

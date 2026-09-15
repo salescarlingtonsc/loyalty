@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="193d6d92e7ff8b8de99b2bb1f09f36daff11826b5b9db04e4dbb0afb04210c81"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="72fe405389753bf163a04056ae04a8c4ae83cf3640c0cb8a34b0ab0b2d57db4b"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 193d6d92e7ff8b8de99b2bb1f09f36daff11826b5b9db04e4dbb0afb04210c81</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 72fe405389753bf163a04056ae04a8c4ae83cf3640c0cb8a34b0ab0b2d57db4b</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -9980,9 +9980,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const losing=exclusiveConflictsV322(kind).map(switchTitleV322);
     if(!losing.length)return '';
     return `<div class="imp-note" data-grow-setup-exclusive-w6i2="${esc(kind)}" style="margin-top:12px" role="status">
-      <b>${esc(switchTitleV322(kind))} runs on its own</b>
+      <b><span>${esc(switchTitleV322(kind))}</span> runs on its own</b>
       <p class="muted small" style="margin-top:6px">Turning it on switches ${esc(losing.join(' and '))} off, so customers stop earning there. Everything you have set up stays saved and comes back if you turn it on again.</p>
-      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on ${esc(switchTitleV322(kind))}</button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on <span>${esc(switchTitleV322(kind))}</span></button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
   };
   const stepOneHtml=()=>{
     const anyOn=anySwitchOnW6I2();
@@ -13419,7 +13419,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?'Choose the stamp card, set how many stamps a visit earns, and add a first gift customers can redeem for.'
           :'Choose points, set the earning rate, and add a first gift customers can redeem for.',
         actionHtml:canSetupGrow
-          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up ${growPointsPageTitleV326}</button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
+          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up <span>${growPointsPageTitleV326}</span></button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
         <!-- V343 (owner mockup, photo 4): the summary row, Edit/Add gifts/ON-OFF and the
@@ -14457,14 +14457,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            the amount box is relabelled to match so the number on screen has a unit. */''}
         ${[['points','Points'],['stamps','Stamps'],['voucher','A free gift']].map(([kind,label])=>`<label class="welcome-offer-optioncard-v350${growReferralKindV420===kind?' selected':''}" style="flex:1;min-width:min(100%,180px)"><input type="radio" name="growReferralKindV420" value="${kind}" ${growReferralKindV420===kind?'checked':''}><span><b>${esc(label)}</b></span></label>`).join('')}
       </div>
-      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364"><span>${growReferralKindV420==='stamps'?'Stamps':'Points'}</span> for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
       <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
       ${/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's
            side, on by default because that is the ruling — a firm that wants the old one-sided
            referral back unticks it here. The amount is left blank on purpose: blank means the same
            as the referrer, so a firm that simply wants both sides paid fills in nothing. */''}
       <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
-      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421"><span>${growReferralKindV420==='stamps'?'Stamps':'Points'}</span> for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
       <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least <span>(${esc(S.biz?.currency||'SGD')})</span></label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
@@ -16856,7 +16856,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <button type="button" class="card" data-reward-template="${index}" style="text-align:left;cursor:pointer">
           <b>${esc(template.name)}</b>
           <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
-          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: ${esc(money(template.budget))}</span></p>
+          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: <span>${esc(money(template.budget))}</span></span></p>
         </button>`).join('')}</div>
         <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{

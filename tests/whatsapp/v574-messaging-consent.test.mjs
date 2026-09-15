@@ -194,7 +194,7 @@ function buildStaffFns() {
 test('staff row: allowed shows "Allowed by customer · {date}" and NO toggle/button', () => {
   const { staffClientWhatsappConsentRowMarkupV574 } = buildStaffFns();
   const html = staffClientWhatsappConsentRowMarkupV574({ opted_in: true, decided_at: '2026-08-20T03:00:00Z' });
-  assert.match(html, /Allowed by customer · 20 Aug 2026/);
+  assert.match(html, /Allowed by customer · <span>20 Aug 2026<\/span>/);
   assert.match(html, /WhatsApp offers/);
   assert.doesNotMatch(html, /<button/i, 'staff must never get a setter for this');
   assert.doesNotMatch(html, /<input/i, 'staff must never get a toggle for this');

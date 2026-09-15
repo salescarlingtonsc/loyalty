@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="34ae588c12eaa778b7ceffde698e118566f60a14f916b5d030adf2b477779d3d"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="59715dc4bf7cd7a367fcbe88d6782bd66b881d016ecfddd28b9aae20f5aff4c0"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 34ae588c12eaa778b7ceffde698e118566f60a14f916b5d030adf2b477779d3d</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 59715dc4bf7cd7a367fcbe88d6782bd66b881d016ecfddd28b9aae20f5aff4c0</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -7288,7 +7288,7 @@ async function clientsPage(){
    (label span, value span, one row div) rather than depending on that closure-local helper. */
 function staffClientWhatsappConsentRowMarkupV574(permission){
   const valueHtml=permission?.opted_in===true
-    ?`<span class="pill on">Allowed by customer · ${esc(formatCustomerJoinedDateV141(permission.decided_at||''))}</span>`
+    ?`<span class="pill on">Allowed by customer · <span>${esc(formatCustomerJoinedDateV141(permission.decided_at||''))}</span></span>`
     :'<span class="pill off">Not allowed</span>';
   return `<div class="c360-summary-row-v294"><span class="c360-summary-label-v294">${esc('WhatsApp offers')}</span><span class="c360-summary-value-v294">${valueHtml}</span></div><p class="muted small" style="margin-top:2px">Only the customer can change this, from their own Peekaa app.</p>`;
 }
@@ -7763,7 +7763,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
       :'';
     birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit</b>
       <p class="muted small" style="margin-top:7px">${esc(birthdayBenefit.label||'Birthday benefit')} · ${esc(birthdayBenefit.display||String(birthdayBenefit.status||'').replaceAll('_',' '))}</p>
-      <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
+      <p class="muted small" style="margin-top:5px"><span>${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'}</span> The team never sees the customer’s birthday date or validity window.</p>
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
   let rewardsMarkup='';
@@ -8078,7 +8078,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
       <p class="muted small" style="margin-top:5px">Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.</p>
       ${giftRowsV665.map(gift=>`<div class="row" style="margin-top:10px;align-items:flex-start" data-gift-row-v665="${esc(String(gift.id||''))}">
         <span class="inline-status">${CUI.icon('giftcard',{size:16})}<span data-merchant-content>${esc(gift.reward_label||GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}</span></span><span class="spacer"></span>
-        <span class="muted small" style="text-align:right">${esc(GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}${gift.reversed_at?`<br><span class="pill off">given back ${esc(activityWhenTextV267(gift.reversed_at))}</span>`:''}</span>
+        <span class="muted small" style="text-align:right">${esc(GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}${gift.reversed_at?`<br><span class="pill off">given back <span>${esc(activityWhenTextV267(gift.reversed_at))}</span></span>`:''}</span>
         ${gift.can_reverse===true
           ?`<button class="btn danger sm" style="margin-left:10px" data-gift-undo-v665="${esc(String(gift.id||''))}" data-kind-v665="${esc(String(gift.gift_kind||''))}" data-label-v665="${esc(gift.reward_label||'')}">Give back</button>`
           :(gift.reversed_at?'':`<span class="muted small" style="margin-left:10px">${esc(gift.refusal_reason||'')}</span>`)}
@@ -10497,9 +10497,9 @@ async function tillPage(){
   function checkoutActionHtml(){
     const hasSale=cartSaleLines().length>0, extras=extraLines();
     if(!hasSale)
-      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(extrasTotalCents())}</button>`:'';
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Record sale</span> · ${money(extrasTotalCents())}</button>`:'';
     if(staleConfirm)
-      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
+      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Confirm new total</span> · ${money(evalResult.total_cents)}</button>`;
     if(payError&&payError.kind==='retry')
       return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Retry payment</button>`;
     if(payError&&payError.kind==='conflict')
@@ -10795,7 +10795,7 @@ async function tillPage(){
     const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
     const welcomeBanner=welcomeOffer
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
-        <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="small" style="margin:5px 0"><span>${esc(welcomeOffer.reward_label||'Free item')}</span> is free for this customer.</p>
         ${welcomeMin
           ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
           :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
@@ -10868,7 +10868,7 @@ async function tillPage(){
       const items=Array.isArray(benefit?.scope_items)?benefit.scope_items.filter(Boolean):[];
       if(!items.length)return '';
       return String(benefit?.discount_scope||'')==='item'
-        ?`<span class="muted small">Any one of: ${esc(items.join(', '))}</span>`
+        ?`<span class="muted small">Any one of: <span>${esc(items.join(', '))}</span></span>`
         :`<span class="muted small">On ${esc(items.join(', '))}</span>`;
     };
     const giveRows=giveNow.map(benefit=>{
@@ -11264,7 +11264,7 @@ async function tillPage(){
     return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${/* V399 (owner, photo 2: the "What they had last" caption struck out). The grid still leads
         with this customer's own history — only the label describing it is gone, because the tiles
         are self-evident and the caption was competing with the question above it. The
-        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small"><span>${hiddenCount}</span> more under More items</span>`:''}</div>
       <div class="till-item-search-v392">
         <label class="sr-only" for="tillItemSearchV392">Search services, products and bundles</label>
         <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services, products and bundles" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
@@ -12144,7 +12144,7 @@ async function tillPage(){
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
         ${d.welcomeOfferGivenV215
-          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          ?`<p class="ok small" role="status" style="margin-top:10px"><span>${esc(d.welcomeOfferGivenV215)}</span> given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
               <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
@@ -14115,7 +14115,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     :loyaltyActiveV235?{label:'Live',tone:'on'}:{label:'Paused',tone:'off'};
   const loyaltyStatusPillV235=`<span class="pill ${loyaltyStatusV235.tone}" id="loyaltyStatusPillV235"><span aria-hidden="true">●</span> ${esc(loyaltyStatusV235.label)}</span>`;
   const loyaltyStripV235=(()=>{
-    if(p&&!loyaltyActiveV235)return `<div class="loyalty-strip-v235" id="loyaltyStripV235" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Paused</b> — customers are not earning right now.${draftVersionId?' Your unsaved and unpublished changes are safe.':''}</span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="loyaltyResumeV235" type="button">Resume programme</button>':''}</div></div>`;
+    if(p&&!loyaltyActiveV235)return `<div class="loyalty-strip-v235" id="loyaltyStripV235" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Paused</b> — customers are not earning right now.<span>${draftVersionId?' Your unsaved and unpublished changes are safe.':''}</span></span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="loyaltyResumeV235" type="button">Resume programme</button>':''}</div></div>`;
     /* nestly_v415 (owner, photo 2: the whole banner ringed — "remove the circled area, pressing
        save would publish to live. dont need hide in draft").
        The banner and its "Review & publish" are gone because Save now publishes: both writers on
@@ -14125,7 +14125,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        this page was the last one still asking the owner to publish by hand.
        A recommendation still gets a line, because a generated draft IS worth reading before it
        goes live; it just no longer claims the page is hiding anything. */
-    if(draftVersionId&&recommendation)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b>Suggested for you.</b> ${esc(recommendation.rationale)} Review every number below — Save puts it live for customers.</span></div></div>`;
+    if(draftVersionId&&recommendation)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b>Suggested for you.</b> <span>${esc(recommendation.rationale)}</span> Review every number below — Save puts it live for customers.</span></div></div>`;
     if(draftVersionId)return '';
     return '';
   })();
@@ -16766,7 +16766,7 @@ function promotionDemoteDialogV462({live=[],max=0}={}){
     dialog.setAttribute('aria-labelledby','promotionDemoteTitleV462');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
       <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">You already have ${rows.length} offer${rows.length===1?'':'s'} live</h2>
-      <p class="muted small" style="margin-top:10px">${max} live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
+      <p class="muted small" style="margin-top:10px"><span>${max}</span> live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
       <div class="promotion-demote-list-v462" role="radiogroup" aria-label="Offer to move back to draft" style="margin-top:12px;display:grid;gap:8px">
         ${rows.map((item,index)=>`<label class="welcome-offer-optioncard-v350" style="display:flex;gap:10px;align-items:flex-start">
           <input type="radio" name="promotionDemotePickV462" value="${esc(item.id)}"${index===0?' checked':''}>
@@ -19587,7 +19587,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?'Choose the stamp card, set how many stamps a visit earns, and add a first gift customers can redeem for.'
           :'Choose points, set the earning rate, and add a first gift customers can redeem for.',
         actionHtml:canSetupGrow
-          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up ${growPointsPageTitleV326}</button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
+          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up <span>${growPointsPageTitleV326}</span></button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
         <!-- V343 (owner mockup, photo 4): the summary row, Edit/Add gifts/ON-OFF and the
@@ -20625,14 +20625,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            the amount box is relabelled to match so the number on screen has a unit. */''}
         ${[['points','Points'],['stamps','Stamps'],['voucher','A free gift']].map(([kind,label])=>`<label class="welcome-offer-optioncard-v350${growReferralKindV420===kind?' selected':''}" style="flex:1;min-width:min(100%,180px)"><input type="radio" name="growReferralKindV420" value="${kind}" ${growReferralKindV420===kind?'checked':''}><span><b>${esc(label)}</b></span></label>`).join('')}
       </div>
-      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364"><span>${growReferralKindV420==='stamps'?'Stamps':'Points'}</span> for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
       <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
       ${/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's
            side, on by default because that is the ruling — a firm that wants the old one-sided
            referral back unticks it here. The amount is left blank on purpose: blank means the same
            as the referrer, so a firm that simply wants both sides paid fills in nothing. */''}
       <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
-      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421"><span>${growReferralKindV420==='stamps'?'Stamps':'Points'}</span> for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
       <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least <span>(${esc(S.biz?.currency||'SGD')})</span></label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
@@ -23024,7 +23024,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <button type="button" class="card" data-reward-template="${index}" style="text-align:left;cursor:pointer">
           <b>${esc(template.name)}</b>
           <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
-          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: ${esc(money(template.budget))}</span></p>
+          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: <span>${esc(money(template.budget))}</span></span></p>
         </button>`).join('')}</div>
         <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
@@ -23164,7 +23164,7 @@ async function renderPlaybooks(ctx){
     host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:20})}<b>Bring-back playbooks</b></div>
       ${denied
         ?`<p class="muted small" style="margin-top:10px;display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:16})}<span>Playbook results need finance viewing. Ask an owner for retention + finance read access.</span></p>`
-        :`<div class="err" style="margin-top:10px" role="alert">Could not load playbooks. ${esc(error.message||'')}</div><button class="btn ghost sm" id="pbRetry" style="margin-top:10px">Try again</button>`}</div>`;
+        :`<div class="err" style="margin-top:10px" role="alert">Could not load playbooks. <span>${esc(error.message||'')}</span></div><button class="btn ghost sm" id="pbRetry" style="margin-top:10px">Try again</button>`}</div>`;
     if(!denied&&$('pbRetry'))$('pbRetry').onclick=()=>renderPlaybooks(ctx);
     return;
   }
@@ -23227,7 +23227,7 @@ async function pbRenderResults(c,el,ctx){
     const denied=error.code==='42501';
     el.innerHTML=denied
       ?`<p class="muted small" style="display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:16})}<span>Results need finance + retention viewing access.</span></p>`
-      :`<div class="err" role="alert">Could not load results. ${esc(error.message||'')}</div><button class="btn ghost sm" data-pb-resretry style="margin-top:8px">Try again</button>`;
+      :`<div class="err" role="alert">Could not load results. <span>${esc(error.message||'')}</span></div><button class="btn ghost sm" data-pb-resretry style="margin-top:8px">Try again</button>`;
     const r=el.querySelector('[data-pb-resretry]');if(r)r.onclick=()=>pbRenderResults(c,el,ctx);
     return;
   }
@@ -23569,7 +23569,7 @@ function openPlaybookWizard(ctx){
       matched=cand;versions=vs||[];
     }catch(e){
       if(!modal.isConnected)return;
-      $('pbWizBody').innerHTML=`<div class="err" role="alert">Could not prepare the playbook. ${esc(e.message||String(e))}</div>`;
+      $('pbWizBody').innerHTML=`<div class="err" role="alert">Could not prepare the playbook. <span>${esc(e.message||String(e))}</span></div>`;
       return;
     }
     if(!modal.isConnected)return;
@@ -23673,7 +23673,7 @@ function openPlaybookWizard(ctx){
           state.candidates=[];state.truncated=false;
           state.candidatesLoading=false;
           const host=$('pbWhoPreview');
-          if(host)host.innerHTML=`<div class="err" role="alert">Could not count matching customers. ${esc(e.message||String(e))}</div>`;
+          if(host)host.innerHTML=`<div class="err" role="alert">Could not count matching customers. <span>${esc(e.message||String(e))}</span></div>`;
           return;
         }
         state.candidatesLoading=false;
@@ -23742,12 +23742,12 @@ function openPlaybookWizard(ctx){
           p_business:S.biz.id,p_program_version_id:state.version.id,p_name:name,p_audience_criteria:criteria,
           p_holdout_percent:state.holdout,p_budget_cap_cents:capCents,p_attribution_window_days:state.windowDays,
           p_expected_cost_cents:expectedCostCents(),p_expected_upside_cents:expUpside,p_explanation:null});
-        if(error){out.innerHTML=`<div class="err" role="alert">Could not create: ${esc(error.message||'')}</div>`;resetLaunch('Create & start');state.busy=false;return;}
+        if(error){out.innerHTML=`<div class="err" role="alert">Could not create: <span>${esc(error.message||'')}</span></div>`;resetLaunch('Create & start');state.busy=false;return;}
         state.createdCampaignId=data.campaign_id;
       }
       const {error:actErr}=await pbActivateCampaign(state.createdCampaignId,clientIds);
       if(actErr){
-        out.innerHTML=`<div class="err" role="alert"><b>Created, but couldn’t start.</b> ${esc(actErr.message||'')} It’s saved as a draft — press Retry start.</div>`;
+        out.innerHTML=`<div class="err" role="alert"><b>Created, but couldn’t start.</b> <span>${esc(actErr.message||'')}</span> It’s saved as a draft — press Retry start.</div>`;
         resetLaunch('Retry start');state.busy=false;
         if(ctx.isCurrent())renderPlaybooks(ctx);
         return;
@@ -25239,9 +25239,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const losing=exclusiveConflictsV322(kind).map(switchTitleV322);
     if(!losing.length)return '';
     return `<div class="imp-note" data-grow-setup-exclusive-w6i2="${esc(kind)}" style="margin-top:12px" role="status">
-      <b>${esc(switchTitleV322(kind))} runs on its own</b>
+      <b><span>${esc(switchTitleV322(kind))}</span> runs on its own</b>
       <p class="muted small" style="margin-top:6px">Turning it on switches ${esc(losing.join(' and '))} off, so customers stop earning there. Everything you have set up stays saved and comes back if you turn it on again.</p>
-      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on ${esc(switchTitleV322(kind))}</button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on <span>${esc(switchTitleV322(kind))}</span></button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
   };
   const stepOneHtml=()=>{
     const anyOn=anySwitchOnW6I2();
@@ -27848,7 +27848,7 @@ async function storedValuePage(){
     const msg=(ovRes.error&&ovRes.error.message)||(rcRes.error&&rcRes.error.message)||'Stored value could not load.';
     const denied=(ovRes.error&&ovRes.error.code==='42501')||(rcRes.error&&rcRes.error.code==='42501');
     routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'The stored-value state could not be confirmed.',iconName:'wallet',canWrite:false,moduleLabel:'Stored value'})}
-      <div class="card"><div class="err" role="alert"><b>Stored value is unavailable.</b> ${esc(denied?'Only the owner can view stored value.':msg)} No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.</div>
+      <div class="card"><div class="err" role="alert"><b>Stored value is unavailable.</b> <span>${esc(denied?'Only the owner can view stored value.':msg)}</span> No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.</div>
       <div style="margin-top:12px"><button class="btn" id="svRetry" type="button">Try again</button></div></div>`;
     if($('svRetry'))$('svRetry').onclick=()=>storedValuePage();
     return;
@@ -28194,10 +28194,10 @@ async function svRunTopupFlow({branches,state,testOnly}){
             <div class="muted small" style="margin-top:2px">Pay <b>${money(Number(pl.price_cents||0))}</b>${Number(pl.bonus_cents||0)>0?` · bonus <b>${money(Number(pl.bonus_cents))}</b>`:''} · total value <b>${money(Number(pl.total_usable_cents||0))}</b></div>
             <div class="muted small">Paid value expiry: ${esc(expiryWords(pl.paid_expiry_days))}${Number(pl.bonus_cents||0)>0?` · bonus expiry: ${esc(expiryWords(pl.bonus_expiry_days))}`:''}</div>
             ${blockersHtml(pl.blockers)}</div></label>`;
-      }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. ${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</p>`;
+      }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. <span>${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</span></p>`;
       const methodSel=`<div><label for="svtMethod" class="muted small">Payment method</label><br><select id="svtMethod" style="max-width:220px"${testOnly?' disabled':''}>${methodOpts.map(([v,l])=>`<option value="${v}"${v===st.method?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
       const refField=needsReference()?`<div><label for="svtRef" class="muted small">Payment reference (required)</label><br><input id="svtRef" type="text" value="${esc(st.reference)}" placeholder="e.g. terminal approval code" style="max-width:260px"></div>`:'';
-      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b>${esc(BRAND.productName)} has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
+      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b><span>${esc(BRAND.productName)}</span> has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
       body=`<div class="cui-card-head"><h3>${esc(st.cust.full_name||'Customer')} · ${esc(st.cust.phone||'')}</h3><p>Choose the plan and payment. Amounts are set by the plan and cannot be edited here.</p></div>
         ${planRadios}
         <div class="row" style="gap:10px;flex-wrap:wrap;align-items:end;margin-top:14px">${methodSel}${refField}</div>
@@ -29424,9 +29424,9 @@ async function svRunTopupFlow({branches,state,testOnly}){
   function checkoutActionHtml(){
     const hasSale=cartSaleLines().length>0, extras=extraLines();
     if(!hasSale)
-      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(extrasTotalCents())}</button>`:'';
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Record sale</span> · ${money(extrasTotalCents())}</button>`:'';
     if(staleConfirm)
-      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
+      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Confirm new total</span> · ${money(evalResult.total_cents)}</button>`;
     if(payError&&payError.kind==='retry')
       return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Retry payment</button>`;
     if(payError&&payError.kind==='conflict')
@@ -29722,7 +29722,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
     const welcomeBanner=welcomeOffer
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
-        <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="small" style="margin:5px 0"><span>${esc(welcomeOffer.reward_label||'Free item')}</span> is free for this customer.</p>
         ${welcomeMin
           ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
           :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
@@ -29795,7 +29795,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const items=Array.isArray(benefit?.scope_items)?benefit.scope_items.filter(Boolean):[];
       if(!items.length)return '';
       return String(benefit?.discount_scope||'')==='item'
-        ?`<span class="muted small">Any one of: ${esc(items.join(', '))}</span>`
+        ?`<span class="muted small">Any one of: <span>${esc(items.join(', '))}</span></span>`
         :`<span class="muted small">On ${esc(items.join(', '))}</span>`;
     };
     const giveRows=giveNow.map(benefit=>{
@@ -30191,7 +30191,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
     return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${/* V399 (owner, photo 2: the "What they had last" caption struck out). The grid still leads
         with this customer's own history — only the label describing it is gone, because the tiles
         are self-evident and the caption was competing with the question above it. The
-        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small"><span>${hiddenCount}</span> more under More items</span>`:''}</div>
       <div class="till-item-search-v392">
         <label class="sr-only" for="tillItemSearchV392">Search services, products and bundles</label>
         <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services, products and bundles" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
@@ -31071,7 +31071,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
         ${d.welcomeOfferGivenV215
-          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          ?`<p class="ok small" role="status" style="margin-top:10px"><span>${esc(d.welcomeOfferGivenV215)}</span> given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
               <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
@@ -31311,7 +31311,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
       rebookFromAppointmentV640={businessId:S.biz.id,appointmentId:item.id,clientId:item.client_id||null};
       const card=dialog.querySelector('.modal-card');
       if(!card){close();return}
-      card.innerHTML=`<div class="row"><div><h2 id="appointmentCompletedTitleV640">Appointment completed</h2><p class="muted small" style="margin-top:4px" data-merchant-content>${esc(client.full_name||'This customer')} is checked out.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentCompletedCloseV640" aria-label="Close">Close</button></div><div class="appointment-detail-actions" style="margin-top:16px"><button type="button" class="btn" id="appointmentBookNextV640">Book next visit</button><button type="button" class="btn ghost" id="appointmentCompletedDoneV640">Done</button></div>`;
+      card.innerHTML=`<div class="row"><div><h2 id="appointmentCompletedTitleV640">Appointment completed</h2><p class="muted small" style="margin-top:4px" data-merchant-content><span>${esc(client.full_name||'This customer')}</span> is checked out.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentCompletedCloseV640" aria-label="Close">Close</button></div><div class="appointment-detail-actions" style="margin-top:16px"><button type="button" class="btn" id="appointmentBookNextV640">Book next visit</button><button type="button" class="btn ghost" id="appointmentCompletedDoneV640">Done</button></div>`;
       dialog.setAttribute('aria-labelledby','appointmentCompletedTitleV640');
       $('appointmentCompletedCloseV640').onclick=close;
       $('appointmentCompletedDoneV640').onclick=close;
@@ -31518,6 +31518,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'34ae588c12eaa778b7ceffde698e118566f60a14f916b5d030adf2b477779d3d',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'59715dc4bf7cd7a367fcbe88d6782bd66b881d016ecfddd28b9aae20f5aff4c0',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

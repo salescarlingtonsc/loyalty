@@ -3938,7 +3938,7 @@ async function writeProgrammeSwitchesWithStampConversionV384(set,{paused=false,k
 function openBookingRequestPopupV329(row){
   if($('bookingRequestPopupV329'))return;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingRequestPopupV329" role="dialog" aria-modal="true" aria-labelledby="bookingRequestPopupTitleV329" tabindex="-1"><div class="modal-card" style="max-width:480px">
-    <div class="row"><div><h2 id="bookingRequestPopupTitleV329">New booking request</h2><p class="muted small" style="margin-top:4px">${esc(row.name||'A customer')} wants to book.</p></div><span class="spacer"></span><button class="btn ghost sm" id="bookingRequestPopupCloseV329" type="button">Close</button></div>
+    <div class="row"><div><h2 id="bookingRequestPopupTitleV329">New booking request</h2><p class="muted small" style="margin-top:4px"><span>${esc(row.name||'A customer')}</span> wants to book.</p></div><span class="spacer"></span><button class="btn ghost sm" id="bookingRequestPopupCloseV329" type="button">Close</button></div>
     <div class="imp-note" style="margin-top:12px">
       <div><b>Service</b> ${esc(bookingRequestForNameV882(row)||'General visit')}</div>
       <div><b>Preferred time</b> ${esc(sgt(row.preferred_at)||'—')}</div>
@@ -4438,7 +4438,7 @@ function openReversalDialog(kind,item,onDone){
      method rather than looked up per sale: the dialog does not carry the tender, and a
      second place deciding what a sale was paid with is a second thing to keep true. */
   const tenderNoteV819=kind!=='sale'||item.is_package_session?''
-    :`<div class="imp-note"><b>${esc(BRAND.productName)} records the correction, it does not move money.</b> Cash and store credit are settled here — store credit goes straight back to the customer's balance. If they paid by card, PayNow or bank transfer, refund them on the terminal or app you took that payment on.</div>`;
+    :`<div class="imp-note"><b><span>${esc(BRAND.productName)}</span> records the correction, it does not move money.</b> Cash and store credit are settled here — store credit goes straight back to the customer's balance. If they paid by card, PayNow or bank transfer, refund them on the terminal or app you took that payment on.</div>`;
   const loyaltyNote=kind!=='redemption'?''
     :Number(item.points_spent||0)>0
     ?`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original points entry, every FEFO batch drain, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal.</div>`
@@ -4496,7 +4496,7 @@ function openReversalDialog(kind,item,onDone){
       const conflict=error.code==='23505'||/conflict|another immutable request|already reversed/i.test(error.message||'');
       const loyaltyShortfall=kind==='sale'&&/loyalty_already_spent/i.test(error.message||'');
       $('revOutcome').innerHTML=loyaltyShortfall
-        ?`<div class="err"><b>Some points from this sale are no longer available.</b> The refund was not created. ${S.myRole==='owner'?'An owner can explicitly accept the recorded loyalty shortfall; the customer keeps any reward already issued.':'Ask an owner to review and explicitly accept the loyalty shortfall.'}</div>${S.myRole==='owner'?'<button class="btn danger sm" id="revAcceptLoyaltyShortfall" type="button">Accept shortfall and reverse sale</button>':''}`
+        ?`<div class="err"><b>Some points from this sale are no longer available.</b> The refund was not created. <span>${S.myRole==='owner'?'An owner can explicitly accept the recorded loyalty shortfall; the customer keeps any reward already issued.':'Ask an owner to review and explicitly accept the loyalty shortfall.'}</span></div>${S.myRole==='owner'?'<button class="btn danger sm" id="revAcceptLoyaltyShortfall" type="button">Accept shortfall and reverse sale</button>':''}`
         :`<div class="err"><b>${conflict?'Changed-request conflict':'Reversal refused'}.</b> ${esc(error.message||'The database could not prove a safe compensation.')}</div>`;
       const acceptShortfall=$('revAcceptLoyaltyShortfall');
       if(acceptShortfall)acceptShortfall.onclick=async()=>{
@@ -4708,7 +4708,7 @@ function openSaleAmountCorrectionDialog(item,onDone){
   }
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="saleCorrectionModal" role="dialog" aria-modal="true" aria-labelledby="saleCorrectionTitle" tabindex="-1"><div class="modal-card" style="max-width:540px">
     <div class="row"><div><h2 id="saleCorrectionTitle">Amend sale amount</h2><p class="muted small">${esc(item.customer_name||'Walk-in')} · original ${money(Number(item.amount_cents))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="saleCorrectionClose" type="button">Close</button></div>
-    <div class="imp-note"><b>The original stays in history.</b> ${esc(BRAND.productName)} reverses it and records a corrected replacement together, so customer points and financial records stay synchronized.</div>
+    <div class="imp-note"><b>The original stays in history.</b> <span>${esc(BRAND.productName)}</span> reverses it and records a corrected replacement together, so customer points and financial records stay synchronized.</div>
     <label for="saleCorrectedAmount">Amended amount <span>(${esc(S.biz.currency||'SGD')})</span></label>
     <input id="saleCorrectedAmount" type="number" min="0.01" step="0.01" inputmode="decimal" value="${(Number(item.amount_cents)/100).toFixed(2)}">
     <label for="saleCorrectionNote">Correction note (optional)</label>
@@ -6918,7 +6918,7 @@ async function clientsPage(){
    (label span, value span, one row div) rather than depending on that closure-local helper. */
 function staffClientWhatsappConsentRowMarkupV574(permission){
   const valueHtml=permission?.opted_in===true
-    ?`<span class="pill on">Allowed by customer · ${esc(formatCustomerJoinedDateV141(permission.decided_at||''))}</span>`
+    ?`<span class="pill on">Allowed by customer · <span>${esc(formatCustomerJoinedDateV141(permission.decided_at||''))}</span></span>`
     :'<span class="pill off">Not allowed</span>';
   return `<div class="c360-summary-row-v294"><span class="c360-summary-label-v294">${esc('WhatsApp offers')}</span><span class="c360-summary-value-v294">${valueHtml}</span></div><p class="muted small" style="margin-top:2px">Only the customer can change this, from their own Peekaa app.</p>`;
 }
@@ -7394,7 +7394,7 @@ async function clientDetail(id){
       :'';
     birthdayCardMarkup=`<div class="card" id="c360-birthday"><b>Birthday benefit</b>
       <p class="muted small" style="margin-top:7px">${esc(birthdayBenefit.label||'Birthday benefit')} · ${esc(birthdayBenefit.display||String(birthdayBenefit.status||'').replaceAll('_',' '))}</p>
-      <p class="muted small" style="margin-top:5px">${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'} The team never sees the customer’s birthday date or validity window.</p>
+      <p class="muted small" style="margin-top:5px"><span>${birthdayBenefit.status==='available'?'Available to redeem now.':birthdayBenefit.status==='expired'?'No longer available.':'Fulfilment status is shown above.'}</span> The team never sees the customer’s birthday date or validity window.</p>
       ${birthdayRedeemMarkup}${birthdayReverseMarkup}</div>`;
   }
   let rewardsMarkup='';
@@ -7709,7 +7709,7 @@ async function clientDetail(id){
       <p class="muted small" style="margin-top:5px">Free rewards this customer has been given. Giving one back makes it available to them again; no money moves.</p>
       ${giftRowsV665.map(gift=>`<div class="row" style="margin-top:10px;align-items:flex-start" data-gift-row-v665="${esc(String(gift.id||''))}">
         <span class="inline-status">${CUI.icon('giftcard',{size:16})}<span data-merchant-content>${esc(gift.reward_label||GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}</span></span><span class="spacer"></span>
-        <span class="muted small" style="text-align:right">${esc(GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}${gift.reversed_at?`<br><span class="pill off">given back ${esc(activityWhenTextV267(gift.reversed_at))}</span>`:''}</span>
+        <span class="muted small" style="text-align:right">${esc(GIFT_KIND_LABEL_V665[gift.gift_kind]||'Reward')}${gift.given_at?` · ${esc(activityWhenTextV267(gift.given_at))}`:''}${gift.reversed_at?`<br><span class="pill off">given back <span>${esc(activityWhenTextV267(gift.reversed_at))}</span></span>`:''}</span>
         ${gift.can_reverse===true
           ?`<button class="btn danger sm" style="margin-left:10px" data-gift-undo-v665="${esc(String(gift.id||''))}" data-kind-v665="${esc(String(gift.gift_kind||''))}" data-label-v665="${esc(gift.reward_label||'')}">Give back</button>`
           :(gift.reversed_at?'':`<span class="muted small" style="margin-left:10px">${esc(gift.refusal_reason||'')}</span>`)}
@@ -10128,9 +10128,9 @@ async function tillPage(){
   function checkoutActionHtml(){
     const hasSale=cartSaleLines().length>0, extras=extraLines();
     if(!hasSale)
-      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Record sale · ${money(extrasTotalCents())}</button>`:'';
+      return extras.length?`<button class="btn" id="tCartConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Record sale</span> · ${money(extrasTotalCents())}</button>`:'';
     if(staleConfirm)
-      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} Confirm new total · ${money(evalResult.total_cents)}</button>`;
+      return `<button class="btn" id="tStaleConfirm" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('check',{size:20})} <span>Confirm new total</span> · ${money(evalResult.total_cents)}</button>`;
     if(payError&&payError.kind==='retry')
       return `<button class="btn" id="tPayRetry" style="width:100%;margin-top:16px;padding:18px;font-size:18px">${CUI.icon('retention',{size:20})} Retry payment</button>`;
     if(payError&&payError.kind==='conflict')
@@ -10426,7 +10426,7 @@ async function tillPage(){
     const welcomeMin=Number(welcomeOffer?.min_spend_cents)||0;
     const welcomeBanner=welcomeOffer
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Welcome offer &mdash; new sign-up</b>
-        <p class="small" style="margin:5px 0">${esc(welcomeOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="small" style="margin:5px 0"><span>${esc(welcomeOffer.reward_label||'Free item')}</span> is free for this customer.</p>
         ${welcomeMin
           ?`<p class="muted small" style="margin:5px 0">Needs at least ${money(welcomeMin)} on this sale. Ring the sale up first — the free item is offered on the receipt.</p>`
           :`<p class="muted small" style="margin:5px 0">No minimum spend. Nothing is charged.</p>
@@ -10499,7 +10499,7 @@ async function tillPage(){
       const items=Array.isArray(benefit?.scope_items)?benefit.scope_items.filter(Boolean):[];
       if(!items.length)return '';
       return String(benefit?.discount_scope||'')==='item'
-        ?`<span class="muted small">Any one of: ${esc(items.join(', '))}</span>`
+        ?`<span class="muted small">Any one of: <span>${esc(items.join(', '))}</span></span>`
         :`<span class="muted small">On ${esc(items.join(', '))}</span>`;
     };
     const giveRows=giveNow.map(benefit=>{
@@ -10895,7 +10895,7 @@ async function tillPage(){
     return `<div class="till-quick-head-v373"><b class="small">What did they use or buy today?</b>${/* V399 (owner, photo 2: the "What they had last" caption struck out). The grid still leads
         with this customer's own history — only the label describing it is gone, because the tiles
         are self-evident and the caption was competing with the question above it. The
-        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small">${hiddenCount} more under More items</span>`:''}</div>
+        "N more under More items" hint is a different sentence, was not marked, and stays. */''}${(!usingHistoryV392&&hiddenCount>0)?`<span class="muted small"><span>${hiddenCount}</span> more under More items</span>`:''}</div>
       <div class="till-item-search-v392">
         <label class="sr-only" for="tillItemSearchV392">Search services, products and bundles</label>
         <input id="tillItemSearchV392" type="search" autocomplete="off" placeholder="Search services, products and bundles" value="${esc(tillItemSearchV392)}" ${cartLocked()?'disabled':''}>
@@ -11775,7 +11775,7 @@ async function tillPage(){
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
         ${extrasBlock}
         ${d.welcomeOfferGivenV215
-          ?`<p class="ok small" role="status" style="margin-top:10px">${esc(d.welcomeOfferGivenV215)} given free — welcome offer used.</p>`
+          ?`<p class="ok small" role="status" style="margin-top:10px"><span>${esc(d.welcomeOfferGivenV215)}</span> given free — welcome offer used.</p>`
           :d.welcomeOfferV215
           ?`<div class="permission-banner welcome-offer-v215" style="margin-top:12px;text-align:left"><b>Welcome offer unlocked</b>
               <p class="small" style="margin:5px 0">This sale meets the minimum, so ${esc(d.welcomeOfferV215.label)} is free — the welcome gift has not been claimed yet.</p>
@@ -13722,7 +13722,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     :loyaltyActiveV235?{label:'Live',tone:'on'}:{label:'Paused',tone:'off'};
   const loyaltyStatusPillV235=`<span class="pill ${loyaltyStatusV235.tone}" id="loyaltyStatusPillV235"><span aria-hidden="true">●</span> ${esc(loyaltyStatusV235.label)}</span>`;
   const loyaltyStripV235=(()=>{
-    if(p&&!loyaltyActiveV235)return `<div class="loyalty-strip-v235" id="loyaltyStripV235" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Paused</b> — customers are not earning right now.${draftVersionId?' Your unsaved and unpublished changes are safe.':''}</span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="loyaltyResumeV235" type="button">Resume programme</button>':''}</div></div>`;
+    if(p&&!loyaltyActiveV235)return `<div class="loyalty-strip-v235" id="loyaltyStripV235" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b><span aria-hidden="true">●</span> Paused</b> — customers are not earning right now.<span>${draftVersionId?' Your unsaved and unpublished changes are safe.':''}</span></span><span class="spacer"></span>${canManageLoyalty?'<button class="btn sm" id="loyaltyResumeV235" type="button">Resume programme</button>':''}</div></div>`;
     /* nestly_v415 (owner, photo 2: the whole banner ringed — "remove the circled area, pressing
        save would publish to live. dont need hide in draft").
        The banner and its "Review & publish" are gone because Save now publishes: both writers on
@@ -13732,7 +13732,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
        this page was the last one still asking the owner to publish by hand.
        A recommendation still gets a line, because a generated draft IS worth reading before it
        goes live; it just no longer claims the page is hiding anything. */
-    if(draftVersionId&&recommendation)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b>Suggested for you.</b> ${esc(recommendation.rationale)} Review every number below — Save puts it live for customers.</span></div></div>`;
+    if(draftVersionId&&recommendation)return `<div class="loyalty-strip-v235" id="growDraftBarV170" role="status" style="margin-bottom:16px"><div class="row" style="flex-wrap:wrap;gap:8px"><span><b>Suggested for you.</b> <span>${esc(recommendation.rationale)}</span> Review every number below — Save puts it live for customers.</span></div></div>`;
     if(draftVersionId)return '';
     return '';
   })();
@@ -16364,7 +16364,7 @@ function promotionDemoteDialogV462({live=[],max=0}={}){
     dialog.setAttribute('aria-labelledby','promotionDemoteTitleV462');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
       <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">You already have ${rows.length} offer${rows.length===1?'':'s'} live</h2>
-      <p class="muted small" style="margin-top:10px">${max} live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
+      <p class="muted small" style="margin-top:10px"><span>${max}</span> live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
       <div class="promotion-demote-list-v462" role="radiogroup" aria-label="Offer to move back to draft" style="margin-top:12px;display:grid;gap:8px">
         ${rows.map((item,index)=>`<label class="welcome-offer-optioncard-v350" style="display:flex;gap:10px;align-items:flex-start">
           <input type="radio" name="promotionDemotePickV462" value="${esc(item.id)}"${index===0?' checked':''}>
@@ -19185,7 +19185,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ?'Choose the stamp card, set how many stamps a visit earns, and add a first gift customers can redeem for.'
           :'Choose points, set the earning rate, and add a first gift customers can redeem for.',
         actionHtml:canSetupGrow
-          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up ${growPointsPageTitleV326}</button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
+          ?`<button type="button" class="btn sm" id="growPointsSetupV326"${growPointsBusyV326?' disabled':''}>Set up <span>${growPointsPageTitleV326}</span></button>${growPointsErrorV326?`<p class="notice warn small" style="margin-top:8px">${esc(growPointsErrorV326)}</p>`:''}`
           :'<span class="muted small">Setting this up is an owner job. You can review what is running from the Programmes list.</span>'})
     :`<ul class="grow-setup-rewardlist-v301" data-grow-points-summary-v326>
         <!-- V343 (owner mockup, photo 4): the summary row, Edit/Add gifts/ON-OFF and the
@@ -20223,14 +20223,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            the amount box is relabelled to match so the number on screen has a unit. */''}
         ${[['points','Points'],['stamps','Stamps'],['voucher','A free gift']].map(([kind,label])=>`<label class="welcome-offer-optioncard-v350${growReferralKindV420===kind?' selected':''}" style="flex:1;min-width:min(100%,180px)"><input type="radio" name="growReferralKindV420" value="${kind}" ${growReferralKindV420===kind?'checked':''}><span><b>${esc(label)}</b></span></label>`).join('')}
       </div>
-      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralPointsWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralRewardV364"><span>${growReferralKindV420==='stamps'?'Stamps':'Points'}</span> for the customer who referred</label><br><input id="growReferralRewardV364" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralRewardV364))}" placeholder="e.g. 50"></p>
       <p class="grow-setup-sentence-v301" id="growReferralGiftWrapV420" style="margin-top:10px"${growReferralKindV420==='voucher'?'':' hidden'}><label class="muted small" for="growReferralGiftV420">The gift the referrer receives</label><br><input id="growReferralGiftV420" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralGiftV420)}" placeholder="e.g. Free Coffee" maxlength="80"><br><span class="muted small">Staff hand it over from Record sale after looking the referrer up. Nothing is charged, and the visit is recorded at zero.</span></p>
       ${/* nestly_v421 (owner, 2026-08-21: "yes make the friend get the reward too"). The friend's
            side, on by default because that is the ruling — a firm that wants the old one-sided
            referral back unticks it here. The amount is left blank on purpose: blank means the same
            as the referrer, so a firm that simply wants both sides paid fills in nothing. */''}
       <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
-      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
+      <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421"><span>${growReferralKindV420==='stamps'?'Stamps':'Points'}</span> for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
       <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
       <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least <span>(${esc(S.biz?.currency||'SGD')})</span></label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
@@ -22622,7 +22622,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         <button type="button" class="card" data-reward-template="${index}" style="text-align:left;cursor:pointer">
           <b>${esc(template.name)}</b>
           <p class="muted small" style="margin-top:4px">${esc(template.desc)}</p>
-          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: ${esc(money(template.budget))}</span></p>
+          <p class="small" style="margin-top:8px"><span class="pill new">Suggested cost to you: <span>${esc(money(template.budget))}</span></span></p>
         </button>`).join('')}</div>
         <p class="muted small" style="margin-top:10px">Suggestions use your own service prices${prices.length?'':' (none yet, so sector defaults are shown)'}. You review and can change everything before publishing.</p>`;
       templatesPanel.querySelectorAll('[data-reward-template]').forEach(button=>button.onclick=()=>{
@@ -22762,7 +22762,7 @@ async function renderPlaybooks(ctx){
     host.innerHTML=`<div class="card"><div style="display:flex;gap:8px;align-items:center">${CUI.icon('retention',{size:20})}<b>Bring-back playbooks</b></div>
       ${denied
         ?`<p class="muted small" style="margin-top:10px;display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:16})}<span>Playbook results need finance viewing. Ask an owner for retention + finance read access.</span></p>`
-        :`<div class="err" style="margin-top:10px" role="alert">Could not load playbooks. ${esc(error.message||'')}</div><button class="btn ghost sm" id="pbRetry" style="margin-top:10px">Try again</button>`}</div>`;
+        :`<div class="err" style="margin-top:10px" role="alert">Could not load playbooks. <span>${esc(error.message||'')}</span></div><button class="btn ghost sm" id="pbRetry" style="margin-top:10px">Try again</button>`}</div>`;
     if(!denied&&$('pbRetry'))$('pbRetry').onclick=()=>renderPlaybooks(ctx);
     return;
   }
@@ -22825,7 +22825,7 @@ async function pbRenderResults(c,el,ctx){
     const denied=error.code==='42501';
     el.innerHTML=denied
       ?`<p class="muted small" style="display:flex;gap:6px;align-items:flex-start">${CUI.icon('info',{size:16})}<span>Results need finance + retention viewing access.</span></p>`
-      :`<div class="err" role="alert">Could not load results. ${esc(error.message||'')}</div><button class="btn ghost sm" data-pb-resretry style="margin-top:8px">Try again</button>`;
+      :`<div class="err" role="alert">Could not load results. <span>${esc(error.message||'')}</span></div><button class="btn ghost sm" data-pb-resretry style="margin-top:8px">Try again</button>`;
     const r=el.querySelector('[data-pb-resretry]');if(r)r.onclick=()=>pbRenderResults(c,el,ctx);
     return;
   }
@@ -23167,7 +23167,7 @@ function openPlaybookWizard(ctx){
       matched=cand;versions=vs||[];
     }catch(e){
       if(!modal.isConnected)return;
-      $('pbWizBody').innerHTML=`<div class="err" role="alert">Could not prepare the playbook. ${esc(e.message||String(e))}</div>`;
+      $('pbWizBody').innerHTML=`<div class="err" role="alert">Could not prepare the playbook. <span>${esc(e.message||String(e))}</span></div>`;
       return;
     }
     if(!modal.isConnected)return;
@@ -23271,7 +23271,7 @@ function openPlaybookWizard(ctx){
           state.candidates=[];state.truncated=false;
           state.candidatesLoading=false;
           const host=$('pbWhoPreview');
-          if(host)host.innerHTML=`<div class="err" role="alert">Could not count matching customers. ${esc(e.message||String(e))}</div>`;
+          if(host)host.innerHTML=`<div class="err" role="alert">Could not count matching customers. <span>${esc(e.message||String(e))}</span></div>`;
           return;
         }
         state.candidatesLoading=false;
@@ -23340,12 +23340,12 @@ function openPlaybookWizard(ctx){
           p_business:S.biz.id,p_program_version_id:state.version.id,p_name:name,p_audience_criteria:criteria,
           p_holdout_percent:state.holdout,p_budget_cap_cents:capCents,p_attribution_window_days:state.windowDays,
           p_expected_cost_cents:expectedCostCents(),p_expected_upside_cents:expUpside,p_explanation:null});
-        if(error){out.innerHTML=`<div class="err" role="alert">Could not create: ${esc(error.message||'')}</div>`;resetLaunch('Create & start');state.busy=false;return;}
+        if(error){out.innerHTML=`<div class="err" role="alert">Could not create: <span>${esc(error.message||'')}</span></div>`;resetLaunch('Create & start');state.busy=false;return;}
         state.createdCampaignId=data.campaign_id;
       }
       const {error:actErr}=await pbActivateCampaign(state.createdCampaignId,clientIds);
       if(actErr){
-        out.innerHTML=`<div class="err" role="alert"><b>Created, but couldn’t start.</b> ${esc(actErr.message||'')} It’s saved as a draft — press Retry start.</div>`;
+        out.innerHTML=`<div class="err" role="alert"><b>Created, but couldn’t start.</b> <span>${esc(actErr.message||'')}</span> It’s saved as a draft — press Retry start.</div>`;
         resetLaunch('Retry start');state.busy=false;
         if(ctx.isCurrent())renderPlaybooks(ctx);
         return;
@@ -24801,9 +24801,9 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const losing=exclusiveConflictsV322(kind).map(switchTitleV322);
     if(!losing.length)return '';
     return `<div class="imp-note" data-grow-setup-exclusive-w6i2="${esc(kind)}" style="margin-top:12px" role="status">
-      <b>${esc(switchTitleV322(kind))} runs on its own</b>
+      <b><span>${esc(switchTitleV322(kind))}</span> runs on its own</b>
       <p class="muted small" style="margin-top:6px">Turning it on switches ${esc(losing.join(' and '))} off, so customers stop earning there. Everything you have set up stays saved and comes back if you turn it on again.</p>
-      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on ${esc(switchTitleV322(kind))}</button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on <span>${esc(switchTitleV322(kind))}</span></button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
   };
   const stepOneHtml=()=>{
     const anyOn=anySwitchOnW6I2();
@@ -27311,7 +27311,7 @@ async function storedValuePage(){
     const msg=(ovRes.error&&ovRes.error.message)||(rcRes.error&&rcRes.error.message)||'Stored value could not load.';
     const denied=(ovRes.error&&ovRes.error.code==='42501')||(rcRes.error&&rcRes.error.code==='42501');
     routeMain.innerHTML=`${CUI.pageHeader({title:'Stored value',subtitle:'The stored-value state could not be confirmed.',iconName:'wallet',canWrite:false,moduleLabel:'Stored value'})}
-      <div class="card"><div class="err" role="alert"><b>Stored value is unavailable.</b> ${esc(denied?'Only the owner can view stored value.':msg)} No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.</div>
+      <div class="card"><div class="err" role="alert"><b>Stored value is unavailable.</b> <span>${esc(denied?'Only the owner can view stored value.':msg)}</span> No controls are shown until the live server state can be read — nothing is assumed live, clean or usable.</div>
       <div style="margin-top:12px"><button class="btn" id="svRetry" type="button">Try again</button></div></div>`;
     if($('svRetry'))$('svRetry').onclick=()=>storedValuePage();
     return;
@@ -27990,7 +27990,7 @@ async function giftcardsPage(){
       </div>
       ${growWhyList(gift.reasoning)}
       ${growLiftNote('giftcard')}
-      <p class="muted small" style="margin-top:10px">${esc(growEstimateNote)} Type any amount you like when you issue a card.</p>`;
+      <p class="muted small" style="margin-top:10px"><span>${esc(growEstimateNote)}</span> Type any amount you like when you issue a card.</p>`;
   };
   loadGiftHint();
   if($('giftBranch'))$('giftBranch').onchange=()=>{
@@ -28983,7 +28983,7 @@ async function appointmentsPage(){
     document.querySelector('#clashPromptV220')?.remove();
     document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="clashPromptV220" role="dialog" aria-modal="true" aria-labelledby="clashTitleV220" tabindex="-1">
       <section class="modal-card" style="max-width:520px">
-        <div class="row"><div><p class="eyebrow">Not booked</p><h2 id="clashTitleV220" style="margin-top:4px">${who} is already busy then</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="clashCloseV220" aria-label="Close">Close</button></div>
+        <div class="row"><div><p class="eyebrow">Not booked</p><h2 id="clashTitleV220" style="margin-top:4px"><span>${who}</span> is already busy then</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="clashCloseV220" aria-label="Close">Close</button></div>
         <p class="muted small">Nothing has been booked. Pick another time, or give this booking to someone who is free.</p>
         ${times.length?`<b class="small" style="display:block;margin-top:14px">${staffLabel?`Other times ${esc(staffLabel)} is free`:'Other times that work'}</b>
           <div class="schedule-suggestion-actions">${times.map(slot=>`<button type="button" class="btn ghost sm" data-clash-time="${esc(slot.starts_at)}" data-clash-time-staff="${esc(slot.staff_id||'')}">${esc(sgt(slot.starts_at))}${staffLabel?'':` · ${esc(staffName[slot.staff_id]||slot.staff_name||'')}`}</button>`).join('')}</div>`
@@ -29375,7 +29375,7 @@ async function appointmentsPage(){
       rebookFromAppointmentV640={businessId:S.biz.id,appointmentId:item.id,clientId:item.client_id||null};
       const card=dialog.querySelector('.modal-card');
       if(!card){close();return}
-      card.innerHTML=`<div class="row"><div><h2 id="appointmentCompletedTitleV640">Appointment completed</h2><p class="muted small" style="margin-top:4px" data-merchant-content>${esc(client.full_name||'This customer')} is checked out.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentCompletedCloseV640" aria-label="Close">Close</button></div><div class="appointment-detail-actions" style="margin-top:16px"><button type="button" class="btn" id="appointmentBookNextV640">Book next visit</button><button type="button" class="btn ghost" id="appointmentCompletedDoneV640">Done</button></div>`;
+      card.innerHTML=`<div class="row"><div><h2 id="appointmentCompletedTitleV640">Appointment completed</h2><p class="muted small" style="margin-top:4px" data-merchant-content><span>${esc(client.full_name||'This customer')}</span> is checked out.</p></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="appointmentCompletedCloseV640" aria-label="Close">Close</button></div><div class="appointment-detail-actions" style="margin-top:16px"><button type="button" class="btn" id="appointmentBookNextV640">Book next visit</button><button type="button" class="btn ghost" id="appointmentCompletedDoneV640">Done</button></div>`;
       dialog.setAttribute('aria-labelledby','appointmentCompletedTitleV640');
       $('appointmentCompletedCloseV640').onclick=close;
       $('appointmentCompletedDoneV640').onclick=close;
@@ -31219,7 +31219,7 @@ async function bottleSetupPageV275(){
     const fallback=String(Number($('bkDays')?.value)||30);
     host.innerHTML=tiersV278.map((tier,index)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
       <b style="flex:1 1 auto;overflow-wrap:anywhere">${esc(tier.name)}</b>
-      <label class="sr-only" for="bkTierDays${index}">Keep days for ${esc(tier.name)}</label>
+      <label class="sr-only" for="bkTierDays${index}">Keep days for <span>${esc(tier.name)}</span></label>
       <input id="bkTierDays${index}" type="number" min="1" max="365" inputmode="numeric" style="max-width:110px" placeholder="${esc(fallback)}" value="${esc(tier.keep_days)}" data-tier-days="${index}" data-merchant-content>
       <span class="muted small">days</span>
     </div>`).join('');
@@ -31247,7 +31247,7 @@ async function bottleSetupPageV275(){
     host.innerHTML=catalogueV278.map((product,index)=>`<div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--line)">
       <div style="flex:2 1 150px"><label class="sr-only" for="bkBottleName${index}">Bottle name</label>
         <input id="bkBottleName${index}" maxlength="120" autocomplete="off" value="${esc(product.name)}" data-bottle-name="${index}" data-merchant-content></div>
-      <div style="flex:1 1 90px"><label class="sr-only" for="bkBottleMl${index}">Size in millilitres for ${esc(product.name)}</label>
+      <div style="flex:1 1 90px"><label class="sr-only" for="bkBottleMl${index}">Size in millilitres for <span>${esc(product.name)}</span></label>
         <input id="bkBottleMl${index}" type="number" min="100" max="5000" inputmode="numeric" placeholder="Not a bottle" value="${esc(product.size_ml)}" data-bottle-ml="${index}"></div>
       <div style="flex:1 1 90px"><label class="sr-only" for="bkBottlePrice${index}">Price</label>
         <input id="bkBottlePrice${index}" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" value="${esc((Number(product.price_cents)/100).toFixed(2))}" data-bottle-price="${index}"></div>
@@ -31315,7 +31315,7 @@ async function bottleSetupPageV275(){
       if(tier.keep_days==='')continue;
       const days=Number(tier.keep_days);
       if(!Number.isInteger(days)||days<1||days>365){
-        errorHost.innerHTML=`<div class="err">${esc(tier.name)} needs a whole number between 1 and 365 days, or an empty box.</div>`;
+        errorHost.innerHTML=`<div class="err"><span>${esc(tier.name)}</span> needs a whole number between 1 and 365 days, or an empty box.</div>`;
         return;
       }
     }
@@ -32556,7 +32556,7 @@ async function waitlistPage(){
     currentRows=queue;
     if(kpis)kpis.innerHTML=`
       <div class="card kpi"><div class="l">Waiting now</div><div class="v">${queue.length}</div></div>
-      <div class="card kpi"><div class="l">Resolved as booked ${esc(waitlistPeriodLabelV571())}</div><div class="v">${bookedToday}</div></div>
+      <div class="card kpi"><div class="l">Resolved as booked <span>${esc(waitlistPeriodLabelV571())}</span></div><div class="v">${bookedToday}</div></div>
       `;
     if(!queue.length){
       wlist.innerHTML=CUI.emptyState({iconName:'waitlist',title:'No waiting customers',
@@ -34983,7 +34983,7 @@ async function customerIntelligencePage(){
     const exportId=created.data?.export_id,total=Number(created.data?.total_customers||0);
     if(created.error||!exportId){
       button.disabled=false;button.textContent='Export customers CSV';
-      if(status)status.innerHTML=`<div class="err">Complete export could not be created. No partial CSV was downloaded. ${esc(created.error?.message||'Try again.')}</div>`;
+      if(status)status.innerHTML=`<div class="err">Complete export could not be created. No partial CSV was downloaded. <span>${esc(created.error?.message||'Try again.')}</span></div>`;
       return;
     }
     let customers=[],afterOrdinal=0,hasMore=true;
@@ -34994,7 +34994,7 @@ async function customerIntelligencePage(){
       if(!isCurrent()||!button.isConnected)return;
       if(response.error){
         button.disabled=false;button.textContent='Export customers CSV';
-        if(status)status.innerHTML=`<div class="err">Complete export stopped before downloading. No partial CSV was downloaded. ${esc(response.error.message||'Try again.')}</div>`;
+        if(status)status.innerHTML=`<div class="err">Complete export stopped before downloading. No partial CSV was downloaded. <span>${esc(response.error.message||'Try again.')}</span></div>`;
         return;
       }
       const incoming=Array.isArray(response.data?.customers)?response.data.customers:[];
@@ -35130,7 +35130,7 @@ function ciOpportunityRetentionRiskHtmlV716(retentionRisk){
   const r=retentionRisk&&typeof retentionRisk==='object'?retentionRisk:null;
   if(!r||!r.status||r.status==='not_applicable')return '';
   if(r.status==='ok')
-    return `<div><span>Retention risk</span><strong>${Number(r.at_risk_n)||0} at risk</strong></div>`;
+    return `<div><span>Retention risk</span><strong><span>${Number(r.at_risk_n)||0}</span> at risk</strong></div>`;
   return `<div><span>Retention risk</span><strong>${esc(r.reason||'Not available.')}</strong></div>`;
 }
 function ciOpportunityConcentrationHtmlV716(concentration){
@@ -35928,7 +35928,7 @@ function ownerBriefHtmlV771(brief,options){
         ${tileV771('Collected',collectedV774===null?'—':money(collectedV774),collectedPctV774===null?'not enough data yet':`${collectedPctV774}% of revenue recorded`)}
         ${tileV771('Not recorded as paid',outstandingV774===null?'—':money(outstandingV774),`${pluralV774(unpaidV774,'sale','sales')} unpaid · ${partlyV774} partly paid`)}
       </div>
-      ${methodsV774.length?`<p style="margin:10px 0 2px">By method: ${esc(methodsV774.join(' · '))}</p>`:''}
+      ${methodsV774.length?`<p style="margin:10px 0 2px">By method: <span>${esc(methodsV774.join(' · '))}</span></p>`:''}
       ${unlinkedCountV774>0?`<p class="small" style="margin:6px 0 2px">${esc(`${pluralV774(unlinkedCountV774,'payment','payments')} worth ${money(countV771(unlinkedV774.cents))} ${unlinkedCountV774===1?'is':'are'} not linked to any sale in this period.`)}</p>`:''}
       ${refundsV774>0?`<p class="small" style="margin:6px 0 2px">Refunds: ${esc(money(refundsV774))}</p>`:''}
       ${debtorsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Who still has an open bill"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Open sales</th><th>Outstanding</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${debtorsV774.map(row=>
@@ -38181,7 +38181,7 @@ function recoveryHeadlineHtmlV652(evidenceRaw,net,rec,attrDays){
       <h2 id="recoveryHeadlineHeadingV652">Not enough signal yet</h2>
       <p>The customers Peekaa contacted cannot yet be told apart from customers who were never contacted — the comparison group here is simply whoever was not reached, not a random holdout. Peekaa is withholding a dollar figure until the two groups can be told apart with confidence.</p>
       <p class="muted small" style="margin-top:8px">Contacted: <b>${Number(sample.treated)||0}</b> (${Number(sample.treated_events)||0} returned) &middot; Comparison: <b>${Number(sample.comparison)||0}</b> (${Number(sample.comparison_events)||0} returned)</p>
-      <details style="margin-top:8px"><summary class="muted small" style="cursor:pointer">Estimated figure (not yet reliable)</summary><p class="muted small" style="margin-top:4px">${esc(money(net.cents))} — for reference only; do not quote this while the verdict is "not enough signal".</p></details>
+      <details style="margin-top:8px"><summary class="muted small" style="cursor:pointer">Estimated figure (not yet reliable)</summary><p class="muted small" style="margin-top:4px"><span>${esc(money(net.cents))}</span> — for reference only; do not quote this while the verdict is "not enough signal".</p></details>
       ${limitationsHtml}
       </div>
     </section>`;
@@ -38550,7 +38550,7 @@ async function reportsPage(){
         note:busyNoteV297
       });
       target.innerHTML=`${busyVerdictV297}<div class="card"><b>Booked work</b><div class="metric" style="margin-top:8px">${current.serviceHours.toFixed(1)} hours</div>
-          <p class="muted small">${current.total} appointments in this period.</p></div>
+          <p class="muted small"><span>${current.total}</span> appointments in this period.</p></div>
         <div class="card"><b>Appointment outcomes</b><table style="margin-top:8px">
           <tr><td>Booked</td><td class="num"><b>${current.booked}</b></td></tr>
           <tr><td>Completed</td><td class="num"><b>${current.completed}</b></td></tr>
@@ -38592,7 +38592,7 @@ async function reportsPage(){
       const reason=c.status==='no_data'||c.eligibleTransactions===0
         ?'No eligible recorded purchases exist in this answer period.'
         :`Lifecycle figures are unavailable because none of ${c.eligibleTransactions} eligible recorded purchases are linked to a customer.`;
-      target.innerHTML=`<div class="card"><div class="empty">${esc(reason)} No zero is inferred.</div></div>`;
+      target.innerHTML=`<div class="card"><div class="empty"><span>${esc(reason)}</span> No zero is inferred.</div></div>`;
       return;
     }
     const cm=c.metrics,pm=p.usable?p.metrics:null;
@@ -38617,14 +38617,14 @@ async function reportsPage(){
       note:priorReturningV297===null?'':`Compared with ${scope.priorFrom} to ${scope.priorTo} on the same branch scope.`
     });
     target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
-        <p class="muted small">${pct(cm.existing_customer_share_pct)} of identified customers in this period.</p>
+        <p class="muted small"><span>${pct(cm.existing_customer_share_pct)}</span> of identified customers in this period.</p>
         <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
         <tr><td>New customers</td><td class="num"><b>${Number(cm.new_customers||0)}</b></td></tr>
         <tr><td>Reactivated customers</td><td class="num"><b>${Number(cm.reactivated_customers||0)}</b></td></tr>
         <tr><td>Identified customers</td><td class="num"><b>${Number(cm.transacting_identified_customers||0)}</b></td></tr></table></div>
       <div class="card"><b>Repeat purchasing</b><div class="metric" style="margin-top:8px">${pct(cm.repeat_in_period_rate_pct)}</div>
-        <p class="muted small">${Number(cm.repeat_purchasers_in_period||0)} customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.</p></div>`;
+        <p class="muted small"><span>${Number(cm.repeat_purchasers_in_period||0)}</span> customers purchased more than once in this answer period. This uses eligible completed purchases that retain positive value after reversals or refunds; it is not inferred from visits.</p></div>`;
   }
   async function runRecovered(){
     const target=$('recoveredBody');if(!target)return;
@@ -39684,7 +39684,7 @@ async function expensesPage(){
     $('exList').innerHTML=(ex&&ex.length)?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Expense records"><table data-responsive="true"><tr><th>Date</th><th>Scope</th><th>Category</th><th>Supplier</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr>
       ${ex.map(e=>{const amount=expenseAmountProjection(e,S.biz.currency||'SGD');return `<tr class="${e.voided_at?'strike':''}"><td>${esc(e.occurred_on||'—')}</td><td>${e.branch_id?esc(branchName[e.branch_id]||'Historical branch'):'Business-wide'}</td><td>${esc(e.category||'—')}</td>
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
-        <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
+        <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small"><span>${esc(amount.baseLabel)}</span> used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td style="white-space:nowrap">${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn danger sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
         <div class="row" style="margin-top:12px"><span class="muted small">${workspaceTemplateHtmlV97('expensesPageCount',{total:total.toLocaleString('en-SG'),page:expensePage+1,pages:totalPages})}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
@@ -39836,7 +39836,7 @@ async function pnlPage(){
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">${branchSpecific?'Selected-branch expenses':'All business expenses'}</div></div><div class="v">${money(expTotal)}</div><p class="hint">${branchSpecific?'Business-wide overhead excluded.':'All recorded expenses in scope.'}</p></div>
         <div class="card kpi v150-kpi"><div class="v150-kpi-head"><div class="l">Cash result after expenses</div></div><div class="v" style="color:${net>=0?'var(--success)':'var(--danger)'}">${net>=0?'+':'−'}${money(Math.abs(net))}</div><p class="hint">Cash-basis revenue less ${branchSpecific?'selected-branch':'all business'} expenses.</p></div>
       </div>
-      <p class="muted small" style="margin:12px 0">${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}Only recorded eligible payments count toward cash-basis revenue.</p>
+      <p class="muted small" style="margin:12px 0"><span>${branchSpecific?'This branch view excludes business-wide overhead. Use All branches for consolidated profit after overhead. ':''}</span>Only recorded eligible payments count toward cash-basis revenue.</p>
       <div class="charts"><div class="card"><div class="v150-soft-head"><b>Expenses by category</b></div>${Object.keys(byCat).length?'<div class="chart-frame"><canvas id="plC1"></canvas></div>':CUI.emptyState({iconName:'expenses',title:'No expenses recorded in this scope',body:'Record expenses to keep your P&L accurate.'})}</div>
         <div class="card"><div class="v150-soft-head"><b>Accrual revenue vs expenses by month</b></div>${mk.length?'<div class="chart-frame"><canvas id="plC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'Add a wider range to see month-by-month',body:'Pick a range covering two or more months and run again.'})}</div></div>`;
     if(Object.keys(byCat).length||mk.length){try{await loadChartLibrary()}catch{if(isLatest())$('plBody').insertAdjacentHTML('afterbegin','<div class="err" role="status">Charts could not load. The verified P&amp;L totals remain available.</div>');return}}
@@ -40810,7 +40810,7 @@ async function settingsPage(){
     const emptyRota=rotas.find(rota=>rota.wantsRota&&!rota.open.length);
     if(emptyRota){
       save.disabled=false;
-      err.innerHTML=`<div class="err">${esc(emptyRota.name)} works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
+      err.innerHTML=`<div class="err"><span>${esc(emptyRota.name)}</span> works their own hours but has no open day. Add a day, or untick "Works their own hours" to follow the shop hours.</div>`;
       return;
     }
     const results=await Promise.all([
@@ -41021,7 +41021,7 @@ async function settingsPage(){
             ${/* nestly_v603: the Edit button moved INTO the row, beside Commission, where the owner
                  drew it. Leaving a second one here would be two controls doing one thing. */''}`:`<span class="muted small">Inherits every enabled module — can't be restricted</span>`}
           </div>
-          ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}">${esc(s.full_name||'This teammate')} has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
+          ${accessPendingV569?`<p class="muted small" data-access-pending-note="${s.id}"><span>${esc(s.full_name||'This teammate')}</span> has signed up and is waiting for you to let them in. Approving gives them the modules already set for them.</p>`:''}
         </div>
         ${openProfileId===s.id?staffEditDialogHtmlV584(s):''}
       </div>`;
@@ -41088,7 +41088,7 @@ async function settingsPage(){
       const link=staffInviteLinkV151(code);
       return `<article class="staff-invite-card">
         <div class="row"><div class="staff-invite-main"><span class="pill new">Invite pending</span> <span class="staff-invite-code">${esc(code)}</span></div><span class="spacer"></span><span class="pill off">${esc(ROLE_LABELS[i.role]||i.role)}</span></div>
-        <div class="staff-invite-meta"><span>Role offered: ${esc(ROLE_LABELS[i.role]||i.role)}</span>${i.email?`<span>Restricted email: <span>${esc(i.email)}</span></span>`:'<span>Restricted email: any authenticated user with this invite</span>'}<span>Invite link opens the staff join flow directly.</span></div>
+        <div class="staff-invite-meta"><span>Role offered: <span>${esc(ROLE_LABELS[i.role]||i.role)}</span></span>${i.email?`<span>Restricted email: <span>${esc(i.email)}</span></span>`:'<span>Restricted email: any authenticated user with this invite</span>'}<span>Invite link opens the staff join flow directly.</span></div>
         <div class="staff-invite-actions">
           <button class="btn ghost sm" onclick="cpInv('${esc(code)}')">Copy code</button>
           <button class="btn ghost sm" onclick="cpInvLink('${esc(code)}')">Copy invite link</button>
@@ -43893,7 +43893,7 @@ function bookingPreviewBlockedNoteV654(){
       ?'this workspace has no active service for customers to book'
       :'“Customers can request appointments” is off under Customer Interface \u2192 Customer Permission';
   return `<section class="card" aria-label="Why Book now is hidden" data-ci-preview-booking-blocked-v654>
-    <p class="muted small" style="margin:0"><b>No “Book now” for your customers.</b> ${esc(reason)}. Turn it on and this preview — and your customers’ app — will show the button.</p>
+    <p class="muted small" style="margin:0"><b>No “Book now” for your customers.</b> <span>${esc(reason)}</span>. Turn it on and this preview — and your customers’ app — will show the button.</p>
   </section>`;
 }
 function customerInterfaceLivePreviewMarkupV326(){

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="f65ed7a9640755d5c1330d315afb65dc6693cd1f269c7036706f163ee43c5a57"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="b41818660900ac64b120f60521c1bfe324ced24280c898721f70f593b120285c"><link rel="icon" href="data:,"><title>Peekaa V131 store acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6222,7 +6222,7 @@ body{padding:16px}.v131-nav{position:fixed;z-index:300;top:8px;right:8px;display
   globalThis.document?.documentElement?.setAttribute('lang','en');
   root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} is not open yet</h2>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2><span>${esc(BRAND.customerLabel)}</span> is not open yet</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
     </div>${accountDeletionCardHtml()}${legalLinks(customerLocale)}</div></div>`;
   wireAccountDeletionButton();
@@ -6233,7 +6233,7 @@ function renderCustomerCapabilityRetry(message,reason=''){
   setCustomerSurfaceDocumentV167();
   root.innerHTML=`<div class="wallet-shell customer-surface"><div class="wallet-inner"><div class="wallet-head">
     <div class="logo">${brandWordmark()}</div><span class="spacer"></span><button class="btn ghost sm" id="walletSignOut">Sign out</button></div>
-    <div class="card" style="text-align:center;padding:34px 22px"><h2>${esc(BRAND.customerLabel)} could not load</h2>
+    <div class="card" style="text-align:center;padding:34px 22px"><h2><span>${esc(BRAND.customerLabel)}</span> could not load</h2>
       <p class="muted" style="margin-top:8px">${esc(message)}</p>
       ${reason?`<p class="muted small" style="margin-top:6px">${esc(reason)}</p>`:''}
       <button class="btn" id="customerCapabilityRetry" style="margin-top:16px">Try again</button>
