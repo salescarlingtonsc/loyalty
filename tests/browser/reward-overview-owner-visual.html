@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="2fd5b95e45c44f969447ad52e28e673a6d95bc9a1a9dd7be796a6e2cb909f02a"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="8c11bc3ae3427575947f1f0107459b47d4893e826b33ab31547bf4d66c745211"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 2fd5b95e45c44f969447ad52e28e673a6d95bc9a1a9dd7be796a6e2cb909f02a</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 8c11bc3ae3427575947f1f0107459b47d4893e826b33ab31547bf4d66c745211</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -9986,7 +9986,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!losing.length)return '';
     return `<div class="imp-note" data-grow-setup-exclusive-w6i2="${esc(kind)}" style="margin-top:12px" role="status">
       <b><span>${esc(switchTitleV322(kind))}</span> runs on its own</b>
-      <p class="muted small" style="margin-top:6px">Turning it on switches ${esc(losing.join(' and '))} off, so customers stop earning there. Everything you have set up stays saved and comes back if you turn it on again.</p>
+      <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('turningOnSwitchesOthersOff',{others:losing.join(' and ')})}</p>
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on <span>${esc(switchTitleV322(kind))}</span></button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
   };
   const stepOneHtml=()=>{
@@ -10209,7 +10209,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     <div class="field-grid">
       <div class="full"><label for="growSetupReferralRewardW6I2">Points for the customer who referred</label>
         <input id="growSetupReferralRewardW6I2" inputmode="numeric" value="${esc(String(Math.max(0,Math.round(Number(state.referralReward)||0))))}"></div>
-      <div class="full"><label for="growSetupReferralMinW6I2">Friend must spend at least (${esc(currency)})</label>
+      <div class="full"><label for="growSetupReferralMinW6I2">${workspaceTemplateHtmlV97('friendMinSpendCurrencyTwo',{currency:currency})}</label>
         <input id="growSetupReferralMinW6I2" inputmode="decimal" value="${esc(Number(state.referralMinSpend||0).toFixed(2))}"></div>
     </div>
     <p class="grow-setup-example-v301" id="growSetupReferralExampleW6I2" role="status">${esc(referralExampleTextW6I2())}</p>
@@ -10485,7 +10485,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       ?'<p class="muted small">Checking what changes for customers…</p>'
       :changes.error
         ?'<p class="muted small">The change list could not be read, so it is not shown. Nothing has been published yet.</p>'
-        :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(changes.unreadable.join(' and '))} could not be read, so they are not listed here.</p>`:''}`;
+        :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('changesCouldNotBeRead',{areas:changes.unreadable.join(' and ')})}</p>`:''}`;
     const claimLine=tiersOnlyClaimLineV305();
     const ackBlock=state.needAck
       ?`<div class="imp-note" style="margin-top:12px">${state.impactRules.length?`<b>Advanced rules this draft turns on</b><div style="margin-top:6px">${state.impactRules.map(rule=>`<div class="studio-impact-rule"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b></div>`).join('')}</div>`:'<b>This draft turns on a rule that moves money or reaches customers.</b>'}
@@ -10571,7 +10571,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const growPointsPageHref='#/grow/points';
     host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
       <div class="grow-setup-head-v301"><div>${state.simpleEditModeV335?'':`<p class="customer-quest-kicker">Set up rewards</p>
-      <h3 class="grow-setup-title-v301">Step ${state.step} of ${railCountW6I2()} · ${esc(railStepW6I2().label)}</h3>
+      <h3 class="grow-setup-title-v301">${workspaceTemplateHtmlV97('wizardStepOfWithLabel',{step:state.step,total:railCountW6I2(),label:railStepW6I2().label})}</h3>
       <p class="muted small" data-grow-setup-percent-w6i2="${railPercentW6I2()}" role="status">${railPercentW6I2()}% done</p>`}</div>
       <!-- V302: the wizard is now the door for every unfinished programme, including a PAUSED one
            that already carries a catalogue, tiers and reward history. That owner must never lose
@@ -14153,7 +14153,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     }).join('')}
   </div>`;
   const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
-    <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
+    <b>${workspaceTemplateHtmlV97('stampsPastTargetNotClaimable',{target:growStampsTargetV416})}</b>
     <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
     ${growStampsStrandedChipsV445}
     ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
@@ -14162,7 +14162,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          the card — is the whole offer. Offering a button that can only fail is the defect this
          guard was written for in the first place; only the number it guards has changed.
          Comment inside the expression, not its own ${''} slot: see the grid's "+" above. */
-      canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+      canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">${workspaceTemplateHtmlV97('makeTheCardStamps',{stamps:growStampsHighestGiftV416})}</button></div>`:''}
   </div>`:'';
   /* nestly_v567 — THE CANVAS MUST NOT PRETEND TO BE A SAVED CARD.
      GROW_STAMPS_DEFAULT_LEN_V416 (15) is a fine way to SEED a card nobody has set up yet: the
@@ -14252,7 +14252,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <section class="card customer-business-summary-v346" data-grow-stamps-preview-card-v472 aria-label="Customer stamp card preview">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>STAMPS</span></span>
-          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>Example · ${esc(String(growStampsPreviewQuestV472.shown))} of ${esc(String(growStampsPreviewQuestV472.slots))}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${workspaceTemplateHtmlV97('exampleShownOfSlots',{shown:String(growStampsPreviewQuestV472.shown),slots:String(growStampsPreviewQuestV472.slots)})}</span></span>
         </div>
         ${customerHeroStampCardV422(growStampsPreviewQuestV472)}
       </section>
@@ -15237,7 +15237,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const {data,error}=response;
       if(!isGrowCurrent())return false;
       if(error||data?.program_id!==id){
-        panelHost.innerHTML=`<section class="notice warn" role="alert"><b>This ${kind==='birthday'?'birthday benefit':'Bring-back rule'} could not be prepared for editing.</b><p class="small" style="margin-top:5px">Nothing was published. Return to the overview, refresh, and try again.</p><a class="btn ghost sm" href="#/grow" style="margin-top:10px">Back to Grow overview</a></section>`;
+        panelHost.innerHTML=`<section class="notice warn" role="alert"><b>${workspaceTemplateHtmlV97('couldNotPrepareForEditing',{kind:kind==='birthday'?'birthday benefit':'Bring-back rule'})}</b><p class="small" style="margin-top:5px">Nothing was published. Return to the overview, refresh, and try again.</p><a class="btn ghost sm" href="#/grow" style="margin-top:10px">Back to Grow overview</a></section>`;
         return false;
       }
       draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'2fd5b95e45c44f969447ad52e28e673a6d95bc9a1a9dd7be796a6e2cb909f02a',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'8c11bc3ae3427575947f1f0107459b47d4893e826b33ab31547bf4d66c745211',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

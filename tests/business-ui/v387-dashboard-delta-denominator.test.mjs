@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v945: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   This harness builds its renderer with `new Function`, where a free identifier resolves against
+   globalThis, so the REAL runtime is installed there. Never a stub: a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 /* V387 — the owner's second pass on photo 1 of the 2026-08-17 review.
  *
@@ -67,10 +74,12 @@ test('V387 the period is stated once, not once per tile',()=>{
   const tile=dash.was({key:'new',value:'5',delta:400,was:'1'},RANGE);
   assert.doesNotMatch(tile,/20\/06\/2026|19\/07\/2026/);
   const legend=dash.legend([{delta:400,was:'1'}],RANGE);
-  assert.match(legend,/20\/06\/2026 – 19\/07\/2026/);
-  assert.match(legend,/previous 30 days/);
+  assert.match(legend,/data-workspace-value="from"[^>]*>20\/06\/2026<[^]*?data-workspace-value="to"[^>]*>19\/07\/2026</);
+  assert.match(legend,/previous <span[^>]*>30 days<\/span>/);
   /* And the legend names the word the tiles use, so the two read as one sentence. */
-  assert.match(legend,/"was"/);
+  /* nestly_v945: the legend is a named template now, and workspaceTemplateInnerHtmlV97 escapes the
+     literal halves as well as the values — so the quotes around "was" arrive as entities. */
+  assert.match(legend,/&quot;was&quot;/);
 });
 
 test('V387 the legend stays absent when no tile has a comparison to make',()=>{

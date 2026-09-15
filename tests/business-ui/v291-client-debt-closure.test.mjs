@@ -307,7 +307,7 @@ test('V291 the publish gate renders the same diff it publishes, above its checkb
   assert.doesNotMatch(gate,/does not summarise reward, birthday or bring-back field values/);
   assert.doesNotMatch(gate,/This check does not display ordinary reward/);
   // A read that failed is admitted, never reported as "no change".
-  assert.match(gate,/could not be read, so they are not listed here/);
+  assert.match(gate,/'changesCouldNotBeReadReview'/);
   // The dialog mirrors the rendered block, so the checkbox is never ticked blind.
   assert.match(gate,/const publishDiffHtml=String\(\$\('growPublishDiffBody'\)\?\.innerHTML\|\|''\)/);
 });

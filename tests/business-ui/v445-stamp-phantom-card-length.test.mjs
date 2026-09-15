@@ -25,6 +25,13 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v945: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   This harness builds its renderer with `new Function`, where a free identifier resolves against
+   globalThis, so the REAL runtime is installed there. Never a stub: a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const appJs = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -134,7 +141,7 @@ test('v445 the out-of-range gifts get a warning, are named, and are not grid slo
   const g = render({ stampTarget: 15, gifts: KAYA });
   assert.equal(g.growStampsStrandedV416, true);
   /* v363's warning survives, word for word in its heading. */
-  assert.match(g.growStampsStrandedNoteV416, /Stamps past 15 cannot be claimed yet/);
+  assert.match(g.growStampsStrandedNoteV416, /Stamps past <span[^>]*>15<\/span> cannot be claimed yet/);
   assert.match(g.growStampsStrandedNoteV416, /2 gifts sit past the end of it/,
     'both stranded gifts are counted — the old copy named only the highest');
   assert.doesNotMatch(g.growStampsGridV416, /is-past-v416/,

@@ -186,7 +186,10 @@ test('V314 (3) a failed switch never re-publishes an already-live version', () =
   assert.match(reviewPublish, /growPublishedV314\s*\r?\n?\s*\?\{error:null\}/);
   assert.match(studioOverview, /let studioPublishedV314=false;/);
   assert.match(studioOverview, /studioPublishedV314\s*\r?\n?\s*\?\{error:null\}/);
-  assert.match(reviewPublish, /Published\. The programme switch could not be applied/);
+  assert.match(reviewPublish, /'publishedSwitchNotApplied'/);
+  /* nestly_v945 converted the review-publish sentence to a named template. studioOverview raises
+     its own wording ("Press retry.") from a different code path and is still a template literal,
+     so it is still asserted as English here — and will move when that path is converted too. */
   assert.match(studioOverview, /Published\. The programme switch could not be applied/);
 });
 

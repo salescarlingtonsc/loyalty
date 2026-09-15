@@ -34,6 +34,13 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v945: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   This harness builds its renderer with `new Function`, where a free identifier resolves against
+   globalThis, so the REAL runtime is installed there. Never a stub: a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const readIndex = () => readFileSync(join(root, 'app', 'index.html'), 'utf8');
@@ -455,7 +462,16 @@ test('v449 rows of five is a layout change ONLY — the grid markup and every ha
      the drawing is still held byte-identical to the v445 commit: at 12 stamps the grid, the "+",
      the stranded chips for the gifts at 15 and 1000, and the warning note are unchanged. */
   const args = { target: 12, gifts: KAYA_GIFTS, pick: ['grid', 'note'] };
-  assert.equal(drawFrom(appNow, args), drawFrom(appV445, args),
+  /* nestly_v945 made the stranded-gift heading a named template, so the current render wraps that
+     one sentence and its number in data-workspace-* spans. That is an i18n wrapper, not a change
+     to the card: unwrapping it on both sides keeps this pin doing exactly what it was written to
+     do — hold every other byte of the grid, the "+", the stranded chips and the warning note
+     identical to v445 — while stating precisely which bytes v945 is allowed to have moved. */
+  const unwrapTemplates = (html) => html
+    .replace(/<span data-workspace-template="[^"]*">/g, '')
+    .replace(/<span data-workspace-value="[^"]*" data-merchant-content>([^<]*)<\/span>/g, '$1')
+    .replace(/<\/span>(?=<\/b>)/g, '');
+  assert.equal(unwrapTemplates(drawFrom(appNow, args)), drawFrom(appV445, args),
     'v449/v453/v463 must not have changed a single byte of the stamp card the editor draws '
     + 'below the maximum length');
   const atMax = drawFrom(appNow, { target: 15, gifts: KAYA_GIFTS, pick: ['grid', 'note'] });
@@ -465,7 +481,7 @@ test('v449 rows of five is a layout change ONLY — the grid markup and every ha
   /* Deleting the ELEMENT and nothing around it: the "+" sits in an interpolation slot whose own
      newline and indentation stay in the string when the slot renders empty, so removing the
      surrounding whitespace here would be comparing against markup neither revision produces. */
-  assert.equal(atMax,
+  assert.equal(unwrapTemplates(atMax),
     atMaxBefore.replace(
       /<button type="button" class="grow-stamps-editcell-v416 is-add-v416"[^>]*>\+<\/button>/, ''),
     'the withheld "+" is the ONLY difference between the two cards at the maximum');

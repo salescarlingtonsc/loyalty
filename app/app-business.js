@@ -4598,7 +4598,7 @@ function openGiftUndoDialogV665({businessId,giftKind,targetId,rewardLabel,custom
   const presets=['Scanned the wrong customer','Given by mistake','Customer did not take it'];
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="giftUndoModalV665" role="dialog" aria-modal="true" aria-labelledby="giftUndoTitleV665" tabindex="-1"><div class="modal-card" style="max-width:520px">
     <div class="row"><div><h2 id="giftUndoTitleV665">Give this back?</h2><p class="muted small" style="margin-top:4px" data-merchant-content>${esc(rewardLabel||'Reward')}${customerName?` · ${esc(customerName)}`:''}</p></div><span class="spacer"></span><button class="btn ghost sm" id="giftUndoCloseV665" type="button">Close</button></div>
-    <div class="imp-note" style="margin-top:12px"><b>The customer gets it back.</b><p class="small" style="margin-top:5px">This ${esc(kindWord)} becomes available to them again straight away. No money moves, and nothing is deleted — the record that it was given stays, with this reversal recorded beside it.</p></div>
+    <div class="imp-note" style="margin-top:12px"><b>The customer gets it back.</b><p class="small" style="margin-top:5px">${workspaceTemplateHtmlV97('giftBecomesAvailableAgain',{kind:kindWord})}</p></div>
     <label for="giftUndoReasonV665">Why is this being given back? (required, at least 10 characters)</label>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${presets.map((preset,index)=>`<button type="button" class="btn ghost sm" data-gift-undo-preset-v665="${index}">${esc(preset)}</button>`).join('')}</div>
     <textarea id="giftUndoReasonV665" rows="2" data-workspace-i18n placeholder="e.g. Scanned the wrong customer"></textarea>
@@ -5088,7 +5088,7 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
   const glyph=change>0?'▲':change<0?'▼':'▬';
   /* V299: a fall now reads in the same three-tone language Business Insights already uses —
      a −18% and a 0% were both the identical grey pill, distinguished only by the glyph. */
-  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${Math.abs(change)}% ${word} versus ${esc(previousFrom)} to ${esc(previousTo)}</span></span>`;
+  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${workspaceTemplateHtmlV97('percentChangeVersusRange',{pct:Math.abs(change),word:word,from:previousFrom,to:previousTo})}</span></span>`;
 }
 /* V385 (owner markup on the dashboard, photo 1: the ▲400% chip ringed with "Compare with
    what? please state here"). The chip already knew its answer — previousEquivalentRangeV153
@@ -5417,7 +5417,7 @@ function dashboardDeltaLegendV385(metrics,previousRange){
   if(!comparable||!previousRange?.previousFrom||!previousRange?.previousTo)return '';
   const days=Number(previousRange.days)||0;
   const span=days===1?'day':`${days} days`;
-  return `<p class="muted small dashboard-delta-legend-v385" style="grid-column:1/-1;margin:2px 0 0">"was" and ▲▼ are the previous ${esc(span)}: ${esc(promotionDateShortV324(previousRange.previousFrom))} – ${esc(promotionDateShortV324(previousRange.previousTo))}.</p>`;
+  return `<p class="muted small dashboard-delta-legend-v385" style="grid-column:1/-1;margin:2px 0 0">${workspaceTemplateHtmlV97('previousSpanLegend',{span:span,from:promotionDateShortV324(previousRange.previousFrom),to:promotionDateShortV324(previousRange.previousTo)})}</p>`;
 }
 function dashboardLoyaltyRowV170(cards){
   return `<section class="dashboard-loyalty" aria-labelledby="dashboardLoyaltyTitle"><div class="dashboard-loyalty-head">${CUI.icon('loyalty',{size:20})}<div><h3 id="dashboardLoyaltyTitle">Loyalty this period</h3><p class="muted small">Programme activity for the selected dates.</p></div></div><div class="dashboard-loyalty-grid">${cards.map(card=>`<div class="dashboard-loyalty-card"><b>${esc(card.label)}</b><span class="v">${esc(card.value)}</span><span class="metric-hint">${esc(card.hint)}</span>${card.retryId?`<button type="button" class="btn ghost sm" id="${card.retryId}">Retry</button>`:''}</div>`).join('')}</div></section>`;
@@ -10449,7 +10449,7 @@ async function tillPage(){
     const referralOffer=catalog.customerReferralOffer||null;
     const referralBanner=referralOffer
       ?`<div class="permission-banner welcome-offer-v215" style="margin-bottom:14px"><b>Referral gift</b>
-        <p class="small" style="margin:5px 0">${esc(referralOffer.reward_label||'Free item')} is free for this customer.</p>
+        <p class="small" style="margin:5px 0">${workspaceTemplateHtmlV97('referralItemIsFree',{item:referralOffer.reward_label||'Free item'})}</p>
         <p class="muted small" style="margin:5px 0">Earned for introducing a friend who has now visited. Nothing is charged.</p>
         <button type="button" class="btn primary sm" id="tReferralRedeemV420" data-grant="${esc(referralOffer.grant_id)}">Give ${esc(referralOffer.reward_label||'the free item')}</button></div>`
       :'';
@@ -19635,7 +19635,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     }).join('')}
   </div>`;
   const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
-    <b>Stamps past ${growStampsTargetV416} cannot be claimed yet</b>
+    <b>${workspaceTemplateHtmlV97('stampsPastTargetNotClaimable',{target:growStampsTargetV416})}</b>
     <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
     ${growStampsStrandedChipsV445}
     ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
@@ -19644,7 +19644,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
          the card — is the whole offer. Offering a button that can only fail is the defect this
          guard was written for in the first place; only the number it guards has changed.
          Comment inside the expression, not its own ${''} slot: see the grid's "+" above. */
-      canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">Make the card ${growStampsHighestGiftV416} stamps</button></div>`:''}
+      canSetupGrow&&growStampsHighestGiftV416<=GROW_STAMPS_MAX_LEN_V463?`<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-stamps-len-v416="${growStampsHighestGiftV416}">${workspaceTemplateHtmlV97('makeTheCardStamps',{stamps:growStampsHighestGiftV416})}</button></div>`:''}
   </div>`:'';
   /* nestly_v567 — THE CANVAS MUST NOT PRETEND TO BE A SAVED CARD.
      GROW_STAMPS_DEFAULT_LEN_V416 (15) is a fine way to SEED a card nobody has set up yet: the
@@ -19734,7 +19734,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <section class="card customer-business-summary-v346" data-grow-stamps-preview-card-v472 aria-label="Customer stamp card preview">
         <div class="customer-business-summary-top-v347">
           <span class="customer-business-tier-pill-v347">${CUI.icon('giftcard',{size:16})}<span>STAMPS</span></span>
-          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>Example · ${esc(String(growStampsPreviewQuestV472.shown))} of ${esc(String(growStampsPreviewQuestV472.slots))}</span></span>
+          <span class="customer-business-ready-v347">${CUI.icon('loyalty',{size:16})}<span>${workspaceTemplateHtmlV97('exampleShownOfSlots',{shown:String(growStampsPreviewQuestV472.shown),slots:String(growStampsPreviewQuestV472.slots)})}</span></span>
         </div>
         ${customerHeroStampCardV422(growStampsPreviewQuestV472)}
       </section>
@@ -20719,7 +20719,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const {data,error}=response;
       if(!isGrowCurrent())return false;
       if(error||data?.program_id!==id){
-        panelHost.innerHTML=`<section class="notice warn" role="alert"><b>This ${kind==='birthday'?'birthday benefit':'Bring-back rule'} could not be prepared for editing.</b><p class="small" style="margin-top:5px">Nothing was published. Return to the overview, refresh, and try again.</p><a class="btn ghost sm" href="#/grow" style="margin-top:10px">Back to Grow overview</a></section>`;
+        panelHost.innerHTML=`<section class="notice warn" role="alert"><b>${workspaceTemplateHtmlV97('couldNotPrepareForEditing',{kind:kind==='birthday'?'birthday benefit':'Bring-back rule'})}</b><p class="small" style="margin-top:5px">Nothing was published. Return to the overview, refresh, and try again.</p><a class="btn ghost sm" href="#/grow" style="margin-top:10px">Back to Grow overview</a></section>`;
         return false;
       }
       draftSnapshotHash=data.snapshot_hash||draftSnapshotHash;
@@ -23190,7 +23190,7 @@ function openPlaybookWizard(ctx){
       <div style="font-size:24px;font-weight:700">${workspaceTemplateHtmlV97(n===1?'customerMatches':'customersMatch',{count:n})}</div>
       ${state.truncated?`<div class="err" role="alert" style="margin-top:6px">Too many customers match to freeze safely. Narrow the rule — raise the days or the visit count.</div>`:''}
       <p class="muted small" style="margin-top:6px">${n?`${names}${n>8?` and ${n-8} more`:''}`:'No customers match yet — widen the days or lower the visit count.'}</p>
-      <p class="muted small" style="margin-top:6px">Regulars with ${state.minVisits}+ past visits and none in over ${state.lapsedDays} days — the same rule a customer profile uses to flag someone as overdue.</p>
+      <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('regularsWithVisitsAndLapse',{visits:state.minVisits,days:state.lapsedDays})}</p>
     </div>`;
   }
   function rewardInfo(){
@@ -23215,7 +23215,7 @@ function openPlaybookWizard(ctx){
     return `<label for="pbVersion">Which reward should be prepared?</label>
       <select id="pbVersion">${state.versions.map(v=>`<option value="${esc(v.id)}" ${state.version&&state.version.id===v.id?'selected':''}>${esc(v.name)} — ${esc(pbRewardLabel(v))}</option>`).join('')}</select>
       <div id="pbRewardInfo" style="margin-top:10px"></div>
-      <label for="pbUpside" style="margin-top:12px">Sales you hope to win back (optional, ${esc(pbCur())})</label>
+      <label for="pbUpside" style="margin-top:12px">${workspaceTemplateHtmlV97('salesToWinBackCurrency',{currency:pbCur()})}</label>
       <input id="pbUpside" type="number" min="0" step="0.01" value="${esc(state.upsideDollars)}" placeholder="e.g. 500">`;
   }
   function stepSafety(){
@@ -24802,7 +24802,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!losing.length)return '';
     return `<div class="imp-note" data-grow-setup-exclusive-w6i2="${esc(kind)}" style="margin-top:12px" role="status">
       <b><span>${esc(switchTitleV322(kind))}</span> runs on its own</b>
-      <p class="muted small" style="margin-top:6px">Turning it on switches ${esc(losing.join(' and '))} off, so customers stop earning there. Everything you have set up stays saved and comes back if you turn it on again.</p>
+      <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('turningOnSwitchesOthersOff',{others:losing.join(' and ')})}</p>
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-setup-exclusive-confirm-w6i2="${esc(kind)}">Turn on <span>${esc(switchTitleV322(kind))}</span></button><button type="button" class="btn ghost sm" data-grow-setup-exclusive-cancel-w6i2="1">Cancel</button></div></div>`;
   };
   const stepOneHtml=()=>{
@@ -25025,7 +25025,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     <div class="field-grid">
       <div class="full"><label for="growSetupReferralRewardW6I2">Points for the customer who referred</label>
         <input id="growSetupReferralRewardW6I2" inputmode="numeric" value="${esc(String(Math.max(0,Math.round(Number(state.referralReward)||0))))}"></div>
-      <div class="full"><label for="growSetupReferralMinW6I2">Friend must spend at least (${esc(currency)})</label>
+      <div class="full"><label for="growSetupReferralMinW6I2">${workspaceTemplateHtmlV97('friendMinSpendCurrencyTwo',{currency:currency})}</label>
         <input id="growSetupReferralMinW6I2" inputmode="decimal" value="${esc(Number(state.referralMinSpend||0).toFixed(2))}"></div>
     </div>
     <p class="grow-setup-example-v301" id="growSetupReferralExampleW6I2" role="status">${esc(referralExampleTextW6I2())}</p>
@@ -25301,7 +25301,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       ?'<p class="muted small">Checking what changes for customers…</p>'
       :changes.error
         ?'<p class="muted small">The change list could not be read, so it is not shown. Nothing has been published yet.</p>'
-        :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">Changes to ${esc(changes.unreadable.join(' and '))} could not be read, so they are not listed here.</p>`:''}`;
+        :`${changes.lines.length?`<ul class="studio-change-list-v295">${changes.lines.join('')}</ul>`:'<p class="muted small">Nothing changes for customers in this draft.</p>'}${changes.unreadable.length?`<p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97('changesCouldNotBeRead',{areas:changes.unreadable.join(' and ')})}</p>`:''}`;
     const claimLine=tiersOnlyClaimLineV305();
     const ackBlock=state.needAck
       ?`<div class="imp-note" style="margin-top:12px">${state.impactRules.length?`<b>Advanced rules this draft turns on</b><div style="margin-top:6px">${state.impactRules.map(rule=>`<div class="studio-impact-rule"><b>${rule.name?`<span data-merchant-content>${esc(rule.name)}</span>`:'(unnamed)'}</b></div>`).join('')}</div>`:'<b>This draft turns on a rule that moves money or reaches customers.</b>'}
@@ -25387,7 +25387,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     const growPointsPageHref='#/grow/points';
     host.innerHTML=`<section class="grow-setup-v301" id="growSetupWizardPanelV301" aria-label="Set up rewards" data-grow-setup-step-v301="${state.step}">
       <div class="grow-setup-head-v301"><div>${state.simpleEditModeV335?'':`<p class="customer-quest-kicker">Set up rewards</p>
-      <h3 class="grow-setup-title-v301">Step ${state.step} of ${railCountW6I2()} · ${esc(railStepW6I2().label)}</h3>
+      <h3 class="grow-setup-title-v301">${workspaceTemplateHtmlV97('wizardStepOfWithLabel',{step:state.step,total:railCountW6I2(),label:railStepW6I2().label})}</h3>
       <p class="muted small" data-grow-setup-percent-w6i2="${railPercentW6I2()}" role="status">${railPercentW6I2()}% done</p>`}</div>
       <!-- V302: the wizard is now the door for every unfinished programme, including a PAUSED one
            that already carries a catalogue, tiers and reward history. That owner must never lose
@@ -26340,7 +26340,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
          are machinery, so they fold away under one disclosure instead of framing the answer. -->
     <section class="card" id="growPublishDiffCard"><h2>What changes for customers</h2><div id="growPublishDiffBody" role="status" aria-live="polite" style="margin-top:12px"><p class="muted small">Loading what changes for customers…</p></div><div id="growPublishPauseV258" style="margin-top:12px"></div>
       <details class="studio-technical-v295" id="growPublishTechnicalV295"><summary>Technical detail</summary>
-        <p class="muted small" style="margin-top:8px">Draft v${Number(draft?.version_no||0)} compared with the programme customers earn on today.</p>
+        <p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('draftComparedWithLive',{version:Number(draft?.version_no||0)})}</p>
         <p class="muted small" style="margin-top:6px">This page is the final publication gate. It lists every programme, reward, birthday and bring-back value this draft changes, and checks advanced-action safety before you confirm.</p>
         <p class="muted small" style="margin-top:6px">The welcome offer is not part of this draft \u2014 it goes live when it is saved.</p>
       </details></section>
@@ -26493,7 +26493,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
     /* The one-sentence answer is only honest when everything WAS read. A draft with an unreadable
        section is not a draft that changes nothing, so it says what it could not see instead. */
     const unreadableLineV295=unreadableV291.length
-      ?`<p class="muted small"${changeLinesV295.length?' style="margin-top:10px"':''}>Changes to ${esc(unreadableV291.join(' and '))} could not be read, so they are not listed here. Review them in their editors before publishing.</p>`
+      ?`<p class="muted small"${changeLinesV295.length?' style="margin-top:10px"':''}>${workspaceTemplateHtmlV97('changesCouldNotBeReadReview',{areas:unreadableV291.join(' and ')})}</p>`
       :'';
     target.innerHTML=changeLinesV295.length
       ?`<ul class="studio-change-list-v295">${changeLinesV295.join('')}</ul>${unreadableLineV295}`
@@ -26547,7 +26547,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
        and the two things that are genuinely a warning — publishing paused, and a draft that needs
        confirmation. The acknowledgement checkbox and the disabled-until-ticked button are
        untouched: they are the gate, not the ceremony. */
-    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">Final confirmation for draft v${Number(draft?.version_no||0)}.</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div><section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml||'<p class="muted small">The change list could not be read on the page behind this dialog. Close, reload the review page and read it before publishing.</p>'}</div></section>${ruleBlocks?`<section class="imp-note" style="margin-bottom:12px" aria-label="Advanced rules"><b>Advanced rules this draft turns on</b><div style="margin-top:8px">${ruleBlocks}</div></section>`:''}${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}${needConfirm?'<div class="studio-emg-banner" role="note" style="margin-top:14px">This draft turns on a rule that moves money or reaches customers.</div>':''}<label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
+    document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="growPubModal" role="dialog" aria-modal="true" aria-labelledby="growPubTitle" tabindex="-1"><div class="modal-card" style="max-width:640px"><div class="row"><div><h2 id="growPubTitle">Confirm draft publication</h2><p class="muted small">${workspaceTemplateHtmlV97('finalConfirmationForDraft',{version:Number(draft?.version_no||0)})}</p></div><span class="spacer"></span><button class="btn ghost sm" id="growPubClose" type="button">Close</button></div><section class="imp-note" style="margin-bottom:12px" aria-label="What changes for customers"><b>What changes for customers</b><div style="margin-top:8px">${publishDiffHtml||'<p class="muted small">The change list could not be read on the page behind this dialog. Close, reload the review page and read it before publishing.</p>'}</div></section>${ruleBlocks?`<section class="imp-note" style="margin-bottom:12px" aria-label="Advanced rules"><b>Advanced rules this draft turns on</b><div style="margin-top:8px">${ruleBlocks}</div></section>`:''}${draftProgrammeActiveV258===false?'<div class="studio-emg-banner" role="alert" style="margin-top:12px"><b>This will publish PAUSED — customers earn nothing.</b> Cancel, then use “Set Status to Active” on the review page if that is not what you want.</div>':''}${needConfirm?'<div class="studio-emg-banner" role="note" style="margin-top:14px">This draft turns on a rule that moves money or reaches customers.</div>':''}<label style="display:flex;align-items:flex-start;gap:9px;margin:10px 0 0;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px;min-height:42px"><input type="checkbox" id="growPubType" style="width:auto;margin-top:3px"> <span data-workspace-i18n>I have read the changes above and want customers to get them now.</span></label><div id="growPubErr"></div><div class="row" style="margin-top:16px"><button class="btn ${needConfirm?'danger':''}" id="growPubConfirm" type="button" disabled>Publish now</button><button class="btn ghost sm" id="growPubCancel" type="button">Cancel</button></div></div></div>`);
     let deactivate;const close=()=>{if(deactivate)deactivate();else $('growPubModal')?.remove();releaseV301()};
     deactivate=CUI.activateDialog($('growPubModal'),{onClose:close,initialFocus:'#growPubType'});
     $('growPubClose').onclick=$('growPubCancel').onclick=close;
@@ -26584,7 +26584,7 @@ async function studioPublishReviewPage(routeMain,isCurrent,draftVersionId){
       if(!isCurrent())return;
       if(!switchV314.ok){
         confirmButton.disabled=false;
-        $('growPubErr').innerHTML=`<div class="err">Published. The programme switch could not be applied — ${esc(switchV314.error?.message||'try again.')} Press Publish now to retry just the switch.</div>`;
+        $('growPubErr').innerHTML=`<div class="err">${workspaceTemplateHtmlV97('publishedSwitchNotApplied',{reason:switchV314.error?.message||'try again.'})}</div>`;
         return;
       }
       sessionStorage.removeItem(reviewKey);close();toast('Grow changes published');nav('#/grow');
@@ -26651,7 +26651,7 @@ async function studioOverview(routeMain,isCurrent){
         ${reg?`<div>Canonical key: <code>${esc(reg.canonical_benefit_key_template)}</code></div>`:''}
         <div>When: ${studioWhenText(item,cat)}</div>
         <div>Then: ${studioThenText(item,cat)}</div>
-        <div>During: ${studioDuringText(item.during_schedule)} · Stacking: ${studioUsingText(item.using_stacking)}</div>
+        <div>${workspaceTemplateHtmlV97('studioDuringStacking',{during:studioDuringText(item.during_schedule),stacking:studioUsingText(item.using_stacking)})}</div>
       </div></details>`;
     // PS-1C.2: studio rows show the per-effect breakdown (so a partly-executing rule is never a
     // bare 'Live') and the published-rule controls (pause/resume + emergency pause/lift).
@@ -27405,7 +27405,7 @@ async function storedValuePage(){
   const cutReady=cut&&cut.ready===true;              // server value, never inferred here
   const cutLive=(cut&&cut.authority_state==='live')||state==='live';
   const cutBodyHtml=cutRes.error
-    ? `<p class="err" role="alert" style="margin-top:8px">The cutover preview could not be loaded (${esc(cutRes.error.message||'unavailable')}). Cutover stays unavailable.</p>`
+    ? `<p class="err" role="alert" style="margin-top:8px">${workspaceTemplateHtmlV97('cutoverPreviewFailed',{reason:cutRes.error.message||'unavailable'})}</p>`
     : cutLive
       ? `<p class="muted small" style="margin-top:8px">This business is already live. Cutover happens once and cannot be undone here — if something is wrong, use <b>Pause &amp; safety</b> above to stop stored value immediately.</p>`
       : `<p class="muted small" style="margin-top:8px">Cutover makes stored value real for this business: customers can top up and spend actual money. It happens once, it cannot be undone from this screen, and it needs a super admin to designate this business first.</p>
@@ -27584,8 +27584,8 @@ async function referralsPage(){
     :'Referral programme is Off. Referral links are saved, but no reward is paid while it remains Off.';
   const referralSettings=canWrite?`<label for="fe">Status</label><select id="fe"><option value="true" ${p?.enabled?'selected':''}>${STATUS_WORDS.on}</option><option value="false" ${!p||!p.enabled?'selected':''}>${STATUS_WORDS.off}</option></select>
       <label for="fr">${esc(referralAmountLabelV429)}</label><input id="fr" type="number" min="0" step="1" value="${Math.max(0,Math.round(Number(p?.reward_points)||0))}"${referralKindV429==='voucher'?' disabled':''}>
-      ${referralKindV429==='voucher'?`<p class="muted small">This referral pays a free gift — ${esc(String(p?.reward_label||'').trim()||'not named yet')}. Change the reward type in Rewards Programme → Referrals.</p>`:''}
-      <label for="fm">Minimum spend on friend's qualifying sale (${S.biz.currency||'SGD'})</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
+      ${referralKindV429==='voucher'?`<p class="muted small">${workspaceTemplateHtmlV97('referralPaysFreeGift',{gift:String(p?.reward_label||'').trim()||'not named yet'})}</p>`:''}
+      <label for="fm">${workspaceTemplateHtmlV97('friendQualifyingMinCurrency',{currency:S.biz.currency||'SGD'})}</label><input id="fm" type="number" min="0" step="0.01" value="${((p?.min_spend_cents??0)/100).toFixed(2)}">`
     :`<dl class="cui-readonly-list" aria-label="Referral program settings"><div class="cui-readonly-row"><dt>Status</dt><dd>${statusOnOff(!!p?.enabled)}</dd></div><div class="cui-readonly-row"><dt>${esc(referralAmountLabelV429)}</dt><dd>${esc(referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'A free gift'):growReferralAmountWordV425(referralKindV429,p?.reward_points))}</dd></div><div class="cui-readonly-row"><dt>Minimum qualifying spend</dt><dd>${money(p?.min_spend_cents??0)}</dd></div></dl>`;
   /* nestly_v585 (owner photo 9: "add a back button (only this does not have back button)"). Every
      other Rewards & Offer destination carries the same round back control; this page was reached
@@ -27776,7 +27776,7 @@ async function membershipsPage(){
     const historyPlans=(plans||[]).filter(p=>p.deleted_at!=null);
     const rows=plansTabV329==='published'?publishedPlans:historyPlans;
     const rowHtml=p=>{
-      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${money(p.price_cents)}/${p.cadence==='annual'?'yr':'mo'} → ${money(p.credit_cents)} credit each period</div></div>`;
+      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${workspaceTemplateHtmlV97('pricePerPeriodToCredit',{price:money(p.price_cents),cadence:p.cadence==='annual'?'yr':'mo',credit:money(p.credit_cents)})}</div></div>`;
       if(plansTabV329==='history')return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=plansDeletePendingV329===String(p.id);
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
@@ -28131,7 +28131,7 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   if($('bookingConfirmedContactV330'))$('bookingConfirmedContactV330').remove();
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="bookingConfirmedContactV330" role="dialog" aria-modal="true" aria-labelledby="bookingConfirmedContactTitleV330" tabindex="-1"><div class="modal-card" style="max-width:420px">
     <h2 id="bookingConfirmedContactTitleV330">Booking confirmed</h2>
-    <p class="muted small" style="margin-top:4px">Let ${esc(customerName||'the customer')} know.</p>
+    <p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('letCustomerKnow',{name:customerName||'the customer'})}</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
       ${waUrl?`<a class="btn" id="bookingConfirmedWhatsAppV330" href="${esc(waUrl)}" target="_blank" rel="noopener noreferrer">${CUI.icon('chat',{size:16,className:'icon-whatsapp-v330'})} WhatsApp</a>`:''}
       ${callNumber?`<a class="btn ghost" href="tel:${esc(callNumber)}">${CUI.icon('phone',{size:16})} Call</a>`:''}
@@ -28804,7 +28804,7 @@ async function appointmentsPage(){
       const daysV468=[];
       for(let cursor=dateValue;cursor<=lastDayV468&&daysV468.length<=MAX_BLOCK_DAYS_V468;cursor=addDays(cursor,1))daysV468.push(cursor);
       if(daysV468.length>MAX_BLOCK_DAYS_V468){
-        errorHost.innerHTML=`<div class="err">Block at most ${MAX_BLOCK_DAYS_V468} days at a time. Split a longer absence into two.</div>`;return;
+        errorHost.innerHTML=`<div class="err">${workspaceTemplateHtmlV97('blockAtMostDays',{days:MAX_BLOCK_DAYS_V468})}</div>`;return;
       }
       const spansV468=daysV468.map(day=>({day,starts:sgIso(`${day}T${startValue}`),ends:sgIso(`${day}T${endValue}`)}));
       if(spansV468.some(span=>!span.starts||!span.ends||new Date(span.ends)<=new Date(span.starts))){

@@ -39,6 +39,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v945: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   This harness builds its renderer with `new Function`, where a free identifier resolves against
+   globalThis, so the REAL runtime is installed there. Never a stub: a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -171,7 +178,7 @@ test('W6I2 A4 the rail is composed from the switches, in customer-facing order',
   assert.match(wizard, /if\(state\.switches\[programme\]!==true\)return;/);
   assert.match(wizard, /const railCountW6I2=\(\)=>railW6I2\(\)\.length;/);
   assert.match(wizard, /const railPercentW6I2=\(\)=>\{/);
-  assert.match(wizard, /Step \$\{state\.step\} of \$\{railCountW6I2\(\)\} · \$\{esc\(railStepW6I2\(\)\.label\)\}/);
+  assert.match(wizard, /'wizardStepOfWithLabel'/);
   // Zero switched on: the rail is screen 0 + Go-live, and Publish is refused in words.
   assert.match(wizard, /const anySwitchOnW6I2=\(\)=>PROGRAMME_KINDS_W6I2\.some\(kind=>state\.switches\[kind\]===true\);/);
   assert.match(wizard, /\|\|!anySwitchOnW6I2\(\)/);
@@ -710,7 +717,11 @@ function mountWizard({ spine = null, industry = 'salon', snapshot = {}, liveTier
     },
     click: async selector => { const el = dom.host.querySelector(selector);
       assert.ok(el, `no ${selector} on screen`); await el.onclick() },
-    title: () => /<h3 class="grow-setup-title-v301">([^<]*)</.exec(dom.markup)?.[1] || '',
+    /* nestly_v945: the step title is a named template now — "Step {step} of {total} · {label}" —
+       so its content arrives wrapped in spans rather than as bare text. Read the whole element and
+       strip the tags, which is what this accessor always meant by "the title". */
+    title: () => (/<h3 class="grow-setup-title-v301">([\s\S]*?)<\/h3>/.exec(dom.markup)?.[1] || '')
+      .replace(/<[^>]*>/g, ''),
     rail: () => [...dom.markup.matchAll(/class="grow-setup-step-label-v301">([^<]*)</g)].map(m => m[1]),
     configWrites: () => rpc.filter(call => call.name === 'save_loyalty_config_draft').map(call => call.args.p_config),
     called: name => rpc.filter(call => call.name === name) };
@@ -1166,7 +1177,11 @@ test('W6I2 E6 the four switches actually toggle, and only the one that was press
     'the first press on an excluding switch changes nothing at all');
   assert.match(w.dom.markup, /data-grow-setup-exclusive-w6i2="stamps"/,
     'it arms a confirmation instead');
-  assert.match(w.dom.markup, /Turning it on switches Points &amp; gifts off/,
+  /* nestly_v945: the confirmation is a named template now, so the programme it names arrives in
+     its own value span. Assert that span's content — which says WHICH programme is being named,
+     rather than merely that the words appear somewhere in the sentence. */
+  assert.match(w.dom.markup,
+    /data-workspace-template="turningOnSwitchesOthersOff"[^]*?data-workspace-value="others"[^>]*>Points &amp; gifts</,
     'and the confirmation NAMES what goes, before it goes');
   await w.click('[data-grow-setup-exclusive-confirm-w6i2="stamps"]');
   assert.deepEqual(w.rail(), ['Programmes', 'Stamps', 'Milestones'],

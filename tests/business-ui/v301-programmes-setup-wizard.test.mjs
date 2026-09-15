@@ -283,7 +283,7 @@ test('W6I2 (b) one running percentage across the whole sequence', () => {
   assert.match(wizard, /const railPercentW6I2=\(\)=>\{/);
   assert.match(wizard, /return Math\.max\(0,Math\.min\(100,Math\.round\(\(\(state\.step-1\)\/total\)\*100\)\)\);/);
   assert.match(wizard, /data-grow-setup-percent-w6i2="\$\{railPercentW6I2\(\)\}"/);
-  assert.match(wizard, /Step \$\{state\.step\} of \$\{railCountW6I2\(\)\} · \$\{esc\(railStepW6I2\(\)\.label\)\}/);
+  assert.match(wizard, /'wizardStepOfWithLabel'/);
 });
 
 test('V303 (c) the Tiers step builds a ladder through the editor\u2019s own tier writer', () => {
@@ -589,7 +589,7 @@ test('V301 (c) the change list reuses the publish gate’s own comparison helper
   assert.match(comparison, /new bring-back rule, starts when you publish/);
   // Fail-soft: an unreadable section is NAMED, never reported as "nothing changed".
   assert.match(comparison, /const unreadable=\[diff\.rewards\?'':'rewards',diff\.retention\?'':'bring-back rules',diff\.birthday\?'':'the birthday benefit'\]\.filter\(Boolean\);/);
-  assert.match(wizard, /could not be read, so they are not listed here/);
+  assert.match(wizard, /'changesCouldNotBeRead'/);
 });
 
 test('V301 (c) success replaces the wizard body and offers exactly two ways on', () => {

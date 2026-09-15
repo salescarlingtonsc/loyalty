@@ -20,6 +20,13 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v945: a renderer in this file now carries a named template for a sentence that mixes
+   reviewed English with a runtime value — one text node, which the flat catalogue can never reach.
+   This harness builds its renderer with `new Function`, where a free identifier resolves against
+   globalThis, so the REAL runtime is installed there. Never a stub: a stub would let a template
+   with a missing key or a dropped value pass a test that claims to render production markup. */
+installWorkspaceTemplateGlobals();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const appJs = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -117,7 +124,10 @@ test('v463 the one-tap stranded fix is withheld for a gift past 15', () => {
      so the same rule now withholds it for a gift at 20 — a length no owner may set. */
   for (const stamp of [16, 20, 80, 1000]) {
     const note = render({ stampTarget: 10, gifts: [GIFT('Free Lotion', stamp)] }).growStampsStrandedNoteV416;
-    assert.match(note, /Stamps past 10 cannot be claimed yet/, `stamp ${stamp} is still reported`);
+    /* nestly_v945: the heading is a named template now, so the card length arrives in its own
+       value span. The sentence and the number are both still pinned. */
+    assert.match(note, /Stamps past <span[^>]*>10<\/span> cannot be claimed yet/,
+      `stamp ${stamp} is still reported`);
     assert.deepEqual(lenWrites(note), [], `no fix button for a gift at stamp ${stamp}`);
     assert.match(note, /move that gift onto a stamp inside the card/,
       'the paragraph still names the way out that does exist');
