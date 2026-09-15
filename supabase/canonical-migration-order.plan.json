@@ -4396,6 +4396,18 @@
       "version": "20261016010000",
       "name": "nestly_v974_template_reconcile_cron",
       "sourcePath": "db/migrations/20261016_nestly_v974_template_reconcile_cron.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261017000000",
+      "name": "nestly_v963_promo_executor_schema",
+      "sourcePath": "db/migrations/20261016_nestly_v963_promo_executor_schema.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261017010000",
+      "name": "nestly_v964_applied_coupon_is_not_removable",
+      "sourcePath": "db/migrations/20261016_nestly_v964_applied_coupon_is_not_removable.sql"
     }
   ]
 }

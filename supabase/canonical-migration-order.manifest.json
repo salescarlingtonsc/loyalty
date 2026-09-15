@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 687,
-  "itemCount": 732,
+  "pendingCount": 689,
+  "itemCount": 734,
   "items": [
     {
       "order": 1,
@@ -7327,6 +7327,26 @@
       "path": "supabase/migrations/20261016010000_nestly_v974_template_reconcile_cron.sql",
       "octetLength": 7290,
       "sha256": "df3d0ea293f8b98f04e8d106e00d491bfd69e1d2e35353c9be7bfd96f8ed2e66",
+      "provenance": "local-source"
+    },
+    {
+      "order": 733,
+      "kind": "pending",
+      "version": "20261017000000",
+      "name": "nestly_v963_promo_executor_schema",
+      "path": "supabase/migrations/20261017000000_nestly_v963_promo_executor_schema.sql",
+      "octetLength": 6409,
+      "sha256": "624bd8a22924a00fa007705176dc14bbcd40f0087e41796089d67f55aaf167ab",
+      "provenance": "local-source"
+    },
+    {
+      "order": 734,
+      "kind": "pending",
+      "version": "20261017010000",
+      "name": "nestly_v964_applied_coupon_is_not_removable",
+      "path": "supabase/migrations/20261017010000_nestly_v964_applied_coupon_is_not_removable.sql",
+      "octetLength": 3694,
+      "sha256": "5a1689683795b080d1f1ab398cc5896598a9ed4211f86834f57d190e81f17b19",
       "provenance": "local-source"
     }
   ]

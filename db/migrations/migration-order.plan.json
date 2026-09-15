@@ -4401,6 +4401,18 @@
       "path": "db/migrations/20261016_nestly_v974_template_reconcile_cron.sql",
       "semanticVersion": "v974",
       "proposedDeployVersion": "20261016010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261016_nestly_v963_promo_executor_schema.sql",
+      "semanticVersion": "v963",
+      "proposedDeployVersion": "20261017000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261016_nestly_v964_applied_coupon_is_not_removable.sql",
+      "semanticVersion": "v964",
+      "proposedDeployVersion": "20261017010000"
     }
   ]
 }
