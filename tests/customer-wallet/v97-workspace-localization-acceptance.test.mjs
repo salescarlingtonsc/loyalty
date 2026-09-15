@@ -581,7 +581,7 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      joined by "·" rather than one sentence with three optional tails and eight shapes to review.
      The six expiry keys are named literally at the call site rather than built from a prefix,
      because a key assembled at run time is a key this gate cannot see. 360 + 66 = 426. */
-  assert.equal(keys.length,826,'mixed-interface interpolation inventory changed without review');
+  assert.equal(keys.length,867,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

@@ -891,7 +891,7 @@ function programmeExclusionsV322(kind){
    the localizer and a test can both see it in one place. */
 function growPointsWordV322(points){
   const value=Math.max(0,Math.round(Number(points)||0));
-  return `${value} ${value===1?'point':'points'}`;
+  return workspaceTemplateTextV97(value===1?'onePointWord':'manyPointsWord',{count:value});
 }
 /* nestly_v429 (B1): a referral reward now has THREE declared types (v425), and the two accruing
    ones share referral_programs.reward_points — one number, and reward_kind says which pot it
@@ -2366,7 +2366,7 @@ function bindCatalogueDeleteV660(onDone){
     const kind=button.dataset.catalogueKindV660==='product'?'product':'service';
     const name=button.dataset.catalogueNameV660||`this ${kind}`;
     if(!await confirmActionV386(
-      workspaceTemplateTextV97('deleteCatalogueItemConfirm',{itemName:name,pastRecordKind:kind==='service'?'appointment or sale':'sale'}),
+      workspaceTemplateTextV97(kind==='service'?'deleteCatalogueItemConfirmService':'deleteCatalogueItemConfirmProduct',{itemName:name}),
       {confirmLabel:'Delete',cancelLabel:'Keep it'}))return;
     CUI.setButtonBusy(button,{busy:true,label:'…'});
     const {data,error}=await sb.rpc('business_manage_catalogue_item_v660',
@@ -2607,11 +2607,11 @@ function renderOnboard(){
       const startButton=$('startSelfServe');
       if(startButton)startButton.disabled=!tier;
       $('selfServeTotal').textContent=tier
-        ?`${money(tier.amount_cents)} / ${cadence==='annual'?'year':'month'}`
+        ?workspaceTemplateTextV97(cadence==='annual'?'amountPerYear':'amountPerMonth',{amount:money(tier.amount_cents)})
         :'Arranged with Peekaa support';
       $('selfServeCapacityNote').textContent=tier
         ?'Each branch you add later is charged this amount again, on its own subscription and its own card.'
-        :workspaceTemplateTextV97('billingCycleNotOfferedAtThisCapacity',{cycle:cadence==='annual'?'Annual':'Monthly'});
+        :workspaceTemplateTextV97(cadence==='annual'?'annualBillingNotOfferedAtThisCapacity':'monthlyBillingNotOfferedAtThisCapacity',{});
       /* Both cadence cards price the capacity actually chosen, so the headline and the amount due
          can never disagree. A cadence with no tier at this capacity says so on its own card. */
       const annualTier=signupTierV664('annual',capacity),monthlyTier=signupTierV664('monthly',capacity);
@@ -3817,7 +3817,7 @@ async function decideBookingRequestGlobalV329(id,decision,contactDetails){
   const authorized=decision==='confirm'?canWriteModule('bookings'):decision==='decline'?canWriteModule('bookings'):false;
   if(!authorized){toast('Booking write access is required');return}
   const {data,error}=await sb.rpc('staff_decide_booking_request_v73',{p_business:S.biz.id,p_request:id,p_decision:decision,p_branch:null});
-  if(error){const failText=`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Try again.'}`;toast(failText);return}
+  if(error){const failText=workspaceTemplateTextV97(decision==='confirm'?'confirmFailedReason':'declineFailedReason',{reason:error.message||workspaceTranslationV97('Try again.')});toast(failText);return}
   const notice=bookingDecisionNotice(data,decision);
   toast(notice.text);
   autoRefreshIfRelevant();
@@ -5184,7 +5184,7 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
   const glyph=change>0?'▲':change<0?'▼':'▬';
   /* V299: a fall now reads in the same three-tone language Business Insights already uses —
      a −18% and a 0% were both the identical grey pill, distinguished only by the glyph. */
-  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${workspaceTemplateHtmlV97('percentChangeVersusRange',{pct:Math.abs(change),word:word,from:previousFrom,to:previousTo})}</span></span>`;
+  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${workspaceTemplateHtmlV97(change>0?'percentChangeUpVersusRange':change<0?'percentChangeDownVersusRange':'percentChangeLevelVersusRange',{pct:Math.abs(change),from:previousFrom,to:previousTo})}</span></span>`;
 }
 /* V385 (owner markup on the dashboard, photo 1: the ▲400% chip ringed with "Compare with
    what? please state here"). The chip already knew its answer — previousEquivalentRangeV153
@@ -5619,7 +5619,9 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const rows=(data||[]).filter(row=>String(row.status||'').toLowerCase()!=='cancelled');
   if(summary){
     summary.textContent=rows.length
-      ?(isTodayV252?`${rows.length} ${rows.length===1?'booking':'bookings'} today.`:`${rows.length} ${rows.length===1?'booking':'bookings'} on ${dayLabelV252}.`)
+      ?(isTodayV252
+        ?workspaceTemplateTextV97(rows.length===1?'oneBookingToday':'manyBookingsToday',{count:rows.length})
+        :workspaceTemplateTextV97(rows.length===1?'oneBookingOnDay':'manyBookingsOnDay',{count:rows.length,day:dayLabelV252}))
       :(isTodayV252?'Nothing booked for today.':workspaceTemplateTextV97('nothingBookedOnDaySummary',{day:dayLabelV252}));
   }
   if(!rows.length){
@@ -6574,7 +6576,7 @@ function insightQuietScopeV214({current,branchId,branchName}){
   const revenueCents=Number(current?.revenue_cents)||0;
   const where=branchId?(branchName||'This branch'):'This business';
   const activity=visits||revenueCents
-    ?workspaceTemplateTextV97('recordedVisitsAndRevenueNotEnoughForTrend',{where:where,visits:visits,visitWord:visits===1?'visit':'visits',amount:money(revenueCents)})
+    ?workspaceTemplateTextV97(visits===1?'recordedOneVisitAndRevenueNotEnoughForTrend':'recordedManyVisitsAndRevenueNotEnoughForTrend',{where:where,visits:visits,amount:money(revenueCents)})
     :workspaceTemplateTextV97('recordedNoVisitsOrSalesNothingToCompare',{where:where});
   return {
     tone:'neutral',icon:'info',category:'Readiness',
@@ -8745,7 +8747,7 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
     heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
     message:duplicate?`${workspaceTemplateTextV97(unitNounV430==='stamps'?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints',{balance:pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'})}`
-      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97('noUnitEarnedForThisPurchase',{unitNoun:unitNounV430}),
+      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97(unitNounV430==='stamps'?'noStampsEarnedForThisPurchase':'noPointsEarnedForThisPurchase',{}),
     pointsEarned,
     pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
     duplicate
@@ -11867,7 +11869,7 @@ async function tillPage(){
           :d.pointsEarned>0
           ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
-          ?`<p class="muted">${workspaceTemplateHtmlV97('recordedCurrentBalance',{balance:d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—',unit:tillUnitNounV430(catalog)})}</p>`
+          ?`<p class="muted">${workspaceTemplateHtmlV97(catalog?.customerGiftsV392?.program?.unit==='stamps'?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints',{balance:d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—'})}</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
@@ -12202,8 +12204,8 @@ async function salesPage(){
     const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows'
       :workflowDeniedV579?' · Reverse controls need refund permission; Reversed status is inferred from the ledger':'';
     salesFilterNoteV266(paymentStateApplied
-      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
-      :workspaceTemplateTextV97('showingSalesPaymentStateNotApplied',{count:rows.length,saleWord:rows.length===1?'sale':'sales',period:period,workflowNote:workflowWarning}),
+      ?`${workspaceTemplateTextV97(rows.length===1?'showingOneSaleForPeriod':'showingManySalesForPeriod',{count:rows.length,period})}${workflowWarning}`
+      :workspaceTemplateTextV97(rows.length===1?'showingOneSalePaymentStateNotApplied':'showingManySalesPaymentStateNotApplied',{count:rows.length,period:period,workflowNote:workflowWarning}),
       (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
       if(applyButton?.isConnected&&isCurrentLoadV579())CUI.setButtonBusy(applyButton,{busy:false});
@@ -13961,7 +13963,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
       redemptionStatus.textContent=canManageLoyalty
         ?'This switch affects customer QR redemption only. Booking settings are preserved.'
-        :workspaceTemplateTextV97('customerQrRedemptionIsState',{state:redemptionToggle.checked?'enabled':'off'});
+        :workspaceTemplateTextV97(redemptionToggle.checked?'customerQrRedemptionIsEnabled':'customerQrRedemptionIsOff',{});
       if(canManageLoyalty){
         redemptionToggle.disabled=false;redemptionSave.disabled=false;
         redemptionSave.onclick=async()=>{
@@ -13974,7 +13976,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           redemptionToggle.disabled=false;redemptionSave.disabled=false;
           redemptionStatus.textContent=result.error
             ?'Customer QR redemption was not changed. Refresh and try again.'
-            :workspaceTemplateTextV97('customerQrRedemptionIsStateBookingSettingsPreserved',{state:result.data?.redemption_enabled===true?'enabled':'off'});
+            :workspaceTemplateTextV97(result.data?.redemption_enabled===true?'customerQrRedemptionIsEnabledBookingSettingsPreserved':'customerQrRedemptionIsOffBookingSettingsPreserved',{});
         };
       }
     }
@@ -19229,7 +19231,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
     <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
     <b>Add reward</b>
-    <span class="muted small">${workspaceTemplateHtmlV97('createGiftsRedeemWithUnit',{unit:growPointsUnitV326})}</span>
+    <span class="muted small">${workspaceTemplateHtmlV97(growPointsIsStampsV326?'createGiftsRedeemWithStamps':'createGiftsRedeemWithPoints',{})}</span>
   </li>`:'';
   /* V359 (owner: "adding or editing the fields will be auto publish (with a save button that
      already exist) - dont need the wizard go live steps"). The earning rule is edited HERE now,
@@ -19327,7 +19329,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
       ${growRedemptionBandV521}
-      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">${workspaceTemplateHtmlV97('giftsAvailableWithUnit',{unit:growPointsUnitV326})}</p></div>`
+      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">${workspaceTemplateHtmlV97(growPointsIsStampsV326?'giftsAvailableWithStamps':'giftsAvailableWithPoints',{})}</p></div>`
         :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">${workspaceTemplateHtmlV97('showingGiftsRetiredYears',{years:GROW_HISTORY_WINDOW_YEARS_V375})}</p></div>`}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
         ${growPointsManageTabV326==='published'
@@ -20619,7 +20621,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            does not exclude those three), so a tile-list filter alone does not stop this block from
            rendering on those routes. Explicit is the only safe guard here. -->
       <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
-        ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
+        ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?workspaceTemplateTextV97(activeMembershipCount===1?'oneActivePlan':'manyActivePlans',{count:activeMembershipCount}):membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
     </section>
     ${/* V364 (owner markup 2026-08-16, photos 6 and 7: the whole "How the programme fits
@@ -22213,10 +22215,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the numbers underneath them have to be re-read. Saying it once, here, is the difference
        between a deliberate change and a silent one. */
     const rungsV585=growTiersPublishedV331.length;
-    const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
+    /* nestly_v963: the basis is a WORD, so it cannot be a value — it was named {v1}/{v3}, which is
+       how it survived a scan looking for word-shaped slot names. Six keys: three bases × singular
+       and plural, each naming its basis in its own language. */
+    const tiersBasisKeyV963=basis==='visits'?'Visits':basis==='spend'?'DollarsSpent':'PointsEarned';
     toast(rungsV585
-      ?workspaceTemplateTextV97(rungsV585===1?'tiersAreEarnedByNowYourOne':'tiersAreEarnedByNowYourMany',{v1:wordV585,v2:rungsV585,v3:wordV585})
-      :workspaceTemplateTextV97('tiersAreEarnedByNow',{basisWord:wordV585}));
+      ?workspaceTemplateTextV97(rungsV585===1
+        ?(tiersBasisKeyV963==='Visits'?'tiersAreEarnedByVisitsNowYourOne':tiersBasisKeyV963==='DollarsSpent'?'tiersAreEarnedByDollarsSpentNowYourOne':'tiersAreEarnedByPointsEarnedNowYourOne')
+        :(tiersBasisKeyV963==='Visits'?'tiersAreEarnedByVisitsNowYourMany':tiersBasisKeyV963==='DollarsSpent'?'tiersAreEarnedByDollarsSpentNowYourMany':'tiersAreEarnedByPointsEarnedNowYourMany'),{rungs:rungsV585})
+      :workspaceTemplateTextV97(basis==='visits'?'tiersAreEarnedByVisitsNow':basis==='spend'?'tiersAreEarnedByDollarsSpentNow':'tiersAreEarnedByPointsEarnedNow',{}));
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -22332,7 +22339,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
       if(!isGrowCurrent()){growReferralBusyV364=false;return null;}
       return spine.ok?true
-        :referralFailV567(workspaceTemplateTextV97('referralsCouldNotBeTurnedOnOff',{onOff:wantOnV558?'on':'off',errorMessage:ownerErrorText(spine.error)}));
+        :referralFailV567(workspaceTemplateTextV97(wantOnV558?'referralsCouldNotBeTurnedOn':'referralsCouldNotBeTurnedOff',{errorMessage:ownerErrorText(spine.error)}));
     };
     /* v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
@@ -24713,7 +24720,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   const rewardFormProblemV304=form=>{
     if(String(form?.name||'').trim().length<2)return 'Give this reward a name customers will recognise.';
-    if(!(parseInt(form?.points||'0',10)>0))return workspaceTemplateTextV97('enterHowManyUnitsThisRewardCosts',{unit:rewardUnit()});
+    if(!(parseInt(form?.points||'0',10)>0))return workspaceTemplateTextV97(rewardUnit()==='stamps'?'enterHowManyStampsThisRewardCosts':'enterHowManyPointsThisRewardCosts',{});
     return '';
   };
   /* The write advance() always performed, verbatim: materialise a published reward into this draft
@@ -24792,7 +24799,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!name)return {ok:false,soft:true,message:'Give this tier a name customers will see.'};
     const threshold=parseInt(form?.threshold||'',10);
     if(!Number.isFinite(threshold)||threshold<0)return {ok:false,soft:true,
-      message:workspaceTemplateTextV97('enterHowManyUnitsCustomerNeedsForThisTier',{unit:tierBasisV303()==='visits'?'visits':'points'})};
+      message:workspaceTemplateTextV97(tierBasisV303()==='visits'?'enterHowManyVisitsCustomerNeedsForThisTier':'enterHowManyPointsCustomerNeedsForThisTier',{})};
     const id=form.id||crypto.randomUUID();
     const existing=state.tiers.find(tier=>tier.id===id);
     /* The candidate is written BEFORE it joins the list, so a failed add leaves no phantom row
@@ -25190,7 +25197,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      textContent assignment for the v97 reason exampleText() is: interpolated runtime copy belongs
      in a named function, so the localizer and this pin can both see it in one place. */
   const rewardRowPointsTextV304=points=>` · ${unitWord(Math.max(0,Number(points)||0),rewardUnit())}`;
-  const tierRowThresholdTextV304=threshold=>` · ${Math.max(0,Number(threshold)||0)} ${tierBasisV303()==='visits'?'visits':'points'}`;
+  const tierRowThresholdTextV304=threshold=>workspaceTemplateTextV97(tierBasisV303()==='visits'?'thresholdVisitsSuffix':'thresholdPointsSuffix',{count:Math.max(0,Number(threshold)||0)});
   const tiersStepHtml=()=>{
     const form=state.tierForm||{name:'',threshold:''};
     /* V304: a removed row keeps its place for the rest of this visit, muted, with Undo beside it.
@@ -25288,7 +25295,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     return `<p class="grow-setup-lead-v301">What do customers get, and at how many stamps?</p>
       <p class="muted small" style="margin-top:-4px">Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.</p>
       ${rows}${chips}${rewardFormHtml()}
-      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?workspaceTemplateTextV97('cardCustomersSeeIsThisLong',{stampCountWithUnit:esc(unitWord(length,'stamps'))}):'The card gets its length from your last milestone.'}</p>
+      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?workspaceTemplateTextV97(Number(length)===1?'cardCustomersSeeIsOneStampLong':'cardCustomersSeeIsManyStampsLong',{stamps:esc(length)}):'The card gets its length from your last milestone.'}</p>
       <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.</p>`;
   };
   const stepThreeHtml=()=>{
@@ -25374,7 +25381,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      omit three of them. Nothing switched on says so plainly rather than printing an earn rate for
      a programme that will not run. */
   const ladderLineW6I2=()=>activeTiersV304().length
-    ?activeTiersV304().map(tier=>`${tier.name} — ${tier.threshold} ${tierBasisV303()==='visits'?'visits':'points'}`).join(' · ')
+    ?activeTiersV304().map(tier=>`${tier.name} — ${workspaceTemplateTextV97(tierBasisV303()==='visits'?'tierThresholdVisits':'tierThresholdPoints',{threshold:tier.threshold})}`).join(' · ')
     :'No tier yet';
   const earnOrClimbLineV305=()=>{
     const parts=[];
@@ -27887,7 +27894,7 @@ async function membershipsPage(){
     const historyPlans=(plans||[]).filter(p=>p.deleted_at!=null);
     const rows=plansTabV329==='published'?publishedPlans:historyPlans;
     const rowHtml=p=>{
-      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${workspaceTemplateHtmlV97('pricePerPeriodToCredit',{price:money(p.price_cents),cadence:p.cadence==='annual'?'yr':'mo',credit:money(p.credit_cents)})}</div></div>`;
+      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${workspaceTemplateHtmlV97(p.cadence==='annual'?'pricePerYearToCredit':'pricePerMonthToCredit',{price:money(p.price_cents),credit:money(p.credit_cents)})}</div></div>`;
       if(plansTabV329==='history')return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=plansDeletePendingV329===String(p.id);
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
@@ -33231,7 +33238,7 @@ async function packagesPage(options){
           ${catalogueBranchPickerHtmlV627({branches:packageBranches,assigned:packageBranchIdsV627(plan.id),
             name:'package-edit',label:'Offered at',failed:packageBranchFailedV627,help:packageBranchHelpV627})}
           <p class="muted small" style="margin-top:6px">${sold
-            ? `Sold to ${sold} customer${sold===1?'':'s'}. Saving applies to packages sold from now on — the ${sold===1?'customer':'customers'} who already bought keep${sold===1?'s':''} the price, sessions and service they paid for.`
+            ? workspaceTemplateTextV97(sold===1?'soldToOneCustomerSavingApplies':'soldToManyCustomersSavingApplies',{count:sold})
             : 'Nobody has bought this yet, so saving simply changes it.'}</p>
           <div id="packageEditErrorV601" role="alert"></div>
           <div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="packageEditCancelV601">Cancel</button><button type="submit" class="btn" id="packageEditSaveV601">Save</button></div>

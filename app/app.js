@@ -1682,7 +1682,7 @@ function programmeExclusionsV322(kind){
    the localizer and a test can both see it in one place. */
 function growPointsWordV322(points){
   const value=Math.max(0,Math.round(Number(points)||0));
-  return `${value} ${value===1?'point':'points'}`;
+  return workspaceTemplateTextV97(value===1?'onePointWord':'manyPointsWord',{count:value});
 }
 /* nestly_v429 (B1): a referral reward now has THREE declared types (v425), and the two accruing
    ones share referral_programs.reward_points — one number, and reward_kind says which pot it
@@ -4377,7 +4377,7 @@ function bindCatalogueDeleteV660(onDone){
     const kind=button.dataset.catalogueKindV660==='product'?'product':'service';
     const name=button.dataset.catalogueNameV660||`this ${kind}`;
     if(!await confirmActionV386(
-      workspaceTemplateTextV97('deleteCatalogueItemConfirm',{itemName:name,pastRecordKind:kind==='service'?'appointment or sale':'sale'}),
+      workspaceTemplateTextV97(kind==='service'?'deleteCatalogueItemConfirmService':'deleteCatalogueItemConfirmProduct',{itemName:name}),
       {confirmLabel:'Delete',cancelLabel:'Keep it'}))return;
     CUI.setButtonBusy(button,{busy:true,label:'…'});
     const {data,error}=await sb.rpc('business_manage_catalogue_item_v660',
@@ -20463,11 +20463,11 @@ function renderOnboard(){
       const startButton=$('startSelfServe');
       if(startButton)startButton.disabled=!tier;
       $('selfServeTotal').textContent=tier
-        ?`${money(tier.amount_cents)} / ${cadence==='annual'?'year':'month'}`
+        ?workspaceTemplateTextV97(cadence==='annual'?'amountPerYear':'amountPerMonth',{amount:money(tier.amount_cents)})
         :'Arranged with Peekaa support';
       $('selfServeCapacityNote').textContent=tier
         ?'Each branch you add later is charged this amount again, on its own subscription and its own card.'
-        :workspaceTemplateTextV97('billingCycleNotOfferedAtThisCapacity',{cycle:cadence==='annual'?'Annual':'Monthly'});
+        :workspaceTemplateTextV97(cadence==='annual'?'annualBillingNotOfferedAtThisCapacity':'monthlyBillingNotOfferedAtThisCapacity',{});
       /* Both cadence cards price the capacity actually chosen, so the headline and the amount due
          can never disagree. A cadence with no tier at this capacity says so on its own card. */
       const annualTier=signupTierV664('annual',capacity),monthlyTier=signupTierV664('monthly',capacity);
@@ -21933,7 +21933,7 @@ async function decideBookingRequestGlobalV329(id,decision,contactDetails){
   const authorized=decision==='confirm'?canWriteModule('bookings'):decision==='decline'?canWriteModule('bookings'):false;
   if(!authorized){toast('Booking write access is required');return}
   const {data,error}=await sb.rpc('staff_decide_booking_request_v73',{p_business:S.biz.id,p_request:id,p_decision:decision,p_branch:null});
-  if(error){const failText=`${decision==='confirm'?'Confirm':'Decline'} failed. ${error.message||'Try again.'}`;toast(failText);return}
+  if(error){const failText=workspaceTemplateTextV97(decision==='confirm'?'confirmFailedReason':'declineFailedReason',{reason:error.message||workspaceTranslationV97('Try again.')});toast(failText);return}
   const notice=bookingDecisionNotice(data,decision);
   toast(notice.text);
   autoRefreshIfRelevant();
@@ -22935,7 +22935,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   bringbackSentAfterDays:Object.freeze({en:"Sent because they had not visited for {days} days. Nothing is charged.",'zh-CN':"因为他们已有 {days} 天未到访而发送。不收取任何费用。",ms:"Dihantar kerana mereka tidak datang selama {days} hari. Tiada apa-apa dicaj."}),
   noCatalogueMatchForSearch:Object.freeze({en:"Nothing in this branch\u0027s checkout catalogue matches “{search}”. Try More items, or type an amount below.",'zh-CN':"本分店的结账目录中没有与「{search}」匹配的内容。请试试「更多项目」，或在下方输入金额。",ms:"Tiada apa dalam katalog pembayaran cawangan ini sepadan dengan “{search}”. Cuba Lagi item, atau taip amaun di bawah."}),
   viewAllTierBenefits:Object.freeze({en:"View all {tier} benefits",'zh-CN':"查看{tier}的全部福利",ms:"Lihat semua faedah {tier}"}),
-  recordedCurrentBalance:Object.freeze({en:"Recorded — current balance: {balance} {unit}.",'zh-CN':"已记录 — 当前余额：{balance} {unit}。",ms:"Direkodkan — baki semasa: {balance} {unit}."}),
   scanToOpenRewardsAt:Object.freeze({en:"Scan to open your rewards, points and past visits at {business}.",'zh-CN':"扫码即可查看您在 {business} 的奖励、积分和过往到访。",ms:"Imbas untuk membuka ganjaran, mata dan kunjungan lalu anda di {business}."}),
   tierGateAndAbove:Object.freeze({en:"🔒 {tier} and above",'zh-CN':"🔒 {tier}及以上",ms:"🔒 {tier} dan ke atas"}),
   earnPointsPerDollarTiers:Object.freeze({en:"Earn {rate} points per $1. Points accumulate for life and unlock higher tiers at each threshold.",'zh-CN':"每消费 1 元可得 {rate} 积分。积分终身累计，达到各门槛即可解锁更高等级。",ms:"Peroleh {rate} mata bagi setiap $1. Mata terkumpul sepanjang hayat dan membuka peringkat lebih tinggi pada setiap ambang."}),
@@ -22958,9 +22957,7 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   itemIsFreeForCustomer:Object.freeze({en:"{item} is free for this customer.",'zh-CN':"{item}对这位顾客免费。",ms:"{item} percuma untuk pelanggan ini."}),
   saleMeetsMinimumItemFree:Object.freeze({en:"This sale meets the minimum, so {item} is free — the welcome gift has not been claimed yet.",'zh-CN':"这笔交易已达最低消费，因此{item}免费 — 迎新礼物尚未领取。",ms:"Jualan ini memenuhi minimum, jadi {item} percuma — hadiah selamat datang belum dituntut."}),
   comeBackRateBetter:Object.freeze({en:"Come-back rate: about {low}–{high}% better.",'zh-CN':"回头率：约高出 {low}–{high}%。",ms:"Kadar kembali: kira-kira {low}–{high}% lebih baik."}),
-  createGiftsRedeemWithUnit:Object.freeze({en:"Create new gifts for your customers to redeem with {unit}s.",'zh-CN':"创建新的礼物，供顾客用{unit}兑换。",ms:"Cipta hadiah baharu untuk pelanggan anda tebus dengan {unit}."}),
   pointsPerCurrencyOne:Object.freeze({en:"Points per {currency} 1 spent",'zh-CN':"每消费 1 {currency} 可得积分",ms:"Mata bagi setiap {currency} 1 dibelanjakan"}),
-  giftsAvailableWithUnit:Object.freeze({en:"These gifts are available for your customers to redeem with their {unit}s.",'zh-CN':"这些礼物可供顾客用其{unit}兑换。",ms:"Hadiah ini tersedia untuk pelanggan anda tebus dengan {unit} mereka."}),
   showingGiftsRetiredYears:Object.freeze({en:"Showing gifts retired in the last {years} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.",'zh-CN':"显示最近 {years} 年内下架的礼物。没有任何内容被删除 — 更早的礼物仍有记录，顾客已完成的每一次兑换也都完整保留。",ms:"Menunjukkan hadiah yang ditamatkan dalam {years} tahun lalu. Tiada apa dipadam — hadiah lama kekal direkodkan, dan setiap penebusan yang pelanggan telah buat disimpan sepenuhnya."}),
   awayDaysToReward:Object.freeze({en:"Away {days} days → {reward}",'zh-CN':"离开 {days} 天 → {reward}",ms:"Tidak datang {days} hari → {reward}"}),
   awayOverDays:Object.freeze({en:"Away over {days} days",'zh-CN':"离开超过 {days} 天",ms:"Tidak datang lebih {days} hari"}),
@@ -23005,7 +23002,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      the stamp-card preview, the playbook audience rule, the Program Studio publish gate and its
      refusals, and the branch and referral money labels. */
   giftBecomesAvailableAgain:Object.freeze({en:"This {kind} becomes available to them again straight away. No money moves, and nothing is deleted — the record that it was given stays, with this reversal recorded beside it.",'zh-CN':"这项{kind}会立即重新对他们开放。不涉及任何金钱流动，也不会删除任何内容 — 给予的记录仍会保留，并在旁边记录本次撤销。",ms:"{kind} ini menjadi tersedia semula untuk mereka dengan serta-merta. Tiada wang berpindah, dan tiada apa dipadam — rekod bahawa ia diberi kekal, dengan pembatalan ini direkodkan di sebelahnya."}),
-  percentChangeVersusRange:Object.freeze({en:"{pct}% {word} versus {from} to {to}",'zh-CN':"{pct}% {word}，对比 {from} 至 {to}",ms:"{pct}% {word} berbanding {from} hingga {to}"}),
   previousSpanLegend:Object.freeze({en:"\"was\" and ▲▼ are the previous {span}: {from} – {to}.",'zh-CN':"「was」和 ▲▼ 指的是上一个{span}：{from} – {to}。",ms:"\"was\" dan ▲▼ ialah {span} sebelumnya: {from} – {to}."}),
   referralItemIsFree:Object.freeze({en:"{item} is free for this customer.",'zh-CN':"{item}对这位顾客免费。",ms:"{item} percuma untuk pelanggan ini."}),
   stampsPastTargetNotClaimable:Object.freeze({en:"Stamps past {target} cannot be claimed yet",'zh-CN':"超过 {target} 枚的印花暂时无法兑换",ms:"Setem melepasi {target} belum boleh dituntut"}),
@@ -23026,7 +23022,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   cutoverPreviewFailed:Object.freeze({en:"The cutover preview could not be loaded ({reason}). Cutover stays unavailable.",'zh-CN':"无法加载切换预览（{reason}）。切换仍不可用。",ms:"Pratonton peralihan tidak dapat dimuatkan ({reason}). Peralihan kekal tidak tersedia."}),
   referralPaysFreeGift:Object.freeze({en:"This referral pays a free gift — {gift}. Change the reward type in Rewards Programme → Referrals.",'zh-CN':"此推荐支付的是一份免费礼物 — {gift}。请在「奖励方案 → 推荐」中更改奖励类型。",ms:"Rujukan ini membayar hadiah percuma — {gift}. Tukar jenis ganjaran dalam Program Ganjaran → Rujukan."}),
   friendQualifyingMinCurrency:Object.freeze({en:"Minimum spend on friend\u0027s qualifying sale ({currency})",'zh-CN':"好友符合条件的交易最低消费（{currency}）",ms:"Perbelanjaan minimum pada jualan layak rakan ({currency})"}),
-  pricePerPeriodToCredit:Object.freeze({en:"{price}/{cadence} → {credit} credit each period",'zh-CN':"{price}/{cadence} → 每期 {credit} 额度",ms:"{price}/{cadence} → kredit {credit} setiap tempoh"}),
   letCustomerKnow:Object.freeze({en:"Let {name} know.",'zh-CN':"请告知{name}。",ms:"Beritahu {name}."}),
   blockAtMostDays:Object.freeze({en:"Block at most {days} days at a time. Split a longer absence into two.",'zh-CN':"每次最多锁定 {days} 天。更长的缺席请拆成两段。",ms:"Sekat paling banyak {days} hari pada satu masa. Bahagikan ketiadaan yang lebih panjang kepada dua."}),
   /* nestly_v946 — twelve more embedded-value sentences: the reward-cost recommendation, the
@@ -23321,8 +23316,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   resumeRenewalNextPaymentAmount:Object.freeze({en:"Resume renewal? Next payment {amount}",'zh-CN':"恢复续费？下次付款 {amount}",ms:"Sambung semula pembaharuan? Bayaran seterusnya {amount}"}),
   youCanResumeUntilDate:Object.freeze({en:"You can resume until {resumeByDate}.",'zh-CN':"您可以在 {resumeByDate} 之前恢复。",ms:"Anda boleh menyambung semula sehingga {resumeByDate}."}),
   closesTheMostSalesOtherHasBiggestAverageSale:Object.freeze({en:"{topSalesStaffName} closes the most sales ({saleCount}); {topAverageStaffName} has the biggest average sale ({averageSale}){comparisonNote}.",'zh-CN':"{topSalesStaffName} 成交的销售最多（{saleCount} 笔）；{topAverageStaffName} 的每单平均金额最高（{averageSale}）{comparisonNote}。",ms:"{topSalesStaffName} menutup jualan paling banyak ({saleCount}); {topAverageStaffName} mempunyai purata setiap jualan tertinggi ({averageSale}){comparisonNote}."}),
-  deleteCatalogueItemConfirm:Object.freeze({en:"Delete \"{itemName}\"? If nothing uses it, it is removed. If it appears on a past {pastRecordKind}, or in a package, reward, bundle or tier discount, it is switched off instead and kept — so nothing you have already recorded changes.",'zh-CN':"删除「{itemName}」？如果没有任何地方用到它，就会被移除。如果它出现在过去的{pastRecordKind}上，或出现在配套、奖励、捆绑包或等级折扣中，就改为关闭并保留 — 这样您已经记录的内容都不会改变。",ms:"Padam \"{itemName}\"? Jika tiada apa-apa menggunakannya, ia dibuang. Jika ia muncul pada {pastRecordKind} lepas, atau dalam pakej, ganjaran, himpunan atau diskaun peringkat, ia dimatikan dan disimpan — jadi apa yang sudah anda rekodkan tidak berubah."}),
-  billingCycleNotOfferedAtThisCapacity:Object.freeze({en:"{cycle} billing is not offered at this capacity — contact admin.peekaa@gmail.com.",'zh-CN':"此容量不提供{cycle}付款方式 — 请联系 admin.peekaa@gmail.com。",ms:"Pembayaran {cycle} tidak ditawarkan pada kapasiti ini — hubungi admin.peekaa@gmail.com."}),
   figuresBelowCoverScope:Object.freeze({en:"Figures below cover {scope}. {withheldNotes}",'zh-CN':"以下数字涵盖{scope}。{withheldNotes}",ms:"Angka di bawah meliputi {scope}. {withheldNotes}"}),
   lastSevenDaysComparedWithNormalWeek:Object.freeze({en:"Last 7 days: {amount}, {comparison} a normal week ({normalAmount}).",'zh-CN':"最近 7 天：{amount}，{comparison}正常的一周（{normalAmount}）。",ms:"7 hari lalu: {amount}, {comparison} minggu biasa ({normalAmount})."}),
   branchComparedWithNormalWeekOthersTooNew:Object.freeze({en:"{branch}: {comparison} its normal week. The other outlets have too little history to compare.",'zh-CN':"{branch}：{comparison}自己正常的一周。其他分店的记录太少，无法比较。",ms:"{branch}: {comparison} minggu biasanya. Cawangan lain belum cukup rekod untuk dibandingkan."}),
@@ -23332,29 +23325,19 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   slowestDayAndWhereItIsHeading:Object.freeze({en:"{weekday} is your slowest day, and it is {trend}{comparison}.",'zh-CN':"{weekday} 是您生意最少的一天，而且{trend}{comparison}。",ms:"{weekday} ialah hari paling lengang anda, dan keadaannya {trend}{comparison}."}),
   customerRecordsCreatedBusinessWide:Object.freeze({en:"Customer records created {range} · business-wide",'zh-CN':"{range} 建立的客户记录 · 全商户",ms:"Rekod pelanggan didaftarkan {range} · seluruh perniagaan"}),
   pointsSpentOnRewardsBusinessWide:Object.freeze({en:"Points spent on rewards {range} · business-wide",'zh-CN':"{range} 用来兑换奖励的积分 · 全商户",ms:"Mata yang digunakan untuk ganjaran {range} · seluruh perniagaan"}),
-  recordedVisitsAndRevenueNotEnoughForTrend:Object.freeze({en:"{where} recorded {visits} {visitWord} and {amount} in this period — not yet enough to call a trend.",'zh-CN':"{where}在这段期间记录了 {visits} {visitWord} 和 {amount} — 还不足以看出趋势。",ms:"{where} merekod {visits} {visitWord} dan {amount} dalam tempoh ini — belum cukup untuk dikira sebagai aliran."}),
   recordedNoVisitsOrSalesNothingToCompare:Object.freeze({en:"{where} recorded no visits or sales in this period, so there is nothing to compare yet.",'zh-CN':"{where}在这段期间没有到访，也没有销售，所以还没有东西可以比较。",ms:"{where} tidak merekod sebarang kunjungan atau jualan dalam tempoh ini, jadi belum ada apa-apa untuk dibandingkan."}),
   customersNotVisitedInAtLeast60Days:Object.freeze({en:"{customerCountText} not visited in at least 60 days.",'zh-CN':"{customerCountText} 至少 60 天未到访。",ms:"{customerCountText} tidak berkunjung selama sekurang-kurangnya 60 hari."}),
   dayRecordedHighestNumberOfValidVisits:Object.freeze({en:"{dayName} recorded the highest number of valid visits.",'zh-CN':"{dayName}记录到的有效到访次数最多。",ms:"{dayName} mencatat bilangan kunjungan sah paling banyak."}),
   reviewStaffingAndAvailabilityForDay:Object.freeze({en:"Review staffing and availability for {dayName}s.",'zh-CN':"查看{dayName}的人手安排和可预约时间。",ms:"Semak kakitangan dan masa tersedia untuk setiap {dayName}."}),
   referAFriendRewardAfterQualifyingFirstVisit:Object.freeze({en:"Refer a friend — {rewardAmount} after their qualifying first visit.",'zh-CN':"推荐朋友 — 对方完成首次符合条件的到访后可得 {rewardAmount}。",ms:"Rujuk rakan — {rewardAmount} selepas kunjungan pertama mereka yang layak."}),
-  noUnitEarnedForThisPurchase:Object.freeze({en:"No {unitNoun} earned for this purchase.",'zh-CN':"这笔消费没有获得{unitNoun}。",ms:"Tiada {unitNoun} diperoleh untuk pembelian ini."}),
-  showingSalesPaymentStateNotApplied:Object.freeze({en:"Showing {count} {saleWord} · {period} · payment state could not be read, so it was not applied{workflowNote}",'zh-CN':"显示 {count} 笔销售{saleWord} · {period} · 读不到付款状态，所以这个筛选没有生效{workflowNote}",ms:"Menunjukkan {count} jualan{saleWord} · {period} · keadaan pembayaran tidak dapat dibaca, jadi ia tidak digunakan{workflowNote}"}),
   decisionAppliedCurrentStatus:Object.freeze({en:"{decisionVerb} applied. Current status: {currentStatus}.",'zh-CN':"{decisionVerb}已生效。目前状态：{currentStatus}。",ms:"{decisionVerb} telah dibuat. Status semasa: {currentStatus}."}),
   decisionAlreadyAppliedCurrentStatus:Object.freeze({en:"{decisionVerb} was already applied. Current status: {currentStatus}.",'zh-CN':"{decisionVerb}之前已经生效。目前状态：{currentStatus}。",ms:"{decisionVerb} sudah pun dibuat sebelum ini. Status semasa: {currentStatus}."}),
   decisionCouldNotBeAppliedTeamMemberNotAvailable:Object.freeze({en:"{decision} could not be applied — the team member isn't available at that time, per their schedule. Try \"Change time / staff\" for a different slot.",'zh-CN':"无法执行{decision} — 该团队成员按排班在那个时间没有空。请用「更改时间 / 员工」另选一个时段。",ms:"{decision} tidak dapat dilakukan — ahli pasukan itu tidak lapang pada masa itu, mengikut jadual mereka. Cuba \"Tukar masa / kakitangan\" untuk slot lain."}),
   decisionCouldNotBeAppliedWithReasonAndStatus:Object.freeze({en:"{decision} could not be applied ({reason}). Current status: {status}.",'zh-CN':"无法执行{decision}（{reason}）。当前状态：{status}。",ms:"{decision} tidak dapat dilakukan ({reason}). Status semasa: {status}."}),
   couldNotMoveThisRequest:Object.freeze({en:"Could not move this request. {errorMessage}",'zh-CN':"无法改期此请求。{errorMessage}",ms:"Tidak dapat mengalihkan permintaan ini. {errorMessage}"}),
-  customerQrRedemptionIsState:Object.freeze({en:"Customer QR redemption is {state}.",'zh-CN':"顾客二维码兑换{state}。",ms:"Penebusan QR pelanggan {state}."}),
-  customerQrRedemptionIsStateBookingSettingsPreserved:Object.freeze({en:"Customer QR redemption is {state}. Booking and appointment settings were preserved.",'zh-CN':"顾客二维码兑换{state}。预订和预约设置保持不变。",ms:"Penebusan QR pelanggan {state}. Tetapan tempahan dan janji temu dikekalkan."}),
   thatOfferWasNotMovedToDraftReason:Object.freeze({en:"That offer was not moved to draft ({reason}).",'zh-CN':"该优惠未退回草稿（{reason}）。",ms:"Tawaran itu tidak dialihkan ke draf ({reason})."}),
   workspaceHasNoLoyaltyModuleNothingToManage:Object.freeze({en:"This workspace does not include the loyalty module, so there is no {programmeName} to manage.",'zh-CN':"这个工作区不包含忠诚度模块，所以没有{programmeName}可以管理。",ms:"Ruang kerja ini tidak termasuk modul kesetiaan, jadi tiada {programmeName} untuk diurus."}),
   turnProgrammeOffForCustomers:Object.freeze({en:"Turn {programmeName} off for customers?",'zh-CN':"要为顾客关闭{programmeName}吗？",ms:"Matikan {programmeName} untuk pelanggan?"}),
-  tiersAreEarnedByNow:Object.freeze({en:"Tiers are earned by {basisWord} now.",'zh-CN':"现在等级按{basisWord}计算。",ms:"Tahap kini diperoleh mengikut {basisWord}."}),
-  referralsCouldNotBeTurnedOnOff:Object.freeze({en:"Referrals could not be turned {onOff} — {errorMessage}",'zh-CN':"推荐功能无法设为{onOff} — {errorMessage}",ms:"Rujukan tidak dapat ditetapkan {onOff} — {errorMessage}"}),
-  enterHowManyUnitsThisRewardCosts:Object.freeze({en:"Enter how many {unit} this reward costs.",'zh-CN':"请输入这份奖励需要多少{unit}。",ms:"Masukkan berapa banyak {unit} yang diperlukan untuk ganjaran ini."}),
-  enterHowManyUnitsCustomerNeedsForThisTier:Object.freeze({en:"Enter how many {unit} a customer needs for this tier.",'zh-CN':"请输入顾客达到此等级需要多少{unit}。",ms:"Masukkan berapa banyak {unit} yang diperlukan pelanggan untuk peringkat ini."}),
-  cardCustomersSeeIsThisLong:Object.freeze({en:"The card customers see is {stampCountWithUnit} long — your last milestone.",'zh-CN':"顾客看到的卡片有 {stampCountWithUnit} 那么长 — 也就是您最后一个里程碑。",ms:"Kad yang pelanggan lihat panjangnya {stampCountWithUnit} — pencapaian terakhir anda."}),
   pauseStoredValueIntro:Object.freeze({en:"Immediately stop {scope} for stored value. History is kept; only new operations of this kind are stopped. Record why.",'zh-CN':"立即停止储值的{scope}。历史记录会保留；只有这一类的新操作会被停止。请记录原因。",ms:"Hentikan {scope} untuk nilai tersimpan serta-merta. Sejarah dikekalkan; hanya operasi baharu jenis ini dihentikan. Catat sebabnya."}),
   liftStoredValuePauseIntro:Object.freeze({en:"Lift the pause on {scope}. That operation family can run again once lifted (still only when authority is live, which is not possible in this phase). Record why it is safe to lift.",'zh-CN':"解除对{scope}的暂停。解除后这一类操作可以再次运行（仍需权限处于生效状态，而本阶段做不到）。请记录为什么可以安全解除。",ms:"Angkat jeda pada {scope}. Kumpulan operasi itu boleh berjalan semula selepas diangkat (masih hanya apabila kuasa aktif, yang tidak mungkin dalam fasa ini). Catat sebab ia selamat untuk diangkat."}),
   ownerOnlyChangesAccessAndBilling:Object.freeze({en:"{pageName} changes who can do what and what the business is charged for, so it is kept to the owner account. Ask the owner if something here needs to change.",'zh-CN':"{pageName}会决定谁能做什么，以及商户需要支付哪些费用，因此只限店主账户使用。如果这里有需要更改的地方，请询问店主。",ms:"{pageName} mengubah siapa boleh buat apa dan apa yang perniagaan perlu bayar, jadi ia dikhaskan untuk akaun pemilik. Tanya pemilik jika ada sesuatu di sini yang perlu diubah."}),
@@ -23478,8 +23461,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   useWithinDayMany:Object.freeze({en:"· Use within {v1} days",'zh-CN':"· 请在 {v1} 天内使用",ms:"· Guna dalam {v1} hari"}),
   giftOnThisCardChangesApplyOne:Object.freeze({en:"{v1} gift on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.",'zh-CN':"这张卡上有 {v1} 份礼物。改动只对新的集章卡生效 — 已经在集章的顾客会保留他们当前的卡片、奖励和赚取规则。您的改动会在他们完成或过期当前卡片后生效。",ms:"{v1} hadiah pada kad ini. Perubahan hanya digunakan pada Kad Setem baharu — pelanggan yang sedang mengumpul setem akan mengekalkan kad semasa, ganjaran dan peraturan perolehan mereka. Perubahan anda digunakan apabila mereka menyelesaikan atau meluputkan kad semasa mereka."}),
   giftOnThisCardChangesApplyMany:Object.freeze({en:"{v1} gifts on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.",'zh-CN':"这张卡上有 {v1} 份礼物。改动只对新的集章卡生效 — 已经在集章的顾客会保留他们当前的卡片、奖励和赚取规则。您的改动会在他们完成或过期当前卡片后生效。",ms:"{v1} hadiah pada kad ini. Perubahan hanya digunakan pada Kad Setem baharu — pelanggan yang sedang mengumpul setem akan mengekalkan kad semasa, ganjaran dan peraturan perolehan mereka. Perubahan anda digunakan apabila mereka menyelesaikan atau meluputkan kad semasa mereka."}),
-  tiersAreEarnedByNowYourOne:Object.freeze({en:"Tiers are earned by {v1} now. Your {v2} rung kept its number — check it reads right in {v3}.",'zh-CN':"等级现在以{v1}为依据。您的 {v2} 个层级保留了原来的数字 — 请在{v3}中确认它读起来是对的。",ms:"Peringkat kini diperoleh mengikut {v1}. {v2} anak tangga anda mengekalkan nombornya — semak ia dibaca dengan betul dalam {v3}."}),
-  tiersAreEarnedByNowYourMany:Object.freeze({en:"Tiers are earned by {v1} now. Your {v2} rungs kept their number — check they read right in {v3}.",'zh-CN':"等级现在以{v1}为依据。您的 {v2} 个层级保留了原来的数字 — 请在{v3}中确认它们读起来是对的。",ms:"Peringkat kini diperoleh mengikut {v1}. {v2} anak tangga anda mengekalkan nombornya — semak ia dibaca dengan betul dalam {v3}."}),
   startThisFreezesCustomerAndHoldsOne:Object.freeze({en:"Start \"{v1}\"? This freezes {v2} customer and holds back {v3}% as a control.",'zh-CN':"开始「{v1}」吗？这会冻结 {v2} 位顾客，并保留 {v3}% 作为对照组。",ms:"Mulakan “{v1}”? Ini membekukan {v2} pelanggan dan menahan {v3}% sebagai kawalan."}),
   startThisFreezesCustomerAndHoldsMany:Object.freeze({en:"Start \"{v1}\"? This freezes {v2} customers and holds back {v3}% as a control.",'zh-CN':"开始「{v1}」吗？这会冻结 {v2} 位顾客，并保留 {v3}% 作为对照组。",ms:"Mulakan “{v1}”? Ini membekukan {v2} pelanggan dan menahan {v3}% sebagai kawalan."}),
   confirmThatSelectedCustomerActuallyReceivedOne:Object.freeze({en:"Confirm that {v1} selected customer actually received the reward via {v2}? This records your manual attestation; it is not a provider delivery receipt.",'zh-CN':"确认这 {v1} 位选定的顾客确实通过{v2}收到了奖励吗？这会记录您的手动确认；它不是服务商的送达回执。",ms:"Sahkan bahawa {v1} pelanggan terpilih benar-benar menerima ganjaran melalui {v2}? Ini merekodkan pengesahan manual anda; ia bukan resit penghantaran pembekal."}),
@@ -23618,6 +23599,85 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      verbatim. Two keys rather than one with a slot. */
   keepAnnualBilling:Object.freeze({en:"Keep annual",'zh-CN':"\u4fdd\u6301\u5e74\u5ea6\u8ba1\u8d39",ms:"Kekalkan tahunan"}),
   keepMonthlyBilling:Object.freeze({en:"Keep monthly",'zh-CN':"\u4fdd\u6301\u6708\u5ea6\u8ba1\u8d39",ms:"Kekalkan bulanan"}),
+  /* nestly_v962: the noun-as-value class. A word chosen by a ternary and handed to a sentence
+     as a VALUE is preserved verbatim, so it reads English inside an otherwise Chinese or Malay
+     sentence — the same defect v961 caught in billingCadenceWordV764, one shape smaller. Key
+     variants at the call site, never a translated noun handed to an English frame. */
+  onePointWord:Object.freeze({en:"{count} point",'zh-CN':"{count} \u79ef\u5206",ms:"{count} mata"}),
+  manyPointsWord:Object.freeze({en:"{count} points",'zh-CN':"{count} \u79ef\u5206",ms:"{count} mata"}),
+  amountPerYear:Object.freeze({en:"{amount} / year",'zh-CN':"{amount} / \u5e74",ms:"{amount} / tahun"}),
+  amountPerMonth:Object.freeze({en:"{amount} / month",'zh-CN':"{amount} / \u6708",ms:"{amount} / bulan"}),
+  confirmFailedReason:Object.freeze({en:"Confirm failed. {reason}",'zh-CN':"\u786e\u8ba4\u5931\u8d25\u3002{reason}",ms:"Pengesahan gagal. {reason}"}),
+  declineFailedReason:Object.freeze({en:"Decline failed. {reason}",'zh-CN':"\u62d2\u7edd\u5931\u8d25\u3002{reason}",ms:"Penolakan gagal. {reason}"}),
+  oneBookingToday:Object.freeze({en:"{count} booking today.",'zh-CN':"\u4eca\u5929\u6709 {count} \u4e2a\u9884\u7ea6\u3002",ms:"{count} tempahan hari ini."}),
+  manyBookingsToday:Object.freeze({en:"{count} bookings today.",'zh-CN':"\u4eca\u5929\u6709 {count} \u4e2a\u9884\u7ea6\u3002",ms:"{count} tempahan hari ini."}),
+  oneBookingOnDay:Object.freeze({en:"{count} booking on {day}.",'zh-CN':"{day} \u6709 {count} \u4e2a\u9884\u7ea6\u3002",ms:"{count} tempahan pada {day}."}),
+  manyBookingsOnDay:Object.freeze({en:"{count} bookings on {day}.",'zh-CN':"{day} \u6709 {count} \u4e2a\u9884\u7ea6\u3002",ms:"{count} tempahan pada {day}."}),
+  showingOneSaleForPeriod:Object.freeze({en:"Showing {count} sale \u00b7 {period}",'zh-CN':"\u663e\u793a {count} \u7b14\u9500\u552e \u00b7 {period}",ms:"Menunjukkan {count} jualan \u00b7 {period}"}),
+  showingManySalesForPeriod:Object.freeze({en:"Showing {count} sales \u00b7 {period}",'zh-CN':"\u663e\u793a {count} \u7b14\u9500\u552e \u00b7 {period}",ms:"Menunjukkan {count} jualan \u00b7 {period}"}),
+  oneActivePlan:Object.freeze({en:"{count} active plan.",'zh-CN':"{count} \u4e2a\u6709\u6548\u65b9\u6848\u3002",ms:"{count} pelan aktif."}),
+  manyActivePlans:Object.freeze({en:"{count} active plans.",'zh-CN':"{count} \u4e2a\u6709\u6548\u65b9\u6848\u3002",ms:"{count} pelan aktif."}),
+  thresholdVisitsSuffix:Object.freeze({en:" \u00b7 {count} visits",'zh-CN':" \u00b7 {count} \u6b21\u5230\u8bbf",ms:" \u00b7 {count} kunjungan"}),
+  thresholdPointsSuffix:Object.freeze({en:" \u00b7 {count} points",'zh-CN':" \u00b7 {count} \u79ef\u5206",ms:" \u00b7 {count} mata"}),
+  tierThresholdVisits:Object.freeze({en:"{threshold} visits",'zh-CN':"{threshold} \u6b21\u5230\u8bbf",ms:"{threshold} kunjungan"}),
+  tierThresholdPoints:Object.freeze({en:"{threshold} points",'zh-CN':"{threshold} \u79ef\u5206",ms:"{threshold} mata"}),
+  soldToOneCustomerSavingApplies:Object.freeze({en:"Sold to {count} customer. Saving applies to packages sold from now on \u2014 the customer who already bought keeps the price, sessions and service they paid for.",'zh-CN':"\u5df2\u552e\u7ed9 {count} \u4f4d\u987e\u5ba2\u3002\u6b64\u4f18\u60e0\u4ec5\u9002\u7528\u4e8e\u4ece\u73b0\u5728\u8d77\u552e\u51fa\u7684\u914d\u5957 \u2014 \u5df2\u7ecf\u8d2d\u4e70\u7684\u987e\u5ba2\u4ecd\u4fdd\u7559\u4ed6\u4eec\u4ed8\u8d39\u65f6\u7684\u4ef7\u683c\u3001\u6b21\u6570\u548c\u670d\u52a1\u3002",ms:"Dijual kepada {count} pelanggan. Penjimatan terpakai untuk pakej yang dijual mulai sekarang \u2014 pelanggan yang sudah membeli mengekalkan harga, sesi dan perkhidmatan yang mereka bayar."}),
+  soldToManyCustomersSavingApplies:Object.freeze({en:"Sold to {count} customers. Saving applies to packages sold from now on \u2014 the customers who already bought keep the price, sessions and service they paid for.",'zh-CN':"\u5df2\u552e\u7ed9 {count} \u4f4d\u987e\u5ba2\u3002\u6b64\u4f18\u60e0\u4ec5\u9002\u7528\u4e8e\u4ece\u73b0\u5728\u8d77\u552e\u51fa\u7684\u914d\u5957 \u2014 \u5df2\u7ecf\u8d2d\u4e70\u7684\u987e\u5ba2\u4ecd\u4fdd\u7559\u4ed6\u4eec\u4ed8\u8d39\u65f6\u7684\u4ef7\u683c\u3001\u6b21\u6570\u548c\u670d\u52a1\u3002",ms:"Dijual kepada {count} pelanggan. Penjimatan terpakai untuk pakej yang dijual mulai sekarang \u2014 pelanggan yang sudah membeli mengekalkan harga, sesi dan perkhidmatan yang mereka bayar."}),
+  /* nestly_v963: nine templates that were REVIEWED and still shipped half-English. Each took
+     the inflecting word as a VALUE — {saleWord}, {cycle}, {onOff}, {unit} — and a value is
+     preserved verbatim, so a zh-CN owner read "显示 3 笔销售sales" and "此容量不提供Annual付款
+     方式". Being in the table is not the same as being translated. One key per form now, and
+     the nine slot-bearing rows are gone so the shape cannot be reintroduced by copying one. */
+  deleteCatalogueItemConfirmService:Object.freeze({en:"Delete \"{itemName}\"? If nothing uses it, it is removed. If it appears on a past appointment or sale, or in a package, reward, bundle or tier discount, it is switched off instead and kept \u2014 so nothing you have already recorded changes.",'zh-CN':"\u5220\u9664\u300c{itemName}\u300d\uff1f\u5982\u679c\u6ca1\u6709\u4efb\u4f55\u5730\u65b9\u7528\u5230\u5b83\uff0c\u5c31\u4f1a\u88ab\u79fb\u9664\u3002\u5982\u679c\u5b83\u51fa\u73b0\u5728\u8fc7\u53bb\u7684\u9884\u7ea6\u6216\u9500\u552e\u4e0a\uff0c\u6216\u51fa\u73b0\u5728\u914d\u5957\u3001\u5956\u52b1\u3001\u6346\u7ed1\u5305\u6216\u7b49\u7ea7\u6298\u6263\u4e2d\uff0c\u5c31\u6539\u4e3a\u5173\u95ed\u5e76\u4fdd\u7559 \u2014 \u8fd9\u6837\u60a8\u5df2\u7ecf\u8bb0\u5f55\u8fc7\u7684\u5185\u5bb9\u90fd\u4e0d\u4f1a\u6539\u53d8\u3002",ms:"Padam \"{itemName}\"? Jika tiada apa-apa yang menggunakannya, ia akan dibuang. Jika ia muncul pada janji temu atau jualan lepas, atau dalam pakej, ganjaran, bundel atau diskaun peringkat, ia dimatikan dan dikekalkan \u2014 jadi apa yang sudah anda rekodkan tidak berubah."}),
+  deleteCatalogueItemConfirmProduct:Object.freeze({en:"Delete \"{itemName}\"? If nothing uses it, it is removed. If it appears on a past sale, or in a package, reward, bundle or tier discount, it is switched off instead and kept \u2014 so nothing you have already recorded changes.",'zh-CN':"\u5220\u9664\u300c{itemName}\u300d\uff1f\u5982\u679c\u6ca1\u6709\u4efb\u4f55\u5730\u65b9\u7528\u5230\u5b83\uff0c\u5c31\u4f1a\u88ab\u79fb\u9664\u3002\u5982\u679c\u5b83\u51fa\u73b0\u5728\u8fc7\u53bb\u7684\u9500\u552e\u4e0a\uff0c\u6216\u51fa\u73b0\u5728\u914d\u5957\u3001\u5956\u52b1\u3001\u6346\u7ed1\u5305\u6216\u7b49\u7ea7\u6298\u6263\u4e2d\uff0c\u5c31\u6539\u4e3a\u5173\u95ed\u5e76\u4fdd\u7559 \u2014 \u8fd9\u6837\u60a8\u5df2\u7ecf\u8bb0\u5f55\u8fc7\u7684\u5185\u5bb9\u90fd\u4e0d\u4f1a\u6539\u53d8\u3002",ms:"Padam \"{itemName}\"? Jika tiada apa-apa yang menggunakannya, ia akan dibuang. Jika ia muncul pada jualan lepas, atau dalam pakej, ganjaran, bundel atau diskaun peringkat, ia dimatikan dan dikekalkan \u2014 jadi apa yang sudah anda rekodkan tidak berubah."}),
+  annualBillingNotOfferedAtThisCapacity:Object.freeze({en:"Annual billing is not offered at this capacity \u2014 contact admin.peekaa@gmail.com.",'zh-CN':"\u6b64\u5bb9\u91cf\u4e0d\u63d0\u4f9b\u5e74\u5ea6\u4ed8\u6b3e\u65b9\u5f0f \u2014 \u8bf7\u8054\u7cfb admin.peekaa@gmail.com\u3002",ms:"Pembayaran tahunan tidak ditawarkan pada kapasiti ini \u2014 hubungi admin.peekaa@gmail.com."}),
+  monthlyBillingNotOfferedAtThisCapacity:Object.freeze({en:"Monthly billing is not offered at this capacity \u2014 contact admin.peekaa@gmail.com.",'zh-CN':"\u6b64\u5bb9\u91cf\u4e0d\u63d0\u4f9b\u6708\u5ea6\u4ed8\u6b3e\u65b9\u5f0f \u2014 \u8bf7\u8054\u7cfb admin.peekaa@gmail.com\u3002",ms:"Pembayaran bulanan tidak ditawarkan pada kapasiti ini \u2014 hubungi admin.peekaa@gmail.com."}),
+  recordedOneVisitAndRevenueNotEnoughForTrend:Object.freeze({en:"{where} recorded {visits} visit and {amount} in this period \u2014 not yet enough to call a trend.",'zh-CN':"{where}\u5728\u8fd9\u6bb5\u671f\u95f4\u8bb0\u5f55\u4e86 {visits} \u6b21\u5230\u8bbf\u548c {amount} \u2014 \u8fd8\u4e0d\u8db3\u4ee5\u770b\u51fa\u8d8b\u52bf\u3002",ms:"{where} merekod {visits} kunjungan dan {amount} dalam tempoh ini \u2014 belum cukup untuk dikira sebagai aliran."}),
+  recordedManyVisitsAndRevenueNotEnoughForTrend:Object.freeze({en:"{where} recorded {visits} visits and {amount} in this period \u2014 not yet enough to call a trend.",'zh-CN':"{where}\u5728\u8fd9\u6bb5\u671f\u95f4\u8bb0\u5f55\u4e86 {visits} \u6b21\u5230\u8bbf\u548c {amount} \u2014 \u8fd8\u4e0d\u8db3\u4ee5\u770b\u51fa\u8d8b\u52bf\u3002",ms:"{where} merekod {visits} kunjungan dan {amount} dalam tempoh ini \u2014 belum cukup untuk dikira sebagai aliran."}),
+  showingOneSalePaymentStateNotApplied:Object.freeze({en:"Showing {count} sale \u00b7 {period} \u00b7 payment state could not be read, so it was not applied{workflowNote}",'zh-CN':"\u663e\u793a {count} \u7b14\u9500\u552e \u00b7 {period} \u00b7 \u8bfb\u4e0d\u5230\u4ed8\u6b3e\u72b6\u6001\uff0c\u6240\u4ee5\u8fd9\u4e2a\u7b5b\u9009\u6ca1\u6709\u751f\u6548{workflowNote}",ms:"Menunjukkan {count} jualan \u00b7 {period} \u00b7 keadaan pembayaran tidak dapat dibaca, jadi ia tidak digunakan{workflowNote}"}),
+  showingManySalesPaymentStateNotApplied:Object.freeze({en:"Showing {count} sales \u00b7 {period} \u00b7 payment state could not be read, so it was not applied{workflowNote}",'zh-CN':"\u663e\u793a {count} \u7b14\u9500\u552e \u00b7 {period} \u00b7 \u8bfb\u4e0d\u5230\u4ed8\u6b3e\u72b6\u6001\uff0c\u6240\u4ee5\u8fd9\u4e2a\u7b5b\u9009\u6ca1\u6709\u751f\u6548{workflowNote}",ms:"Menunjukkan {count} jualan \u00b7 {period} \u00b7 keadaan pembayaran tidak dapat dibaca, jadi ia tidak digunakan{workflowNote}"}),
+  customerQrRedemptionIsEnabled:Object.freeze({en:"Customer QR redemption is enabled.",'zh-CN':"\u987e\u5ba2\u4e8c\u7ef4\u7801\u5151\u6362\u5df2\u5f00\u542f\u3002",ms:"Penebusan QR pelanggan dihidupkan."}),
+  customerQrRedemptionIsOff:Object.freeze({en:"Customer QR redemption is off.",'zh-CN':"\u987e\u5ba2\u4e8c\u7ef4\u7801\u5151\u6362\u5df2\u5173\u95ed\u3002",ms:"Penebusan QR pelanggan dimatikan."}),
+  customerQrRedemptionIsEnabledBookingSettingsPreserved:Object.freeze({en:"Customer QR redemption is enabled. Booking and appointment settings were preserved.",'zh-CN':"\u987e\u5ba2\u4e8c\u7ef4\u7801\u5151\u6362\u5df2\u5f00\u542f\u3002\u9884\u8ba2\u548c\u9884\u7ea6\u8bbe\u7f6e\u4fdd\u6301\u4e0d\u53d8\u3002",ms:"Penebusan QR pelanggan dihidupkan. Tetapan tempahan dan janji temu dikekalkan."}),
+  customerQrRedemptionIsOffBookingSettingsPreserved:Object.freeze({en:"Customer QR redemption is off. Booking and appointment settings were preserved.",'zh-CN':"\u987e\u5ba2\u4e8c\u7ef4\u7801\u5151\u6362\u5df2\u5173\u95ed\u3002\u9884\u8ba2\u548c\u9884\u7ea6\u8bbe\u7f6e\u4fdd\u6301\u4e0d\u53d8\u3002",ms:"Penebusan QR pelanggan dimatikan. Tetapan tempahan dan janji temu dikekalkan."}),
+  referralsCouldNotBeTurnedOn:Object.freeze({en:"Referrals could not be turned on \u2014 {errorMessage}",'zh-CN':"\u63a8\u8350\u529f\u80fd\u65e0\u6cd5\u5f00\u542f \u2014 {errorMessage}",ms:"Rujukan tidak dapat dihidupkan \u2014 {errorMessage}"}),
+  referralsCouldNotBeTurnedOff:Object.freeze({en:"Referrals could not be turned off \u2014 {errorMessage}",'zh-CN':"\u63a8\u8350\u529f\u80fd\u65e0\u6cd5\u5173\u95ed \u2014 {errorMessage}",ms:"Rujukan tidak dapat dimatikan \u2014 {errorMessage}"}),
+  enterHowManyVisitsCustomerNeedsForThisTier:Object.freeze({en:"Enter how many visits a customer needs for this tier.",'zh-CN':"\u8bf7\u8f93\u5165\u987e\u5ba2\u8fbe\u5230\u6b64\u7b49\u7ea7\u9700\u8981\u591a\u5c11\u6b21\u5230\u8bbf\u3002",ms:"Masukkan berapa banyak kunjungan yang diperlukan pelanggan untuk peringkat ini."}),
+  enterHowManyPointsCustomerNeedsForThisTier:Object.freeze({en:"Enter how many points a customer needs for this tier.",'zh-CN':"\u8bf7\u8f93\u5165\u987e\u5ba2\u8fbe\u5230\u6b64\u7b49\u7ea7\u9700\u8981\u591a\u5c11\u79ef\u5206\u3002",ms:"Masukkan berapa banyak mata yang diperlukan pelanggan untuk peringkat ini."}),
+  pricePerYearToCredit:Object.freeze({en:"{price}/yr \u2192 {credit} credit each period",'zh-CN':"{price}/\u5e74 \u2192 \u6bcf\u671f {credit} \u989d\u5ea6",ms:"{price}/thn \u2192 kredit {credit} setiap tempoh"}),
+  pricePerMonthToCredit:Object.freeze({en:"{price}/mo \u2192 {credit} credit each period",'zh-CN':"{price}/\u6708 \u2192 \u6bcf\u671f {credit} \u989d\u5ea6",ms:"{price}/bln \u2192 kredit {credit} setiap tempoh"}),
+  /* nestly_v963: the same defect where the word came from a helper rather than a ternary —
+     tillUnitNounV430 and growPointsUnitV326 both RETURN an English noun. recordedCurrentBalance
+     had a second render site the v961 pass missed; it now uses the per-unit keys that pass
+     already made. Found by asking the TABLE which rows still carry a word-shaped slot, which
+     is the only question that reaches a word arriving from a function call. */
+  createGiftsRedeemWithStamps:Object.freeze({en:"Create new gifts for your customers to redeem with stamps.",'zh-CN':"\u521b\u5efa\u65b0\u7684\u793c\u7269\uff0c\u4f9b\u987e\u5ba2\u7528\u5370\u82b1\u5151\u6362\u3002",ms:"Cipta hadiah baharu untuk pelanggan anda tebus dengan setem."}),
+  createGiftsRedeemWithPoints:Object.freeze({en:"Create new gifts for your customers to redeem with points.",'zh-CN':"\u521b\u5efa\u65b0\u7684\u793c\u7269\uff0c\u4f9b\u987e\u5ba2\u7528\u79ef\u5206\u5151\u6362\u3002",ms:"Cipta hadiah baharu untuk pelanggan anda tebus dengan mata."}),
+  giftsAvailableWithStamps:Object.freeze({en:"These gifts are available for your customers to redeem with their stamps.",'zh-CN':"\u8fd9\u4e9b\u793c\u7269\u53ef\u4f9b\u987e\u5ba2\u7528\u5176\u5370\u82b1\u5151\u6362\u3002",ms:"Hadiah ini tersedia untuk pelanggan anda tebus dengan setem mereka."}),
+  giftsAvailableWithPoints:Object.freeze({en:"These gifts are available for your customers to redeem with their points.",'zh-CN':"\u8fd9\u4e9b\u793c\u7269\u53ef\u4f9b\u987e\u5ba2\u7528\u5176\u79ef\u5206\u5151\u6362\u3002",ms:"Hadiah ini tersedia untuk pelanggan anda tebus dengan mata mereka."}),
+  /* nestly_v963 (second pass): five more, found by the TABLE-side question rather than the
+     call-site one — the word arrived from a helper or a lookup object, not a visible ternary.
+     wordV585 is a basis→word map, unitNounV430 a parameter defaulting to 'points', rewardUnit()
+     a closure, and unitWord() built "8 stamps" whole. None of them could be seen by scanning
+     the call site for a quoted pair; all four put an English noun in a reviewed sentence. */
+  percentChangeUpVersusRange:Object.freeze({en:"{pct}% up versus {from} to {to}",'zh-CN':"\u8f83 {from} \u81f3 {to} \u4e0a\u5347 {pct}%",ms:"{pct}% naik berbanding {from} hingga {to}"}),
+  percentChangeDownVersusRange:Object.freeze({en:"{pct}% down versus {from} to {to}",'zh-CN':"\u8f83 {from} \u81f3 {to} \u4e0b\u964d {pct}%",ms:"{pct}% turun berbanding {from} hingga {to}"}),
+  percentChangeLevelVersusRange:Object.freeze({en:"{pct}% level versus {from} to {to}",'zh-CN':"\u8f83 {from} \u81f3 {to} \u6301\u5e73 {pct}%",ms:"{pct}% sama berbanding {from} hingga {to}"}),
+  noStampsEarnedForThisPurchase:Object.freeze({en:"No stamps earned for this purchase.",'zh-CN':"\u672c\u6b21\u6d88\u8d39\u672a\u83b7\u5f97\u5370\u82b1\u3002",ms:"Tiada setem diperoleh untuk pembelian ini."}),
+  noPointsEarnedForThisPurchase:Object.freeze({en:"No points earned for this purchase.",'zh-CN':"\u672c\u6b21\u6d88\u8d39\u672a\u83b7\u5f97\u79ef\u5206\u3002",ms:"Tiada mata diperoleh untuk pembelian ini."}),
+  tiersAreEarnedByVisitsNow:Object.freeze({en:"Tiers are earned by visits now.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u5230\u8bbf\u6b21\u6570\u8ba1\u7b97\u3002",ms:"Peringkat kini diperoleh mengikut kunjungan."}),
+  tiersAreEarnedByDollarsSpentNow:Object.freeze({en:"Tiers are earned by dollars spent now.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u6d88\u8d39\u91d1\u989d\u8ba1\u7b97\u3002",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan."}),
+  tiersAreEarnedByPointsEarnedNow:Object.freeze({en:"Tiers are earned by points earned now.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u8d5a\u53d6\u7684\u79ef\u5206\u8ba1\u7b97\u3002",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh."}),
+  enterHowManyStampsThisRewardCosts:Object.freeze({en:"Enter how many stamps this reward costs.",'zh-CN':"\u8bf7\u8f93\u5165\u6b64\u5956\u52b1\u9700\u8981\u591a\u5c11\u5370\u82b1\u3002",ms:"Masukkan berapa banyak setem yang diperlukan untuk ganjaran ini."}),
+  enterHowManyPointsThisRewardCosts:Object.freeze({en:"Enter how many points this reward costs.",'zh-CN':"\u8bf7\u8f93\u5165\u6b64\u5956\u52b1\u9700\u8981\u591a\u5c11\u79ef\u5206\u3002",ms:"Masukkan berapa banyak mata yang diperlukan untuk ganjaran ini."}),
+  cardCustomersSeeIsOneStampLong:Object.freeze({en:"The card customers see is {stamps} stamp long \u2014 your last milestone.",'zh-CN':"\u987e\u5ba2\u770b\u5230\u7684\u5361\u7247\u957f\u5ea6\u662f {stamps} \u5f20\u5370\u82b1 \u2014 \u5373\u60a8\u6700\u540e\u4e00\u4e2a\u91cc\u7a0b\u7891\u3002",ms:"Kad yang dilihat pelanggan ialah {stamps} setem panjang \u2014 pencapaian terakhir anda."}),
+  cardCustomersSeeIsManyStampsLong:Object.freeze({en:"The card customers see is {stamps} stamps long \u2014 your last milestone.",'zh-CN':"\u987e\u5ba2\u770b\u5230\u7684\u5361\u7247\u957f\u5ea6\u662f {stamps} \u5f20\u5370\u82b1 \u2014 \u5373\u60a8\u6700\u540e\u4e00\u4e2a\u91cc\u7a0b\u7891\u3002",ms:"Kad yang dilihat pelanggan ialah {stamps} setem panjang \u2014 pencapaian terakhir anda."}),
+  tiersAreEarnedByVisitsNowYourOne:Object.freeze({en:"Tiers are earned by visits now. Your {rungs} rung kept its number \u2014 check it reads right in visits.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u5230\u8bbf\u6b21\u6570\u4e3a\u4f9d\u636e\u3002\u60a8\u7684 {rungs} \u4e2a\u5c42\u7ea7\u4fdd\u7559\u4e86\u539f\u6765\u7684\u6570\u5b57 \u2014 \u8bf7\u786e\u8ba4\u5b83\u4ee5\u5230\u8bbf\u6b21\u6570\u6765\u8bfb\u662f\u5bf9\u7684\u3002",ms:"Peringkat kini diperoleh mengikut kunjungan. {rungs} tangga anda mengekalkan nombornya \u2014 pastikan ia dibaca dengan betul dalam kunjungan."}),
+  tiersAreEarnedByVisitsNowYourMany:Object.freeze({en:"Tiers are earned by visits now. Your {rungs} rungs kept their number \u2014 check they read right in visits.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u5230\u8bbf\u6b21\u6570\u4e3a\u4f9d\u636e\u3002\u60a8\u7684 {rungs} \u4e2a\u5c42\u7ea7\u4fdd\u7559\u4e86\u539f\u6765\u7684\u6570\u5b57 \u2014 \u8bf7\u786e\u8ba4\u5b83\u4eec\u4ee5\u5230\u8bbf\u6b21\u6570\u6765\u8bfb\u662f\u5bf9\u7684\u3002",ms:"Peringkat kini diperoleh mengikut kunjungan. {rungs} tangga anda mengekalkan nombornya \u2014 pastikan ia dibaca dengan betul dalam kunjungan."}),
+  tiersAreEarnedByDollarsSpentNowYourOne:Object.freeze({en:"Tiers are earned by dollars spent now. Your {rungs} rung kept its number \u2014 check it reads right in dollars spent.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u6d88\u8d39\u91d1\u989d\u4e3a\u4f9d\u636e\u3002\u60a8\u7684 {rungs} \u4e2a\u5c42\u7ea7\u4fdd\u7559\u4e86\u539f\u6765\u7684\u6570\u5b57 \u2014 \u8bf7\u786e\u8ba4\u5b83\u4ee5\u6d88\u8d39\u91d1\u989d\u6765\u8bfb\u662f\u5bf9\u7684\u3002",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan. {rungs} tangga anda mengekalkan nombornya \u2014 pastikan ia dibaca dengan betul dalam jumlah perbelanjaan."}),
+  tiersAreEarnedByDollarsSpentNowYourMany:Object.freeze({en:"Tiers are earned by dollars spent now. Your {rungs} rungs kept their number \u2014 check they read right in dollars spent.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u6d88\u8d39\u91d1\u989d\u4e3a\u4f9d\u636e\u3002\u60a8\u7684 {rungs} \u4e2a\u5c42\u7ea7\u4fdd\u7559\u4e86\u539f\u6765\u7684\u6570\u5b57 \u2014 \u8bf7\u786e\u8ba4\u5b83\u4eec\u4ee5\u6d88\u8d39\u91d1\u989d\u6765\u8bfb\u662f\u5bf9\u7684\u3002",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan. {rungs} tangga anda mengekalkan nombornya \u2014 pastikan ia dibaca dengan betul dalam jumlah perbelanjaan."}),
+  tiersAreEarnedByPointsEarnedNowYourOne:Object.freeze({en:"Tiers are earned by points earned now. Your {rungs} rung kept its number \u2014 check it reads right in points earned.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u8d5a\u53d6\u7684\u79ef\u5206\u4e3a\u4f9d\u636e\u3002\u60a8\u7684 {rungs} \u4e2a\u5c42\u7ea7\u4fdd\u7559\u4e86\u539f\u6765\u7684\u6570\u5b57 \u2014 \u8bf7\u786e\u8ba4\u5b83\u4ee5\u8d5a\u53d6\u7684\u79ef\u5206\u6765\u8bfb\u662f\u5bf9\u7684\u3002",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh. {rungs} tangga anda mengekalkan nombornya \u2014 pastikan ia dibaca dengan betul dalam mata yang diperoleh."}),
+  tiersAreEarnedByPointsEarnedNowYourMany:Object.freeze({en:"Tiers are earned by points earned now. Your {rungs} rungs kept their number \u2014 check they read right in points earned.",'zh-CN':"\u7b49\u7ea7\u73b0\u5728\u4ee5\u8d5a\u53d6\u7684\u79ef\u5206\u4e3a\u4f9d\u636e\u3002\u60a8\u7684 {rungs} \u4e2a\u5c42\u7ea7\u4fdd\u7559\u4e86\u539f\u6765\u7684\u6570\u5b57 \u2014 \u8bf7\u786e\u8ba4\u5b83\u4eec\u4ee5\u8d5a\u53d6\u7684\u79ef\u5206\u6765\u8bfb\u662f\u5bf9\u7684\u3002",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh. {rungs} tangga anda mengekalkan nombornya \u2014 pastikan ia dibaca dengan betul dalam mata yang diperoleh."}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'isSwitchedOffAndKeptRecordOne',
@@ -23670,8 +23730,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'useWithinDayMany',
   'giftOnThisCardChangesApplyOne',
   'giftOnThisCardChangesApplyMany',
-  'tiersAreEarnedByNowYourOne',
-  'tiersAreEarnedByNowYourMany',
   'startThisFreezesCustomerAndHoldsOne',
   'startThisFreezesCustomerAndHoldsMany',
   'confirmThatSelectedCustomerActuallyReceivedOne',
@@ -23796,8 +23854,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'branchStaysOnAndRenewsWithYourPlan',
 
   'closesTheMostSalesOtherHasBiggestAverageSale',
-  'deleteCatalogueItemConfirm',
-  'billingCycleNotOfferedAtThisCapacity',
   'figuresBelowCoverScope',
   'lastSevenDaysComparedWithNormalWeek',
   'branchComparedWithNormalWeekOthersTooNew',
@@ -23807,29 +23863,19 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'slowestDayAndWhereItIsHeading',
   'customerRecordsCreatedBusinessWide',
   'pointsSpentOnRewardsBusinessWide',
-  'recordedVisitsAndRevenueNotEnoughForTrend',
   'recordedNoVisitsOrSalesNothingToCompare',
   'customersNotVisitedInAtLeast60Days',
   'dayRecordedHighestNumberOfValidVisits',
   'reviewStaffingAndAvailabilityForDay',
   'referAFriendRewardAfterQualifyingFirstVisit',
-  'noUnitEarnedForThisPurchase',
-  'showingSalesPaymentStateNotApplied',
   'decisionAppliedCurrentStatus',
   'decisionAlreadyAppliedCurrentStatus',
   'decisionCouldNotBeAppliedTeamMemberNotAvailable',
   'decisionCouldNotBeAppliedWithReasonAndStatus',
   'couldNotMoveThisRequest',
-  'customerQrRedemptionIsState',
-  'customerQrRedemptionIsStateBookingSettingsPreserved',
   'thatOfferWasNotMovedToDraftReason',
   'workspaceHasNoLoyaltyModuleNothingToManage',
   'turnProgrammeOffForCustomers',
-  'tiersAreEarnedByNow',
-  'referralsCouldNotBeTurnedOnOff',
-  'enterHowManyUnitsThisRewardCosts',
-  'enterHowManyUnitsCustomerNeedsForThisTier',
-  'cardCustomersSeeIsThisLong',
   'pauseStoredValueIntro',
   'liftStoredValuePauseIntro',
   'ownerOnlyChangesAccessAndBilling',
@@ -24101,12 +24147,12 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'storageCapacityInUse','keptForDays','expiresOnAfterDays','recordedAtBranchPaysNow',
   'thisIsYourNthBranch','alsoAllowedChannels','stageWindowTimeBasis','stageReturnedOfTotal',
   /* nestly_v945 — twenty-five more embedded-value sentences. */
-  'giftBecomesAvailableAgain','percentChangeVersusRange','previousSpanLegend','referralItemIsFree',
+  'giftBecomesAvailableAgain','previousSpanLegend','referralItemIsFree',
   'stampsPastTargetNotClaimable','makeTheCardStamps','exampleShownOfSlots','couldNotPrepareForEditing',
   'regularsWithVisitsAndLapse','salesToWinBackCurrency','turningOnSwitchesOthersOff','friendMinSpendCurrencyTwo',
   'changesCouldNotBeRead','wizardStepOfWithLabel','draftComparedWithLive','changesCouldNotBeReadReview',
   'finalConfirmationForDraft','publishedSwitchNotApplied','studioDuringStacking','cutoverPreviewFailed',
-  'referralPaysFreeGift','friendQualifyingMinCurrency','pricePerPeriodToCredit','letCustomerKnow',
+  'referralPaysFreeGift','friendQualifyingMinCurrency','letCustomerKnow',
   'blockAtMostDays',
   /* nestly_v944 — fifteen counted sentences as singular/plural key pairs. */
   'customerOverdue','customersOverdue','customerVisitedOnce','customersVisitedOnce',
@@ -24120,7 +24166,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   /* nestly_v943 — fourteen more embedded-value sentences. */
   'noRefundSessionAddedBack','pointsAdjustedWithCorrection','showingFirstInactiveCap','lastVisitCadenceValue',
   'linesDoNotMatchSale','itemIsFreeForCustomer','saleMeetsMinimumItemFree','comeBackRateBetter',
-  'createGiftsRedeemWithUnit','pointsPerCurrencyOne','giftsAvailableWithUnit','showingGiftsRetiredYears',
+  'pointsPerCurrencyOne','showingGiftsRetiredYears',
   'awayDaysToReward','awayOverDays',
   /* nestly_v942: one key per translatable noun, because a template VALUE is preserved verbatim
      and an English noun inside it would survive into 中文. */
@@ -24133,7 +24179,7 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'openBusinessRewards','unitsCountTowardMembership','demoReplyBy','setUpProgrammeQuestion',
   'programmeRunsAloneSwitchesOff','showingFirstOpenCustomers','loadingScheduleForDay','nothingBookedOnDay',
   'sessionsUsedOfTotal','welcomeGiftNeedsMinimum','bringbackSentAfterDays',
-  'noCatalogueMatchForSearch','viewAllTierBenefits','recordedCurrentBalance','scanToOpenRewardsAt',
+  'noCatalogueMatchForSearch','viewAllTierBenefits','scanToOpenRewardsAt',
   'tierGateAndAbove','earnPointsPerDollarTiers',
   'forEveryAmountSpent','suggestedRangeForSector','tierAndAboveFrom',
   'budgetDividedByPointCost','awayDaysNow','awayDaysBackOn','showingMostRecentReturns',
@@ -24263,6 +24309,66 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'monthlyBillingStartsOnRenewalDate',
   'keepAnnualBilling',
   'keepMonthlyBilling',
+  'onePointWord',
+  'manyPointsWord',
+  'amountPerYear',
+  'amountPerMonth',
+  'confirmFailedReason',
+  'declineFailedReason',
+  'oneBookingToday',
+  'manyBookingsToday',
+  'oneBookingOnDay',
+  'manyBookingsOnDay',
+  'showingOneSaleForPeriod',
+  'showingManySalesForPeriod',
+  'oneActivePlan',
+  'manyActivePlans',
+  'thresholdVisitsSuffix',
+  'thresholdPointsSuffix',
+  'tierThresholdVisits',
+  'tierThresholdPoints',
+  'soldToOneCustomerSavingApplies',
+  'soldToManyCustomersSavingApplies',
+  'deleteCatalogueItemConfirmService',
+  'deleteCatalogueItemConfirmProduct',
+  'annualBillingNotOfferedAtThisCapacity',
+  'monthlyBillingNotOfferedAtThisCapacity',
+  'recordedOneVisitAndRevenueNotEnoughForTrend',
+  'recordedManyVisitsAndRevenueNotEnoughForTrend',
+  'showingOneSalePaymentStateNotApplied',
+  'showingManySalesPaymentStateNotApplied',
+  'customerQrRedemptionIsEnabled',
+  'customerQrRedemptionIsOff',
+  'customerQrRedemptionIsEnabledBookingSettingsPreserved',
+  'customerQrRedemptionIsOffBookingSettingsPreserved',
+  'referralsCouldNotBeTurnedOn',
+  'referralsCouldNotBeTurnedOff',
+  'enterHowManyVisitsCustomerNeedsForThisTier',
+  'enterHowManyPointsCustomerNeedsForThisTier',
+  'pricePerYearToCredit',
+  'pricePerMonthToCredit',
+  'createGiftsRedeemWithStamps',
+  'createGiftsRedeemWithPoints',
+  'giftsAvailableWithStamps',
+  'giftsAvailableWithPoints',
+  'percentChangeUpVersusRange',
+  'percentChangeDownVersusRange',
+  'percentChangeLevelVersusRange',
+  'noStampsEarnedForThisPurchase',
+  'noPointsEarnedForThisPurchase',
+  'tiersAreEarnedByVisitsNow',
+  'tiersAreEarnedByDollarsSpentNow',
+  'tiersAreEarnedByPointsEarnedNow',
+  'enterHowManyStampsThisRewardCosts',
+  'enterHowManyPointsThisRewardCosts',
+  'cardCustomersSeeIsOneStampLong',
+  'cardCustomersSeeIsManyStampsLong',
+  'tiersAreEarnedByVisitsNowYourOne',
+  'tiersAreEarnedByVisitsNowYourMany',
+  'tiersAreEarnedByDollarsSpentNowYourOne',
+  'tiersAreEarnedByDollarsSpentNowYourMany',
+  'tiersAreEarnedByPointsEarnedNowYourOne',
+  'tiersAreEarnedByPointsEarnedNowYourMany',
 ]);
 const WORKSPACE_INTERPOLATED_ATTRIBUTE_INVENTORY_V97=Object.freeze([
   'switchOtherWorkspace','switchOtherWorkspaces','notificationsUnread',
@@ -25537,7 +25643,7 @@ function dashboardDeltaChipV170(change,previousFrom,previousTo){
   const glyph=change>0?'▲':change<0?'▼':'▬';
   /* V299: a fall now reads in the same three-tone language Business Insights already uses —
      a −18% and a 0% were both the identical grey pill, distinguished only by the glyph. */
-  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${workspaceTemplateHtmlV97('percentChangeVersusRange',{pct:Math.abs(change),word:word,from:previousFrom,to:previousTo})}</span></span>`;
+  return `<span class="metric-delta pill ${change>0?'ok':change<0?'no':'off'}"><span aria-hidden="true">${glyph} ${Math.abs(change)}%</span><span class="sr-only">${workspaceTemplateHtmlV97(change>0?'percentChangeUpVersusRange':change<0?'percentChangeDownVersusRange':'percentChangeLevelVersusRange',{pct:Math.abs(change),from:previousFrom,to:previousTo})}</span></span>`;
 }
 /* V385 (owner markup on the dashboard, photo 1: the ▲400% chip ringed with "Compare with
    what? please state here"). The chip already knew its answer — previousEquivalentRangeV153
@@ -26047,7 +26153,9 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const rows=(data||[]).filter(row=>String(row.status||'').toLowerCase()!=='cancelled');
   if(summary){
     summary.textContent=rows.length
-      ?(isTodayV252?`${rows.length} ${rows.length===1?'booking':'bookings'} today.`:`${rows.length} ${rows.length===1?'booking':'bookings'} on ${dayLabelV252}.`)
+      ?(isTodayV252
+        ?workspaceTemplateTextV97(rows.length===1?'oneBookingToday':'manyBookingsToday',{count:rows.length})
+        :workspaceTemplateTextV97(rows.length===1?'oneBookingOnDay':'manyBookingsOnDay',{count:rows.length,day:dayLabelV252}))
       :(isTodayV252?'Nothing booked for today.':workspaceTemplateTextV97('nothingBookedOnDaySummary',{day:dayLabelV252}));
   }
   if(!rows.length){
@@ -27008,7 +27116,7 @@ function insightQuietScopeV214({current,branchId,branchName}){
   const revenueCents=Number(current?.revenue_cents)||0;
   const where=branchId?(branchName||'This branch'):'This business';
   const activity=visits||revenueCents
-    ?workspaceTemplateTextV97('recordedVisitsAndRevenueNotEnoughForTrend',{where:where,visits:visits,visitWord:visits===1?'visit':'visits',amount:money(revenueCents)})
+    ?workspaceTemplateTextV97(visits===1?'recordedOneVisitAndRevenueNotEnoughForTrend':'recordedManyVisitsAndRevenueNotEnoughForTrend',{where:where,visits:visits,amount:money(revenueCents)})
     :workspaceTemplateTextV97('recordedNoVisitsOrSalesNothingToCompare',{where:where});
   return {
     tone:'neutral',icon:'info',category:'Readiness',
@@ -29179,7 +29287,7 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
     heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
     message:duplicate?`${workspaceTemplateTextV97(unitNounV430==='stamps'?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints',{balance:pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'})}`
-      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97('noUnitEarnedForThisPurchase',{unitNoun:unitNounV430}),
+      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97(unitNounV430==='stamps'?'noStampsEarnedForThisPurchase':'noPointsEarnedForThisPurchase',{}),
     pointsEarned,
     pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
     duplicate
@@ -32301,7 +32409,7 @@ async function tillPage(){
           :d.pointsEarned>0
           ?`<p style="font-size:24px;font-weight:700;letter-spacing:-.03em;color:var(--green);margin-top:2px;font-variant-numeric:tabular-nums">+${d.pointsEarned} ${tillUnitNounV430(catalog)}</p>`
           :d.hasSale?(d.duplicate
-          ?`<p class="muted">${workspaceTemplateHtmlV97('recordedCurrentBalance',{balance:d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—',unit:tillUnitNounV430(catalog)})}</p>`
+          ?`<p class="muted">${workspaceTemplateHtmlV97(catalog?.customerGiftsV392?.program?.unit==='stamps'?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints',{balance:d.pointsTotal!=null?Number(d.pointsTotal).toLocaleString('en-SG'):'—'})}</p>`
           :`<p class="muted small">No points earned for this purchase.</p>`)
           :`<p class="muted small">No points-earning items — none earned.</p>`}
         ${d.hasSale?`<ul class="till-receipt-lines" style="text-align:left">${lineRows}</ul>${breakdown}`:''}
@@ -32636,8 +32744,8 @@ async function salesPage(){
     const workflowWarning=salesWorkflowMayHaveMoreV291?' · reversal/status detail may be incomplete for some rows'
       :workflowDeniedV579?' · Reverse controls need refund permission; Reversed status is inferred from the ledger':'';
     salesFilterNoteV266(paymentStateApplied
-      ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
-      :workspaceTemplateTextV97('showingSalesPaymentStateNotApplied',{count:rows.length,saleWord:rows.length===1?'sale':'sales',period:period,workflowNote:workflowWarning}),
+      ?`${workspaceTemplateTextV97(rows.length===1?'showingOneSaleForPeriod':'showingManySalesForPeriod',{count:rows.length,period})}${workflowWarning}`
+      :workspaceTemplateTextV97(rows.length===1?'showingOneSalePaymentStateNotApplied':'showingManySalesPaymentStateNotApplied',{count:rows.length,period:period,workflowNote:workflowWarning}),
       (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
       if(applyButton?.isConnected&&isCurrentLoadV579())CUI.setButtonBusy(applyButton,{busy:false});
@@ -34419,7 +34527,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
       redemptionStatus.textContent=canManageLoyalty
         ?'This switch affects customer QR redemption only. Booking settings are preserved.'
-        :workspaceTemplateTextV97('customerQrRedemptionIsState',{state:redemptionToggle.checked?'enabled':'off'});
+        :workspaceTemplateTextV97(redemptionToggle.checked?'customerQrRedemptionIsEnabled':'customerQrRedemptionIsOff',{});
       if(canManageLoyalty){
         redemptionToggle.disabled=false;redemptionSave.disabled=false;
         redemptionSave.onclick=async()=>{
@@ -34432,7 +34540,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           redemptionToggle.disabled=false;redemptionSave.disabled=false;
           redemptionStatus.textContent=result.error
             ?'Customer QR redemption was not changed. Refresh and try again.'
-            :workspaceTemplateTextV97('customerQrRedemptionIsStateBookingSettingsPreserved',{state:result.data?.redemption_enabled===true?'enabled':'off'});
+            :workspaceTemplateTextV97(result.data?.redemption_enabled===true?'customerQrRedemptionIsEnabledBookingSettingsPreserved':'customerQrRedemptionIsOffBookingSettingsPreserved',{});
         };
       }
     }
@@ -39696,7 +39804,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growPointsAddCardV343=canSetupGrow&&growPointsManageTabV326==='published'&&growPointsAddOpenV326===''?`<li class="grow-points-add-card-v343" data-grow-points-add-v326="1" role="button" tabindex="0">
     <span class="grow-points-add-card-icon-v343" aria-hidden="true">${CUI.icon('add',{size:20})}</span>
     <b>Add reward</b>
-    <span class="muted small">${workspaceTemplateHtmlV97('createGiftsRedeemWithUnit',{unit:growPointsUnitV326})}</span>
+    <span class="muted small">${workspaceTemplateHtmlV97(growPointsIsStampsV326?'createGiftsRedeemWithStamps':'createGiftsRedeemWithPoints',{})}</span>
   </li>`:'';
   /* V359 (owner: "adding or editing the fields will be auto publish (with a save button that
      already exist) - dont need the wizard go live steps"). The earning rule is edited HERE now,
@@ -39794,7 +39902,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       </ul>
       ${growSwitchErrorV322&&growSwitchPendingV322===growPointsSpineKindV326?`<div class="err" role="alert" style="margin-top:8px">${esc(growSwitchErrorV322)}</div>`:''}
       ${growRedemptionBandV521}
-      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">${workspaceTemplateHtmlV97('giftsAvailableWithUnit',{unit:growPointsUnitV326})}</p></div>`
+      ${growPointsManageTabV326==='published'?`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>Gifts${growPointsPublishedV326.length?` <span class="muted small">(${growPointsPublishedV326.length})</span>`:''}</h3><p class="muted small">${workspaceTemplateHtmlV97(growPointsIsStampsV326?'giftsAvailableWithStamps':'giftsAvailableWithPoints',{})}</p></div>`
         :`<div class="grow-topic-group-head-v244" style="margin-top:18px"><h3>History</h3><p class="muted small">${workspaceTemplateHtmlV97('showingGiftsRetiredYears',{years:GROW_HISTORY_WINDOW_YEARS_V375})}</p></div>`}
       <ul class="grow-setup-rewardlist-v301" style="margin-top:10px" data-grow-points-giftlist-v326>
         ${growPointsManageTabV326==='published'
@@ -41086,7 +41194,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
            does not exclude those three), so a tile-list filter alone does not stop this block from
            rendering on those routes. Explicit is the only safe guard here. -->
       <div class="programme-category" data-programme-category-v268="recurring"><div class="programme-category-title">Memberships</div><div class="grow-programme-list">
-        ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?`${activeMembershipCount} active ${activeMembershipCount===1?'plan':'plans'}.`:membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
+        ${programmeRow({kind:'memberships',icon:CUI.icon('memberships',{size:20}),title:'Memberships',copy:!modules.includes('memberships')?'Memberships are not included in this workspace.':snapshot.overviewErrors?.memberships?'Status could not be confirmed.':activeMembershipCount?workspaceTemplateTextV97(activeMembershipCount===1?'oneActivePlan':'manyActivePlans',{count:activeMembershipCount}):membershipConfigured?'Membership plans exist but are currently paused.':'Create the first recurring membership plan.',status:!modules.includes('memberships')?'Not included':snapshot.overviewErrors?.memberships?'Unavailable':activeMembershipCount?'Live':snapshot.memberships.length?'Paused':'Not set up',statusTone:activeMembershipCount?'on':'off',canWrite:isOwner&&modules.includes('memberships')&&canWriteModule('memberships')&&!snapshot.overviewErrors?.memberships,readOnly:modules.includes('memberships')&&!(isOwner&&canWriteModule('memberships')),href:membershipConfigured?'#/memberships/plist':'#/memberships/mn',actionLabel:membershipConfigured?'Manage':'Set up'})}
       </div></div>      `:''}
     </section>
     ${/* V364 (owner markup 2026-08-16, photos 6 and 7: the whole "How the programme fits
@@ -42680,10 +42788,15 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
        the numbers underneath them have to be re-read. Saying it once, here, is the difference
        between a deliberate change and a silent one. */
     const rungsV585=growTiersPublishedV331.length;
-    const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
+    /* nestly_v963: the basis is a WORD, so it cannot be a value — it was named {v1}/{v3}, which is
+       how it survived a scan looking for word-shaped slot names. Six keys: three bases × singular
+       and plural, each naming its basis in its own language. */
+    const tiersBasisKeyV963=basis==='visits'?'Visits':basis==='spend'?'DollarsSpent':'PointsEarned';
     toast(rungsV585
-      ?workspaceTemplateTextV97(rungsV585===1?'tiersAreEarnedByNowYourOne':'tiersAreEarnedByNowYourMany',{v1:wordV585,v2:rungsV585,v3:wordV585})
-      :workspaceTemplateTextV97('tiersAreEarnedByNow',{basisWord:wordV585}));
+      ?workspaceTemplateTextV97(rungsV585===1
+        ?(tiersBasisKeyV963==='Visits'?'tiersAreEarnedByVisitsNowYourOne':tiersBasisKeyV963==='DollarsSpent'?'tiersAreEarnedByDollarsSpentNowYourOne':'tiersAreEarnedByPointsEarnedNowYourOne')
+        :(tiersBasisKeyV963==='Visits'?'tiersAreEarnedByVisitsNowYourMany':tiersBasisKeyV963==='DollarsSpent'?'tiersAreEarnedByDollarsSpentNowYourMany':'tiersAreEarnedByPointsEarnedNowYourMany'),{rungs:rungsV585})
+      :workspaceTemplateTextV97(basis==='visits'?'tiersAreEarnedByVisitsNow':basis==='spend'?'tiersAreEarnedByDollarsSpentNow':'tiersAreEarnedByPointsEarnedNow',{}));
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -42799,7 +42912,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
       if(!isGrowCurrent()){growReferralBusyV364=false;return null;}
       return spine.ok?true
-        :referralFailV567(workspaceTemplateTextV97('referralsCouldNotBeTurnedOnOff',{onOff:wantOnV558?'on':'off',errorMessage:ownerErrorText(spine.error)}));
+        :referralFailV567(workspaceTemplateTextV97(wantOnV558?'referralsCouldNotBeTurnedOn':'referralsCouldNotBeTurnedOff',{errorMessage:ownerErrorText(spine.error)}));
     };
     /* v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
@@ -45216,7 +45329,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   const rewardFormProblemV304=form=>{
     if(String(form?.name||'').trim().length<2)return 'Give this reward a name customers will recognise.';
-    if(!(parseInt(form?.points||'0',10)>0))return workspaceTemplateTextV97('enterHowManyUnitsThisRewardCosts',{unit:rewardUnit()});
+    if(!(parseInt(form?.points||'0',10)>0))return workspaceTemplateTextV97(rewardUnit()==='stamps'?'enterHowManyStampsThisRewardCosts':'enterHowManyPointsThisRewardCosts',{});
     return '';
   };
   /* The write advance() always performed, verbatim: materialise a published reward into this draft
@@ -45295,7 +45408,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!name)return {ok:false,soft:true,message:'Give this tier a name customers will see.'};
     const threshold=parseInt(form?.threshold||'',10);
     if(!Number.isFinite(threshold)||threshold<0)return {ok:false,soft:true,
-      message:workspaceTemplateTextV97('enterHowManyUnitsCustomerNeedsForThisTier',{unit:tierBasisV303()==='visits'?'visits':'points'})};
+      message:workspaceTemplateTextV97(tierBasisV303()==='visits'?'enterHowManyVisitsCustomerNeedsForThisTier':'enterHowManyPointsCustomerNeedsForThisTier',{})};
     const id=form.id||crypto.randomUUID();
     const existing=state.tiers.find(tier=>tier.id===id);
     /* The candidate is written BEFORE it joins the list, so a failed add leaves no phantom row
@@ -45693,7 +45806,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      textContent assignment for the v97 reason exampleText() is: interpolated runtime copy belongs
      in a named function, so the localizer and this pin can both see it in one place. */
   const rewardRowPointsTextV304=points=>` · ${unitWord(Math.max(0,Number(points)||0),rewardUnit())}`;
-  const tierRowThresholdTextV304=threshold=>` · ${Math.max(0,Number(threshold)||0)} ${tierBasisV303()==='visits'?'visits':'points'}`;
+  const tierRowThresholdTextV304=threshold=>workspaceTemplateTextV97(tierBasisV303()==='visits'?'thresholdVisitsSuffix':'thresholdPointsSuffix',{count:Math.max(0,Number(threshold)||0)});
   const tiersStepHtml=()=>{
     const form=state.tierForm||{name:'',threshold:''};
     /* V304: a removed row keeps its place for the rest of this visit, muted, with Undo beside it.
@@ -45791,7 +45904,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     return `<p class="grow-setup-lead-v301">What do customers get, and at how many stamps?</p>
       <p class="muted small" style="margin-top:-4px">Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.</p>
       ${rows}${chips}${rewardFormHtml()}
-      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?workspaceTemplateTextV97('cardCustomersSeeIsThisLong',{stampCountWithUnit:esc(unitWord(length,'stamps'))}):'The card gets its length from your last milestone.'}</p>
+      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?workspaceTemplateTextV97(Number(length)===1?'cardCustomersSeeIsOneStampLong':'cardCustomersSeeIsManyStampsLong',{stamps:esc(length)}):'The card gets its length from your last milestone.'}</p>
       <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.</p>`;
   };
   const stepThreeHtml=()=>{
@@ -45877,7 +45990,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
      omit three of them. Nothing switched on says so plainly rather than printing an earn rate for
      a programme that will not run. */
   const ladderLineW6I2=()=>activeTiersV304().length
-    ?activeTiersV304().map(tier=>`${tier.name} — ${tier.threshold} ${tierBasisV303()==='visits'?'visits':'points'}`).join(' · ')
+    ?activeTiersV304().map(tier=>`${tier.name} — ${workspaceTemplateTextV97(tierBasisV303()==='visits'?'tierThresholdVisits':'tierThresholdPoints',{threshold:tier.threshold})}`).join(' · ')
     :'No tier yet';
   const earnOrClimbLineV305=()=>{
     const parts=[];
@@ -48648,7 +48761,7 @@ async function membershipsPage(){
     const historyPlans=(plans||[]).filter(p=>p.deleted_at!=null);
     const rows=plansTabV329==='published'?publishedPlans:historyPlans;
     const rowHtml=p=>{
-      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${workspaceTemplateHtmlV97('pricePerPeriodToCredit',{price:money(p.price_cents),cadence:p.cadence==='annual'?'yr':'mo',credit:money(p.credit_cents)})}</div></div>`;
+      const meta=`<div><b data-merchant-content>${esc(p.name)}</b><div class="muted small">${workspaceTemplateHtmlV97(p.cadence==='annual'?'pricePerYearToCredit':'pricePerMonthToCredit',{price:money(p.price_cents),credit:money(p.credit_cents)})}</div></div>`;
       if(plansTabV329==='history')return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)">${meta}<span class="spacer"></span><span class="pill off">In history</span></div>`;
       const confirmOpen=plansDeletePendingV329===String(p.id);
       return `<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap">${meta}
@@ -54025,7 +54138,7 @@ async function packagesPage(options){
           ${catalogueBranchPickerHtmlV627({branches:packageBranches,assigned:packageBranchIdsV627(plan.id),
             name:'package-edit',label:'Offered at',failed:packageBranchFailedV627,help:packageBranchHelpV627})}
           <p class="muted small" style="margin-top:6px">${sold
-            ? `Sold to ${sold} customer${sold===1?'':'s'}. Saving applies to packages sold from now on — the ${sold===1?'customer':'customers'} who already bought keep${sold===1?'s':''} the price, sessions and service they paid for.`
+            ? workspaceTemplateTextV97(sold===1?'soldToOneCustomerSavingApplies':'soldToManyCustomersSavingApplies',{count:sold})
             : 'Nobody has bought this yet, so saving simply changes it.'}</p>
           <div id="packageEditErrorV601" role="alert"></div>
           <div class="row" style="margin-top:16px"><span class="spacer"></span><button type="button" class="btn ghost" id="packageEditCancelV601">Cancel</button><button type="submit" class="btn" id="packageEditSaveV601">Save</button></div>

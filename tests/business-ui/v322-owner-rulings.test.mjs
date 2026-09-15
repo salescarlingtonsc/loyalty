@@ -26,6 +26,12 @@ import { dirname, join } from 'node:path';
    the REAL runtime, so a missing key fails here instead of rendering as an empty string. */
 import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 const TPL_V960 = workspaceTemplateRuntime('en');
+/* nestly_v962: growPointsWordV322 now picks between two named keys instead of interpolating
+   the English noun, which a value would have preserved verbatim into 中文. The rules bundle
+   below is built with `new Function`, where a free identifier resolves against globalThis —
+   so the REAL runtime goes there. Never a stub: it returns '' for an unknown key, which would
+   turn a broken phrase into a passing assertion. */
+for (const [name, value] of Object.entries(TPL_V960)) globalThis[name] = value;
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');

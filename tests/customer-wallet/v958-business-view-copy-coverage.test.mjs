@@ -172,3 +172,253 @@ test('the register says WHY for everything it excuses, and excuses nothing that 
   const sources = register.entries.map(e => e.source);
   assert.equal(new Set(sources).size, sources.length, 'the register lists a string twice');
 });
+
+/* ── nestly_v961: a FOURTH class, found while reviewing this wave's own rows ──────────────────
+   The three classes above are about where copy LIVES. This one is about how it is PARAMETERISED.
+
+   `${count} ${count===1?'stamp':'stamps'}` is not a sentence assembled in JS by the scan above's
+   definition — it carries fewer than three English words — but it has the identical failure. The
+   noun sits in a VALUE, and a template value is preserved verbatim, so it survives into 中文 the
+   moment the sentence around it is localised. That is precisely how "Annual计费从 … 开始" was
+   about to ship: billingCadenceWordV764 returns an English word and the sentence took it as a
+   slot. Three of these were fixed in v961 because this wave touched them; the rest are counted
+   here so the class cannot quietly grow while the catalogue does.
+
+   The fix is never a helper tweak — translating the noun alone leaves Chinese mid-English until
+   the surrounding sentence is templated too. It is key VARIANTS chosen at the call site, the same
+   shape v961 used for the two-independent-plural sentences.
+
+   THIS NUMBER IS A FLOOR, NOT A CENSUS. The scan pairs backticks sequentially, so a template
+   literal nested inside another (`${own?'':` for ${units} ${units===1?'branch':'branches'}`}`)
+   is swallowed by the outer one and never counted. Lowering it is real work; it rising means a
+   new one was added in plain sight. */
+/* nestly_v962 closed the nine business-surface shapes whose template literal was the whole
+   expression — a drop-in replacement with no restructuring, so no render path changed shape.
+   What is left is deliberately left, and each has a reason rather than a shrug:
+
+   FOUR ARE ON THE CUSTOMER SURFACE (the wallet's own point/stamp nouns, the consent history
+   sentence, and the stamps-left column). workspaceTemplateTextV97 defaults its locale to
+   workspaceLocale, and the customer reads customerLocale — so converting these means threading
+   the customer's locale through the helper at every call and deciding whether the v954 walker
+   re-runs its render on a language change the way v959 made the workspace route do. That is a
+   design decision about the customer surface, not a find-and-replace, and it belongs in a wave
+   that can verify it end to end.
+
+   FOUR ARE NESTED INSIDE A LARGER TEMPLATE LITERAL, where converting the noun means restructuring
+   the sentence around it — the capacity-increase confirm and the branch-count line among them.
+   Note the scan cannot even SEE those: it pairs backticks sequentially, so an inner literal is
+   swallowed by its outer one. The count is a floor. */
+const NOUN_AS_VALUE_REMAINING_V961 = 8;
+
+/* Not copy. Each is a ternary over two English words that never reaches a reader as prose. */
+const NOUN_AS_VALUE_NOT_COPY_V961 = new Map([
+  ['t{}:{}:{}', 'a telemetry token — matched/unmatched is a field value, not a word anyone reads'],
+  ['data-stamp-quest-claimed-v323="{}"', 'an HTML data attribute; yes/no is read by code, never rendered'],
+  ['{}.{}', 'a file extension — png/jpg is the format, not a word'],
+  ['{}', 'the ternary picks a TEMPLATE KEY, not a word: this one is already right'],
+  ['{}-customer-intelligence-{}.csv', 'a download filename; the scope word names the file, and a\n'
+    + 'localised filename would break every operator script that globs for it'],
+]);
+
+function nounAsValueShapes() {
+  const SLOT = /\$\{(?:[^{}`]|\{[^{}`]*\})*\}/g;
+  const WORD_TERNARY = /\?\s*['"]([A-Za-z][A-Za-z ]{0,20})['"]\s*:\s*['"]([A-Za-z][A-Za-z ]{0,20})['"]/;
+  const out = new Map();
+  for (const m of app.matchAll(/`((?:[^`\\]|\\.){4,400})`/g)) {
+    const raw = m[1];
+    if (/[<>]/.test(raw) || !raw.includes('${')) continue;
+    for (const slot of raw.match(SLOT) || []) {
+      const pair = slot.match(WORD_TERNARY);
+      if (!pair) continue;
+      const shape = raw.replace(SLOT, '{}').trim();
+      if (!out.has(shape)) out.set(shape, `${pair[1]}/${pair[2]}`);
+    }
+  }
+  return out;
+}
+
+test('an English noun is never left sitting in a template value, and the count only ever falls', () => {
+  const found = nounAsValueShapes();
+  const remaining = [...found].filter(([shape]) => !NOUN_AS_VALUE_NOT_COPY_V961.has(shape));
+  assert.ok(remaining.length <= NOUN_AS_VALUE_REMAINING_V961,
+    `${remaining.length} shapes now, up from ${NOUN_AS_VALUE_REMAINING_V961}. A word chosen by a\n`
+    + `ternary and handed to a sentence as a VALUE is preserved verbatim — it will read English\n`
+    + `inside an otherwise Chinese or Malay sentence. Give the call site key variants in\n`
+    + `WORKSPACE_TEMPLATE_COPY_V97 instead, one per form of the word. If the pair is not copy — a\n`
+    + `field value, a file extension, a template KEY — add it to NOUN_AS_VALUE_NOT_COPY_V961 with\n`
+    + `the reason.\n`
+    + remaining.map(([shape, pair]) => `  ${pair.padEnd(22)} ${JSON.stringify(shape)}`).join('\n'));
+  assert.equal(remaining.length, NOUN_AS_VALUE_REMAINING_V961,
+    `${remaining.length} remain — lower the reviewed number to match.`);
+});
+
+test('the not-copy register for noun-as-value says why, and excuses nothing that is still rendered', () => {
+  const found = nounAsValueShapes();
+  for (const [shape, reason] of NOUN_AS_VALUE_NOT_COPY_V961) {
+    assert.ok(reason.trim().length > 20, `${JSON.stringify(shape)} is excused without a real reason`);
+    assert.ok(found.has(shape),
+      `${JSON.stringify(shape)} is excused but no longer exists — drop it, or the register starts\n`
+      + `excusing things nobody can find. A stale excuse is how the next one gets in.`);
+  }
+});
+
+/* ── nestly_v963: being IN the reviewed table is not the same as being translated ──────────────
+   The worst version of the noun-as-value defect is the one that looks finished. Nine named
+   templates — reviewed, in all three locales, counted by every gate above — took the inflecting
+   word as a VALUE:
+
+     showingSalesPaymentStateNotApplied  {saleWord}  'sale'/'sales'
+     billingCycleNotOfferedAtThisCapacity {cycle}    'Annual'/'Monthly'
+     referralsCouldNotBeTurnedOnOff      {onOff}     'on'/'off'
+     enterHowManyUnitsCustomerNeedsForThisTier {unit} 'visits'/'points'   … and five more
+
+   A value is preserved verbatim, so a zh-CN owner read "显示 3 笔销售sales · …" — the Chinese
+   sentence had already said 笔销售 and then appended the English word — and "此容量不提供Annual
+   付款方式". These shipped. No count in this file could see them, because every count here asks
+   whether a string is IN the catalogue, and they were.
+
+   So this gate asks the opposite question, at the call site: is any value handed to a named
+   template an English WORD chosen by a ternary? That is a defect on sight. The fix is one key per
+   form of the word, which is why the nine slot-bearing rows were deleted rather than left beside
+   their replacements — a row with a {word} slot is a template for making the mistake again.
+
+   Zero is the line, and it is a real zero, not a ratchet: there is no legitimate reason to put an
+   English word in a value. A NAME, a number, a date, a merchant's own words — those are values. */
+function nounShapedTemplateSlots() {
+  const found = [];
+  const call = /workspaceTemplate(?:Text|Html|Attribute)V97\(/g;
+  let m;
+  while ((m = call.exec(app))) {
+    let i = m.index + m[0].length, depth = 1, args = '';
+    for (; i < app.length && depth > 0; i++) {
+      const c = app[i];
+      if (c === '(') depth++;
+      else if (c === ')') { depth--; if (!depth) break; }
+      args += c;
+    }
+    const open = args.indexOf('{', args.indexOf(','));
+    if (open < 0) continue;
+    let d = 1, values = '';
+    for (let j = open + 1; j < args.length && d > 0; j++) {
+      const c = args[j];
+      if (c === '{') d++;
+      else if (c === '}') { d--; if (!d) break; }
+      values += c;
+    }
+    for (const hit of values.matchAll(
+      /([A-Za-z_][A-Za-z0-9_]*)\s*:\s*[^,]*?\?\s*['"]([A-Za-z][A-Za-z ]{0,20})['"]\s*:\s*['"]([A-Za-z][A-Za-z ]{0,20})['"]/g)) {
+      found.push({
+        line: app.slice(0, m.index).split('\n').length,
+        slot: hit[1], pair: `${hit[2]}/${hit[3]}`,
+        key: (args.match(/^\s*['"]([A-Za-z0-9_]+)['"]/) || [])[1] || '(computed)',
+      });
+    }
+  }
+  return found;
+}
+
+test('no named template is handed an English word as a value — the defect that hides inside a reviewed row', () => {
+  const found = nounShapedTemplateSlots();
+  assert.deepEqual(found, [],
+    `${found.length} named template call${found.length === 1 ? '' : 's'} pass an English word as a\n`
+    + `VALUE. A value is preserved verbatim, so the word stays English inside the Chinese or Malay\n`
+    + `sentence — and the row still counts as translated everywhere else in this file. Split the key\n`
+    + `into one per form of the word and delete the slot-bearing row.\n`
+    + found.map(f => `  app.js:${f.line}  ${f.key} {${f.slot}} <- ${f.pair}`).join('\n'));
+});
+
+test('no row in the reviewed template table still carries a word-shaped slot', () => {
+  /* The call-site check above is the one that bites; this is its other half. A slot NAMED for a
+     word is the invitation — {saleWord}, {onOff}, {cycle}, {unit} — and leaving one in the table
+     is how the next call site learns to pass one. */
+  const table = app.slice(app.indexOf('const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({'));
+  const WORD_SHAPED = /\{(\w*(?:Word|onOff|cycle|cadence|unit|state|plural)\w*)\}/i;
+  /* Two slots are named after a word and hold something else. Both were checked at their call
+     site rather than taken on trust — that is the price of an allow-list. */
+  const NOT_A_WORD = new Map([
+    ['lastVisitCadenceValue', 'its {cadence} is a NUMBER of days — String(Math.round(cadence_days)) —\n'
+      + 'rendered between "~" and "d". A number is a value in any language.'],
+    ['usuallyVisitsEveryDaysLastSeenDaysAgo', 'its {cadenceDays} is a NUMBER of days, rendered\n'
+      + 'between "every" and "days" — the noun is already in the reviewed sentence.'],
+    ['customerUsuallyVisitsEveryDaysLastSeenDaysAgo', 'same: {cadenceDays} is a day count, not a word.'],
+    ['mostlyCrowdOnlySomeBuyersGaveDetailsTooFew', 'CROWD PHRASE — a real gap, deliberately left.'],
+    ['mostlyCrowdTooFewBuyersGaveDetails', 'CROWD PHRASE — a real gap, deliberately left.'],
+    ['mostlyCrowdSomeOfBuyers', 'CROWD PHRASE — a real gap, deliberately left.'],
+    ['mostBuyersOfItemAre', 'CROWD PHRASE — a real gap, deliberately left. {crowdWords} is built one\n'
+      + 'layer down as `${genderWord} aged ${ageWord}` from two demographic words, so closing it means\n'
+      + 'keying gender x age-band and rebuilding that phrase, not splitting these four rows. Counted\n'
+      + 'here rather than excused quietly: the owner reads "大多是 women aged 25-34" today.'],
+    ['unitsCountTowardMembership', 'its {unit} is ct(presentation.unit): the CUSTOMER translator has\n'
+      + 'already turned it into the reader\'s own language before it reaches the slot. The open\n'
+      + 'question on this row is the other one — the template resolves against workspaceLocale while\n'
+      + 'the wallet reads customerLocale — and that is the customer-surface wave, not this defect.'],
+  ]);
+  const offenders = [];
+  for (const row of table.matchAll(/^ {2}([A-Za-z0-9_]+):Object\.freeze\(\{en:("(?:[^"\\]|\\.)*")/gm)) {
+    const hit = JSON.parse(row[2]).match(WORD_SHAPED);
+    if (hit && !NOT_A_WORD.has(row[1])) offenders.push(`${row[1]} carries {${hit[1]}}`);
+  }
+  for (const key of NOT_A_WORD.keys()) {
+    assert.ok(table.includes(`\n  ${key}:Object.freeze({`),
+      `${key} is allow-listed here but no longer exists — drop the entry rather than leaving an\n`
+      + `excuse nobody can check.`);
+  }
+  assert.deepEqual(offenders, [],
+    `a reviewed template still has a slot named for a word rather than a value:\n  `
+    + offenders.join('\n  '));
+});
+
+/* The name-independent half. Two of the worst offenders in this wave were invisible to both scans
+   above: tiersAreEarnedByNowYour* named its basis {v1} and {v3}, and cardCustomersSeeIsThisLong
+   took "8 stamps" built whole by a helper. Neither slot NAME looks like a word and neither call
+   site shows a quoted pair — the word came out of a function.
+
+   So this asks the third question: is a known word-producing helper ever handed to a template as
+   a value? These functions all RETURN English ('stamps', 'Annual', '3 points'). Their output
+   belongs in a key name, never in a slot. */
+const WORD_PRODUCING_HELPERS_V963 = [
+  'billingCadenceWordV764', 'tillUnitNounV430', 'unitWord', 'pluralV774', 'biPluralV892',
+  'growPointsUnitV326', 'rewardUnit', 'unitNounV437', 'unitNounV430',
+];
+
+test('no word-producing helper is ever handed to a named template as a value', () => {
+  const offenders = [];
+  const call = /workspaceTemplate(?:Text|Html|Attribute)V97\(/g;
+  let m;
+  while ((m = call.exec(app))) {
+    let i = m.index + m[0].length, depth = 1, args = '';
+    for (; i < app.length && depth > 0; i++) {
+      const c = app[i];
+      if (c === '(') depth++;
+      else if (c === ')') { depth--; if (!depth) break; }
+      args += c;
+    }
+    const open = args.indexOf('{', args.indexOf(','));
+    if (open < 0) continue;
+    let d = 1, values = '';
+    for (let j = open + 1; j < args.length && d > 0; j++) {
+      const c = args[j];
+      if (c === '{') d++;
+      else if (c === '}') { d--; if (!d) break; }
+      values += c;
+    }
+    for (const helper of WORD_PRODUCING_HELPERS_V963) {
+      if (!new RegExp(`\\b${helper}\\b`).test(values)) continue;
+      offenders.push(`app.js:${app.slice(0, m.index).split('\n').length}  ${helper} feeds a template value`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    `a helper that RETURNS an English word is being passed to a template as a value. Its output is\n`
+    + `preserved verbatim, so it stays English inside the Chinese or Malay sentence. Pick the key by\n`
+    + `the same condition the helper switches on, and give each form its own reviewed row.\n`
+    + offenders.join('\n'));
+});
+
+test('the word-producing helper list still names functions this app has', () => {
+  /* An allow-list that drifts is worse than none: if a helper is renamed, the check above silently
+     stops looking for it. */
+  for (const helper of WORD_PRODUCING_HELPERS_V963) {
+    assert.ok(new RegExp(`\\b${helper}\\b`).test(app),
+      `${helper} is checked for but no longer exists in app.js — rename it here or drop it.`);
+  }
+});

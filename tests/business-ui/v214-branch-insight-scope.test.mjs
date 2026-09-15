@@ -41,7 +41,9 @@ test('V214 quiet branch card reports real counted activity, not a generic placeh
   assert.match(quiet, /Number\(current\?\.revenue_cents\)\|\|0/);
   /* nestly_v960: a named template now — the words are pinned once where they are written, and
      the call site is pinned to the key it names. */
-  assert.match(quiet, /'recordedVisitsAndRevenueNotEnoughForTrendOne':'recordedVisitsAndRevenueNotEnoughForTrendMany'|recordedVisitsAndRevenueNotEnoughForTrend/);
+  /* nestly_v963: the visit noun was a {visitWord} value, so it stayed English inside the Chinese
+     sentence. Two keys, picked by the count. */
+  assert.match(quiet, /'recordedOneVisitAndRevenueNotEnoughForTrend':'recordedManyVisitsAndRevenueNotEnoughForTrend'/);
   assert.match(quiet, /recordedNoVisitsOrSalesNothingToCompare/);
   // The reassurance the owner asked for: fewer cards is expected, not a fault.
   assert.match(quiet, /Nothing is broken\./);

@@ -275,6 +275,11 @@ function buildLoadRecent() {
     salesFilterNoteV266: () => {},
     dashboardScheduleDayLabelV252: value => value,
     renderSalesRowsV291: () => { renderCalls.push({ rows: context.salesFilteredRowsV291.slice() }); },
+    /* nestly_v962: the "Showing N sales · period" line is a named template now, so the sentence
+       follows the owner's language instead of being assembled from an English noun. This is a
+       fresh vm context, so it needs the REAL runtime spread in — a stub would answer '' for an
+       unknown key and hide a broken sentence behind a green test. */
+    ...workspaceTemplateRuntime(),
   };
   const loadRecent = vm.runInNewContext(`${src}; loadRecent`, context);
   return { loadRecent, context, elements, renderCalls, fetchAllRowsResultQueue };

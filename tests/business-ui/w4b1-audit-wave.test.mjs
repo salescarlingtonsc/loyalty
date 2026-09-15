@@ -77,7 +77,9 @@ test('F021 legacySaleReceiptV145 never asserts "no extra points added" on a repl
 test('F021 the cart receipt (posReceiptV142) duplicate branch shows the same honest copy', () => {
   const block = section("<h2 style=\"margin:8px 0 4px\">${d.duplicate?'Recorded'", '${d.hasSale?`<ul class="till-receipt-lines"');
   assert.doesNotMatch(block, /no extra points added/i);
-  assert.match(block, /workspaceTemplateHtmlV97\('recordedCurrentBalance'/);
+  /* nestly_v963: recordedCurrentBalance took the unit as a VALUE — tillUnitNounV430 returns the
+     English 'stamps'/'points', which a value preserves verbatim into 中文. One key per unit now. */
+  assert.match(block, /workspaceTemplateHtmlV97\(catalog\?\.customerGiftsV392\?\.program\?\.unit==='stamps'\?'recordedCurrentBalanceStamps':'recordedCurrentBalancePoints'/);
   assert.match(block, /d\.pointsTotal/);
 });
 

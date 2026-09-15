@@ -60,7 +60,9 @@ test('V266 A3 Apply filters always produces a visible result, even when the rows
   const block = sales();
   assert.match(block, /id="salesFilterSummary"/);
   assert.match(block, /const salesFilterNoteV266=/);
-  assert.match(block, /Showing \$\{rows\.length\} \$\{rows\.length===1\?'sale':'sales'\}/);
+  /* nestly_v962: the summary line is a named template now — the sale noun was being assembled in
+     English, which no catalogue keyed on whole text nodes could ever reach. */
+  assert.match(block, /'showingOneSaleForPeriod':'showingManySalesForPeriod'/);
   // The button reports that it is working, and stops reporting it in a finally.
   assert.match(block, /CUI\.setButtonBusy\(applyButton,\{busy:true,label:'Applying…'\}\)/);
   // audit F006 (nestly_v579) added a load-generation guard alongside the isConnected check so a

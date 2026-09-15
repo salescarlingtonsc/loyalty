@@ -114,7 +114,11 @@ test('item 4 (photo 8) — every figure on the tiers page follows the stored bas
   // Changing the basis does not rewrite the rungs, so the owner is told what their numbers mean now.
   /* nestly_v960: a named template now — the wording is pinned once where it is written, and the
      call site is pinned to the key and the condition that chooses between its two forms. */
-  assert.match(app, /rungsV585===1\?'tiersAreEarnedByNowYourOne':'tiersAreEarnedByNowYourMany'/);
+  /* nestly_v963: the basis word was named {v1}/{v3} and handed in as a value, so "visits" or
+     "dollars spent" stayed English mid-sentence. Six keys now — three bases x singular/plural —
+     and the singular/plural split this line was written to protect is still asserted. */
+  assert.match(app, /rungsV585===1\s*\n?\s*\?\(tiersBasisKeyV963==='Visits'\?'tiersAreEarnedByVisitsNowYourOne'/);
+  assert.match(app, /:\(tiersBasisKeyV963==='Visits'\?'tiersAreEarnedByVisitsNowYourMany'/);
 });
 
 test('item 4 — and the customer app was already saying the same words', () => {
