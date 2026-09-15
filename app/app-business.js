@@ -12124,7 +12124,7 @@ async function salesPage(){
         <td data-label="Item">${salesItemCellV571(s)}</td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${saleAmendCellV579(s,salesPaymentsBySaleV579)}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
-      <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
+      <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">${workspaceTemplateHtmlV97(rows.length===1?'showingSaleOfTotal':'showingSalesOfTotal',{shown:shown.length,total:rows.length})}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
     bindReversalButtons(loadRecent);
     host.querySelectorAll('[data-correct-sale]').forEach(button=>button.onclick=()=>{
@@ -16363,7 +16363,7 @@ function promotionDemoteDialogV462({live=[],max=0}={}){
     dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
     dialog.setAttribute('aria-labelledby','promotionDemoteTitleV462');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
-      <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">You already have ${rows.length} offer${rows.length===1?'':'s'} live</h2>
+      <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">${workspaceTemplateHtmlV97(rows.length===1?'alreadyHaveOfferLive':'alreadyHaveOffersLive',{count:rows.length})}</h2>
       <p class="muted small" style="margin-top:10px"><span>${max}</span> live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
       <div class="promotion-demote-list-v462" role="radiogroup" aria-label="Offer to move back to draft" style="margin-top:12px;display:grid;gap:8px">
         ${rows.map((item,index)=>`<label class="welcome-offer-optioncard-v350" style="display:flex;gap:10px;align-items:flex-start">
@@ -19401,7 +19401,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${[30,60,90].map(days=>`<button type="button" class="btn ghost sm" data-grow-bb-template-v364="${days}">${workspaceTemplateHtmlV97('awayOverDays',{days:days})}</button>`).join('')}
         </div></div>`:''}
       <ul class="grow-setup-rewardlist-v301" data-grow-bb-summary-v361>
-        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${growBbRowsV361.length} campaign${growBbRowsV361.length===1?'':'s'} configured</p></span>
+        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${workspaceTemplateHtmlV97(growBbRowsV361.length===1?'campaignConfigured':'campaignsConfigured',{count:growBbRowsV361.length})}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-add-v361="1">+ Add campaign</button>`:''}
           </span></li>
@@ -20064,7 +20064,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
-        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} configured</p></span>
+        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${workspaceTemplateHtmlV97(growTiersPublishedV331.length===1?'tierConfigured':'tiersConfigured',{count:growTiersPublishedV331.length})}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${/* V399: the switch that used to sit here now lives on the basis card above — see
                  the note there. Only + Add tier remains, which is what this header is for. */''}
@@ -22524,7 +22524,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(!(redeemed>0)||card.querySelector('.reward-card-redeemed-v300'))return;
       const costLine=card.querySelector('.reward-card-cost-v250');
       if(costLine)costLine.insertAdjacentHTML('afterend',
-        `<span class="reward-card-redeemed-v300">Redeemed ${redeemed} time${redeemed===1?'':'s'}</span>`);
+        `<span class="reward-card-redeemed-v300">${workspaceTemplateHtmlV97(redeemed===1?'redeemedTime':'redeemedTimes',{count:redeemed})}</span>`);
     });
   })();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
@@ -23000,7 +23000,7 @@ function pbResolveExposureRetryChannel(existingChannels,displayedChannel){
 function pbOpenIssueModal(c,targets,ctx){
   const total=targets.length;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pbIssueModal" role="dialog" aria-modal="true" aria-labelledby="pbIssueTitle" tabindex="-1"><div class="modal-card" style="max-width:680px">
-    <div class="row"><div><h2 id="pbIssueTitle">Prepare rewards, then confirm receipt</h2><p class="muted small">${esc(c.name)} · ${total} treatment customer${total===1?'':'s'}</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbIssueClose">Close</button></div>
+    <div class="row"><div><h2 id="pbIssueTitle">Prepare rewards, then confirm receipt</h2><p class="muted small">${workspaceTemplateHtmlV97(total===1?'treatmentCustomer':'treatmentCustomers',{name:c.name,count:total})}</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbIssueClose">Close</button></div>
     <div class="imp-note"><b>Three truthful steps.</b> First, Peekaa creates a reward entitlement visible in customer history. This does not add spendable points or store credit, and merchant fulfilment remains pending. Next, actually show or send the reward. Only then confirm receipt below. Peekaa has no delivery provider receipt.</div>
     <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn ghost sm" id="pbCopyContacts" disabled>${CUI.icon('copy',{size:16})}<span>Copy prepared contacts</span></button>
       <button class="btn" id="pbIssueRun">${CUI.icon('redeem',{size:16})}<span>Create reward entitlements</span></button></div>
@@ -23024,7 +23024,7 @@ function pbOpenIssueModal(c,targets,ctx){
     const rows=[...entitlementRows.values()];
     const pending=rows.filter(row=>row.exposureStatus!=='verified');
     outEl.innerHTML=`<div class="card" style="background:var(--tint);border:none">
-      <b>${rows.length} reward entitlement${rows.length===1?'':'s'} prepared.</b>
+      <b>${workspaceTemplateHtmlV97(rows.length===1?'rewardEntitlementPrepared':'rewardEntitlementsPrepared',{count:rows.length})}</b>
       <p class="muted small" style="margin-top:6px">These rewards are visible in customer history with merchant fulfilment pending. No points or store credit were posted.</p>
       ${capped?'<p class="err" style="margin-top:6px">Budget cap reached — no entitlement was created for the remaining customers.</p>':''}
       ${failed.length?`<p class="err" style="margin-top:6px">${failed.length} could not be prepared: ${esc(failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '))}${failed.length>6?` and ${failed.length-6} more`:''}.</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:''}
@@ -23187,7 +23187,7 @@ function openPlaybookWizard(ctx){
     const n=state.candidates.length;
     const names=state.candidates.slice(0,8).map(c=>esc(c.full_name||'Customer')).join(', ');
     return `<div class="card" style="background:var(--tint);border:none">
-      <div style="font-size:24px;font-weight:700">${n} customer${n===1?'':'s'} match</div>
+      <div style="font-size:24px;font-weight:700">${workspaceTemplateHtmlV97(n===1?'customerMatches':'customersMatch',{count:n})}</div>
       ${state.truncated?`<div class="err" role="alert" style="margin-top:6px">Too many customers match to freeze safely. Narrow the rule — raise the days or the visit count.</div>`:''}
       <p class="muted small" style="margin-top:6px">${n?`${names}${n>8?` and ${n-8} more`:''}`:'No customers match yet — widen the days or lower the visit count.'}</p>
       <p class="muted small" style="margin-top:6px">Regulars with ${state.minVisits}+ past visits and none in over ${state.lapsedDays} days — the same rule a customer profile uses to flag someone as overdue.</p>
@@ -23239,7 +23239,7 @@ function openPlaybookWizard(ctx){
     const v=state.version,treat=treatmentCount(),hold=state.candidates.length-treat;
     return `<label for="pbName">Playbook name</label><input id="pbName" value="${esc(state.name)}" maxlength="120">
       <div class="card" style="margin-top:12px">
-        <div class="row"><span>Audience</span><span class="spacer"></span><b>${state.candidates.length} lapsed regular${state.candidates.length===1?'':'s'}</b></div>
+        <div class="row"><span>Audience</span><span class="spacer"></span><b>${workspaceTemplateHtmlV97(state.candidates.length===1?'lapsedRegular':'lapsedRegulars',{count:state.candidates.length})}</b></div>
         <div class="row" style="margin-top:6px"><span>Treatment group</span><span class="spacer"></span><b>${treat} customer${treat===1?'':'s'}</b></div>
         <div class="row" style="margin-top:6px"><span>Held back (proof)</span><span class="spacer"></span><b>${hold} · ${state.holdout}%</b></div>
         <div class="row" style="margin-top:6px"><span>Reward configuration</span><span class="spacer"></span><b>${v?esc(pbRewardLabel(v)):'—'}</b></div>
@@ -29973,7 +29973,7 @@ async function appointmentsPage(){
         </div>`:''}
       </div>`;
     }).join('');
-    return `<div class="card pending-request-banner"><b>${pendingRequests.length} booking request${pendingRequests.length===1?'':'s'} awaiting confirmation today</b>${cards}</div>`;
+    return `<div class="card pending-request-banner"><b>${workspaceTemplateHtmlV97(pendingRequests.length===1?'bookingRequestAwaiting':'bookingRequestsAwaiting',{count:pendingRequests.length})}</b>${cards}</div>`;
   }
   function pendingRequestContactDetailsV330(id){
     const r=pendingRequests.find(row=>row.id===id);
@@ -39032,7 +39032,7 @@ async function staffPerfPage(drillId){
           :`<span data-merchant-content>${esc(sale.staffNames.join(', '))}</span>`;
         return `<tr class="staff-commission-sale-v832"${sale.reversed?' style="opacity:.6"':''}><td data-label="When">${esc(sgt(sale.occurred_at)||'')}</td>
           <td data-label="Customer">${customerCellV832(head)}</td>
-          <td data-label="Sale"><b>${esc(saleKindLabelV832(sale.sale_kind))}</b> <span class="muted small">· ${esc(String(sale.shownLines))}${sale.hiddenLines?` of ${esc(String(sale.totalLines))}`:''} line${sale.shownLines===1&&!sale.hiddenLines?'':'s'}</span>${sale.hiddenLines?`<div class="muted small">${esc(String(sale.hiddenLines))} line${sale.hiddenLines===1?'':'s'} hidden by the current filter, so this subtotal covers only the lines shown.</div>`:''}</td>
+          <td data-label="Sale"><b>${esc(saleKindLabelV832(sale.sale_kind))}</b> <span class="muted small">· ${esc(String(sale.shownLines))}${sale.hiddenLines?` of ${esc(String(sale.totalLines))}`:''} line${sale.shownLines===1&&!sale.hiddenLines?'':'s'}</span>${sale.hiddenLines?`<div class="muted small">${workspaceTemplateHtmlV97(sale.hiddenLines===1?'lineHiddenByFilter':'linesHiddenByFilter',{count:String(sale.hiddenLines)})}</div>`:''}</td>
           <td data-label="Team member">${who}</td>
           <td class="num" data-label="Amount">${sale.reversed?`<s>${esc(money(sale.amount))}</s>`:`<b>${esc(money(sale.amount))}</b>`}</td>
           <td data-label="Rate"></td>
@@ -45653,7 +45653,7 @@ function helpSearchResultsHtmlV904(query){
     </section>`;
   }
   return `<section class="help-results-v904" aria-live="polite">
-    <p class="help-results-count-v904">${results.length} result${results.length===1?'':'s'} for <b>${esc(query)}</b></p>
+    <p class="help-results-count-v904">${workspaceTemplateHtmlV97(results.length===1?'resultForQuery':'resultsForQuery',{count:results.length})}<b>${esc(query)}</b></p>
     ${results.map(result=>`<a class="help-result-v904" href="${esc(result.href)}">
       <span class="help-result-kind-v904">${esc(result.kind)}</span>
       <b>${esc(result.title)}</b>
@@ -45961,6 +45961,6 @@ async function platformPage(){
       <td>${r.branch_count}</td><td>${r.staff_count}</td><td>${r.client_count}</td><td>${r.billable_seats}</td>
       <td><span class="pill ${r.subscription_status==='active'?'ok':r.subscription_status==='trialing'?'new':'off'}">${esc(r.subscription_status||'—')}</span></td>
       <td class="num">${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
-    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"><b>${money(totals.monthly)}</b></td></tr></table>`;
+    <tr><td><b>${workspaceTemplateHtmlV97(totals.companies===1?'totalCompany':'totalCompanies',{count:totals.companies})}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"><b>${money(totals.monthly)}</b></td></tr></table>`;
 }
 

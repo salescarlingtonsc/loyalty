@@ -22876,8 +22876,54 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   showingGiftsRetiredYears:Object.freeze({en:"Showing gifts retired in the last {years} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.",'zh-CN':"显示最近 {years} 年内下架的礼物。没有任何内容被删除 — 更早的礼物仍有记录，顾客已完成的每一次兑换也都完整保留。",ms:"Menunjukkan hadiah yang ditamatkan dalam {years} tahun lalu. Tiada apa dipadam — hadiah lama kekal direkodkan, dan setiap penebusan yang pelanggan telah buat disimpan sepenuhnya."}),
   awayDaysToReward:Object.freeze({en:"Away {days} days → {reward}",'zh-CN':"离开 {days} 天 → {reward}",ms:"Tidak datang {days} hari → {reward}"}),
   awayOverDays:Object.freeze({en:"Away over {days} days",'zh-CN':"离开超过 {days} 天",ms:"Tidak datang lebih {days} hari"}),
+  /* nestly_v944 — fifteen counted sentences, as thirty keys. English inflects the noun for number
+     and Chinese and Malay do not, so the "s" is grammar rather than data: passing it as a template
+     VALUE would leave a bare English plural sitting inside 中文, because a value is preserved
+     verbatim by design. The call site chooses between the two keys instead, which is the shape
+     switchOtherWorkspace / switchOtherWorkspaces has had since v97. The zh-CN and ms halves of each
+     pair are identical on purpose — those languages do not make the distinction, and writing them
+     differently to look busy would be a lie about the grammar. */
+  customerOverdue:Object.freeze({en:"{count} customer overdue",'zh-CN':"{count} 位顾客已逾期未到",ms:"{count} pelanggan lewat"}),
+  customersOverdue:Object.freeze({en:"{count} customers overdue",'zh-CN':"{count} 位顾客已逾期未到",ms:"{count} pelanggan lewat"}),
+  customerVisitedOnce:Object.freeze({en:"{count} customer visited once in the last year and never came back.",'zh-CN':"{count} 位顾客在过去一年中只来过一次，之后再也没有回来。",ms:"{count} pelanggan datang sekali dalam setahun lalu dan tidak pernah kembali."}),
+  customersVisitedOnce:Object.freeze({en:"{count} customers visited once in the last year and never came back.",'zh-CN':"{count} 位顾客在过去一年中只来过一次，之后再也没有回来。",ms:"{count} pelanggan datang sekali dalam setahun lalu dan tidak pernah kembali."}),
+  showingSaleOfTotal:Object.freeze({en:"Showing {shown} of {total} sale",'zh-CN':"显示 {total} 笔交易中的 {shown} 笔",ms:"Menunjukkan {shown} daripada {total} jualan"}),
+  showingSalesOfTotal:Object.freeze({en:"Showing {shown} of {total} sales",'zh-CN':"显示 {total} 笔交易中的 {shown} 笔",ms:"Menunjukkan {shown} daripada {total} jualan"}),
+  alreadyHaveOfferLive:Object.freeze({en:"You already have {count} offer live",'zh-CN':"您已有 {count} 个进行中的优惠",ms:"Anda sudah mempunyai {count} tawaran aktif"}),
+  alreadyHaveOffersLive:Object.freeze({en:"You already have {count} offers live",'zh-CN':"您已有 {count} 个进行中的优惠",ms:"Anda sudah mempunyai {count} tawaran aktif"}),
+  campaignConfigured:Object.freeze({en:"{count} campaign configured",'zh-CN':"已配置 {count} 个活动",ms:"{count} kempen dikonfigurasikan"}),
+  campaignsConfigured:Object.freeze({en:"{count} campaigns configured",'zh-CN':"已配置 {count} 个活动",ms:"{count} kempen dikonfigurasikan"}),
+  tierConfigured:Object.freeze({en:"{count} tier configured",'zh-CN':"已配置 {count} 个等级",ms:"{count} peringkat dikonfigurasikan"}),
+  tiersConfigured:Object.freeze({en:"{count} tiers configured",'zh-CN':"已配置 {count} 个等级",ms:"{count} peringkat dikonfigurasikan"}),
+  redeemedTime:Object.freeze({en:"Redeemed {count} time",'zh-CN':"已兑换 {count} 次",ms:"Ditebus {count} kali"}),
+  redeemedTimes:Object.freeze({en:"Redeemed {count} times",'zh-CN':"已兑换 {count} 次",ms:"Ditebus {count} kali"}),
+  treatmentCustomer:Object.freeze({en:"{name} · {count} treatment customer",'zh-CN':"{name} · {count} 位实验组顾客",ms:"{name} · {count} pelanggan rawatan"}),
+  treatmentCustomers:Object.freeze({en:"{name} · {count} treatment customers",'zh-CN':"{name} · {count} 位实验组顾客",ms:"{name} · {count} pelanggan rawatan"}),
+  rewardEntitlementPrepared:Object.freeze({en:"{count} reward entitlement prepared.",'zh-CN':"已准备 {count} 项奖励资格。",ms:"{count} kelayakan ganjaran disediakan."}),
+  rewardEntitlementsPrepared:Object.freeze({en:"{count} reward entitlements prepared.",'zh-CN':"已准备 {count} 项奖励资格。",ms:"{count} kelayakan ganjaran disediakan."}),
+  customerMatches:Object.freeze({en:"{count} customer match",'zh-CN':"{count} 位顾客符合条件",ms:"{count} pelanggan sepadan"}),
+  customersMatch:Object.freeze({en:"{count} customers match",'zh-CN':"{count} 位顾客符合条件",ms:"{count} pelanggan sepadan"}),
+  lapsedRegular:Object.freeze({en:"{count} lapsed regular",'zh-CN':"{count} 位流失的常客",ms:"{count} pelanggan tetap yang luput"}),
+  lapsedRegulars:Object.freeze({en:"{count} lapsed regulars",'zh-CN':"{count} 位流失的常客",ms:"{count} pelanggan tetap yang luput"}),
+  bookingRequestAwaiting:Object.freeze({en:"{count} booking request awaiting confirmation today",'zh-CN':"今天有 {count} 个预约请求等待确认",ms:"{count} permintaan tempahan menunggu pengesahan hari ini"}),
+  bookingRequestsAwaiting:Object.freeze({en:"{count} booking requests awaiting confirmation today",'zh-CN':"今天有 {count} 个预约请求等待确认",ms:"{count} permintaan tempahan menunggu pengesahan hari ini"}),
+  lineHiddenByFilter:Object.freeze({en:"{count} line hidden by the current filter, so this subtotal covers only the lines shown.",'zh-CN':"当前筛选隐藏了 {count} 行，因此此小计仅涵盖已显示的行。",ms:"{count} baris disembunyikan oleh penapis semasa, jadi subjumlah ini meliputi baris yang ditunjukkan sahaja."}),
+  linesHiddenByFilter:Object.freeze({en:"{count} lines hidden by the current filter, so this subtotal covers only the lines shown.",'zh-CN':"当前筛选隐藏了 {count} 行，因此此小计仅涵盖已显示的行。",ms:"{count} baris disembunyikan oleh penapis semasa, jadi subjumlah ini meliputi baris yang ditunjukkan sahaja."}),
+  resultForQuery:Object.freeze({en:"{count} result for",'zh-CN':"{count} 条结果，关键词",ms:"{count} keputusan untuk"}),
+  resultsForQuery:Object.freeze({en:"{count} results for",'zh-CN':"{count} 条结果，关键词",ms:"{count} keputusan untuk"}),
+  totalCompany:Object.freeze({en:"Total — {count} company",'zh-CN':"合计 — {count} 家公司",ms:"Jumlah — {count} syarikat"}),
+  totalCompanies:Object.freeze({en:"Total — {count} companies",'zh-CN':"合计 — {count} 家公司",ms:"Jumlah — {count} syarikat"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v944 — fifteen counted sentences as singular/plural key pairs. */
+  'customerOverdue','customersOverdue','customerVisitedOnce','customersVisitedOnce',
+  'showingSaleOfTotal','showingSalesOfTotal','alreadyHaveOfferLive','alreadyHaveOffersLive',
+  'campaignConfigured','campaignsConfigured','tierConfigured','tiersConfigured',
+  'redeemedTime','redeemedTimes','treatmentCustomer','treatmentCustomers',
+  'rewardEntitlementPrepared','rewardEntitlementsPrepared','customerMatches','customersMatch',
+  'lapsedRegular','lapsedRegulars','bookingRequestAwaiting','bookingRequestsAwaiting',
+  'lineHiddenByFilter','linesHiddenByFilter','resultForQuery','resultsForQuery',
+  'totalCompany','totalCompanies',
   /* nestly_v943 — fourteen more embedded-value sentences. */
   'noRefundSessionAddedBack','pointsAdjustedWithCorrection','showingFirstInactiveCap','lastVisitCadenceValue',
   'linesDoNotMatchSale','itemIsFreeForCustomer','saleMeetsMinimumItemFree','comeBackRateBetter',
@@ -24526,9 +24572,9 @@ async function loadAttentionListV571(root,branchId=null,hostId='growBbAttentionV
   };
   host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-top:12px">
     <div class="cui-card-head">${CUI.icon('customers',{size:24})}<div><h2 id="dashboardAttentionTitleV548">Customers to bring back</h2><p>Each customer judged by their own visit rhythm, not a fixed rule.</p></div></div>
-    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${fadingCount} customer${fadingCount===1?'':'s'} overdue</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
+    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${workspaceTemplateHtmlV97(fadingCount===1?'customerOverdue':'customersOverdue',{count:fadingCount})}</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
     <ul style="list-style:none;margin:8px 0 0;padding:0">${rows.map(attentionRowV548).join('')}</ul>
-    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${oneTime} customer${oneTime===1?'':'s'} visited once in the last year and never came back.</p>`:''}
+    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${workspaceTemplateHtmlV97(oneTime===1?'customerVisitedOnce':'customersVisitedOnce',{count:oneTime})}</p>`:''}
     <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/customers">Open Customers</a></div>
   </section>`;
   /* V550: a Message tap becomes evidence. The wa.me draft opens regardless; the record is
@@ -31219,7 +31265,7 @@ async function salesPage(){
         <td data-label="Item">${salesItemCellV571(s)}</td>
         <td class="num">${money(s.amount_cents)}</td><td class="num"><b>${money(Number(w.net_amount_cents??s.amount_cents))}</b></td>
         <td>${w.can_reverse?`<div class="row" style="gap:6px;flex-wrap:wrap">${saleAmendCellV579(s,salesPaymentsBySaleV579)}<button class="btn danger sm" data-reverse-kind="sale" data-reverse-id="${s.id}">Reverse</button></div>`:w.refusal_reason?`<span class="muted small">${esc(w.refusal_reason)}</span>`:''}</td></tr>`}).join('')}</table></div>
-      <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">Showing ${shown.length} of ${rows.length} ${rows.length===1?'sale':'sales'}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
+      <div class="row" style="margin-top:14px;gap:12px;flex-wrap:wrap;align-items:center"><span class="muted small" role="status" aria-live="polite">${workspaceTemplateHtmlV97(rows.length===1?'showingSaleOfTotal':'showingSalesOfTotal',{shown:shown.length,total:rows.length})}</span><span class="spacer"></span>${shown.length<rows.length?`<button class="btn ghost sm" type="button" id="salesLoadMoreV291">Load more</button>`:''}</div>`
       :CUI.emptyState({iconName:'sales',title:'No sales match these filters',body:'Try a wider date range or clear filters. Use Record sale when you need to create a new sale.'});
     bindReversalButtons(loadRecent);
     host.querySelectorAll('[data-correct-sale]').forEach(button=>button.onclick=()=>{
@@ -35491,7 +35537,7 @@ function promotionDemoteDialogV462({live=[],max=0}={}){
     dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
     dialog.setAttribute('aria-labelledby','promotionDemoteTitleV462');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card" style="width:min(520px,100%)">
-      <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">You already have ${rows.length} offer${rows.length===1?'':'s'} live</h2>
+      <h2 id="promotionDemoteTitleV462" style="margin:0;font-size:17px">${workspaceTemplateHtmlV97(rows.length===1?'alreadyHaveOfferLive':'alreadyHaveOffersLive',{count:rows.length})}</h2>
       <p class="muted small" style="margin-top:10px"><span>${max}</span> live offers is the limit for this business. To publish this one, choose an offer to move back to draft. Customers stop seeing the one you choose; nothing about it is deleted and you can publish it again later.</p>
       <div class="promotion-demote-list-v462" role="radiogroup" aria-label="Offer to move back to draft" style="margin-top:12px;display:grid;gap:8px">
         ${rows.map((item,index)=>`<label class="welcome-offer-optioncard-v350" style="display:flex;gap:10px;align-items:flex-start">
@@ -38529,7 +38575,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${[30,60,90].map(days=>`<button type="button" class="btn ghost sm" data-grow-bb-template-v364="${days}">${workspaceTemplateHtmlV97('awayOverDays',{days:days})}</button>`).join('')}
         </div></div>`:''}
       <ul class="grow-setup-rewardlist-v301" data-grow-bb-summary-v361>
-        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${growBbRowsV361.length} campaign${growBbRowsV361.length===1?'':'s'} configured</p></span>
+        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${workspaceTemplateHtmlV97(growBbRowsV361.length===1?'campaignConfigured':'campaignsConfigured',{count:growBbRowsV361.length})}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-add-v361="1">+ Add campaign</button>`:''}
           </span></li>
@@ -39192,7 +39238,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
-        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} configured</p></span>
+        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${workspaceTemplateHtmlV97(growTiersPublishedV331.length===1?'tierConfigured':'tiersConfigured',{count:growTiersPublishedV331.length})}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${/* V399: the switch that used to sit here now lives on the basis card above — see
                  the note there. Only + Add tier remains, which is what this header is for. */''}
@@ -41652,7 +41698,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(!(redeemed>0)||card.querySelector('.reward-card-redeemed-v300'))return;
       const costLine=card.querySelector('.reward-card-cost-v250');
       if(costLine)costLine.insertAdjacentHTML('afterend',
-        `<span class="reward-card-redeemed-v300">Redeemed ${redeemed} time${redeemed===1?'':'s'}</span>`);
+        `<span class="reward-card-redeemed-v300">${workspaceTemplateHtmlV97(redeemed===1?'redeemedTime':'redeemedTimes',{count:redeemed})}</span>`);
     });
   })();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
@@ -42128,7 +42174,7 @@ function pbResolveExposureRetryChannel(existingChannels,displayedChannel){
 function pbOpenIssueModal(c,targets,ctx){
   const total=targets.length;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="pbIssueModal" role="dialog" aria-modal="true" aria-labelledby="pbIssueTitle" tabindex="-1"><div class="modal-card" style="max-width:680px">
-    <div class="row"><div><h2 id="pbIssueTitle">Prepare rewards, then confirm receipt</h2><p class="muted small">${esc(c.name)} · ${total} treatment customer${total===1?'':'s'}</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbIssueClose">Close</button></div>
+    <div class="row"><div><h2 id="pbIssueTitle">Prepare rewards, then confirm receipt</h2><p class="muted small">${workspaceTemplateHtmlV97(total===1?'treatmentCustomer':'treatmentCustomers',{name:c.name,count:total})}</p></div><span class="spacer"></span><button class="btn ghost sm" id="pbIssueClose">Close</button></div>
     <div class="imp-note"><b>Three truthful steps.</b> First, Peekaa creates a reward entitlement visible in customer history. This does not add spendable points or store credit, and merchant fulfilment remains pending. Next, actually show or send the reward. Only then confirm receipt below. Peekaa has no delivery provider receipt.</div>
     <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:8px"><button class="btn ghost sm" id="pbCopyContacts" disabled>${CUI.icon('copy',{size:16})}<span>Copy prepared contacts</span></button>
       <button class="btn" id="pbIssueRun">${CUI.icon('redeem',{size:16})}<span>Create reward entitlements</span></button></div>
@@ -42152,7 +42198,7 @@ function pbOpenIssueModal(c,targets,ctx){
     const rows=[...entitlementRows.values()];
     const pending=rows.filter(row=>row.exposureStatus!=='verified');
     outEl.innerHTML=`<div class="card" style="background:var(--tint);border:none">
-      <b>${rows.length} reward entitlement${rows.length===1?'':'s'} prepared.</b>
+      <b>${workspaceTemplateHtmlV97(rows.length===1?'rewardEntitlementPrepared':'rewardEntitlementsPrepared',{count:rows.length})}</b>
       <p class="muted small" style="margin-top:6px">These rewards are visible in customer history with merchant fulfilment pending. No points or store credit were posted.</p>
       ${capped?'<p class="err" style="margin-top:6px">Budget cap reached — no entitlement was created for the remaining customers.</p>':''}
       ${failed.length?`<p class="err" style="margin-top:6px">${failed.length} could not be prepared: ${esc(failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '))}${failed.length>6?` and ${failed.length-6} more`:''}.</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:''}
@@ -42315,7 +42361,7 @@ function openPlaybookWizard(ctx){
     const n=state.candidates.length;
     const names=state.candidates.slice(0,8).map(c=>esc(c.full_name||'Customer')).join(', ');
     return `<div class="card" style="background:var(--tint);border:none">
-      <div style="font-size:24px;font-weight:700">${n} customer${n===1?'':'s'} match</div>
+      <div style="font-size:24px;font-weight:700">${workspaceTemplateHtmlV97(n===1?'customerMatches':'customersMatch',{count:n})}</div>
       ${state.truncated?`<div class="err" role="alert" style="margin-top:6px">Too many customers match to freeze safely. Narrow the rule — raise the days or the visit count.</div>`:''}
       <p class="muted small" style="margin-top:6px">${n?`${names}${n>8?` and ${n-8} more`:''}`:'No customers match yet — widen the days or lower the visit count.'}</p>
       <p class="muted small" style="margin-top:6px">Regulars with ${state.minVisits}+ past visits and none in over ${state.lapsedDays} days — the same rule a customer profile uses to flag someone as overdue.</p>
@@ -42367,7 +42413,7 @@ function openPlaybookWizard(ctx){
     const v=state.version,treat=treatmentCount(),hold=state.candidates.length-treat;
     return `<label for="pbName">Playbook name</label><input id="pbName" value="${esc(state.name)}" maxlength="120">
       <div class="card" style="margin-top:12px">
-        <div class="row"><span>Audience</span><span class="spacer"></span><b>${state.candidates.length} lapsed regular${state.candidates.length===1?'':'s'}</b></div>
+        <div class="row"><span>Audience</span><span class="spacer"></span><b>${workspaceTemplateHtmlV97(state.candidates.length===1?'lapsedRegular':'lapsedRegulars',{count:state.candidates.length})}</b></div>
         <div class="row" style="margin-top:6px"><span>Treatment group</span><span class="spacer"></span><b>${treat} customer${treat===1?'':'s'}</b></div>
         <div class="row" style="margin-top:6px"><span>Held back (proof)</span><span class="spacer"></span><b>${hold} · ${state.holdout}%</b></div>
         <div class="row" style="margin-top:6px"><span>Reward configuration</span><span class="spacer"></span><b>${v?esc(pbRewardLabel(v)):'—'}</b></div>
@@ -49395,7 +49441,7 @@ async function appointmentsPage(){
         </div>`:''}
       </div>`;
     }).join('');
-    return `<div class="card pending-request-banner"><b>${pendingRequests.length} booking request${pendingRequests.length===1?'':'s'} awaiting confirmation today</b>${cards}</div>`;
+    return `<div class="card pending-request-banner"><b>${workspaceTemplateHtmlV97(pendingRequests.length===1?'bookingRequestAwaiting':'bookingRequestsAwaiting',{count:pendingRequests.length})}</b>${cards}</div>`;
   }
   function pendingRequestContactDetailsV330(id){
     const r=pendingRequests.find(row=>row.id===id);
@@ -58534,7 +58580,7 @@ async function staffPerfPage(drillId){
           :`<span data-merchant-content>${esc(sale.staffNames.join(', '))}</span>`;
         return `<tr class="staff-commission-sale-v832"${sale.reversed?' style="opacity:.6"':''}><td data-label="When">${esc(sgt(sale.occurred_at)||'')}</td>
           <td data-label="Customer">${customerCellV832(head)}</td>
-          <td data-label="Sale"><b>${esc(saleKindLabelV832(sale.sale_kind))}</b> <span class="muted small">· ${esc(String(sale.shownLines))}${sale.hiddenLines?` of ${esc(String(sale.totalLines))}`:''} line${sale.shownLines===1&&!sale.hiddenLines?'':'s'}</span>${sale.hiddenLines?`<div class="muted small">${esc(String(sale.hiddenLines))} line${sale.hiddenLines===1?'':'s'} hidden by the current filter, so this subtotal covers only the lines shown.</div>`:''}</td>
+          <td data-label="Sale"><b>${esc(saleKindLabelV832(sale.sale_kind))}</b> <span class="muted small">· ${esc(String(sale.shownLines))}${sale.hiddenLines?` of ${esc(String(sale.totalLines))}`:''} line${sale.shownLines===1&&!sale.hiddenLines?'':'s'}</span>${sale.hiddenLines?`<div class="muted small">${workspaceTemplateHtmlV97(sale.hiddenLines===1?'lineHiddenByFilter':'linesHiddenByFilter',{count:String(sale.hiddenLines)})}</div>`:''}</td>
           <td data-label="Team member">${who}</td>
           <td class="num" data-label="Amount">${sale.reversed?`<s>${esc(money(sale.amount))}</s>`:`<b>${esc(money(sale.amount))}</b>`}</td>
           <td data-label="Rate"></td>
@@ -65178,7 +65224,7 @@ function helpSearchResultsHtmlV904(query){
     </section>`;
   }
   return `<section class="help-results-v904" aria-live="polite">
-    <p class="help-results-count-v904">${results.length} result${results.length===1?'':'s'} for <b>${esc(query)}</b></p>
+    <p class="help-results-count-v904">${workspaceTemplateHtmlV97(results.length===1?'resultForQuery':'resultsForQuery',{count:results.length})}<b>${esc(query)}</b></p>
     ${results.map(result=>`<a class="help-result-v904" href="${esc(result.href)}">
       <span class="help-result-kind-v904">${esc(result.kind)}</span>
       <b>${esc(result.title)}</b>
@@ -65486,7 +65532,7 @@ async function platformPage(){
       <td>${r.branch_count}</td><td>${r.staff_count}</td><td>${r.client_count}</td><td>${r.billable_seats}</td>
       <td><span class="pill ${r.subscription_status==='active'?'ok':r.subscription_status==='trialing'?'new':'off'}">${esc(r.subscription_status||'—')}</span></td>
       <td class="num">${money(r.est_monthly_cents||0)}</td></tr>`).join('')}
-    <tr><td><b>Total — ${totals.companies} compan${totals.companies===1?'y':'ies'}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"><b>${money(totals.monthly)}</b></td></tr></table>`;
+    <tr><td><b>${workspaceTemplateHtmlV97(totals.companies===1?'totalCompany':'totalCompanies',{count:totals.companies})}</b></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"><b>${money(totals.monthly)}</b></td></tr></table>`;
 }
 
 /* ---------- public customer portal ---------- */

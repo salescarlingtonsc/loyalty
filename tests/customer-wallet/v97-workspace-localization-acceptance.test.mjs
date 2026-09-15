@@ -500,8 +500,14 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      the only shape that reads correctly in all three locales. 161 + 30 - 4 + 11 = 198.
      nestly_v943 adds 14 more of the same class — the reversal and sale-correction receipts, the
      overdue-customer cadence line, the gift catalogue's unit sentences, and the bring-back rows.
-     198 + 14 = 212. */
-  assert.equal(keys.length,212,'mixed-interface interpolation inventory changed without review');
+     198 + 14 = 212.
+     nestly_v944 adds 30, as fifteen singular/plural PAIRS. English inflects a counted noun and
+     Chinese and Malay do not, so the "s" is grammar rather than data: passing it as a value would
+     leave a bare English plural sitting inside 中文, because a value is preserved verbatim by
+     design. The call site chooses between the two keys instead — the shape switchOtherWorkspace /
+     switchOtherWorkspaces has had since v97 — and the zh-CN and ms halves of each pair are
+     identical on purpose, because those languages do not make the distinction. 212 + 30 = 242. */
+  assert.equal(keys.length,242,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

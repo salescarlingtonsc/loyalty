@@ -108,7 +108,10 @@ test('V548 the card prints the server judgement: names, rhythm line, status chip
   assert.ok(html.includes('Customers to bring back'));
   assert.ok(html.includes('Jane Tan'));
   assert.ok(html.includes('Amanda &lt;Lim&gt;'), 'names are escaped, never raw');
-  assert.ok(html.includes('3 customers overdue'), 'overdue headline = overdue + slipping');
+    /* nestly_v944: the headline is a singular/plural key pair now, so the count arrives in its own
+     value span. Assert the value by name — that is what "overdue + slipping" was ever about. */
+  assert.match(html, /data-workspace-template="customersOverdue"/, 'overdue headline = overdue + slipping');
+  assert.match(html, /data-workspace-value="count"[^>]*>3</, 'overdue headline = overdue + slipping');
   assert.ok(html.includes('SGD 784.00'), 'at-risk money comes from the summary, not re-added client-side');
   /* nestly_v943: the rhythm line is a named template now, so its three figures arrive in their
      own value spans rather than inside one string. Each is still asserted, by the name the
@@ -119,7 +122,8 @@ test('V548 the card prints the server judgement: names, rhythm line, status chip
   assert.equal(cadenceValue('cadence'), '30', "Jane's rhythm is the server's cadence");
   assert.ok(html.includes('Overdue') && html.includes('Slipping away') && html.includes('Due back'),
     'all three status chips render from the status map');
-  assert.ok(html.includes('9 customers visited once'), 'the one-time count reaches the card');
+  assert.match(html, /data-workspace-template="customersVisitedOnce"[^]*?data-workspace-value="count"[^>]*>9</,
+    'the one-time count reaches the card');
   assert.ok(html.includes('href="#/customers"'), 'the card leads into Customers');
 });
 

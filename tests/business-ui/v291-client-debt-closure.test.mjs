@@ -98,7 +98,7 @@ test('V291 the sales ledger paints a bounded window of the full filtered answer'
   assert.match(render,/const shown=rows\.slice\(0,salesVisibleCountV291\);/);
   assert.match(render,/\$\{shown\.map\(s=>\{/);
   // ...and the summary still counts the whole filtered set.
-  assert.match(render,/Showing \$\{shown\.length\} of \$\{rows\.length\}/);
+  assert.match(render,/'showingSaleOfTotal':'showingSalesOfTotal'/);
   assert.match(render,/id="salesLoadMoreV291"/);
   assert.match(render,/salesVisibleCountV291=Math\.min\(rows\.length,salesVisibleCountV291\+SALES_PAGE_SIZE_V291\)/);
   // The full fetch is untouched: counts, payment-state filtering and export need it.

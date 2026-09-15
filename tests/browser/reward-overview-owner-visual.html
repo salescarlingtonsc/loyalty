@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="27c06d22f292e95fe1f3b257a6b2c0eccafd84a467ac1d46054af12b750608cb"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="2fd5b95e45c44f969447ad52e28e673a6d95bc9a1a9dd7be796a6e2cb909f02a"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 27c06d22f292e95fe1f3b257a6b2c0eccafd84a467ac1d46054af12b750608cb</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 2fd5b95e45c44f969447ad52e28e673a6d95bc9a1a9dd7be796a6e2cb909f02a</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -13919,7 +13919,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           ${[30,60,90].map(days=>`<button type="button" class="btn ghost sm" data-grow-bb-template-v364="${days}">${workspaceTemplateHtmlV97('awayOverDays',{days:days})}</button>`).join('')}
         </div></div>`:''}
       <ul class="grow-setup-rewardlist-v301" data-grow-bb-summary-v361>
-        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${growBbRowsV361.length} campaign${growBbRowsV361.length===1?'':'s'} configured</p></span>
+        <li data-grow-bb-header-v361><span><b>Campaigns</b><p class="muted small" style="margin:2px 0 0">${workspaceTemplateHtmlV97(growBbRowsV361.length===1?'campaignConfigured':'campaignsConfigured',{count:growBbRowsV361.length})}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${canSetupWinback?`<button type="button" class="btn ghost sm" data-grow-bb-add-v361="1">+ Add campaign</button>`:''}
           </span></li>
@@ -14582,7 +14582,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ${growTiersErrorV331?`<p class="notice warn small" style="margin-top:8px">${esc(growTiersErrorV331)}</p>`:''}
       ${growTiersLadderV343}
       <ul class="grow-setup-rewardlist-v301" data-grow-tiers-summary-v331>
-        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${growTiersPublishedV331.length} tier${growTiersPublishedV331.length===1?'':'s'} configured</p></span>
+        <li data-grow-tiers-header-v331><span><b>Manage tiers</b><p class="muted small" style="margin:2px 0 0">${workspaceTemplateHtmlV97(growTiersPublishedV331.length===1?'tierConfigured':'tiersConfigured',{count:growTiersPublishedV331.length})}</p></span>
           <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
             ${/* V399: the switch that used to sit here now lives on the basis card above — see
                  the note there. Only + Add tier remains, which is what this header is for. */''}
@@ -17042,7 +17042,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       if(!(redeemed>0)||card.querySelector('.reward-card-redeemed-v300'))return;
       const costLine=card.querySelector('.reward-card-cost-v250');
       if(costLine)costLine.insertAdjacentHTML('afterend',
-        `<span class="reward-card-redeemed-v300">Redeemed ${redeemed} time${redeemed===1?'':'s'}</span>`);
+        `<span class="reward-card-redeemed-v300">${workspaceTemplateHtmlV97(redeemed===1?'redeemedTime':'redeemedTimes',{count:redeemed})}</span>`);
     });
   })();
   document.querySelectorAll('[data-rewards-overview-edit]').forEach(button=>button.onclick=()=>{
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'27c06d22f292e95fe1f3b257a6b2c0eccafd84a467ac1d46054af12b750608cb',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'2fd5b95e45c44f969447ad52e28e673a6d95bc9a1a9dd7be796a6e2cb909f02a',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

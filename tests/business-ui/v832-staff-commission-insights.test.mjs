@@ -303,7 +303,7 @@ test('v832 the page offers By line / By sale, the two filters, and the compariso
   assert.match(page,/<tr class="staff-commission-sale-line-v832"/);
   assert.match(page,/<td data-label="Item" style="padding-left:26px"><span class="muted" aria-hidden="true">↳<\/span>/,
     'a line is indented under its sale');
-  assert.match(page,/line\$\{sale\.hiddenLines===1\?'':'s'\} hidden by the current filter, so this subtotal covers only the lines shown\./);
+  assert.match(page,/'lineHiddenByFilter':'linesHiddenByFilter'/);
   // reversed sales stay struck through and dimmed in the new view too
   assert.match(page,/\$\{sale\.reversed\?`<s>\$\{esc\(money\(sale\.commission\)\)\}<\/s>`/);
   /* NO colspan in either view. CUI.enhanceTables sets data-responsive="false" on any table that

@@ -7871,8 +7871,54 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   showingGiftsRetiredYears:Object.freeze({en:"Showing gifts retired in the last {years} years. Nothing is deleted — older gifts stay recorded, and every redemption a customer already made is kept in full.",'zh-CN':"显示最近 {years} 年内下架的礼物。没有任何内容被删除 — 更早的礼物仍有记录，顾客已完成的每一次兑换也都完整保留。",ms:"Menunjukkan hadiah yang ditamatkan dalam {years} tahun lalu. Tiada apa dipadam — hadiah lama kekal direkodkan, dan setiap penebusan yang pelanggan telah buat disimpan sepenuhnya."}),
   awayDaysToReward:Object.freeze({en:"Away {days} days → {reward}",'zh-CN':"离开 {days} 天 → {reward}",ms:"Tidak datang {days} hari → {reward}"}),
   awayOverDays:Object.freeze({en:"Away over {days} days",'zh-CN':"离开超过 {days} 天",ms:"Tidak datang lebih {days} hari"}),
+  /* nestly_v944 — fifteen counted sentences, as thirty keys. English inflects the noun for number
+     and Chinese and Malay do not, so the "s" is grammar rather than data: passing it as a template
+     VALUE would leave a bare English plural sitting inside 中文, because a value is preserved
+     verbatim by design. The call site chooses between the two keys instead, which is the shape
+     switchOtherWorkspace / switchOtherWorkspaces has had since v97. The zh-CN and ms halves of each
+     pair are identical on purpose — those languages do not make the distinction, and writing them
+     differently to look busy would be a lie about the grammar. */
+  customerOverdue:Object.freeze({en:"{count} customer overdue",'zh-CN':"{count} 位顾客已逾期未到",ms:"{count} pelanggan lewat"}),
+  customersOverdue:Object.freeze({en:"{count} customers overdue",'zh-CN':"{count} 位顾客已逾期未到",ms:"{count} pelanggan lewat"}),
+  customerVisitedOnce:Object.freeze({en:"{count} customer visited once in the last year and never came back.",'zh-CN':"{count} 位顾客在过去一年中只来过一次，之后再也没有回来。",ms:"{count} pelanggan datang sekali dalam setahun lalu dan tidak pernah kembali."}),
+  customersVisitedOnce:Object.freeze({en:"{count} customers visited once in the last year and never came back.",'zh-CN':"{count} 位顾客在过去一年中只来过一次，之后再也没有回来。",ms:"{count} pelanggan datang sekali dalam setahun lalu dan tidak pernah kembali."}),
+  showingSaleOfTotal:Object.freeze({en:"Showing {shown} of {total} sale",'zh-CN':"显示 {total} 笔交易中的 {shown} 笔",ms:"Menunjukkan {shown} daripada {total} jualan"}),
+  showingSalesOfTotal:Object.freeze({en:"Showing {shown} of {total} sales",'zh-CN':"显示 {total} 笔交易中的 {shown} 笔",ms:"Menunjukkan {shown} daripada {total} jualan"}),
+  alreadyHaveOfferLive:Object.freeze({en:"You already have {count} offer live",'zh-CN':"您已有 {count} 个进行中的优惠",ms:"Anda sudah mempunyai {count} tawaran aktif"}),
+  alreadyHaveOffersLive:Object.freeze({en:"You already have {count} offers live",'zh-CN':"您已有 {count} 个进行中的优惠",ms:"Anda sudah mempunyai {count} tawaran aktif"}),
+  campaignConfigured:Object.freeze({en:"{count} campaign configured",'zh-CN':"已配置 {count} 个活动",ms:"{count} kempen dikonfigurasikan"}),
+  campaignsConfigured:Object.freeze({en:"{count} campaigns configured",'zh-CN':"已配置 {count} 个活动",ms:"{count} kempen dikonfigurasikan"}),
+  tierConfigured:Object.freeze({en:"{count} tier configured",'zh-CN':"已配置 {count} 个等级",ms:"{count} peringkat dikonfigurasikan"}),
+  tiersConfigured:Object.freeze({en:"{count} tiers configured",'zh-CN':"已配置 {count} 个等级",ms:"{count} peringkat dikonfigurasikan"}),
+  redeemedTime:Object.freeze({en:"Redeemed {count} time",'zh-CN':"已兑换 {count} 次",ms:"Ditebus {count} kali"}),
+  redeemedTimes:Object.freeze({en:"Redeemed {count} times",'zh-CN':"已兑换 {count} 次",ms:"Ditebus {count} kali"}),
+  treatmentCustomer:Object.freeze({en:"{name} · {count} treatment customer",'zh-CN':"{name} · {count} 位实验组顾客",ms:"{name} · {count} pelanggan rawatan"}),
+  treatmentCustomers:Object.freeze({en:"{name} · {count} treatment customers",'zh-CN':"{name} · {count} 位实验组顾客",ms:"{name} · {count} pelanggan rawatan"}),
+  rewardEntitlementPrepared:Object.freeze({en:"{count} reward entitlement prepared.",'zh-CN':"已准备 {count} 项奖励资格。",ms:"{count} kelayakan ganjaran disediakan."}),
+  rewardEntitlementsPrepared:Object.freeze({en:"{count} reward entitlements prepared.",'zh-CN':"已准备 {count} 项奖励资格。",ms:"{count} kelayakan ganjaran disediakan."}),
+  customerMatches:Object.freeze({en:"{count} customer match",'zh-CN':"{count} 位顾客符合条件",ms:"{count} pelanggan sepadan"}),
+  customersMatch:Object.freeze({en:"{count} customers match",'zh-CN':"{count} 位顾客符合条件",ms:"{count} pelanggan sepadan"}),
+  lapsedRegular:Object.freeze({en:"{count} lapsed regular",'zh-CN':"{count} 位流失的常客",ms:"{count} pelanggan tetap yang luput"}),
+  lapsedRegulars:Object.freeze({en:"{count} lapsed regulars",'zh-CN':"{count} 位流失的常客",ms:"{count} pelanggan tetap yang luput"}),
+  bookingRequestAwaiting:Object.freeze({en:"{count} booking request awaiting confirmation today",'zh-CN':"今天有 {count} 个预约请求等待确认",ms:"{count} permintaan tempahan menunggu pengesahan hari ini"}),
+  bookingRequestsAwaiting:Object.freeze({en:"{count} booking requests awaiting confirmation today",'zh-CN':"今天有 {count} 个预约请求等待确认",ms:"{count} permintaan tempahan menunggu pengesahan hari ini"}),
+  lineHiddenByFilter:Object.freeze({en:"{count} line hidden by the current filter, so this subtotal covers only the lines shown.",'zh-CN':"当前筛选隐藏了 {count} 行，因此此小计仅涵盖已显示的行。",ms:"{count} baris disembunyikan oleh penapis semasa, jadi subjumlah ini meliputi baris yang ditunjukkan sahaja."}),
+  linesHiddenByFilter:Object.freeze({en:"{count} lines hidden by the current filter, so this subtotal covers only the lines shown.",'zh-CN':"当前筛选隐藏了 {count} 行，因此此小计仅涵盖已显示的行。",ms:"{count} baris disembunyikan oleh penapis semasa, jadi subjumlah ini meliputi baris yang ditunjukkan sahaja."}),
+  resultForQuery:Object.freeze({en:"{count} result for",'zh-CN':"{count} 条结果，关键词",ms:"{count} keputusan untuk"}),
+  resultsForQuery:Object.freeze({en:"{count} results for",'zh-CN':"{count} 条结果，关键词",ms:"{count} keputusan untuk"}),
+  totalCompany:Object.freeze({en:"Total — {count} company",'zh-CN':"合计 — {count} 家公司",ms:"Jumlah — {count} syarikat"}),
+  totalCompanies:Object.freeze({en:"Total — {count} companies",'zh-CN':"合计 — {count} 家公司",ms:"Jumlah — {count} syarikat"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v944 — fifteen counted sentences as singular/plural key pairs. */
+  'customerOverdue','customersOverdue','customerVisitedOnce','customersVisitedOnce',
+  'showingSaleOfTotal','showingSalesOfTotal','alreadyHaveOfferLive','alreadyHaveOffersLive',
+  'campaignConfigured','campaignsConfigured','tierConfigured','tiersConfigured',
+  'redeemedTime','redeemedTimes','treatmentCustomer','treatmentCustomers',
+  'rewardEntitlementPrepared','rewardEntitlementsPrepared','customerMatches','customersMatch',
+  'lapsedRegular','lapsedRegulars','bookingRequestAwaiting','bookingRequestsAwaiting',
+  'lineHiddenByFilter','linesHiddenByFilter','resultForQuery','resultsForQuery',
+  'totalCompany','totalCompanies',
   /* nestly_v943 — fourteen more embedded-value sentences. */
   'noRefundSessionAddedBack','pointsAdjustedWithCorrection','showingFirstInactiveCap','lastVisitCadenceValue',
   'linesDoNotMatchSale','itemIsFreeForCustomer','saleMeetsMinimumItemFree','comeBackRateBetter',
@@ -8066,9 +8112,9 @@ async function loadAttentionListV571(root,branchId=null,hostId='growBbAttentionV
   };
   host.innerHTML=`<section class="card" aria-labelledby="dashboardAttentionTitleV548" style="margin-top:12px">
     <div class="cui-card-head">${CUI.icon('customers',{size:24})}<div><h2 id="dashboardAttentionTitleV548">Customers to bring back</h2><p>Each customer judged by their own visit rhythm, not a fixed rule.</p></div></div>
-    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${fadingCount} customer${fadingCount===1?'':'s'} overdue</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
+    ${fadingCount?`<p style="margin:10px 0 2px;font-size:1.05em"><b style="color:#C24135">${workspaceTemplateHtmlV97(fadingCount===1?'customerOverdue':'customersOverdue',{count:fadingCount})}</b> · about <b>${esc(money(atRisk))}/month</b> of regular spend at risk</p>`:''}
     <ul style="list-style:none;margin:8px 0 0;padding:0">${rows.map(attentionRowV548).join('')}</ul>
-    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${oneTime} customer${oneTime===1?'':'s'} visited once in the last year and never came back.</p>`:''}
+    ${oneTime?`<p class="muted small" style="margin:12px 0 0">${workspaceTemplateHtmlV97(oneTime===1?'customerVisitedOnce':'customersVisitedOnce',{count:oneTime})}</p>`:''}
     <div class="row" style="margin-top:14px"><a class="btn secondary" href="#/customers">Open Customers</a></div>
   </section>`;
   /* V550: a Message tap becomes evidence. The wa.me draft opens regardless; the record is

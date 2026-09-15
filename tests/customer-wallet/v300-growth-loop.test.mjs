@@ -97,7 +97,7 @@ test('customer 360 states Last visit and honest Rewards claimed',()=>{
 test('reward cards annotate real redemption counts, never zeros',()=>{
   assert.match(app,/business_reward_redemption_counts_v300',\{p_business:S\.biz\.id\}/);
   assert.match(app,/if\(!\(redeemed>0\)\|\|card\.querySelector\('\.reward-card-redeemed-v300'\)\)return/);
-  assert.match(app,/Redeemed \$\{redeemed\} time\$\{redeemed===1\?'':'s'\}/);
+  assert.match(app,/'redeemedTime':'redeemedTimes'/);
   assert.match(indexHtml,/\.reward-card-redeemed-v300\{display:block;font-size:11\.5px;color:var\(--muted\);margin-top:3px\}/);
   assert.match(indexHtml,/\.customer-referral-code\{[^}]*border:1\.5px dashed var\(--coral\)/);
 });

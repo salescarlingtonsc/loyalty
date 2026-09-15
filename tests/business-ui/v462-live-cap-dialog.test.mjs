@@ -13,6 +13,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { installWorkspaceTemplateGlobals } from '../support/workspace-template-runtime.mjs';
+/* nestly_v944: the dialog's cap sentence is a named template now — it is one text node mixing
+   reviewed English with two values, which the flat catalogue can never reach. This harness builds
+   the opener with `new Function`, where a free identifier resolves against globalThis, so the REAL
+   runtime is installed there. Never a stub. */
+installWorkspaceTemplateGlobals();
 
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 
@@ -121,8 +127,8 @@ test('V462 the dialog names the real limit and LISTS the live offers rather than
   open({ live: LIVE, max: 10 });
   assert.equal(appended.length, 1, 'exactly one dialog is mounted');
   const html = appended[0].innerHTML;
-  assert.match(html, /You already have 3 offers live/);
-  assert.match(html, /<span>10<\/span> live offers is the limit for this business/,
+  assert.match(html, /You already have <span[^>]*>3<\/span> offers live/);
+  assert.match(html, /10<\/span> live offers is the limit for this business/,
     'the sentence must name the entitlement it was handed, not a constant');
   for (const offer of LIVE) {
     assert.ok(html.includes(offer.name), `${offer.name} must be offered as a choice`);
