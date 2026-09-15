@@ -42295,7 +42295,12 @@ async function loadPromoCardV961(businessId){
         ? 'Promo codes are not available on your billing plan.'
         : message.includes('promo_already_used')||message.includes('promo_already_held')
           ? 'You have already used a promo code.'
-          : 'That code cannot be used. Check it and try again.';
+          /* nestly_v965: this one is not about the code at all — the subscription itself cannot be
+             charged, so saying "check the code" would send them hunting for the wrong problem. It
+             names no code and so gives nothing away. */
+          : message.includes('promo_subscription_not_chargeable')
+            ? 'Your subscription is not active, so a discount cannot be added to it. Sort the subscription out first.'
+            : 'That code cannot be used. Check it and try again.';
       return;
     }
     /* nestly_v962: a stripe firm's code is only half-redeemed until a real coupon exists on the

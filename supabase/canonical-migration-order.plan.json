@@ -4408,6 +4408,18 @@
       "version": "20261017010000",
       "name": "nestly_v964_applied_coupon_is_not_removable",
       "sourcePath": "db/migrations/20261016_nestly_v964_applied_coupon_is_not_removable.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261017020000",
+      "name": "nestly_v965_promo_hardening",
+      "sourcePath": "db/migrations/20261016_nestly_v965_promo_hardening.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261017030000",
+      "name": "nestly_v966_promo_release",
+      "sourcePath": "db/migrations/20261016_nestly_v966_promo_release.sql"
     }
   ]
 }

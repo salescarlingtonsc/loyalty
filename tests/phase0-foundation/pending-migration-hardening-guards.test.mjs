@@ -249,6 +249,7 @@ export const PAGE_SIZE_BOUND_EXEMPT = new Set([
   'app.run_outbox_sweep', 'app.run_referral_shadow', 'app.run_studio_executor',
   'app.run_sv_expiry_sweep', 'app.run_sv_tender_release', 'app.run_whatsapp_reminder_sweep_v557',
   'app.support_ingest_status_v535', 'app.support_route_inbound_v531',
+  'app.consume_provider_promos_v965',
   'app.sweep_stranded_self_serve_activations_v766', 'app.v551_ingest_retention_optout',
   'app.v551_ingest_retention_status', 'app.apply_due_cadence_changes_v922',
   'app.migrate_programme_pot_v312', 'app.whatsapp_quarantine_support_v816',

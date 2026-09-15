@@ -4413,6 +4413,18 @@
       "path": "db/migrations/20261016_nestly_v964_applied_coupon_is_not_removable.sql",
       "semanticVersion": "v964",
       "proposedDeployVersion": "20261017010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261016_nestly_v965_promo_hardening.sql",
+      "semanticVersion": "v965",
+      "proposedDeployVersion": "20261017020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261016_nestly_v966_promo_release.sql",
+      "semanticVersion": "v966",
+      "proposedDeployVersion": "20261017030000"
     }
   ]
 }
