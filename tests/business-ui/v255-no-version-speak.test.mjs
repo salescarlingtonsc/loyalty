@@ -72,7 +72,9 @@ test('V255 retentionPage no longer speaks in version-architecture terms', () => 
 
 test('V255 studioSetRuleActive confirm dialog speaks in outcome language', () => {
   assert.doesNotMatch(studioSetRuleActiveNoComments, /publishes a NEW configuration version/);
-  assert.match(studioSetRuleActiveNoComments, /Publishing replaces what customers see/);
+  /* nestly_v960: a named template now — the words are pinned once where they are written, and
+     the call site is pinned to the key it names. */
+  assert.match(studioSetRuleActiveNoComments, /publishingReplacesWhatCustomersSeeAnd(Named|Unnamed)/);
 });
 
 test('V255 studioDraftEditor draft card no longer says "Draft configuration"', () => {

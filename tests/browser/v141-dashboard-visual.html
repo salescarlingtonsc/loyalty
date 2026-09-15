@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="f84cad9f9a0f180fc491ac3c03e4dae5584e005cbba0f75cfdb22c808ea79f09"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="1bc7d4eb7e21ee45d0f38cf3a8d2f2b4e73112c6b344fb44a78942b2bb2e6d6d"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -6903,8 +6903,8 @@ function activeBranchesForScopeV217(branches=[]){
 function branchScopeUnavailableReasonV217(branch){
   if(!branch||branch.active!==false)return '';
   return branch.billing_state==='pending_payment'
-    ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
-    :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+    ?workspaceTemplateTextV97(branch.name?'isWaitingForPaymentSoItsNamed':'isWaitingForPaymentSoItsUnnamed',{named:branch.name})
+    :workspaceTemplateTextV97(branch.name?'isSwitchedOffSoItsReportsNamed':'isSwitchedOffSoItsReportsUnnamed',{named:branch.name});
 }
 /* V272: removing the Business Insights branch select also removed the only place that said an
    unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
@@ -6920,7 +6920,7 @@ function reportScopeNoteTextV272(branches=[]){
       :(usable[0]?.name||'this business');
   const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
     .map(branchScopeUnavailableReasonV217).filter(Boolean);
-  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+  return workspaceTemplateTextV97('figuresBelowCoverScope',{scope:covered,withheldNotes:withheld.join(' ')}).trim();
 }
 async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
   const host=$(targetId);
@@ -7391,7 +7391,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         loyalty.innerHTML=dashboardLoyaltyRowV170([
           {label:'Members joined',
             value:customerMetricsAvailable?Number(d.new_customers||0).toLocaleString('en-SG'):'Unavailable',
-            hint:customerMetricsAvailable?`Customer records created ${dashboardRangeLabelV170(from,to)} · business-wide`:'Customer access is not complete for this reporting scope.'},
+            hint:customerMetricsAvailable?workspaceTemplateTextV97('customerRecordsCreatedBusinessWide',{range:dashboardRangeLabelV170(from,to)}):'Customer access is not complete for this reporting scope.'},
           /* nestly_v461: the heading follows the unit the server scoped this figure to. Cubbly SPA
              runs stamps and this tile said "Points earned" over a stamp count. */
           {label:`${loyaltyUnitNounV461(d.loyalty_unit)} earned`,
@@ -7399,7 +7399,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
             hint:pointsEarned===null?'Loyalty access is not complete for this reporting scope.':`Sale-linked earn · ${scopeLabel}`},
           {label:'Rewards redeemed',
             value:rewardsRedeemed===null?'Unavailable':rewardsRedeemed.toLocaleString('en-SG'),
-            hint:rewardsRedeemed===null?'Redeemed points could not be loaded.':`Points spent on rewards ${dashboardRangeLabelV170(from,to)} · business-wide`,
+            hint:rewardsRedeemed===null?'Redeemed points could not be loaded.':workspaceTemplateTextV97('pointsSpentOnRewardsBusinessWide',{range:dashboardRangeLabelV170(from,to)}),
             retryId:rewardsRedeemed===null?'dashboardLoyaltyRedeemedRetry':''}
         ]);
         loyalty.querySelector('#dashboardLoyaltyRedeemedRetry')?.addEventListener('click',load);
@@ -7466,6 +7466,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'f84cad9f9a0f180fc491ac3c03e4dae5584e005cbba0f75cfdb22c808ea79f09',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'1bc7d4eb7e21ee45d0f38cf3a8d2f2b4e73112c6b344fb44a78942b2bb2e6d6d',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

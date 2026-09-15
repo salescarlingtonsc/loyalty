@@ -1320,6 +1320,42 @@
   {
    "source": "SGD",
    "reason": "An ISO currency code."
+  },
+  {
+   "source": "peekaa.loyalty.recommended-tiers.v148.{}",
+   "reason": "A localStorage key. Translating it would orphan every value already stored under the English one."
+  },
+  {
+   "source": "{}/storage/v1/object/public/business-public/{}",
+   "reason": "A Supabase storage URL built from the project origin and the object path."
+  },
+  {
+   "source": "tr[data-grow-usage-group-v413=\"{}\"][data-grow-usage-child-v413]",
+   "reason": "A CSS selector passed to querySelectorAll."
+  },
+  {
+   "source": ".booking-decision[data-request=\"{}\"],[data-booking-move-v880=\"{}\"]",
+   "reason": "A CSS selector passed to querySelectorAll."
+  },
+  {
+   "source": "#modgrid-{} select[data-staff-module]",
+   "reason": "A CSS selector passed to querySelectorAll."
+  },
+  {
+   "source": "status.in.(waiting,contacted),and(created_at.gte.{},created_at.lt.{})",
+   "reason": "A PostgREST filter string sent to the server, not read by anyone."
+  },
+  {
+   "source": "*, clients(full_name,phone), staff(full_name), appointments(services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)), {}",
+   "reason": "A PostgREST select list — column and foreign-key names."
+  },
+  {
+   "source": "*, staff(full_name), appointments(services!appointments_service_id_fkey(name),bundles!appointments_bundle_id_fkey(name)), {}",
+   "reason": "A PostgREST select list — column and foreign-key names."
+  },
+  {
+   "source": ":''} was {}. Not enough history yet to say what a normal {} looks like.",
+   "reason": "Not a real string: the scanner window opened mid-expression, so the leading :''} is source, not copy. The sentence it belongs to is already a template."
   }
  ]
 }

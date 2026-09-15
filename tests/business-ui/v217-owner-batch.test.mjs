@@ -44,8 +44,10 @@ test('V217 neither branch picker offers a branch the server will refuse', () => 
   assert.doesNotMatch(app, /topbar-branch-withheld-v217/);
   assert.doesNotMatch(shell, /topbar-branch-withheld-v217/);
   const reason = fn('branchScopeUnavailableReasonV217');
-  assert.match(reason, /waiting for payment/);
-  assert.match(reason, /switched off/);
+  /* nestly_v960: a named template now — the words are pinned once where they are written, and
+     the call site is pinned to the key it names. */
+  assert.match(reason, /isWaitingForPaymentSoIts(Named|Unnamed)/);
+  assert.match(reason, /isSwitchedOffSoItsReports(Named|Unnamed)/);
   assert.match(app, /branchScopeUnavailableReasonV217\)\.join\(' '\)/, 'still explained on the page filter');
 });
 

@@ -39,8 +39,10 @@ test('V214 quiet branch card reports real counted activity, not a generic placeh
   // Real numbers from the same payload the KPIs use — never a bare "no data" message.
   assert.match(quiet, /Number\(current\?\.visits\)\|\|0/);
   assert.match(quiet, /Number\(current\?\.revenue_cents\)\|\|0/);
-  assert.match(quiet, /recorded \$\{visits\} \$\{visits===1\?'visit':'visits'\} and \$\{money\(revenueCents\)\}/);
-  assert.match(quiet, /recorded no visits or sales in this period/);
+  /* nestly_v960: a named template now — the words are pinned once where they are written, and
+     the call site is pinned to the key it names. */
+  assert.match(quiet, /'recordedVisitsAndRevenueNotEnoughForTrendOne':'recordedVisitsAndRevenueNotEnoughForTrendMany'|recordedVisitsAndRevenueNotEnoughForTrend/);
+  assert.match(quiet, /recordedNoVisitsOrSalesNothingToCompare/);
   // The reassurance the owner asked for: fewer cards is expected, not a fault.
   assert.match(quiet, /Nothing is broken\./);
   assert.match(quiet, /Each branch is measured on its own/);

@@ -546,6 +546,16 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      render time, so the same wave makes a language change re-run the route: the picker sits in the
      profile menu and is reachable from every page, and in-place localisation cannot move a sentence
      that carries no key to look up. 426 + 117 = 543.
+     nestly_v960 adds 232 and finishes the class. 108 are plain templates — every slot a figure, a
+     date, a merchant name, or a sub-clause that is itself a template, which nests safely because
+     v959 re-renders the route on a language change. The other 124 are 62 either/or PAIRS whose two
+     English forms were DERIVED FROM THE SOURCE rather than retyped: a plural ternary and the three
+     plural helpers already carry both words, and a ||'fallback' already carries the unnamed
+     wording. Three helpers had to be told apart doing it — biPluralV892 and pluralV774 print the
+     count WITH the noun, while the bare `plural` returns the noun alone because the caller printed
+     the count already, and substituting the wrong one doubles or drops the number. The zh-CN and ms
+     halves of a plural pair are identical on purpose: neither language inflects for number, and
+     writing them twice is how a pair drifts apart later. 543 + 232 = 775.
      nestly_v952 adds 31 and closes the workspace interpolation gap: the two reversal receipts and
      the exact-compensation proof list, the profile-scope refusal in its three shapes, the paused
      tier warning in its four, the reward-cost profitability line, the typical-sale basis, the
@@ -571,7 +581,7 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      joined by "·" rather than one sentence with three optional tails and eight shapes to review.
      The six expiry keys are named literally at the call site rather than built from a prefix,
      because a key assembled at run time is a key this gate cannot see. 360 + 66 = 426. */
-  assert.equal(keys.length,543,'mixed-interface interpolation inventory changed without review');
+  assert.equal(keys.length,775,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

@@ -22,6 +22,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+/* nestly_v960: a sentence in the sliced region is a named template now — the sandbox carries
+   the REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 
@@ -258,7 +263,7 @@ test('V322 R5 the milestone list renders every milestone, in stamp order, with n
     { id: 'r5', name: 'Free snack', points: 5, active: true }
   ];
   const api = new Function('esc', 'unitWord', 'state', 'activeRewardsV304', 'rewardRowPointsTextV304',
-    'rowMarkTextV304', 'rewardFormHtml',
+    'rowMarkTextV304', 'rewardFormHtml', 'workspaceTemplateTextV97',
     `${src}\nreturn {stampMilestonesHtmlV322,stampTargetFromMilestonesV322,stampMilestonesV322};`
   )(esc,
     (value, plural) => `${value} ${Number(value) === 1 ? 'stamp' : plural}`,
@@ -266,7 +271,7 @@ test('V322 R5 the milestone list renders every milestone, in stamp order, with n
     () => rewards.filter(r => r.active !== false),
     points => ` · ${points} stamps`,
     () => '',
-    () => '<form data-form></form>');
+    () => '<form data-form></form>', TPL_V960.workspaceTemplateTextV97);
 
   const markup = api.stampMilestonesHtmlV322();
   const order = [...markup.matchAll(/data-grow-setup-milestone-v322="(\d+)"/g)].map(m => Number(m[1]));

@@ -3,6 +3,11 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const app=((await readFile(new URL('../../app/index.html',import.meta.url),'utf8'))+'\n'+(await readFile(new URL('../../app/app.js',import.meta.url),'utf8')));
 
 function section(start,end){
@@ -14,7 +19,7 @@ function section(start,end){
 test('route generation rejects an older workspace resolution before it can commit state',async()=>{
   const source=app.match(/let routeRenderEpoch=0;[^\n]*\n(?:let [^\n]+\n)*const beginRouteInvocation=\(\)=>\{[\s\S]*?\n\};/)?.[0];
   assert.ok(source);
-  const {beginRouteInvocation}=vm.runInNewContext(`(()=>{${source};return {beginRouteInvocation}})()`);
+  const {beginRouteInvocation}=vm.runInNewContext(`(()=>{${source};return {beginRouteInvocation}})()`, {...TPL_V960});
   const committed=[];
   let releaseOld;
   const oldPending=new Promise(resolve=>{releaseOld=resolve});
@@ -52,7 +57,7 @@ test('owners cannot see or mutate a disabled module while owner-only special pag
   const roleSource=app.match(/const ROLE_CAPABILITIES=\{[\s\S]*?const hasRoleCapability=[^\n]+/)?.[0];
   const compoundSource=app.match(/const FINANCE_MODULES=[\s\S]*?const filterResolvedModulesForRole=[\s\S]*?;/)?.[0];
   assert.ok(source&&roleSource&&compoundSource);
-  const evaluate=modules=>vm.runInNewContext(`(()=>{const S={myRole:'owner',myModules:${JSON.stringify(modules)},myModulePerms:{appointments:'rw'}};${roleSource};${compoundSource};${source};return [canReadModule('appointments'),canWriteModule('appointments')]})()`);
+  const evaluate=modules=>vm.runInNewContext(`(()=>{const S={myRole:'owner',myModules:${JSON.stringify(modules)},myModulePerms:{appointments:'rw'}};${roleSource};${compoundSource};${source};return [canReadModule('appointments'),canWriteModule('appointments')]})()`, {...TPL_V960});
   assert.equal(JSON.stringify(evaluate([])),JSON.stringify([false,false]));
   assert.equal(JSON.stringify(evaluate(['appointments'])),JSON.stringify([true,true]));
   const route=section('async function route(){','/* ---------- customer wallet ---------- */');
@@ -96,7 +101,7 @@ test('v73 staff decisions are authority-gated, duplicate-safe, state-aware, and 
   assert.doesNotMatch(bookings,/from\('booking_requests'\)\.update/);
 
   const source=app.match(/function bookingDecisionNotice\([^\n]*\)\{[\s\S]*?\n\}/)?.[0];
-  const notice=vm.runInNewContext(`(${source})`);
+  const notice=vm.runInNewContext(`(${source})`, {...TPL_V960});
   assert.deepEqual(
     JSON.parse(JSON.stringify(notice({outcome:'applied',actual_status:'confirmed'},'confirm'))),
     {ok:true,text:'Confirm applied. Current status: confirmed.'}
@@ -124,7 +129,7 @@ test('linked waitlist decisions never directly mutate queue status or claim a se
 test('customer booking requests split active from recent terminal outcomes and Home counts active only',()=>{
   const source=app.match(/const ACTIVE_CUSTOMER_BOOKING_REQUEST_STATUSES=[\s\S]*?function composeCustomerBookingGroups\([^\n]*\)\{[\s\S]*?\n\}/)?.[0];
   assert.ok(source);
-  const {compose,isActive}=vm.runInNewContext(`(()=>{${source};return {compose:composeCustomerBookingGroups,isActive:isActiveCustomerBookingRequest}})()`);
+  const {compose,isActive}=vm.runInNewContext(`(()=>{${source};return {compose:composeCustomerBookingGroups,isActive:isActiveCustomerBookingRequest}})()`, {...TPL_V960});
   const groups=compose([],{items:[
     {request_id:'a',business_slug:'one',business_name:'One',status:'pending'},
     {request_id:'b',business_slug:'one',business_name:'One',status:'declined'},

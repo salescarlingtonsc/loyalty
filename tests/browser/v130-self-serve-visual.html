@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="1019a5552add29cbef64c00a051be22a3f43723f9c0a648c2b2dc188a9372ff5"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="production-source-sha256" content="647ea82616031c5bebec17c2214b984f1f3943dc58f520cb07cee9e904f5de6a"><link rel="icon" href="data:,"><title>Peekaa V130 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6822,7 +6822,7 @@ async function wireAccountDeletionButton(){
         :'Arranged with Peekaa support';
       $('selfServeCapacityNote').textContent=tier
         ?'Each branch you add later is charged this amount again, on its own subscription and its own card.'
-        :`${cadence==='annual'?'Annual':'Monthly'} billing is not offered at this capacity — contact admin.peekaa@gmail.com.`;
+        :workspaceTemplateTextV97('billingCycleNotOfferedAtThisCapacity',{cycle:cadence==='annual'?'Annual':'Monthly'});
       /* Both cadence cards price the capacity actually chosen, so the headline and the amount due
          can never disagree. A cadence with no tier at this capacity says so on its own card. */
       const annualTier=signupTierV664('annual',capacity),monthlyTier=signupTierV664('monthly',capacity);

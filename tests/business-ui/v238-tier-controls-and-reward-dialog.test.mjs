@@ -16,6 +16,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rawApp = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 /* The generated zh/ms/ta table carries retired en source strings as lookup keys — data, not
@@ -26,11 +31,11 @@ const loyalty = app.slice(app.indexOf('async function loyaltyPage('), app.indexO
 
 /* The derived-line helpers are pure and module-scope, so they are executed rather than
    pattern-matched — the rounding is the thing the owner actually saw go wrong. */
-const helpers = new Function(`${app.slice(
+const helpers = new Function('workspaceTemplateTextV97', `${app.slice(
   app.indexOf('const BONUS_POINTS_LINE_RE_V238'),
   app.indexOf('/* The threshold means different things per firm'),
 )}
-return {BONUS_POINTS_LINE_RE_V238,DISCOUNT_LINE_RE_V238,bonusPointsLineV238,discountLineV238};`)();
+return {BONUS_POINTS_LINE_RE_V238,DISCOUNT_LINE_RE_V238,bonusPointsLineV238,discountLineV238};`)(TPL_V960.workspaceTemplateTextV97);
 
 test('(a) the bonus-points benefit line is derived from the multiplier, and disappears at 1x', () => {
   const { bonusPointsLineV238, BONUS_POINTS_LINE_RE_V238 } = helpers;

@@ -64,7 +64,9 @@ test('V272 (B) the excluded-branch truth the notice carried is restated next to 
   assert.match(reports, /renderReportScopeNoteV272\(isCurrent\)/);
   const note = section(js, 'function reportScopeNoteTextV272(', '\nfunction branchScopeErrorHintV217(');
   // It says what the figures DO cover...
-  assert.match(note, /Figures below cover/);
+  /* nestly_v960: a named template now — the words are pinned once where they are written, and
+     the call site is pinned to the key it names. */
+  assert.match(note, /figuresBelowCoverScope/);
   // ...and names any branch left out, reusing the one wording the removed notice used.
   assert.match(note, /branch\.active===false/);
   assert.match(note, /branchScopeUnavailableReasonV217/);

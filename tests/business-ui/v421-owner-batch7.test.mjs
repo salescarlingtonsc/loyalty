@@ -17,6 +17,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const appJs = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const indexHtml = readFileSync(join(root, 'app', 'index.html'), 'utf8');
@@ -33,8 +38,8 @@ const fnSource = (name, nextName) => {
 };
 const load = (source, prelude = '') => {
   // eslint-disable-next-line no-new-func
-  return new Function(`${prelude}\n${source}\nreturn {${source.match(/function (\w+)\(/g)
-    .map((m) => m.slice(9, -1)).join(',')}};`)();
+  return new Function('workspaceTemplateTextV97', `${prelude}\n${source}\nreturn {${source.match(/function (\w+)\(/g)
+    .map((m) => m.slice(9, -1)).join(',')}};`)(TPL_V960.workspaceTemplateTextV97);
 };
 
 const esc = `const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));`;
@@ -78,7 +83,8 @@ test('v421 the workspace writes through a NEW saver, never an overload twin of v
 test('v421 both sides of the referral are stated back to the owner', () => {
   assert.match(appJs, /<dt>Reward for the friend<\/dt>/, 'the settings summary names the friend');
   assert.match(appJs, /Nothing — the referrer only/, 'and says so plainly when that side is off');
-  assert.match(appJs, /to the referrer, \$\{friend\} to the friend/,
+  /* nestly_v960: a named template now — the wording is pinned once where it is written. */
+  assert.match(appJs, /'amountToReferrerAmountToFriend'/,
     'the Rewards overview row names both');
 });
 

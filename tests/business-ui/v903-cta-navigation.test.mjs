@@ -31,6 +31,11 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
 const customerUi = readFileSync(join(root, 'app', 'customer-ui.js'), 'utf8');
@@ -95,7 +100,7 @@ function openExplain(card, { group = null } = {}) {
   const closeCalls = [];
   const navCalls = [];
   const frames = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ ...TPL_V960,
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}`,
     walletDate: (v) => `WD:${v}`,
@@ -334,7 +339,8 @@ const ROUTE_KEYS_V903 = (() => {
 })();
 
 test('v903 destination: the unpaid-money card leads to the screen where a payment is recorded', () => {
-  const card = block.slice(block.indexOf("finding:`${biMoneyV892(outstanding,currency)} not yet collected`"));
+  /* nestly_v960: the finding is a named template now; the card is still found by the key it names. */
+  const card = block.slice(block.indexOf("amountNotYetCollected"));
   const cta = card.slice(0, card.indexOf('evidence:'));
   assert.match(cta, /cta:\{kind:'route',href:'#\/sales',label:'Review payments'\}/,
     'Review payments navigates to Sales & refunds instead of scrolling to a panel on this page');

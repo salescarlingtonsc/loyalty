@@ -4,6 +4,11 @@ import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 /* nestly_v890 — owner ruling 2026-09-13: the Dashboard card is a simple overview (three tiles and
    one link); the sentences and every grouped answer moved into Customer intelligence, read from
    the same cached response. These tests execute the tile builder against the v826 fixture shape
@@ -18,7 +23,7 @@ function extractFunction(src, name) {
   throw new Error('no close');
 }
 function tiles(brief) {
-  const ctx = vm.createContext({
+  const ctx = vm.createContext({ ...TPL_V960,
     esc: (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
     money: (c) => `SGD ${((c || 0) / 100).toFixed(2)}`,
   });

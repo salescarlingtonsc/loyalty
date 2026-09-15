@@ -426,7 +426,9 @@ test('W6I2 C3 the movement COUNT is capability-checked and degrades to an honest
   assert.match(wizard, /if\(movements\.evaluated===false\)return \{evaluated:false,reason:String\(movements\.reason\|\|''\)\};/);
   assert.match(wizard, /How many members move is not counted yet on this workspace/);
   assert.match(wizard, /There are too many members to count the moves before publishing\./);
-  assert.match(wizard, /\$\{counts\.down\} member\$\{counts\.down===1\?'':'s'\} would move down · \$\{counts\.up\} would move up\./);
+  /* nestly_v960: a named template now — the wording is pinned once where it is written, and the
+     call site is pinned to the key and the condition that chooses between its two forms. */
+  assert.match(wizard, /'memberWouldMoveDownWouldMoveOne':'memberWouldMoveDownWouldMoveMany'/);
   // Read when the gate PAINTS, not only when Publish is pressed — otherwise it is not a preview.
   const load = wizard.slice(wizard.indexOf('async function loadComparison(){'), wizard.indexOf('const readStepFields='));
   assert.match(load, /sb\.rpc\('preview_publish_impact',\{p_config_version_id:state\.versionId\}\)/);

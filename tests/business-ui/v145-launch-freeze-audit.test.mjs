@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const appPath = new URL('../../app/index.html', import.meta.url);
 const app = fs.readFileSync(appPath, 'utf8') + '\n' + fs.readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 const dbMigrationPath = new URL('../../db/migrations/20260803_nestly_v145_launch_freeze_metrics.sql', import.meta.url);
@@ -59,7 +64,7 @@ test('Singapore report date arithmetic advances calendar dates without UTC offse
   const end=app.indexOf('\nasync function fetchAllRows',start);
   assert.ok(start>=0&&end>start,'Singapore date-shift helper is missing');
   const source=app.slice(start,end);
-  const shift=new Function(`${source};return shiftSgDateInput`)();
+  const shift=new Function('workspaceTemplateTextV97', `${source};return shiftSgDateInput`)(TPL_V960.workspaceTemplateTextV97);
   assert.equal(shift('2026-08-03',1),'2026-08-04');
   assert.equal(shift('2026-08-03',-29),'2026-07-05');
   assert.equal(shift('2028-02-28',1),'2028-02-29');
@@ -72,7 +77,7 @@ test('Singapore weekdays and month spans ignore a non-Singapore device timezone'
   const originalTz=process.env.TZ;
   try{
     process.env.TZ='America/New_York';
-    const helpers=new Function(`${app.slice(start,end)};return {sgCalendarWeekday,calendarMonthSpan}`)();
+    const helpers=new Function('workspaceTemplateTextV97', `${app.slice(start,end)};return {sgCalendarWeekday,calendarMonthSpan}`)(TPL_V960.workspaceTemplateTextV97);
     assert.equal(helpers.sgCalendarWeekday('2026-08-03'),1,'Singapore Monday must remain Monday');
     assert.equal(helpers.sgCalendarWeekday('2026-08-02'),0,'Singapore Sunday must remain Sunday');
     assert.equal(helpers.calendarMonthSpan('2026-07-02','2026-08-01'),1,
@@ -92,7 +97,7 @@ test('customer inactivity uses complete Singapore calendar days at midnight boun
   const helperStart=app.indexOf('const sgDateInputValue=');
   const helperEnd=app.indexOf('const REPORT_MAX_RANGE_DAYS=',helperStart);
   assert.ok(helperStart>=0&&helperEnd>helperStart,'Singapore inactivity helper is missing');
-  const daysSince=new Function(`${app.slice(helperStart,helperEnd)};return completeSgCalendarDaysSince`)();
+  const daysSince=new Function('workspaceTemplateTextV97', `${app.slice(helperStart,helperEnd)};return completeSgCalendarDaysSince`)(TPL_V960.workspaceTemplateTextV97);
   const justBeforeSgMidnight='2026-08-02T15:59:59.000Z';
   const justAfterSgMidnight=new Date('2026-08-02T16:00:01.000Z');
   assert.equal(daysSince(justBeforeSgMidnight,justAfterSgMidnight),1,
@@ -114,7 +119,7 @@ test('customer reward expiry countdown follows Singapore calendar dates, not rou
   const helperStart=app.indexOf('const sgDateInputValue=');
   const helperEnd=app.indexOf('const REPORT_MAX_RANGE_DAYS=',helperStart);
   assert.ok(helperStart>=0&&helperEnd>helperStart,'Singapore calendar expiry helper is missing');
-  const helpers=new Function(`${app.slice(helperStart,helperEnd)};return {daysUntil:completeSgCalendarDaysUntil,date:sgDateInputValue}`)();
+  const helpers=new Function('workspaceTemplateTextV97', `${app.slice(helperStart,helperEnd)};return {daysUntil:completeSgCalendarDaysUntil,date:sgDateInputValue}`)(TPL_V960.workspaceTemplateTextV97);
   const expiry='2026-08-04T16:00:00.000Z'; // 5 Aug 2026, 00:00 Singapore
   assert.equal(helpers.daysUntil(expiry,new Date('2026-08-03T15:59:59.000Z')),2,
     'one second before Singapore midnight the expiry is still two calendar dates away');
@@ -133,7 +138,7 @@ test('lifecycle answer reads the server metrics object and withholds unclassifia
   const start=app.indexOf('function lifecycleAnswerProjection(');
   const end=app.indexOf('\nfunction expenseAmountProjection(',start);
   assert.ok(start>=0&&end>start,'lifecycle answer projection is missing');
-  const project=new Function(`${app.slice(start,end)};return lifecycleAnswerProjection`)();
+  const project=new Function('workspaceTemplateTextV97', `${app.slice(start,end)};return lifecycleAnswerProjection`)(TPL_V960.workspaceTemplateTextV97);
   const nonZero=project({status:'ok',metrics:{existing_returning_customers:7,new_customers:3},coverage:{eligible_transactions:12,identified_transactions:10,identified_transaction_pct:83.33}});
   assert.equal(nonZero.usable,true);
   assert.equal(nonZero.metrics.existing_returning_customers,7);
@@ -154,7 +159,7 @@ test('expense list preserves original currency and reconciles the exact base-cur
   const start=app.indexOf('function expenseAmountProjection(');
   const end=app.indexOf('\nasync function fetchAllRows',start);
   assert.ok(start>=0&&end>start,'expense amount projection is missing');
-  const project=new Function(`${app.slice(start,end)};return expenseAmountProjection`)();
+  const project=new Function('workspaceTemplateTextV97', `${app.slice(start,end)};return expenseAmountProjection`)(TPL_V960.workspaceTemplateTextV97);
   assert.deepEqual(project({amount_cents:100,currency:'USD',fx_rate_to_base:'1.5'},'SGD'),{
     valid:true,originalLabel:'USD 1.00',baseLabel:'SGD 1.50',baseCents:150,showBase:true
   });
@@ -249,7 +254,7 @@ test('staff commission counts a reversed line in no total and pays each line to 
   const helperStart=app.indexOf('function staffCommissionAggregationV825(');
   const helperEnd=app.indexOf('\nfunction commissionInputsHtmlV825(',helperStart);
   assert.ok(helperStart>=0&&helperEnd>helperStart,'staff commission aggregation helper is missing');
-  const aggregate=new Function(`${app.slice(helperStart,helperEnd)};return staffCommissionAggregationV825`)();
+  const aggregate=new Function('workspaceTemplateTextV97', `${app.slice(helperStart,helperEnd)};return staffCommissionAggregationV825`)(TPL_V960.workspaceTemplateTextV97);
   const rows=Array.from({length:1001},(_,index)=>({sale_id:`sale-${index}`,staff_id:'staff-1',staff_name:'Aisha',line_cents:1,commission_cents:1,reversed:false}));
   rows.push(
     {sale_id:'reversed',staff_id:'staff-1',staff_name:'Aisha',line_cents:10000,commission_cents:1000,reversed:true},
@@ -547,7 +552,7 @@ test('existing referral, legacy sale and package paths never promise points whil
   const receiptStart=app.indexOf('function legacySaleReceiptV145(');
   const receiptEnd=app.indexOf('\nfunction giftCardAbilitiesV102',receiptStart);
   assert.ok(receiptStart>=0&&receiptEnd>receiptStart,'legacy sale receipt truth helper is missing');
-  const receipt=new Function(`${app.slice(receiptStart,receiptEnd)};return legacySaleReceiptV145`)();
+  const receipt=new Function('workspaceTemplateTextV97', `${app.slice(receiptStart,receiptEnd)};return legacySaleReceiptV145`)(TPL_V960.workspaceTemplateTextV97);
   assert.deepEqual(receipt({pointsEarned:12,pointsTotal:112,duplicate:false}),{
     heading:'Done',message:'+12 points',pointsEarned:12,pointsTotal:112,duplicate:false
   });
@@ -630,7 +635,7 @@ test('waitlist terminal booked rows are labelled as conversions, never proven se
   const helperStart=app.indexOf('function waitlistTodaySummary(');
   const helperEnd=app.indexOf('\nasync function fetchAllRows(',helperStart);
   assert.ok(helperStart>=0&&helperEnd>helperStart,'waitlist summary helper is missing');
-  const summarize=new Function(`${app.slice(helperStart,helperEnd)};return waitlistTodaySummary`)();
+  const summarize=new Function('workspaceTemplateTextV97', `${app.slice(helperStart,helperEnd)};return waitlistTodaySummary`)(TPL_V960.workspaceTemplateTextV97);
   const start=Date.parse('2026-08-03T00:00:00.000Z');
   const summary=summarize([
     {id:'seat-now',status:'booked',created_at:'2026-08-03T01:00:00.000Z'},

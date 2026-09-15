@@ -13,6 +13,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
+/* nestly_v960: sentences in the sliced regions are named templates now — every sandbox here
+   carries the REAL runtime, so a missing key fails loudly instead of rendering as ''. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const appJs = await readFile(path.join(root, 'app/app.js'), 'utf8');
 const section = (from, to) => {
@@ -132,6 +137,7 @@ const runWlBook = async ({ seatWalkInDirectlyV571, canBook = true, row }) => {
     pendingWaitlistBookIdV571: '',
     pendingApptClientId: '',
     pendingApptPrefillV575: null,
+    ...TPL_V960,
   };
   const wlBook = vm.runInNewContext(`${src}; window.wlBook`, context);
   await wlBook(row?.id);

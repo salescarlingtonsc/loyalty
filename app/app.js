@@ -4090,7 +4090,7 @@ function staffCommissionInsightLineV832(insights,formatMoney){
   if(avgTied)return workspaceTemplateTextV97('closesTheMostSalesAverageSaleIsLevel',{staffName:most.name,saleCount:most.sales,averageSale:fmt(biggest.avgSale)});
   if(most.key===biggest.key)return workspaceTemplateTextV97('leadsOnBothMostSalesAndBiggestAverageSale',{staffName:most.name,saleCount:most.sales,averageSale:fmt(most.avgSale)});
   const tail=biggest.sales<most.sales?' — fewer deals, bigger tickets':'';
-  return `${most.name} closes the most sales (${most.sales}); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)})${tail}.`;
+  return workspaceTemplateTextV97('closesTheMostSalesOtherHasBiggestAverageSale',{topSalesStaffName:most.name,saleCount:most.sales,topAverageStaffName:biggest.name,averageSale:fmt(biggest.avgSale),comparisonNote:tail});
 }
 /* nestly_v825 — the commission pair on a product, a bundle or a package (owner ruling 2026-09-08:
    "% or fixed amount, same as services"). One markup, one reader, one writer, so blank-vs-zero
@@ -4377,7 +4377,7 @@ function bindCatalogueDeleteV660(onDone){
     const kind=button.dataset.catalogueKindV660==='product'?'product':'service';
     const name=button.dataset.catalogueNameV660||`this ${kind}`;
     if(!await confirmActionV386(
-      `Delete "${name}"? If nothing uses it, it is removed. If it appears on a past ${kind==='service'?'appointment or sale':'sale'}, or in a package, reward, bundle or tier discount, it is switched off instead and kept — so nothing you have already recorded changes.`,
+      workspaceTemplateTextV97('deleteCatalogueItemConfirm',{itemName:name,pastRecordKind:kind==='service'?'appointment or sale':'sale'}),
       {confirmLabel:'Delete',cancelLabel:'Keep it'}))return;
     CUI.setButtonBusy(button,{busy:true,label:'…'});
     const {data,error}=await sb.rpc('business_manage_catalogue_item_v660',
@@ -4385,7 +4385,7 @@ function bindCatalogueDeleteV660(onDone){
     if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error)return toast(ownerErrorText(error));
     toast(data&&data.action==='retire'
-      ?`"${name}" is switched off and kept — ${data.used_by} record${Number(data.used_by)===1?'':'s'} still refer to it`
+      ?workspaceTemplateTextV97(Number(data.used_by)===1?'isSwitchedOffAndKeptRecordOne':'isSwitchedOffAndKeptRecordMany',{v1:name,v2:data.used_by})
       :`"${name}" deleted`);
     if(typeof onDone==='function')onDone();
   });
@@ -20467,7 +20467,7 @@ function renderOnboard(){
         :'Arranged with Peekaa support';
       $('selfServeCapacityNote').textContent=tier
         ?'Each branch you add later is charged this amount again, on its own subscription and its own card.'
-        :`${cadence==='annual'?'Annual':'Monthly'} billing is not offered at this capacity — contact admin.peekaa@gmail.com.`;
+        :workspaceTemplateTextV97('billingCycleNotOfferedAtThisCapacity',{cycle:cadence==='annual'?'Annual':'Monthly'});
       /* Both cadence cards price the capacity actually chosen, so the headline and the amount due
          can never disagree. A cadence with no tier at this capacity says so on its own card. */
       const annualTier=signupTierV664('annual',capacity),monthlyTier=signupTierV664('monthly',capacity);
@@ -22025,7 +22025,7 @@ function openStampSwitchConversionPopupV384(){
         const points=Math.max(0,Number(data?.points_convertible)||0);
         const leftover=Math.max(0,Number(data?.leftover_points)||0);
         preview.textContent=stamps>0
-          ?`${points.toLocaleString('en-SG')} points can become ${stamps.toLocaleString('en-SG')} stamps for ${customers} customer${customers===1?'':'s'}. ${leftover.toLocaleString('en-SG')} points stay saved.`
+          ?workspaceTemplateTextV97(customers===1?'pointsCanBecomeStampsForCustomerOne':'pointsCanBecomeStampsForCustomerMany',{v1:points.toLocaleString('en-SG'),v2:stamps.toLocaleString('en-SG'),v3:customers,v4:leftover.toLocaleString('en-SG')})
           :'No existing points are ready to convert at this rate.';
       }catch(error){
         if(modal.isConnected)preview.textContent='Preview unavailable. You can still start fresh, or try a different rate.';
@@ -23320,8 +23320,475 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   moneyBackRequestDeadlineUnderAcceptedTerms:Object.freeze({en:"Money-back request deadline under your previously accepted terms: {deadlineDate}. It does not reset after plan changes.",'zh-CN':"根据您先前接受的条款，申请退款的截止日期：{deadlineDate}。更换套餐后不会重新计算。",ms:"Tarikh akhir untuk meminta bayaran balik di bawah terma yang anda terima sebelum ini: {deadlineDate}. Ia tidak bermula semula apabila anda menukar pelan."}),
   resumeRenewalNextPaymentAmount:Object.freeze({en:"Resume renewal? Next payment {amount}",'zh-CN':"恢复续费？下次付款 {amount}",ms:"Sambung semula pembaharuan? Bayaran seterusnya {amount}"}),
   youCanResumeUntilDate:Object.freeze({en:"You can resume until {resumeByDate}.",'zh-CN':"您可以在 {resumeByDate} 之前恢复。",ms:"Anda boleh menyambung semula sehingga {resumeByDate}."}),
+  closesTheMostSalesOtherHasBiggestAverageSale:Object.freeze({en:"{topSalesStaffName} closes the most sales ({saleCount}); {topAverageStaffName} has the biggest average sale ({averageSale}){comparisonNote}.",'zh-CN':"{topSalesStaffName} 成交的销售最多（{saleCount} 笔）；{topAverageStaffName} 的每单平均金额最高（{averageSale}）{comparisonNote}。",ms:"{topSalesStaffName} menutup jualan paling banyak ({saleCount}); {topAverageStaffName} mempunyai purata setiap jualan tertinggi ({averageSale}){comparisonNote}."}),
+  deleteCatalogueItemConfirm:Object.freeze({en:"Delete \"{itemName}\"? If nothing uses it, it is removed. If it appears on a past {pastRecordKind}, or in a package, reward, bundle or tier discount, it is switched off instead and kept — so nothing you have already recorded changes.",'zh-CN':"删除「{itemName}」？如果没有任何地方用到它，就会被移除。如果它出现在过去的{pastRecordKind}上，或出现在配套、奖励、捆绑包或等级折扣中，就改为关闭并保留 — 这样您已经记录的内容都不会改变。",ms:"Padam \"{itemName}\"? Jika tiada apa-apa menggunakannya, ia dibuang. Jika ia muncul pada {pastRecordKind} lepas, atau dalam pakej, ganjaran, himpunan atau diskaun peringkat, ia dimatikan dan disimpan — jadi apa yang sudah anda rekodkan tidak berubah."}),
+  billingCycleNotOfferedAtThisCapacity:Object.freeze({en:"{cycle} billing is not offered at this capacity — contact admin.peekaa@gmail.com.",'zh-CN':"此容量不提供{cycle}付款方式 — 请联系 admin.peekaa@gmail.com。",ms:"Pembayaran {cycle} tidak ditawarkan pada kapasiti ini — hubungi admin.peekaa@gmail.com."}),
+  figuresBelowCoverScope:Object.freeze({en:"Figures below cover {scope}. {withheldNotes}",'zh-CN':"以下数字涵盖{scope}。{withheldNotes}",ms:"Angka di bawah meliputi {scope}. {withheldNotes}"}),
+  lastSevenDaysComparedWithNormalWeek:Object.freeze({en:"Last 7 days: {amount}, {comparison} a normal week ({normalAmount}).",'zh-CN':"最近 7 天：{amount}，{comparison}正常的一周（{normalAmount}）。",ms:"7 hari lalu: {amount}, {comparison} minggu biasa ({normalAmount})."}),
+  branchComparedWithNormalWeekOthersTooNew:Object.freeze({en:"{branch}: {comparison} its normal week. The other outlets have too little history to compare.",'zh-CN':"{branch}：{comparison}自己正常的一周。其他分店的记录太少，无法比较。",ms:"{branch}: {comparison} minggu biasanya. Cawangan lain belum cukup rekod untuk dibandingkan."}),
+  dayOfMonthRevenueSoFar:Object.freeze({en:"Day {day} of the month: {amount}.{paceClause}",'zh-CN':"本月第 {day} 天：{amount}。{paceClause}",ms:"Hari {day} bulan ini: {amount}.{paceClause}"}),
+  dayOfMonthRevenueVersusLastMonth:Object.freeze({en:"Day {day} of the month: {amount} versus {lastMonthAmount} at this point last month, {changePhrase} last month.{paceClause}",'zh-CN':"本月第 {day} 天：{amount}，上月同期为 {lastMonthAmount}，比上月{changePhrase}。{paceClause}",ms:"Hari {day} bulan ini: {amount} berbanding {lastMonthAmount} pada masa yang sama bulan lepas, {changePhrase} bulan lepas.{paceClause}"}),
+  ifEveryoneRedeemedTomorrowYouWouldOweAtLeast:Object.freeze({en:"If every customer redeemed tomorrow, you would owe at least {amount}{grantsClause}.",'zh-CN':"如果所有顾客明天都来兑换，您至少要付出 {amount}{grantsClause}。",ms:"Jika semua pelanggan menebus esok, anda perlu membayar sekurang-kurangnya {amount}{grantsClause}."}),
+  slowestDayAndWhereItIsHeading:Object.freeze({en:"{weekday} is your slowest day, and it is {trend}{comparison}.",'zh-CN':"{weekday} 是您生意最少的一天，而且{trend}{comparison}。",ms:"{weekday} ialah hari paling lengang anda, dan keadaannya {trend}{comparison}."}),
+  customerRecordsCreatedBusinessWide:Object.freeze({en:"Customer records created {range} · business-wide",'zh-CN':"{range} 建立的客户记录 · 全商户",ms:"Rekod pelanggan didaftarkan {range} · seluruh perniagaan"}),
+  pointsSpentOnRewardsBusinessWide:Object.freeze({en:"Points spent on rewards {range} · business-wide",'zh-CN':"{range} 用来兑换奖励的积分 · 全商户",ms:"Mata yang digunakan untuk ganjaran {range} · seluruh perniagaan"}),
+  recordedVisitsAndRevenueNotEnoughForTrend:Object.freeze({en:"{where} recorded {visits} {visitWord} and {amount} in this period — not yet enough to call a trend.",'zh-CN':"{where}在这段期间记录了 {visits} {visitWord} 和 {amount} — 还不足以看出趋势。",ms:"{where} merekod {visits} {visitWord} dan {amount} dalam tempoh ini — belum cukup untuk dikira sebagai aliran."}),
+  recordedNoVisitsOrSalesNothingToCompare:Object.freeze({en:"{where} recorded no visits or sales in this period, so there is nothing to compare yet.",'zh-CN':"{where}在这段期间没有到访，也没有销售，所以还没有东西可以比较。",ms:"{where} tidak merekod sebarang kunjungan atau jualan dalam tempoh ini, jadi belum ada apa-apa untuk dibandingkan."}),
+  customersNotVisitedInAtLeast60Days:Object.freeze({en:"{customerCountText} not visited in at least 60 days.",'zh-CN':"{customerCountText} 至少 60 天未到访。",ms:"{customerCountText} tidak berkunjung selama sekurang-kurangnya 60 hari."}),
+  dayRecordedHighestNumberOfValidVisits:Object.freeze({en:"{dayName} recorded the highest number of valid visits.",'zh-CN':"{dayName}记录到的有效到访次数最多。",ms:"{dayName} mencatat bilangan kunjungan sah paling banyak."}),
+  reviewStaffingAndAvailabilityForDay:Object.freeze({en:"Review staffing and availability for {dayName}s.",'zh-CN':"查看{dayName}的人手安排和可预约时间。",ms:"Semak kakitangan dan masa tersedia untuk setiap {dayName}."}),
+  referAFriendRewardAfterQualifyingFirstVisit:Object.freeze({en:"Refer a friend — {rewardAmount} after their qualifying first visit.",'zh-CN':"推荐朋友 — 对方完成首次符合条件的到访后可得 {rewardAmount}。",ms:"Rujuk rakan — {rewardAmount} selepas kunjungan pertama mereka yang layak."}),
+  noUnitEarnedForThisPurchase:Object.freeze({en:"No {unitNoun} earned for this purchase.",'zh-CN':"这笔消费没有获得{unitNoun}。",ms:"Tiada {unitNoun} diperoleh untuk pembelian ini."}),
+  showingSalesPaymentStateNotApplied:Object.freeze({en:"Showing {count} {saleWord} · {period} · payment state could not be read, so it was not applied{workflowNote}",'zh-CN':"显示 {count} 笔销售{saleWord} · {period} · 读不到付款状态，所以这个筛选没有生效{workflowNote}",ms:"Menunjukkan {count} jualan{saleWord} · {period} · keadaan pembayaran tidak dapat dibaca, jadi ia tidak digunakan{workflowNote}"}),
+  decisionAppliedCurrentStatus:Object.freeze({en:"{decisionVerb} applied. Current status: {currentStatus}.",'zh-CN':"{decisionVerb}已生效。目前状态：{currentStatus}。",ms:"{decisionVerb} telah dibuat. Status semasa: {currentStatus}."}),
+  decisionAlreadyAppliedCurrentStatus:Object.freeze({en:"{decisionVerb} was already applied. Current status: {currentStatus}.",'zh-CN':"{decisionVerb}之前已经生效。目前状态：{currentStatus}。",ms:"{decisionVerb} sudah pun dibuat sebelum ini. Status semasa: {currentStatus}."}),
+  decisionCouldNotBeAppliedTeamMemberNotAvailable:Object.freeze({en:"{decision} could not be applied — the team member isn't available at that time, per their schedule. Try \"Change time / staff\" for a different slot.",'zh-CN':"无法执行{decision} — 该团队成员按排班在那个时间没有空。请用「更改时间 / 员工」另选一个时段。",ms:"{decision} tidak dapat dilakukan — ahli pasukan itu tidak lapang pada masa itu, mengikut jadual mereka. Cuba \"Tukar masa / kakitangan\" untuk slot lain."}),
+  decisionCouldNotBeAppliedWithReasonAndStatus:Object.freeze({en:"{decision} could not be applied ({reason}). Current status: {status}.",'zh-CN':"无法执行{decision}（{reason}）。当前状态：{status}。",ms:"{decision} tidak dapat dilakukan ({reason}). Status semasa: {status}."}),
+  couldNotMoveThisRequest:Object.freeze({en:"Could not move this request. {errorMessage}",'zh-CN':"无法改期此请求。{errorMessage}",ms:"Tidak dapat mengalihkan permintaan ini. {errorMessage}"}),
+  customerQrRedemptionIsState:Object.freeze({en:"Customer QR redemption is {state}.",'zh-CN':"顾客二维码兑换{state}。",ms:"Penebusan QR pelanggan {state}."}),
+  customerQrRedemptionIsStateBookingSettingsPreserved:Object.freeze({en:"Customer QR redemption is {state}. Booking and appointment settings were preserved.",'zh-CN':"顾客二维码兑换{state}。预订和预约设置保持不变。",ms:"Penebusan QR pelanggan {state}. Tetapan tempahan dan janji temu dikekalkan."}),
+  thatOfferWasNotMovedToDraftReason:Object.freeze({en:"That offer was not moved to draft ({reason}).",'zh-CN':"该优惠未退回草稿（{reason}）。",ms:"Tawaran itu tidak dialihkan ke draf ({reason})."}),
+  workspaceHasNoLoyaltyModuleNothingToManage:Object.freeze({en:"This workspace does not include the loyalty module, so there is no {programmeName} to manage.",'zh-CN':"这个工作区不包含忠诚度模块，所以没有{programmeName}可以管理。",ms:"Ruang kerja ini tidak termasuk modul kesetiaan, jadi tiada {programmeName} untuk diurus."}),
+  turnProgrammeOffForCustomers:Object.freeze({en:"Turn {programmeName} off for customers?",'zh-CN':"要为顾客关闭{programmeName}吗？",ms:"Matikan {programmeName} untuk pelanggan?"}),
+  tiersAreEarnedByNow:Object.freeze({en:"Tiers are earned by {basisWord} now.",'zh-CN':"现在等级按{basisWord}计算。",ms:"Tahap kini diperoleh mengikut {basisWord}."}),
+  referralsCouldNotBeTurnedOnOff:Object.freeze({en:"Referrals could not be turned {onOff} — {errorMessage}",'zh-CN':"推荐功能无法设为{onOff} — {errorMessage}",ms:"Rujukan tidak dapat ditetapkan {onOff} — {errorMessage}"}),
+  enterHowManyUnitsThisRewardCosts:Object.freeze({en:"Enter how many {unit} this reward costs.",'zh-CN':"请输入这份奖励需要多少{unit}。",ms:"Masukkan berapa banyak {unit} yang diperlukan untuk ganjaran ini."}),
+  enterHowManyUnitsCustomerNeedsForThisTier:Object.freeze({en:"Enter how many {unit} a customer needs for this tier.",'zh-CN':"请输入顾客达到此等级需要多少{unit}。",ms:"Masukkan berapa banyak {unit} yang diperlukan pelanggan untuk peringkat ini."}),
+  cardCustomersSeeIsThisLong:Object.freeze({en:"The card customers see is {stampCountWithUnit} long — your last milestone.",'zh-CN':"顾客看到的卡片有 {stampCountWithUnit} 那么长 — 也就是您最后一个里程碑。",ms:"Kad yang pelanggan lihat panjangnya {stampCountWithUnit} — pencapaian terakhir anda."}),
+  pauseStoredValueIntro:Object.freeze({en:"Immediately stop {scope} for stored value. History is kept; only new operations of this kind are stopped. Record why.",'zh-CN':"立即停止储值的{scope}。历史记录会保留；只有这一类的新操作会被停止。请记录原因。",ms:"Hentikan {scope} untuk nilai tersimpan serta-merta. Sejarah dikekalkan; hanya operasi baharu jenis ini dihentikan. Catat sebabnya."}),
+  liftStoredValuePauseIntro:Object.freeze({en:"Lift the pause on {scope}. That operation family can run again once lifted (still only when authority is live, which is not possible in this phase). Record why it is safe to lift.",'zh-CN':"解除对{scope}的暂停。解除后这一类操作可以再次运行（仍需权限处于生效状态，而本阶段做不到）。请记录为什么可以安全解除。",ms:"Angkat jeda pada {scope}. Kumpulan operasi itu boleh berjalan semula selepas diangkat (masih hanya apabila kuasa aktif, yang tidak mungkin dalam fasa ini). Catat sebab ia selamat untuk diangkat."}),
+  ownerOnlyChangesAccessAndBilling:Object.freeze({en:"{pageName} changes who can do what and what the business is charged for, so it is kept to the owner account. Ask the owner if something here needs to change.",'zh-CN':"{pageName}会决定谁能做什么，以及商户需要支付哪些费用，因此只限店主账户使用。如果这里有需要更改的地方，请询问店主。",ms:"{pageName} mengubah siapa boleh buat apa dan apa yang perniagaan perlu bayar, jadi ia dikhaskan untuk akaun pemilik. Tanya pemilik jika ada sesuatu di sini yang perlu diubah."}),
+  markBottleRetrievedLeavesShelfForGood:Object.freeze({en:"Mark {bottleName} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.",'zh-CN':"将 {bottleName} 标记为已取走？酒已被顾客带走，因此会永久离开存放架和他们的应用。",ms:"Tandakan {bottleName} sebagai Diambil? Ia telah keluar bersama pelanggan, jadi ia meninggalkan rak dan aplikasi mereka untuk selamanya."}),
+  bottleStopsBeingTracked:Object.freeze({en:"{bottleName} stops being tracked.",'zh-CN':"{bottleName} 将不再被追踪。",ms:"{bottleName} berhenti dijejaki."}),
+  switchPackageOffBuyersKeepSessions:Object.freeze({en:"Switch \"{packageName}\" off? Staff can no longer sell it at Record sale. Customers who already bought it keep every session they paid for, and you can switch it back on at any time.",'zh-CN':"关闭“{packageName}”？员工将无法再在「记录销售」中销售它。已经购买的顾客仍保留他们付费的全部次数，您也随时可以重新开启。",ms:"Matikan \"{packageName}\"? Kakitangan tidak boleh lagi menjualnya di Rekod jualan. Pelanggan yang sudah membelinya mengekalkan setiap sesi yang mereka bayar, dan anda boleh menghidupkannya semula pada bila-bila masa."}),
+  packageSoldButUsableAtEveryBranch:Object.freeze({en:"The package was sold, but it is usable at every branch: {problem}",'zh-CN':"配套已售出，但它在每家分店都可以使用：{problem}",ms:"Pakej itu telah dijual, tetapi ia boleh digunakan di setiap cawangan: {problem}"}),
+  topAgeBand:Object.freeze({en:"Top age band {band}",'zh-CN':"最多的年龄段 {band}",ms:"Kumpulan umur teratas {band}"}),
+  attributeKnownForCustomers:Object.freeze({en:"{label} known for {knownCount} of {totalCount} customers.",'zh-CN':"{totalCount} 位顾客中，有 {knownCount} 位知道{label}。",ms:"{label} diketahui bagi {knownCount} daripada {totalCount} pelanggan."}),
+  yourWidestPermissionTodayIsChannel:Object.freeze({en:"Your widest permission today is {channel}.",'zh-CN':"目前获得许可最多的渠道是{channel}。",ms:"Saluran dengan kebenaran paling banyak hari ini ialah {channel}."}),
+  mostlyCrowdOnlySomeBuyersGaveDetailsTooFew:Object.freeze({en:"Mostly {crowdWords} (only {toldCount} of {buyerCount} buyers told you their details — too few to be sure)",'zh-CN':"大多是 {crowdWords}（{buyerCount} 位购买者中只有 {toldCount} 位告诉您他们的资料 — 太少了，无法确定）",ms:"Kebanyakannya {crowdWords} (hanya {toldCount} daripada {buyerCount} pembeli memberitahu anda butiran mereka — terlalu sedikit untuk dipastikan)"}),
+  mostlyCrowdTooFewBuyersGaveDetails:Object.freeze({en:"Mostly {crowdWords} (too few buyers told you their details to be sure)",'zh-CN':"大多是 {crowdWords}（告诉您资料的购买者太少，无法确定）",ms:"Kebanyakannya {crowdWords} (terlalu sedikit pembeli memberitahu anda butiran mereka untuk dipastikan)"}),
+  mostlyCrowdSomeOfBuyers:Object.freeze({en:"Mostly {crowdWords} · {toldCount} of {buyerCount} buyers",'zh-CN':"大多是 {crowdWords} · {buyerCount} 位购买者中的 {toldCount} 位",ms:"Kebanyakannya {crowdWords} · {toldCount} daripada {buyerCount} pembeli"}),
+  mostBuyersOfItemAre:Object.freeze({en:"Most {itemName} buyers are {crowdWords}.",'zh-CN':"购买「{itemName}」的顾客大多是 {crowdWords}。",ms:"Kebanyakan pembeli {itemName} ialah {crowdWords}."}),
+  dayNameIsYourQuietestDay:Object.freeze({en:"{dayName} is your quietest day.",'zh-CN':"{dayName} 是您最清闲的一天。",ms:"{dayName} ialah hari paling lengang anda."}),
+  deleteTeammateRecordCompletelyUseDeactivateInstead:Object.freeze({en:"Delete {teammateName}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.",'zh-CN':"彻底删除 {teammateName} 的记录？此操作只用于误加的同事。如果他们在这里工作过，请按「取消」，改用「停用」 — 那样会保留他们的历史记录。",ms:"Padam rekod {teammateName} sepenuhnya? Ini hanya untuk rakan sepasukan yang tersilap ditambah. Jika mereka pernah bekerja di sini, tekan Batal dan guna Nyahaktifkan sebaliknya — itu menyimpan sejarah mereka."}),
+  lastCheckNeverRecordedSaleOrAppointmentDeleteForGood:Object.freeze({en:"Last check: {teammateName} has never recorded a sale or an appointment. Delete the record for good?",'zh-CN':"最后确认：{teammateName} 从未记录过任何销售或预约。要永久删除这条记录吗？",ms:"Semakan terakhir: {teammateName} tidak pernah merekod sebarang jualan atau janji temu. Padam rekod ini untuk selamanya?"}),
+  inviteCreatedLinkCopiedForRole:Object.freeze({en:"Invite created — link copied for {roleName}",'zh-CN':"邀请已创建 — 已复制 {roleName} 的链接",ms:"Jemputan dibuat — pautan disalin untuk {roleName}"}),
+  billingFootnoteGstNotChargedStaffIncluded:Object.freeze({en:"{refundSentence} GST not charged. Staff access included — staff count never changes this price. Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · admin.peekaa@gmail.com",'zh-CN':"{refundSentence} 不收取消费税。已包含员工使用权限 — 员工人数不会改变此价格。由 NESTLY TECHNOLOGIES PTE. LTD. 开具账单 · UEN 202634502E · 未登记消费税 · admin.peekaa@gmail.com",ms:"{refundSentence} GST tidak dikenakan. Akses kakitangan disertakan — bilangan kakitangan tidak pernah mengubah harga ini. Bil dikeluarkan oleh NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Tidak berdaftar GST · admin.peekaa@gmail.com"}),
+  discountCameOffYourFirstPayment:Object.freeze({en:"{discountAmount} came off your first payment.",'zh-CN':"{discountAmount} 已从您的首期付款中扣除。",ms:"{discountAmount} telah ditolak daripada pembayaran pertama anda."}),
+  discountSavedButNotOnCardYet:Object.freeze({en:"{discount} is saved against your account, but it has not reached your card yet. Peekaa is on it — you will not be charged the full amount without it.",'zh-CN':"{discount} 已记在您的账户上，但还没有到您的银行卡上。Peekaa 正在处理 — 优惠没用上之前，不会向您收取全额。",ms:"{discount} disimpan pada akaun anda, tetapi ia belum sampai ke kad anda. Peekaa sedang menguruskannya — anda tidak akan dicaj jumlah penuh tanpa potongan itu."}),
+  discountOnNextPaymentSettingUpOnCard:Object.freeze({en:"{discount} your next payment. Setting it up on your card now.",'zh-CN':"下次付款可享 {discount}。正在您的银行卡上设置。",ms:"{discount} untuk bayaran anda yang seterusnya. Sedang disediakan pada kad anda sekarang."}),
+  discountOnNextPaymentSetUpOnCard:Object.freeze({en:"{discount} your next payment. It is set up on your card.",'zh-CN':"下次付款可享 {discount}。已在您的银行卡上设置好。",ms:"{discount} untuk bayaran anda yang seterusnya. Ia sudah disediakan pada kad anda."}),
+  discountOnFirstPaymentAppliedWhenTaken:Object.freeze({en:"{discount} your first payment. It is applied when that payment is taken.",'zh-CN':"首次付款可享 {discount}。在收取该笔付款时扣除。",ms:"{discount} untuk pembayaran pertama anda. Ia ditolak apabila bayaran itu diambil."}),
+  percentMorePointsOnEverySpend:Object.freeze({en:"{percent}% more points on every spend",'zh-CN':"每次消费多得 {percent}% 积分",ms:"{percent}% lebih mata pada setiap perbelanjaan"}),
+  percentOffEveryVisit:Object.freeze({en:"{percent}% off every visit",'zh-CN':"每次到访享 {percent}% 折扣",ms:"Diskaun {percent}% pada setiap lawatan"}),
+  quietestStretchHours:Object.freeze({en:"quietest stretch {from}–{to} ({percent}% of visits)",'zh-CN':"最清闲的时段 {from}–{to}（占到访的 {percent}%）",ms:"waktu paling lengang {from}–{to} ({percent}% daripada lawatan)"}),
+  percentOfVisitsNowVersusTwelveWeeksAgo:Object.freeze({en:"({now}% of visits now versus {before}% twelve weeks ago)",'zh-CN':"（现在占到访的 {now}%，十二周前为 {before}%）",ms:"({now}% daripada lawatan kini berbanding {before}% dua belas minggu lalu)"}),
+  andCountActivatedTheirBirthdayReward:Object.freeze({en:", {count} activated their birthday reward",'zh-CN':"，其中 {count} 位启用了生日奖励",ms:", {count} mengaktifkan ganjaran hari lahir mereka"}),
+  staffEarnsMostPerRosteredHour:Object.freeze({en:"{staff} earns the most per rostered hour ({amount})",'zh-CN':"{staff} 每个排班小时的产出最高（{amount}）",ms:"{staff} memperoleh paling banyak setiap jam bertugas ({amount})"}),
+  andStaffEarnsTheLeast:Object.freeze({en:"; {staff} earns the least ({amount})",'zh-CN':"；{staff} 最低（{amount}）",ms:"; {staff} memperoleh paling sedikit ({amount})"}),
+  comparedWithSameSevenDaysLastWeek:Object.freeze({en:", {direction} the same 7 days last week ({amount})",'zh-CN':"，与上周同样的 7 天相比{direction}（{amount}）",ms:", {direction} 7 hari yang sama minggu lalu ({amount})"}),
+  amountAMonthAtStake:Object.freeze({en:"{amount} a month at stake",'zh-CN':"每月有 {amount} 面临风险",ms:"{amount} sebulan dipertaruhkan"}),
+  weekdayIsYourBusiestDay:Object.freeze({en:"{weekday} is your busiest day",'zh-CN':"{weekday} 是您最忙的一天",ms:"{weekday} ialah hari paling sibuk anda"}),
+  oneStampForEveryAmountSpent:Object.freeze({en:"1 stamp for every {amount} spent",'zh-CN':"每消费 {amount} 得 1 个印章",ms:"1 setem bagi setiap {amount} dibelanjakan"}),
+  completedCardIsUsedStampsNotDeducted:Object.freeze({en:"{reward} — a completed card is used, stamps are not deducted",'zh-CN':"{reward} — 使用一张已集满的卡，不会扣除印章",ms:"{reward} — kad yang lengkap digunakan, setem tidak ditolak"}),
+  nowPointsTotal:Object.freeze({en:"· now {points} points total",'zh-CN':"· 现在共 {points} 积分",ms:"· kini {points} mata kesemuanya"}),
+  pointsPerOneDollarSpent:Object.freeze({en:"{points} points per $1 spent",'zh-CN':"每消费 $1 得 {points} 积分",ms:"{points} mata bagi setiap $1 dibelanjakan"}),
+  amountForNewSignUps:Object.freeze({en:"{amount} for new sign-ups",'zh-CN':"新注册可得 {amount}",ms:"{amount} untuk pendaftaran baharu"}),
+  amountToTheReferrer:Object.freeze({en:"{amount} to the referrer",'zh-CN':"推荐人可得 {amount}",ms:"{amount} kepada perujuk"}),
+  amountToReferrerAmountToFriend:Object.freeze({en:"{referrer} to the referrer, {friend} to the friend",'zh-CN':"推荐人可得 {referrer}，朋友可得 {friend}",ms:"{referrer} kepada perujuk, {friend} kepada rakan"}),
+  programmeIsNotSetUpYet:Object.freeze({en:"{programme} is not set up yet",'zh-CN':"{programme} 还没有设置",ms:"{programme} belum disediakan"}),
+  daysBeforeToDaysAfterTheirBirthday:Object.freeze({en:"{before} days before to {after} days after their birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"{before} hari sebelum hingga {after} hari selepas hari lahir mereka"}),
+  daysAfterTheyJoin:Object.freeze({en:"{days} days after they join",'zh-CN':"加入后 {days} 天",ms:"{days} hari selepas mereka menyertai"}),
+  amountEachTimeThisRuleGivesIt:Object.freeze({en:"{amount} each time this rule gives it",'zh-CN':"这条规则每次发放时为 {amount}",ms:"{amount} setiap kali peraturan ini memberikannya"}),
+  percentOffTheBill:Object.freeze({en:"{percent}% off the bill",'zh-CN':"账单享 {percent}% 折扣",ms:"Diskaun {percent}% pada bil"}),
+  listValueNoDiscount:Object.freeze({en:"{amount} list value · no discount",'zh-CN':"标价 {amount} · 无折扣",ms:"Nilai tersenarai {amount} · tiada diskaun"}),
+  listValueSaveAmountPercentOff:Object.freeze({en:"{listAmount} list value · save {saved} ({percent}% off)",'zh-CN':"标价 {listAmount} · 省下 {saved}（{percent}% 折扣）",ms:"Nilai tersenarai {listAmount} · jimat {saved} (diskaun {percent}%)"}),
+  listValueAboveListPercent:Object.freeze({en:"{listAmount} list value · {above} above list ({percent}%)",'zh-CN':"标价 {listAmount} · 高于标价 {above}（{percent}%）",ms:"Nilai tersenarai {listAmount} · {above} melebihi senarai ({percent}%)"}),
+  aboveListPricePercentPremium:Object.freeze({en:"{above} above list price · {percent}% premium",'zh-CN':"高于标价 {above} · 溢价 {percent}%",ms:"{above} melebihi harga senarai · premium {percent}%"}),
+  itemIsNoLongerForSale:Object.freeze({en:"“{itemName}” is no longer for sale",'zh-CN':"「{itemName}」已不再销售",ms:"“{itemName}” tidak lagi dijual"}),
+  countStoppingAtTheBillingDate:Object.freeze({en:"· {count} stopping at the billing date",'zh-CN':"· {count} 个将在结算日停止",ms:"· {count} berhenti pada tarikh pengebilan"}),
+  valueTooFewToSay:Object.freeze({en:"{value} — too few to say",'zh-CN':"{value} — 数量太少，无法判断",ms:"{value} — terlalu sedikit untuk dinilai"}),
+  vsPreviousDaysNoChange:Object.freeze({en:"vs the previous {days} days: no change",'zh-CN':"与前 {days} 天相比：没有变化",ms:"berbanding {days} hari sebelumnya: tiada perubahan"}),
+  cameBackWithinDaysCount:Object.freeze({en:"came back within {days} days",'zh-CN':"在 {days} 天内回头",ms:"kembali dalam {days} hari"}),
+  biggestCategoryCustomerContributesPercent:Object.freeze({en:"your biggest {category} customer contributes about {percent}% of that category",'zh-CN':"您在「{category}」上最大的顾客贡献了该分类约 {percent}%",ms:"pelanggan {category} terbesar anda menyumbang kira-kira {percent}% daripada kategori itu"}),
+  categoryMakesUpPercentOfSortedMoney:Object.freeze({en:"{category} makes up {percent}% of the money you’ve sorted into categories",'zh-CN':"{category} 占您已分类金额的 {percent}%",ms:"{category} membentuk {percent}% daripada wang yang telah anda susun mengikut kategori"}),
+  categoryBringsMoreMoneyPerVisitThan:Object.freeze({en:"{better} brings in more money per visit than {worse}",'zh-CN':"{better} 每次到访带来的收入高于 {worse}",ms:"{better} membawa lebih banyak wang setiap lawatan berbanding {worse}"}),
+  firstTimeCustomersCameBackForSecondVisit:Object.freeze({en:"{returned} of {total} first-time customers came back for a second visit",'zh-CN':"{total} 位首次到访的顾客中，有 {returned} 位回来了第二次",ms:"{returned} daripada {total} pelanggan kali pertama kembali untuk lawatan kedua"}),
+  serviceBringsPeopleInButFewBuyAgain:Object.freeze({en:"{service} brings people in, but few of them buy it again",'zh-CN':"{service} 能吸引顾客上门，但很少有人再买第二次",ms:"{service} membawa orang masuk, tetapi sedikit sahaja yang membelinya lagi"}),
+  percentOfRewardsLandOnVisitsAlreadyDue:Object.freeze({en:"{percent}% of {programme} rewards land on visits that were already due",'zh-CN':"{programme} 奖励中有 {percent}% 落在本来就该到访的行程上",ms:"{percent}% daripada ganjaran {programme} jatuh pada lawatan yang memang sudah dijangka"}),
+  staffEarnsLessThanAverageOnSameServices:Object.freeze({en:"{staff} earns less than your own average on the same services",'zh-CN':"在相同的服务上，{staff} 的产出低于您自己的平均水平",ms:"{staff} memperoleh kurang daripada purata anda sendiri bagi perkhidmatan yang sama"}),
+  customersSentCampaignBoughtAfterwards:Object.freeze({en:"{bought} of {sent} customers sent a campaign bought something afterwards",'zh-CN':"收到活动的 {sent} 位顾客中，有 {bought} 位事后购买了东西",ms:"{bought} daripada {sent} pelanggan yang dihantar kempen membeli sesuatu selepas itu"}),
+  groupDidWorseInSecondHalf:Object.freeze({en:"{group} did worse in the second half of the period than the first",'zh-CN':"{group} 在本期间的后半段表现不如前半段",ms:"{group} menunjukkan prestasi lebih buruk pada separuh kedua tempoh berbanding separuh pertama"}),
+  weekdayIsYourStrongestDay:Object.freeze({en:"{weekday} is your strongest day",'zh-CN':"{weekday} 是您表现最好的一天",ms:"{weekday} ialah hari terkuat anda"}),
+  itemLeadsEverythingElseYouSell:Object.freeze({en:"{item} leads everything else you sell",'zh-CN':"{item} 领先于您售卖的其他一切",ms:"{item} mendahului segala yang lain anda jual"}),
+  serviceIsYourBestSelling:Object.freeze({en:"{service} is your best-selling service",'zh-CN':"{service} 是您最畅销的服务",ms:"{service} ialah perkhidmatan paling laris anda"}),
+  amountNotYetCollected:Object.freeze({en:"{amount} not yet collected",'zh-CN':"还有 {amount} 未收款",ms:"{amount} belum dikutip"}),
+  percentOfRevenueSortedIntoCategories:Object.freeze({en:"{percent}% of revenue is sorted into categories",'zh-CN':"{percent}% 的营收已分类",ms:"{percent}% daripada hasil disusun mengikut kategori"}),
+  theComparedPeriodFromTo:Object.freeze({en:"the compared period ({from} to {to})",'zh-CN':"比较期间（{from} 至 {to}）",ms:"tempoh yang dibandingkan ({from} hingga {to})"}),
+  staffCanNowSignIn:Object.freeze({en:"{staff} can now sign in",'zh-CN':"{staff} 现在可以登录了",ms:"{staff} kini boleh log masuk"}),
+  branchStaysOnYourPlan:Object.freeze({en:"{branch} stays on your plan",'zh-CN':"{branch} 会保留在您的方案中",ms:"{branch} kekal dalam pelan anda"}),
+  branchStaysOnAndRenewsWithYourPlan:Object.freeze({en:"{branch} stays on and renews with your plan",'zh-CN':"{branch} 会保留，并随您的方案一起续订",ms:"{branch} kekal dan diperbaharui bersama pelan anda"}),
+  isSwitchedOffAndKeptRecordOne:Object.freeze({en:"\"{v1}\" is switched off and kept — {v2} record still refer to it",'zh-CN':"「{v1}」已停用并保留 — 仍有 {v2} 条记录引用它",ms:"“{v1}” dimatikan dan dikekalkan — {v2} rekod masih merujuk kepadanya"}),
+  isSwitchedOffAndKeptRecordMany:Object.freeze({en:"\"{v1}\" is switched off and kept — {v2} records still refer to it",'zh-CN':"「{v1}」已停用并保留 — 仍有 {v2} 条记录引用它",ms:"“{v1}” dimatikan dan dikekalkan — {v2} rekod masih merujuk kepadanya"}),
+  pointsCanBecomeStampsForCustomerOne:Object.freeze({en:"{v1} points can become {v2} stamps for {v3} customer. {v4} points stay saved.",'zh-CN':"{v1} 积分可以换成 {v2} 个印章，适用于 {v3} 位顾客。{v4} 积分会保留。",ms:"{v1} mata boleh menjadi {v2} setem untuk {v3} pelanggan. {v4} mata kekal tersimpan."}),
+  pointsCanBecomeStampsForCustomerMany:Object.freeze({en:"{v1} points can become {v2} stamps for {v3} customers. {v4} points stay saved.",'zh-CN':"{v1} 积分可以换成 {v2} 个印章，适用于 {v3} 位顾客。{v4} 积分会保留。",ms:"{v1} mata boleh menjadi {v2} setem untuk {v3} pelanggan. {v4} mata kekal tersimpan."}),
+  isWaitingForPaymentSoItsNamed:Object.freeze({en:"{named} is waiting for payment, so its reports are not available yet.",'zh-CN':"{named} 正在等待付款，因此暂时无法查看它的报告。",ms:"{named} sedang menunggu pembayaran, jadi laporannya belum tersedia."}),
+  isWaitingForPaymentSoItsUnnamed:Object.freeze({en:"This branch is waiting for payment, so its reports are not available yet.",'zh-CN':"本分店正在等待付款，因此暂时无法查看它的报告。",ms:"Cawangan ini sedang menunggu pembayaran, jadi laporannya belum tersedia."}),
+  isSwitchedOffSoItsReportsNamed:Object.freeze({en:"{named} is switched off, so its reports are not available.",'zh-CN':"{named} 已关闭，因此无法查看它的报告。",ms:"{named} dimatikan, jadi laporannya tidak tersedia."}),
+  isSwitchedOffSoItsReportsUnnamed:Object.freeze({en:"This branch is switched off, so its reports are not available.",'zh-CN':"本分店已关闭，因此无法查看它的报告。",ms:"Cawangan ini dimatikan, jadi laporannya tidak tersedia."}),
+  activeRewardWasNeverRedeemedOne:Object.freeze({en:"{v1} active reward was never redeemed.",'zh-CN':"有 {v1} 份有效奖励从未被兑换。",ms:"{v1} ganjaran aktif tidak pernah ditebus."}),
+  activeRewardWasNeverRedeemedMany:Object.freeze({en:"{v1} active rewards were never redeemed.",'zh-CN':"有 {v1} 份有效奖励从未被兑换。",ms:"{v1} ganjaran aktif tidak pernah ditebus."}),
+  plusUnredeemedRewardGrantNotCountedOne:Object.freeze({en:"plus {v1} unredeemed reward grant not counted in that figure",'zh-CN':"另有 {v1} 笔未兑换的奖励发放未计入该数字",ms:"serta {v1} pemberian ganjaran belum ditebus yang tidak dikira dalam angka itu"}),
+  plusUnredeemedRewardGrantNotCountedMany:Object.freeze({en:"plus {v1} unredeemed reward grants not counted in that figure",'zh-CN':"另有 {v1} 笔未兑换的奖励发放未计入该数字",ms:"serta {v1} pemberian ganjaran belum ditebus yang tidak dikira dalam angka itu"}),
+  gaveTheMostDiscountsAcrossLineOne:Object.freeze({en:"{v1} gave the most discounts: {v2} across {v3} line ({v4} total).",'zh-CN':"{v1} 给出的折扣最多：{v3} 个项目共 {v2}（合计 {v4}）。",ms:"{v1} memberikan diskaun paling banyak: {v2} merentas {v3} baris ({v4} kesemuanya)."}),
+  gaveTheMostDiscountsAcrossLineMany:Object.freeze({en:"{v1} gave the most discounts: {v2} across {v3} lines ({v4} total).",'zh-CN':"{v1} 给出的折扣最多：{v3} 个项目共 {v2}（合计 {v4}）。",ms:"{v1} memberikan diskaun paling banyak: {v2} merentas {v3} baris ({v4} kesemuanya)."}),
+  customerHasABirthdayThisMonthOne:Object.freeze({en:"{v1} customer has a birthday this month{v2}.",'zh-CN':"本月有 {v1} 位顾客过生日{v2}。",ms:"{v1} pelanggan menyambut hari lahir bulan ini{v2}."}),
+  customerHasABirthdayThisMonthMany:Object.freeze({en:"{v1} customers have a birthday this month{v2}.",'zh-CN':"本月有 {v1} 位顾客过生日{v2}。",ms:"{v1} pelanggan menyambut hari lahir bulan ini{v2}."}),
+  caseOfACustomerRedeemingRewardsOne:Object.freeze({en:"{v1} case of a customer redeeming 3+ rewards in one day",'zh-CN':"有 {v1} 次顾客在一天内兑换了 3 份或更多奖励",ms:"{v1} kes pelanggan menebus 3+ ganjaran dalam satu hari"}),
+  caseOfACustomerRedeemingRewardsMany:Object.freeze({en:"{v1} cases of a customer redeeming 3+ rewards in one day",'zh-CN':"有 {v1} 次顾客在一天内兑换了 3 份或更多奖励",ms:"{v1} kes pelanggan menebus 3+ ganjaran dalam satu hari"}),
+  issuedOfManualRedemptionsNamed:Object.freeze({en:"{named} issued {v1}% of manual redemptions",'zh-CN':"{named} 发出了 {v1}% 的手动兑换",ms:"{named} mengeluarkan {v1}% daripada penebusan manual"}),
+  issuedOfManualRedemptionsUnnamed:Object.freeze({en:"a staff login issued {v1}% of manual redemptions",'zh-CN':"某个员工账号发出了 {v1}% 的手动兑换",ms:"Satu log masuk kakitangan mengeluarkan {v1}% daripada penebusan manual"}),
+  caseOfACustomerBuyingAtOne:Object.freeze({en:"{v1} case of a customer buying at 3+ branches in one day",'zh-CN':"有 {v1} 次顾客在一天内于 3 家或更多分店消费",ms:"{v1} kes pelanggan membeli di 3+ cawangan dalam satu hari"}),
+  caseOfACustomerBuyingAtMany:Object.freeze({en:"{v1} cases of a customer buying at 3+ branches in one day",'zh-CN':"有 {v1} 次顾客在一天内于 3 家或更多分店消费",ms:"{v1} kes pelanggan membeli di 3+ cawangan dalam satu hari"}),
+  staffMemberIsAttributedSalesInOne:Object.freeze({en:"{v1} staff member is attributed sales in the window.",'zh-CN':"本时段内有 {v1} 位团队成员被归属了销售。",ms:"{v1} ahli kakitangan dikaitkan dengan jualan dalam tetingkap ini."}),
+  staffMemberIsAttributedSalesInMany:Object.freeze({en:"{v1} staff members are attributed sales in the window.",'zh-CN':"本时段内有 {v1} 位团队成员被归属了销售。",ms:"{v1} ahli kakitangan dikaitkan dengan jualan dalam tetingkap ini."}),
+  hasAboutDayOfStockLeftOne:Object.freeze({en:"\"{v1}\" has about {v2} day of stock left at the current rate{v3}.",'zh-CN':"按目前的速度，「{v1}」大约还剩 {v2} 天的库存{v3}。",ms:"“{v1}” mempunyai kira-kira {v2} hari stok berbaki pada kadar semasa{v3}."}),
+  hasAboutDayOfStockLeftMany:Object.freeze({en:"\"{v1}\" has about {v2} days of stock left at the current rate{v3}.",'zh-CN':"按目前的速度，「{v1}」大约还剩 {v2} 天的库存{v3}。",ms:"“{v1}” mempunyai kira-kira {v2} hari stok berbaki pada kadar semasa{v3}."}),
+  bookingInTheNextDaysOne:Object.freeze({en:"{v1} booking in the next 7 days",'zh-CN':"未来 7 天有 {v1} 个预订",ms:"{v1} tempahan dalam 7 hari akan datang"}),
+  bookingInTheNextDaysMany:Object.freeze({en:"{v1} bookings in the next 7 days",'zh-CN':"未来 7 天有 {v1} 个预订",ms:"{v1} tempahan dalam 7 hari akan datang"}),
+  visitNoNormalWeekToCompareOne:Object.freeze({en:"{v1} visit · no normal week to compare yet",'zh-CN':"{v1} 次到访 · 还没有正常周可供比较",ms:"{v1} lawatan · tiada minggu biasa untuk dibandingkan lagi"}),
+  visitNoNormalWeekToCompareMany:Object.freeze({en:"{v1} visits · no normal week to compare yet",'zh-CN':"{v1} 次到访 · 还没有正常周可供比较",ms:"{v1} lawatan · tiada minggu biasa untuk dibandingkan lagi"}),
+  notEnoughActivityAtYetNamed:Object.freeze({en:"Not enough activity at {named} yet",'zh-CN':"{named} 的活动还不够多",ms:"Aktiviti di {named} belum mencukupi"}),
+  notEnoughActivityAtYetUnnamed:Object.freeze({en:"Not enough activity at this branch yet",'zh-CN':"本分店的活动还不够多",ms:"Aktiviti di cawangan ini belum mencukupi"}),
+  weMissYouCanReturnForNamed:Object.freeze({en:"We miss you. {named} can return for the latest rewards and offers.",'zh-CN':"我们很想念您。{named} 可以回来领取最新的奖励和优惠。",ms:"Kami rindukan anda. {named} boleh kembali untuk ganjaran dan tawaran terkini."}),
+  weMissYouCanReturnForUnnamed:Object.freeze({en:"We miss you. Selected customers can return for the latest rewards and offers.",'zh-CN':"我们很想念您。所选顾客可以回来领取最新的奖励和优惠。",ms:"Kami rindukan anda. Pelanggan terpilih boleh kembali untuk ganjaran dan tawaran terkini."}),
+  isReadyNowNamed:Object.freeze({en:"{named} is ready now",'zh-CN':"{named} 现在可以领取了",ms:"{named} sedia sekarang"}),
+  isReadyNowUnnamed:Object.freeze({en:"Reward is ready now",'zh-CN':"奖励现在可以领取了",ms:"Ganjaran sedia sekarang"}),
+  theCounterAboveIsAuthoritativeSessionOne:Object.freeze({en:"The counter above is authoritative. {v1} session has been used; {v2} matching sales are visible to you here.",'zh-CN':"以上方的计数为准。已使用 {v1} 次；您在这里能看到 {v2} 笔对应的销售。",ms:"Kaunter di atas adalah muktamad. {v1} sesi telah digunakan; {v2} jualan sepadan kelihatan kepada anda di sini."}),
+  theCounterAboveIsAuthoritativeSessionMany:Object.freeze({en:"The counter above is authoritative. {v1} sessions have been used; {v2} matching sales are visible to you here.",'zh-CN':"以上方的计数为准。已使用 {v1} 次；您在这里能看到 {v2} 笔对应的销售。",ms:"Kaunter di atas adalah muktamad. {v1} sesi telah digunakan; {v2} jualan sepadan kelihatan kepada anda di sini."}),
+  wasAlreadyGivenNamed:Object.freeze({en:"\"{named}\" was already given",'zh-CN':"「{named}」已经发放过了",ms:"“{named}” telah pun diberikan"}),
+  wasAlreadyGivenUnnamed:Object.freeze({en:"\"This reward\" was already given",'zh-CN':"这份奖励已经发放过了",ms:"Ganjaran ini telah pun diberikan"}),
+  inTheDayBeforeYourBirthdayOne:Object.freeze({en:"in the {v1} day before your birthday",'zh-CN':"在生日前的 {v1} 天内",ms:"dalam {v1} hari sebelum hari lahir anda"}),
+  inTheDayBeforeYourBirthdayMany:Object.freeze({en:"in the {v1} days before your birthday",'zh-CN':"在生日前的 {v1} 天内",ms:"dalam {v1} hari sebelum hari lahir anda"}),
+  withinDayAfterYourBirthdayOne:Object.freeze({en:"within {v1} day after your birthday",'zh-CN':"在生日后的 {v1} 天内",ms:"dalam {v1} hari selepas hari lahir anda"}),
+  withinDayAfterYourBirthdayMany:Object.freeze({en:"within {v1} days after your birthday",'zh-CN':"在生日后的 {v1} 天内",ms:"dalam {v1} hari selepas hari lahir anda"}),
+  uCUDStopsBeingNamed:Object.freeze({en:"\\u201C{named}\\u201D stops being awarded to customers.",'zh-CN':"「{named}」将不再发放给顾客。",ms:"“{named}” berhenti diberikan kepada pelanggan."}),
+  uCUDStopsBeingUnnamed:Object.freeze({en:"\\u201CThis tier\\u201D stops being awarded to customers.",'zh-CN':"该等级将不再发放给顾客。",ms:"Peringkat ini berhenti diberikan kepada pelanggan."}),
+  useWithinDayOne:Object.freeze({en:"· Use within {v1} day",'zh-CN':"· 请在 {v1} 天内使用",ms:"· Guna dalam {v1} hari"}),
+  useWithinDayMany:Object.freeze({en:"· Use within {v1} days",'zh-CN':"· 请在 {v1} 天内使用",ms:"· Guna dalam {v1} hari"}),
+  giftOnThisCardChangesApplyOne:Object.freeze({en:"{v1} gift on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.",'zh-CN':"这张卡上有 {v1} 份礼物。改动只对新的集章卡生效 — 已经在集章的顾客会保留他们当前的卡片、奖励和赚取规则。您的改动会在他们完成或过期当前卡片后生效。",ms:"{v1} hadiah pada kad ini. Perubahan hanya digunakan pada Kad Setem baharu — pelanggan yang sedang mengumpul setem akan mengekalkan kad semasa, ganjaran dan peraturan perolehan mereka. Perubahan anda digunakan apabila mereka menyelesaikan atau meluputkan kad semasa mereka."}),
+  giftOnThisCardChangesApplyMany:Object.freeze({en:"{v1} gifts on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.",'zh-CN':"这张卡上有 {v1} 份礼物。改动只对新的集章卡生效 — 已经在集章的顾客会保留他们当前的卡片、奖励和赚取规则。您的改动会在他们完成或过期当前卡片后生效。",ms:"{v1} hadiah pada kad ini. Perubahan hanya digunakan pada Kad Setem baharu — pelanggan yang sedang mengumpul setem akan mengekalkan kad semasa, ganjaran dan peraturan perolehan mereka. Perubahan anda digunakan apabila mereka menyelesaikan atau meluputkan kad semasa mereka."}),
+  tiersAreEarnedByNowYourOne:Object.freeze({en:"Tiers are earned by {v1} now. Your {v2} rung kept its number — check it reads right in {v3}.",'zh-CN':"等级现在以{v1}为依据。您的 {v2} 个层级保留了原来的数字 — 请在{v3}中确认它读起来是对的。",ms:"Peringkat kini diperoleh mengikut {v1}. {v2} anak tangga anda mengekalkan nombornya — semak ia dibaca dengan betul dalam {v3}."}),
+  tiersAreEarnedByNowYourMany:Object.freeze({en:"Tiers are earned by {v1} now. Your {v2} rungs kept their number — check they read right in {v3}.",'zh-CN':"等级现在以{v1}为依据。您的 {v2} 个层级保留了原来的数字 — 请在{v3}中确认它们读起来是对的。",ms:"Peringkat kini diperoleh mengikut {v1}. {v2} anak tangga anda mengekalkan nombornya — semak ia dibaca dengan betul dalam {v3}."}),
+  startThisFreezesCustomerAndHoldsOne:Object.freeze({en:"Start \"{v1}\"? This freezes {v2} customer and holds back {v3}% as a control.",'zh-CN':"开始「{v1}」吗？这会冻结 {v2} 位顾客，并保留 {v3}% 作为对照组。",ms:"Mulakan “{v1}”? Ini membekukan {v2} pelanggan dan menahan {v3}% sebagai kawalan."}),
+  startThisFreezesCustomerAndHoldsMany:Object.freeze({en:"Start \"{v1}\"? This freezes {v2} customers and holds back {v3}% as a control.",'zh-CN':"开始「{v1}」吗？这会冻结 {v2} 位顾客，并保留 {v3}% 作为对照组。",ms:"Mulakan “{v1}”? Ini membekukan {v2} pelanggan dan menahan {v3}% sebagai kawalan."}),
+  confirmThatSelectedCustomerActuallyReceivedOne:Object.freeze({en:"Confirm that {v1} selected customer actually received the reward via {v2}? This records your manual attestation; it is not a provider delivery receipt.",'zh-CN':"确认这 {v1} 位选定的顾客确实通过{v2}收到了奖励吗？这会记录您的手动确认；它不是服务商的送达回执。",ms:"Sahkan bahawa {v1} pelanggan terpilih benar-benar menerima ganjaran melalui {v2}? Ini merekodkan pengesahan manual anda; ia bukan resit penghantaran pembekal."}),
+  confirmThatSelectedCustomerActuallyReceivedMany:Object.freeze({en:"Confirm that {v1} selected customers actually received the reward via {v2}? This records your manual attestation; it is not a provider delivery receipt.",'zh-CN':"确认这 {v1} 位选定的顾客确实通过{v2}收到了奖励吗？这会记录您的手动确认；它不是服务商的送达回执。",ms:"Sahkan bahawa {v1} pelanggan terpilih benar-benar menerima ganjaran melalui {v2}? Ini merekodkan pengesahan manual anda; ia bukan resit penghantaran pembekal."}),
+  earnPointPerSpentOne:Object.freeze({en:"Earn {v1} point per $1 spent",'zh-CN':"每消费 $1 得 {v1} 积分",ms:"Peroleh {v1} mata bagi setiap $1 dibelanjakan"}),
+  earnPointPerSpentMany:Object.freeze({en:"Earn {v1} points per $1 spent",'zh-CN':"每消费 $1 得 {v1} 积分",ms:"Peroleh {v1} mata bagi setiap $1 dibelanjakan"}),
+  publishingReplacesWhatCustomersSeeAndNamed:Object.freeze({en:"{v1} \"{named}\"? Publishing replaces what customers see and takes effect at the counter immediately.",'zh-CN':"{v1}「{named}」吗？发布会替换顾客看到的内容，并在柜台立即生效。",ms:"{v1} “{named}”? Menerbitkan menggantikan apa yang pelanggan lihat dan berkuat kuasa di kaunter serta-merta."}),
+  publishingReplacesWhatCustomersSeeAndUnnamed:Object.freeze({en:"{v1} \"this rule\"? Publishing replaces what customers see and takes effect at the counter immediately.",'zh-CN':"{v1}这条规则吗？发布会替换顾客看到的内容，并在柜台立即生效。",ms:"{v1} peraturan ini? Menerbitkan menggantikan apa yang pelanggan lihat dan berkuat kuasa di kaunter serta-merta."}),
+  memberWouldMoveDownWouldMoveOne:Object.freeze({en:"{v1} member would move down · {v2} would move up.",'zh-CN':"{v1} 位会员会降级 · {v2} 位会升级。",ms:"{v1} ahli akan turun · {v2} akan naik."}),
+  memberWouldMoveDownWouldMoveMany:Object.freeze({en:"{v1} members would move down · {v2} would move up.",'zh-CN':"{v1} 位会员会降级 · {v2} 位会升级。",ms:"{v1} ahli akan turun · {v2} akan naik."}),
+  matchingCustomerNamesMayRepeatConfirmOne:Object.freeze({en:"{v1} matching customer. Names may repeat — confirm the phone number.",'zh-CN':"找到 {v1} 位匹配的顾客。姓名可能重复 — 请确认电话号码。",ms:"{v1} pelanggan sepadan. Nama mungkin berulang — sahkan nombor telefon."}),
+  matchingCustomerNamesMayRepeatConfirmMany:Object.freeze({en:"{v1} matching customers. Names may repeat — confirm the phone number.",'zh-CN':"找到 {v1} 位匹配的顾客。姓名可能重复 — 请确认电话号码。",ms:"{v1} pelanggan sepadan. Nama mungkin berulang — sahkan nombor telefon."}),
+  removeSBlockedTimeNamed:Object.freeze({en:"Remove {named}’s blocked time?",'zh-CN':"移除 {named} 的锁定时段吗？",ms:"Alih keluar masa disekat {named}?"}),
+  removeSBlockedTimeUnnamed:Object.freeze({en:"Remove this team member’s blocked time?",'zh-CN':"移除这位团队成员的锁定时段吗？",ms:"Alih keluar masa disekat rakan sepasukan ini?"}),
+  seatNowTheyLeaveTheWaitingNamed:Object.freeze({en:"Seat {named} now? They leave the waiting queue.",'zh-CN':"现在为 {named} 安排座位吗？他们会离开候位队列。",ms:"Duduk kan {named} sekarang? Mereka akan keluar daripada barisan menunggu."}),
+  seatNowTheyLeaveTheWaitingUnnamed:Object.freeze({en:"Seat this walk-in now? They leave the waiting queue.",'zh-CN':"现在为这位到店顾客安排座位吗？他们会离开候位队列。",ms:"Duduk kan pelanggan tanpa temu janji ini sekarang? Mereka akan keluar daripada barisan menunggu."}),
+  switchOffStaffCanNoLongerNamed:Object.freeze({en:"Switch \"{named}\" off? Staff can no longer sell it at Record sale. Past sales keep it, and you can switch it back on at any time.",'zh-CN':"关闭「{named}」吗？员工将无法在「记录销售」中售卖它。过往销售会保留，您也可以随时重新开启。",ms:"Matikan “{named}”? Kakitangan tidak lagi boleh menjualnya di Rekod jualan. Jualan lalu mengekalkannya, dan anda boleh menghidupkannya semula bila-bila masa."}),
+  switchOffStaffCanNoLongerUnnamed:Object.freeze({en:"Switch \"this product\" off? Staff can no longer sell it at Record sale. Past sales keep it, and you can switch it back on at any time.",'zh-CN':"关闭这个产品吗？员工将无法在「记录销售」中售卖它。过往销售会保留，您也可以随时重新开启。",ms:"Matikan produk ini? Kakitangan tidak lagi boleh menjualnya di Rekod jualan. Jualan lalu mengekalkannya, dan anda boleh menghidupkannya semula bila-bila masa."}),
+  expiresDayAfterPurchaseOne:Object.freeze({en:"expires {v1} day after purchase",'zh-CN':"购买后 {v1} 天到期",ms:"luput {v1} hari selepas pembelian"}),
+  expiresDayAfterPurchaseMany:Object.freeze({en:"expires {v1} days after purchase",'zh-CN':"购买后 {v1} 天到期",ms:"luput {v1} hari selepas pembelian"}),
+  stopSellingItLeavesRecordSaleOne:Object.freeze({en:"Stop selling \"{v1}\"? It leaves Record sale and this list, so nobody can buy it again. The {v2} customer who already bought it keeps the sessions they paid for and can still use them. This cannot be undone.",'zh-CN':"停止销售「{v1}」吗？它会从「记录销售」和这份清单中移除，之后没有人能再购买。已经购买的 {v2} 位顾客会保留他们付费的次数，并且仍然可以使用。此操作无法撤销。",ms:"Berhenti menjual “{v1}”? Ia keluar daripada Rekod jualan dan senarai ini, jadi tiada sesiapa boleh membelinya lagi. {v2} pelanggan yang sudah membelinya mengekalkan sesi yang mereka bayar dan masih boleh menggunakannya. Ini tidak boleh dibatalkan."}),
+  stopSellingItLeavesRecordSaleMany:Object.freeze({en:"Stop selling \"{v1}\"? It leaves Record sale and this list, so nobody can buy it again. The {v2} customers who already bought it keep the sessions they paid for and can still use them. This cannot be undone.",'zh-CN':"停止销售「{v1}」吗？它会从「记录销售」和这份清单中移除，之后没有人能再购买。已经购买的 {v2} 位顾客会保留他们付费的次数，并且仍然可以使用。此操作无法撤销。",ms:"Berhenti menjual “{v1}”? Ia keluar daripada Rekod jualan dan senarai ini, jadi tiada sesiapa boleh membelinya lagi. {v2} pelanggan yang sudah membelinya mengekalkan sesi yang mereka bayar dan masih boleh menggunakannya. Ini tidak boleh dibatalkan."}),
+  dataAsOfNamed:Object.freeze({en:"Data as of {named} · {v1}",'zh-CN':"数据截至 {named} · {v1}",ms:"Data setakat {named} · {v1}"}),
+  dataAsOfUnnamed:Object.freeze({en:"Data as of no recorded sale yet · {v1}",'zh-CN':"数据截至：尚未记录任何销售 · {v1}",ms:"Data setakat tiada jualan direkodkan lagi · {v1}"}),
+  branchIsOutsideWhatYourRoleOne:Object.freeze({en:"{v1} branch is outside what your role can see.",'zh-CN':"有 {v1} 家分店超出了您的角色可见范围。",ms:"{v1} cawangan berada di luar apa yang boleh dilihat oleh peranan anda."}),
+  branchIsOutsideWhatYourRoleMany:Object.freeze({en:"{v1} branches are outside what your role can see.",'zh-CN':"有 {v1} 家分店超出了您的角色可见范围。",ms:"{v1} cawangan berada di luar apa yang boleh dilihat oleh peranan anda."}),
+  paymentWorthIsNotLinkedToOne:Object.freeze({en:"{count} payment worth {v1} is not linked to any sale in this period.",'zh-CN':"有 {count} 笔价值 {v1} 的付款在本期间没有关联到任何销售。",ms:"{count} pembayaran bernilai {v1} tidak dipautkan kepada sebarang jualan dalam tempoh ini."}),
+  paymentWorthIsNotLinkedToMany:Object.freeze({en:"{count} payments worth {v1} are not linked to any sale in this period.",'zh-CN':"有 {count} 笔价值 {v1} 的付款在本期间没有关联到任何销售。",ms:"{count} pembayaran bernilai {v1} tidak dipautkan kepada sebarang jualan dalam tempoh ini."}),
+  customerTooRecentToJudgeOne:Object.freeze({en:"{count} customer too recent to judge",'zh-CN':"{count} 位顾客太近期，无法判断",ms:"{count} pelanggan terlalu baharu untuk dinilai"}),
+  customerTooRecentToJudgeMany:Object.freeze({en:"{count} customers too recent to judge",'zh-CN':"{count} 位顾客太近期，无法判断",ms:"{count} pelanggan terlalu baharu untuk dinilai"}),
+  regularIsPastTheirUsualVisitOne:Object.freeze({en:"{count} regular is past their usual visit gap",'zh-CN':"{count} 位常客已超过通常的到访间隔",ms:"{count} pelanggan tetap melepasi jurang lawatan biasa mereka"}),
+  regularIsPastTheirUsualVisitMany:Object.freeze({en:"{count} regulars are past their usual visit gap",'zh-CN':"{count} 位常客已超过通常的到访间隔",ms:"{count} pelanggan tetap melepasi jurang lawatan biasa mereka"}),
+  onlyOfCustomerMayBeSentOne:Object.freeze({en:"Only {v1} of {count} customer may be sent an offer",'zh-CN':"{count} 位顾客中只有 {v1} 位可以收到优惠",ms:"Hanya {v1} daripada {count} pelanggan boleh dihantar tawaran"}),
+  onlyOfCustomerMayBeSentMany:Object.freeze({en:"Only {v1} of {count} customers may be sent an offer",'zh-CN':"{count} 位顾客中只有 {v1} 位可以收到优惠",ms:"Hanya {v1} daripada {count} pelanggan boleh dihantar tawaran"}),
+  ofItsBuyerBoughtItAOne:Object.freeze({en:"{v1}% of its {count} buyer bought it a second time.",'zh-CN':"在它的 {count} 位买家中，有 {v1}% 买了第二次。",ms:"{v1}% daripada {count} pembelinya membelinya kali kedua."}),
+  ofItsBuyerBoughtItAMany:Object.freeze({en:"{v1}% of its {count} buyers bought it a second time.",'zh-CN':"在它的 {count} 位买家中，有 {v1}% 买了第二次。",ms:"{v1}% daripada {count} pembelinya membelinya kali kedua."}),
+  regularHasGoneQuietWithoutEverOne:Object.freeze({en:"{count} regular has gone quiet without ever needing a discount",'zh-CN':"{count} 位常客已经沉寂，而且从来不需要打折",ms:"{count} pelanggan tetap senyap tanpa pernah memerlukan diskaun"}),
+  regularHasGoneQuietWithoutEverMany:Object.freeze({en:"{count} regulars have gone quiet without ever needing a discount",'zh-CN':"{count} 位常客已经沉寂，而且从来不需要打折",ms:"{count} pelanggan tetap senyap tanpa pernah memerlukan diskaun"}),
+  boughtByCustomerInThisPeriodOne:Object.freeze({en:"Bought by {count} customer in this period.",'zh-CN':"本期间有 {count} 位顾客购买。",ms:"Dibeli oleh {count} pelanggan dalam tempoh ini."}),
+  boughtByCustomerInThisPeriodMany:Object.freeze({en:"Bought by {count} customers in this period.",'zh-CN':"本期间有 {count} 位顾客购买。",ms:"Dibeli oleh {count} pelanggan dalam tempoh ini."}),
+  saleIsNotRecordedAsFullyOne:Object.freeze({en:"{count} sale is not recorded as fully paid.",'zh-CN':"有 {count} 笔销售未记录为全额付清。",ms:"{count} jualan tidak direkodkan sebagai dibayar penuh."}),
+  saleIsNotRecordedAsFullyMany:Object.freeze({en:"{count} sales are not recorded as fully paid.",'zh-CN':"有 {count} 笔销售未记录为全额付清。",ms:"{count} jualan tidak direkodkan sebagai dibayar penuh."}),
+  regularIsOverdueAboutAMonthOne:Object.freeze({en:"{count} regular is overdue · about {v1} a month of regular spend at stake.",'zh-CN':"{count} 位常客已逾期未到 · 每月约有 {v1} 的固定消费面临风险。",ms:"{count} pelanggan tetap sudah lewat · kira-kira {v1} sebulan perbelanjaan tetap dipertaruhkan."}),
+  regularIsOverdueAboutAMonthMany:Object.freeze({en:"{count} regulars are overdue · about {v1} a month of regular spend at stake.",'zh-CN':"{count} 位常客已逾期未到 · 每月约有 {v1} 的固定消费面临风险。",ms:"{count} pelanggan tetap sudah lewat · kira-kira {v1} sebulan perbelanjaan tetap dipertaruhkan."}),
+  basedOnCustomerWithEnoughVisitOne:Object.freeze({en:"Based on {count} customer with enough visit history to judge.",'zh-CN':"依据 {count} 位有足够到访记录可供判断的顾客。",ms:"Berdasarkan {count} pelanggan dengan sejarah lawatan yang cukup untuk dinilai."}),
+  basedOnCustomerWithEnoughVisitMany:Object.freeze({en:"Based on {count} customers with enough visit history to judge.",'zh-CN':"依据 {count} 位有足够到访记录可供判断的顾客。",ms:"Berdasarkan {count} pelanggan dengan sejarah lawatan yang cukup untuk dinilai."}),
+  peekaaSawThisTimeItWaitsOne:Object.freeze({en:"Peekaa saw this {count} time. It waits for at least {v1} before saying anything.",'zh-CN':"Peekaa 看到这种情况 {count} 次。它会等到至少 {v1} 才会说什么。",ms:"Peekaa melihat ini {count} kali. Ia menunggu sekurang-kurangnya {v1} sebelum mengatakan apa-apa."}),
+  peekaaSawThisTimeItWaitsMany:Object.freeze({en:"Peekaa saw this {count} times. It waits for at least {v1} before saying anything.",'zh-CN':"Peekaa 看到这种情况 {count} 次。它会等到至少 {v1} 才会说什么。",ms:"Peekaa melihat ini {count} kali. Ia menunggu sekurang-kurangnya {v1} sebelum mengatakan apa-apa."}),
+  youKnowTheAgeOfOfOne:Object.freeze({en:"You know the age of {v1} of {count} customer and the gender of {v2} of {v3}.",'zh-CN':"{count} 位顾客中，您知道 {v1} 位的年龄，知道 {v3} 位中 {v2} 位的性别。",ms:"Anda tahu umur {v1} daripada {count} pelanggan dan jantina {v2} daripada {v3}."}),
+  youKnowTheAgeOfOfMany:Object.freeze({en:"You know the age of {v1} of {count} customers and the gender of {v2} of {v3}.",'zh-CN':"{count} 位顾客中，您知道 {v1} 位的年龄，知道 {v3} 位中 {v2} 位的性别。",ms:"Anda tahu umur {v1} daripada {count} pelanggan dan jantina {v2} daripada {v3}."}),
+  youKnowTheAgeOfOf2One:Object.freeze({en:"You know the age of {v1} of {count} customer.",'zh-CN':"{count} 位顾客中，您知道 {v1} 位的年龄。",ms:"Anda tahu umur {v1} daripada {count} pelanggan."}),
+  youKnowTheAgeOfOf2Many:Object.freeze({en:"You know the age of {v1} of {count} customers.",'zh-CN':"{count} 位顾客中，您知道 {v1} 位的年龄。",ms:"Anda tahu umur {v1} daripada {count} pelanggan."}),
+  youKnowTheGenderOfOfOne:Object.freeze({en:"You know the gender of {v1} of {count} customer.",'zh-CN':"{count} 位顾客中，您知道 {v1} 位的性别。",ms:"Anda tahu jantina {v1} daripada {count} pelanggan."}),
+  youKnowTheGenderOfOfMany:Object.freeze({en:"You know the gender of {v1} of {count} customers.",'zh-CN':"{count} 位顾客中，您知道 {v1} 位的性别。",ms:"Anda tahu jantina {v1} daripada {count} pelanggan."}),
+  callTheCustomerWhoStillHasOne:Object.freeze({en:"Call the {count} customer who still has sessions left.",'zh-CN':"请致电这 {count} 位还有剩余次数的顾客。",ms:"Hubungi {count} pelanggan yang masih ada sesi berbaki."}),
+  callTheCustomerWhoStillHasMany:Object.freeze({en:"Call the {count} customers who still have sessions left.",'zh-CN':"请致电这 {count} 位还有剩余次数的顾客。",ms:"Hubungi {count} pelanggan yang masih ada sesi berbaki."}),
+  onlyOfCustomerAgreedToBeOne:Object.freeze({en:"Only {v1} of {count} customer agreed to be contacted.",'zh-CN':"{count} 位顾客中只有 {v1} 位同意被联系。",ms:"Hanya {v1} daripada {count} pelanggan bersetuju untuk dihubungi."}),
+  onlyOfCustomerAgreedToBeMany:Object.freeze({en:"Only {v1} of {count} customers agreed to be contacted.",'zh-CN':"{count} 位顾客中只有 {v1} 位同意被联系。",ms:"Hanya {v1} daripada {count} pelanggan bersetuju untuk dihubungi."}),
+  youKnowTheAgeOfOnlyOne:Object.freeze({en:"You know the age of only {v1} of {count} customer.",'zh-CN':"{count} 位顾客中，您只知道 {v1} 位的年龄。",ms:"Anda hanya tahu umur {v1} daripada {count} pelanggan."}),
+  youKnowTheAgeOfOnlyMany:Object.freeze({en:"You know the age of only {v1} of {count} customers.",'zh-CN':"{count} 位顾客中，您只知道 {v1} 位的年龄。",ms:"Anda hanya tahu umur {v1} daripada {count} pelanggan."}),
+  thePreviousDayOne:Object.freeze({en:"the previous {v1} day",'zh-CN':"前 {v1} 天",ms:"{v1} hari sebelumnya"}),
+  thePreviousDayMany:Object.freeze({en:"the previous {v1} days",'zh-CN':"前 {v1} 天",ms:"{v1} hari sebelumnya"}),
+  renewalCancelIsFinalEndsStartNamed:Object.freeze({en:"Renewal cancel is final · ends {named} · Start a new plan",'zh-CN':"续订取消已确定 · 于 {named} 结束 · 开始新的方案",ms:"Pembatalan pembaharuan adalah muktamad · tamat {named} · Mulakan pelan baharu"}),
+  renewalCancelIsFinalEndsStartUnnamed:Object.freeze({en:"Renewal cancel is final · ends at your next billing date · Start a new plan",'zh-CN':"续订取消已确定 · 于下一个结算日结束 · 开始新的方案",ms:"Pembatalan pembaharuan adalah muktamad · tamat pada tarikh pengebilan anda yang seterusnya · Mulakan pelan baharu"}),
+  renewalCancelledAccessUntilNamed:Object.freeze({en:"Renewal cancelled · access until {named}",'zh-CN':"续订已取消 · 可使用至 {named}",ms:"Pembaharuan dibatalkan · akses sehingga {named}"}),
+  renewalCancelledAccessUntilUnnamed:Object.freeze({en:"Renewal cancelled · access until your next billing date",'zh-CN':"续订已取消 · 可使用至下一个结算日",ms:"Pembaharuan dibatalkan · akses sehingga tarikh pengebilan anda yang seterusnya"}),
+  cancelRenewalEverythingKeepsWorkingUntilNamed:Object.freeze({en:"Cancel renewal? Everything keeps working until {named}.",'zh-CN':"取消续订吗？在 {named} 之前一切照常运作。",ms:"Batalkan pembaharuan? Semuanya terus berfungsi sehingga {named}."}),
+  cancelRenewalEverythingKeepsWorkingUntilUnnamed:Object.freeze({en:"Cancel renewal? Everything keeps working until your next billing date.",'zh-CN':"取消续订吗？在下一个结算日之前一切照常运作。",ms:"Batalkan pembaharuan? Semuanya terus berfungsi sehingga tarikh pengebilan anda yang seterusnya."}),
+  switchesOffOnNamed:Object.freeze({en:"{v1} switches off on {named}",'zh-CN':"{v1} 将于 {named} 关闭",ms:"{v1} dimatikan pada {named}"}),
+  switchesOffOnUnnamed:Object.freeze({en:"{v1} switches off on your next billing date",'zh-CN':"{v1} 将于下一个结算日关闭",ms:"{v1} dimatikan pada tarikh pengebilan anda yang seterusnya"}),
+  switchesOffKeepItOnAndNamed:Object.freeze({en:"Switches off {named}. Keep it on and it renews with your plan.",'zh-CN':"将于 {named} 关闭。保持开启，它就会随您的方案一起续订。",ms:"Dimatikan pada {named}. Kekalkan ia dihidupkan dan ia diperbaharui bersama pelan anda."}),
+  switchesOffKeepItOnAndUnnamed:Object.freeze({en:"Switches off at renewal. Keep it on and it renews with your plan.",'zh-CN':"将在续订时关闭。保持开启，它就会随您的方案一起续订。",ms:"Dimatikan pada pembaharuan. Kekalkan ia dihidupkan dan ia diperbaharui bersama pelan anda."}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  'isSwitchedOffAndKeptRecordOne',
+  'isSwitchedOffAndKeptRecordMany',
+  'pointsCanBecomeStampsForCustomerOne',
+  'pointsCanBecomeStampsForCustomerMany',
+  'isWaitingForPaymentSoItsNamed',
+  'isWaitingForPaymentSoItsUnnamed',
+  'isSwitchedOffSoItsReportsNamed',
+  'isSwitchedOffSoItsReportsUnnamed',
+  'activeRewardWasNeverRedeemedOne',
+  'activeRewardWasNeverRedeemedMany',
+  'plusUnredeemedRewardGrantNotCountedOne',
+  'plusUnredeemedRewardGrantNotCountedMany',
+  'gaveTheMostDiscountsAcrossLineOne',
+  'gaveTheMostDiscountsAcrossLineMany',
+  'customerHasABirthdayThisMonthOne',
+  'customerHasABirthdayThisMonthMany',
+  'caseOfACustomerRedeemingRewardsOne',
+  'caseOfACustomerRedeemingRewardsMany',
+  'issuedOfManualRedemptionsNamed',
+  'issuedOfManualRedemptionsUnnamed',
+  'caseOfACustomerBuyingAtOne',
+  'caseOfACustomerBuyingAtMany',
+  'staffMemberIsAttributedSalesInOne',
+  'staffMemberIsAttributedSalesInMany',
+  'hasAboutDayOfStockLeftOne',
+  'hasAboutDayOfStockLeftMany',
+  'bookingInTheNextDaysOne',
+  'bookingInTheNextDaysMany',
+  'visitNoNormalWeekToCompareOne',
+  'visitNoNormalWeekToCompareMany',
+  'notEnoughActivityAtYetNamed',
+  'notEnoughActivityAtYetUnnamed',
+  'weMissYouCanReturnForNamed',
+  'weMissYouCanReturnForUnnamed',
+  'isReadyNowNamed',
+  'isReadyNowUnnamed',
+  'theCounterAboveIsAuthoritativeSessionOne',
+  'theCounterAboveIsAuthoritativeSessionMany',
+  'wasAlreadyGivenNamed',
+  'wasAlreadyGivenUnnamed',
+  'inTheDayBeforeYourBirthdayOne',
+  'inTheDayBeforeYourBirthdayMany',
+  'withinDayAfterYourBirthdayOne',
+  'withinDayAfterYourBirthdayMany',
+  'uCUDStopsBeingNamed',
+  'uCUDStopsBeingUnnamed',
+  'useWithinDayOne',
+  'useWithinDayMany',
+  'giftOnThisCardChangesApplyOne',
+  'giftOnThisCardChangesApplyMany',
+  'tiersAreEarnedByNowYourOne',
+  'tiersAreEarnedByNowYourMany',
+  'startThisFreezesCustomerAndHoldsOne',
+  'startThisFreezesCustomerAndHoldsMany',
+  'confirmThatSelectedCustomerActuallyReceivedOne',
+  'confirmThatSelectedCustomerActuallyReceivedMany',
+  'earnPointPerSpentOne',
+  'earnPointPerSpentMany',
+  'publishingReplacesWhatCustomersSeeAndNamed',
+  'publishingReplacesWhatCustomersSeeAndUnnamed',
+  'memberWouldMoveDownWouldMoveOne',
+  'memberWouldMoveDownWouldMoveMany',
+  'matchingCustomerNamesMayRepeatConfirmOne',
+  'matchingCustomerNamesMayRepeatConfirmMany',
+  'removeSBlockedTimeNamed',
+  'removeSBlockedTimeUnnamed',
+  'seatNowTheyLeaveTheWaitingNamed',
+  'seatNowTheyLeaveTheWaitingUnnamed',
+  'switchOffStaffCanNoLongerNamed',
+  'switchOffStaffCanNoLongerUnnamed',
+  'expiresDayAfterPurchaseOne',
+  'expiresDayAfterPurchaseMany',
+  'stopSellingItLeavesRecordSaleOne',
+  'stopSellingItLeavesRecordSaleMany',
+  'dataAsOfNamed',
+  'dataAsOfUnnamed',
+  'branchIsOutsideWhatYourRoleOne',
+  'branchIsOutsideWhatYourRoleMany',
+  'paymentWorthIsNotLinkedToOne',
+  'paymentWorthIsNotLinkedToMany',
+  'customerTooRecentToJudgeOne',
+  'customerTooRecentToJudgeMany',
+  'regularIsPastTheirUsualVisitOne',
+  'regularIsPastTheirUsualVisitMany',
+  'onlyOfCustomerMayBeSentOne',
+  'onlyOfCustomerMayBeSentMany',
+  'ofItsBuyerBoughtItAOne',
+  'ofItsBuyerBoughtItAMany',
+  'regularHasGoneQuietWithoutEverOne',
+  'regularHasGoneQuietWithoutEverMany',
+  'boughtByCustomerInThisPeriodOne',
+  'boughtByCustomerInThisPeriodMany',
+  'saleIsNotRecordedAsFullyOne',
+  'saleIsNotRecordedAsFullyMany',
+  'regularIsOverdueAboutAMonthOne',
+  'regularIsOverdueAboutAMonthMany',
+  'basedOnCustomerWithEnoughVisitOne',
+  'basedOnCustomerWithEnoughVisitMany',
+  'peekaaSawThisTimeItWaitsOne',
+  'peekaaSawThisTimeItWaitsMany',
+  'youKnowTheAgeOfOfOne',
+  'youKnowTheAgeOfOfMany',
+  'youKnowTheAgeOfOf2One',
+  'youKnowTheAgeOfOf2Many',
+  'youKnowTheGenderOfOfOne',
+  'youKnowTheGenderOfOfMany',
+  'callTheCustomerWhoStillHasOne',
+  'callTheCustomerWhoStillHasMany',
+  'onlyOfCustomerAgreedToBeOne',
+  'onlyOfCustomerAgreedToBeMany',
+  'youKnowTheAgeOfOnlyOne',
+  'youKnowTheAgeOfOnlyMany',
+  'thePreviousDayOne',
+  'thePreviousDayMany',
+  'renewalCancelIsFinalEndsStartNamed',
+  'renewalCancelIsFinalEndsStartUnnamed',
+  'renewalCancelledAccessUntilNamed',
+  'renewalCancelledAccessUntilUnnamed',
+  'cancelRenewalEverythingKeepsWorkingUntilNamed',
+  'cancelRenewalEverythingKeepsWorkingUntilUnnamed',
+  'switchesOffOnNamed',
+  'switchesOffOnUnnamed',
+  'switchesOffKeepItOnAndNamed',
+  'switchesOffKeepItOnAndUnnamed',
+
+  'percentMorePointsOnEverySpend',
+  'percentOffEveryVisit',
+  'quietestStretchHours',
+  'percentOfVisitsNowVersusTwelveWeeksAgo',
+  'andCountActivatedTheirBirthdayReward',
+  'staffEarnsMostPerRosteredHour',
+  'andStaffEarnsTheLeast',
+  'comparedWithSameSevenDaysLastWeek',
+  'amountAMonthAtStake',
+  'weekdayIsYourBusiestDay',
+  'oneStampForEveryAmountSpent',
+  'completedCardIsUsedStampsNotDeducted',
+  'nowPointsTotal',
+  'pointsPerOneDollarSpent',
+  'amountForNewSignUps',
+  'amountToTheReferrer',
+  'amountToReferrerAmountToFriend',
+  'programmeIsNotSetUpYet',
+  'daysBeforeToDaysAfterTheirBirthday',
+  'daysAfterTheyJoin',
+  'amountEachTimeThisRuleGivesIt',
+  'percentOffTheBill',
+  'listValueNoDiscount',
+  'listValueSaveAmountPercentOff',
+  'listValueAboveListPercent',
+  'aboveListPricePercentPremium',
+  'itemIsNoLongerForSale',
+  'countStoppingAtTheBillingDate',
+  'valueTooFewToSay',
+  'vsPreviousDaysNoChange',
+  'cameBackWithinDaysCount',
+  'biggestCategoryCustomerContributesPercent',
+  'categoryMakesUpPercentOfSortedMoney',
+  'categoryBringsMoreMoneyPerVisitThan',
+  'firstTimeCustomersCameBackForSecondVisit',
+  'serviceBringsPeopleInButFewBuyAgain',
+  'percentOfRewardsLandOnVisitsAlreadyDue',
+  'staffEarnsLessThanAverageOnSameServices',
+  'customersSentCampaignBoughtAfterwards',
+  'groupDidWorseInSecondHalf',
+  'weekdayIsYourStrongestDay',
+  'itemLeadsEverythingElseYouSell',
+  'serviceIsYourBestSelling',
+  'amountNotYetCollected',
+  'percentOfRevenueSortedIntoCategories',
+  'theComparedPeriodFromTo',
+  'staffCanNowSignIn',
+  'branchStaysOnYourPlan',
+  'branchStaysOnAndRenewsWithYourPlan',
+
+  'closesTheMostSalesOtherHasBiggestAverageSale',
+  'deleteCatalogueItemConfirm',
+  'billingCycleNotOfferedAtThisCapacity',
+  'figuresBelowCoverScope',
+  'lastSevenDaysComparedWithNormalWeek',
+  'branchComparedWithNormalWeekOthersTooNew',
+  'dayOfMonthRevenueSoFar',
+  'dayOfMonthRevenueVersusLastMonth',
+  'ifEveryoneRedeemedTomorrowYouWouldOweAtLeast',
+  'slowestDayAndWhereItIsHeading',
+  'customerRecordsCreatedBusinessWide',
+  'pointsSpentOnRewardsBusinessWide',
+  'recordedVisitsAndRevenueNotEnoughForTrend',
+  'recordedNoVisitsOrSalesNothingToCompare',
+  'customersNotVisitedInAtLeast60Days',
+  'dayRecordedHighestNumberOfValidVisits',
+  'reviewStaffingAndAvailabilityForDay',
+  'referAFriendRewardAfterQualifyingFirstVisit',
+  'noUnitEarnedForThisPurchase',
+  'showingSalesPaymentStateNotApplied',
+  'decisionAppliedCurrentStatus',
+  'decisionAlreadyAppliedCurrentStatus',
+  'decisionCouldNotBeAppliedTeamMemberNotAvailable',
+  'decisionCouldNotBeAppliedWithReasonAndStatus',
+  'couldNotMoveThisRequest',
+  'customerQrRedemptionIsState',
+  'customerQrRedemptionIsStateBookingSettingsPreserved',
+  'thatOfferWasNotMovedToDraftReason',
+  'workspaceHasNoLoyaltyModuleNothingToManage',
+  'turnProgrammeOffForCustomers',
+  'tiersAreEarnedByNow',
+  'referralsCouldNotBeTurnedOnOff',
+  'enterHowManyUnitsThisRewardCosts',
+  'enterHowManyUnitsCustomerNeedsForThisTier',
+  'cardCustomersSeeIsThisLong',
+  'pauseStoredValueIntro',
+  'liftStoredValuePauseIntro',
+  'ownerOnlyChangesAccessAndBilling',
+  'markBottleRetrievedLeavesShelfForGood',
+  'bottleStopsBeingTracked',
+  'switchPackageOffBuyersKeepSessions',
+  'packageSoldButUsableAtEveryBranch',
+  'topAgeBand',
+  'attributeKnownForCustomers',
+  'yourWidestPermissionTodayIsChannel',
+  'mostlyCrowdOnlySomeBuyersGaveDetailsTooFew',
+  'mostlyCrowdTooFewBuyersGaveDetails',
+  'mostlyCrowdSomeOfBuyers',
+  'mostBuyersOfItemAre',
+  'dayNameIsYourQuietestDay',
+  'deleteTeammateRecordCompletelyUseDeactivateInstead',
+  'lastCheckNeverRecordedSaleOrAppointmentDeleteForGood',
+  'inviteCreatedLinkCopiedForRole',
+  'billingFootnoteGstNotChargedStaffIncluded',
+  'discountCameOffYourFirstPayment',
+  'discountSavedButNotOnCardYet',
+  'discountOnNextPaymentSettingUpOnCard',
+  'discountOnNextPaymentSetUpOnCard',
+  'discountOnFirstPaymentAppliedWhenTaken',
+
   'topSellerByRevenueMarginUnknown',
   'topSellerByRevenueAndByMargin',
   'mostBoughtTogetherPair',
@@ -24776,8 +25243,8 @@ function activeBranchesForScopeV217(branches=[]){
 function branchScopeUnavailableReasonV217(branch){
   if(!branch||branch.active!==false)return '';
   return branch.billing_state==='pending_payment'
-    ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
-    :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+    ?workspaceTemplateTextV97(branch.name?'isWaitingForPaymentSoItsNamed':'isWaitingForPaymentSoItsUnnamed',{named:branch.name})
+    :workspaceTemplateTextV97(branch.name?'isSwitchedOffSoItsReportsNamed':'isSwitchedOffSoItsReportsUnnamed',{named:branch.name});
 }
 /* V272: removing the Business Insights branch select also removed the only place that said an
    unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
@@ -24793,7 +25260,7 @@ function reportScopeNoteTextV272(branches=[]){
       :(usable[0]?.name||'this business');
   const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
     .map(branchScopeUnavailableReasonV217).filter(Boolean);
-  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+  return workspaceTemplateTextV97('figuresBelowCoverScope',{scope:covered,withheldNotes:withheld.join(' ')}).trim();
 }
 async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
   const host=$(targetId);
@@ -25501,11 +25968,11 @@ const BONUS_POINTS_LINE_RE_V238=/^\d+(\.\d+)?% more points on every spend$/i;
 const DISCOUNT_LINE_RE_V238=/^\d+(\.\d+)?% off every visit$/i;
 function bonusPointsLineV238(multiplier){
   const pct=Math.round((Number(multiplier)-1)*100);
-  return Number.isFinite(pct)&&pct>0?`${pct}% more points on every spend`:'';
+  return Number.isFinite(pct)&&pct>0?workspaceTemplateTextV97('percentMorePointsOnEverySpend',{percent:pct}):'';
 }
 function discountLineV238(pct){
   const rounded=Math.round(Number(pct));
-  return Number.isFinite(rounded)&&rounded>0?`${rounded}% off every visit`:'';
+  return Number.isFinite(rounded)&&rounded>0?workspaceTemplateTextV97('percentOffEveryVisit',{percent:rounded}):'';
 }
 /* The threshold means different things per firm, so the help text must follow tier_basis
    rather than hardcode "points" — a spend-based ladder saying "points" is simply wrong. */
@@ -25548,7 +26015,7 @@ function ownerBriefLinesV826(brief){
       lines.push({kind:'plain',text:`Last 7 days: ${rev} from ${w.visits||0} ${plural(w.visits,'visit','visits')}. Not enough history yet to say what a normal week looks like.`});
     }else{
       const d=Number(w.revenue_delta_pct);
-      let text=`Last 7 days: ${rev}, ${ownerBriefPctV826(d)} a normal week (${money(w.baseline?.revenue_cents||0)}).`;
+      let text=workspaceTemplateTextV97('lastSevenDaysComparedWithNormalWeek',{amount:rev,comparison:ownerBriefPctV826(d),normalAmount:money(w.baseline?.revenue_cents||0)});
       if(w.driver==='visits')text+=d<0?' Fewer people, not smaller orders.':' More people, not bigger orders.';
       else if(w.driver==='basket')text+=d<0?' Smaller orders, not fewer people.':' Bigger orders, not more people.';
       lines.push({kind:d<-5?'warn':d>5?'good':'plain',text});
@@ -25562,7 +26029,7 @@ function ownerBriefLinesV826(brief){
     if(b&&x&&b.name!==x.name){
       lines.push({kind:Number(x.revenue_delta_pct)<-5?'warn':'plain',text:`${b.name} ${Number(b.revenue_delta_pct)>=0?'carried the week':'held up best'} (${ownerBriefSignedV826(b.revenue_delta_pct)}). ${x.name} is dragging (${ownerBriefSignedV826(x.revenue_delta_pct)}).`});
     }else if(b){
-      lines.push({kind:'plain',text:`${b.name}: ${ownerBriefPctV826(b.revenue_delta_pct)} its normal week. The other outlets have too little history to compare.`});
+      lines.push({kind:'plain',text:workspaceTemplateTextV97('branchComparedWithNormalWeekOthersTooNew',{branch:b.name,comparison:ownerBriefPctV826(b.revenue_delta_pct)})});
     }
   }
   const dp=brief.daypart||{};
@@ -25571,7 +26038,7 @@ function ownerBriefLinesV826(brief){
     if(dp.busiest_weekday?.label)parts.push(`Busiest day ${dp.busiest_weekday.label}`);
     if(dp.slowest_weekday?.label)parts.push(`slowest ${dp.slowest_weekday.label}`);
     const q=dp.quietest_hours;
-    if(q&&q.start_hour!=null)parts.push(`quietest stretch ${ownerBriefHourV826(q.start_hour)}–${ownerBriefHourV826(q.end_hour)} (${Math.round(Number(q.share_pct)||0)}% of visits)`);
+    if(q&&q.start_hour!=null)parts.push(workspaceTemplateTextV97('quietestStretchHours',{from:ownerBriefHourV826(q.start_hour),to:ownerBriefHourV826(q.end_hour),percent:Math.round(Number(q.share_pct)||0)}));
     if(parts.length)lines.push({kind:'plain',text:`${parts.join(', ')}.`});
   }
   const c=brief.customers||{};
@@ -25591,7 +26058,7 @@ function ownerBriefLinesV826(brief){
   if(r.status==='ok'){
     const ignored=Number(r.ignored_active)||0;
     if(Number(r.redemptions)>0&&r.top?.name){
-      lines.push({kind:'plain',text:`Most redeemed reward: ${r.top.name} (${r.top.redemptions} in 8 weeks).${ignored>0?` ${ignored} active ${plural(ignored,'reward was','rewards were')} never redeemed.`:''}`});
+      lines.push({kind:'plain',text:`Most redeemed reward: ${r.top.name} (${r.top.redemptions} in 8 weeks).${ignored>0?" "+workspaceTemplateTextV97(ignored===1?'activeRewardWasNeverRedeemedOne':'activeRewardWasNeverRedeemedMany',{v1:ignored}):''}`});
     }else if(ignored>0){
       lines.push({kind:'warn',text:`No reward redeemed in 8 weeks; ${ignored} active ${plural(ignored,'reward is','rewards are')} untouched.`});
     }
@@ -25676,14 +26143,14 @@ function ownerBriefAnswersV828(brief){
       const mtd=fact.mtd||{},prev=fact.previous_month_same_days||{};
       const d=fact.revenue_delta_pct;
       const pace=Number.isFinite(Number(fact.on_pace_cents))?' '+workspaceTemplateTextV97('onPaceForAmountThisMonth',{amount:money(fact.on_pace_cents)}):'';
-      if(d==null)return {answer:`Day ${fact.days_elapsed} of the month: ${money(mtd.revenue_cents||0)}.${pace}`,kind:'plain'};
+      if(d==null)return {answer:workspaceTemplateTextV97('dayOfMonthRevenueSoFar',{day:fact.days_elapsed,amount:money(mtd.revenue_cents||0),paceClause:pace}),kind:'plain'};
       const n=Number(d);
-      return {answer:`Day ${fact.days_elapsed} of the month: ${money(mtd.revenue_cents||0)} versus ${money(prev.revenue_cents||0)} at this point last month, ${ownerBriefPctV826(n)} last month.${pace}`,kind:n<-5?'warn':n>5?'good':'plain'};
+      return {answer:workspaceTemplateTextV97('dayOfMonthRevenueVersusLastMonth',{day:fact.days_elapsed,amount:money(mtd.revenue_cents||0),lastMonthAmount:money(prev.revenue_cents||0),changePhrase:ownerBriefPctV826(n),paceClause:pace}),kind:n<-5?'warn':n>5?'good':'plain'};
     }),
     factItem('liability','If every customer redeemed tomorrow, what would it cost me?',fact=>{
       const grants=fact.unredeemed_reward_grants||{};
-      const grantsClause=Number(grants.count)>0?` plus ${grants.count} unredeemed reward ${plural(grants.count,'grant','grants')} not counted in that figure`:'';
-      return {answer:`If every customer redeemed tomorrow, you would owe at least ${money(fact.known_cents_total||0)}${grantsClause}.`,kind:'plain'};
+      const grantsClause=Number(grants.count)>0?" "+workspaceTemplateTextV97(grants.count===1?'plusUnredeemedRewardGrantNotCountedOne':'plusUnredeemedRewardGrantNotCountedMany',{v1:grants.count}):'';
+      return {answer:workspaceTemplateTextV97('ifEveryoneRedeemedTomorrowYouWouldOweAtLeast',{amount:money(fact.known_cents_total||0),grantsClause:grantsClause}),kind:'plain'};
     }),
   ]);
 
@@ -25696,8 +26163,8 @@ function ownerBriefAnswersV828(brief){
       if(!ref||!trend)return {answer:'Not enough history yet to tell if the quiet stretch is new or normal.',kind:'muted'};
       const w=fact.windows||{};
       const now1=w.weeks_1_4?.reference_weekday_share_pct,then=w.weeks_9_12?.reference_weekday_share_pct;
-      const cmp=(now1!=null&&then!=null)?` (${pct1(now1)}% of visits now versus ${pct1(then)}% twelve weeks ago)` : '';
-      return {answer:`${ref.label} is your slowest day, and it is ${trend}${cmp}.`,kind:trend==='worsening'?'warn':trend==='improving'?'good':'plain'};
+      const cmp=(now1!=null&&then!=null)?" "+workspaceTemplateTextV97('percentOfVisitsNowVersusTwelveWeeksAgo',{now:pct1(now1),before:pct1(then)}) : '';
+      return {answer:workspaceTemplateTextV97('slowestDayAndWhereItIsHeading',{weekday:ref.label,trend:trend,comparison:cmp}),kind:trend==='worsening'?'warn':trend==='improving'?'good':'plain'};
     }),
   ]);
 
@@ -25732,7 +26199,7 @@ function ownerBriefAnswersV828(brief){
         return null;
       }
       const top=staff[0];
-      return {answer:`${top.name} gave the most discounts: ${money(top.discount_cents||0)} across ${top.discount_count} ${plural(top.discount_count,'line','lines')} (${money(fact.total_discount_cents||0)} total).`,kind:'plain'};
+      return {answer:workspaceTemplateTextV97(top.discount_count===1?'gaveTheMostDiscountsAcrossLineOne':'gaveTheMostDiscountsAcrossLineMany',{v1:top.name,v2:money(top.discount_cents||0),v3:top.discount_count,v4:money(fact.total_discount_cents||0)}),kind:'plain'};
     }),
   ]);
 
@@ -25751,9 +26218,9 @@ function ownerBriefAnswersV828(brief){
       if(n===0)return {answer:'No customers have a birthday this month.',kind:'plain'};
       const granted=fact.granted_this_month,redeemed=fact.redeemed_this_month;
       let extra='';
-      if(granted!=null)extra+=`, ${granted} activated their birthday reward`;
+      if(granted!=null)extra+=workspaceTemplateTextV97('andCountActivatedTheirBirthdayReward',{count:granted});
       if(redeemed!=null)extra+=`, ${redeemed} redeemed it`;
-      return {answer:`${n} ${plural(n,'customer has','customers have')} a birthday this month${extra}.`,kind:'plain'};
+      return {answer:workspaceTemplateTextV97(n===1?'customerHasABirthdayThisMonthOne':'customerHasABirthdayThisMonthMany',{v1:n,v2:extra}),kind:'plain'};
     }),
   ]);
 
@@ -25793,11 +26260,11 @@ function ownerBriefAnswersV828(brief){
       if(flags===0)return {question:'Is anyone gaming it?',answer:'No signs of gaming in the last 8 weeks.',kind:'good'};
       const clauses=[];
       const a=fact.rule_a_redemption_burst;
-      if(a&&Number(a.count)>0)clauses.push(`${a.count} case${a.count===1?'':'s'} of a customer redeeming 3+ rewards in one day`);
+      if(a&&Number(a.count)>0)clauses.push(workspaceTemplateTextV97(a.count===1?'caseOfACustomerRedeemingRewardsOne':'caseOfACustomerRedeemingRewardsMany',{v1:a.count}));
       const b=fact.rule_b_staff_concentration;
-      if(b&&b.flagged&&b.top)clauses.push(`${b.top.staff_name||'a staff login'} issued ${rpct(b.top.share_pct)}% of manual redemptions`);
+      if(b&&b.flagged&&b.top)clauses.push(workspaceTemplateTextV97(b.top.staff_name?'issuedOfManualRedemptionsNamed':'issuedOfManualRedemptionsUnnamed',{named:b.top.staff_name,v1:rpct(b.top.share_pct)}));
       const c=fact.rule_c_multi_branch_same_day;
-      if(c&&Number(c.count)>0)clauses.push(`${c.count} case${c.count===1?'':'s'} of a customer buying at 3+ branches in one day`);
+      if(c&&Number(c.count)>0)clauses.push(workspaceTemplateTextV97(c.count===1?'caseOfACustomerBuyingAtOne':'caseOfACustomerBuyingAtMany',{v1:c.count}));
       const body=clauses.length?clauses.join('; '):'a pattern worth a second look';
       return {question:'Is anyone gaming it?',answer:`${flags} ${plural(flags,'flag','flags')} raised: ${body}.`,kind:'warn'};
     })(),
@@ -25813,17 +26280,17 @@ function ownerBriefAnswersV828(brief){
       const ranked=withHours.filter(s=>s.revenue_per_rostered_hour_cents!=null).sort((a,b)=>b.revenue_per_rostered_hour_cents-a.revenue_per_rostered_hour_cents);
       if(ranked.length>=2){
         const best=ranked[0],worst=ranked[ranked.length-1];
-        let text=`${best.name} earns the most per rostered hour (${money(best.revenue_per_rostered_hour_cents)})`;
+        let text=workspaceTemplateTextV97('staffEarnsMostPerRosteredHour',{staff:best.name,amount:money(best.revenue_per_rostered_hour_cents)});
         if(zeroSales&&zeroSales.name===worst.name){
           text+=workspaceTemplateTextV97('staffRosteredHoursWithZeroSalesClause',{staff:worst.name,hours:worst.rostered_hours});
         }else{
-          text+=`; ${worst.name} earns the least (${money(worst.revenue_per_rostered_hour_cents)})`;
+          text+=workspaceTemplateTextV97('andStaffEarnsTheLeast',{staff:worst.name,amount:money(worst.revenue_per_rostered_hour_cents)});
           text+=zeroSales?workspaceTemplateTextV97('andStaffRosteredHoursWithZeroSalesClause',{staff:zeroSales.name,hours:zeroSales.rostered_hours}):'.';
         }
         return {answer:text,kind:zeroSales?'warn':'plain'};
       }
       if(zeroSales)return {answer:workspaceTemplateTextV97('staffRosteredHoursButNoAttributedSales',{staff:zeroSales.name,hours:zeroSales.rostered_hours}),kind:'warn'};
-      return {answer:`${list.length} staff ${plural(list.length,'member is','members are')} attributed sales in the window.`,kind:'plain'};
+      return {answer:workspaceTemplateTextV97(list.length===1?'staffMemberIsAttributedSalesInOne':'staffMemberIsAttributedSalesInMany',{v1:list.length}),kind:'plain'};
     }),
   ]);
 
@@ -25834,15 +26301,15 @@ function ownerBriefAnswersV828(brief){
       if(!items.length)return {answer:'Nothing is projected to run out in the next two weeks.',kind:'good'};
       const worst=items[0];
       const more=items.length>1?` (${items.length-1} more)`:'';
-      return {answer:`"${worst.name}" has about ${worst.days_left} ${plural(worst.days_left,'day','days')} of stock left at the current rate${more}.`,kind:'warn'};
+      return {answer:workspaceTemplateTextV97(worst.days_left===1?'hasAboutDayOfStockLeftOne':'hasAboutDayOfStockLeftMany',{v1:worst.name,v2:worst.days_left,v3:more}),kind:'warn'};
     }),
     factItem('bookings_ahead','Next seven days of bookings versus the same week last year?',fact=>{
       const next=fact.next_7_days||{},lw=fact.same_days_last_week||{};
-      let text=`${next.bookings||0} ${plural(next.bookings,'booking','bookings')} in the next 7 days`;
+      let text=workspaceTemplateTextV97(next.bookings===1?'bookingInTheNextDaysOne':'bookingInTheNextDaysMany',{v1:next.bookings||0});
       let kind='plain';
       if(lw.delta_pct!=null){
         const n=Number(lw.delta_pct);
-        text+=`, ${ownerBriefPctV826(n)} the same 7 days last week (${lw.bookings||0})`;
+        text+=workspaceTemplateTextV97('comparedWithSameSevenDaysLastWeek',{direction:ownerBriefPctV826(n),amount:lw.bookings||0});
         kind=n<-20?'warn':n>20?'good':'plain';
       }
       return {answer:`${text}.`,kind};
@@ -25892,7 +26359,7 @@ function ownerBriefOverviewV890(brief){
   const w=b.week||{};
   if(w.status==='ok'){
     const hint=w.revenue_delta_pct==null
-      ?`${w.visits||0} ${plural(w.visits,'visit','visits')} · no normal week to compare yet`
+      ?workspaceTemplateTextV97(w.visits===1?'visitNoNormalWeekToCompareOne':'visitNoNormalWeekToCompareMany',{v1:w.visits||0})
       :`${ownerBriefPctV826(Number(w.revenue_delta_pct))} a normal week (${money(w.baseline?.revenue_cents||0)})`;
     const d=Number(w.revenue_delta_pct);
     tiles.push(ownerBriefTileV890('Peekaa recorded revenue',money(w.revenue_cents||0),hint,w.revenue_delta_pct==null?'':d<-5?'warn':d>5?'good':''));
@@ -25910,7 +26377,7 @@ function ownerBriefOverviewV890(brief){
   if(at.status==='ok'){
     const n=(Number(at.overdue)||0)+(Number(at.slipping)||0);
     const stake=Number(at.monthly_at_risk_cents)||0;
-    tiles.push(ownerBriefTileV890('Regulars overdue',String(n),n>0?(stake>0?`${money(stake)} a month at stake`:'Worth a call this week'):'Nobody is overdue',n>0?'warn':'good'));
+    tiles.push(ownerBriefTileV890('Regulars overdue',String(n),n>0?(stake>0?workspaceTemplateTextV97('amountAMonthAtStake',{amount:money(stake)}):'Worth a call this week'):'Nobody is overdue',n>0?'warn':'good'));
   }else{
     tiles.push(ownerBriefTileV890('Regulars overdue','—','Could not be prepared',''));
   }
@@ -26298,7 +26765,7 @@ async function dashboard(){
         loyalty.innerHTML=dashboardLoyaltyRowV170([
           {label:'Members joined',
             value:customerMetricsAvailable?Number(d.new_customers||0).toLocaleString('en-SG'):'Unavailable',
-            hint:customerMetricsAvailable?`Customer records created ${dashboardRangeLabelV170(from,to)} · business-wide`:'Customer access is not complete for this reporting scope.'},
+            hint:customerMetricsAvailable?workspaceTemplateTextV97('customerRecordsCreatedBusinessWide',{range:dashboardRangeLabelV170(from,to)}):'Customer access is not complete for this reporting scope.'},
           /* nestly_v461: the heading follows the unit the server scoped this figure to. Cubbly SPA
              runs stamps and this tile said "Points earned" over a stamp count. */
           {label:`${loyaltyUnitNounV461(d.loyalty_unit)} earned`,
@@ -26306,7 +26773,7 @@ async function dashboard(){
             hint:pointsEarned===null?'Loyalty access is not complete for this reporting scope.':`Sale-linked earn · ${scopeLabel}`},
           {label:'Rewards redeemed',
             value:rewardsRedeemed===null?'Unavailable':rewardsRedeemed.toLocaleString('en-SG'),
-            hint:rewardsRedeemed===null?'Redeemed points could not be loaded.':`Points spent on rewards ${dashboardRangeLabelV170(from,to)} · business-wide`,
+            hint:rewardsRedeemed===null?'Redeemed points could not be loaded.':workspaceTemplateTextV97('pointsSpentOnRewardsBusinessWide',{range:dashboardRangeLabelV170(from,to)}),
             retryId:rewardsRedeemed===null?'dashboardLoyaltyRedeemedRetry':''}
         ]);
         loyalty.querySelector('#dashboardLoyaltyRedeemedRetry')?.addEventListener('click',load);
@@ -26422,11 +26889,11 @@ function insightQuietScopeV214({current,branchId,branchName}){
   const revenueCents=Number(current?.revenue_cents)||0;
   const where=branchId?(branchName||'This branch'):'This business';
   const activity=visits||revenueCents
-    ?`${where} recorded ${visits} ${visits===1?'visit':'visits'} and ${money(revenueCents)} in this period — not yet enough to call a trend.`
-    :`${where} recorded no visits or sales in this period, so there is nothing to compare yet.`;
+    ?workspaceTemplateTextV97('recordedVisitsAndRevenueNotEnoughForTrend',{where:where,visits:visits,visitWord:visits===1?'visit':'visits',amount:money(revenueCents)})
+    :workspaceTemplateTextV97('recordedNoVisitsOrSalesNothingToCompare',{where:where});
   return {
     tone:'neutral',icon:'info',category:'Readiness',
-    title:branchId?`Not enough activity at ${branchName||'this branch'} yet`:'More activity is needed',
+    title:branchId?workspaceTemplateTextV97(branchName?'notEnoughActivityAtYetNamed':'notEnoughActivityAtYetUnnamed',{named:branchName}):'More activity is needed',
     explanation:activity,
     why:branchId
       ?'Each branch is measured on its own, so a quieter branch shows fewer recommendations than a busy one. Nothing is broken.'
@@ -26469,7 +26936,7 @@ function campaignTemplateMessageV153(type,audienceLabel){
   if(type==='weekend')return 'Weekend slots are open. Book early and enjoy your next visit.';
   if(type==='new_service')return 'A new service is available. Tap to see what is new.';
   if(type==='flash')return 'Limited-time promotion available for eligible customers.';
-  return `We miss you. ${audienceLabel||'Selected customers'} can return for the latest rewards and offers.`;
+  return workspaceTemplateTextV97(audienceLabel?'weMissYouCanReturnForNamed':'weMissYouCanReturnForUnnamed',{named:audienceLabel});
 }
 function openCampaignPrepV153({audienceKey='inactive_60_plus',audienceLabel='Inactive customers',definition='',count=0,consentEligible=null,branchLabel='All branches consolidated'}={}){
   document.querySelector('#campaignPrepModalV153')?.remove();
@@ -26547,14 +27014,14 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
     insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[]});
   }
   if(Number(inactive60Total)>0){
-    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
+    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:workspaceTemplateTextV97('customersNotVisitedInAtLeast60Days',{customerCountText:customerCountTextV154(inactive60Total)}),why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
   }
   const weekdayValues=(current?.visits_by_weekday||[]).map(Number);
   const busiest=Math.max(0,...weekdayValues);
   const totalVisits=weekdayValues.reduce((sum,value)=>sum+value,0);
   if(totalVisits>=MIN_INSIGHT_BUSIEST_VISITS_V153&&busiest>0){
     const day=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][weekdayValues.indexOf(busiest)]||'One day';
-    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
+    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:workspaceTemplateTextV97('weekdayIsYourBusiestDay',{weekday:day}),explanation:workspaceTemplateTextV97('dayRecordedHighestNumberOfValidVisits',{dayName:day}),why:workspaceTemplateTextV97('reviewStaffingAndAvailabilityForDay',{dayName:day}),actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
     insights.push(insightQuietScopeV214({current,branchId,branchName}));
@@ -27366,7 +27833,7 @@ async function clientDetail(id){
     const stampCentsV567=Number(prog.stamp_per_cents);
     const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
-      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
+      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?workspaceTemplateTextV97('oneStampForEveryAmountSpent',{amount:money(stampCentsV567)}):'')
       :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?workspaceTemplateTextV97('pointsForEverySgd1Spent',{pointsPerDollar:earnPerDollarV567}):'');
     const earnLineV567=earnCopy
       ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
@@ -27376,7 +27843,7 @@ async function clientDetail(id){
     let nextCopy='No reward milestone has been added yet.';
     if(!redemptionEnabled)nextCopy='Customer redemption is switched off. Turn it on under Customer Interface → Customer Action.';
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
-      ?`${projectedNextReward.name||'Reward'} is ready now`
+      ?workspaceTemplateTextV97(projectedNextReward.name?'isReadyNowNamed':'isReadyNowUnnamed',{named:projectedNextReward.name})
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
     /* V226 (owner crossed the whole block out: "too confusing", and wrote "show Redeemable
        Rewards for customer"). It led with an explanation of the SCHEME — how rewards work,
@@ -27603,7 +28070,7 @@ async function clientDetail(id){
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
     /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
        "50 points" over a stamps payout in the go-live battery. Same helper the Grow panel uses. */
-    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
+    Number(referralProgrammeV294.reward_points)>0?workspaceTemplateTextV97('referAFriendRewardAfterQualifyingFirstVisit',{rewardAmount:growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)}):'Refer friends and get rewards.',
     referralProgrammeV294.enabled===true));
   if(welcomeOfferV294?.configured)programmeRowsV294.push(programmeRowHtmlV294('Welcome offer',
     welcomeOfferV294.reward_label?`New sign-ups get ${welcomeOfferV294.reward_label} free${Number(welcomeOfferV294.min_spend_cents)>0?` once they spend ${money(welcomeOfferV294.min_spend_cents)}`:''}.`:'A free item on the first visit.',
@@ -28593,7 +29060,7 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
     heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
     message:duplicate?`Recorded — current balance: ${pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'} ${unitNounV430}.`
-      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:`No ${unitNounV430} earned for this purchase.`,
+      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97('noUnitEarnedForThisPurchase',{unitNoun:unitNounV430}),
     pointsEarned,
     pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
     duplicate
@@ -28730,7 +29197,7 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
   const lastUsedAt=liveUses.length?liveUses[liveUses.length-1].at:null;
   const caveats=[
     entry.ambiguous?workspaceTemplateTextV97('holdsMoreThanOnePackageUsesListedByName',{packageName:entry.planName}):'',
-    entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${liveUses.length} matching sales are visible to you here.`:''
+    entry.unattributed?workspaceTemplateTextV97(entry.used===1?'theCounterAboveIsAuthoritativeSessionOne':'theCounterAboveIsAuthoritativeSessionMany',{v1:entry.used,v2:liveUses.length}):''
   ].filter(Boolean);
   return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
     <div class="c360-summary-row-v294">
@@ -29380,7 +29847,7 @@ async function tillPage(){
           if(!isTillCurrent())return;
           draw();
           return toast(givenV681?.replayed===true
-            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            ?workspaceTemplateTextV97(givenV681.reward_label||labelV666?'wasAlreadyGivenNamed':'wasAlreadyGivenUnnamed',{named:givenV681.reward_label||labelV666})
             :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
         }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
@@ -30673,7 +31140,7 @@ async function tillPage(){
              count is NOT deducted. The old line subtracted the cost and promised "759 (now 764)",
              a balance the server never produces (go-live battery, 2026-08-22). Points keep the
              debit projection; the server does debit those. */
-          ?row('Stamps after',`${balanceNow} — a completed card is used, stamps are not deducted`)
+          ?row('Stamps after',workspaceTemplateTextV97('completedCardIsUsedStampsNotDeducted',{reward:balanceNow}))
           :row('Points after',`${balanceNow-total} (now ${balanceNow})`)):''}
         ${branchName?row('Branch',branchName):''}
         ${staffName?row('Staff',staffName):''}
@@ -31667,7 +32134,7 @@ async function tillPage(){
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
           :`<p class="muted">${outcome.message}</p>`}
-        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?" "+workspaceTemplateTextV97('nowPointsTotal',{points:outcome.pointsTotal}):''}</p>
         ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
@@ -32051,7 +32518,7 @@ async function salesPage(){
       :workflowDeniedV579?' · Reverse controls need refund permission; Reversed status is inferred from the ledger':'';
     salesFilterNoteV266(paymentStateApplied
       ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
-      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied${workflowWarning}`,
+      :workspaceTemplateTextV97('showingSalesPaymentStateNotApplied',{count:rows.length,saleWord:rows.length===1?'sale':'sales',period:period,workflowNote:workflowWarning}),
       (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
       if(applyButton?.isConnected&&isCurrentLoadV579())CUI.setButtonBusy(applyButton,{busy:false});
@@ -32763,18 +33230,18 @@ function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
   const verb=decision==='confirm'?'Confirm':'Decline';
-  if(outcome==='applied')return {ok:true,text:`${verb} applied. Current status: ${actual}.`};
-  if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:`${verb} was already applied. Current status: ${actual}.`};
+  if(outcome==='applied')return {ok:true,text:workspaceTemplateTextV97('decisionAppliedCurrentStatus',{decisionVerb:verb,currentStatus:actual})};
+  if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:workspaceTemplateTextV97('decisionAlreadyAppliedCurrentStatus',{decisionVerb:verb,currentStatus:actual})};
   /* Owner report: "pressing confirm does no changes". scheduling_conflict is by far the most
      common non-applied outcome on Confirm — it means the chosen team member isn't available at
      that exact time per their own schedule (the write-time guard refused it), not a generic
      failure. Name the real cause and the fix (Change time / staff) instead of a bare snake_case
      outcome string. */
-  if(outcome==='scheduling_conflict')return {ok:false,text:`${verb} could not be applied — the team member isn't available at that time, per their schedule. Try "Change time / staff" for a different slot.`};
+  if(outcome==='scheduling_conflict')return {ok:false,text:workspaceTemplateTextV97('decisionCouldNotBeAppliedTeamMemberNotAvailable',{decision:verb})};
   /* nestly_v882: the server now names a request whose preferred time has passed instead of letting
      the scheduler's raw refusal through. The rescue is Move & confirm on the Bookings row. */
   if(outcome==='past_start')return {ok:false,text:'This time has already passed. Pick a new date and time and press Move & confirm, or decline the request.'};
-  return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
+  return {ok:false,text:workspaceTemplateTextV97('decisionCouldNotBeAppliedWithReasonAndStatus',{decision:verb,reason:outcome.replaceAll('_',' '),status:actual})};
 }
 /* V200 (owner: "in all the modules i need you to simplify the sub modules ... just tab the sub
    modules and can view easily instead of long scrolling"). ONE mechanism for every module,
@@ -33121,7 +33588,7 @@ async function bookingsPage(){
     if(!isCurrent())return;
     pendingDecisions.delete(id);
     if(error){
-      decisionNotices.set(id,{ok:false,text:`Could not move this request. ${error.message||'Try again.'}`});
+      decisionNotices.set(id,{ok:false,text:workspaceTemplateTextV97('couldNotMoveThisRequest',{errorMessage:error.message||'Try again.'})});
     }else{
       const notice=bookingDecisionNotice(data,'confirm');
       decisionNotices.set(id,notice);toast(notice.text);
@@ -33708,7 +34175,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   })();
   const loyaltyEarnFactV235=model==='stamps'
     ?`${money(p?.stamp_per_cents??500)} spent = 1 stamp`
-    :`${p?.earn_points_per_dollar??1} points per $1 spent`;
+    :workspaceTemplateTextV97('pointsPerOneDollarSpent',{points:p?.earn_points_per_dollar??1});
   const tierBasisFactV235=({visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points'})[p?.tier_basis||'visits'];
   const stampTargetV235=(()=>{
     const costs=rewards.filter(r=>r.active!==false).map(r=>Number(r.cost_points)).filter(n=>n>0);
@@ -33833,7 +34300,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
       redemptionStatus.textContent=canManageLoyalty
         ?'This switch affects customer QR redemption only. Booking settings are preserved.'
-        :`Customer QR redemption is ${redemptionToggle.checked?'enabled':'off'}.`;
+        :workspaceTemplateTextV97('customerQrRedemptionIsState',{state:redemptionToggle.checked?'enabled':'off'});
       if(canManageLoyalty){
         redemptionToggle.disabled=false;redemptionSave.disabled=false;
         redemptionSave.onclick=async()=>{
@@ -33846,7 +34313,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           redemptionToggle.disabled=false;redemptionSave.disabled=false;
           redemptionStatus.textContent=result.error
             ?'Customer QR redemption was not changed. Refresh and try again.'
-            :`Customer QR redemption is ${result.data?.redemption_enabled===true?'enabled':'off'}. Booking and appointment settings were preserved.`;
+            :workspaceTemplateTextV97('customerQrRedemptionIsStateBookingSettingsPreserved',{state:result.data?.redemption_enabled===true?'enabled':'off'});
         };
       }
     }
@@ -34020,7 +34487,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
           if(!before&&!after)return 'on your birthday';
           if(before&&after)return `from ${before} day${before===1?'':'s'} before to ${after} day${after===1?'':'s'} after your birthday`;
-          return before?`in the ${before} day${before===1?'':'s'} before your birthday`:`within ${after} day${after===1?'':'s'} after your birthday`;
+          return before?workspaceTemplateTextV97(before===1?'inTheDayBeforeYourBirthdayOne':'inTheDayBeforeYourBirthdayMany',{v1:before}):workspaceTemplateTextV97(after===1?'withinDayAfterYourBirthdayOne':'withinDayAfterYourBirthdayMany',{v1:after});
         })();
       $('birthdayTerms').value=[
         `Get ${benefit} ${when}.`,
@@ -34944,7 +35411,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!tier)return;
     const confirmed=await confirmDeliberateV288({
       title:'Pause this tier?',
-      body:`\u201C${tier.name||'This tier'}\u201D stops being awarded to customers.`,
+      body:workspaceTemplateTextV97(tier.name?'uCUDStopsBeingNamed':'uCUDStopsBeingUnnamed',{named:tier.name}),
       summaryHtml:'<b>Pause, not delete</b><p class="small" style="margin-top:5px">The tier is switched off and customers stop reaching it. Nothing is deleted \u2014 its name, threshold and benefits are kept, and you can switch it back on by editing it. Customers who already hold it keep what they hold. Nothing changes until this draft is published.</p>',
       acknowledgement:'I understand this tier stops being awarded.',
       confirmLabel:'Pause tier',danger:true});
@@ -36795,7 +37262,7 @@ async function promotionsPage(selectedPromotionId=null){
     /* A structured 200 refusal is a failure however friendly it looks (v378). */
     if(result.data?.blocked===true){
       return {error:{code:'promotion_finalize_rejected',reason:result.data.reason||'',
-        message:`That offer was not moved to draft (${result.data.reason||'refused'}).`}};
+        message:workspaceTemplateTextV97('thatOfferWasNotMovedToDraftReason',{reason:result.data.reason||'refused'})}};
     }
     return {error:null,data:result.data};
   };
@@ -37743,7 +38210,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
       status:growTileStatusV371('welcome',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
-        ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
+        ?workspaceTemplateTextV97('amountForNewSignUps',{amount:welcomeOfferStatusV215.reward_label}):'Choose the free item new members get'},
     {key:'birthday',icon:'cake',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
       status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?[STATUS_WORDS.on,'on']:rewardJourney.birthday?['Paused','warn']:['Not set up','warn']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
@@ -38323,10 +38790,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           :(Number(points)>0?growReferralAmountWordV425(snapshot.referral.reward_kind,points):'');
         const referrer=side(snapshot.referral.reward_points,snapshot.referral.reward_label);
         if(!referrer)return '';
-        if(snapshot.referral.friend_enabled===false)return `${referrer} to the referrer`;
+        if(snapshot.referral.friend_enabled===false)return workspaceTemplateTextV97('amountToTheReferrer',{amount:referrer});
         const friend=side(snapshot.referral.friend_reward_points??snapshot.referral.reward_points,
           snapshot.referral.friend_reward_label||snapshot.referral.reward_label);
-        return friend?`${referrer} to the referrer, ${friend} to the friend`:`${referrer} to the referrer`;
+        return friend?workspaceTemplateTextV97('amountToReferrerAmountToFriend',{referrer:referrer,friend:friend}):workspaceTemplateTextV97('amountToTheReferrer',{amount:referrer});
       })()});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
@@ -38910,7 +39377,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the same rule nestly_v471 applied to the end-date line this sits beside. */
   const growPointsGiftExpiryTextV520=reward=>{
     const days=Math.max(0,Math.round(Number(reward&&reward.entitlement_expiry_days)||0));
-    return days?` · Use within ${days} day${days===1?'':'s'}`:'';
+    return days?" "+workspaceTemplateTextV97(days===1?'useWithinDayOne':'useWithinDayMany',{v1:days}):'';
   };
   const growPointsGiftEndsTextV476=reward=>{
     const raw=reward?.claim_available_until;
@@ -39169,10 +39636,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>`;
   const growPointsManageV326=!canRewards
     ?CUI.emptyState({iconName:'till',title:'Loyalty is not included',
-        body:`This workspace does not include the loyalty module, so there is no ${growPointsPageTitleV326} to manage.`,
+        body:workspaceTemplateTextV97('workspaceHasNoLoyaltyModuleNothingToManage',{programmeName:growPointsPageTitleV326}),
         actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
     :!growPointsConfiguredV326
-    ?CUI.emptyState({iconName:'till',title:`${growPointsPageTitleV326} is not set up yet`,
+    ?CUI.emptyState({iconName:'till',title:workspaceTemplateTextV97('programmeIsNotSetUpYet',{programme:growPointsPageTitleV326}),
         body:growPointsIsStampsV326
           ?'Choose the stamp card, set how many stamps a visit earns, and add a first gift customers can redeem for.'
           :'Choose points, set the earning rate, and add a first gift customers can redeem for.',
@@ -39195,7 +39662,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
-          <b>${growPointsOnV326?`Turn ${esc(growPointsRowLabelV326)} off for customers?`:`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
+          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
           <p class="muted small" style="margin-top:6px">${growPointsOnV326
             ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
             :growPointsLosingV326.length
@@ -39294,7 +39761,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growBirthdayWindowTextV382=!growBirthdayV382?''
     :(growBirthdayV382.window_mode||'month')!=='days'
       ?'Their whole birthday month'
-      :`${Number(growBirthdayV382.window_days_before)||0} days before to ${Number(growBirthdayV382.window_days_after)||0} days after their birthday`;
+      :workspaceTemplateTextV97('daysBeforeToDaysAfterTheirBirthday',{before:Number(growBirthdayV382.window_days_before)||0,after:Number(growBirthdayV382.window_days_after)||0});
   const growBirthdayPageV382=!canRewards
     ?CUI.emptyState({iconName:'loyalty',title:'Loyalty is not included',
         body:'This workspace does not include the loyalty module, so there is no birthday gift to set up.',
@@ -39335,7 +39802,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       :'Straight away — no minimum spend';
   const growWelcomeExpiryTextV584=!growWelcomeV584?''
     :Number(growWelcomeV584.expiry_days)>0
-      ?`${Number(growWelcomeV584.expiry_days)} days after they join`
+      ?workspaceTemplateTextV97('daysAfterTheyJoin',{days:Number(growWelcomeV584.expiry_days)})
       :'No expiry';
   const growWelcomePageV584=!canRewards
     ?CUI.emptyState({iconName:'giftcard',title:'Loyalty is not included',
@@ -39606,7 +40073,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?`<button type="button" class="grow-stamps-editcell-v416 is-add-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}" aria-label="Make the card one stamp longer">+</button>`:''}
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
-    ?`${growStampsLevelsSortedV350.length} gift${growStampsLevelsSortedV350.length===1?'':'s'} on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.`
+    ?workspaceTemplateTextV97(growStampsLevelsSortedV350.length===1?'giftOnThisCardChangesApplyOne':'giftOnThisCardChangesApplyMany',{v1:growStampsLevelsSortedV350.length})
     :workspaceTemplateTextV97('noGiftsYetStartOneEveryStamps',{everyStamps:GROW_STAMPS_DEFAULT_EVERY_V416,startStamp:Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)})}</p>`;
   /* v414's refusal, said BEFORE the owner hits it. business_set_stamp_card_length_v414 will not
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
@@ -42096,8 +42563,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const rungsV585=growTiersPublishedV331.length;
     const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
     toast(rungsV585
-      ?`Tiers are earned by ${wordV585} now. Your ${rungsV585} rung${rungsV585===1?'' :'s'} kept ${rungsV585===1?'its':'their'} number — check ${rungsV585===1?'it reads':'they read'} right in ${wordV585}.`
-      :`Tiers are earned by ${wordV585} now.`);
+      ?workspaceTemplateTextV97(rungsV585===1?'tiersAreEarnedByNowYourOne':'tiersAreEarnedByNowYourMany',{v1:wordV585,v2:rungsV585,v3:wordV585})
+      :workspaceTemplateTextV97('tiersAreEarnedByNow',{basisWord:wordV585}));
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -42213,7 +42680,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
       if(!isGrowCurrent()){growReferralBusyV364=false;return null;}
       return spine.ok?true
-        :referralFailV567(`Referrals could not be turned ${wantOnV558?'on':'off'} — ${ownerErrorText(spine.error)}`);
+        :referralFailV567(workspaceTemplateTextV97('referralsCouldNotBeTurnedOnOff',{onOff:wantOnV558?'on':'off',errorMessage:ownerErrorText(spine.error)}));
     };
     /* v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
@@ -42950,7 +43417,7 @@ async function pbActivateDraft(c,ctx){
   const {candidates:cands,truncated}=await pbLoadCandidatesV244(crit.lapsed_days||45,crit.min_visits||3);
   if(truncated)return toast('Too many customers match this playbook to freeze safely — start a fresh one with a narrower rule');
   if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
-  if(!await confirmActionV386(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
+  if(!await confirmActionV386(workspaceTemplateTextV97(cands.length===1?'startThisFreezesCustomerAndHoldsOne':'startThisFreezesCustomerAndHoldsMany',{v1:c.name,v2:cands.length,v3:c.holdout_percent})))return;
   const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
   if(error)return fail(error);
   toast('Playbook started');
@@ -43054,7 +43521,7 @@ function pbOpenIssueModal(c,targets,ctx){
       return toast(message);
     }
     const channel=retryChannel.channel;
-    if(!await confirmActionV386(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
+    if(!await confirmActionV386(workspaceTemplateTextV97(selected.length===1?'confirmThatSelectedCustomerActuallyReceivedOne':'confirmThatSelectedCustomerActuallyReceivedMany',{v1:selected.length,v2:channel.replace('_',' ')})))return;
     const button=$('pbConfirmExposure'),status=$('pbExposureStatus');
     button.disabled=true;status.textContent='Recording manual receipt confirmations…';
     let confirmed=0;const failed=[];
@@ -43435,7 +43902,7 @@ function studioEffectText(e,cat){
     case 'apply_discount_amount':return `Take ${studioMoney(e.amount_cents)} off`;
     case 'apply_discount_pct':return `Take ${Number(e.discount_pct||0)}% off`;
     case 'earn_bonus_points':
-      if(e.points_per_dollar!=null)return `Earn ${Number(e.points_per_dollar)} point${Number(e.points_per_dollar)===1?'':'s'} per $1 spent`;
+      if(e.points_per_dollar!=null)return workspaceTemplateTextV97(Number(e.points_per_dollar)===1?'earnPointPerSpentOne':'earnPointPerSpentMany',{v1:Number(e.points_per_dollar)});
       return workspaceTemplateTextV97('giveBonusPoints',{points:Number(e.points||0)});
     case 'earn_bonus_stamps':
       if(e.per_cents!=null)return workspaceTemplateTextV97('earnOneStampPerAmountSpent',{amount:studioMoney(e.per_cents)});
@@ -43554,7 +44021,7 @@ function studioEmergencyPauseActorLabel(actor){
 async function studioSetRuleActive(item,active,onDone){
   if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
   const verb=active?'Resume':'Pause';
-  if(!await confirmActionV386(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
+  if(!await confirmActionV386(workspaceTemplateTextV97(item.name?'publishingReplacesWhatCustomersSeeAndNamed':'publishingReplacesWhatCustomersSeeAndUnnamed',{v1:verb,named:item.name})))return;
   sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
     if(error){
       if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
@@ -43671,14 +44138,14 @@ function studioEstimate(rule,agg){
     const t=e.effect_type;
     if(t==='grant_credit'||t==='apply_discount_amount'){
       const per=Number(e.amount_cents||0);
-      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${studioMoney(per)} each time this rule gives it`,
+      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('amountEachTimeThisRuleGivesIt',{amount:studioMoney(per)}),
         est:monthly!=null?`Rough estimate: about ${studioMoney(per*monthly)} per month`:null,
         note:monthly!=null?'Based on the last 30 days of sales; real cost depends on how often this rule matches once activated.'
           :'No monthly estimate available — it depends on how often this rule matches.'});
     }else if(t==='apply_discount_pct'){
       const pct=Number(e.discount_pct||0);const avg=agg&&agg.avgBill?agg.avgBill:null;
       const perApprox=avg!=null?Math.round(avg*pct/100):null;
-      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${pct}% off the bill`,
+      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('percentOffTheBill',{percent:pct}),
         est:(monthly!=null&&perApprox!=null)?`Rough estimate: about ${studioMoney(perApprox*monthly)} per month`:null,
         note:(monthly!=null&&perApprox!=null)?workspaceTemplateTextV97('assumesAverageBillOverLast30Days',{averageBill:studioMoney(avg)})
           :'No monthly estimate available — it depends on bill size and how often this rule matches.'});
@@ -44630,7 +45097,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   const rewardFormProblemV304=form=>{
     if(String(form?.name||'').trim().length<2)return 'Give this reward a name customers will recognise.';
-    if(!(parseInt(form?.points||'0',10)>0))return `Enter how many ${rewardUnit()} this reward costs.`;
+    if(!(parseInt(form?.points||'0',10)>0))return workspaceTemplateTextV97('enterHowManyUnitsThisRewardCosts',{unit:rewardUnit()});
     return '';
   };
   /* The write advance() always performed, verbatim: materialise a published reward into this draft
@@ -44709,7 +45176,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!name)return {ok:false,soft:true,message:'Give this tier a name customers will see.'};
     const threshold=parseInt(form?.threshold||'',10);
     if(!Number.isFinite(threshold)||threshold<0)return {ok:false,soft:true,
-      message:`Enter how many ${tierBasisV303()==='visits'?'visits':'points'} a customer needs for this tier.`};
+      message:workspaceTemplateTextV97('enterHowManyUnitsCustomerNeedsForThisTier',{unit:tierBasisV303()==='visits'?'visits':'points'})};
     const id=form.id||crypto.randomUUID();
     const existing=state.tiers.find(tier=>tier.id===id);
     /* The candidate is written BEFORE it joins the list, so a failed add leaves no phantom row
@@ -44958,7 +45425,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   const tierMovementCountLineW6I2=()=>{
     const counts=tierMovementCountsW6I2();
-    if(counts&&counts.evaluated)return `${counts.down} member${counts.down===1?'':'s'} would move down · ${counts.up} would move up.`;
+    if(counts&&counts.evaluated)return workspaceTemplateTextV97(counts.down===1?'memberWouldMoveDownWouldMoveOne':'memberWouldMoveDownWouldMoveMany',{v1:counts.down,v2:counts.up});
     if(counts&&!counts.evaluated)return 'There are too many members to count the moves before publishing.';
     /* No key at all: the server has not shipped the count yet. Say that, rather than a zero. */
     return 'How many members move is not counted yet on this workspace, so check the ladder before you publish.';
@@ -45205,7 +45672,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     return `<p class="grow-setup-lead-v301">What do customers get, and at how many stamps?</p>
       <p class="muted small" style="margin-top:-4px">Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.</p>
       ${rows}${chips}${rewardFormHtml()}
-      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?`The card customers see is ${esc(unitWord(length,'stamps'))} long — your last milestone.`:'The card gets its length from your last milestone.'}</p>
+      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?workspaceTemplateTextV97('cardCustomersSeeIsThisLong',{stampCountWithUnit:esc(unitWord(length,'stamps'))}):'The card gets its length from your last milestone.'}</p>
       <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.</p>`;
   };
   const stepThreeHtml=()=>{
@@ -47617,7 +48084,7 @@ async function storedValuePage(){
     const scope=$('svPauseScope')?$('svPauseScope').value:'all';
     svOpenActionModal({
       title:'Pause stored value',
-      intro:`Immediately stop ${SV_SCOPE_WORDS[scope]||scope} for stored value. History is kept; only new operations of this kind are stopped. Record why.`,
+      intro:workspaceTemplateTextV97('pauseStoredValueIntro',{scope:SV_SCOPE_WORDS[scope]||scope}),
       reasonLabel:'Reason (required, at least 3 characters)',
       reasonPlaceholder:'What is wrong and who asked for this stop?',
       submitLabel:'Pause now',
@@ -47630,7 +48097,7 @@ async function storedValuePage(){
     const scope=b.dataset.svLift;
     svOpenActionModal({
       title:'Lift stored-value pause',
-      intro:`Lift the pause on ${SV_SCOPE_WORDS[scope]||scope}. That operation family can run again once lifted (still only when authority is live, which is not possible in this phase). Record why it is safe to lift.`,
+      intro:workspaceTemplateTextV97('liftStoredValuePauseIntro',{scope:SV_SCOPE_WORDS[scope]||scope}),
       reasonLabel:'Reason (required, at least 3 characters)',
       reasonPlaceholder:'Why is it safe to lift this pause?',
       submitLabel:'Lift pause',
@@ -49171,7 +49638,7 @@ async function appointmentsPage(){
     $('ac').value=matches.some(client=>client.id===selectedId)?selectedId:'';
     const help=$('appointmentCustomerHelp');
     if(help)help.textContent=query
-      ?`${matches.length} matching customer${matches.length===1?'':'s'}. Names may repeat — confirm the phone number.`
+      ?workspaceTemplateTextV97(matches.length===1?'matchingCustomerNamesMayRepeatConfirmOne':'matchingCustomerNamesMayRepeatConfirmMany',{v1:matches.length})
       :'Names may repeat — use the phone number to confirm the right customer.';
   }
   function syncFormOptions(){
@@ -49894,7 +50361,7 @@ async function appointmentsPage(){
     routeMain.querySelectorAll('[data-delete-block]').forEach(button=>button.onclick=async()=>{
       const blockId=button.dataset.deleteBlock;
       const block=calendarBlocks.find(item=>item.id===blockId);
-      if(!block||!await confirmActionV386(`Remove ${staffName[block.staff_id]||'this team member'}’s blocked time?`))return;
+      if(!block||!await confirmActionV386(workspaceTemplateTextV97(staffName[block.staff_id]?'removeSBlockedTimeNamed':'removeSBlockedTimeUnnamed',{named:staffName[block.staff_id]})))return;
       let attempt=blockDeleteAttempts.get(blockId);
       if(!attempt){attempt=crypto.randomUUID();blockDeleteAttempts.set(blockId,attempt)}
       button.disabled=true;$('calendarSelection').innerHTML='';
@@ -50303,7 +50770,7 @@ async function appointmentsPage(){
         p_business:S.biz.id,p_request:id,p_preferred:preferred,...rescheduleStaffChoiceV695(staffSelect)
       });
       if(!isCurrent())return;
-      if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
+      if(error){const failText=workspaceTemplateTextV97('couldNotMoveThisRequest',{errorMessage:error.message||'Try again.'});toast(failText);button.disabled=false;return}
       const notice=bookingDecisionNotice(data,'confirm');
       toast(notice.text);
       if(!notice.ok){button.disabled=false;return}
@@ -50374,7 +50841,7 @@ async function appointmentsPage(){
         p_business:S.biz.id,p_request:row.id,p_preferred:preferred,...rescheduleStaffChoiceV695(staffSelect)
       });
       if(!isCurrent())return;
-      if(error){const failText=`Could not move this request. ${error.message||'Try again.'}`;toast(failText);button.disabled=false;return}
+      if(error){const failText=workspaceTemplateTextV97('couldNotMoveThisRequest',{errorMessage:error.message||'Try again.'});toast(failText);button.disabled=false;return}
       const notice=bookingDecisionNotice(data,'confirm');
       toast(notice.text);
       if(!notice.ok){button.disabled=false;return}
@@ -50927,7 +51394,7 @@ function ownerOnlyDeniedCardV285(title,iconName='settings'){
   const host=M();if(!host)return;
   host.innerHTML=CUI.pageHeader({title,iconName,canWrite:false,moduleLabel:title})
     +CUI.emptyState({iconName,title:'Only the owner can open this',
-      body:`${title} changes who can do what and what the business is charged for, so it is kept to the owner account. Ask the owner if something here needs to change.`,
+      body:workspaceTemplateTextV97('ownerOnlyChangesAccessAndBilling',{pageName:title}),
       actionHtml:'<a class="btn ghost sm" href="#/dashboard">Back to dashboard</a>'});
 }
 
@@ -52356,7 +52823,7 @@ async function bottlesPage(){
          screen no longer offers two buttons for one physical event. */
       const retrieveButton=host.querySelector('[data-retrieve]');
       if(retrieveButton)retrieveButton.onclick=async ()=>{
-        if(!await confirmActionV386(`Mark ${bottleNameV275(bottle)} as retrieved? It has gone out with the customer, so it leaves the shelf and their app for good.`))return;
+        if(!await confirmActionV386(workspaceTemplateTextV97('markBottleRetrievedLeavesShelfForGood',{bottleName:bottleNameV275(bottle)})))return;
         runAction(retrieveButton,`status:${bottleId}:retrieved`,
           key=>sb.rpc('set_bottle_status_v275',{p_business:S.biz.id,p_bottle:bottleId,
             p_status:'retrieved',p_idempotency_key:key}),'Bottle retrieved');
@@ -52370,7 +52837,7 @@ async function bottlesPage(){
       if(removeButtonV288)removeButtonV288.onclick=async()=>{
         const confirmed=await confirmDeliberateV288({
           title:'Remove this bottle from the list?',
-          body:`${bottleNameV275(bottle)} stops being tracked.`,
+          body:workspaceTemplateTextV97('bottleStopsBeingTracked',{bottleName:bottleNameV275(bottle)}),
           summaryHtml:'<b>This is not "Retrieved"</b><p class="small" style="margin-top:5px">Use Remove when the bottle should never have been on this list \u2014 a wrong tag, a duplicate, or one you have thrown away. It closes the record and takes the bottle out of the customer\u2019s app, but it does NOT record that the customer collected it. The history stays readable.</p>',
           acknowledgement:'I understand the customer did not collect this bottle.',
           confirmLabel:'Remove bottle',danger:true});
@@ -52713,7 +53180,7 @@ async function waitlistPage(){
     if(seatWalkInDirectlyV571){
       /* W3B/F073: no appointment form exists for this workspace, so the queue itself is the only
          place the walk-in can be resolved. Confirm first — this clears the row. */
-      if(!await confirmActionV386(`Seat ${row?.name||'this walk-in'} now? They leave the waiting queue.`,{confirmLabel:'Seat now',danger:false}))return;
+      if(!await confirmActionV386(workspaceTemplateTextV97(row?.name?'seatNowTheyLeaveTheWaitingNamed':'seatNowTheyLeaveTheWaitingUnnamed',{named:row?.name}),{confirmLabel:'Seat now',danger:false}))return;
       if(await updateWl(id,'booked')){toast('Walk-in seated');loadWl()}
       return;
     }
@@ -52985,7 +53452,7 @@ async function inventoryPage(){
     document.querySelectorAll('[data-prod-toggle]').forEach(b=>b.onclick=async()=>{
       /* nestly_v658: ask before it stops being sellable; switching back on takes nothing away. */
       if(b.dataset.prodActive&&!await confirmActionV386(
-        `Switch "${b.dataset.prodName||'this product'}" off? Staff can no longer sell it at Record sale. Past sales keep it, and you can switch it back on at any time.`,
+        workspaceTemplateTextV97(b.dataset.prodName?'switchOffStaffCanNoLongerNamed':'switchOffStaffCanNoLongerUnnamed',{named:b.dataset.prodName}),
         {confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
       const to=!b.dataset.prodActive;
       const {error}=await sb.from('products').update({active:to}).eq('id',b.dataset.prodToggle);
@@ -53234,11 +53701,11 @@ async function packagesPage(options){
     const list=Number(plan.list_value_cents_snapshot);
     if(!(list>0))return 'No linked service price';
     const difference=list-Number(plan.price_cents||0);
-    if(difference===0)return `${money(list)} list value · no discount`;
+    if(difference===0)return workspaceTemplateTextV97('listValueNoDiscount',{amount:money(list)});
     const pct=Math.abs(difference/list*100).toFixed(1).replace(/\.0$/,'');
     return difference>0
-      ?`${money(list)} list value · save ${money(difference)} (${pct}% off)`
-      :`${money(list)} list value · ${money(-difference)} above list (${pct}%)`;
+      ?workspaceTemplateTextV97('listValueSaveAmountPercentOff',{listAmount:money(list),saved:money(difference),percent:pct})
+      :workspaceTemplateTextV97('listValueAboveListPercent',{listAmount:money(list),above:money(-difference),percent:pct});
   };
   /* nestly_v613 (owner: "Products & Packages please follow Services format"). Services keeps its
      Add behind a title-bar action and leads with the catalogue; Packages led with a permanently
@@ -53280,7 +53747,7 @@ async function packagesPage(options){
       <div class="card"><div class="v150-soft-head"><b>Packages catalogue</b><p>Active packages can be sold at Record sale.</p></div>
       <div id="kplist" style="margin-top:8px">${(plans||[]).filter(p=>!p.retired_at).length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Packages catalogue"><table class="cui-table" data-responsive="true"><thead><tr><th>Package</th><th class="num">Price</th><th class="num">Sessions</th><th>Status</th><th></th></tr></thead><tbody>${(plans||[]).filter(p=>!p.retired_at).map(p=>`<tr>
         <td data-label="Package"><b data-merchant-content>${esc(p.name)}</b>
-          <div class="muted small">${p.service_id?`${esc(serviceDisplayName(serviceById[p.service_id]||{}))} · `:''}${p.expiry_days?`expires ${Number(p.expiry_days)} day${Number(p.expiry_days)===1?'':'s'} after purchase`:'no expiry'}</div>
+          <div class="muted small">${p.service_id?`${esc(serviceDisplayName(serviceById[p.service_id]||{}))} · `:''}${p.expiry_days?workspaceTemplateTextV97(Number(p.expiry_days)===1?'expiresDayAfterPurchaseOne':'expiresDayAfterPurchaseMany',{v1:Number(p.expiry_days)}):'no expiry'}</div>
           <div class="muted small">${esc(discountSummary(p))}${commissionOverrideTextV825(p)?` · Commission ${esc(commissionOverrideTextV825(p))}`:''}</div><div class="muted small">${packagePurchaseCount[p.id]?`Sold to ${packagePurchaseCount[p.id]} customer${packagePurchaseCount[p.id]===1?'':'s'}. Editing it changes what you sell from now on; they keep the price and sessions they paid for.`:'Not sold to anyone yet.'}</div></td>
         <td class="num" data-label="Price">${money(p.price_cents)}</td>
         <td class="num" data-label="Sessions">${p.sessions}</td>
@@ -53359,7 +53826,7 @@ async function packagesPage(options){
       const pct=list>0?Math.abs(difference/list*100):0;
       const result=difference===0?'No discount'
         :difference>0?`${money(difference)} off · ${pct.toFixed(1).replace(/\.0$/,'')}% discount`
-        :`${money(-difference)} above list price · ${pct.toFixed(1).replace(/\.0$/,'')}% premium`;
+        :workspaceTemplateTextV97('aboveListPricePercentPremium',{above:money(-difference),percent:pct.toFixed(1).replace(/\.0$/,'')});
       $('kDiscount').innerHTML=`<b>${esc(serviceDisplayName(service))}: ${money(service.price_cents)} × ${sessions} = ${money(list)}</b>
         <p style="margin-top:5px"><b>${esc(result)}</b></p>
         <p class="muted small" style="margin-top:4px">This list value is frozen with the package so future service-price changes do not rewrite what was sold.</p>`;
@@ -53396,14 +53863,14 @@ async function packagesPage(options){
       const id=button.dataset.packageDelete,name=button.dataset.packageName||'this package';
       const sold=Number(button.dataset.packageSold||0);
       if(!await confirmActionV386(sold
-        ? `Stop selling "${name}"? It leaves Record sale and this list, so nobody can buy it again. The ${sold} customer${sold===1?'':'s'} who already bought it keep${sold===1?'s':''} the sessions they paid for and can still use them. This cannot be undone.`
+        ? workspaceTemplateTextV97(sold===1?'stopSellingItLeavesRecordSaleOne':'stopSellingItLeavesRecordSaleMany',{v1:name,v2:sold})
         : `Delete "${name}"? Nobody has bought it, so nothing is taken away from a customer. This cannot be undone.`))return;
       CUI.setButtonBusy(button,{busy:true,label:'Deleting…'});
       const {error}=await sb.rpc('business_manage_package_plan_v193',
         {p_business:S.biz.id,p_plan:id,p_action:'delete',p_name:null});
       if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
       if(error)return toast(ownerErrorText(error));
-      toast(sold?`"${name}" is no longer for sale`:'Package deleted');refreshPackagesV584();
+      toast(sold?workspaceTemplateTextV97('itemIsNoLongerForSale',{itemName:name}):'Package deleted');refreshPackagesV584();
     });
     /* nestly_v601: the same option list the create form draws, so the dialog cannot offer a
        different set of services from the form beside it. The current service stays selected even
@@ -53507,7 +53974,7 @@ async function packagesPage(options){
          owner who has already sold some. */
       const nameV658=button.dataset.packageName||'this package';
       if(!turningOn&&!await confirmActionV386(
-        `Switch "${nameV658}" off? Staff can no longer sell it at Record sale. Customers who already bought it keep every session they paid for, and you can switch it back on at any time.`,
+        workspaceTemplateTextV97('switchPackageOffBuyersKeepSessions',{packageName:nameV658}),
         {confirmLabel:'Switch off',cancelLabel:'Keep it on'}))return;
       CUI.setButtonBusy(button,{busy:true,label:'…'});
       const {error}=await sb.rpc('business_set_package_active_v601',
@@ -53852,7 +54319,7 @@ async function packagesPage(options){
         const problem=await saveCatalogueBranchesV627({table:'package_branches',column:'plan_id',
           entityId:bespokePlanIdV627,name:'package-bespoke',branches:packageBranches,before:new Set()});
         if(problem){
-          showError(`The package was sold, but it is usable at every branch: ${problem}`);
+          showError(workspaceTemplateTextV97('packageSoldButUsableAtEveryBranch',{problem:problem}));
           refreshPackagesV584();return;
         }
       }
@@ -53965,7 +54432,7 @@ function branchBillingSentenceV280(counts){
     billable=Number(counts?.billable||0),lapsed=Number(counts?.lapsed||0);
   const stopping=Number(counts?.stopping||0),unsubscribed=Number(counts?.unsubscribed||0);
   return `${total} ${total===1?'branch':'branches'} · ${included} included in your plan · ${billable} billable`
-    +(stopping?` · ${stopping} stopping at the billing date`:'')
+    +(stopping?" "+workspaceTemplateTextV97('countStoppingAtTheBillingDate',{count:stopping}):'')
     +(unsubscribed?` · ${unsubscribed} unsubscribed`:'')
     +(lapsed?` · ${lapsed} payment lapsed`:'');
 }
@@ -55623,7 +56090,7 @@ function ciFreshnessCaptionHtmlV734(payload){
   const ageText=ageHours===null?'age unknown'
     :ageHours<1?'under an hour old'
     :`${ageHours.toFixed(1)} hour${ageHours===1?'':'s'} old`;
-  const freshLine=`Data as of ${dataAsOfText||'no recorded sale yet'} · ${ageText}`;
+  const freshLine=workspaceTemplateTextV97(dataAsOfText?'dataAsOfNamed':'dataAsOfUnnamed',{named:dataAsOfText,v1:ageText});
   const staleLine=freshness.stale
     ?`<p class="muted small ci-freshness-stale-v734" role="status">${dataAsOfText?workspaceTemplateHtmlV97('lastSaleWas',{date:dataAsOfText}):workspaceTemplateHtmlV97('lastSaleNeverRecorded',{})}${freshness.note?` <span data-merchant-content>${esc(String(freshness.note))}</span>`:''}</p>`
     :'';
@@ -55815,7 +56282,7 @@ function ownerBriefHtmlV771(brief,options){
     const base=numeratorOnly===true?String(countV771(block.numerator))
       :`${countV771(block.numerator)} of ${countV771(block.denominator)}`;
     const pct=wholePctV774(block.pct);
-    return pct===null?`${base} — too few to say`:`${base} (${pct}%)`;
+    return pct===null?workspaceTemplateTextV97('valueTooFewToSay',{value:base}):`${base} (${pct}%)`;
   };
   /* nestly_v776: counts first, percent only if the server gave one. The two differ in what a
      missing pct means. For a share of a KNOWN total (a reward's share of all redemptions) the
@@ -55835,7 +56302,7 @@ function ownerBriefHtmlV771(brief,options){
   const changeCaptionV774=value=>{
     const pct=wholePctV774(value);
     if(pct===null)return 'no earlier data to compare';
-    if(pct===0)return `vs the previous ${periodDaysV771} days: no change`;
+    if(pct===0)return workspaceTemplateTextV97('vsPreviousDaysNoChange',{days:periodDaysV771});
     return `vs the previous ${periodDaysV771} days: ${pct>0?'+':'−'}${Math.abs(pct)}%`;
   };
   const labelOfV774=row=>String(row&&row.label==null?'':row.label).trim();
@@ -55894,7 +56361,7 @@ function ownerBriefHtmlV771(brief,options){
     if(now===null||before===null||before<=0)return 'no earlier data to compare';
     const change=Math.round((now-before)/before*100);
     if(!Number.isFinite(change))return 'no earlier data to compare';
-    if(change===0)return `vs the previous ${periodDaysV771} days: no change`;
+    if(change===0)return workspaceTemplateTextV97('vsPreviousDaysNoChange',{days:periodDaysV771});
     return `vs the previous ${periodDaysV771} days: ${change>0?'+':'−'}${Math.abs(change)}%`;
   };
   const tileV771=(label,value,caption)=>`<article class="revenue-truth-metric"><span>${esc(label)}</span><strong>${esc(value)}</strong><span class="muted small" style="display:block;margin-top:4px">${esc(caption)}</span></article>`;
@@ -55967,7 +56434,7 @@ function ownerBriefHtmlV771(brief,options){
       return [
         women?`Women ${women}`:'',
         men?`Men ${men}`:'',
-        band?`Top age band ${band}`:'',
+        band?workspaceTemplateTextV97('topAgeBand',{band:band}):'',
         busiest?`Busiest ${busiest}`:'',
         slowest?`Slowest ${slowest}`:'',
         item?`Top item ${item}`:''
@@ -55989,7 +56456,7 @@ function ownerBriefHtmlV771(brief,options){
           ?`<tr><td data-label="Details" class="muted small ci-branch-detail-v778" colspan="5">${esc(detail)}</td></tr>`
           :''}`;
       }).join('')}</tbody></table></div>
-      ${hiddenV778>0?`<p class="muted small" style="margin-top:8px">${esc(`${hiddenV778} ${hiddenV778===1?'branch is':'branches are'} outside what your role can see.`)}</p>`:''}
+      ${hiddenV778>0?`<p class="muted small" style="margin-top:8px">${esc(workspaceTemplateTextV97(hiddenV778===1?'branchIsOutsideWhatYourRoleOne':'branchIsOutsideWhatYourRoleMany',{v1:hiddenV778}))}</p>`:''}
       ${noteLineV774('Branches are compared on where the sale was rung up. A customer who visits two branches is counted at each.')}`}
     </section>`;
   }
@@ -56254,7 +56721,7 @@ function ownerBriefHtmlV771(brief,options){
         ${tileV771('Not recorded as paid',outstandingV774===null?'—':money(outstandingV774),`${pluralV774(unpaidV774,'sale','sales')} unpaid · ${partlyV774} partly paid`)}
       </div>
       ${methodsV774.length?`<p style="margin:10px 0 2px">By method: <span>${esc(methodsV774.join(' · '))}</span></p>`:''}
-      ${unlinkedCountV774>0?`<p class="small" style="margin:6px 0 2px">${esc(`${pluralV774(unlinkedCountV774,'payment','payments')} worth ${money(countV771(unlinkedV774.cents))} ${unlinkedCountV774===1?'is':'are'} not linked to any sale in this period.`)}</p>`:''}
+      ${unlinkedCountV774>0?`<p class="small" style="margin:6px 0 2px">${esc(workspaceTemplateTextV97(unlinkedCountV774===1?'paymentWorthIsNotLinkedToOne':'paymentWorthIsNotLinkedToMany',{count:unlinkedCountV774,v1:money(countV771(unlinkedV774.cents))}))}</p>`:''}
       ${refundsV774>0?`<p class="small" style="margin:6px 0 2px">Refunds: ${esc(money(refundsV774))}</p>`:''}
       ${debtorsV774.length?`<div class="cui-table-wrap" role="region" aria-label="Who still has an open bill"><table class="cui-table" data-responsive="true"><thead><tr><th>Customer</th><th>Open sales</th><th class="num">Outstanding</th>${canOpenV771?'<th>Action</th>':''}</tr></thead><tbody>${debtorsV774.map(row=>
         `<tr><td data-label="Customer"><b>${esc(nameV771(row.client_name))}</b></td>
@@ -56276,7 +56743,7 @@ function ownerBriefHtmlV771(brief,options){
   let staffBlockV774='';
   if(staffBundleV774||staffErrorV774){
     const windowDaysV774=countV771(staffBundleV774?.window_days);
-    const cameBackPhraseV774=windowDaysV774>0?`came back within ${windowDaysV774} days`:'came back again';
+    const cameBackPhraseV774=windowDaysV774>0?workspaceTemplateTextV97('cameBackWithinDaysCount',{days:windowDaysV774}):'came back again';
     const cameBackHeadV774=windowDaysV774>0?workspaceTemplateTextV97('cameBackWithinDaysHeading',{days:windowDaysV774}):'Came back again';
     /* nestly_v776: a cohort that has not MATURED is a different answer from one that is too
        small. Until a customer's first visit is window_days old they cannot yet have failed to
@@ -56287,7 +56754,7 @@ function ownerBriefHtmlV771(brief,options){
     const tooRecentV774=(matured,immature)=>{
       const waiting=countV771(immature);
       return (countV771(matured)===0&&waiting>0)
-        ?`${pluralV774(waiting,'customer','customers')} too recent to judge`:'';
+        ?workspaceTemplateTextV97(waiting===1?'customerTooRecentToJudgeOne':'customerTooRecentToJudgeMany',{count:waiting}):'';
     };
     const firmV774=objectV771(staffBundleV774?.firm);
     const firmReturnedV774=objectV771(firmV774?.returned_any);
@@ -56467,7 +56934,7 @@ function ownerBriefHtmlV771(brief,options){
     const knownLineV774=(rateBlock,what)=>{
       const block=objectV771(rateBlock);
       if(!block)return '';
-      return `${what} known for ${countV771(block.numerator)} of ${countV771(block.denominator)} customers.`;
+      return workspaceTemplateTextV97('attributeKnownForCustomers',{label:what,knownCount:countV771(block.numerator),totalCount:countV771(block.denominator)});
     };
     /* The base travels even when the percent is withheld: "1 of 6 — too few to say" says both
        how many and against what, where a bare "1" left an owner to guess the denominator. */
@@ -56683,9 +57150,9 @@ const BI_TEMPLATES_V894=Object.freeze({
     const buyers=biWholeV892(top.customer_count);
     const topOne=biPctFromBpsV894(biObjectV892(item.concentration)?.top1_share_bps);
     const bought=buyers===null?'':`${biPluralV892(buyers,'customer','customers')} bought ${label}`;
-    const biggest=topOne===null?'':`your biggest ${label} customer contributes about ${topOne}% of that category`;
+    const biggest=topOne===null?'':workspaceTemplateTextV97('biggestCategoryCustomerContributesPercent',{category:label,percent:topOne});
     return {
-      finding:`${label} makes up ${share}% of the money you’ve sorted into categories`,
+      finding:workspaceTemplateTextV97('categoryMakesUpPercentOfSortedMoney',{category:label,percent:share}),
       why:biSentenceV894([bought,biggest].filter(Boolean).join(', and ')),
       action:'Most of your money comes from one kind of service.',
       cta:{kind:'section',section:'services',label:'View services'}
@@ -56698,7 +57165,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     return {
       finding:count===null
         ?'Some regulars are past their usual visit gap'
-        :`${biPluralV892(count,'regular is','regulars are')} past their usual visit gap`,
+        :workspaceTemplateTextV97(count===1?'regularIsPastTheirUsualVisitOne':'regularIsPastTheirUsualVisitMany',{count:count}),
       why:worth?workspaceTemplateTextV97('aboutAmountOfUsualSpendAtStake',{amount:worth}):'',
       action:'',
       cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
@@ -56712,7 +57179,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const busyLabel=biTextV892(busy.label),busyVisits=biWholeV892(busy.visits);
     if(!gold||!dead)return null;
     return {
-      finding:`${gold} brings in more money per visit than ${dead}`,
+      finding:workspaceTemplateTextV97('categoryBringsMoreMoneyPerVisitThan',{better:gold,worse:dead}),
       why:busyLabel
         ?`${busyLabel} is your busiest day${busyVisits===null?'':` (${biPluralV892(busyVisits,'visit','visits')})`}.`
         :'',
@@ -56728,8 +57195,8 @@ const BI_TEMPLATES_V894=Object.freeze({
     const channel=BI_CHANNEL_WORDS_V894[biTextV892(refs.best_channel).toLowerCase()]||'';
     if(total===null||best===null)return null;
     return {
-      finding:`Only ${best} of ${biPluralV892(total,'customer','customers')} may be sent an offer`,
-      why:channel?`Your widest permission today is ${channel}.`:'',
+      finding:workspaceTemplateTextV97(total===1?'onlyOfCustomerMayBeSentOne':'onlyOfCustomerMayBeSentMany',{v1:best,count:total}),
+      why:channel?workspaceTemplateTextV97('yourWidestPermissionTodayIsChannel',{channel:channel}):'',
       action:'Ask for permission at checkout so more customers can hear from you.',
       cta:{kind:'section',section:'acquisition',label:'See who you may contact'}
     };
@@ -56755,7 +57222,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const window=biWholeV892(refs.window_days);
     if(returned===null||outOf===null)return null;
     return {
-      finding:`${returned} of ${outOf} first-time customers came back for a second visit`,
+      finding:workspaceTemplateTextV97('firstTimeCustomersCameBackForSecondVisit',{returned:returned,total:outOf}),
       why:window===null?'':workspaceTemplateTextV97('countedWithinDaysOfFirstVisit',{days:window}),
       action:'Look at what happens right after a first visit.',
       cta:{kind:'section',section:'retention',label:'See who comes back'}
@@ -56768,9 +57235,9 @@ const BI_TEMPLATES_V894=Object.freeze({
     const buyers=biWholeV892(refs.buyers);
     const repeat=biWholeV892(biObjectV892(refs.repeat_rate)?.pct);
     return {
-      finding:`${service} brings people in, but few of them buy it again`,
+      finding:workspaceTemplateTextV97('serviceBringsPeopleInButFewBuyAgain',{service:service}),
       why:(buyers!==null&&repeat!==null)
-        ?`${repeat}% of its ${biPluralV892(buyers,'buyer','buyers')} bought it a second time.`
+        ?workspaceTemplateTextV97(buyers===1?'ofItsBuyerBoughtItAOne':'ofItsBuyerBoughtItAMany',{v1:repeat,count:buyers})
         :'',
       action:'Look at what you offer these customers next.',
       cta:{kind:'section',section:'services',label:'View services'}
@@ -56780,7 +57247,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const count=biWholeV892(biObjectV892(item.refs)?.reminder_only_candidates_n);
     if(count===null)return null;
     return {
-      finding:`${biPluralV892(count,'regular has','regulars have')} gone quiet without ever needing a discount`,
+      finding:workspaceTemplateTextV97(count===1?'regularHasGoneQuietWithoutEverOne':'regularHasGoneQuietWithoutEverMany',{count:count}),
       why:'They have always come back at full price.',
       action:'A plain reminder is enough here — no offer needed.',
       cta:{kind:'route',href:'#/grow/bringback',label:'Open bring-back list'}
@@ -56792,7 +57259,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const share=biWholeV892(refs.within_cycle_pct);
     if(!programme||share===null)return null;
     return {
-      finding:`${share}% of ${programme} rewards land on visits that were already due`,
+      finding:workspaceTemplateTextV97('percentOfRewardsLandOnVisitsAlreadyDue',{percent:share,programme:programme}),
       why:'The reward is arriving on visits the customer’s own rhythm predicted.',
       action:'Check whether this reward changes behaviour or pays for it.',
       cta:{kind:'section',section:'rewards',label:'See rewards'}
@@ -56802,7 +57269,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const name=biTextV892(biObjectV892(item.refs)?.full_name);
     if(!name)return null;
     return {
-      finding:`${name} earns less than your own average on the same services`,
+      finding:workspaceTemplateTextV97('staffEarnsLessThanAverageOnSameServices',{staff:name}),
       why:'Measured against your own price list, not an outside target.',
       action:'Worth a conversation about how these services are sold.',
       cta:{kind:'section',section:'staff',label:'See staff performance'}
@@ -56813,7 +57280,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const bought=biWholeV892(rate.numerator),sent=biWholeV892(rate.denominator);
     if(bought===null||sent===null)return null;
     return {
-      finding:`${bought} of ${sent} customers sent a campaign bought something afterwards`,
+      finding:workspaceTemplateTextV97('customersSentCampaignBoughtAfterwards',{bought:bought,sent:sent}),
       why:'A purchase after a send is not proof the send caused it.',
       action:'Review who this went to and what it said.',
       cta:{kind:'section',section:'evidence',label:'See the full evidence'}
@@ -56833,7 +57300,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const group=biTextV892(biObjectV892(item.refs)?.group);
     if(!group)return null;
     return {
-      finding:`${group} did worse in the second half of the period than the first`,
+      finding:workspaceTemplateTextV97('groupDidWorseInSecondHalf',{group:group}),
       why:'',
       action:'Worth checking what changed for this group.',
       cta:{kind:'section',section:'evidence',label:'See the full evidence'}
@@ -56843,7 +57310,7 @@ const BI_TEMPLATES_V894=Object.freeze({
     const label=biTextV892(biObjectV892(item.refs)?.label);
     if(!label)return null;
     return {
-      finding:`${label} is your strongest day`,why:'',action:'',
+      finding:workspaceTemplateTextV97('weekdayIsYourStrongestDay',{weekday:label}),why:'',action:'',
       cta:{kind:'section',section:'behaviour',label:'See busy and quiet times'}
     };
   },
@@ -56853,8 +57320,8 @@ const BI_TEMPLATES_V894=Object.freeze({
     if(!label)return null;
     const buyers=biWholeV892(refs.customer_count);
     return {
-      finding:`${label} leads everything else you sell`,
-      why:buyers===null?'':`Bought by ${biPluralV892(buyers,'customer','customers')} in this period.`,
+      finding:workspaceTemplateTextV97('itemLeadsEverythingElseYouSell',{item:label}),
+      why:buyers===null?'':workspaceTemplateTextV97(buyers===1?'boughtByCustomerInThisPeriodOne':'boughtByCustomerInThisPeriodMany',{count:buyers}),
       action:'',
       cta:{kind:'section',section:'services',label:'View services'}
     };
@@ -56865,8 +57332,8 @@ const BI_TEMPLATES_V894=Object.freeze({
     if(!name)return null;
     const buyers=biWholeV892(refs.buyers);
     return {
-      finding:`${name} is your best-selling service`,
-      why:buyers===null?'':`Bought by ${biPluralV892(buyers,'customer','customers')} in this period.`,
+      finding:workspaceTemplateTextV97('serviceIsYourBestSelling',{service:name}),
+      why:buyers===null?'':workspaceTemplateTextV97(buyers===1?'boughtByCustomerInThisPeriodOne':'boughtByCustomerInThisPeriodMany',{count:buyers}),
       action:'',
       cta:{kind:'section',section:'services',label:'View services'}
     };
@@ -57259,8 +57726,8 @@ function biSelectInsightsV892(model){
     const openSales=biWholeV892(cash.openSales)||0;
     push({
       type:'needs_attention',topic:'cash',
-      finding:`${biMoneyV892(outstanding,currency)} not yet collected`,
-      why:`${biPluralV892(openSales,'sale is','sales are')} not recorded as fully paid.`,
+      finding:workspaceTemplateTextV97('amountNotYetCollected',{amount:biMoneyV892(outstanding,currency)}),
+      why:workspaceTemplateTextV97(openSales===1?'saleIsNotRecordedAsFullyOne':'saleIsNotRecordedAsFullyMany',{count:openSales}),
       action:'Review the open sales and record any payments already received.',
       /* nestly_v903 (owner: "it does not work — i need it to lead me to immediate action"). This
          CTA used to scroll to the money panel further down THIS page, which only restates the same
@@ -57302,7 +57769,7 @@ function biSelectInsightsV892(model){
       why:withheld
         ?rhythm
         :(fading>0
-          ? (stake?`${biPluralV892(fading,'regular is','regulars are')} overdue · about ${stake} a month of regular spend at stake.`
+          ? (stake?workspaceTemplateTextV97(fading===1?'regularIsOverdueAboutAMonthOne':'regularIsOverdueAboutAMonthMany',{count:fading,v1:stake})
             :`${biPluralV892(fading,'regular is','regulars are')} overdue their usual visit.`)
           :'This customer is overdue against their own visit rhythm.'),
       why2:(withheld&&stake)?workspaceTemplateTextV97('aboutMonthlyRegularSpendMayBeAtRisk',{monthlySpend:stake}):'',
@@ -57312,7 +57779,7 @@ function biSelectInsightsV892(model){
         fact:'Each person is judged against their own visit rhythm, not against a fixed rule.',
         period,
         sample:biWholeV892(bringBack.considered)
-          ?`Based on ${biPluralV892(biWholeV892(bringBack.considered),'customer','customers')} with enough visit history to judge.`
+          ?workspaceTemplateTextV97(biWholeV892(bringBack.considered)===1?'basedOnCustomerWithEnoughVisitOne':'basedOnCustomerWithEnoughVisitMany',{count:biWholeV892(bringBack.considered)})
           :'',
         limitation:'A customer with too few visits to show a rhythm is not judged at all.',
         reconsider:'Peekaa drops the flag the moment they visit again.'
@@ -57345,7 +57812,7 @@ function biSelectInsightsV892(model){
         money walking away reads as something to fix. */
   biListV892(view.advisory).forEach(item=>{
     const sample=(item.sampleSize!==null&&item.sampleSize!==undefined&&item.sampleFloor)
-      ?`Peekaa saw this ${biPluralV892(item.sampleSize,'time','times')}. It waits for at least ${item.sampleFloor} before saying anything.`
+      ?workspaceTemplateTextV97(item.sampleSize===1?'peekaaSawThisTimeItWaitsOne':'peekaaSawThisTimeItWaitsMany',{count:item.sampleSize,v1:item.sampleFloor})
       :'';
     /* nestly_v894: the approved owner wording for this generator, built from the payload's own
        structured fields. A generator with no template prints NO server prose here — it offers
@@ -57645,7 +58112,7 @@ function biHealthHtmlV892(model){
     coverageSaidV892=true;
     rows.push({
       label:'Services sorted into categories',
-      value:`${coverage.toFixed(1)}% of revenue is sorted into categories`,
+      value:workspaceTemplateTextV97('percentOfRevenueSortedIntoCategories',{percent:coverage.toFixed(1)}),
       cta:coverage<100?{href:'#/servicemapping',label:'Map services'}:null
     });
   }
@@ -57753,10 +58220,10 @@ function biWhoBuysRowsV902(model){
     let sentence=BI_WORDING_V892.noCrowd;
     if(words&&short){
       sentence=rate
-        ?`Mostly ${words} (only ${rate.numerator} of ${rate.denominator} buyers told you their details — too few to be sure)`
-        :`Mostly ${words} (too few buyers told you their details to be sure)`;
+        ?workspaceTemplateTextV97('mostlyCrowdOnlySomeBuyersGaveDetailsTooFew',{crowdWords:words,toldCount:rate.numerator,buyerCount:rate.denominator})
+        :workspaceTemplateTextV97('mostlyCrowdTooFewBuyersGaveDetails',{crowdWords:words});
     }else if(words){
-      sentence=rate?`Mostly ${words} · ${rate.numerator} of ${rate.denominator} buyers`:`Mostly ${words}`;
+      sentence=rate?workspaceTemplateTextV97('mostlyCrowdSomeOfBuyers',{crowdWords:words,toldCount:rate.numerator,buyerCount:rate.denominator}):`Mostly ${words}`;
     }
     return {
       name:biTextV892(row.item_name,'Item'),
@@ -57777,9 +58244,9 @@ function biCrowdCoverageLineV902(model){
     return (numerator===null||denominator===null)?null:{numerator,denominator};
   };
   const age=pair(profile.age),gender=pair(profile.gender);
-  if(age&&gender)return `You know the age of ${age.numerator} of ${biPluralV892(age.denominator,'customer','customers')} and the gender of ${gender.numerator} of ${gender.denominator}.`;
-  if(age)return `You know the age of ${age.numerator} of ${biPluralV892(age.denominator,'customer','customers')}.`;
-  if(gender)return `You know the gender of ${gender.numerator} of ${biPluralV892(gender.denominator,'customer','customers')}.`;
+  if(age&&gender)return workspaceTemplateTextV97(age.denominator===1?'youKnowTheAgeOfOfOne':'youKnowTheAgeOfOfMany',{v1:age.numerator,count:age.denominator,v2:gender.numerator,v3:gender.denominator});
+  if(age)return workspaceTemplateTextV97(age.denominator===1?'youKnowTheAgeOfOf2One':'youKnowTheAgeOfOf2Many',{v1:age.numerator,count:age.denominator});
+  if(gender)return workspaceTemplateTextV97(gender.denominator===1?'youKnowTheGenderOfOfOne':'youKnowTheGenderOfOfMany',{v1:gender.numerator,count:gender.denominator});
   return '';
 }
 function biWhoBuysHtmlV902(model){
@@ -57830,7 +58297,7 @@ function biIdeasV902(model){
   const lead=biWhoBuysRowsV902(view).rows.find(row=>row.crowd.known)||null;
   if(lead)add({
     text:'Ask your best customers to bring a friend.',
-    because:`Most ${lead.name} buyers are ${lead.crowd.words}.`,
+    because:workspaceTemplateTextV97('mostBuyersOfItemAre',{itemName:lead.name,crowdWords:lead.crowd.words}),
     cta:{kind:'section',section:'services',label:'See what sells'}
   });
 
@@ -57838,7 +58305,7 @@ function biIdeasV902(model){
   const packages=biObjectV892(view.packages)||{};
   const holders=biWholeV892(packages.holders),sessions=biWholeV892(packages.sessions);
   if(holders&&sessions)add({
-    text:`Call the ${biPluralV892(holders,'customer','customers')} who still ${holders===1?'has':'have'} sessions left.`,
+    text:workspaceTemplateTextV97(holders===1?'callTheCustomerWhoStillHasOne':'callTheCustomerWhoStillHasMany',{count:holders}),
     because:`${biPluralV892(holders,'customer holds','customers hold')} ${biPluralV892(sessions,'unused session','unused sessions')}.`,
     cta:{kind:'route',href:'#/custpackages',label:'View packages'}
   });
@@ -57847,7 +58314,7 @@ function biIdeasV902(model){
   const quiet=biObjectV892(view.quietWeekday);
   if(quiet&&biTextV892(quiet.label))add({
     text:'Try an offer on your quiet day.',
-    because:`${biTextV892(quiet.label)} is your quietest day.`,
+    because:workspaceTemplateTextV97('dayNameIsYourQuietestDay',{dayName:biTextV892(quiet.label)}),
     cta:{kind:'section',section:'behaviour',label:'See busy and quiet times'}
   });
 
@@ -57868,7 +58335,7 @@ function biIdeasV902(model){
   const reachBase=biWholeV892(biObjectV892(reachRefs.business_offers)?.customers);
   if(allowed!==null&&reachBase!==null)add({
     text:'Ask customers at checkout if you may contact them.',
-    because:`Only ${allowed} of ${biPluralV892(reachBase,'customer','customers')} agreed to be contacted.`,
+    because:workspaceTemplateTextV97(reachBase===1?'onlyOfCustomerAgreedToBeOne':'onlyOfCustomerAgreedToBeMany',{v1:allowed,count:reachBase}),
     cta:{kind:'section',section:'acquisition',label:'See who you may contact'}
   });
 
@@ -57878,7 +58345,7 @@ function biIdeasV902(model){
   const ageKnown=biWholeV892(age?.numerator),ageBase=biWholeV892(age?.denominator);
   if(agePct!==null&&agePct<60&&ageKnown!==null&&ageBase!==null)add({
     text:'Record birthday and gender when you add a customer.',
-    because:`You know the age of only ${ageKnown} of ${biPluralV892(ageBase,'customer','customers')}.`,
+    because:workspaceTemplateTextV97(ageBase===1?'youKnowTheAgeOfOnlyOne':'youKnowTheAgeOfOnlyMany',{v1:ageKnown,count:ageBase}),
     cta:{kind:'route',href:'#/clients',label:'Open customers'}
   });
 
@@ -58222,7 +58689,7 @@ function reportVerdictBandV297({label,valueText,current,previous,previousText=''
   available=true,unavailableReason='',zeroBaselineText='nothing was recorded in the previous period',note='',periodLabel=''}={}){
   /* V300: an explicitly chosen baseline (calendar grain or custom compare dates) names itself;
      the derived window keeps the exact V297 phrasing. */
-  const periodWords=periodLabel||`the previous ${days} day${days===1?'':'s'}`;
+  const periodWords=periodLabel||workspaceTemplateTextV97(days===1?'thePreviousDayOne':'thePreviousDayMany',{v1:days});
   const currentValue=Number(current),previousValue=Number(previous);
   let tone='none',arrow='',word='',sentence='';
   if(!available||!Number.isFinite(previousValue)||!Number.isFinite(currentValue)){
@@ -58652,7 +59119,7 @@ async function reportsPage(){
       const compareRange=reportRangeValidation(compareFrom,compareTo);
       if(!compareRange.ok)throw new Error(`Compare dates: ${compareRange.reason}`);
       priorFrom=compareFrom;priorTo=compareTo;
-      priorLabel=`the compared period (${compareFrom} to ${compareTo})`;
+      priorLabel=workspaceTemplateTextV97('theComparedPeriodFromTo',{from:compareFrom,to:compareTo});
     }
     return {from,to,days,priorFrom,priorTo,priorLabel,
       fromTs:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
@@ -61597,7 +62064,7 @@ async function settingsPage(){
     if(button)button.disabled=false;
     if(error)return fail(error);
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:teamRowsById.get(id)?.user_id||''});
-    toast(approve?`${name} can now sign in`:'App access declined');
+    toast(approve?workspaceTemplateTextV97('staffCanNowSignIn',{staff:name}):'App access declined');
     await loadTeam();
   };
   window.setStaffActiveV285=async(id,active,button)=>{
@@ -61616,7 +62083,7 @@ async function settingsPage(){
      would take the person's name off history that has to keep answering "who did this". */
   window.rmStaff=async(id,btn)=>{
     const name=btn?.dataset?.name||'this teammate';
-    if(!await confirmActionV386(`Delete ${name}'s record completely? This is only for a teammate added by mistake. If they worked here, press Cancel and use Deactivate instead — that keeps their history.`))return;
+    if(!await confirmActionV386(workspaceTemplateTextV97('deleteTeammateRecordCompletelyUseDeactivateInstead',{teammateName:name})))return;
     if(btn)btn.disabled=true;
     const [saleCount,appointmentCount]=await Promise.all([
       sb.from('sales').select('id',{count:'exact',head:true}).eq('business_id',S.biz.id).eq('staff_id',id),
@@ -61629,7 +62096,7 @@ async function settingsPage(){
       toast(workspaceTemplateTextV97(worked===1?'staffKeptHasRecord':'staffKeptHasRecords',{name,count:worked}));
       return;
     }
-    if(!await confirmActionV386(`Last check: ${name} has never recorded a sale or an appointment. Delete the record for good?`))return;
+    if(!await confirmActionV386(workspaceTemplateTextV97('lastCheckNeverRecordedSaleOrAppointmentDeleteForGood',{teammateName:name})))return;
     const removedUserId=teamRowsById.get(id)?.user_id||'';
     const {error}=await sb.from('staff').delete().eq('id',id);
     if(error)return fail(error);
@@ -61862,7 +62329,7 @@ async function settingsPage(){
     const {data,error}=await sb.rpc('create_invite',{p_business:S.biz.id,p_role:$('ir').value,p_email:$('ie').value||null});
     if(button.isConnected)CUI.setButtonBusy(button,{busy:false});
     if(error) return fail(error);
-    await copyTextToClipboard(staffInviteLinkV151(data.code),{success:`Invite created — link copied for ${esc(ROLE_LABELS[$('ir').value]||$('ir').value)}`,
+    await copyTextToClipboard(staffInviteLinkV151(data.code),{success:workspaceTemplateTextV97('inviteCreatedLinkCopiedForRole',{roleName:esc(ROLE_LABELS[$('ir').value]||$('ir').value)}),
       failure:'Invite created, but copy was blocked. Copy the link or code from Pending invites.'});loadTeam();
   };
   await loadTemplates();
@@ -62066,7 +62533,7 @@ function billingFootnoteV786(moneyBackWindow){
   const refund=until
     ?workspaceTemplateTextV97('moneyBackRequestDeadlineUnderAcceptedTerms',{deadlineDate:until})
     :'Subscription fees are non-refundable after payment, except where required by law or Peekaa agrees otherwise in writing.';
-  return `${refund} GST not charged. Staff access included — staff count never changes this price. Billed by NESTLY TECHNOLOGIES PTE. LTD. · UEN 202634502E · Not GST-registered · admin.peekaa@gmail.com`;
+  return workspaceTemplateTextV97('billingFootnoteGstNotChargedStaffIncluded',{refundSentence:refund});
 }
 /* The "Adding a new branch" strip under the cards — three steps, in the mockup's words. */
 function billingAddBranchStepsV784(){
@@ -62202,17 +62669,17 @@ function billingLifecycleLinesV764(billing,summary,paymentMethod){
   }
   if(sentAt){
     out.show_final=true;
-    out.final_line=`Renewal cancel is final · ends ${endsOn||'at your next billing date'} · Start a new plan`;
+    out.final_line=workspaceTemplateTextV97(endsOn?'renewalCancelIsFinalEndsStartNamed':'renewalCancelIsFinalEndsStartUnnamed',{named:endsOn});
   }else if(requestedAt){
     out.show_resume=true;
-    out.cancel_line=`Renewal cancelled · access until ${endsOn||'your next billing date'}`;
+    out.cancel_line=workspaceTemplateTextV97(endsOn?'renewalCancelledAccessUntilNamed':'renewalCancelledAccessUntilUnnamed',{named:endsOn});
     out.resume_label='Resume renewal';
     out.resume_confirm=workspaceTemplateTextV97('resumeRenewalNextPaymentAmount',{amount:moneyShortV758(Number(s.total_cents||0))})
       +` on ${endsOn||'your next billing date'} to ${card}.`;
   }else{
     out.show_cancel=true;
     const resumeUntil=billingDateV758(s.renewal_cancel_final_after||b.renewal_cancel_final_after);
-    out.cancel_confirm=`Cancel renewal? Everything keeps working until ${endsOn||'your next billing date'}.`
+    out.cancel_confirm=workspaceTemplateTextV97(endsOn?'cancelRenewalEverythingKeepsWorkingUntilNamed':'cancelRenewalEverythingKeepsWorkingUntilUnnamed',{named:endsOn})
       +` Nothing is refunded.`
       +(resumeUntil?' '+workspaceTemplateTextV97('youCanResumeUntilDate',{resumeByDate:resumeUntil}):'');
   }
@@ -62357,9 +62824,9 @@ async function runBranchBillingActionV758(record,button,kind){
   }
   toast(kind==='stop'
     ?(data?.status==='replayed'?'That branch is already switching off'
-      :`${record.branch} switches off on ${billingDateV758(data?.effective_at)||'your next billing date'}`)
-    :(data?.billing_state==='included'?`${record.branch} stays on your plan`
-      :data?.billing_state==='active'?`${record.branch} stays on and renews with your plan`
+      :workspaceTemplateTextV97(billingDateV758(data?.effective_at)?'switchesOffOnNamed':'switchesOffOnUnnamed',{v1:record.branch,named:billingDateV758(data?.effective_at)}))
+    :(data?.billing_state==='included'?workspaceTemplateTextV97('branchStaysOnYourPlan',{branch:record.branch})
+      :data?.billing_state==='active'?workspaceTemplateTextV97('branchStaysOnAndRenewsWithYourPlan',{branch:record.branch})
       :`${record.branch} is back — pay for it from Branches to switch it on`));
   loadBillingConfig();
 }
@@ -62502,14 +62969,14 @@ function promoCardHtmlV961(state){
         <b>Promo code</b><span class="pill ${consumed?'off':waitingOnStripe?'new':'ok'}">${esc(String(state.code||''))}</span>
       </div>
       <p class="muted small" style="margin-top:6px">${consumed
-        ? `${esc(promoValueTextV961(state))} came off your first payment.`
+        ? workspaceTemplateTextV97('discountCameOffYourFirstPayment',{discountAmount:esc(promoValueTextV961(state))})
         : stripeFailed
-          ? `${esc(promoValueTextV961(state))} is saved against your account, but it has not reached your card yet. Peekaa is on it — you will not be charged the full amount without it.`
+          ? workspaceTemplateTextV97('discountSavedButNotOnCardYet',{discount:esc(promoValueTextV961(state))})
           : waitingOnStripe
-            ? `${esc(promoValueTextV961(state))} your next payment. Setting it up on your card now.`
+            ? workspaceTemplateTextV97('discountOnNextPaymentSettingUpOnCard',{discount:esc(promoValueTextV961(state))})
             : onStripe
-              ? `${esc(promoValueTextV961(state))} your next payment. It is set up on your card.`
-              : `${esc(promoValueTextV961(state))} your first payment. It is applied when that payment is taken.`}</p>
+              ? workspaceTemplateTextV97('discountOnNextPaymentSetUpOnCard',{discount:esc(promoValueTextV961(state))})
+              : workspaceTemplateTextV97('discountOnFirstPaymentAppliedWhenTaken',{discount:esc(promoValueTextV961(state))})}</p>
     </div>`;
   }
   if(!state.can_redeem)return '';
@@ -62923,7 +63390,7 @@ async function loadBillingConfig(){
       const subscribedCount=branchRowsV784.filter(row=>subscribedStatesV784.includes(row.billing_state)&&String(row.billing_mode||'shared')==='shared').length;
       const stopPayload=esc(JSON.stringify(recordForV784(branch)));
       const branchAction=own||branch.is_default===true||!providerSubscription?null
-        :state==='canceling'?{kind:'keep',label:'Keep on',line:`Switches off ${billingDateV758(branch.billing_cancel_at)||'at renewal'}. Keep it on and it renews with your plan.`,payload:stopPayload}
+        :state==='canceling'?{kind:'keep',label:'Keep on',line:workspaceTemplateTextV97(billingDateV758(branch.billing_cancel_at)?'switchesOffKeepItOnAndNamed':'switchesOffKeepItOnAndUnnamed',{named:billingDateV758(branch.billing_cancel_at)}),payload:stopPayload}
         :state==='unsubscribed'||state==='suspended'?{kind:'keep',label:'Switch on',line:'Switched off. Put it back on your plan.',payload:stopPayload}
         :subscribedStatesV784.includes(state)&&subscribedCount>1?{kind:'stop',label:'Switch off',line:'Keeps working until renewal, not charged after.',payload:stopPayload}
         :null;

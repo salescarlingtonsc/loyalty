@@ -135,7 +135,13 @@ test('single-word labels are translated — the class every two-word harvest ski
    scan is now counted, and counted out loud. */
 /* nestly_v959 templated 117 of these. Each one removed its own raw literal from the source, which
    is why the number moved on its own — it is not a figure anyone edited to match. */
-const JS_BUILT_SENTENCES_REMAINING_V958 = 200;
+/* nestly_v960 templated another 232. The number moves on its own — templating a sentence removes
+   its raw literal — so it is measured, never edited to match. What is left is what a pair cannot
+   express: sentences assembled from sub-clauses that are themselves assembled, and three carrying
+   two INDEPENDENT plural conditions, which need four keys rather than two. Nine shapes the scan
+   was counting are not copy at all — a localStorage key, three CSS selectors, three PostgREST
+   strings, a storage URL, and one window that opened mid-expression — and are in the register. */
+const JS_BUILT_SENTENCES_REMAINING_V958 = 21;
 
 test('sentences built in JS are counted, and the count only ever falls', () => {
   const found = jsBuiltSentences();

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="d72b8c90d446bb485c096e4a2c2291ba138bc1cf660100b420ed41532bb99ea1"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="ea055730813d665146bcdde9ca202af39b0407e63f2b7740df230c25c6c6d6a4"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6228,7 +6228,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · d72b8c90d446bb485c096e4a2c2291ba138bc1cf660100b420ed41532bb99ea1</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · ea055730813d665146bcdde9ca202af39b0407e63f2b7740df230c25c6c6d6a4</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -6867,11 +6867,11 @@ function insightQuietScopeV214({current,branchId,branchName}){
   const revenueCents=Number(current?.revenue_cents)||0;
   const where=branchId?(branchName||'This branch'):'This business';
   const activity=visits||revenueCents
-    ?`${where} recorded ${visits} ${visits===1?'visit':'visits'} and ${money(revenueCents)} in this period — not yet enough to call a trend.`
-    :`${where} recorded no visits or sales in this period, so there is nothing to compare yet.`;
+    ?workspaceTemplateTextV97('recordedVisitsAndRevenueNotEnoughForTrend',{where:where,visits:visits,visitWord:visits===1?'visit':'visits',amount:money(revenueCents)})
+    :workspaceTemplateTextV97('recordedNoVisitsOrSalesNothingToCompare',{where:where});
   return {
     tone:'neutral',icon:'info',category:'Readiness',
-    title:branchId?`Not enough activity at ${branchName||'this branch'} yet`:'More activity is needed',
+    title:branchId?workspaceTemplateTextV97(branchName?'notEnoughActivityAtYetNamed':'notEnoughActivityAtYetUnnamed',{named:branchName}):'More activity is needed',
     explanation:activity,
     why:branchId
       ?'Each branch is measured on its own, so a quieter branch shows fewer recommendations than a busy one. Nothing is broken.'
@@ -6914,7 +6914,7 @@ function campaignTemplateMessageV153(type,audienceLabel){
   if(type==='weekend')return 'Weekend slots are open. Book early and enjoy your next visit.';
   if(type==='new_service')return 'A new service is available. Tap to see what is new.';
   if(type==='flash')return 'Limited-time promotion available for eligible customers.';
-  return `We miss you. ${audienceLabel||'Selected customers'} can return for the latest rewards and offers.`;
+  return workspaceTemplateTextV97(audienceLabel?'weMissYouCanReturnForNamed':'weMissYouCanReturnForUnnamed',{named:audienceLabel});
 }
 function openCampaignPrepV153({audienceKey='inactive_60_plus',audienceLabel='Inactive customers',definition='',count=0,consentEligible=null,branchLabel='All branches consolidated'}={}){
   document.querySelector('#campaignPrepModalV153')?.remove();
@@ -6992,14 +6992,14 @@ function buildMerchantInsightsV153({current,previous,inactive60Total=0,from,to,p
     insights.push({tone:'positive',icon:'reports',category:'Revenue trend',title:'Revenue has started',explanation:'Sales were recorded this period. Keep recording activity to unlock a reliable trend.',why:'',actions:[]});
   }
   if(Number(inactive60Total)>0){
-    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:`${customerCountTextV154(inactive60Total)} not visited in at least 60 days.`,why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
+    insights.push({tone:'attention',icon:'customers',category:'Customer retention',title:'Customers may be drifting away',explanation:workspaceTemplateTextV97('customersNotVisitedInAtLeast60Days',{customerCountText:customerCountTextV154(inactive60Total)}),why:'Prepare a win-back campaign for this audience.',actions:[{label:'View inactive customers',href:'#/clients',dataset:'data-insight-inactive="60_plus"'},{label:'Prepare campaign',dataset:'data-campaign-prep-v153 data-audience-key="inactive_60_plus" data-audience-label="Inactive 60+ customers" data-audience-count="'+String(Number(inactive60Total)||0)+'"',variant:'ghost'}]});
   }
   const weekdayValues=(current?.visits_by_weekday||[]).map(Number);
   const busiest=Math.max(0,...weekdayValues);
   const totalVisits=weekdayValues.reduce((sum,value)=>sum+value,0);
   if(totalVisits>=MIN_INSIGHT_BUSIEST_VISITS_V153&&busiest>0){
     const day=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][weekdayValues.indexOf(busiest)]||'One day';
-    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:`${day} is your busiest day`,explanation:`${day} recorded the highest number of valid visits.`,why:`Review staffing and availability for ${day}s.`,actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
+    insights.push({tone:'neutral',icon:'appointments',category:'Demand pattern',title:workspaceTemplateTextV97('weekdayIsYourBusiestDay',{weekday:day}),explanation:workspaceTemplateTextV97('dayRecordedHighestNumberOfValidVisits',{dayName:day}),why:workspaceTemplateTextV97('reviewStaffingAndAvailabilityForDay',{dayName:day}),actions:[{label:'View appointment report',href:'#/reports',variant:'ghost'}]});
   }
   if(!insights.length){
     insights.push(insightQuietScopeV214({current,branchId,branchName}));
@@ -7810,7 +7810,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
     const stampCentsV567=Number(prog.stamp_per_cents);
     const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
-      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
+      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?workspaceTemplateTextV97('oneStampForEveryAmountSpent',{amount:money(stampCentsV567)}):'')
       :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?workspaceTemplateTextV97('pointsForEverySgd1Spent',{pointsPerDollar:earnPerDollarV567}):'');
     const earnLineV567=earnCopy
       ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
@@ -7820,7 +7820,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
     let nextCopy='No reward milestone has been added yet.';
     if(!redemptionEnabled)nextCopy='Customer redemption is switched off. Turn it on under Customer Interface → Customer Action.';
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
-      ?`${projectedNextReward.name||'Reward'} is ready now`
+      ?workspaceTemplateTextV97(projectedNextReward.name?'isReadyNowNamed':'isReadyNowUnnamed',{named:projectedNextReward.name})
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
     /* V226 (owner crossed the whole block out: "too confusing", and wrote "show Redeemable
        Rewards for customer"). It led with an explanation of the SCHEME — how rewards work,
@@ -8047,7 +8047,7 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
     /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
        "50 points" over a stamps payout in the go-live battery. Same helper the Grow panel uses. */
-    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
+    Number(referralProgrammeV294.reward_points)>0?workspaceTemplateTextV97('referAFriendRewardAfterQualifyingFirstVisit',{rewardAmount:growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)}):'Refer friends and get rewards.',
     referralProgrammeV294.enabled===true));
   if(welcomeOfferV294?.configured)programmeRowsV294.push(programmeRowHtmlV294('Welcome offer',
     welcomeOfferV294.reward_label?`New sign-ups get ${welcomeOfferV294.reward_label} free${Number(welcomeOfferV294.min_spend_cents)>0?` once they spend ${money(welcomeOfferV294.min_spend_cents)}`:''}.`:'A free item on the first visit.',
@@ -9037,7 +9037,7 @@ function legacySaleReceiptV145(doneInfo={},unitNounV430='points'){
     heading:duplicate?'Recorded':'Done',
     /* nestly_v430: the earn line speaks the till's unit (stamps firms earned stamps and read "points"). */
     message:duplicate?`Recorded — current balance: ${pointsTotal!=null?pointsTotal.toLocaleString('en-SG'):'—'} ${unitNounV430}.`
-      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:`No ${unitNounV430} earned for this purchase.`,
+      :pointsEarned>0?`+${pointsEarned} ${unitNounV430}`:workspaceTemplateTextV97('noUnitEarnedForThisPurchase',{unitNoun:unitNounV430}),
     pointsEarned,
     pointsTotal:duplicate||pointsEarned>0?pointsTotal:null,
     duplicate
@@ -9174,7 +9174,7 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
   const lastUsedAt=liveUses.length?liveUses[liveUses.length-1].at:null;
   const caveats=[
     entry.ambiguous?workspaceTemplateTextV97('holdsMoreThanOnePackageUsesListedByName',{packageName:entry.planName}):'',
-    entry.unattributed?`The counter above is authoritative. ${entry.used} session${entry.used===1?'':'s'} ${entry.used===1?'has':'have'} been used; ${liveUses.length} matching sales are visible to you here.`:''
+    entry.unattributed?workspaceTemplateTextV97(entry.used===1?'theCounterAboveIsAuthoritativeSessionOne':'theCounterAboveIsAuthoritativeSessionMany',{v1:entry.used,v2:liveUses.length}):''
   ].filter(Boolean);
   return `<div class="c360-package-v442${entry.exhausted?' is-exhausted-v442':''}" data-package-v442="${esc(entry.id)}">
     <div class="c360-summary-row-v294">
@@ -9824,7 +9824,7 @@ async function tillPage(){
           if(!isTillCurrent())return;
           draw();
           return toast(givenV681?.replayed===true
-            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            ?workspaceTemplateTextV97(givenV681.reward_label||labelV666?'wasAlreadyGivenNamed':'wasAlreadyGivenUnnamed',{named:givenV681.reward_label||labelV666})
             :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
         }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
@@ -11117,7 +11117,7 @@ async function tillPage(){
              count is NOT deducted. The old line subtracted the cost and promised "759 (now 764)",
              a balance the server never produces (go-live battery, 2026-08-22). Points keep the
              debit projection; the server does debit those. */
-          ?row('Stamps after',`${balanceNow} — a completed card is used, stamps are not deducted`)
+          ?row('Stamps after',workspaceTemplateTextV97('completedCardIsUsedStampsNotDeducted',{reward:balanceNow}))
           :row('Points after',`${balanceNow-total} (now ${balanceNow})`)):''}
         ${branchName?row('Branch',branchName):''}
         ${staffName?row('Staff',staffName):''}
@@ -12111,7 +12111,7 @@ async function tillPage(){
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
           :`<p class="muted">${outcome.message}</p>`}
-        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?" "+workspaceTemplateTextV97('nowPointsTotal',{points:outcome.pointsTotal}):''}</p>
         ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
@@ -12495,7 +12495,7 @@ async function salesPage(){
       :workflowDeniedV579?' · Reverse controls need refund permission; Reversed status is inferred from the ledger':'';
     salesFilterNoteV266(paymentStateApplied
       ?`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period}${workflowWarning}`
-      :`Showing ${rows.length} ${rows.length===1?'sale':'sales'} · ${period} · payment state could not be read, so it was not applied${workflowWarning}`,
+      :workspaceTemplateTextV97('showingSalesPaymentStateNotApplied',{count:rows.length,saleWord:rows.length===1?'sale':'sales',period:period,workflowNote:workflowWarning}),
       (paymentStateApplied&&!salesWorkflowMayHaveMoreV291)?'':'warn');
     }finally{
       if(applyButton?.isConnected&&isCurrentLoadV579())CUI.setButtonBusy(applyButton,{busy:false});
@@ -13207,18 +13207,18 @@ function bookingDecisionNotice(result,decision){
   const outcome=String(result?.outcome||'unknown');
   const actual=String(result?.actual_status||'unknown').replaceAll('_',' ');
   const verb=decision==='confirm'?'Confirm':'Decline';
-  if(outcome==='applied')return {ok:true,text:`${verb} applied. Current status: ${actual}.`};
-  if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:`${verb} was already applied. Current status: ${actual}.`};
+  if(outcome==='applied')return {ok:true,text:workspaceTemplateTextV97('decisionAppliedCurrentStatus',{decisionVerb:verb,currentStatus:actual})};
+  if(outcome==='replayed'||result?.replayed===true)return {ok:true,text:workspaceTemplateTextV97('decisionAlreadyAppliedCurrentStatus',{decisionVerb:verb,currentStatus:actual})};
   /* Owner report: "pressing confirm does no changes". scheduling_conflict is by far the most
      common non-applied outcome on Confirm — it means the chosen team member isn't available at
      that exact time per their own schedule (the write-time guard refused it), not a generic
      failure. Name the real cause and the fix (Change time / staff) instead of a bare snake_case
      outcome string. */
-  if(outcome==='scheduling_conflict')return {ok:false,text:`${verb} could not be applied — the team member isn't available at that time, per their schedule. Try "Change time / staff" for a different slot.`};
+  if(outcome==='scheduling_conflict')return {ok:false,text:workspaceTemplateTextV97('decisionCouldNotBeAppliedTeamMemberNotAvailable',{decision:verb})};
   /* nestly_v882: the server now names a request whose preferred time has passed instead of letting
      the scheduler's raw refusal through. The rescue is Move & confirm on the Bookings row. */
   if(outcome==='past_start')return {ok:false,text:'This time has already passed. Pick a new date and time and press Move & confirm, or decline the request.'};
-  return {ok:false,text:`${verb} could not be applied (${outcome.replaceAll('_',' ')}). Current status: ${actual}.`};
+  return {ok:false,text:workspaceTemplateTextV97('decisionCouldNotBeAppliedWithReasonAndStatus',{decision:verb,reason:outcome.replaceAll('_',' '),status:actual})};
 }
 /* V200 (owner: "in all the modules i need you to simplify the sub modules ... just tab the sub
    modules and can view easily instead of long scrolling"). ONE mechanism for every module,
@@ -13565,7 +13565,7 @@ async function bookingsPage(){
     if(!isCurrent())return;
     pendingDecisions.delete(id);
     if(error){
-      decisionNotices.set(id,{ok:false,text:`Could not move this request. ${error.message||'Try again.'}`});
+      decisionNotices.set(id,{ok:false,text:workspaceTemplateTextV97('couldNotMoveThisRequest',{errorMessage:error.message||'Try again.'})});
     }else{
       const notice=bookingDecisionNotice(data,'confirm');
       decisionNotices.set(id,notice);toast(notice.text);
@@ -14152,7 +14152,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   })();
   const loyaltyEarnFactV235=model==='stamps'
     ?`${money(p?.stamp_per_cents??500)} spent = 1 stamp`
-    :`${p?.earn_points_per_dollar??1} points per $1 spent`;
+    :workspaceTemplateTextV97('pointsPerOneDollarSpent',{points:p?.earn_points_per_dollar??1});
   const tierBasisFactV235=({visits:'Number of visits',spend:'Lifetime spend',points_earned:'Lifetime points'})[p?.tier_basis||'visits'];
   const stampTargetV235=(()=>{
     const costs=rewards.filter(r=>r.active!==false).map(r=>Number(r.cost_points)).filter(n=>n>0);
@@ -14277,7 +14277,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       redemptionToggle.checked=redemptionCapability.data?.redemption_enabled===true;
       redemptionStatus.textContent=canManageLoyalty
         ?'This switch affects customer QR redemption only. Booking settings are preserved.'
-        :`Customer QR redemption is ${redemptionToggle.checked?'enabled':'off'}.`;
+        :workspaceTemplateTextV97('customerQrRedemptionIsState',{state:redemptionToggle.checked?'enabled':'off'});
       if(canManageLoyalty){
         redemptionToggle.disabled=false;redemptionSave.disabled=false;
         redemptionSave.onclick=async()=>{
@@ -14290,7 +14290,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           redemptionToggle.disabled=false;redemptionSave.disabled=false;
           redemptionStatus.textContent=result.error
             ?'Customer QR redemption was not changed. Refresh and try again.'
-            :`Customer QR redemption is ${result.data?.redemption_enabled===true?'enabled':'off'}. Booking and appointment settings were preserved.`;
+            :workspaceTemplateTextV97('customerQrRedemptionIsStateBookingSettingsPreserved',{state:result.data?.redemption_enabled===true?'enabled':'off'});
         };
       }
     }
@@ -14464,7 +14464,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
           const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
           if(!before&&!after)return 'on your birthday';
           if(before&&after)return `from ${before} day${before===1?'':'s'} before to ${after} day${after===1?'':'s'} after your birthday`;
-          return before?`in the ${before} day${before===1?'':'s'} before your birthday`:`within ${after} day${after===1?'':'s'} after your birthday`;
+          return before?workspaceTemplateTextV97(before===1?'inTheDayBeforeYourBirthdayOne':'inTheDayBeforeYourBirthdayMany',{v1:before}):workspaceTemplateTextV97(after===1?'withinDayAfterYourBirthdayOne':'withinDayAfterYourBirthdayMany',{v1:after});
         })();
       $('birthdayTerms').value=[
         `Get ${benefit} ${when}.`,
@@ -15388,7 +15388,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     if(!tier)return;
     const confirmed=await confirmDeliberateV288({
       title:'Pause this tier?',
-      body:`\u201C${tier.name||'This tier'}\u201D stops being awarded to customers.`,
+      body:workspaceTemplateTextV97(tier.name?'uCUDStopsBeingNamed':'uCUDStopsBeingUnnamed',{named:tier.name}),
       summaryHtml:'<b>Pause, not delete</b><p class="small" style="margin-top:5px">The tier is switched off and customers stop reaching it. Nothing is deleted \u2014 its name, threshold and benefits are kept, and you can switch it back on by editing it. Customers who already hold it keep what they hold. Nothing changes until this draft is published.</p>',
       acknowledgement:'I understand this tier stops being awarded.',
       confirmLabel:'Pause tier',danger:true});
@@ -17239,7 +17239,7 @@ async function promotionsPage(selectedPromotionId=null){
     /* A structured 200 refusal is a failure however friendly it looks (v378). */
     if(result.data?.blocked===true){
       return {error:{code:'promotion_finalize_rejected',reason:result.data.reason||'',
-        message:`That offer was not moved to draft (${result.data.reason||'refused'}).`}};
+        message:workspaceTemplateTextV97('thatOfferWasNotMovedToDraftReason',{reason:result.data.reason||'refused'})}};
     }
     return {error:null,data:result.data};
   };
@@ -18187,7 +18187,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     {key:'welcome',icon:'giftcard',title:'Welcome gift',blurb:'Give every new sign-up a gift on their first visit.',
       status:growTileStatusV371('welcome',!canRewards?['Not included','off']:welcomeOfferStatusV215?.active?[STATUS_WORDS.on,'on']:welcomeOfferStatusV215?.configured?['Paused','warn']:['Not set up','warn']),
       summary:welcomeOfferStatusV215?.active&&welcomeOfferStatusV215?.reward_label
-        ?`${welcomeOfferStatusV215.reward_label} for new sign-ups`:'Choose the free item new members get'},
+        ?workspaceTemplateTextV97('amountForNewSignUps',{amount:welcomeOfferStatusV215.reward_label}):'Choose the free item new members get'},
     {key:'birthday',icon:'cake',title:'Birthday benefit',blurb:'Treat customers in their birthday month.',
       status:growTileStatusV371('birthday',!canRewards?['Not included','off']:rewardJourney.birthday?.active?[STATUS_WORDS.on,'on']:rewardJourney.birthday?['Paused','warn']:['Not set up','warn']),
       summary:rewardJourney.birthday?.active&&rewardJourney.birthday?.value
@@ -18767,10 +18767,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
           :(Number(points)>0?growReferralAmountWordV425(snapshot.referral.reward_kind,points):'');
         const referrer=side(snapshot.referral.reward_points,snapshot.referral.reward_label);
         if(!referrer)return '';
-        if(snapshot.referral.friend_enabled===false)return `${referrer} to the referrer`;
+        if(snapshot.referral.friend_enabled===false)return workspaceTemplateTextV97('amountToTheReferrer',{amount:referrer});
         const friend=side(snapshot.referral.friend_reward_points??snapshot.referral.reward_points,
           snapshot.referral.friend_reward_label||snapshot.referral.reward_label);
-        return friend?`${referrer} to the referrer, ${friend} to the friend`:`${referrer} to the referrer`;
+        return friend?workspaceTemplateTextV97('amountToReferrerAmountToFriend',{referrer:referrer,friend:friend}):workspaceTemplateTextV97('amountToTheReferrer',{amount:referrer});
       })()});
     (snapshot.memberships||[]).forEach(plan=>entries.push({name:plan?.name||'Membership plan',
       usageScopeV386:'membership',usageIdV386:plan?.id,openV388:{topic:'membership'},
@@ -19354,7 +19354,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
      the same rule nestly_v471 applied to the end-date line this sits beside. */
   const growPointsGiftExpiryTextV520=reward=>{
     const days=Math.max(0,Math.round(Number(reward&&reward.entitlement_expiry_days)||0));
-    return days?` · Use within ${days} day${days===1?'':'s'}`:'';
+    return days?" "+workspaceTemplateTextV97(days===1?'useWithinDayOne':'useWithinDayMany',{v1:days}):'';
   };
   const growPointsGiftEndsTextV476=reward=>{
     const raw=reward?.claim_available_until;
@@ -19613,10 +19613,10 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>`;
   const growPointsManageV326=!canRewards
     ?CUI.emptyState({iconName:'till',title:'Loyalty is not included',
-        body:`This workspace does not include the loyalty module, so there is no ${growPointsPageTitleV326} to manage.`,
+        body:workspaceTemplateTextV97('workspaceHasNoLoyaltyModuleNothingToManage',{programmeName:growPointsPageTitleV326}),
         actionHtml:'<a class="btn ghost sm" href="#/grow">Back to Programmes</a>'})
     :!growPointsConfiguredV326
-    ?CUI.emptyState({iconName:'till',title:`${growPointsPageTitleV326} is not set up yet`,
+    ?CUI.emptyState({iconName:'till',title:workspaceTemplateTextV97('programmeIsNotSetUpYet',{programme:growPointsPageTitleV326}),
         body:growPointsIsStampsV326
           ?'Choose the stamp card, set how many stamps a visit earns, and add a first gift customers can redeem for.'
           :'Choose points, set the earning rate, and add a first gift customers can redeem for.',
@@ -19639,7 +19639,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
             ${growPointsTabStripV326('Live gifts')}
           </span></li>
         <li class="imp-note" data-grow-switchconfirm-v322="${growPointsSpineKindV326}" style="margin-top:8px"${growSwitchPendingV322===growPointsSpineKindV326?'':' hidden'}>
-          <b>${growPointsOnV326?`Turn ${esc(growPointsRowLabelV326)} off for customers?`:`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
+          <b>${growPointsOnV326?workspaceTemplateTextV97('turnProgrammeOffForCustomers',{programmeName:esc(growPointsRowLabelV326)}):`Turn ${esc(growPointsRowLabelV326)} on for customers?`}</b>
           <p class="muted small" style="margin-top:6px">${growPointsOnV326
             ?'Customers stop earning and stop being able to claim rewards straight away. Everything you have set up stays saved and comes back when you turn it on again.'
             :growPointsLosingV326.length
@@ -19738,7 +19738,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growBirthdayWindowTextV382=!growBirthdayV382?''
     :(growBirthdayV382.window_mode||'month')!=='days'
       ?'Their whole birthday month'
-      :`${Number(growBirthdayV382.window_days_before)||0} days before to ${Number(growBirthdayV382.window_days_after)||0} days after their birthday`;
+      :workspaceTemplateTextV97('daysBeforeToDaysAfterTheirBirthday',{before:Number(growBirthdayV382.window_days_before)||0,after:Number(growBirthdayV382.window_days_after)||0});
   const growBirthdayPageV382=!canRewards
     ?CUI.emptyState({iconName:'loyalty',title:'Loyalty is not included',
         body:'This workspace does not include the loyalty module, so there is no birthday gift to set up.',
@@ -19779,7 +19779,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       :'Straight away — no minimum spend';
   const growWelcomeExpiryTextV584=!growWelcomeV584?''
     :Number(growWelcomeV584.expiry_days)>0
-      ?`${Number(growWelcomeV584.expiry_days)} days after they join`
+      ?workspaceTemplateTextV97('daysAfterTheyJoin',{days:Number(growWelcomeV584.expiry_days)})
       :'No expiry';
   const growWelcomePageV584=!canRewards
     ?CUI.emptyState({iconName:'giftcard',title:'Loyalty is not included',
@@ -20050,7 +20050,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       ?`<button type="button" class="grow-stamps-editcell-v416 is-add-v416" data-grow-stamps-len-v416="${growStampsCardLenV416+1}" aria-label="Make the card one stamp longer">+</button>`:''}
   </div>
   <p class="muted small grow-stamps-gridlegend-v416">${growStampsHighestGiftV416
-    ?`${growStampsLevelsSortedV350.length} gift${growStampsLevelsSortedV350.length===1?'':'s'} on this card. Changes apply to new Stamp Cards — customers already collecting stamps will keep their current card, rewards and earning rules. Your changes apply when they complete or expire their current card.`
+    ?workspaceTemplateTextV97(growStampsLevelsSortedV350.length===1?'giftOnThisCardChangesApplyOne':'giftOnThisCardChangesApplyMany',{v1:growStampsLevelsSortedV350.length})
     :workspaceTemplateTextV97('noGiftsYetStartOneEveryStamps',{everyStamps:GROW_STAMPS_DEFAULT_EVERY_V416,startStamp:Math.min(GROW_STAMPS_DEFAULT_EVERY_V416,growStampsCardLenV416)})}</p>`;
   /* v414's refusal, said BEFORE the owner hits it. business_set_stamp_card_length_v414 will not
      shorten a card past a live gift, and app.redeem_reward_core refuses to pay one out past the
@@ -22540,8 +22540,8 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const rungsV585=growTiersPublishedV331.length;
     const wordV585=({visits:'visits',spend:'dollars spent',points_earned:'points earned'})[basis];
     toast(rungsV585
-      ?`Tiers are earned by ${wordV585} now. Your ${rungsV585} rung${rungsV585===1?'' :'s'} kept ${rungsV585===1?'its':'their'} number — check ${rungsV585===1?'it reads':'they read'} right in ${wordV585}.`
-      :`Tiers are earned by ${wordV585} now.`);
+      ?workspaceTemplateTextV97(rungsV585===1?'tiersAreEarnedByNowYourOne':'tiersAreEarnedByNowYourMany',{v1:wordV585,v2:rungsV585,v3:wordV585})
+      :workspaceTemplateTextV97('tiersAreEarnedByNow',{basisWord:wordV585}));
     growRerenderV322();
   };
   /* ---- V364: referral settings, immediate write to the live referral_programs row. ---- */
@@ -22657,7 +22657,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       const spine=await writeProgrammeSwitchesV314(S.biz.id,{referral:wantOnV558});
       if(!isGrowCurrent()){growReferralBusyV364=false;return null;}
       return spine.ok?true
-        :referralFailV567(`Referrals could not be turned ${wantOnV558?'on':'off'} — ${ownerErrorText(spine.error)}`);
+        :referralFailV567(workspaceTemplateTextV97('referralsCouldNotBeTurnedOnOff',{onOff:wantOnV558?'on':'off',errorMessage:ownerErrorText(spine.error)}));
     };
     /* v420's saver, NOT v322's: adding parameters to the old one would have created an overload
        twin rather than replacing it (see nestly_v410). */
@@ -23394,7 +23394,7 @@ async function pbActivateDraft(c,ctx){
   const {candidates:cands,truncated}=await pbLoadCandidatesV244(crit.lapsed_days||45,crit.min_visits||3);
   if(truncated)return toast('Too many customers match this playbook to freeze safely — start a fresh one with a narrower rule');
   if(!cands.length)return toast('No customers currently match this playbook — cancel it or start a fresh one');
-  if(!await confirmActionV386(`Start "${c.name}"? This freezes ${cands.length} customer${cands.length===1?'':'s'} and holds back ${c.holdout_percent}% as a control.`))return;
+  if(!await confirmActionV386(workspaceTemplateTextV97(cands.length===1?'startThisFreezesCustomerAndHoldsOne':'startThisFreezesCustomerAndHoldsMany',{v1:c.name,v2:cands.length,v3:c.holdout_percent})))return;
   const {error}=await pbActivateCampaign(c.campaign_id,cands.map(x=>x.id));
   if(error)return fail(error);
   toast('Playbook started');
@@ -23498,7 +23498,7 @@ function pbOpenIssueModal(c,targets,ctx){
       return toast(message);
     }
     const channel=retryChannel.channel;
-    if(!await confirmActionV386(`Confirm that ${selected.length} selected customer${selected.length===1?'':'s'} actually received the reward via ${channel.replace('_',' ')}? This records your manual attestation; it is not a provider delivery receipt.`))return;
+    if(!await confirmActionV386(workspaceTemplateTextV97(selected.length===1?'confirmThatSelectedCustomerActuallyReceivedOne':'confirmThatSelectedCustomerActuallyReceivedMany',{v1:selected.length,v2:channel.replace('_',' ')})))return;
     const button=$('pbConfirmExposure'),status=$('pbExposureStatus');
     button.disabled=true;status.textContent='Recording manual receipt confirmations…';
     let confirmed=0;const failed=[];
@@ -23879,7 +23879,7 @@ function studioEffectText(e,cat){
     case 'apply_discount_amount':return `Take ${studioMoney(e.amount_cents)} off`;
     case 'apply_discount_pct':return `Take ${Number(e.discount_pct||0)}% off`;
     case 'earn_bonus_points':
-      if(e.points_per_dollar!=null)return `Earn ${Number(e.points_per_dollar)} point${Number(e.points_per_dollar)===1?'':'s'} per $1 spent`;
+      if(e.points_per_dollar!=null)return workspaceTemplateTextV97(Number(e.points_per_dollar)===1?'earnPointPerSpentOne':'earnPointPerSpentMany',{v1:Number(e.points_per_dollar)});
       return workspaceTemplateTextV97('giveBonusPoints',{points:Number(e.points||0)});
     case 'earn_bonus_stamps':
       if(e.per_cents!=null)return workspaceTemplateTextV97('earnOneStampPerAmountSpent',{amount:studioMoney(e.per_cents)});
@@ -23998,7 +23998,7 @@ function studioEmergencyPauseActorLabel(actor){
 async function studioSetRuleActive(item,active,onDone){
   if(!item||!item.rule_id)return toast('This rule cannot be changed from here.');
   const verb=active?'Resume':'Pause';
-  if(!await confirmActionV386(`${verb} "${item.name||'this rule'}"? Publishing replaces what customers see and takes effect at the counter immediately.`))return;
+  if(!await confirmActionV386(workspaceTemplateTextV97(item.name?'publishingReplacesWhatCustomersSeeAndNamed':'publishingReplacesWhatCustomersSeeAndUnnamed',{v1:verb,named:item.name})))return;
   sb.rpc('set_studio_rule_active',{p_business:S.biz.id,p_rule_id:item.rule_id,p_active:active}).then(({error})=>{
     if(error){
       if(error.code==='42501')return toast('Only the owner can pause or resume a rule.');
@@ -24115,14 +24115,14 @@ function studioEstimate(rule,agg){
     const t=e.effect_type;
     if(t==='grant_credit'||t==='apply_discount_amount'){
       const per=Number(e.amount_cents||0);
-      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${studioMoney(per)} each time this rule gives it`,
+      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('amountEachTimeThisRuleGivesIt',{amount:studioMoney(per)}),
         est:monthly!=null?`Rough estimate: about ${studioMoney(per*monthly)} per month`:null,
         note:monthly!=null?'Based on the last 30 days of sales; real cost depends on how often this rule matches once activated.'
           :'No monthly estimate available — it depends on how often this rule matches.'});
     }else if(t==='apply_discount_pct'){
       const pct=Number(e.discount_pct||0);const avg=agg&&agg.avgBill?agg.avgBill:null;
       const perApprox=avg!=null?Math.round(avg*pct/100):null;
-      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:`${pct}% off the bill`,
+      lines.push({label:STUDIO_EFFECT_LABEL[t].label,face:workspaceTemplateTextV97('percentOffTheBill',{percent:pct}),
         est:(monthly!=null&&perApprox!=null)?`Rough estimate: about ${studioMoney(perApprox*monthly)} per month`:null,
         note:(monthly!=null&&perApprox!=null)?workspaceTemplateTextV97('assumesAverageBillOverLast30Days',{averageBill:studioMoney(avg)})
           :'No monthly estimate available — it depends on bill size and how often this rule matches.'});
@@ -25074,7 +25074,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   const rewardFormProblemV304=form=>{
     if(String(form?.name||'').trim().length<2)return 'Give this reward a name customers will recognise.';
-    if(!(parseInt(form?.points||'0',10)>0))return `Enter how many ${rewardUnit()} this reward costs.`;
+    if(!(parseInt(form?.points||'0',10)>0))return workspaceTemplateTextV97('enterHowManyUnitsThisRewardCosts',{unit:rewardUnit()});
     return '';
   };
   /* The write advance() always performed, verbatim: materialise a published reward into this draft
@@ -25153,7 +25153,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     if(!name)return {ok:false,soft:true,message:'Give this tier a name customers will see.'};
     const threshold=parseInt(form?.threshold||'',10);
     if(!Number.isFinite(threshold)||threshold<0)return {ok:false,soft:true,
-      message:`Enter how many ${tierBasisV303()==='visits'?'visits':'points'} a customer needs for this tier.`};
+      message:workspaceTemplateTextV97('enterHowManyUnitsCustomerNeedsForThisTier',{unit:tierBasisV303()==='visits'?'visits':'points'})};
     const id=form.id||crypto.randomUUID();
     const existing=state.tiers.find(tier=>tier.id===id);
     /* The candidate is written BEFORE it joins the list, so a failed add leaves no phantom row
@@ -25402,7 +25402,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
   };
   const tierMovementCountLineW6I2=()=>{
     const counts=tierMovementCountsW6I2();
-    if(counts&&counts.evaluated)return `${counts.down} member${counts.down===1?'':'s'} would move down · ${counts.up} would move up.`;
+    if(counts&&counts.evaluated)return workspaceTemplateTextV97(counts.down===1?'memberWouldMoveDownWouldMoveOne':'memberWouldMoveDownWouldMoveMany',{v1:counts.down,v2:counts.up});
     if(counts&&!counts.evaluated)return 'There are too many members to count the moves before publishing.';
     /* No key at all: the server has not shipped the count yet. Say that, rather than a zero. */
     return 'How many members move is not counted yet on this workspace, so check the ladder before you publish.';
@@ -25649,7 +25649,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
     return `<p class="grow-setup-lead-v301">What do customers get, and at how many stamps?</p>
       <p class="muted small" style="margin-top:-4px">Add as many milestones as you like — 3 stamps, 5, 8, 12, there is no limit. They are ordered by how many stamps they need.</p>
       ${rows}${chips}${rewardFormHtml()}
-      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?`The card customers see is ${esc(unitWord(length,'stamps'))} long — your last milestone.`:'The card gets its length from your last milestone.'}</p>
+      <p class="muted small" style="margin-top:10px" data-grow-setup-stamplength-v322="${length}">${length>0?workspaceTemplateTextV97('cardCustomersSeeIsThisLong',{stampCountWithUnit:esc(unitWord(length,'stamps'))}):'The card gets its length from your last milestone.'}</p>
       <p class="muted small" style="margin-top:8px" data-grow-setup-stampspend-v322>Claiming a milestone does not spend the stamps — the card keeps filling to the end. When the last milestone is claimed the card is complete and starts again from whatever is left over.</p>`;
   };
   const stepThreeHtml=()=>{
@@ -28061,7 +28061,7 @@ async function storedValuePage(){
     const scope=$('svPauseScope')?$('svPauseScope').value:'all';
     svOpenActionModal({
       title:'Pause stored value',
-      intro:`Immediately stop ${SV_SCOPE_WORDS[scope]||scope} for stored value. History is kept; only new operations of this kind are stopped. Record why.`,
+      intro:workspaceTemplateTextV97('pauseStoredValueIntro',{scope:SV_SCOPE_WORDS[scope]||scope}),
       reasonLabel:'Reason (required, at least 3 characters)',
       reasonPlaceholder:'What is wrong and who asked for this stop?',
       submitLabel:'Pause now',
@@ -28074,7 +28074,7 @@ async function storedValuePage(){
     const scope=b.dataset.svLift;
     svOpenActionModal({
       title:'Lift stored-value pause',
-      intro:`Lift the pause on ${SV_SCOPE_WORDS[scope]||scope}. That operation family can run again once lifted (still only when authority is live, which is not possible in this phase). Record why it is safe to lift.`,
+      intro:workspaceTemplateTextV97('liftStoredValuePauseIntro',{scope:SV_SCOPE_WORDS[scope]||scope}),
       reasonLabel:'Reason (required, at least 3 characters)',
       reasonPlaceholder:'Why is it safe to lift this pause?',
       submitLabel:'Lift pause',
@@ -28766,7 +28766,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
           if(!isTillCurrent())return;
           draw();
           return toast(givenV681?.replayed===true
-            ?`"${givenV681.reward_label||labelV666||'This reward'}" was already given`
+            ?workspaceTemplateTextV97(givenV681.reward_label||labelV666?'wasAlreadyGivenNamed':'wasAlreadyGivenUnnamed',{named:givenV681.reward_label||labelV666})
             :`"${givenV681.reward_label||labelV666||'Reward'}" given to ${data?.full_name||'the customer'}`);
         }
         /* A DISCOUNT perk is staged the moment its owner is on screen: staging spends the QR but
@@ -30059,7 +30059,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
              count is NOT deducted. The old line subtracted the cost and promised "759 (now 764)",
              a balance the server never produces (go-live battery, 2026-08-22). Points keep the
              debit projection; the server does debit those. */
-          ?row('Stamps after',`${balanceNow} — a completed card is used, stamps are not deducted`)
+          ?row('Stamps after',workspaceTemplateTextV97('completedCardIsUsedStampsNotDeducted',{reward:balanceNow}))
           :row('Points after',`${balanceNow-total} (now ${balanceNow})`)):''}
         ${branchName?row('Branch',branchName):''}
         ${staffName?row('Staff',staffName):''}
@@ -31053,7 +31053,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
         ${outcome.pointsEarned>0
           ?`<p style="font-size:1.6rem;font-weight:700;letter-spacing:-.035em;color:var(--green);margin-top:4px;font-variant-numeric:tabular-nums">${outcome.message}</p>`
           :`<p class="muted">${outcome.message}</p>`}
-        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?` · now ${outcome.pointsTotal} points total`:''}</p>
+        <p class="muted small" style="margin-top:6px">${esc(doneInfo.name)} · ${esc(doneInfo.method||'payment')} received${outcome.pointsTotal!=null?" "+workspaceTemplateTextV97('nowPointsTotal',{points:outcome.pointsTotal}):''}</p>
         ${canScanRedemption()&&doneInfo.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         <button class="btn" id="tNext" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Next customer ${CUI.icon('forward',{size:20})}</button>
       </div>`;
@@ -31554,6 +31554,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'d72b8c90d446bb485c096e4a2c2291ba138bc1cf660100b420ed41532bb99ea1',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'ea055730813d665146bcdde9ca202af39b0407e63f2b7740df230c25c6c6d6a4',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

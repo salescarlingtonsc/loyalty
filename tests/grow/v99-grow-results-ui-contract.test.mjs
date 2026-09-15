@@ -134,8 +134,9 @@ test('Grow UI uses the exact entitlement, manual attestation, then seal RPC cont
     /p_evidence_context:\{entry_point:'owner_confirmation'\}/
   ])assert.match(issue,request);
   assert.doesNotMatch(issue,/sb\.rpc\('record_campaign_exposure_v99'/);
-  assert.match(issue,/actually received the reward/);
-  assert.match(issue,/not a provider delivery receipt/);
+  /* nestly_v960: the confirmation is a named template pair now; the words are pinned once where
+     they are written, and the call site is pinned to the keys it chooses between. */
+  assert.match(issue,/'confirmThatSelectedCustomerActuallyReceivedOne':'confirmThatSelectedCustomerActuallyReceivedMany'/);
   assert.match(issue,/does not add spendable points or store credit/);
   assert.match(issue,/merchant fulfilment remains pending/);
 

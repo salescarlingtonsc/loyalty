@@ -78,9 +78,12 @@ test('retention page carries the come-back card fed by v244 + v300 on the same v
 });
 
 test('insights verdict band names an explicit baseline and keeps derived phrasing',()=>{
-  assert.match(app,/const periodWords=periodLabel\|\|`the previous \$\{days\} day\$\{days===1\?'':'s'\}`/);
+  /* nestly_v960: a named template now — the wording is pinned once where it is written, and the
+     call site is pinned to the key and the condition that chooses between its two forms. */
+  assert.match(app,/const periodWords=periodLabel\|\|workspaceTemplateTextV97\(days===1\?'thePreviousDayOne':'thePreviousDayMany'/);
   assert.match(app,/periodLabel:scope\.priorLabel\|\|''/);
-  assert.match(app,/priorLabel=`the compared period \(\$\{compareFrom\} to \$\{compareTo\}\)`/);
+  /* nestly_v960: a named template now; the two dates are still its own values. */
+  assert.match(app,/priorLabel=workspaceTemplateTextV97\('theComparedPeriodFromTo',\{from:compareFrom,to:compareTo\}\)/);
   assert.match(app,/function reportCalendarPresetV300\(kind,todayStr\)/);
   assert.match(app,/data-report-preset-cal="\$\{presetKind\}"/);
   assert.match(app,/\[\['month','This month'\],\['lastmonth','Last month'\],\['quarter','This quarter'\],\['lastquarter','Last quarter'\],\['year','This year'\]\]/);

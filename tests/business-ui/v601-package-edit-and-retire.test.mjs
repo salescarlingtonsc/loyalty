@@ -51,9 +51,15 @@ test('the edit dialog cannot silently rewrite the service it was opened on',()=>
 
 test('Delete honours what was sold, and says which it is',()=>{
   assert.match(packages,/data-package-sold="\$\{Number\(packagePurchaseCount\[p\.id\]\|\|0\)\}"/);
-  assert.match(packages,/It leaves Record sale and this list, so nobody can buy it again/,
+  /* nestly_v960: the sentence lives in WORKSPACE_TEMPLATE_COPY_V97 now, in all three languages;
+     the call site is pinned to the key pair and the words are pinned where they are written. */
+  assert.match(packages,/'stopSellingItLeavesRecordSaleOne':'stopSellingItLeavesRecordSaleMany'/,
     'the sold sentence promises what the owner chose: stop selling, honour what is sold');
-  assert.match(packages,/keep\$\{sold===1\?'s':''\} the sessions they paid for/);
+  const sold = app.slice(app.indexOf('stopSellingItLeavesRecordSaleOne:Object.freeze('));
+  assert.match(sold.slice(0, 400), /It leaves Record sale and this list, so nobody can buy it again/);
+  /* nestly_v960: a named template now — the wording is pinned once where it is written, and the
+     call site is pinned to the key and the condition that chooses between its two forms. */
+  assert.match(packages,/'stopSellingItLeavesRecordSaleOne':'stopSellingItLeavesRecordSaleMany'/);
   assert.match(packages,/Nobody has bought it, so nothing is taken away from a customer/,
     'and the unsold sentence still promises a real delete');
 });

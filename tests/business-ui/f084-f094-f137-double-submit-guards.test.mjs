@@ -23,6 +23,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
+/* nestly_v960: sentences in the sliced region are named templates now — the sandbox carries the
+   REAL runtime, so a missing key fails here instead of rendering as an empty string. */
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+const TPL_V960 = workspaceTemplateRuntime('en');
+
 const app = readFileSync(new URL('../../app/app.js', import.meta.url), 'utf8');
 
 function section(source, from, to) {
@@ -83,6 +88,7 @@ test('F084: the Add-product Save button ignores a second click while the insert 
     toast: () => {}, fail: () => {}, CUI: cui,
     dismissFormModalV658: () => {}, loadInv: () => {}
   };
+  Object.assign(ctx, TPL_V960);
   vm.createContext(ctx);
   vm.runInContext(`${handler}\nglobalThis.__onclick=$('padd2').onclick;`, ctx);
 
@@ -116,6 +122,7 @@ test('F094: Create-invite ignores a second click while create_invite is in fligh
     copyTextToClipboard: async () => {}, staffInviteLinkV151: () => '', ROLE_LABELS: {}, esc: s => s,
     loadTeam: () => {}
   };
+  Object.assign(ctx, TPL_V960);
   vm.createContext(ctx);
   vm.runInContext(`${handler}\nglobalThis.__onclick=$('igo').onclick;`, ctx);
 
@@ -152,6 +159,7 @@ test('F137: Add-reward-type ignores a second click while save_reward_taxonomy is
     toast: () => {}, fail: () => {}, CUI: cui,
     isRetentionCurrent: () => true, refreshRetentionPanel: () => {}, draftVersionId: 'draft-1'
   };
+  Object.assign(ctx, TPL_V960);
   vm.createContext(ctx);
   vm.runInContext(`${handler}\nglobalThis.__onclick=$('rtAdd').onclick;`, ctx);
 

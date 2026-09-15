@@ -288,9 +288,10 @@ test('v902 wording: the evidence sentences read as sentences, not as classes', (
 });
 
 test('v902 wording: the card templates lost their analyst nouns and kept every number', () => {
-  assert.ok(block.includes('of the money you’ve sorted into categories'), 'categorised revenue is gone');
+  /* nestly_v960: a named template now — the wording is pinned once where it is written. */
+  assert.ok(block.includes('categoryMakesUpPercentOfSortedMoney'), 'categorised revenue is gone');
   assert.ok(!block.includes('categorised revenue'), 'and does not survive anywhere');
-  assert.ok(block.includes('brings in more money per visit than'), 'earns more per visit is gone');
+  assert.ok(block.includes('categoryBringsMoreMoneyPerVisitThan'), 'earns more per visit is gone');
   assert.ok(!block.includes('earns more per visit than'));
   /* The structured fields each template reads are untouched: the same server keys. */
   for (const field of ['top_share_bps', 'top_category', 'overdue_regulars', 'recoverable_cents',

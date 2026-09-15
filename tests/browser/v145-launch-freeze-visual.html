@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="0ca26b08ee531c9ed335226a3c184b6fecf28461609f083dd97d832ad7257759"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="f2164fb425c21591e2d351c49bcee9820bba2a3727ef27106d5427a64cc32486"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6228,7 +6228,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 0ca26b08ee531c9ed335226a3c184b6fecf28461609f083dd97d832ad7257759</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · f2164fb425c21591e2d351c49bcee9820bba2a3727ef27106d5427a64cc32486</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6708,7 +6708,7 @@ function staffCommissionInsightLineV832(insights,formatMoney){
   if(avgTied)return workspaceTemplateTextV97('closesTheMostSalesAverageSaleIsLevel',{staffName:most.name,saleCount:most.sales,averageSale:fmt(biggest.avgSale)});
   if(most.key===biggest.key)return workspaceTemplateTextV97('leadsOnBothMostSalesAndBiggestAverageSale',{staffName:most.name,saleCount:most.sales,averageSale:fmt(most.avgSale)});
   const tail=biggest.sales<most.sales?' — fewer deals, bigger tickets':'';
-  return `${most.name} closes the most sales (${most.sales}); ${biggest.name} has the biggest average sale (${fmt(biggest.avgSale)})${tail}.`;
+  return workspaceTemplateTextV97('closesTheMostSalesOtherHasBiggestAverageSale',{topSalesStaffName:most.name,saleCount:most.sales,topAverageStaffName:biggest.name,averageSale:fmt(biggest.avgSale),comparisonNote:tail});
 }
 /* nestly_v825 — the commission pair on a product, a bundle or a package (owner ruling 2026-09-08:
    "% or fixed amount, same as services"). One markup, one reader, one writer, so blank-vs-zero
@@ -6986,8 +6986,8 @@ function activeBranchesForScopeV217(branches=[]){
 function branchScopeUnavailableReasonV217(branch){
   if(!branch||branch.active!==false)return '';
   return branch.billing_state==='pending_payment'
-    ?`${branch.name||'This branch'} is waiting for payment, so its reports are not available yet.`
-    :`${branch.name||'This branch'} is switched off, so its reports are not available.`;
+    ?workspaceTemplateTextV97(branch.name?'isWaitingForPaymentSoItsNamed':'isWaitingForPaymentSoItsUnnamed',{named:branch.name})
+    :workspaceTemplateTextV97(branch.name?'isSwitchedOffSoItsReportsNamed':'isSwitchedOffSoItsReportsUnnamed',{named:branch.name});
 }
 /* V272: removing the Business Insights branch select also removed the only place that said an
    unpaid or switched-off branch is LEFT OUT of these figures. A consolidated total nobody can
@@ -7003,7 +7003,7 @@ function reportScopeNoteTextV272(branches=[]){
       :(usable[0]?.name||'this business');
   const withheld=(branches||[]).filter(branch=>branch&&branch.active===false)
     .map(branchScopeUnavailableReasonV217).filter(Boolean);
-  return `Figures below cover ${covered}. ${withheld.join(' ')}`.trim();
+  return workspaceTemplateTextV97('figuresBelowCoverScope',{scope:covered,withheldNotes:withheld.join(' ')}).trim();
 }
 async function renderReportScopeNoteV272(isCurrent=()=>true,targetId='reportScopeNoteV272'){
   const host=$(targetId);
@@ -7474,7 +7474,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
         loyalty.innerHTML=dashboardLoyaltyRowV170([
           {label:'Members joined',
             value:customerMetricsAvailable?Number(d.new_customers||0).toLocaleString('en-SG'):'Unavailable',
-            hint:customerMetricsAvailable?`Customer records created ${dashboardRangeLabelV170(from,to)} · business-wide`:'Customer access is not complete for this reporting scope.'},
+            hint:customerMetricsAvailable?workspaceTemplateTextV97('customerRecordsCreatedBusinessWide',{range:dashboardRangeLabelV170(from,to)}):'Customer access is not complete for this reporting scope.'},
           /* nestly_v461: the heading follows the unit the server scoped this figure to. Cubbly SPA
              runs stamps and this tile said "Points earned" over a stamp count. */
           {label:`${loyaltyUnitNounV461(d.loyalty_unit)} earned`,
@@ -7482,7 +7482,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
             hint:pointsEarned===null?'Loyalty access is not complete for this reporting scope.':`Sale-linked earn · ${scopeLabel}`},
           {label:'Rewards redeemed',
             value:rewardsRedeemed===null?'Unavailable':rewardsRedeemed.toLocaleString('en-SG'),
-            hint:rewardsRedeemed===null?'Redeemed points could not be loaded.':`Points spent on rewards ${dashboardRangeLabelV170(from,to)} · business-wide`,
+            hint:rewardsRedeemed===null?'Redeemed points could not be loaded.':workspaceTemplateTextV97('pointsSpentOnRewardsBusinessWide',{range:dashboardRangeLabelV170(from,to)}),
             retryId:rewardsRedeemed===null?'dashboardLoyaltyRedeemedRetry':''}
         ]);
         loyalty.querySelector('#dashboardLoyaltyRedeemedRetry')?.addEventListener('click',load);
@@ -8047,7 +8047,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const stampCentsV567=Number(prog.stamp_per_cents);
     const earnPerDollarV567=Number(prog.earn_points_per_dollar);
     const earnCopy=stamps
-      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?`1 stamp for every ${money(stampCentsV567)} spent`:'')
+      ?(Number.isFinite(stampCentsV567)&&stampCentsV567>0?workspaceTemplateTextV97('oneStampForEveryAmountSpent',{amount:money(stampCentsV567)}):'')
       :(Number.isFinite(earnPerDollarV567)&&earnPerDollarV567>0?workspaceTemplateTextV97('pointsForEverySgd1Spent',{pointsPerDollar:earnPerDollarV567}):'');
     const earnLineV567=earnCopy
       ?`<p class="small" style="margin-top:5px"><b>Earn:</b> ${esc(earnCopy)}</p>`
@@ -8057,7 +8057,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     let nextCopy='No reward milestone has been added yet.';
     if(!redemptionEnabled)nextCopy='Customer redemption is switched off. Turn it on under Customer Interface → Customer Action.';
     else if(projectedNextReward)nextCopy=projectedNextReward.available_now
-      ?`${projectedNextReward.name||'Reward'} is ready now`
+      ?workspaceTemplateTextV97(projectedNextReward.name?'isReadyNowNamed':'isReadyNowUnnamed',{named:projectedNextReward.name})
       :`${Math.max(0,Number(projectedNextReward.remaining_units)||0)} more ${unit} for ${projectedNextReward.name||'a reward'}`;
     /* V226 (owner crossed the whole block out: "too confusing", and wrote "show Redeemable
        Rewards for customer"). It led with an explanation of the SCHEME — how rewards work,
@@ -8284,7 +8284,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(referralProgrammeV294)programmeRowsV294.push(programmeRowHtmlV294('Referral programme',
     /* nestly_v430: the noun follows the declared reward kind (v425) — this staff line read
        "50 points" over a stamps payout in the go-live battery. Same helper the Grow panel uses. */
-    Number(referralProgrammeV294.reward_points)>0?`Refer a friend — ${growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)} after their qualifying first visit.`:'Refer friends and get rewards.',
+    Number(referralProgrammeV294.reward_points)>0?workspaceTemplateTextV97('referAFriendRewardAfterQualifyingFirstVisit',{rewardAmount:growReferralAmountWordV425(referralProgrammeV294.reward_kind,referralProgrammeV294.reward_points)}):'Refer friends and get rewards.',
     referralProgrammeV294.enabled===true));
   if(welcomeOfferV294?.configured)programmeRowsV294.push(programmeRowHtmlV294('Welcome offer',
     welcomeOfferV294.reward_label?`New sign-ups get ${welcomeOfferV294.reward_label} free${Number(welcomeOfferV294.min_spend_cents)>0?` once they spend ${money(welcomeOfferV294.min_spend_cents)}`:''}.`:'A free item on the first visit.',
@@ -9325,7 +9325,7 @@ function renderHistPage(history,n,offsetV468=0){
       const compareRange=reportRangeValidation(compareFrom,compareTo);
       if(!compareRange.ok)throw new Error(`Compare dates: ${compareRange.reason}`);
       priorFrom=compareFrom;priorTo=compareTo;
-      priorLabel=`the compared period (${compareFrom} to ${compareTo})`;
+      priorLabel=workspaceTemplateTextV97('theComparedPeriodFromTo',{from:compareFrom,to:compareTo});
     }
     return {from,to,days,priorFrom,priorTo,priorLabel,
       fromTs:sgDateBoundary(from),toExclusive:sgDateBoundary(to,1),branchId:selectedBranchId||null};
@@ -10723,7 +10723,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'0ca26b08ee531c9ed335226a3c184b6fecf28461609f083dd97d832ad7257759',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'f2164fb425c21591e2d351c49bcee9820bba2a3727ef27106d5427a64cc32486',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

@@ -287,6 +287,8 @@ test('V269 a slot that is no longer free is reported, never double-booked', () =
   // the RPC's own outcome word (scheduling_conflict, capacity_conflict, terminal_conflict, …) is
   // surfaced verbatim and marked NOT ok, so a refused confirm can never read as a success
   assert.match(notice, /const outcome=String\(result\?\.outcome\|\|'unknown'\);/);
-  assert.match(notice, /return \{ok:false,text:`\$\{verb\} could not be applied \(\$\{outcome\.replaceAll\('_',' '\)\}\)\./);
-  assert.match(notice, /if\(outcome==='replayed'\|\|result\?\.replayed===true\)return \{ok:true,text:`\$\{verb\} was already applied/);
+  /* nestly_v960: a named template now — the wording is pinned once where it is written, and the
+     call site is pinned to the key and the condition that chooses between its two forms. */
+  assert.match(notice, /return \{ok:false,text:workspaceTemplateTextV97\('decisionCouldNotBeAppliedWithReasonAndStatus'/);
+  assert.match(notice, /if\(outcome==='replayed'\|\|result\?\.replayed===true\)return \{ok:true,text:workspaceTemplateTextV97\('decisionAlreadyAppliedCurrentStatus/);
 });

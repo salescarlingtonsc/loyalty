@@ -112,7 +112,9 @@ test('item 4 (photo 8) — every figure on the tiers page follows the stored bas
   assert.doesNotMatch(app, /<small>\$\{Math\.max\(0,Number\(tier\.threshold\|\|0\)\)\} points<\/small>/);
   assert.doesNotMatch(app, />Required points<\/label>/);
   // Changing the basis does not rewrite the rungs, so the owner is told what their numbers mean now.
-  assert.match(app, /kept \$\{rungsV585===1\?'its':'their'\} number/);
+  /* nestly_v960: a named template now — the wording is pinned once where it is written, and the
+     call site is pinned to the key and the condition that chooses between its two forms. */
+  assert.match(app, /rungsV585===1\?'tiersAreEarnedByNowYourOne':'tiersAreEarnedByNowYourMany'/);
 });
 
 test('item 4 — and the customer app was already saying the same words', () => {
