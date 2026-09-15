@@ -4378,6 +4378,12 @@
       "version": "20261015000000",
       "name": "nestly_v951_bounded_read_limits",
       "sourcePath": "db/migrations/20261015_nestly_v951_bounded_read_limits.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261015010000",
+      "name": "nestly_v961_promo_codes",
+      "sourcePath": "db/migrations/20261015_nestly_v961_promo_codes.sql"
     }
   ]
 }

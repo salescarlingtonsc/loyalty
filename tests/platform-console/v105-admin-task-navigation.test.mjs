@@ -36,7 +36,7 @@ test('desktop administration has six primary task areas plus secondary platform 
       {key:'customers',routes:['firms']},
       {key:'reports',routes:['reports','marketing']}, // V256
       // billing is now the "Billing" tab of subscription-operations.
-      {key:'finance',routes:['subscription-operations','pnl','commissions']},
+      {key:'finance',routes:['subscription-operations','pnl','commissions','promo-codes']},
       {key:'automation',routes:['automation']},
       {key:'platform-controls',routes:['sectors','partners','support','access']}
     ]
@@ -48,7 +48,7 @@ test('desktop administration has six primary task areas plus secondary platform 
     // Operating-system IA pass: demo-requests, customer-lifecycle, billing and
     // companies merged into a sibling route as a tab/mode; their deep links
     // still resolve (see legacyRouteRedirects / phase1-brand-platform-console).
-    ['overview','pipeline','onboarding','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','sectors','automation','partners','support','access'],
+    ['overview','pipeline','onboarding','prospecting','firms','reports','marketing','subscription-operations','pnl','commissions','promo-codes','sectors','automation','partners','support','access'],
     'streamlining must not delete a capability or deep link'
   );
 });

@@ -2744,6 +2744,28 @@
       "latest_file": "20260924030000_nestly_v753_birthday_reaches_new_signups.sql",
       "entry_point": "trigger trg_v753_birthday_grant_on_participation_opted_in (AFTER INSERT OR UPDATE OF opted_in on customer_birthday_participation) -> app.v753_birthday_grant_on_participation_opted_in -- AMENDMENT (owner ruling 2026-09-04): the third firing event, covering both the new auto opt-in (nestly_v753 profile trigger) and an explicit later opt-in via public.customer_set_birthday_participation.",
       "kernel": "SAFE -- fail-soft subscriber to opted_in becoming true; delegates to the curated app.v753_birthday_evaluate_and_grant primitive."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_redeem_promo_code_v961",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_redeem_promo_code_v961",
+      "resolves_to": "public.business_redeem_promo_code_v961(business, code) — SECURITY DEFINER, authenticated. Gated on being an ACTIVE OWNER of that business (staff.role='owner' AND active) or app.is_super_admin(), so a manager cannot discount their own firm's bill. Refuses any subscription whose billing_provider is not 'manual' (promo_provider_billed): a provider-charged firm would show a reduced price and be charged the full one. Records one redemption of a promo code against that business's FIRST subscription payment.",
+      "rows_written": "platform_promo_redemptions_v961:INSERT, platform_promo_codes_v961:UPDATE (redeemed_count), audit_log:INSERT",
+      "entry_point": "browser RPC — the 'Have a promo code?' box on the merchant's own Settings > Billing page (loadPromoCardV961), and the same RPC from the platform console's firm record when a super admin applies a code on the merchant's behalf",
+      "idempotency": "platform_promo_redemptions_once_v961 (promo_id, business_id) WHERE removed_at is null makes re-presenting the same code a no-op that returns status 'already_redeemed'; platform_promo_redemptions_one_live_v961 (business_id) WHERE removed_at is null enforces at most one live redemption per business, so two codes can never be held at once",
+      "value": "NON-VALUE. Writes no money. It records an INTENT to charge less on a first payment; credit_ledger, points_ledger, sales and stock_batches are untouched, and the amount actually collected is still the number a human types into platform_record_subscription_payment_v664. The redemption snapshots the code's terms so retiring or editing the code later cannot change what a merchant was already promised.",
+      "kernel_migratability": "portable — business-scoped, append-only in its evidence, and the money path is deliberately outside it."
+    },
+    {
+      "id": "browser.rpc:app/app.js:business_get_promo_state_v961",
+      "surface": "browser_rpc_binding",
+      "rpc": "business_get_promo_state_v961",
+      "resolves_to": "public.business_get_promo_state_v961(business) — SECURITY DEFINER, authenticated, READ ONLY. Same gate as the redeem RPC (active owner of that business, or super admin) rather than app.is_salon_member, because a firm that is trialing and awaiting its first payment is not yet 'operational' and is exactly the firm a first-payment promo belongs to.",
+      "rows_written": "NONE — read only",
+      "entry_point": "browser RPC — the merchant's Settings > Billing promo card, and the Promo code card on the platform console's firm record; both read THIS so neither can show a different promo from the other",
+      "idempotency": "n/a — read only",
+      "value": "NON-VALUE. Reads one promo redemption row.",
+      "kernel_migratability": "portable — read-only and business-scoped."
     }
   ],
   "allowlist": [

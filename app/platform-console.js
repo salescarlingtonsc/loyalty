@@ -624,6 +624,7 @@
       'File':'文件','Find user':'查找用户','Firm module policy':'企业模块政策','Guarded rollback':'受控回滚',
       /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'自 {date} 起成为 Peekaa 商户','Firm controls':'企业控制','Firm controls unavailable':'企业控制不可用','No subscription record exists for this firm yet.':'该企业尚无订阅记录。','Managed by {provider}':'由 {provider} 管理','Frequency':'频率','Period started':'周期开始','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'这些日期由 {provider} 根据其付款设定。请在 {provider} 中更改方案，此记录会随之更新。','worked out automatically':'自动计算','Saved: {cadence} from {start}':'已保存：自 {start} 起{cadence}','Not set yet — payment reminders cannot run until it is.':'尚未设置——设置前无法发送付款提醒。','Save schedule':'保存计划','Module scope':'模块范围','Branch setting':'分店设置','Firm setting':'企业设置','Follows template':'沿用模板','Read-only access and sector templates: Firms directory':'只读权限与行业模板：企业目录','Billing schedule saved. Next payment {date}.':'账单计划已保存。下次付款 {date}。','{module} is now {state}.':'{module} 已{state}。','{count} module settings now follow the default.':'{count} 项模块设置已恢复默认。','Loading billing schedule and modules…':'正在加载账单计划与模块…','Billing schedule':'账单计划','Start date':'开始日期','Modules':'模块','Every month':'每月','Every 3 months':'每 3 个月','Every 6 months':'每 6 个月','Every year':'每年','These switches apply to every branch unless a branch has its own setting.':'这些开关适用于所有分店，除非分店有自己的设置。','These switches apply to this branch only and win over the firm setting.':'这些开关仅适用于此分店，并优先于企业设置。','Follow the template for every module':'所有模块沿用模板','Follow the firm for every module':'所有模块沿用企业设置','Branch modules could not be loaded.':'无法加载分店模块。','The module could not be changed.':'无法更改模块。','Module settings could not be reset.':'无法重置模块设置。','The schedule could not be saved.':'无法保存计划。','on':'开启','off':'关闭','{module} access':'{module} 权限',
       /* nestly_v922 advisor + planned cycle switch */ 'Change advisor':'更换顾问','Advisor updated.':'顾问已更新。','Planned change':'计划变更','Switch to {cadence} from {date}':'自 {date} 起改为{cadence}','Cancel planned change':'取消计划变更','Plan a switch':'安排变更','New frequency':'新频率','From':'开始日期','The current period runs to its end and is still due.':'当前周期照常结束，且仍需付款。','Planned change saved.':'计划变更已保存。','Planned change cancelled.':'计划变更已取消。','The planned change could not be saved.':'无法保存计划变更。','The planned change could not be cancelled.':'无法取消计划变更。',
+      /* nestly_v961 promo codes */ '{percent}% off':'减 {percent}%','{currency} {amount} off':'减 {currency} {amount}','No promo code on this firm. Give the merchant a code and they enter it on their Billing page, or apply one here.':'该企业暂无优惠码。可将优惠码交给商户在账单页面输入，或在此处直接应用。','A firm billed by a payment provider cannot use a promo code yet — the provider decides what it charges.':'由支付服务商扣款的企业暂时无法使用优惠码——收费金额由服务商决定。','Apply a code':'应用优惠码','Used':'已使用','Waiting for the first payment':'等待首次付款','Takes off':'抵扣','Came off':'已抵扣','This promo has been used and cannot be replaced.':'该优惠码已使用，无法更换。','Charge the merchant this much less on their first payment. Recording that payment uses the code up.':'首次付款时按此金额减免。记录该笔付款后，优惠码即失效。','Remove this code':'移除此优惠码','It comes off this firm’s first payment only.':'仅从该企业的首次付款中扣除。','Promo code applied.':'优惠码已应用。','Promo code removed.':'优惠码已移除。','Retired':'已停用','Expired':'已过期','Fully used':'已用完','Promo codes':'优惠码','New promo code':'新建优惠码','Every code, what it takes off, and how many merchants have used it.':'每个优惠码的抵扣内容，以及已有多少商户使用。','Code':'优惠码','Locked to':'限定企业','Expires':'到期','Any manual firm':'任意手动计费企业','No expiry':'无到期日','Retire':'停用','Revive':'恢复','No promo codes yet':'尚无优惠码','Create one, then give the code to the merchant it is for.':'先创建优惠码，再交给对应的商户。','Promo code retired.':'优惠码已停用。','Promo code revived.':'优惠码已恢复。','A percentage':'按百分比','A fixed amount':'按固定金额','No limit':'不限','The merchant enters this code on their Billing page. It comes off their first payment only.':'商户在其账单页面输入此优惠码，仅抵扣首次付款。','Promo code created.':'优惠码已创建。','{used} of {cap}':'{used} / 上限 {cap}','{used} used':'已用 {used}','Promo code':'优惠码','Apply a promo code':'应用优惠码','Apply code':'应用','Promo codes unavailable':'无法加载优惠码','A code takes money off a merchant’s first payment. Give the code to the merchant; they enter it on their own Billing page.':'优惠码可抵扣商户的首次付款。将优惠码交给商户，由其在自己的账单页面输入。','Create code':'创建优惠码','Percent off':'折扣百分比','Amount off (SGD)':'抵扣金额（新元）','Locked to one firm':'限定单一企业','Maximum merchants':'最多商户数','Expires on':'到期日',
       /* nestly_v885 converted-firm drawer */ 'Sales contract & billing documents':'销售合同与账单文件','Contract & billing':'合同与账单','This firm self-served through {provider}.':'该企业通过 {provider} 自助开通。','No quotation was needed. Billing dates and modules are on the Controls tab.':'无需报价单。账单日期与模块见“控制”标签页。','Pre-sale history':'售前历史','Stage, priority and qualification notes from before this firm became a merchant.':'该企业成为商户之前的阶段、优先级与资格审查记录。','Account setup record':'账户设置记录',
       'Import completed':'导入完成','Included modules':'包含的模块','Inventory is not available here':'此处不提供库存功能',
       'Invitation token':'邀请令牌','Invoices':'发票','Item-level intelligence':'项目级洞察',
@@ -741,6 +742,7 @@
       'Firm module policy':'Polisi modul firma','Guarded rollback':'Pemulangan terkawal',
       /* nestly_v883 firm controls */ 'Peekaa merchant since {date}':'Pedagang Peekaa sejak {date}','Firm controls':'Kawalan firma','No subscription record exists for this firm yet.':'Firma ini belum mempunyai rekod langganan.','Managed by {provider}':'Diurus oleh {provider}','Frequency':'Kekerapan','Period started':'Tempoh bermula','{provider} sets these dates from its own payments. Change the plan in {provider}; this record follows it.':'{provider} menetapkan tarikh ini daripada pembayarannya sendiri. Tukar pelan di {provider}; rekod ini akan mengikutinya.','worked out automatically':'dikira secara automatik','Saved: {cadence} from {start}':'Disimpan: {cadence} mulai {start}','Not set yet — payment reminders cannot run until it is.':'Belum ditetapkan — peringatan pembayaran tidak dapat dihantar sehingga ia ditetapkan.','Save schedule':'Simpan jadual','Module scope':'Skop modul','Branch setting':'Tetapan cawangan','Firm setting':'Tetapan firma','Follows template':'Mengikut templat','Read-only access and sector templates: Firms directory':'Akses baca sahaja dan templat sektor: Direktori firma','Billing schedule saved. Next payment {date}.':'Jadual bil disimpan. Pembayaran seterusnya {date}.','{module} is now {state}.':'{module} kini {state}.','{count} module settings now follow the default.':'{count} tetapan modul kini mengikut lalai.','Loading billing schedule and modules…':'Memuatkan jadual bil dan modul…','Billing schedule':'Jadual bil','Start date':'Tarikh mula','Modules':'Modul','Every month':'Setiap bulan','Every 3 months':'Setiap 3 bulan','Every 6 months':'Setiap 6 bulan','Every year':'Setiap tahun','These switches apply to every branch unless a branch has its own setting.':'Suis ini terpakai untuk setiap cawangan kecuali cawangan mempunyai tetapan sendiri.','Follow the template for every module':'Ikut templat untuk setiap modul','Branch modules could not be loaded.':'Modul cawangan tidak dapat dimuatkan.','The module could not be changed.':'Modul tidak dapat diubah.','Module settings could not be reset.':'Tetapan modul tidak dapat ditetapkan semula.','The schedule could not be saved.':'Jadual tidak dapat disimpan.','Whole firm':'Seluruh firma','Next payment':'Pembayaran seterusnya',
       /* nestly_v922 advisor + planned cycle switch */ 'Change advisor':'Tukar penasihat','Advisor updated.':'Penasihat dikemas kini.','Planned change':'Perubahan dirancang','Switch to {cadence} from {date}':'Tukar kepada {cadence} mulai {date}','Cancel planned change':'Batal perubahan dirancang','Plan a switch':'Rancang pertukaran','New frequency':'Kekerapan baharu','From':'Mulai','The current period runs to its end and is still due.':'Tempoh semasa berjalan hingga tamat dan masih perlu dibayar.','Planned change saved.':'Perubahan dirancang disimpan.','Planned change cancelled.':'Perubahan dirancang dibatalkan.','The planned change could not be saved.':'Perubahan dirancang tidak dapat disimpan.','The planned change could not be cancelled.':'Perubahan dirancang tidak dapat dibatalkan.',
+      /* nestly_v961 promo codes */ '{percent}% off':'Potongan {percent}%','{currency} {amount} off':'Potongan {currency} {amount}','No promo code on this firm. Give the merchant a code and they enter it on their Billing page, or apply one here.':'Firma ini tiada kod promosi. Berikan kod kepada peniaga untuk dimasukkan di halaman Bil mereka, atau gunakan satu di sini.','A firm billed by a payment provider cannot use a promo code yet — the provider decides what it charges.':'Firma yang dibilkan oleh penyedia pembayaran belum boleh menggunakan kod promosi — penyedia menentukan jumlah cajnya.','Apply a code':'Guna kod','Used':'Telah digunakan','Waiting for the first payment':'Menunggu pembayaran pertama','Takes off':'Potongan','Came off':'Telah dipotong','This promo has been used and cannot be replaced.':'Kod promosi ini telah digunakan dan tidak boleh diganti.','Charge the merchant this much less on their first payment. Recording that payment uses the code up.':'Caj peniaga sebanyak ini kurang pada pembayaran pertama. Merekod pembayaran itu menghabiskan kod tersebut.','Remove this code':'Buang kod ini','It comes off this firm’s first payment only.':'Ia hanya ditolak daripada pembayaran pertama firma ini.','Promo code applied.':'Kod promosi digunakan.','Promo code removed.':'Kod promosi dibuang.','Retired':'Ditamatkan','Expired':'Tamat tempoh','Fully used':'Habis digunakan','Promo codes':'Kod promosi','New promo code':'Kod promosi baharu','Every code, what it takes off, and how many merchants have used it.':'Setiap kod, potongannya, dan berapa ramai peniaga telah menggunakannya.','Code':'Kod','Locked to':'Dikunci kepada','Expires':'Tamat','Any manual firm':'Mana-mana firma bil manual','No expiry':'Tiada tarikh tamat','Retire':'Tamatkan','Revive':'Pulihkan','No promo codes yet':'Belum ada kod promosi','Create one, then give the code to the merchant it is for.':'Cipta satu, kemudian berikan kod itu kepada peniaga yang berkenaan.','Promo code retired.':'Kod promosi ditamatkan.','Promo code revived.':'Kod promosi dipulihkan.','A percentage':'Peratusan','A fixed amount':'Jumlah tetap','No limit':'Tiada had','The merchant enters this code on their Billing page. It comes off their first payment only.':'Peniaga memasukkan kod ini di halaman Bil mereka. Ia hanya ditolak daripada pembayaran pertama.','Promo code created.':'Kod promosi dicipta.','{used} of {cap}':'{used} daripada {cap}','{used} used':'{used} digunakan','Promo code':'Kod promosi','Apply a promo code':'Guna kod promosi','Apply code':'Guna kod','Promo codes unavailable':'Kod promosi tidak tersedia','A code takes money off a merchant’s first payment. Give the code to the merchant; they enter it on their own Billing page.':'Kod menolak wang daripada pembayaran pertama peniaga. Berikan kod kepada peniaga; mereka memasukkannya di halaman Bil mereka sendiri.','Create code':'Cipta kod','Percent off':'Peratus potongan','Amount off (SGD)':'Jumlah potongan (SGD)','Locked to one firm':'Dikunci kepada satu firma','Maximum merchants':'Bilangan peniaga maksimum','Expires on':'Tarikh tamat',
       /* nestly_v885 converted-firm drawer */ 'Sales contract & billing documents':'Kontrak jualan & dokumen bil','Contract & billing':'Kontrak & bil','This firm self-served through {provider}.':'Firma ini mendaftar sendiri melalui {provider}.','No quotation was needed. Billing dates and modules are on the Controls tab.':'Sebut harga tidak diperlukan. Tarikh bil dan modul terdapat pada tab Kawalan.','Pre-sale history':'Sejarah pra-jualan','Stage, priority and qualification notes from before this firm became a merchant.':'Peringkat, keutamaan dan nota kelayakan sebelum firma ini menjadi peniaga.','Account setup record':'Rekod persediaan akaun',
       'Import completed':'Import selesai','Included modules':'Modul disertakan',
       'Inventory is not available here':'Inventori tidak tersedia di sini','Invitation token':'Token jemputan',
@@ -4034,6 +4036,9 @@
     {key:'subscription-operations',moduleKey:'billing',label:'Subscription operations',shortLabel:'Subscriptions',hash:'#/platform/subscription-operations',icon:'reports'},
     {key:'pnl',label:'Cash P&L',shortLabel:'P&L',hash:'#/platform/pnl',icon:'reports',superAdminOnly:true},
     {key:'commissions',label:'Commission payable',shortLabel:'Commission',hash:'#/platform/commissions',icon:'staff'},
+    /* nestly_v961: super-admin only and deliberately without a moduleKey — a promo code changes
+       what a firm is charged, which is never a tenant-scoped grant. */
+    {key:'promo-codes',label:'Promo codes',shortLabel:'Promos',hash:'#/platform/promo-codes',icon:'giftcards',superAdminOnly:true},
     {key:'sectors',label:'Sector modules',shortLabel:'Sectors',hash:'#/platform/sectors',icon:'packages'},
     {key:'automation',label:'System health',shortLabel:'Health',hash:'#/platform/automation',icon:'retention'},
     /* V282: super-admin only and deliberately NOT given a moduleKey. The partner register is
@@ -4309,7 +4314,7 @@
     Object.freeze({key:'sales',label:'Sales',icon:'branch',routeKeys:Object.freeze(['pipeline','onboarding','prospecting'])}),
     Object.freeze({key:'customers',label:'Customers',icon:'branch',routeKeys:Object.freeze(['firms'])}),
     Object.freeze({key:'reports',label:'Reports',icon:'reports',routeKeys:Object.freeze(['reports','marketing'])}),
-    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','pnl','commissions'])}),
+    Object.freeze({key:'finance',label:'Finance',icon:'reports',routeKeys:Object.freeze(['subscription-operations','pnl','commissions','promo-codes'])}),
     Object.freeze({key:'automation',label:'System health',icon:'retention',routeKeys:Object.freeze(['automation'])}),
     Object.freeze({key:'platform-controls',label:'Platform controls',icon:'setup',secondary:true,routeKeys:Object.freeze(['sectors','partners','support','access'])})
   ]);
@@ -8769,6 +8774,32 @@
       <div data-planned-error role="alert"></div>
     </form>`;
   }
+  /* nestly_v961 — the promo a merchant is holding, on the record the person recording their
+     payment already has open. It is shown rather than applied to the money: a manual payment is a
+     number a human types, and quietly rewriting it under them is how a discount gets taken twice. */
+  function firmPromoCardHtml(promo,CUI){
+    if(promo===null)return '';
+    const state=asObject(promo);
+    const value=state.discount_kind==='percent'
+      ? pt('{percent}% off',{percent:(Number(state.percent_bps||0)/100).toString()})
+      : pt('{currency} {amount} off',{currency:state.currency||'SGD',amount:centsToMoneyInput(state.amount_cents)});
+    if(!state.has_promo){
+      return CUI.card({title:'Promo code',body:`<p class="muted small">${escapeHtml(state.can_redeem
+        ?pt('No promo code on this firm. Give the merchant a code and they enter it on their Billing page, or apply one here.')
+        :pt('A firm billed by a payment provider cannot use a promo code yet — the provider decides what it charges.'))}</p>
+        ${state.can_redeem?`<div class="platform-actions"><button type="button" class="btn ghost sm" data-promo-apply>${escapeHtml(pt('Apply a code'))}</button></div>`:''}
+        <div data-promo-error role="alert"></div>`});
+    }
+    const consumed=!!state.consumed_at;
+    return CUI.card({title:'Promo code',body:`<div class="platform-control-status">${CUI.status(escapeHtml(String(state.code||'')),consumed?'info':'success')}<span class="muted small">${escapeHtml(consumed?pt('Used'):pt('Waiting for the first payment'))}</span></div>
+      <dl class="platform-context-list"><div><dt>${escapeHtml(pt('Takes off'))}</dt><dd>${escapeHtml(value)}</dd></div>
+      ${consumed?`<div><dt>${escapeHtml(pt('Came off'))}</dt><dd>${escapeHtml(`${state.currency||'SGD'} ${centsToMoneyInput(state.consumed_discount_cents)}`)}</dd></div>`:''}</dl>
+      <p class="muted small">${escapeHtml(consumed
+        ?pt('This promo has been used and cannot be replaced.')
+        :pt('Charge the merchant this much less on their first payment. Recording that payment uses the code up.'))}</p>
+      ${consumed?'':`<div class="platform-actions"><button type="button" class="btn ghost sm" data-promo-remove>${escapeHtml(pt('Remove this code'))}</button></div>`}
+      <div data-promo-error role="alert"></div>`});
+  }
   function firmControlModules(){
     return sectorModuleCatalog.filter(module=>!['inventory','customerintel'].includes(module.key));
   }
@@ -8798,13 +8829,16 @@
     const state={scope:'',branches:[],schedule:null,effective:null};
     const readEffective=scope=>rpc(sb,'platform_get_effective_modules_v105',{p_business:businessId,p_branch:scope||null}).then(asObject);
     try{
-      const [schedule,effective,payments]=await Promise.all([
+      const [schedule,effective,payments,promo]=await Promise.all([
         rpc(sb,'platform_get_billing_schedule_v883',{p_business:businessId}).then(asObject),
         readEffective(''),
-        rpc(sb,'platform_get_business_payments_v779',{p_business:businessId}).then(asObject).catch(()=>({}))
+        rpc(sb,'platform_get_business_payments_v779',{p_business:businessId}).then(asObject).catch(()=>({})),
+        /* nestly_v961: tolerated failure on purpose — a console running against a database that
+           has not taken v961 yet must still show the schedule and the modules. */
+        rpc(sb,'business_get_promo_state_v961',{p_business:businessId}).then(asObject).catch(()=>null)
       ]);
       if(!host.isConnected)return;
-      state.schedule=schedule;state.effective=effective;state.branches=asArray(payments.branches);
+      state.schedule=schedule;state.effective=effective;state.branches=asArray(payments.branches);state.promo=promo;
     }catch(error){
       if(!host.isConnected)return;
       host.innerHTML=error?.platformUpdateRequired
@@ -8814,7 +8848,7 @@
     }
     const announceError=(error,fallback)=>CUI.announce(platformErrorMessage(error,fallback),{assertive:true});
     const paint=()=>{
-      host.innerHTML=`<div class="platform-detail-grid platform-firm-controls-grid">${billingScheduleCardHtml(state.schedule,CUI)}${moduleSwitchesHtml(state.effective,state.branches,state.scope,CUI)}</div>`;
+      host.innerHTML=`<div class="platform-detail-grid platform-firm-controls-grid">${billingScheduleCardHtml(state.schedule,CUI)}${firmPromoCardHtml(state.promo,CUI)}${moduleSwitchesHtml(state.effective,state.branches,state.scope,CUI)}</div>`;
       wire();
     };
     const wire=()=>{
@@ -8875,6 +8909,34 @@
           cancelPlanned.disabled=false;
           if(errorHost)errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'The planned change could not be cancelled.'))}</div>`;
         }
+      };
+      /* nestly_v961: applying on the merchant's behalf goes through the SAME RPC the merchant's
+         own Billing page calls, so the two can never diverge on what a code is worth. */
+      const reloadPromo=async()=>{
+        state.promo=await rpc(sb,'business_get_promo_state_v961',{p_business:businessId}).then(asObject).catch(()=>null);
+        paint();
+      };
+      const promoError=error=>{
+        const errorHost=host.querySelector('[data-promo-error]');
+        if(errorHost)errorHost.innerHTML=`<div class="err">${escapeHtml(platformErrorMessage(error,'The promo code could not be applied.'))}</div>`;
+      };
+      const applyPromo=host.querySelector('[data-promo-apply]');
+      if(applyPromo)applyPromo.onclick=()=>{
+        modal({title:'Apply a promo code',submitLabel:'Apply code',CUI,body:`${CUI.field({
+          id:'firmPromoCode',label:'Code',required:true,attributes:'name="code" maxlength="64" autocapitalize="characters"'
+        })}<p class="muted small">${escapeHtml(pt('It comes off this firm’s first payment only.'))}</p>`,
+          onSubmit:async(form,controls)=>{
+            await rpc(sb,'business_redeem_promo_code_v961',{p_business:businessId,p_code:String(form.get('code')||'').trim()});
+            controls.close();CUI.announce(pt('Promo code applied.'));await reloadPromo();
+          }});
+      };
+      const removePromo=host.querySelector('[data-promo-remove]');
+      if(removePromo)removePromo.onclick=async()=>{
+        removePromo.disabled=true;
+        try{
+          await rpc(sb,'platform_remove_promo_redemption_v961',{p_business:businessId,p_reason:'Removed from the firm record'});
+          CUI.announce(pt('Promo code removed.'));await reloadPromo();
+        }catch(error){removePromo.disabled=false;promoError(error)}
       };
       host.querySelectorAll('[data-module-scope]').forEach(button=>button.onclick=async()=>{
         const scope=button.dataset.moduleScope||'';
@@ -12734,6 +12796,118 @@
      any one of the three lists coming back exactly full -- rather than the console
      asserting that 200 disclosures is all there has ever been. */
   const PARTNER_OBLIGATION_CEILING=500;
+  /* nestly_v961 — promo codes. A code takes money off a merchant's FIRST payment; the merchant
+     types it into their own Billing page. Manual-billed firms only: a stripe/razorpay subscription
+     is charged by the provider, so a code that only existed here would show one price and charge
+     another. The server refuses those (promo_provider_billed) and this page says so. */
+  function promoValueText(row){
+    return String(row.discount_kind)==='percent'
+      ? pt('{percent}% off',{percent:(Number(row.percent_bps||0)/100).toString()})
+      : pt('{currency} {amount} off',{currency:row.currency||'SGD',amount:centsToMoneyInput(row.amount_cents)});
+  }
+  function promoStatusText(row){
+    if(!row.active)return pt('Retired');
+    if(row.expired)return pt('Expired');
+    if(row.max_redemptions&&Number(row.live_redemptions||0)>=Number(row.max_redemptions))return pt('Fully used');
+    return pt('Live');
+  }
+  async function renderPromoCodes(context) {
+    const {main,CUI,sb}=context;
+    const canWrite=context.canWrite===true;
+    main.innerHTML=loading(CUI,'Promo codes','Loading promo codes…','giftcards');
+    let payload;
+    try{
+      payload=asObject(await rpc(sb,'platform_list_promo_codes_v961'));
+    }catch(error){
+      main.innerHTML=error?.platformUpdateRequired
+        ?systemUpdateRequired(CUI,pt('Promo codes'))
+        :CUI.errorState({title:'Promo codes unavailable',message:platformErrorMessage(error,'Please try again.')});
+      CUI.focusRoute(main);return;
+    }
+    const items=asArray(payload.items);
+    main.innerHTML=`${CUI.pageHeader({title:'Promo codes',subtitle:'A code takes money off a merchant’s first payment. Give the code to the merchant; they enter it on their own Billing page.',iconName:'giftcards'})}
+      ${localizedRouteNoteHtml('Manually billed firms only','A firm paying through Stripe or Razorpay is charged by that provider, so a code here would not reach the money. Those firms are refused until provider coupons are built.')}
+      ${canWrite?`<div class="platform-actions"><button type="button" class="btn" data-promo-new>${escapeHtml(pt('New promo code'))}</button></div>`:''}
+      ${items.length
+        ? CUI.card({title:'Promo codes',description:pt('Every code, what it takes off, and how many merchants have used it.'),body:CUI.table({caption:pt('Promo codes'),headers:[pt('Code'),pt('Takes off'),pt('Locked to'),pt('Used'),pt('Expires'),pt('Status'),''],rows:items.map(row=>[
+            `<b>${escapeHtml(row.code_norm||row.code||'')}</b>`,
+            escapeHtml(promoValueText(row)),
+            escapeHtml(row.business_name||pt('Any manual firm')),
+            escapeHtml(row.max_redemptions
+              ? pt('{used} of {cap}',{used:row.consumed_redemptions||0,cap:row.max_redemptions})
+              : pt('{used} used',{used:row.consumed_redemptions||0})),
+            escapeHtml(row.expires_on?billingDayLabel(row.expires_on):pt('No expiry')),
+            escapeHtml(promoStatusText(row)),
+            canWrite?`<button type="button" class="btn ghost sm" data-promo-toggle="${escapeHtml(row.id)}" data-promo-active="${row.active?'1':''}">${escapeHtml(row.active?pt('Retire'):pt('Revive'))}</button>`:''
+          ])})})
+        : CUI.emptyState({iconName:'giftcards',title:pt('No promo codes yet'),body:pt('Create one, then give the code to the merchant it is for.')})}`;
+    CUI.focusRoute(main);
+    const reload=()=>renderPromoCodes(context);
+    const create=main.querySelector('[data-promo-new]');
+    if(create)create.onclick=()=>promoCodeModal(context,reload);
+    main.querySelectorAll('[data-promo-toggle]').forEach(button=>button.onclick=async()=>{
+      const active=button.dataset.promoActive==='1';
+      button.disabled=true;
+      try{
+        await rpc(sb,'platform_set_promo_code_active_v961',{
+          p_promo:button.dataset.promoToggle,p_active:!active,
+          p_reason:active?'Retired from the promo codes page':'Revived from the promo codes page'});
+        CUI.announce(active?pt('Promo code retired.'):pt('Promo code revived.'));
+        await reload();
+      }catch(error){
+        button.disabled=false;
+        CUI.announce(platformErrorMessage(error,'The promo code could not be changed.'),{assertive:true});
+      }
+    });
+  }
+  async function promoCodeModal(context,onSaved) {
+    const {CUI,sb}=context;
+    /* The code may be locked to ONE firm, which is the owner's own example (a voucher for abc
+       cafe). The list is the firms a code could actually help: manually billed ones. */
+    /* super_admin_list_businesses returns a TABLE, so the client hands back a plain array of
+       {business_id, name, ...} — not an envelope. Synthetic/QA firms are dropped: a voucher for a
+       fixture is never what the owner meant. */
+    const firms=asArray(await rpc(sb,'super_admin_list_businesses').catch(()=>[]))
+      .filter(firm=>firm&&firm.business_id&&!firm.is_synthetic)
+      .sort((left,right)=>String(left.name||'').localeCompare(String(right.name||'')));
+    modal({title:'New promo code',submitLabel:'Create code',CUI,body:`<div class="platform-form-grid">
+      ${CUI.field({id:'promoCode',label:'Code',required:true,attributes:'name="code" maxlength="64" autocapitalize="characters"'})}
+      ${CUI.field({id:'promoKind',label:'Takes off',control:'select',options:[{value:'percent',label:pt('A percentage')},{value:'amount',label:pt('A fixed amount')}],attributes:'name="kind" data-promo-kind'})}
+      ${CUI.field({id:'promoPercent',label:'Percent off',type:'number',value:'20',attributes:'name="percent" min="1" max="100" step="0.01" data-promo-percent'})}
+      ${CUI.field({id:'promoAmount',label:'Amount off (SGD)',type:'number',value:'200.00',attributes:'name="amount" min="0.01" step="0.01" inputmode="decimal" data-promo-amount'})}
+      ${CUI.field({id:'promoBusiness',label:'Locked to one firm',control:'select',options:[{value:'',label:pt('Any manual firm')},...firms.map(firm=>({value:String(firm.business_id),label:String(firm.name||firm.business_id)}))],attributes:'name="business"'})}
+      ${CUI.field({id:'promoMax',label:'Maximum merchants',type:'number',attributes:'name="max" min="1" step="1"'})}
+      ${CUI.field({id:'promoExpires',label:'Expires on',type:'date',attributes:'name="expires"'})}
+      <div class="wide">${CUI.field({id:'promoNote',label:'Note',attributes:'name="note" maxlength="1000"'})}</div>
+    </div><p class="muted small">${escapeHtml(pt('The merchant enters this code on their Billing page. It comes off their first payment only.'))}</p>`,
+      onSubmit:async(form,controls)=>{
+        const kind=form.get('kind');
+        await rpc(sb,'platform_create_promo_code_v961',{
+          p_code:String(form.get('code')||'').trim(),
+          p_discount_kind:kind,
+          p_percent_bps:kind==='percent'?Math.round(Number(form.get('percent')||0)*100):null,
+          p_amount_cents:kind==='amount'?moneyInputToCents(form.get('amount')):null,
+          p_business:form.get('business')||null,
+          p_max_redemptions:String(form.get('max')||'').trim()===''?null:Number(form.get('max')),
+          p_expires_on:form.get('expires')||null,
+          p_note:form.get('note')||null
+        });
+        controls.close();CUI.announce(pt('Promo code created.'));await onSaved();
+      }});
+    /* Only the field that matters for the chosen shape stays on screen — a percent code has no
+       amount and an amount code has no percent, and the server refuses the other one anyway. */
+    const dialog=document.querySelector('.cui-modal, dialog[open]')||document;
+    const kind=dialog.querySelector('[data-promo-kind]');
+    const percentField=dialog.querySelector('[data-promo-percent]')?.closest('.field,.cui-field,label');
+    const amountField=dialog.querySelector('[data-promo-amount]')?.closest('.field,.cui-field,label');
+    const sync=()=>{
+      const isPercent=!kind||kind.value==='percent';
+      if(percentField)percentField.hidden=!isPercent;
+      if(amountField)amountField.hidden=isPercent;
+    };
+    if(kind)kind.onchange=sync;
+    sync();
+  }
   async function renderPartnerObligations(context,limit=200) {
     const {main,CUI,sb}=context;
     const canWrite=context.canWrite===true;
@@ -16721,6 +16895,7 @@
     if(!task&&activeKey==='commissions')task=renderCommission(context);
     if(!task&&activeKey==='sectors')task=renderSectors(context);
     if(!task&&activeKey==='automation')task=renderAutomation(context);
+    if(!task&&activeKey==='promo-codes')task=renderPromoCodes(context);
     if(!task&&activeKey==='partners')task=renderPartnerObligations(context);
     if(!task&&activeKey==='support')task=renderSupportRequests(context);
     if(!task){

@@ -42148,6 +42148,74 @@ let settingsBillingCardRefreshActiveV764=false;
    card re-renders after every billing command — without a "tried" mark a firm whose provider
    genuinely holds no readable card would fire one refresh per render, forever. */
 const settingsBillingCardBackfillTriedV795=new Set();
+/* nestly_v961 — the promo code box. The owner is given a code (a voucher, often unique to their
+   firm) and enters it here; it comes off their FIRST payment. Drawn after the page paints rather
+   than inside the billing template, because the promo is its own read: a workspace whose database
+   has not taken v961 yet simply does not get the card, and the rest of Billing is untouched.
+   Only a manually billed firm can hold one — a provider decides what it charges, so a code that
+   lived only in our database would show one price and take another. */
+function promoValueTextV961(state){
+  return String(state.discount_kind)==='percent'
+    ? `${(Number(state.percent_bps||0)/100)}% off`
+    : `${esc(state.currency||'SGD')} ${(Number(state.amount_cents||0)/100).toFixed(2)} off`;
+}
+function promoCardHtmlV961(state){
+  if(state.has_promo){
+    const consumed=!!state.consumed_at;
+    return `<div class="card" style="padding:18px;margin-top:12px">
+      <div class="row" style="align-items:center;gap:8px;flex-wrap:wrap">
+        <b>Promo code</b><span class="pill ${consumed?'off':'ok'}">${esc(String(state.code||''))}</span>
+      </div>
+      <p class="muted small" style="margin-top:6px">${consumed
+        ? `${esc(promoValueTextV961(state))} came off your first payment.`
+        : `${esc(promoValueTextV961(state))} your first payment. It is applied when that payment is taken.`}</p>
+    </div>`;
+  }
+  if(!state.can_redeem)return '';
+  return `<div class="card" style="padding:18px;margin-top:12px">
+    <b>Have a promo code?</b>
+    <p class="muted small" style="margin-top:6px">Enter it here and it comes off your first payment.</p>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <input id="promoInputV961" type="text" autocapitalize="characters" autocomplete="off"
+             aria-label="Promo code" placeholder="Promo code" style="flex:1 1 200px;min-width:0">
+      <button type="button" class="btn sm" id="promoApplyV961">Apply</button>
+    </div>
+    <p class="muted small" id="promoStatusV961" role="status" aria-live="polite" style="margin-top:8px"></p>
+  </div>`;
+}
+async function loadPromoCardV961(businessId){
+  const host=document.getElementById('promoCardV961');
+  if(!host||!businessId)return;
+  const {data,error}=await sb.rpc('business_get_promo_state_v961',{p_business:businessId});
+  if(!host.isConnected||error||!data)return;   // an un-migrated workspace simply has no card
+  host.innerHTML=promoCardHtmlV961(data);
+  const button=document.getElementById('promoApplyV961');
+  if(!button)return;
+  button.onclick=async()=>{
+    const input=document.getElementById('promoInputV961');
+    const status=document.getElementById('promoStatusV961');
+    const code=String(input?.value||'').trim();
+    if(!code){status.textContent='Enter the code you were given.';return}
+    button.disabled=true;status.textContent='Checking that code…';
+    const result=await sb.rpc('business_redeem_promo_code_v961',{p_business:businessId,p_code:code});
+    if(result.error){
+      button.disabled=false;
+      /* Every rejection the server can give — wrong code, retired, expired, used up, or belonging
+         to another firm — arrives as the same promo_code_not_found, and is shown as the same
+         sentence. Saying more would let this box be used to discover which codes exist. */
+      const message=String(result.error.message||'');
+      status.textContent=message.includes('promo_provider_billed')
+        ? 'Promo codes are not available on your billing plan.'
+        : message.includes('promo_already_used')||message.includes('promo_already_held')
+          ? 'You have already used a promo code.'
+          : 'That code cannot be used. Check it and try again.';
+      return;
+    }
+    await loadPromoCardV961(businessId);
+    const refreshed=document.getElementById('promoStatusV961');
+    if(refreshed)refreshed.textContent='';
+  };
+}
 /* nestly_v784: which of the two tabs (Branches / Payment history) is open; survives the re-render a command causes. */
 let billingTabV784='branches';
 async function loadBillingConfig(){
@@ -42282,9 +42350,14 @@ async function loadBillingConfig(){
       </div>
       <div id="billingPanelBranchesV784" role="tabpanel"${tabV784==='branches'?'':' hidden'}>${subscriptionBranchCardsV784(cardsV784)}${billingAddBranchStepsV784()}</div>
       <div id="billingPanelPaymentsV784" role="tabpanel"${tabV784==='payments'?'':' hidden'}><div class="card" style="padding:18px">${billingInvoiceTableV758(b,summaryV758)}</div></div>
+      <div id="promoCardV961"></div>
       <p class="muted small" id="billingCommandStatus" role="status" aria-live="polite" style="margin-top:12px">Stripe Checkout collects payment details securely. Access changes only after Stripe confirms payment.</p>
       <p class="muted small" style="margin-top:8px">${esc(billingFootnoteV786(b.money_back_window))}</p>
       <p class="muted small" style="margin-top:6px">Template-assisted promotion wording helps reword factual offer content; the owner reviews and publishes it. It does not use generative AI or invent prices, dates or claims.</p>`;
+    /* nestly_v961: the promo card is filled after the page paints, and on every re-render, so a
+       code applied here survives the redraw a billing command causes. Deliberately not awaited —
+       Billing must not wait on it, and a workspace without v961 simply gets no card. */
+    loadPromoCardV961(S.biz.id);
     /* nestly_v786: a fourth argument names a branch whose OWN subscription the command acts on;
        the command is minted by request_branch_billing_command_v786 and carries scope 'branch'
        through claim to the executor. Everything after the mint — the invoke, the retry rules,
