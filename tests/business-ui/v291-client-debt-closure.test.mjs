@@ -175,7 +175,7 @@ test('V291 blocked time is visible in the List view and the mobile week agenda',
   // List view reads it over the same window the filters name, and never takes the list down.
   assert.match(code,/const blockedFromV291=\$\('appointmentListFrom'\)\?\.value\|\|todaySg;/);
   assert.match(code,/const blockedToV291=\$\('appointmentListTo'\)\?\.value\|\|addDays\(blockedFromV291,90\);/);
-  assert.match(code,/blockedResultV291\.error\s*\n?\s*\?`<section class="card"[\s\S]{0,160}Blocked time could not be read/);
+  assert.match(code,/blockedResultV291\.error\s*\n?\s*\?`<section class="card"[\s\S]{0,160}'blockedTimeUnreadableForWindow'/);
   /* V375 (owner, photo 13: "move there inside"): blocked time is its own Block tab now rather
      than a section appended under the appointment list, so the guarantee is that the tab renders
      it and wires its controls — the same markup, one tab across. */

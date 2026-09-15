@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="8c11bc3ae3427575947f1f0107459b47d4893e826b33ab31547bf4d66c745211"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="18355572643a7ac3cfc75ced8f527d113750d3ef34b6ca7fab682d63c4c3799c"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 8c11bc3ae3427575947f1f0107459b47d4893e826b33ab31547bf4d66c745211</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 18355572643a7ac3cfc75ced8f527d113750d3ef34b6ca7fab682d63c4c3799c</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -13655,7 +13655,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growEarnRuleFormV359=growEarnEditOpenV359?`<li class="grow-points-form-card-v343" data-grow-earn-form-v359>
     <b>Edit earning rule</b>
     ${growPointsIsStampsV326
-      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">Spend per stamp (${esc(S.biz?.currency||'SGD')})</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
+      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">${workspaceTemplateHtmlV97('spendPerStampCurrencyTwo',{currency:S.biz?.currency||'SGD'})}</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnValidityModeV435">Stamp card validity</label><br>
       <select id="growEarnValidityModeV435" class="grow-setup-input-v301" style="width:100%;max-width:260px">
         <option value="none"${!Number(snapshot.loyalty?.stamp_validity_days)?' selected':''}>Cards never expire</option>
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'8c11bc3ae3427575947f1f0107459b47d4893e826b33ab31547bf4d66c745211',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'18355572643a7ac3cfc75ced8f527d113750d3ef34b6ca7fab682d63c4c3799c',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

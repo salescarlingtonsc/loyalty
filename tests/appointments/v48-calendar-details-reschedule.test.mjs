@@ -89,7 +89,7 @@ test('appointment detail sheet exposes authorized particulars and safe call/edit
   assert.match(calendar,/Change appointment/); // v330: owner renamed the "Amend appointment" button
   assert.match(calendar,/Confirm amendment/);
   assert.match(calendar,/reschedule_appointment_v48/);
-  assert.match(calendar,/does not send SMS or WhatsApp/);
+  assert.match(calendar,/'newStartMustBeFuture'/);
   const resolverSource=calendar.match(/const resolveBookedPriceCents=\(appointmentTotal,serviceTotal\)=>\{[^\n]+\};/)?.[0];
   assert.ok(resolverSource,'booked-price resolver must exist');
   const resolveBookedPriceCents=Function(`${resolverSource};return resolveBookedPriceCents`)();

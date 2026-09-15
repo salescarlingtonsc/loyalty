@@ -68,7 +68,7 @@ test('the numbers are stated where branches are listed, bought, and paid for', (
   assert.match(app, /\$\('brList'\)\.innerHTML=`<p class="muted small"[^`]*branchBillingSentenceV280\(branchCountsV280\)/);
   // the create form, before the owner is sent to Stripe
   /* nestly_v666: the create form now prices the branch instead of explaining the policy. */
-  assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
+  assert.match(app, /'thisIsYourNthBranch'/);
   /* nestly_v664: the subscription card no longer quotes one unit and explains the rest in prose —
      the total IS the per-branch amount times the billable branch count, and the sentence beside it
      states the rule and the proration the owner asked for.

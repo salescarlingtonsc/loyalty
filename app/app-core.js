@@ -7936,8 +7936,27 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   pricePerPeriodToCredit:Object.freeze({en:"{price}/{cadence} → {credit} credit each period",'zh-CN':"{price}/{cadence} → 每期 {credit} 额度",ms:"{price}/{cadence} → kredit {credit} setiap tempoh"}),
   letCustomerKnow:Object.freeze({en:"Let {name} know.",'zh-CN':"请告知{name}。",ms:"Beritahu {name}."}),
   blockAtMostDays:Object.freeze({en:"Block at most {days} days at a time. Split a longer absence into two.",'zh-CN':"每次最多锁定 {days} 天。更长的缺席请拆成两段。",ms:"Sekat paling banyak {days} hari pada satu masa. Bahagikan ketiadaan yang lebih panjang kepada dua."}),
+  /* nestly_v946 — twelve more embedded-value sentences: the reward-cost recommendation, the
+     appointment reschedule guard, bottle keep windows and storage capacity, the bespoke-package
+     receipt note, the branch ordinal, and the Business Intelligence stage and channel lines. */
+  givebackOfPricePerVisit:Object.freeze({en:"{pct} of your {price} {item} ≈ {perVisit} per visit.",'zh-CN':"您 {price} 的{item}的 {pct} ≈ 每次到访 {perVisit}。",ms:"{pct} daripada {item} {price} anda ≈ {perVisit} setiap kunjungan."}),
+  spendPerStampCurrencyTwo:Object.freeze({en:"Spend per stamp ({currency})",'zh-CN':"每枚印花所需消费（{currency}）",ms:"Perbelanjaan setiap setem ({currency})"}),
+  newStartMustBeFuture:Object.freeze({en:"The new start must be in the future. {brand} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.",'zh-CN':"新的开始时间必须是将来。{brand} 会在保存前检查时间冲突。如果顾客已同意接收预约更新，系统会创建一条应用内确认；这不会发送短信或 WhatsApp。",ms:"Masa mula baharu mestilah pada masa hadapan. {brand} menyemak pertembungan sebelum menyimpan. Jika pelanggan bersetuju menerima kemas kini tempahan, pengesahan dalam aplikasi dicipta; ini tidak menghantar SMS atau WhatsApp."}),
+  blockedTimeUnreadableForWindow:Object.freeze({en:"Blocked time could not be read for {window}. The appointments above are unaffected.",'zh-CN':"无法读取 {window} 的锁定时间。上方的预约不受影响。",ms:"Masa disekat tidak dapat dibaca untuk {window}. Janji temu di atas tidak terjejas."}),
+  storageCapacityInUse:Object.freeze({en:"How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. {count} in storage right now.",'zh-CN':"您实际能存放多少瓶酒。架子满了之后就会拒绝寄存，以免收下无处安放的酒。目前存放 {count} 瓶。",ms:"Berapa banyak botol yang anda boleh simpan secara fizikal. Simpanan ditolak apabila rak penuh, jadi tiada siapa mengambil botol yang anda tiada tempat untuk letakkan. {count} dalam simpanan sekarang."}),
+  keptForDays:Object.freeze({en:"Kept for {days} days.",'zh-CN':"保管 {days} 天。",ms:"Disimpan selama {days} hari."}),
+  expiresOnAfterDays:Object.freeze({en:"Expires {date} · {days} days",'zh-CN':"{date} 到期 · 共 {days} 天",ms:"Tamat tempoh {date} · {days} hari"}),
+  recordedAtBranchPaysNow:Object.freeze({en:"Recorded at {branch}. The customer pays now, exactly as they would for a catalogue package — points, revenue and the receipt all behave the same way.",'zh-CN':"记录于{branch}。顾客现在付款，与购买目录配套完全一样 — 积分、营收和收据的处理方式都相同。",ms:"Direkodkan di {branch}. Pelanggan membayar sekarang, sama seperti untuk pakej katalog — mata, hasil dan resit semuanya berkelakuan sama."}),
+  thisIsYourNthBranch:Object.freeze({en:"This is your {ordinal} branch.",'zh-CN':"这是您的第{ordinal}家分店。",ms:"Ini cawangan {ordinal} anda."}),
+  alsoAllowedChannels:Object.freeze({en:"Also allowed: push {push}, in-app {inApp}, call {call} (out of {total} customers)",'zh-CN':"同时允许：推送 {push}、应用内 {inApp}、电话 {call}（共 {total} 位顾客）",ms:"Turut dibenarkan: tolak {push}, dalam aplikasi {inApp}, panggilan {call} (daripada {total} pelanggan)"}),
+  stageWindowTimeBasis:Object.freeze({en:"Each stage is measured over a {days}-day window from the customer\u0027s own prior visit, based on {basis}.",'zh-CN':"每个阶段均以顾客上一次到访起算的 {days} 天窗口来衡量，依据为 {basis}。",ms:"Setiap peringkat diukur dalam tetingkap {days} hari dari kunjungan pelanggan itu sendiri sebelumnya, berdasarkan {basis}."}),
+  stageReturnedOfTotal:Object.freeze({en:"{num} of {den} returned ({pct})",'zh-CN':"{den} 位中有 {num} 位回头（{pct}）",ms:"{num} daripada {den} kembali ({pct})"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v946 — twelve more embedded-value sentences. */
+  'givebackOfPricePerVisit','spendPerStampCurrencyTwo','newStartMustBeFuture','blockedTimeUnreadableForWindow',
+  'storageCapacityInUse','keptForDays','expiresOnAfterDays','recordedAtBranchPaysNow',
+  'thisIsYourNthBranch','alsoAllowedChannels','stageWindowTimeBasis','stageReturnedOfTotal',
   /* nestly_v945 — twenty-five more embedded-value sentences. */
   'giftBecomesAvailableAgain','percentChangeVersusRange','previousSpanLegend','referralItemIsFree',
   'stampsPastTargetNotClaimable','makeTheCardStamps','exampleShownOfSlots','couldNotPrepareForEditing',

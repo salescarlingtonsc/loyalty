@@ -509,8 +509,11 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      identical on purpose, because those languages do not make the distinction. 212 + 30 = 242.
      nestly_v945 adds 25 more of the embedded-value class: the reversal and correction receipts,
      the stamp-card preview, the playbook audience rule, the Program Studio publish gate and its
-     refusals, and the branch and referral money labels. 242 + 25 = 267. */
-  assert.equal(keys.length,267,'mixed-interface interpolation inventory changed without review');
+     refusals, and the branch and referral money labels. 242 + 25 = 267.
+     nestly_v946 adds 12: the reward-cost recommendation, the appointment reschedule guard, the
+     bottle keep windows and storage capacity, the bespoke-package receipt note, the branch ordinal
+     and the Business Intelligence stage and channel lines. 267 + 12 = 279. */
+  assert.equal(keys.length,279,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

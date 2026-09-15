@@ -51,7 +51,7 @@ test('booked appointments expose direct, prefilled amendments including overdue 
      guarantee — Amend lands inside the amend panel, ready to edit — is unchanged. */
   assert.match(calendar,/if\(startEditing\)openAmendPickerV760\(\);/);
   assert.match(calendar,/This booked appointment is overdue\. You can move it to a future slot/);
-  assert.match(calendar,/The new start must be in the future/);
+  assert.match(calendar,/'newStartMustBeFuture'/);
   assert.match(calendar,/sb\.rpc\('reschedule_appointment_v48'/);
 });
 

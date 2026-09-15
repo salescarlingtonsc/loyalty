@@ -244,7 +244,7 @@ test('V275 the Park dialog asks the reference questions and previews the expiry'
   assert.match(page, /id="parkQuantity" type="number" min="1" max="20"/);
   // The expiry the business's own keep window produces is shown BEFORE the button is pressed.
   assert.match(page, /const expiry=new Date\(Date\.now\(\)\+keepDays\*864e5\);/);
-  assert.match(page, /Expires \$\{esc\(sgt\(expiry\.toISOString\(\)\)\|\|''\)\} · \$\{keepDays\} days/);
+  assert.match(page, /'expiresOnAfterDays'/);
   // V278 SUPERSEDES THIS CALL SITE. The park dialog now sends the five extra answers the reference
   // bar asks for (expiry mode, expiry date, notify channel, note, purchase date) to
   // park_bottle_v278. park_bottle_v275 is deliberately left deployed and callable so a deploy in

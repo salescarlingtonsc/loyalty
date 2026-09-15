@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="4fdb90a553a2f22d3a52c1864ebd5d5fbc4324c295d67b52dd3e19357775e0c9"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
+    <meta name="production-source-sha256" content="658c4253a343d915a716e38b6fcd16c61b77f07b6a8c80045c800b2c0e84c2c5"><title>Peekaa tier dialog browser acceptance (nestly_v750)</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 4fdb90a553a2f22d3a52c1864ebd5d5fbc4324c295d67b52dd3e19357775e0c9</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 658c4253a343d915a716e38b6fcd16c61b77f07b6a8c80045c800b2c0e84c2c5</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -13371,7 +13371,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growEarnRuleFormV359=growEarnEditOpenV359?`<li class="grow-points-form-card-v343" data-grow-earn-form-v359>
     <b>Edit earning rule</b>
     ${growPointsIsStampsV326
-      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">Spend per stamp (${esc(S.biz?.currency||'SGD')})</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
+      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">${workspaceTemplateHtmlV97('spendPerStampCurrencyTwo',{currency:S.biz?.currency||'SGD'})}</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnValidityModeV435">Stamp card validity</label><br>
       <select id="growEarnValidityModeV435" class="grow-setup-input-v301" style="width:100%;max-width:260px">
         <option value="none"${!Number(snapshot.loyalty?.stamp_validity_days)?' selected':''}>Cards never expire</option>

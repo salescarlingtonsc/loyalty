@@ -13949,7 +13949,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
         </div>
         <p class="small" style="margin-top:12px">That works out to <b>${esc(growPctText(rec.actualGivebackPct))}</b> give-back — about <b>${esc(growMoney(rec.costPerVisitCents))}</b> a visit, or <b>${esc(growMoney(rec.costPer100VisitsCents))}</b> per 100 visits.</p>
         ${growRecMetrics.sampleItems.length?`<b class="small" style="display:block;margin-top:14px">On your own prices</b>
-          <ul class="rec-why">${growRecMetrics.sampleItems.map(item=>`<li>${esc(growPctText(rec.actualGivebackPct))} of your ${esc(growMoney(item.price_cents))} ${esc(item.name||'item')} ≈ ${esc(growMoney(Math.round(item.price_cents*rec.actualGivebackPct/100)))} per visit.</li>`).join('')}</ul>`:''}
+          <ul class="rec-why">${growRecMetrics.sampleItems.map(item=>`<li>${workspaceTemplateHtmlV97('givebackOfPricePerVisit',{pct:growPctText(rec.actualGivebackPct),price:growMoney(item.price_cents),item:item.name||'item',perVisit:growMoney(Math.round(item.price_cents*rec.actualGivebackPct/100))})}</li>`).join('')}</ul>`:''}
         ${growRecMetrics.costedProducts?.length?`<b class="small" style="display:block;margin-top:14px">Cost check on your products</b>
           <ul class="rec-why">${growRecMetrics.costedProducts.slice(0,3).map(product=>{
             const result=productProfitabilityV122({
@@ -19137,7 +19137,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   const growEarnRuleFormV359=growEarnEditOpenV359?`<li class="grow-points-form-card-v343" data-grow-earn-form-v359>
     <b>Edit earning rule</b>
     ${growPointsIsStampsV326
-      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">Spend per stamp (${esc(S.biz?.currency||'SGD')})</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
+      ?`<p class="grow-setup-sentence-v301" style="margin-top:8px"><label class="muted small" for="growEarnStampV359">${workspaceTemplateHtmlV97('spendPerStampCurrencyTwo',{currency:S.biz?.currency||'SGD'})}</label><br><input id="growEarnStampV359" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:180px" value="${esc(((Number(snapshot.loyalty?.stamp_per_cents)||0)/100)||'')}" placeholder="e.g. 5.00"></p>
     <p class="grow-setup-sentence-v301"><label class="muted small" for="growEarnValidityModeV435">Stamp card validity</label><br>
       <select id="growEarnValidityModeV435" class="grow-setup-input-v301" style="width:100%;max-width:260px">
         <option value="none"${!Number(snapshot.loyalty?.stamp_validity_days)?' selected':''}>Cards never expire</option>
@@ -29356,7 +29356,7 @@ async function appointmentsPage(){
         <button type="button" class="btn statusAction" data-status="completed">Complete &amp; checkout</button>
       </div>`:''}`:''}
       <p class="muted small" style="margin-top:10px">${whatsAppUrl?'WhatsApp opens with a draft. Review it and press Send in WhatsApp; Peekaa does not mark it sent or delivered.':'Add a valid Singapore mobile number to this customer before messaging on WhatsApp.'}</p>
-      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">The new start must be in the future. ${esc(BRAND.productName)} checks clashes before saving. If the customer has opted into booking updates, an in-app confirmation is created; this does not send SMS or WhatsApp.</p><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Who would you like?</h4><div class="pf-choice appointment-amend-team-v760" id="appointmentAmendTeam" role="group" aria-label="Choose a team member"></div><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Pick a date &amp; time</h4><div id="appointmentAmendSlots" class="appointment-amend-slots-v760"></div><input type="hidden" id="appointmentEditDate" value="${local.slice(0,10)}"><input type="hidden" id="appointmentEditTime" value="${local.slice(11,16)}"><input type="hidden" id="appointmentEditStaff" value="${esc(item.staff_id||'')}"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
+      ${amendableBooked?`<p class="muted small" style="margin-top:12px">${outcomeIsDue?'This booked appointment is overdue. You can move it to a future slot, complete it, record a no-show, or cancel it.':'Complete and No-show become available after the appointment starts.'}</p><form id="appointmentRescheduleForm" class="appointment-reschedule-form" hidden><h3>Amend date, time, duration or staff</h3><p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('newStartMustBeFuture',{brand:BRAND.productName})}</p><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Who would you like?</h4><div class="pf-choice appointment-amend-team-v760" id="appointmentAmendTeam" role="group" aria-label="Choose a team member"></div><h4 class="appointment-amend-head-v760" style="margin:14px 0 2px;font-size:15px">Pick a date &amp; time</h4><div id="appointmentAmendSlots" class="appointment-amend-slots-v760"></div><input type="hidden" id="appointmentEditDate" value="${local.slice(0,10)}"><input type="hidden" id="appointmentEditTime" value="${local.slice(11,16)}"><input type="hidden" id="appointmentEditStaff" value="${esc(item.staff_id||'')}"><div><label for="appointmentEditDuration">Duration (minutes)</label><input id="appointmentEditDuration" type="number" min="15" max="720" step="15" required value="${duration}"></div><label for="appointmentEditNote">Appointment note (optional)</label><textarea id="appointmentEditNote" rows="3" maxlength="1000">${esc(item.note||'')}</textarea><div id="appointmentRescheduleError" role="alert"></div><div id="appointmentRescheduleFeedback" class="appointment-reschedule-feedback" aria-live="polite"></div><div class="appointment-detail-actions"><button type="submit" class="btn" id="appointmentRescheduleSave">Confirm amendment</button><button type="button" class="btn ghost" id="appointmentRescheduleCancel">Keep current appointment</button></div></form>`:''}</div>`;
     document.body.append(dialog);
     /* A4: every way this dialog can close (X, Escape, backdrop, Done) spends a pending "Book next
        visit" handoff unless the owner is that very moment being sent to the booking form for it —
@@ -29744,7 +29744,7 @@ async function appointmentsPage(){
     calendarBlocks=blockedResultV291.error?[]:(blockedResultV291.data||[])
       .filter(block=>staffFilter==='all'||block.staff_id===staffFilter);
     const blockedListHtmlV291=blockedResultV291.error
-      ?`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time</b><p>Blocked time could not be read for ${esc(blockedWindowV291)}. The appointments above are unaffected.</p></div></section>`
+      ?`<section class="card" style="margin-top:16px"><div class="v150-soft-head"><b>Blocked time</b><p>${workspaceTemplateHtmlV97('blockedTimeUnreadableForWindow',{window:blockedWindowV291})}</p></div></section>`
       /* V385 (owner markup, photo 4): the window dates are struck through and the explanation is
          ringed with "put inside this pop-up question mark button". The dates said nothing the two
          date inputs directly above this card were not already showing, and the explanation is
@@ -31061,7 +31061,7 @@ async function bottleSetupPageV275(){
       <p class="muted small" style="margin-top:-2px">Every bottle parked from now on uses this number. Bottles already on the shelf keep the date they were given.</p>
       <label for="bkCapacity" style="margin-top:14px">Storage capacity</label>
       <input id="bkCapacity" type="number" min="1" max="10000" inputmode="numeric" style="max-width:150px" value="${esc(String(Number(data?.storage_capacity)||500))}">
-      <p class="muted small" style="margin-top:-2px">How many bottles you can physically hold. Parking is refused once the shelves are full, so nobody takes a bottle you have nowhere to put. ${esc(String(Number(data?.in_storage)||0))} in storage right now.</p>
+      <p class="muted small" style="margin-top:-2px">${workspaceTemplateHtmlV97('storageCapacityInUse',{count:String(Number(data?.in_storage)||0)})}</p>
       ${/* nestly_v488 (owner: "push notification when left 7 days to expiry and left 3 days and
            today expiry"). The reminder stopped being a per-business number and became a fixed
            three-checkpoint schedule in the nightly sweep, so the input came off this page — a
@@ -31620,7 +31620,7 @@ async function bottlesPage(){
     dialog.className='modal';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
     dialog.setAttribute('aria-labelledby','parkBottleTitle');dialog.tabIndex=-1;
     dialog.innerHTML=`<div class="modal-card" style="width:min(560px,100%)">
-      <div class="row"><div><h2 id="parkBottleTitle">Park bottle</h2><p class="muted small" style="margin-top:4px">Kept for ${keepDays} days.</p></div><span class="spacer"></span>
+      <div class="row"><div><h2 id="parkBottleTitle">Park bottle</h2><p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('keptForDays',{days:keepDays})}</p></div><span class="spacer"></span>
         <button type="button" class="btn ghost sm" id="parkClose" aria-label="Close park bottle">Close</button></div>
       <form id="parkForm" style="margin-top:16px">
         <label for="parkCustomerSearch">Customer</label>
@@ -31659,7 +31659,7 @@ async function bottlesPage(){
           <div><label for="parkPurchased">Bought on</label><input id="parkPurchased" type="date" value="${esc(sgDateInputValue())}"></div>
           <div><label for="parkNote">Note</label><input id="parkNote" maxlength="500" autocomplete="off" placeholder="optional"></div>
         </div>
-        <div class="imp-note small" id="parkExpiryPreview" style="margin-top:14px">Expires ${esc(sgt(expiry.toISOString())||'')} · ${keepDays} days</div>
+        <div class="imp-note small" id="parkExpiryPreview" style="margin-top:14px">${workspaceTemplateHtmlV97('expiresOnAfterDays',{date:sgt(expiry.toISOString())||'',days:keepDays})}</div>
         <div id="parkError" role="alert"></div>
         <div class="row" style="margin-top:16px"><span class="spacer"></span>
           <button type="button" class="btn ghost" id="parkCancel">Cancel</button>
@@ -33462,7 +33462,7 @@ async function packagesPage(options){
       ${catalogueBranchPickerHtmlV627({branches:packageBranches,assigned:null,name:'package-bespoke',
         label:'Usable at',failed:packageBranchFailedV627,
         help:'Where the customer may use these sessions. Every branch ticked means any branch.'})}
-      <p class="muted small" style="margin-top:6px">Recorded at ${esc(branchName||'this branch')}. The customer pays now, exactly as they would for a catalogue package — points, revenue and the receipt all behave the same way.</p>
+      <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97('recordedAtBranchPaysNow',{branch:branchName||'this branch'})}</p>
       <div id="kBespokeErrorV613" role="alert"></div>
       <div class="row" style="margin-top:14px"><button class="btn ghost sm" type="button" id="kBespokeCancelV613">Cancel</button><span class="spacer"></span><button class="btn" type="button" id="kBespokeSellV613" disabled>Sell package</button></div>
     </section>`;
@@ -33856,7 +33856,7 @@ async function branchesPage(){
               Every new branch is its own subscription: the owner picks its cycle here, pays for it
               with any card on Razorpay's page, and it switches on when that payment confirms. */''}
          <div class="imp-note" style="margin-top:14px" id="brBillingNoteV666">
-           <b>This is your ${branchOrdinalWordV666(branchList.length+1)} branch.</b>
+           <b>${workspaceTemplateHtmlV97('thisIsYourNthBranch',{ordinal:branchOrdinalWordV666(branchList.length+1)})}</b>
            <fieldset style="border:0;padding:0;margin:8px 0 0"><legend class="small" style="font-weight:700;margin-bottom:6px">Billing cycle for this branch</legend>
              <div class="row" style="flex-wrap:wrap;gap:8px">
                <label class="card" style="flex:1;min-width:150px;padding:10px 12px;cursor:pointer"><input type="radio" name="brCadenceV786" value="annual" checked> <strong>Annual</strong><br><span class="small" id="brCadenceAnnualV786">Checking the price…</span></label>
@@ -34246,7 +34246,7 @@ async function customerIntelligencePage(){
       <div class="revenue-truth-metrics" style="margin-top:8px">
         ${channelCard('sms','SMS')}${channelCard('email','Email')}
       </div>
-      <p class="muted small" style="margin-top:8px">Also allowed: push ${Number(channels.push||0)}, in-app ${Number(channels.in_app||0)}, call ${Number(channels.call||0)} (out of ${Number(group.customers||0)} customers)</p>
+      <p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97('alsoAllowedChannels',{push:Number(channels.push||0),inApp:Number(channels.in_app||0),call:Number(channels.call||0),total:Number(group.customers||0)})}</p>
     </div>`;
   }
   function contactabilityMarkupV650(){
@@ -35352,10 +35352,10 @@ function funnelConversionPanelHtmlV679(payload){
   return `<section class="revenue-truth-section" aria-labelledby="ciFunnelConversionHeadingV679">
     <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">How customers return</span>
     <h2 id="ciFunnelConversionHeadingV679">Retention funnel</h2></div></div>
-    <p class="muted small">Each stage is measured over a ${windowDays}-day window from the customer's own prior visit, based on ${esc(p.time_basis||'sale_occurred_at')}.</p>
+    <p class="muted small">${workspaceTemplateHtmlV97('stageWindowTimeBasis',{days:windowDays,basis:p.time_basis||'sale_occurred_at'})}</p>
     <div class="revenue-truth-metrics">
-      <article class="revenue-truth-metric"><span>First to second visit</span><strong>${stage1.num} of ${stage1.den} returned (${stage1.pctText})</strong></article>
-      <article class="revenue-truth-metric"><span>Second to third visit</span><strong>${stage2.num} of ${stage2.den} returned (${stage2.pctText})</strong></article>
+      <article class="revenue-truth-metric"><span>First to second visit</span><strong>${workspaceTemplateHtmlV97('stageReturnedOfTotal',{num:stage1.num,den:stage1.den,pct:stage1.pctText})}</strong></article>
+      <article class="revenue-truth-metric"><span>Second to third visit</span><strong>${workspaceTemplateHtmlV97('stageReturnedOfTotal',{num:stage2.num,den:stage2.den,pct:stage2.pctText})}</strong></article>
     </div>
     <p class="muted small" style="margin-top:10px">${firstImmature} customer${firstImmature===1?'':'s'} too recent to judge for the first stage; ${secondImmature} too recent for the second.</p>
     <p class="muted small">${bottleneckLine}</p>

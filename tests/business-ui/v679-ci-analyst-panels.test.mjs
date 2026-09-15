@@ -22,6 +22,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v946: a renderer here now carries a named template for a sentence that mixes reviewed
+   English with a runtime value — one text node, which the flat catalogue can never reach. A vm
+   context sees none of this process's globals, so the REAL runtime goes into the sandbox with the
+   other helpers. Never a stub. */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -37,7 +42,7 @@ assert.ok(blockStart > -1 && blockEnd > blockStart,
 const block = app.slice(blockStart, blockEnd);
 
 function render(payload) {
-  const sandbox = {
+  const sandbox = { ...workspaceTemplateRuntime(),
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     money: (c) => 'SGD ' + ((c || 0) / 100).toFixed(2),
     walletDate: (v) => `WD:${v}`,
@@ -72,15 +77,28 @@ const FUNNEL_MAIN = {
   observed_since: '2026-08-01T00:00:00Z'
 };
 
+/* nestly_v946: the stage line is a named template now — "{num} of {den} returned ({pct})" — so its
+   three figures arrive in their own value spans rather than as one string. Reading them back out
+   asserts the same thing more precisely: it says WHICH figure is which, so a render that put the
+   denominator where the numerator belongs could no longer pass. */
+function stageLines(html) {
+  return html.split('data-workspace-template="stageReturnedOfTotal"').slice(1).map((chunk) => {
+    const read = (name) =>
+      new RegExp(`data-workspace-value="${name}"[^>]*>([^<]*)<`).exec(chunk)?.[1];
+    return `${read('num')} of ${read('den')} returned (${read('pct')})`;
+  });
+}
 test('V679 funnel: the main scenario prints both stages with their counts and the weaker bottleneck', () => {
   const html = render(FUNNEL_MAIN).funnel(FUNNEL_MAIN);
-  assert.ok(html.includes('4 of 6 returned (66.7%)'), 'stage 1->2 carries its own numerator/denominator');
-  assert.ok(html.includes('2 of 4 returned (50.0%)'), 'stage 2->3 carries its own numerator/denominator');
+  assert.ok(stageLines(html).includes('4 of 6 returned (66.7%)'), 'stage 1->2 carries its own numerator/denominator');
+  assert.ok(stageLines(html).includes('2 of 4 returned (50.0%)'), 'stage 2->3 carries its own numerator/denominator');
   assert.ok(html.includes('Second to third visit'), 'the weaker stage is named as the bottleneck');
   assert.ok(html.includes('1 customer too recent to judge for the first stage'));
   assert.ok(html.includes('0 too recent for the second'));
   assert.ok(html.includes('WD:2026-08-01T00:00:00Z'), 'observed_since reaches the page');
-  assert.ok(html.includes('30-day window'));
+  /* nestly_v946: the window sentence is a named template now, so the number sits in its own span.
+     The caption and the figure are both still pinned. */
+  assert.match(html, /a <span[^>]*>30<\/span>-day window/);
 });
 
 /* Small scenario from the same corpus file: stage_1_to_2=rate_block(0,3)=0/3/0.0% (counts present,
@@ -98,7 +116,7 @@ const FUNNEL_SMALL = {
 
 test('V679 funnel: a below-floor population keeps its real counts, including a genuine 0.0%', () => {
   const html = render(FUNNEL_SMALL).funnel(FUNNEL_SMALL);
-  assert.ok(html.includes('0 of 3 returned (0.0%)'),
+  assert.ok(stageLines(html).includes('0 of 3 returned (0.0%)'),
     'a real, computed zero rate is not the same thing as a withheld one and must still print');
   assert.ok(html.includes('No bottleneck can be named yet') || html.includes('Not enough data yet'),
     'insufficient evidence must withhold the bottleneck diagnosis, not merely a tied pct');

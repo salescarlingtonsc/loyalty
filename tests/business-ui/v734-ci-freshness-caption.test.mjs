@@ -24,6 +24,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v946: a renderer here now carries a named template for a sentence that mixes reviewed
+   English with a runtime value — one text node, which the flat catalogue can never reach. A vm
+   context sees none of this process's globals, so the REAL runtime goes into the sandbox with the
+   other helpers. Never a stub. */
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -38,7 +43,7 @@ assert.ok(block.includes('function ciFreshnessCaptionHtmlV734(payload){'),
   'ciFreshnessCaptionHtmlV734 must live in the same top-level block as the panels it is wired into');
 
 function render() {
-  const sandbox = {
+  const sandbox = { ...workspaceTemplateRuntime(),
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     money: (c) => 'SGD ' + ((c || 0) / 100).toFixed(2),
     walletDate: (v) => `WD:${v}`,
@@ -65,6 +70,16 @@ const FRESHNESS_FRESH = {
   stale: false,
   note: 'data_as_of is the most recent recorded sale for this scope, not the requested reporting period; stale means that sale is more than 48 hours old.'
 };
+
+/* nestly_v946: the stage line is a named template now, so its three figures arrive in their own
+   value spans rather than as one string. Reading them back out asserts which figure is which. */
+function stageLines(html) {
+  return html.split('data-workspace-template="stageReturnedOfTotal"').slice(1).map((chunk) => {
+    const read = (name) =>
+      new RegExp(`data-workspace-value="${name}"[^>]*>([^<]*)<`).exec(chunk)?.[1];
+    return `${read('num')} of ${read('den')} returned (${read('pct')})`;
+  });
+}
 
 test('V734 caption: a fresh payload prints "Data as of <date> · <age>" and no stale line', () => {
   const { caption } = render();
@@ -167,7 +182,7 @@ test('V734 wiring: funnelConversionPanelHtmlV679 renders the fresh caption', () 
   const html = funnel({ ...FUNNEL_BASE, freshness: FRESHNESS_FRESH });
   assert.ok(html.includes('Data as of WD:2026-09-02T09:00:00Z'));
   assert.ok(!html.includes('may be out of date'));
-  assert.ok(html.includes('4 of 6 returned (66.7%)'), 'the panel still renders its own real numbers alongside the caption');
+  assert.ok(stageLines(html).includes('4 of 6 returned (66.7%)'), 'the panel still renders its own real numbers alongside the caption');
 });
 
 test('V734 wiring: funnelConversionPanelHtmlV679 renders the stale disclosure but still shows the full panel', () => {
@@ -175,7 +190,7 @@ test('V734 wiring: funnelConversionPanelHtmlV679 renders the stale disclosure bu
   const html = funnel({ ...FUNNEL_BASE, freshness: FRESHNESS_STALE });
   assert.ok(html.includes('Data may be out of date'));
   assert.ok(html.includes(FRESHNESS_STALE.note));
-  assert.ok(html.includes('4 of 6 returned (66.7%)'),
+  assert.ok(stageLines(html).includes('4 of 6 returned (66.7%)'),
     'a stale freshness block must never withhold the panel’s own real numbers — disclosure only');
   assert.ok(html.includes('Second to third visit'), 'the bottleneck verdict still renders under stale evidence');
 });
@@ -184,7 +199,7 @@ test('V734 wiring: funnelConversionPanelHtmlV679 with no freshness key at all re
   const { funnel } = render();
   const html = funnel({ ...FUNNEL_BASE });
   assert.ok(!html.includes('ci-freshness-caption-v734'), 'no freshness key means no caption markup at all');
-  assert.ok(html.includes('4 of 6 returned (66.7%)'));
+  assert.ok(stageLines(html).includes('4 of 6 returned (66.7%)'));
 });
 
 /* ---------------------------------------------------------------------------------------------

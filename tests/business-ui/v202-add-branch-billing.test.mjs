@@ -54,7 +54,7 @@ test('the owner is told what the branch costs and where it is paid before it is 
      with its own renewal date) replaced the pro-rata charge on the card on file with the branch's
      OWN checkout: the form names the cycle and its flat price, and says the payment happens on
      Razorpay's page with any card. Nothing is charged by our code. */
-  assert.match(app, /This is your \$\{branchOrdinalWordV666\(branchList\.length\+1\)\} branch\./);
+  assert.match(app, /'thisIsYourNthBranch'/);
   assert.match(app, /name="brCadenceV786" value="annual"/);
   assert.match(app, /name="brCadenceV786" value="monthly"/);
   assert.match(app, /Pay with any card on the next page\. This branch renews on its own date and switches on when the payment confirms\./);
