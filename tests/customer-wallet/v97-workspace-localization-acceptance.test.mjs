@@ -261,7 +261,9 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
            Memberships, Waitlist, Reminders, Dashboard, Customer Interface. 149, not 150: 'SKU' was
            already a key, carrying itself as its own value from the v97 machine pass, so adding it
            would have REWRITTEN a catalogue entry rather than added one. It is left as it is. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,3769,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v934: +240 — Programmes (growPage), the service-mapping board, and the long copy a
+       110-character harvest cap had hidden across every earlier wave. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,4009,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
