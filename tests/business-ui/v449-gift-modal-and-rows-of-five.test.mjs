@@ -466,11 +466,13 @@ test('v449 rows of five is a layout change ONLY — the grid markup and every ha
      one sentence and its number in data-workspace-* spans. That is an i18n wrapper, not a change
      to the card: unwrapping it on both sides keeps this pin doing exactly what it was written to
      do — hold every other byte of the grid, the "+", the stranded chips and the warning note
-     identical to v445 — while stating precisely which bytes v945 is allowed to have moved. */
+     identical to v445 — while stating precisely which bytes v945 is allowed to have moved.
+     nestly_v953 makes the stranded-gift NOTE a template too, so the unwrapper now also drops the
+     wrapper span that closes before a plain sibling, not only before a </b>. */
   const unwrapTemplates = (html) => html
     .replace(/<span data-workspace-template="[^"]*">/g, '')
     .replace(/<span data-workspace-value="[^"]*" data-merchant-content>([^<]*)<\/span>/g, '$1')
-    .replace(/<\/span>(?=<\/b>)/g, '');
+    .replace(/<\/span>(?=<\/b>|<\/p>|$)/g, '');
   assert.equal(unwrapTemplates(drawFrom(appNow, args)), drawFrom(appV445, args),
     'v449/v453/v463 must not have changed a single byte of the stamp card the editor draws '
     + 'below the maximum length');

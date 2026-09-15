@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="c5fe762c714b5f1aa9521bda956c9ded3a622796f93e8832147c710e69201201"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
+  <meta name="production-source-sha256" content="67daf2ce98cbc4c8b2b764005ff102d78a3270c05f557260fa07abfb5846a278"><title>Peekaa V129 actual-renderer browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v129-shell{max-width:1180px;margin:auto}.v129-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v129-nav{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.v129-nav button{white-space:nowrap}.appointment-detail-modal{position:relative;inset:auto;background:transparent;padding:0}.appointment-detail-modal .modal-card{margin:0 auto}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}}
-  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · c5fe762c714b5f1aa9521bda956c9ded3a622796f93e8832147c710e69201201</p>
+  </style></head><body><div class="v129-shell"><p class="v129-provenance">Actual production-renderer harness · 67daf2ce98cbc4c8b2b764005ff102d78a3270c05f557260fa07abfb5846a278</p>
   <nav class="v129-nav" aria-label="V129 acceptance views"><button class="btn" data-view="customers">Customers</button><button class="btn ghost" data-view="profile">Customer profile</button><button class="btn ghost" data-view="appointment">Appointment</button><button class="btn ghost" data-view="sale">Record sale</button></nav>
   <main id="main"></main></div><div id="toast" class="toast"></div><div id="appStatus"></div><div id="appAlert"></div><script>
   (function customerUiFactory(global){
@@ -8341,9 +8341,9 @@ function staffClientWhatsappConsentRowMarkupV574(permission){
     body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
       <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th class="num">Points</th><th class="num">Balance</th></tr></thead>
       <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
-      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}${liveBalanceProgrammeIdV461()?' in the running programme — movements in a paused or retired programme are not listed here':''}. ${programmePausedV259
+      <p class="muted small" style="margin-top:10px;line-height:1.5">${workspaceTemplateHtmlV97(pointsUnit==='stamps'?(liveBalanceProgrammeIdV461()?'ledgerTotalStampsRunning':'ledgerTotalStamps'):(liveBalanceProgrammeIdV461()?'ledgerTotalPointsRunning':'ledgerTotalPoints'),{total:running})} <span>${programmePausedV259
         ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
-        :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</p>`;
+        :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</span></p>`;
     CUI.enhance(body);
   }
   function openPointsHistoryV259(){
@@ -11545,11 +11545,11 @@ async function tillPage(){
     }else if(active==='sellpackage'){
       panel=`<p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p>
         <div class="till-cart-catalog">${tillPackagePlanTilesV373(catalog.packages||[])}</div>
-        <p class="muted small" style="margin-top:8px">${catalog.packageEarnsPoints===true
+        <p class="muted small" style="margin-top:8px"><span>${catalog.packageEarnsPoints===true
           ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
           :catalog.packageEarnsPoints===false
             ?'Package purchases are not eligible for points for this business.'
-            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`;
+            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'}</span> <span>Using a session never earns points.</span></p>`;
     }else if(active==='membership'){
       panel=`<div class="till-cart-catalog">${(catalog.memberships||[]).map(p=>`<button type="button" class="choice-button" data-plan="membership" data-id="${esc(p.id)}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span></button>`).join('')}</div>`;
     }else{
@@ -14100,7 +14100,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
   const loyaltyActions=loyaltyAuthorityActionV140({canManage:canManageLoyalty,draftVersionId});
   const publishedBirthdaySummary=publishedBirthdayProgram
-    ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit')} · ${publishedBirthdayProgram.active?'Live for eligible customers':'Published but paused'} · window ${Number(publishedBirthdayProgram.window_days_before||0)} day(s) before to ${Number(publishedBirthdayProgram.window_days_after||0)} day(s) after</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
+    ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97(publishedBirthdayProgram.active?'birthdayBenefitLiveWindow':'birthdayBenefitPausedWindow',{benefit:publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit',before:Number(publishedBirthdayProgram.window_days_before||0),after:Number(publishedBirthdayProgram.window_days_after||0)})}</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
     :'<p class="muted small" style="margin-top:10px">No birthday benefit is published. Starting a draft makes no offer until you complete, explicitly enable, and publish it.</p>';
   const birthdayEditor=canManageLoyalty
     ?!draftVersionId?`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><details class="loyalty-optional-v235" ${publishedBirthdayProgram?'open':''}><summary><b>Birthday reward</b><span class="muted small">give customers a reason to visit in their birthday month.</span></summary><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Edit':'Set up'}</button></details></div>`
@@ -14785,7 +14785,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             The summary now says what is inside, and — when this reward already has any of it set —
             says so, because "More options" on a reward that HAS an end date reads as if it has none.
             No new field, no new column: the feature was here, it just could not be found. */''}
-      <details${expirySetV468||r.usage_limit||r.min_tier_id||r.claim_available_from?' open':''}><summary>More options<span class="muted small"> — expiry date, limits, tier, photo${expirySummaryV468?` · ${esc(expirySummaryV468)}`:''}</span></summary>
+      <details${expirySetV468||r.usage_limit||r.min_tier_id||r.claim_available_from?' open':''}><summary>More options<span class="muted small"> <span>— expiry date, limits, tier, photo</span>${expirySummaryV468?` · ${esc(expirySummaryV468)}`:''}</span></summary>
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
           <div class="full"><label for="rwDescription">What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
@@ -16876,7 +16876,7 @@ async function promotionsPage(selectedPromotionId=null){
          called it a "launch slot" (a lifetime allowance that drafting could never free) and then
          promised "no more than two current offers at once", which was never true of anything. */''}
     <section class="card"><div class="promotion-quota"><div><b>${workspaceTemplateHtmlV97('offersLiveOfMax',{used:quotaUsed,max})}</b>
-      <p class="muted small" style="margin-top:4px">Customers see every live offer on your business page, and one of them on their Home screen. ${atLiveCapV462?'You are at the limit — move one back to draft before publishing another.':`You can publish ${Math.max(0,max-quotaUsed)} more.`} Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}.</p></div>
+      <p class="muted small" style="margin-top:4px"><span>Customers see every live offer on your business page, and one of them on their Home screen.</span> ${atLiveCapV462?workspaceTemplateHtmlV97('atLivePublishLimit',{}):workspaceTemplateHtmlV97('youCanPublishMore',{count:Math.max(0,max-quotaUsed)})} ${workspaceTemplateHtmlV97('complimentaryPublishingEnds',{date:promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z')})}</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${workspaceTemplateHtmlV97('offersLiveOfMax',{used:quotaUsed,max})}" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
       ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
       ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true,selectedId:selected?.id||''})}
@@ -16896,7 +16896,7 @@ async function promotionsPage(selectedPromotionId=null){
         <label>Promotion availability</label>
         <div class="promotion-scope-options" role="radiogroup" aria-label="Promotion availability">
           <label><input type="radio" name="promotionScopeMode" value="all" ${initial.scopeMode==='all'?'checked':''}> <span><b>All branches</b>Available at all current and future branches in this business.</span></label>
-          <label><input type="radio" name="promotionScopeMode" value="current" ${initial.scopeMode==='current'?'checked':''} ${operationalPromotionBranch?'':'disabled'}> <span><b>Current branch</b>Available only at ${esc(promotionBranches.find(branch=>branch.id===operationalPromotionBranch)?.name||'the current branch')}.</span></label>
+          <label><input type="radio" name="promotionScopeMode" value="current" ${initial.scopeMode==='current'?'checked':''} ${operationalPromotionBranch?'':'disabled'}> <span><b>Current branch</b>${(()=>{const branchV953=promotionBranches.find(branch=>branch.id===operationalPromotionBranch)?.name||'';return branchV953?workspaceTemplateHtmlV97('availableOnlyAtBranch',{branch:branchV953}):workspaceTemplateHtmlV97('availableOnlyAtCurrentBranch',{})})()}</span></label>
           <label><input type="radio" name="promotionScopeMode" value="selected" ${initial.scopeMode==='selected'?'checked':''} ${promotionBranches.length?'':'disabled'}> <span><b>Selected branches</b>Choose one or more branches.</span></label>
         </div>
         <div class="promotion-branch-list" id="promotionBranchList" aria-label="Selected promotion branches"></div>
@@ -20040,7 +20040,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>`;
   const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
     <b>${workspaceTemplateHtmlV97('stampsPastTargetNotClaimable',{target:growStampsTargetV416})}</b>
-    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
+    <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(growStampsStrandedGiftsV445.length===1?'oneGiftPastCardEnd':'giftsPastCardEnd',{target:growStampsTargetV416,count:growStampsStrandedGiftsV445.length,stamp:growStampsHighestGiftV416})}</p>
     ${growStampsStrandedChipsV445}
     ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
          tap from being reachable; it no longer is, because no card may be 20 stamps long, so the
@@ -20308,14 +20308,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97(multiplier!==1?'reachedAtThresholdMultiplier':'reachedAtThreshold',{threshold:growTiersThresholdTextV585(threshold),multiplier})}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97(multiplier!==1?'reachedAtThresholdMultiplier':'reachedAtThreshold',{threshold:growTiersThresholdTextV585(threshold),multiplier})}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -20408,7 +20408,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>
   </li>`:'';
   const growTiersTabStripV331=`<div class="v150-segment" role="group" aria-label="Tier status" data-grow-tiers-tabstrip-v331>
-    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Live tiers${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
+    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published"><span>Live tiers</span>${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
     <button type="button" aria-pressed="${growTiersManageTabV331==='history'}" data-grow-tiers-manage-tab-v331="history">History${growTiersHistoryV331.length?` (${growTiersHistoryV331.length})`:''}</button>
   </div>`;
   const growTiersMaxThresholdV331=Math.max(1,...growTiersPublishedV331.map(tier=>Number(tier.threshold||0)));
@@ -23431,7 +23431,7 @@ function pbOpenIssueModal(c,targets,ctx){
       <b>${workspaceTemplateHtmlV97(rows.length===1?'rewardEntitlementPrepared':'rewardEntitlementsPrepared',{count:rows.length})}</b>
       <p class="muted small" style="margin-top:6px">These rewards are visible in customer history with merchant fulfilment pending. No points or store credit were posted.</p>
       ${capped?'<p class="err" style="margin-top:6px">Budget cap reached — no entitlement was created for the remaining customers.</p>':''}
-      ${failed.length?`<p class="err" style="margin-top:6px">${failed.length} could not be prepared: ${esc(failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '))}${failed.length>6?` and ${failed.length-6} more`:''}.</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:''}
+      ${failed.length?`<p class="err" style="margin-top:6px">${workspaceTemplateHtmlV97(failed.length>6?'couldNotBePreparedAndMore':'couldNotBePrepared',{count:failed.length,names:failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '),more:Math.max(0,failed.length-6)})}</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:''}
     </div>
     ${rows.length?`<section class="card" style="margin-top:10px"><h3>Confirm actual receipt</h3>
       <p class="muted small" style="margin-top:5px">Select only customers who have actually been shown or sent their reward. This is your manual attestation, not automated delivery evidence.</p>
@@ -27106,7 +27106,7 @@ async function studioOverview(routeMain,isCurrent){
       const breakdown=studioShouldBreakdown(item)?studioEffectBreakdownHtml(item.effect_states):'';
       const freezeBanner=incomplete?`<div class="studio-emg-banner" role="status"><b>Unavailable for launch.</b> This historical rule contains an action that is not fully live. It remains visible for traceability, but cannot run or be resumed.</div>`:'';
       const pauseActor=studioEmergencyPauseActorLabel(ep?.actor);
-      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?`Reason: ${esc(String(ep.reason))}. `:''}${pauseActor?`By ${esc(pauseActor)}. `:''}${ep.paused_at?`At ${esc(String(ep.paused_at).slice(0,16).replace('T',' '))} (server time). `:''}New effects are stopped; every past record is kept.</div>`:'';
+      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?workspaceTemplateHtmlV97('pauseReasonWas',{reason:String(ep.reason)})+' ':''}${pauseActor?workspaceTemplateHtmlV97('pausedByActor',{actor:pauseActor})+' ':''}${ep.paused_at?workspaceTemplateHtmlV97('pausedAtServerTime',{at:String(ep.paused_at).slice(0,16).replace('T',' ')})+' ':''}<span>New effects are stopped; every past record is kept.</span></div>`:'';
       let controls='';
       if(controllable){
         if(ep){
@@ -28193,13 +28193,13 @@ async function svRunTopupFlow({branches,state,testOnly}){
         return `<label class="row" style="gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px${pl.ok?'':';opacity:.7'}">
           <input type="radio" name="svtPlan" value="${esc(pl.version_id)}"${pl.version_id===st.versionId?' checked':''}${dis} style="margin-top:4px">
           <div style="flex:1;min-width:0"><div style="font-weight:700">${esc(pl.plan_name||'Plan')}</div>
-            <div class="muted small" style="margin-top:2px">Pay <b>${money(Number(pl.price_cents||0))}</b>${Number(pl.bonus_cents||0)>0?` · bonus <b>${money(Number(pl.bonus_cents))}</b>`:''} · total value <b>${money(Number(pl.total_usable_cents||0))}</b></div>
-            <div class="muted small">Paid value expiry: ${esc(expiryWords(pl.paid_expiry_days))}${Number(pl.bonus_cents||0)>0?` · bonus expiry: ${esc(expiryWords(pl.bonus_expiry_days))}`:''}</div>
+            <div class="muted small" style="margin-top:2px">Pay <b>${money(Number(pl.price_cents||0))}</b>${Number(pl.bonus_cents||0)>0?` · <span>bonus</span> <b>${money(Number(pl.bonus_cents))}</b>`:''} · <span>total value</span> <b>${money(Number(pl.total_usable_cents||0))}</b></div>
+            <div class="muted small">${pl.paid_expiry_days==null?workspaceTemplateHtmlV97('paidValueExpiryNone',{}):workspaceTemplateHtmlV97(Number(pl.paid_expiry_days)===1?'paidValueExpiryDay':'paidValueExpiryDays',{days:Number(pl.paid_expiry_days)})}${Number(pl.bonus_cents||0)>0?' · '+(pl.bonus_expiry_days==null?workspaceTemplateHtmlV97('bonusExpiryNone',{}):workspaceTemplateHtmlV97(Number(pl.bonus_expiry_days)===1?'bonusExpiryDay':'bonusExpiryDays',{days:Number(pl.bonus_expiry_days)})):''}</div>
             ${blockersHtml(pl.blockers)}</div></label>`;
       }).join(''):`<p class="muted small" style="margin-top:8px">No sellable plans for this customer at this branch. <span>${state==='unbuilt'?'Stored value is unbuilt.':'Publish a top-up plan first, or check the plan restrictions.'}</span></p>`;
       const methodSel=`<div><label for="svtMethod" class="muted small">Payment method</label><br><select id="svtMethod" style="max-width:220px"${testOnly?' disabled':''}>${methodOpts.map(([v,l])=>`<option value="${v}"${v===st.method?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
       const refField=needsReference()?`<div><label for="svtRef" class="muted small">Payment reference (required)</label><br><input id="svtRef" type="text" value="${esc(st.reference)}" placeholder="e.g. terminal approval code" style="max-width:260px"></div>`:'';
-      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>I confirm the customer has paid${p?` ${money(Number(p.price_cents||0))}`:''}. <b><span>${esc(BRAND.productName)}</span> has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
+      const confirmBox=needsReference()?`<label class="row small" style="gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="svtConfirm"${st.staffConfirmed?' checked':''} style="margin-top:3px"><span>${p?workspaceTemplateHtmlV97('iConfirmCustomerPaidAmount',{amount:money(Number(p.price_cents||0))}):workspaceTemplateHtmlV97('iConfirmCustomerPaid',{})} <b><span>${esc(BRAND.productName)}</span> has not verified this payment</b> — you are attesting it was received.</span></label>`:'';
       body=`<div class="cui-card-head"><h3>${esc(st.cust.full_name||'Customer')} · ${esc(st.cust.phone||'')}</h3><p>Choose the plan and payment. Amounts are set by the plan and cannot be edited here.</p></div>
         ${planRadios}
         <div class="row" style="gap:10px;flex-wrap:wrap;align-items:end;margin-top:14px">${methodSel}${refField}</div>
@@ -28213,7 +28213,7 @@ async function svRunTopupFlow({branches,state,testOnly}){
       const spendable=pv.spendable===true;
       body=`<div class="cui-card-head"><h3>Confirm this top-up</h3></div>
         <aside class="permission-banner" role="note" style="border-color:var(--line)">${CUI.icon('info',{size:20})}<div>
-          <b>You are collecting ${esc(cur)} ${(cash/100).toFixed(2)} and issuing ${esc(cur)} ${(cash/100).toFixed(2)} paid value${bonus>0?` plus ${esc(cur)} ${(bonus/100).toFixed(2)} promotional bonus`:''}.</b>
+          <b>${workspaceTemplateHtmlV97(bonus>0?'collectingIssuingWithBonus':'collectingIssuing',{collecting:`${cur} ${(cash/100).toFixed(2)}`,issuing:`${cur} ${(cash/100).toFixed(2)}`,bonus:`${cur} ${(bonus/100).toFixed(2)}`})}</b>
           <p>${spendable?'This value will be spendable by the customer.':'This is a test in this phase — the value is <b>not</b> spendable and no real money is collected.'}</p></div></aside>
         <dl class="cui-readonly-list" style="margin-top:12px">
           <div class="cui-readonly-row"><dt>Customer</dt><dd>${esc(st.cust.full_name||'')} · ${esc(st.cust.phone||'')}</dd></div>
@@ -30474,11 +30474,11 @@ async function svRunTopupFlow({branches,state,testOnly}){
     }else if(active==='sellpackage'){
       panel=`<p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p>
         <div class="till-cart-catalog">${tillPackagePlanTilesV373(catalog.packages||[])}</div>
-        <p class="muted small" style="margin-top:8px">${catalog.packageEarnsPoints===true
+        <p class="muted small" style="margin-top:8px"><span>${catalog.packageEarnsPoints===true
           ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
           :catalog.packageEarnsPoints===false
             ?'Package purchases are not eligible for points for this business.'
-            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`;
+            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'}</span> <span>Using a session never earns points.</span></p>`;
     }else if(active==='membership'){
       panel=`<div class="till-cart-catalog">${(catalog.memberships||[]).map(p=>`<button type="button" class="choice-button" data-plan="membership" data-id="${esc(p.id)}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span></button>`).join('')}</div>`;
     }else{
@@ -31522,6 +31522,6 @@ function offerBookingConfirmationContactV330({customerName,phone,serviceName,sta
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v129Metrics=()=>({sourceHash:'c5fe762c714b5f1aa9521bda956c9ded3a622796f93e8832147c710e69201201',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
+  window.v129Metrics=()=>({sourceHash:'67daf2ce98cbc4c8b2b764005ff102d78a3270c05f557260fa07abfb5846a278',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,tableClientWidth:document.querySelector('.cui-table-wrap')?.clientWidth||null,tableScrollWidth:document.querySelector('.cui-table-wrap')?.scrollWidth||null,rows:document.querySelectorAll('#list table tr').length-1,genderVisible:/customer gender|gender not set/i.test(document.body.innerText),headings:[...document.querySelectorAll('h1,h2')].map(item=>item.textContent.trim()),expiryText:document.querySelector('.c360-points-expiry')?.textContent.trim()||'',rewardsText:document.querySelector('.c360-rewards-card')?.textContent.trim()||'',whatsappHref:document.getElementById('appointmentWhatsApp')?.href||'',buttons:[...document.querySelectorAll('button,.btn')].filter(item=>item.offsetParent!==null).map(item=>item.getBoundingClientRect().height),rpcCalls:window.__rpcCalls,errors:window.__consoleErrors});
   const initial=new URLSearchParams(location.search).get('view')||'customers';showView(initial).catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

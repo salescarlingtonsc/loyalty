@@ -20940,6 +20940,144 @@
    "reason": "nestly_v952 — one word the wave's own templates left stranded. 'Of' opens the what-would-have-happened-anyway sentence and is followed by a bold figure, so it is a text node of its own; at two characters and one word it fell under the harvest's floor and stayed English while the clause after it was reviewed. Translating it is only worth doing because the rest of that sentence now reads in the reader's language around it.",
    "zh-CN": "共",
    "ms": "Daripada"
+  },
+  {
+   "source": "Package purchases are eligible for points once at purchase when an active published loyalty programme applies.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "当有一个已发布且正在运行的积分方案适用时，配套购买可在购买当下获得一次积分。",
+   "ms": "Pembelian pakej layak mendapat mata sekali semasa pembelian apabila program kesetiaan yang diterbitkan dan aktif terpakai."
+  },
+  {
+   "source": "Package purchases are not eligible for points for this business.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "本商户的配套购买不能获得积分。",
+   "ms": "Pembelian pakej tidak layak mendapat mata bagi perniagaan ini."
+  },
+  {
+   "source": "Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "配套积分设置暂时无法读取。销售完成后的收据会显示服务器确认的积分结果。",
+   "ms": "Tetapan mata pakej tidak tersedia. Resit jualan yang selesai akan menunjukkan keputusan mata yang disahkan pelayan."
+  },
+  {
+   "source": "Using a session never earns points.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "使用一次配套次数永远不会产生积分。",
+   "ms": "Menggunakan sesi tidak pernah memperoleh mata."
+  },
+  {
+   "source": "— expiry date, limits, tier, photo",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "— 有效期、限制、等级、照片",
+   "ms": "— tarikh luput, had, peringkat, foto"
+  },
+  {
+   "source": "Customers see every live offer on your business page, and one of them on their Home screen.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "顾客可以在您的商家页面上看到每一个上线优惠，其中一个还会出现在他们的首页。",
+   "ms": "Pelanggan melihat setiap tawaran langsung di halaman perniagaan anda, dan satu daripadanya di skrin Utama mereka."
+  },
+  {
+   "source": "Cards already going keep this gift until they finish — even a customer one stamp short. It comes off the next card, so anyone starting a new one will not see it.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "已经在进行中的卡片会保留这份礼物直到集满 — 即使顾客只差一个印章也一样。它会从下一张卡片起移除，所以之后新开卡的顾客不会看到它。",
+   "ms": "Kad yang sudah berjalan mengekalkan hadiah ini sehingga ia selesai — walaupun pelanggan kurang satu setem. Ia ditanggalkan daripada kad berikutnya, jadi sesiapa yang memulakan kad baharu tidak akan melihatnya."
+  },
+  {
+   "source": "Live tiers",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "已上线的等级",
+   "ms": "Peringkat langsung"
+  },
+  {
+   "source": "New effects are stopped; every past record is kept.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "新的效果已停止；过去的每一条记录都会保留。",
+   "ms": "Kesan baharu dihentikan; setiap rekod lalu dikekalkan."
+  },
+  {
+   "source": "bonus",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "赠额",
+   "ms": "bonus promosi"
+  },
+  {
+   "source": "total value",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "总价值",
+   "ms": "jumlah nilai"
+  },
+  {
+   "source": "An owner can enable it from Customer Interface → Gift cards.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "店主可以在「客户界面 → 礼品卡」中开启它。",
+   "ms": "Pemilik boleh menghidupkannya daripada Antara Muka Pelanggan → Kad hadiah."
+  },
+  {
+   "source": "Existing card redemption remains available.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "已发出的礼品卡仍可兑换。",
+   "ms": "Penebusan kad sedia ada kekal tersedia."
+  },
+  {
+   "source": "Remind customer puts a message in their Peekaa app — WhatsApp and email are not switched on yet. Retrieved means the bottle went out with them, and closes it for good.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "「提醒顾客」会在他们的 Peekaa 应用里留下一条消息 — WhatsApp 和电子邮件目前尚未开启。「已取走」表示酒瓶已经被带走，并会永久关闭这条记录。",
+   "ms": "Ingatkan pelanggan meletakkan mesej dalam aplikasi Peekaa mereka — WhatsApp dan e-mel belum dihidupkan. Diambil bermakna botol itu keluar bersama mereka, dan menutupnya untuk selamanya."
+  },
+  {
+   "source": "Remove is for a bottle that should never have been on this list — a wrong tag, a duplicate, one you have thrown away. It closes the record WITHOUT saying the customer collected it.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "「移除」用于本来就不该出现在这份清单上的酒瓶 — 标签贴错、重复登记、或已经丢弃的。它会关闭记录，但不会表示顾客已取走。",
+   "ms": "Alih keluar adalah untuk botol yang sepatutnya tidak pernah berada dalam senarai ini — tag yang salah, pendua, satu yang anda telah buang. Ia menutup rekod itu TANPA mengatakan pelanggan mengambilnya."
+  },
+  {
+   "source": "Non-revenue sale amounts recorded:",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "已记录的非营收销售金额：",
+   "ms": "Jumlah jualan bukan hasil yang direkodkan:"
+  },
+  {
+   "source": "These are sale ledger amounts, not verified payment or cash-collection totals.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "这些是销售账本上的金额，不是经过核实的付款或现金收讫总额。",
+   "ms": "Ini ialah jumlah lejar jualan, bukan jumlah pembayaran atau kutipan tunai yang disahkan."
+  },
+  {
+   "source": "Template applied as Edit access.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "模板已按「编辑」权限套用。",
+   "ms": "Templat digunakan sebagai akses Edit."
+  },
+  {
+   "source": "Your own words for what you do — this is the line customers read under your business name. Pick from Industry above to fill it in, or type your own.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "用您自己的话说明您做什么 — 这就是顾客在您商号名称下方读到的那一行。可以从上方的「行业」中选一个来填入，也可以自己输入。",
+   "ms": "Kata-kata anda sendiri tentang apa yang anda lakukan — inilah baris yang dibaca pelanggan di bawah nama perniagaan anda. Pilih daripada Industri di atas untuk mengisinya, atau taip sendiri."
+  },
+  {
+   "source": "It changes nothing else.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "它不会改变其他任何东西。",
+   "ms": "Ia tidak mengubah apa-apa yang lain."
+  },
+  {
+   "source": "The card behind this dialog shows 0 because the programme is paused — these points were not removed.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "此对话框后面的卡片显示 0，是因为方案已暂停 — 这些积分并没有被扣除。",
+   "ms": "Kad di belakang dialog ini menunjukkan 0 kerana program dijeda — mata ini tidak dialih keluar."
+  },
+  {
+   "source": "Every recorded movement is listed; the ledger is append-only and is never edited in place.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "每一条已记录的变动都会列出；账本只能追加，永远不会就地修改。",
+   "ms": "Setiap pergerakan yang direkodkan disenaraikan; lejar ini hanya boleh ditambah dan tidak pernah disunting di tempatnya."
+  },
+  {
+   "source": "Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.",
+   "reason": "nestly_v953 — the reviewed halves of the sentences this wave detached. Each of these was welded to a runtime value inside one text node, so the flat catalogue could never match it and the harvest that built the catalogue skipped the node entirely; wrapping the words in a span of their own is what makes them reachable. The pair that reads as a fragment — 'bonus', 'total value' — sits either side of a bold figure and is translated to stand in that fixed position rather than alone. The Malay for 'bonus' is the fuller 'bonus promosi', because the bare loanword is identical to the English and the ledger refuses a value equal to its source, correctly, as a placeholder.",
+   "zh-CN": "勾选所有允许打折的项目。每次到访只有一项会打折 — 该笔账单上已勾选的最贵的那一项。",
+   "ms": "Tandakan semua yang boleh ditolak diskaun. Hanya SATU didiskaunkan setiap lawatan — item bertanda termahal pada bil itu."
   }
  ]
 }

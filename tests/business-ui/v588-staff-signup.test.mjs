@@ -128,7 +128,8 @@ test('the modal offers Copy invite link via the shared staffInviteLinkV151 helpe
   assert.match(referenceHandler, /copyTextToClipboard\(staffInviteLinkV151\(code\),\{/);
   assert.match(referenceHandler, /send it to them on WhatsApp/);
   assert.match(referenceHandler, /payload\?\.reused\?`<p class="muted small"/);
-  assert.match(referenceHandler, /This is the code you already created — it still works/);
+  /* nestly_v953: an either/or key pair — the expiry clause is part of the sentence, not glued on. */
+  assert.match(referenceHandler, /'codeStillWorksUntil':'codeStillWorks'/);
   assert.match(referenceHandler, /payload\?\.restricted_to_email/);
   assert.match(referenceHandler, /'codeOnlyWorksForEmail'/);
   // No dynamic aria-label/title/placeholder interpolation on this workspace surface.

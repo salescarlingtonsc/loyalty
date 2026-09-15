@@ -47,7 +47,9 @@ test('reward editor exposes simple customer-facing fields and progressive disclo
      Progressive disclosure is still the rule this test guards: the block is still a <details>,
      still collapsed by default for a reward that has none of it. */
   assert.match(app, /<details\$\{expirySetV468\|\|r\.usage_limit\|\|r\.min_tier_id\|\|r\.claim_available_from\?' open':''\}><summary>More options/i);
-  assert.match(app, /More options<span class="muted small"> — expiry date, limits, tier, photo/i,
+  /* nestly_v953: the field list is wrapped so it is a text node of its own and can be translated;
+     the words and their position under the summary are unchanged. */
+  assert.match(app, /More options<span class="muted small"> <span>— expiry date, limits, tier, photo<\/span>/i,
     'the summary must say what it is hiding');
   assert.match(app, /data-reward-elig="\$\{key\}"/i);
   for (const key of ['branch', 'service', 'product']) assert.match(app, new RegExp(`'${key}'`));

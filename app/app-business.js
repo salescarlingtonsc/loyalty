@@ -567,7 +567,7 @@ function growTierEligiblePickerV657(draft,products,services){
   }
   const count=chosenP.size+chosenS.size;
   return `<label class="small" style="display:block;margin-top:12px;font-weight:600">Which items qualify?</label>
-    <p class="muted small" style="margin:4px 0 6px">Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.${count?` ${count} ticked.`:''}</p>
+    <p class="muted small" style="margin:4px 0 6px"><span>Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.</span>${count?' '+workspaceTemplateHtmlV97('itemsTicked',{count}):''}</p>
     <div class="grow-tier-benefit-scope-list-v656">
       ${items.map(row=>{
         const on=row.kind==='service'?chosenS.has(String(row.id)):chosenP.has(String(row.id));
@@ -3860,7 +3860,7 @@ function openStampsExclusivityPopupV363(losingNames,onProceed,openingName='the S
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="stampsExclusivityPopupV363" role="dialog" aria-modal="true" aria-labelledby="stampsExclusivityTitleV363" tabindex="-1"><div class="modal-card" style="max-width:460px">
     <h2 id="stampsExclusivityTitleV363">${workspaceTemplateHtmlV97('setUpProgrammeQuestion',{programme:openingName})}</h2>
     <p class="muted" style="margin-top:8px">${workspaceTemplateHtmlV97('programmeRunsAloneSwitchesOff',{programme:openingName.charAt(0).toUpperCase()+openingName.slice(1),others:list})}</p>
-    <p class="muted small" style="margin-top:8px">Nothing changes yet — everything ${names.length>1?'they have':'it has'} collected stays saved, and you can come back at any time.</p>
+    <p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97(names.length>1?'nothingChangesYetThey':'nothingChangesYetIt',{})}</p>
     <div class="row" style="margin-top:16px;gap:8px;flex-wrap:wrap">
       <button class="btn" id="stampsExclusivityYesV363" type="button">Yes, continue</button>
       <button class="btn ghost" id="stampsExclusivityNoV363" type="button">No, go back</button>
@@ -4457,7 +4457,7 @@ function reversalResultHtml(kind,result){
   if(result.restored_stamp_claims!==undefined){
     const claims=Number(result.restored_stamp_claims||0),cards=Number(result.reopened_stamp_cards||0),
       credit=Number(result.reversed_credit_cents||0);
-    return `<div class="imp-note"><b>Gift un-redeemed.</b> ${claims} stamp gift given back${cards>0?" · the customer's stamp card is open again":''}${credit>0?` · ${money(credit)} credit compensated`:''}${result.replayed?' · exact replay verified':''}.</div>`;
+    return `<div class="imp-note"><b>Gift un-redeemed.</b> ${workspaceTemplateHtmlV97(claims===1?'stampGiftGivenBack':'stampGiftsGivenBack',{claims})}${cards>0?' · '+workspaceTemplateHtmlV97('stampCardOpenAgain',{}):''}${credit>0?' · '+workspaceTemplateHtmlV97('creditCompensatedAmount',{credit:money(credit)}):''}${result.replayed?' · '+workspaceTemplateHtmlV97('exactReplayVerified',{}):''}.</div>`;
   }
   return `<div class="imp-note"><b>Redemption reversed.</b> ${workspaceTemplateHtmlV97(result.replayed?'redemptionReversalAmountsReplayed':'redemptionReversalAmounts',{points:Number(result.restored_points||0),credit:money(Number(result.reversed_credit_cents||0))})}</div>`;
 }
@@ -4483,7 +4483,7 @@ function openReversalDialog(kind,item,onDone){
   const loyaltyNote=kind!=='redemption'?''
     :Number(item.points_spent||0)>0
     ?`<div class="imp-note"><b>Exact compensation only.</b> ${workspaceTemplateHtmlV97('exactCompensationPointsCheck',{brand:BRAND.productName,amount:money(Number(item.credit_cents||0))})}</div>`
-    :`<div class="imp-note"><b>Exact compensation only.</b> ${esc(BRAND.productName)} checks the original claim on the customer's card, the programme rules in effect at the time, and whether the ${money(Number(item.credit_cents||0))} reward credit may have been spent. If any proof is incomplete, it refuses the reversal. The claim is removed and the slot on the card comes back; nothing in the history is deleted.</div>`;
+    :`<div class="imp-note"><b>Exact compensation only.</b> ${workspaceTemplateHtmlV97('exactCompensationClaimCheck',{brand:BRAND.productName,amount:money(Number(item.credit_cents||0))})}</div>`;
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="reversalModal" role="dialog" aria-modal="true" aria-labelledby="revTitle" tabindex="-1"><div class="modal-card" style="max-width:560px">
     <div class="row"><div><h2 id="revTitle">${kind==='sale'?'Reverse sale':'Reverse redemption'}</h2><p class="muted small">${kind==='sale'?`Sale ${esc(item.id)} · ${money(Number(item.amount_cents||0))}`:`${esc(item.reward_name||'Reward')} · ${Number(item.points_spent||0)} points`}</p></div><span class="spacer"></span><button class="btn ghost sm" id="revClose">Close</button></div>
     ${packageNote}${tenderNoteV819}${loyaltyNote}
@@ -5556,7 +5556,7 @@ async function loadDashboardScheduleGlanceV180(root,branchId=null,dateV252=null)
   const {data,error}=await query;
   if(!isCurrentScheduleV252())return;
   if(error){
-    host.innerHTML=`<p class="muted small" role="status">${isTodayV252?'Today\u2019s schedule':`The schedule for ${esc(dayLabelV252)}`} could not be loaded. <button type="button" class="btn ghost sm" id="dashboardScheduleRetry">Try again</button></p>`;
+    host.innerHTML=`<p class="muted small" role="status">${isTodayV252?workspaceTemplateHtmlV97('todaysScheduleCouldNotLoad',{}):workspaceTemplateHtmlV97('scheduleForDayCouldNotLoad',{day:dayLabelV252})} <button type="button" class="btn ghost sm" id="dashboardScheduleRetry">Try again</button></p>`;
     const retry=host.querySelector('#dashboardScheduleRetry');
     if(retry)retry.onclick=()=>loadDashboardScheduleGlanceV180(root,branchId,day);
     return;
@@ -8013,9 +8013,9 @@ async function clientDetail(id){
     body.innerHTML=`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Points history">
       <table class="cui-table" data-responsive="true"><thead><tr><th>When</th><th>What happened</th><th>Source</th><th class="num">Points</th><th class="num">Balance</th></tr></thead>
       <tbody>${withBalance.slice().reverse().map(row=>pointsHistoryRowHtmlV259(row.entry,row.balance)).join('')}</tbody></table></div>
-      <p class="muted small" style="margin-top:10px;line-height:1.5">Ledger total: ${running} ${esc(pointsUnit)}${liveBalanceProgrammeIdV461()?' in the running programme — movements in a paused or retired programme are not listed here':''}. ${programmePausedV259
+      <p class="muted small" style="margin-top:10px;line-height:1.5">${workspaceTemplateHtmlV97(pointsUnit==='stamps'?(liveBalanceProgrammeIdV461()?'ledgerTotalStampsRunning':'ledgerTotalStamps'):(liveBalanceProgrammeIdV461()?'ledgerTotalPointsRunning':'ledgerTotalPoints'),{total:running})} <span>${programmePausedV259
         ?'The card behind this dialog shows 0 because the programme is paused — these points were not removed.'
-        :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</p>`;
+        :'Every recorded movement is listed; the ledger is append-only and is never edited in place.'}</span></p>`;
     CUI.enhance(body);
   }
   function openPointsHistoryV259(){
@@ -11217,11 +11217,11 @@ async function tillPage(){
     }else if(active==='sellpackage'){
       panel=`<p class="muted small" style="margin:0 0 8px">Use only when the customer is buying a prepaid package.</p>
         <div class="till-cart-catalog">${tillPackagePlanTilesV373(catalog.packages||[])}</div>
-        <p class="muted small" style="margin-top:8px">${catalog.packageEarnsPoints===true
+        <p class="muted small" style="margin-top:8px"><span>${catalog.packageEarnsPoints===true
           ?'Package purchases are eligible for points once at purchase when an active published loyalty programme applies.'
           :catalog.packageEarnsPoints===false
             ?'Package purchases are not eligible for points for this business.'
-            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'} Using a session never earns points.</p>`;
+            :'Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.'}</span> <span>Using a session never earns points.</span></p>`;
     }else if(active==='membership'){
       panel=`<div class="till-cart-catalog">${(catalog.memberships||[]).map(p=>`<button type="button" class="choice-button" data-plan="membership" data-id="${esc(p.id)}"><span class="till-choice-text"><b>${esc(p.name)}</b><span class="till-cart-price">${money(p.unit_cents)}</span></span></button>`).join('')}</div>`;
     }else{
@@ -13748,7 +13748,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
   const firmExpiryNeedsDays=expiryModeRequiresDays(firmExpiryMode);
   const loyaltyActions=loyaltyAuthorityActionV140({canManage:canManageLoyalty,draftVersionId});
   const publishedBirthdaySummary=publishedBirthdayProgram
-    ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit')} · ${publishedBirthdayProgram.active?'Live for eligible customers':'Published but paused'} · window ${Number(publishedBirthdayProgram.window_days_before||0)} day(s) before to ${Number(publishedBirthdayProgram.window_days_after||0)} day(s) after</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
+    ?`<div class="wallet-line" style="margin-top:12px"><div><b>${esc(publishedBirthdayProgram.customer_label||'Birthday benefit')}</b><p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97(publishedBirthdayProgram.active?'birthdayBenefitLiveWindow':'birthdayBenefitPausedWindow',{benefit:publishedBirthdayProgram.fulfillment_kind==='discount_pct'?`${publishedBirthdayProgram.discount_percent}% off`:publishedBirthdayProgram.manual_item||'Manual benefit',before:Number(publishedBirthdayProgram.window_days_before||0),after:Number(publishedBirthdayProgram.window_days_after||0)})}</p>${publishedBirthdayProgram.customer_description?`<p class="muted small" style="margin-top:4px">${esc(publishedBirthdayProgram.customer_description)}</p>`:''}</div><span class="spacer"></span><span class="pill ${publishedBirthdayProgram.active?'on':'off'}">Published</span></div>`
     :'<p class="muted small" style="margin-top:10px">No birthday benefit is published. Starting a draft makes no offer until you complete, explicitly enable, and publish it.</p>';
   const birthdayEditor=canManageLoyalty
     ?!draftVersionId?`<div class="card" id="birthdayEditorCard" style="margin-top:16px"><details class="loyalty-optional-v235" ${publishedBirthdayProgram?'open':''}><summary><b>Birthday reward</b><span class="muted small">give customers a reason to visit in their birthday month.</span></summary><p class="muted small" style="margin-top:6px">Customer participation is separately opt-in and birthday details are never shared with your team.</p>${publishedBirthdaySummary}<button class="btn ghost sm" id="birthdayStartDraft" style="margin-top:12px">${publishedBirthdayProgram?'Edit':'Set up'}</button></details></div>`
@@ -14433,7 +14433,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
             The summary now says what is inside, and — when this reward already has any of it set —
             says so, because "More options" on a reward that HAS an end date reads as if it has none.
             No new field, no new column: the feature was here, it just could not be found. */''}
-      <details${expirySetV468||r.usage_limit||r.min_tier_id||r.claim_available_from?' open':''}><summary>More options<span class="muted small"> — expiry date, limits, tier, photo${expirySummaryV468?` · ${esc(expirySummaryV468)}`:''}</span></summary>
+      <details${expirySetV468||r.usage_limit||r.min_tier_id||r.claim_available_from?' open':''}><summary>More options<span class="muted small"> <span>— expiry date, limits, tier, photo</span>${expirySummaryV468?` · ${esc(expirySummaryV468)}`:''}</span></summary>
         <div class="field-grid" style="margin-top:4px">
           <div class="full" style="margin-top:6px"><b>Reward details</b></div>
           <div class="full"><label for="rwDescription">What the customer gets</label><textarea id="rwDescription" rows="2" placeholder="Short, clear description shown to customers">${esc(r.description||'')}</textarea></div>
@@ -16515,7 +16515,7 @@ async function promotionsPage(selectedPromotionId=null){
          called it a "launch slot" (a lifetime allowance that drafting could never free) and then
          promised "no more than two current offers at once", which was never true of anything. */''}
     <section class="card"><div class="promotion-quota"><div><b>${workspaceTemplateHtmlV97('offersLiveOfMax',{used:quotaUsed,max})}</b>
-      <p class="muted small" style="margin-top:4px">Customers see every live offer on your business page, and one of them on their Home screen. ${atLiveCapV462?'You are at the limit — move one back to draft before publishing another.':`You can publish ${Math.max(0,max-quotaUsed)} more.`} Complimentary first-time publishing ends ${esc(promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z'))}.</p></div>
+      <p class="muted small" style="margin-top:4px"><span>Customers see every live offer on your business page, and one of them on their Home screen.</span> ${atLiveCapV462?workspaceTemplateHtmlV97('atLivePublishLimit',{}):workspaceTemplateHtmlV97('youCanPublishMore',{count:Math.max(0,max-quotaUsed)})} ${workspaceTemplateHtmlV97('complimentaryPublishingEnds',{date:promotionDateTextV104(entitlement.complimentary_until||'2026-10-31T15:59:59Z')})}</p></div>
       <div class="promotion-quota-meter" data-workspace-i18n aria-label="${workspaceTemplateHtmlV97('offersLiveOfMax',{used:quotaUsed,max})}" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${quotaUsed}" style="--quota-progress:${quotaProgress}%"><span></span></div></div>
       ${!canPublishThis?'<div class="err" style="margin-top:12px">Publishing is not available for this company. Offers that are still live can still be edited or unpublished.</div>':''}
       ${promotionFeaturedCardV462({items,featuredOfferId:featuredOfferIdV462,pinned:featuredPinnedV462,canWrite:true,selectedId:selected?.id||''})}
@@ -16535,7 +16535,7 @@ async function promotionsPage(selectedPromotionId=null){
         <label>Promotion availability</label>
         <div class="promotion-scope-options" role="radiogroup" aria-label="Promotion availability">
           <label><input type="radio" name="promotionScopeMode" value="all" ${initial.scopeMode==='all'?'checked':''}> <span><b>All branches</b>Available at all current and future branches in this business.</span></label>
-          <label><input type="radio" name="promotionScopeMode" value="current" ${initial.scopeMode==='current'?'checked':''} ${operationalPromotionBranch?'':'disabled'}> <span><b>Current branch</b>Available only at ${esc(promotionBranches.find(branch=>branch.id===operationalPromotionBranch)?.name||'the current branch')}.</span></label>
+          <label><input type="radio" name="promotionScopeMode" value="current" ${initial.scopeMode==='current'?'checked':''} ${operationalPromotionBranch?'':'disabled'}> <span><b>Current branch</b>${(()=>{const branchV953=promotionBranches.find(branch=>branch.id===operationalPromotionBranch)?.name||'';return branchV953?workspaceTemplateHtmlV97('availableOnlyAtBranch',{branch:branchV953}):workspaceTemplateHtmlV97('availableOnlyAtCurrentBranch',{})})()}</span></label>
           <label><input type="radio" name="promotionScopeMode" value="selected" ${initial.scopeMode==='selected'?'checked':''} ${promotionBranches.length?'':'disabled'}> <span><b>Selected branches</b>Choose one or more branches.</span></label>
         </div>
         <div class="promotion-branch-list" id="promotionBranchList" aria-label="Selected promotion branches"></div>
@@ -19679,7 +19679,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>`;
   const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
     <b>${workspaceTemplateHtmlV97('stampsPastTargetNotClaimable',{target:growStampsTargetV416})}</b>
-    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
+    <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(growStampsStrandedGiftsV445.length===1?'oneGiftPastCardEnd':'giftsPastCardEnd',{target:growStampsTargetV416,count:growStampsStrandedGiftsV445.length,stamp:growStampsHighestGiftV416})}</p>
     ${growStampsStrandedChipsV445}
     ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
          tap from being reachable; it no longer is, because no card may be 20 stamps long, so the
@@ -19947,14 +19947,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97(multiplier!==1?'reachedAtThresholdMultiplier':'reachedAtThreshold',{threshold:growTiersThresholdTextV585(threshold),multiplier})}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97(multiplier!==1?'reachedAtThresholdMultiplier':'reachedAtThreshold',{threshold:growTiersThresholdTextV585(threshold),multiplier})}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -20047,7 +20047,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>
   </li>`:'';
   const growTiersTabStripV331=`<div class="v150-segment" role="group" aria-label="Tier status" data-grow-tiers-tabstrip-v331>
-    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Live tiers${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
+    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published"><span>Live tiers</span>${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
     <button type="button" aria-pressed="${growTiersManageTabV331==='history'}" data-grow-tiers-manage-tab-v331="history">History${growTiersHistoryV331.length?` (${growTiersHistoryV331.length})`:''}</button>
   </div>`;
   const growTiersMaxThresholdV331=Math.max(1,...growTiersPublishedV331.map(tier=>Number(tier.threshold||0)));
@@ -23070,7 +23070,7 @@ function pbOpenIssueModal(c,targets,ctx){
       <b>${workspaceTemplateHtmlV97(rows.length===1?'rewardEntitlementPrepared':'rewardEntitlementsPrepared',{count:rows.length})}</b>
       <p class="muted small" style="margin-top:6px">These rewards are visible in customer history with merchant fulfilment pending. No points or store credit were posted.</p>
       ${capped?'<p class="err" style="margin-top:6px">Budget cap reached — no entitlement was created for the remaining customers.</p>':''}
-      ${failed.length?`<p class="err" style="margin-top:6px">${failed.length} could not be prepared: ${esc(failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '))}${failed.length>6?` and ${failed.length-6} more`:''}.</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:''}
+      ${failed.length?`<p class="err" style="margin-top:6px">${workspaceTemplateHtmlV97(failed.length>6?'couldNotBePreparedAndMore':'couldNotBePrepared',{count:failed.length,names:failed.slice(0,6).map(f=>f.full_name||'Customer').join(', '),more:Math.max(0,failed.length-6)})}</p><button class="btn ghost sm" id="pbRetryFailed" style="margin-top:8px">Retry failed only</button>`:''}
     </div>
     ${rows.length?`<section class="card" style="margin-top:10px"><h3>Confirm actual receipt</h3>
       <p class="muted small" style="margin-top:5px">Select only customers who have actually been shown or sent their reward. This is your manual attestation, not automated delivery evidence.</p>
@@ -26709,7 +26709,7 @@ async function studioOverview(routeMain,isCurrent){
       const breakdown=studioShouldBreakdown(item)?studioEffectBreakdownHtml(item.effect_states):'';
       const freezeBanner=incomplete?`<div class="studio-emg-banner" role="status"><b>Unavailable for launch.</b> This historical rule contains an action that is not fully live. It remains visible for traceability, but cannot run or be resumed.</div>`:'';
       const pauseActor=studioEmergencyPauseActorLabel(ep?.actor);
-      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?`Reason: ${esc(String(ep.reason))}. `:''}${pauseActor?`By ${esc(pauseActor)}. `:''}${ep.paused_at?`At ${esc(String(ep.paused_at).slice(0,16).replace('T',' '))} (server time). `:''}New effects are stopped; every past record is kept.</div>`:'';
+      const banner=ep?`<div class="studio-emg-banner" role="alert"><b>Emergency paused.</b> ${ep.reason?workspaceTemplateHtmlV97('pauseReasonWas',{reason:String(ep.reason)})+' ':''}${pauseActor?workspaceTemplateHtmlV97('pausedByActor',{actor:pauseActor})+' ':''}${ep.paused_at?workspaceTemplateHtmlV97('pausedAtServerTime',{at:String(ep.paused_at).slice(0,16).replace('T',' ')})+' ':''}<span>New effects are stopped; every past record is kept.</span></div>`:'';
       let controls='';
       if(controllable){
         if(ep){
@@ -27995,7 +27995,7 @@ async function giftcardsPage(){
   const giftCardWorkspace=issueWorkspace+redeemWorkspace;
   routeMain.innerHTML=`${CUI.pageHeader({title:'Gift cards',subtitle:'Issue and redeem spendable credit through one auditable ledger.',iconName:'giftcard',canWrite:canIssue||canRedeem,moduleLabel:'Gift card transactions'})}
     ${operationalBranches.length>1?`<div class="card" style="margin-bottom:16px"><label for="giftBranch">Branch</label><select id="giftBranch">${operationalBranches.map(branch=>`<option value="${branch.id}" ${branch.id===giftBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select></div>`:`<p class="muted small" style="margin:0 0 12px"><b>Branch:</b> ${esc(operationalBranches[0].name)}</p>`}
-    ${!preferencesAvailable?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card issuance setting unavailable</b><p class="muted small" style="margin-top:4px">Issuance is paused until the setting can be confirmed. Existing cards can still be redeemed with the required authority.</p><button class="btn ghost sm" id="giftPreferencesRetry" style="margin-top:8px">Try again</button></div>`:!giftCardsEnabled?`<div class="permission-banner" style="margin-bottom:16px"><b>New gift-card issuance is off</b><p class="muted small" style="margin-top:4px">${canConfigure?`Turn it back on under <a href="#/customer-interface/giftcards">Customer Interface \u2192 Gift cards</a>.`:'An owner can enable it from Customer Interface \u2192 Gift cards.'} Existing card redemption remains available.</p></div>`:''}
+    ${!preferencesAvailable?`<div class="permission-banner" style="margin-bottom:16px"><b>Gift-card issuance setting unavailable</b><p class="muted small" style="margin-top:4px">Issuance is paused until the setting can be confirmed. Existing cards can still be redeemed with the required authority.</p><button class="btn ghost sm" id="giftPreferencesRetry" style="margin-top:8px">Try again</button></div>`:!giftCardsEnabled?`<div class="permission-banner" style="margin-bottom:16px"><b>New gift-card issuance is off</b><p class="muted small" style="margin-top:4px">${canConfigure?`Turn it back on under <a href="#/customer-interface/giftcards">Customer Interface \u2192 Gift cards</a>.`:'An owner can enable it from Customer Interface \u2192 Gift cards.'} <span>Existing card redemption remains available.</span></p></div>`:''}
     <div class="card" data-subtab="Issue &amp; redeem">${giftCardWorkspace}</div>
     <div class="card" data-subtab="Cards on the books"><div class="cui-card-head"><h2>Cards on the books</h2></div><div id="glist" style="margin-top:8px"><p class="muted small">Loading…</p></div></div>
     <div class="card" data-subtab="Issue &amp; redeem"><div class="cui-card-head"><h2>Suggested amounts</h2><p>Worked out from your own service and product prices — an estimate, not a rule.</p></div>
@@ -28905,7 +28905,7 @@ async function appointmentsPage(){
            Thursday refuses only the Thursday. The days that saved are kept and the refused ones are
            named, because the writer offers no transaction across days and silently discarding four
            saved days to punish the fifth would be the worse answer. */
-        errorHost.innerHTML=`<div class="err">${savedV468?`${savedV468} day${savedV468===1?'':'s'} blocked. `:''}${failedV468.length} day${failedV468.length===1?'':'s'} could not be blocked: ${esc(failedV468.join('; '))}</div>${editingBlockV291?`<div class="${restoredV291?'muted small':'err'}" style="margin-top:6px">${restoredV291?'The original blocked time was put back.':'The original blocked time could NOT be put back \u2014 check the calendar before leaving this page.'}</div>`:''}`;
+        errorHost.innerHTML=`<div class="err">${savedV468?workspaceTemplateHtmlV97(savedV468===1?'dayBlocked':'daysBlocked',{count:savedV468})+' ':''}${workspaceTemplateHtmlV97(failedV468.length===1?'dayCouldNotBeBlocked':'daysCouldNotBeBlocked',{count:failedV468.length,days:failedV468.join('; ')})}</div>${editingBlockV291?`<div class="${restoredV291?'muted small':'err'}" style="margin-top:6px">${restoredV291?'The original blocked time was put back.':'The original blocked time could NOT be put back \u2014 check the calendar before leaving this page.'}</div>`:''}`;
         if(savedV468||editingBlockV291)loadCalendar().catch(fail);
         return;
       }
@@ -31681,7 +31681,7 @@ async function bottlesPage(){
         <p class="muted small" style="margin-top:-2px">New customer? <a href="#/clients">Add them in Customers</a> first.</p>
         ${bottleProductsV278.length?`<label for="parkProduct">Bottle</label>
         <select id="parkProduct"><option value="">Not on the list — type it</option>${bottleProductsV278.map(product=>`<option value="${esc(product.id)}">${esc(product.name)} · ${Number(product.size_ml)}ml</option>`).join('')}</select>`
-        :`<p class="muted small">No bottles in your catalogue yet, so the size has to be typed. ${S.myRole==='owner'?'<a href="#/bottlesetup">Add your bottles in Bottle keep</a>.':'Ask the owner to add them in Bottle keep.'}</p>`}
+        :`<p class="muted small"><span>No bottles in your catalogue yet, so the size has to be typed.</span> ${S.myRole==='owner'?'<a href="#/bottlesetup">Add your bottles in Bottle keep</a>.':'Ask the owner to add them in Bottle keep.'}</p>`}
         <label for="parkLabel">Bottle name</label>
         <input id="parkLabel" maxlength="120" autocomplete="off" placeholder="e.g. Hibiki 12">
         <div class="split">
@@ -31978,7 +31978,7 @@ async function bottlesPage(){
           ${live?`<button type="button" class="btn ghost sm" data-retrieve style="min-height:42px">${CUI.icon('export',{size:16})}<span>Retrieved</span></button>`:''}
           <button type="button" class="btn ghost sm" data-remove-v288 style="min-height:42px">${CUI.icon('close',{size:16})}<span>Remove</span></button>
         </div>
-        <p class="muted small" style="margin-top:8px">${live?'Remind customer puts a message in their Peekaa app — WhatsApp and email are not switched on yet. Retrieved means the bottle went out with them, and closes it for good. ':''}Remove is for a bottle that should never have been on this list — a wrong tag, a duplicate, one you have thrown away. It closes the record WITHOUT saying the customer collected it.</p>
+        <p class="muted small" style="margin-top:8px">${live?'<span>Remind customer puts a message in their Peekaa app — WhatsApp and email are not switched on yet. Retrieved means the bottle went out with them, and closes it for good.</span> ':''}<span>Remove is for a bottle that should never have been on this list — a wrong tag, a duplicate, one you have thrown away. It closes the record WITHOUT saying the customer collected it.</span></p>
         <div id="bottleExpiryPanel" hidden style="margin-top:12px">
           <label for="bottleExpiryMode">Keep until</label>
           <select id="bottleExpiryMode">${BOTTLE_EXPIRY_MODES_V278.map(([value,label])=>`<option value="${esc(value)}"${value===String(bottle.expiry_mode||'auto')?' selected':''}>${esc(label)}</option>`).join('')}</select>
@@ -33417,7 +33417,7 @@ async function packagesPage(options){
       dialog.setAttribute('aria-labelledby','packageHistoryTitleV603');
       dialog.innerHTML=`<div class="modal-card" style="width:min(620px,100%)">
         <div class="row"><div><p class="eyebrow">Package history</p><h2 id="packageHistoryTitleV603" style="margin-top:4px" data-merchant-content>${esc(planName)}</h2>
-        <p class="muted small" style="margin-top:4px">${customerName?`${esc(customerName)} · `:''}${esc(String(data?.remaining??'?'))} of ${esc(String(data?.sessions??'?'))} left · bought ${esc(packageDayV603(data?.purchased_at))}${data?.expires_at?` · use by ${esc(packageDayV603(data.expires_at))}`:''}</p></div>
+        <p class="muted small" style="margin-top:4px">${customerName?`${esc(customerName)} · `:''}${workspaceTemplateHtmlV97(data?.expires_at?'sessionsLeftBoughtUseBy':'sessionsLeftBought',{remaining:String(data?.remaining??'?'),sessions:String(data?.sessions??'?'),bought:packageDayV603(data?.purchased_at),useBy:data?.expires_at?packageDayV603(data.expires_at):''})}</p></div>
         <span class="spacer"></span><button type="button" class="btn ghost sm" id="packageHistoryCloseV603">Close</button></div>
         ${used.length?`<p class="muted small" style="margin-top:12px">Use Undo session use only when a package session was deducted by mistake. It adds one session back and never refunds a payment.</p>
         <div class="cui-table-wrap"><table data-responsive="true" class="cui-table" style="margin-top:8px"><tr><th>When</th><th>Result</th><th></th></tr>
@@ -33739,7 +33739,7 @@ function branchIdentityFieldsHtmlV788(prefix,b){
       <p class="muted small" style="margin-top:4px">Shown on receipts so customers can identify who they paid.</p>
       <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--ink);font-weight:500;font-size:14px">
         <input type="checkbox" id="${prefix}Gst" style="width:auto" ${x.gst_registered?'checked':''}> GST registered</label>
-      <p class="muted small" style="margin-top:4px">When on, Record sale adds ${(Number(x.gst_rate_bps)>0?Number(x.gst_rate_bps)/100:9)}% GST on top of your listed prices at this branch.</p>
+      <p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('recordSaleAddsGst',{rate:(Number(x.gst_rate_bps)>0?Number(x.gst_rate_bps)/100:9)})}</p>
       <label for="${prefix}GstNo">GST registration number</label>
       <input id="${prefix}GstNo" maxlength="60" placeholder="e.g. M9-1234567-8" value="${esc(x.gst_registration_number||'')}">`;
 }
@@ -34040,7 +34040,7 @@ async function branchesPage(){
     const assigned={};(sbRows||[]).forEach(r=>{(assigned[r.branch_id]=assigned[r.branch_id]||new Set()).add(r.staff_id)});
     const awaiting=branchList.filter(b=>b.billing_state==='pending_payment').length;
     const branchCountsV280=branchBillingCountsV280(branchList);
-    $('brList').innerHTML=`<p class="muted small" style="margin:0 0 12px" role="status">${esc(branchBillingSentenceV280(branchCountsV280))}</p>`+(awaiting?`<div class="imp-note" style="margin-bottom:12px" role="status">${awaiting===1?'One branch is':`${awaiting} branches are`} saved but switched off until payment confirms. Nothing at ${awaiting===1?'it':'them'} can take a booking or a sale yet.</div>`:'')+branchList.map(b=>{
+    $('brList').innerHTML=`<p class="muted small" style="margin:0 0 12px" role="status">${esc(branchBillingSentenceV280(branchCountsV280))}</p>`+(awaiting?`<div class="imp-note" style="margin-bottom:12px" role="status">${workspaceTemplateHtmlV97(awaiting===1?'oneBranchAwaitingPayment':'branchesAwaitingPayment',{count:awaiting})}</div>`:'')+branchList.map(b=>{
       const aset=assigned[b.id]||new Set();
       return `<div class="card" style="margin-bottom:12px">
         <div class="row" style="flex-wrap:wrap">
@@ -34351,7 +34351,7 @@ async function customerIntelligencePage(){
     const topShareBps=dist.top1_share_bps;
     const topPct=(topShareBps===null||topShareBps===undefined)?null:(Number(topShareBps)/100);
     const skewNote=category.skew_note;
-    return `<tr class="ci-category-distribution-row-v704"><td colspan="3"><p class="muted small" style="margin:4px 0 0"><b>Concentration</b> — median ${esc(scopeMoney(dist.median))} vs mean ${esc(scopeMoney(dist.mean))} per customer${topPct!==null?` · top customer carries ${topPct.toFixed(1)}%`:''}</p>${skewNote?`<p class="muted small" style="margin:2px 0 0">${esc(skewNote)}</p>`:''}</td></tr>`;
+    return `<tr class="ci-category-distribution-row-v704"><td colspan="3"><p class="muted small" style="margin:4px 0 0"><b>Concentration</b> ${workspaceTemplateHtmlV97(topPct!==null?'medianVsMeanTopCustomer':'medianVsMean',{median:scopeMoney(dist.median),mean:scopeMoney(dist.mean),top:topPct!==null?topPct.toFixed(1):''})}</p>${skewNote?`<p class="muted small" style="margin:2px 0 0">${esc(skewNote)}</p>`:''}</td></tr>`;
   }
   function categoryMixMarkupV650(){
     if(lastCategoryMixError)return ciQuietErrorV650('What they buy could not load.',lastCategoryMixError);
@@ -34376,7 +34376,7 @@ async function customerIntelligencePage(){
       <p class="muted small">All branches</p>
       ${categories.length?`<div class="cui-table-wrap" role="region" aria-label="Category mix"><table class="cui-table" id="ciCategoryMixTableV650"><thead><tr><th>Category</th><th>Revenue</th><th>Customers</th></tr></thead><tbody>${categories.map(category=>`<tr class="ci-category-row-v650" data-node-key="${esc(category.node_key)}" style="cursor:pointer" tabindex="0" role="button" aria-expanded="${expandedCategoryNodesV650.has(category.node_key)}"><td data-label="Category"><b>${esc(category.label||category.node_key)}</b></td><td data-label="Revenue">${esc(scopeMoney(category.revenue_cents))}</td><td data-label="Customers">${Number(category.customer_count||0)}</td></tr>${ciCategoryDistributionRowMarkupV704(category)}${expandedCategoryNodesV650.has(category.node_key)?ciCategoryCustomersRowsMarkupV650(category.node_key,category.customer_count):''}`).join('')}</tbody></table></div>`
         :'<div class="empty">No categorised revenue in this scope yet.</div>'}
-      <p class="muted small" style="margin-top:10px">Category view covers ${classifiedPct.toFixed(1)}% of service &amp; retail revenue.${projectedPct>0?` ${projectedPct.toFixed(1)}% projected through current mappings, not snapshots.`:''}</p>
+      <p class="muted small" style="margin-top:10px">${workspaceTemplateHtmlV97(projectedPct>0?'categoryViewCoversProjected':'categoryViewCovers',{covered:classifiedPct.toFixed(1),projected:projectedPct.toFixed(1)})}</p>
       ${ciMeasuredSinceV650(bundle.observed_since)}
       ${ciFreshnessCaptionHtmlV734(bundle)}
     </section>`;
@@ -35349,7 +35349,7 @@ function ciFreshnessCaptionHtmlV734(payload){
     :`${ageHours.toFixed(1)} hour${ageHours===1?'':'s'} old`;
   const freshLine=`Data as of ${dataAsOfText||'no recorded sale yet'} · ${ageText}`;
   const staleLine=freshness.stale
-    ?`<p class="muted small ci-freshness-stale-v734" role="status">Data may be out of date — last sale ${esc(dataAsOfText||'never recorded')}.${freshness.note?` ${esc(String(freshness.note))}`:''}</p>`
+    ?`<p class="muted small ci-freshness-stale-v734" role="status">${dataAsOfText?workspaceTemplateHtmlV97('lastSaleWas',{date:dataAsOfText}):workspaceTemplateHtmlV97('lastSaleNeverRecorded',{})}${freshness.note?` <span data-merchant-content>${esc(String(freshness.note))}</span>`:''}</p>`
     :'';
   return `<p class="muted small ci-freshness-caption-v734">${esc(freshLine)}</p>${staleLine}`;
 }
@@ -38428,7 +38428,7 @@ async function reportsPage(){
         ${/* V297: the mix is the point of this card and a column of figures does not show it. */''}
         ${reportShareBarV297(Object.entries(byKind).map(([k,v])=>[k.replace('_',' '),v]),{format:money})}
         <p class="muted small" style="margin-top:8px">What you sold, split by type. The bar shows the mix at a glance; the figures above it are the exact amounts.</p>
-        ${Object.keys(nonRevByKind).length?`<p class="muted small" style="margin-top:8px">Non-revenue sale amounts recorded: ${Object.entries(nonRevByKind).map(([k,v])=>`<b>${money(v)}</b> ${k.replace('_',' ')}`).join(', ')}. These are sale ledger amounts, not verified payment or cash-collection totals.</p>`:''}</div>
+        ${Object.keys(nonRevByKind).length?`<p class="muted small" style="margin-top:8px">Non-revenue sale amounts recorded: ${Object.entries(nonRevByKind).map(([k,v])=>`<b>${money(v)}</b> ${k.replace('_',' ')}`).join(', ')}. <span>These are sale ledger amounts, not verified payment or cash-collection totals.</span></p>`:''}</div>
       <div class="card"><b>Reversal reconciliation</b><table style="margin-top:8px">
         <tr><td>Compensating rows</td><td class="num"><b>${reversalRows}</b></td></tr>
         <tr><td>Revenue reversed</td><td class="num"><b>−${money(reversedCents)}</b></td></tr>
@@ -38673,7 +38673,7 @@ async function reportsPage(){
     });
     target.innerHTML=`${returningVerdictV297}<div class="card"><b>Returning customers</b><div class="metric" style="margin-top:8px">${Number(cm.existing_returning_customers||0)}</div>
         <p class="muted small"><span>${pct(cm.existing_customer_share_pct)}</span> of identified customers in this period.</p>
-        <p class="muted small">Identity coverage: ${c.identifiedTransactions} of ${c.eligibleTransactions} eligible recorded purchases${c.identifiedTransactionPct===null?'':` (${pct(c.identifiedTransactionPct)})`}.</p></div>
+        <p class="muted small">${workspaceTemplateHtmlV97(c.identifiedTransactionPct===null?'identityCoverage':'identityCoveragePct',{identified:c.identifiedTransactions,eligible:c.eligibleTransactions,share:c.identifiedTransactionPct===null?'':pct(c.identifiedTransactionPct)})}</p></div>
       <div class="card"><b>New and reactivated</b><table style="margin-top:8px">
         <tr><td>New customers</td><td class="num"><b>${Number(cm.new_customers||0)}</b></td></tr>
         <tr><td>Reactivated customers</td><td class="num"><b>${Number(cm.reactivated_customers||0)}</b></td></tr>
@@ -41345,7 +41345,7 @@ async function settingsPage(){
        entry, one focus lifecycle. */
     const paint=payload=>{
       const code=payload?.code||'';
-      const reusedNote=payload?.reused?`<p class="muted small" style="margin-top:8px">This is the code you already created — it still works${payload?.expires_at?`, until ${esc(walletDate(payload.expires_at,true))}`:''}.</p>`:'';
+      const reusedNote=payload?.reused?`<p class="muted small" style="margin-top:8px">${workspaceTemplateHtmlV97(payload?.expires_at?'codeStillWorksUntil':'codeStillWorks',{until:payload?.expires_at?walletDate(payload.expires_at,true):''})}</p>`:'';
       const restrictedNote=payload?.restricted_to_email?`<p class="muted small" style="margin-top:4px">${workspaceTemplateHtmlV97('codeOnlyWorksForEmail',{email:payload.restricted_to_email})}</p>`:'';
       dialog.querySelector('.modal-card').innerHTML=`
         <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for <span>${esc(name)}</span></h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
@@ -41526,7 +41526,7 @@ async function settingsPage(){
     if(error) return fail(error);
     const resolved=data?.module_perms||{},added=Object.keys(resolved).filter(module=>!Object.hasOwn(permissions,module));
     panelSel[staffId]={mode:'explicit',perms:{...resolved}};openModId=staffId;
-    permissionStatusByStaff[staffId]=`<div class="imp-note small">Template applied as Edit access.${added.length?` Required dependencies added as Read: ${esc(added.map(module=>MODULES[module]?.[1]||module).join(', '))}.`:''}${skipped.length?` Skipped unavailable modules: ${esc(skipped.map(module=>MODULES[module]?.[1]||module).join(', '))}.`:''}</div>`;
+    permissionStatusByStaff[staffId]=`<div class="imp-note small"><span>Template applied as Edit access.</span>${added.length?' '+workspaceTemplateHtmlV97('requiredDependenciesAddedAsRead',{modules:added.map(module=>MODULES[module]?.[1]||module).join(', ')}):''}${skipped.length?' '+workspaceTemplateHtmlV97('skippedUnavailableModules',{modules:skipped.map(module=>MODULES[module]?.[1]||module).join(', ')}):''}</div>`;
     invalidateBranchModuleProjectionCache({businessId:S.biz.id,userId:staff.user_id||''});
     toast('Template applied through v74 permissions');
     await loadTeam();
@@ -43186,7 +43186,7 @@ function workspaceBrandPanelHtmlV259(){
       <div id="biLabelRowV421">
         <label for="bilabel">What customers see under your name</label>
         <input id="bilabel" maxlength="60" placeholder="e.g. Facial studio" value="${esc(S.biz.industry_label||'')}">
-        <p class="muted small" style="margin-top:4px">Your own words for what you do — this is the line customers read under your business name. Pick from Industry above to fill it in, or type your own. ${workspaceIndustryLabelFallbackV799(S.biz.industry)?`Leave it blank and &ldquo;${esc(workspaceIndustryLabelFallbackV799(S.biz.industry))}&rdquo; is shown.`:'Leave it blank and no line is shown.'} It changes nothing else.</p>
+        <p class="muted small" style="margin-top:4px"><span>Your own words for what you do — this is the line customers read under your business name. Pick from Industry above to fill it in, or type your own.</span> ${workspaceIndustryLabelFallbackV799(S.biz.industry)?workspaceTemplateHtmlV97('leaveBlankAndShown',{fallback:workspaceIndustryLabelFallbackV799(S.biz.industry)}):workspaceTemplateHtmlV97('leaveBlankNoLineShown',{})} <span>It changes nothing else.</span></p>
         <p class="muted small" id="biSectorHint" style="margin-top:8px">Your plan sector: <b>${esc(INDUSTRIES[S.biz.industry]?.label||S.biz.industry||'—')}</b> — this is what decides your modules. Ask Peekaa to change it.</p>
       </div>
       ${/* V375 (owner, photo 17: the swatch struck through, "remove"). Every business's customer
@@ -43461,7 +43461,7 @@ function businessProfileGallerySegmentHtmlV472(segment){
   /* The data-* hooks carry the KIND as well as the index. Before v472 an index alone identified a
      photo, because there was only one list; with two on the page an index-only hook would move or
      delete the wrong segment's photo the moment both had rows. */
-  return `<p class="muted small" style="margin:0 0 4px"><b>${esc(segment.heading)}</b> — up to ${GROW_GALLERY_MAX_V418} photos${items.length?` · ${items.length} added`:''}</p>
+  return `<p class="muted small" style="margin:0 0 4px"><b>${esc(segment.heading)}</b> ${workspaceTemplateHtmlV97(items.length?'upToPhotosAdded':'upToPhotos',{max:GROW_GALLERY_MAX_V418,added:items.length})}</p>
     <p class="muted small" style="margin:0 0 8px">${esc(segment.hint)}</p>
     ${items.length?`<div class="profile-gallery-grid-v418">
       ${items.map((item,index)=>{

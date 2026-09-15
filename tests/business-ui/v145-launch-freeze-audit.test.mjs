@@ -144,7 +144,8 @@ test('lifecycle answer reads the server metrics object and withholds unclassifia
   const reports = section('async function reportsPage()', '/* ---------- get started');
   assert.match(reports,/const c=lifecycleAnswerProjection\(current\),p=lifecycleAnswerProjection\(prior\)/);
   assert.match(reports,/const cm=c\.metrics,pm=p\.usable\?p\.metrics:null/);
-  assert.match(reports,/Identity coverage:/);
+  /* nestly_v953: the coverage line is a reviewed key pair now — with and without the share. */
+  assert.match(reports,/'identityCoverage':'identityCoveragePct'/);
   assert.match(reports,/No zero is inferred/);
   assert.doesNotMatch(reports,/c\.existing_returning_customers|c\.new_customers|c\.reactivated_customers/);
 });
@@ -868,6 +869,8 @@ test('Studio labels migration-created pauses as Peekaa launch safety without cha
   assert.match(studio, /STUDIO_LAUNCH_SAFETY_ACTOR='00000000-0000-0000-0000-000000000000'/);
   assert.match(studio, /String\(actor\)===STUDIO_LAUNCH_SAFETY_ACTOR\?'Peekaa launch safety':String\(actor\)/);
   assert.match(app, /const pauseActor=studioEmergencyPauseActorLabel\(ep\?\.actor\)/);
-  assert.match(app, /pauseActor\?`By \$\{esc\(pauseActor\)\}/,
+  /* nestly_v953: the actor still reaches the sentence through the same audited field, now as the
+     named value of a reviewed template rather than as English glued around it. */
+  assert.match(app, /pauseActor\?workspaceTemplateHtmlV97\('pausedByActor',\{actor:pauseActor\}\)/,
     'non-system actors must continue to render through the same audited actor field');
 });

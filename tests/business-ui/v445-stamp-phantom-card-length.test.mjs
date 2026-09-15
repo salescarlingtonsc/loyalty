@@ -142,7 +142,8 @@ test('v445 the out-of-range gifts get a warning, are named, and are not grid slo
   assert.equal(g.growStampsStrandedV416, true);
   /* v363's warning survives, word for word in its heading. */
   assert.match(g.growStampsStrandedNoteV416, /Stamps past <span[^>]*>15<\/span> cannot be claimed yet/);
-  assert.match(g.growStampsStrandedNoteV416, /2 gifts sit past the end of it/,
+  /* nestly_v953: the plural half of a reviewed key pair, and the count is its own value span. */
+  assert.match(g.growStampsStrandedNoteV416, /data-workspace-template="giftsPastCardEnd"[^]*?data-workspace-value="count"[^>]*>2</,
     'both stranded gifts are counted — the old copy named only the highest');
   assert.doesNotMatch(g.growStampsGridV416, /is-past-v416/,
     'nothing beyond stamp 15 is drawn as a slot of this card');

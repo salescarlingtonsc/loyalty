@@ -27,6 +27,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -81,7 +82,11 @@ function makePage() {
   const sandbox = {
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     walletDate: (v) => `WD:${v}`,
-    S: { biz: { currency: 'SGD' } }
+    S: { biz: { currency: 'SGD' } },
+    /* nestly_v953: the concentration line is a reviewed template now, so the sandbox carries the
+       real runtime — a stub would render the key name and the figure assertions below would pass
+       over a broken table. */
+    ...workspaceTemplateRuntime('en')
   };
   const context = vm.createContext(sandbox);
   context.__exports = {};
@@ -157,7 +162,9 @@ test('V704 category mix: an at/above-floor flat row renders the concentration li
 
   assert.ok(html.includes('Concentration'), 'at-floor (n=5) rows do get the concentration line');
   assert.ok(html.includes('SGD 10.00'), 'median (1000 cents) renders');
-  assert.ok(html.includes('20.0%'), 'top1_share_bps (2000) formatted as 20.0%');
+  /* nestly_v953: the share is a named value inside the reviewed concentration sentence, so the
+     "%" sits in the template's own half — read the figure by name instead. */
+  assert.match(html, /data-workspace-value="top"[^>]*>20\.0</, 'top1_share_bps (2000) formatted as 20.0%');
   assert.ok(!html.includes('overstates the typical customer'), 'no skew_note text when the server sent null');
   // No invented numbers: every figure traces to a payload field, nothing computed from anything
   // other than distribution.median / distribution.mean / distribution.top1_share_bps.

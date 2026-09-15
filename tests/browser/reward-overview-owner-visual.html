@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,">
-    <meta name="production-source-sha256" content="14392045d1612fa1cc24cc813085da6a65c73c50e1f259d46f0e4d22c5012c56"><title>Peekaa rewards overview browser acceptance</title><style>
+    <meta name="production-source-sha256" content="d2c5759d008b8595e55d76ded704d181ef39207a6b7c284edff919a285bd7d4e"><title>Peekaa rewards overview browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6208,7 +6208,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 }
 
     body{padding:24px}.visual-shell{max-width:1180px;margin:0 auto}.visual-provenance{margin:0 0 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · 14392045d1612fa1cc24cc813085da6a65c73c50e1f259d46f0e4d22c5012c56</p><main id="main"></main></div>
+    @media(max-width:600px){body{padding:12px}}</style></head><body><div class="visual-shell"><p class="visual-provenance">Production-component harness · d2c5759d008b8595e55d76ded704d181ef39207a6b7c284edff919a285bd7d4e</p><main id="main"></main></div>
     <script>(function customerUiFactory(global){
   'use strict';
 
@@ -8528,7 +8528,7 @@ function growTierEligiblePickerV657(draft,products,services){
   }
   const count=chosenP.size+chosenS.size;
   return `<label class="small" style="display:block;margin-top:12px;font-weight:600">Which items qualify?</label>
-    <p class="muted small" style="margin:4px 0 6px">Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.${count?` ${count} ticked.`:''}</p>
+    <p class="muted small" style="margin:4px 0 6px"><span>Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.</span>${count?' '+workspaceTemplateHtmlV97('itemsTicked',{count}):''}</p>
     <div class="grow-tier-benefit-scope-list-v656">
       ${items.map(row=>{
         const on=row.kind==='service'?chosenS.has(String(row.id)):chosenP.has(String(row.id));
@@ -14154,7 +14154,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
   </div>`;
   const growStampsStrandedNoteV416=growStampsStrandedV416?`<div class="imp-note" style="margin-top:10px" data-grow-stamps-stranded-v445>
     <b>${workspaceTemplateHtmlV97('stampsPastTargetNotClaimable',{target:growStampsTargetV416})}</b>
-    <p class="muted small" style="margin-top:6px">Your card is ${growStampsTargetV416} stamps long, but ${growStampsStrandedGiftsV445.length===1?'a gift sits':`${growStampsStrandedGiftsV445.length} gifts sit`} past the end of it${growStampsStrandedGiftsV445.length===1?` — at stamp ${growStampsHighestGiftV416}`:''}. Customers finish the card before they reach ${growStampsStrandedGiftsV445.length===1?'it':'them'}, so the counter will refuse ${growStampsStrandedGiftsV445.length===1?'it':'them'}. Make the card longer, or move ${growStampsStrandedGiftsV445.length===1?'that gift':'those gifts'} onto a stamp inside the card — tap one to edit it.</p>
+    <p class="muted small" style="margin-top:6px">${workspaceTemplateHtmlV97(growStampsStrandedGiftsV445.length===1?'oneGiftPastCardEnd':'giftsPastCardEnd',{target:growStampsTargetV416,count:growStampsStrandedGiftsV445.length,stamp:growStampsHighestGiftV416})}</p>
     ${growStampsStrandedChipsV445}
     ${/* nestly_v463: the threshold is the new 15-stamp maximum. A gift at stamp 20 used to be one
          tap from being reachable; it no longer is, because no card may be 20 stamps long, so the
@@ -14422,14 +14422,14 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     const icon=CUI.icon(threshold>=500?'memberships':threshold>=100?'loyalty':'star',{size:20});
     if(history)return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97(multiplier!==1?'reachedAtThresholdMultiplier':'reachedAtThreshold',{threshold:growTiersThresholdTextV585(threshold),multiplier})}</span>${perkHtmlV363}</span>
       <span class="pill off">In history</span>
     </li>`;
     const paused=tier.paused===true;
     const confirmOpen=growTiersDeletePendingV331===String(tier.id);
     return `<li class="grow-tier-card-row-v351" data-grow-tiers-row-v331="${esc(tier.id)}">
       <span class="grow-tier-row-icon-v343" aria-hidden="true">${icon}</span>
-      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>Reached at ${esc(growTiersThresholdTextV585(threshold))}${multiplier!==1?` · ${multiplier}× points`:''}</span>${perkHtmlV363}</span>
+      <span class="grow-tier-card-body-v351"><b data-merchant-content>${esc(tier.name)}</b><span class="muted small" data-merchant-content>${workspaceTemplateHtmlV97(multiplier!==1?'reachedAtThresholdMultiplier':'reachedAtThreshold',{threshold:growTiersThresholdTextV585(threshold),multiplier})}</span>${perkHtmlV363}</span>
       <span class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         <span class="pill ${paused?'off':'on'}" data-grow-tiers-state-v331="${paused?'off':'on'}">${statusOnOff(!paused)}</span>
         ${canSetupGrow?`<button type="button" class="btn ghost sm" data-grow-tiers-row-edit-v345="${esc(tier.id)}">Edit</button>
@@ -14522,7 +14522,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-grow-tiers-add-cancel-v331="1">Cancel</button><button type="button" class="btn sm" data-grow-tiers-add-save-v331="1"${growTiersBusyV331?' disabled':''}>${growTiersEditingV331?'Save changes':'Add tier'}</button></div>
   </li>`:'';
   const growTiersTabStripV331=`<div class="v150-segment" role="group" aria-label="Tier status" data-grow-tiers-tabstrip-v331>
-    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published">Live tiers${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
+    <button type="button" aria-pressed="${growTiersManageTabV331==='published'}" data-grow-tiers-manage-tab-v331="published"><span>Live tiers</span>${growTiersPublishedV331.length?` (${growTiersPublishedV331.length})`:''}</button>
     <button type="button" aria-pressed="${growTiersManageTabV331==='history'}" data-grow-tiers-manage-tab-v331="history">History${growTiersHistoryV331.length?` (${growTiersHistoryV331.length})`:''}</button>
   </div>`;
   const growTiersMaxThresholdV331=Math.max(1,...growTiersPublishedV331.map(tier=>Number(tier.threshold||0)));
@@ -17211,7 +17211,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
     await mountGrowSurface(initialAction.surface,{focus:false,draftOverride:hashParam||growDraftVersionId,...initialAction});
   }
 }
-    window.rewardOverviewMetrics=()=>({sourceHash:'14392045d1612fa1cc24cc813085da6a65c73c50e1f259d46f0e4d22c5012c56',role:S.myRole,
+    window.rewardOverviewMetrics=()=>({sourceHash:'d2c5759d008b8595e55d76ded704d181ef39207a6b7c284edff919a285bd7d4e',role:S.myRole,
       viewport:{clientWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth},
       /* nestly_v421: the landing's programme cards are .grow-topic-card-v343, keyed by
          data-grow-topic-v229 — the V343/V362 restructure that turned .grow-programme-row into a

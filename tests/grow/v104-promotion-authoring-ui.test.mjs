@@ -111,7 +111,8 @@ test('quota and recovery states are explicit without silently deleting offers',(
      made the demote dialog a lie. The two-offer promise underneath it was never true of anything. */
   assert.match(page,/'offersLiveOfMax'/);
   assert.doesNotMatch(page,/launch offer slots used/);
-  assert.match(page,/Complimentary first-time publishing ends/);
+  /* nestly_v953: the date rides in a reviewed sentence now. */
+  assert.match(page,/'complimentaryPublishingEnds'/);
   assert.match(page,/Customers see every live offer on your business page, and one of them on their Home screen\./);
   assert.doesNotMatch(page,/Customers see no more than two current offers at once/);
   /* R2c's dialog: the editor answers a cap refusal by naming the live offers and moving one to

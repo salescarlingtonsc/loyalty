@@ -3681,13 +3681,46 @@ const SPLIT_LABELS_V952 = [
   "Of",
 ];
 
+/* nestly_v953. The reviewed halves of the sentences that wave detached: each was welded to a
+   runtime value inside one text node, so the catalogue could never match it and the harvest that
+   built the catalogue skipped the node entirely. Wrapping the words in a span of their own is what
+   makes them reachable. 'bonus' and 'total value' read as fragments because they sit either side of
+   a bold figure; each is translated to stand in that fixed position rather than alone, and the
+   Malay for 'bonus' is the fuller 'bonus promosi' because the bare loanword is identical to the
+   English and the ledger refuses a value equal to its source. */
+const SPLIT_LABELS_V953 = [
+  "Package purchases are eligible for points once at purchase when an active published loyalty programme applies.",
+  "Package purchases are not eligible for points for this business.",
+  "Package points setting is unavailable. The completed sale receipt will show the server-confirmed points result.",
+  "Using a session never earns points.",
+  "— expiry date, limits, tier, photo",
+  "Customers see every live offer on your business page, and one of them on their Home screen.",
+  "Cards already going keep this gift until they finish — even a customer one stamp short. It comes off the next card, so anyone starting a new one will not see it.",
+  "Live tiers",
+  "New effects are stopped; every past record is kept.",
+  "bonus",
+  "total value",
+  "An owner can enable it from Customer Interface → Gift cards.",
+  "Existing card redemption remains available.",
+  "Remind customer puts a message in their Peekaa app — WhatsApp and email are not switched on yet. Retrieved means the bottle went out with them, and closes it for good.",
+  "Remove is for a bottle that should never have been on this list — a wrong tag, a duplicate, one you have thrown away. It closes the record WITHOUT saying the customer collected it.",
+  "Non-revenue sale amounts recorded:",
+  "These are sale ledger amounts, not verified payment or cash-collection totals.",
+  "Template applied as Edit access.",
+  "Your own words for what you do — this is the line customers read under your business name. Pick from Industry above to fill it in, or type your own.",
+  "It changes nothing else.",
+  "The card behind this dialog shows 0 because the programme is paused — these points were not removed.",
+  "Every recorded movement is listed; the ledger is append-only and is never edited in place.",
+  "Tick everything the discount is allowed to come off. Only ONE is discounted per visit — the dearest ticked item on that bill.",
+];
+
 test('the strings came from the reviewed ledger, and the ledger demands a reason', () => {
   const entries = readAdditions(additionsSource);
   /* nestly_v825 adds 'Staff commission' through the same ledger; nestly_v892 adds the renamed
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941, ...SPLIT_LABELS_V951, ...SPLIT_LABELS_V952].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941, ...SPLIT_LABELS_V951, ...SPLIT_LABELS_V952, ...SPLIT_LABELS_V953].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -3721,7 +3754,7 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 4956);
+  assert.equal(once.keyCount, 4979);
 });
 
 /* nestly_v933. The generator applies `table[locale][entry.source] = value`, which ADDS a key when
@@ -3749,7 +3782,7 @@ test('every ledger entry adds a key — none rewrites a translation the ledger d
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 4956 strings per locale/);
+  assert.match(clean, /up to date: 4979 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

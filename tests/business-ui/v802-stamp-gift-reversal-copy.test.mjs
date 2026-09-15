@@ -34,8 +34,10 @@ const resultSrc = block('function reversalResultHtml(kind,result){', "</div>`;\n
 
 /* The dialog is ~90 lines of DOM wiring; only its note is under test, so the note expression is
    lifted on its own and evaluated with the same inputs the dialog gives it. */
+/* nestly_v953: the note's two arms are reviewed templates now, so the slice ends where the
+   expression does rather than on a sentence that has moved into the copy table. */
 const noteSrc = block("  const loyaltyNote=kind!=='redemption'?''",
-  'nothing in the history is deleted.</div>`;');
+  "credit_cents||0))})}</div>`;");
 
 const money = (cents) => `$${(Number(cents || 0) / 100).toFixed(2)}`;
 const esc = (s) => String(s);
@@ -55,8 +57,11 @@ test('a stamp-gift reversal is reported as the gift coming back, not as 0 points
     reopened_stamp_cards: 1, reversed_credit_cents: 0, replayed: false
   });
   assert.match(html, /Gift un-redeemed/);
-  assert.match(html, /1 stamp gift given back/);
-  assert.match(html, /stamp card is open again/);
+  /* nestly_v953: each clause of this receipt is its own reviewed key now — the singular and the
+     plural of the gift count, the reopened card, the credit, the replay — so the count is read by
+     name and the key itself proves the singular was chosen. */
+  assert.match(html, /data-workspace-template="stampGiftGivenBack"[^]*?data-workspace-value="claims"[^>]*>1</);
+  assert.match(html, /data-workspace-template="stampCardOpenAgain"/);
   assert.doesNotMatch(html, /points restored/,
     'a stamp gift restores no points; saying so describes nothing that happened');
   assert.doesNotMatch(html, /credit compensated/,
@@ -67,9 +72,9 @@ test('a stamp gift that did carry credit still reports the credit', () => {
   const html = reversalResultHtml('redemption', {
     restored_stamp_claims: 1, reopened_stamp_cards: 0, reversed_credit_cents: 500, replayed: true
   });
-  assert.match(html, /\$5\.00 credit compensated/);
-  assert.match(html, /exact replay verified/);
-  assert.doesNotMatch(html, /stamp card is open again/,
+  assert.match(html, /data-workspace-template="creditCompensatedAmount"[^]*?data-workspace-value="credit"[^>]*>\$5\.00</);
+  assert.match(html, /data-workspace-template="exactReplayVerified"/);
+  assert.doesNotMatch(html, /stampCardOpenAgain/,
     'a mid-card gift closes no card, so nothing was reopened');
 });
 
@@ -93,7 +98,7 @@ test('a sale reversal is untouched', () => {
 
 test('the dialog note describes the claim for a stamp gift and the ledger for a points one', () => {
   const stamp = loyaltyNoteFor('redemption', { points_spent: 0, credit_cents: 0 });
-  assert.match(stamp, /original claim on the customer's card/);
+  assert.match(stamp, /original claim on the customer&#39;s card/);
   assert.match(stamp, /slot on the card comes back/);
   assert.doesNotMatch(stamp, /FEFO/,
     'a stamp gift has no batch drains; promising that check is a promise about work nobody does');

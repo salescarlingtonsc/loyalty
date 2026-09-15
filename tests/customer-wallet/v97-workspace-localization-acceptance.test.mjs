@@ -274,7 +274,7 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v940: +26 — the reviewed half of each split interpolated label. */
         /* nestly_v941: +56 — the reviewed half of 56 more split interpolated labels. */
     
-    assert.equal(Object.keys(generatedCopy[locale]).length,4956,`${locale} valid visible-literal inventory changed without catalog review`);
+    assert.equal(Object.keys(generatedCopy[locale]).length,4979,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
@@ -546,8 +546,18 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      was first drawn in. openTopicGuide is the one place a reviewed sentence still carries an
      English noun — the topic title is a value, and translating a value needs a mechanism this
      table does not have — and it was already in this table from v949, serving the Help index's own
-     copy of the same link, so this wave only brought the second call site onto it. 329 + 31 = 360. */
-  assert.equal(keys.length,360,'mixed-interface interpolation inventory changed without review');
+     copy of the same link, so this wave only brought the second call site onto it. 329 + 31 = 360.
+     nestly_v953 adds 66 and closes a class the earlier scan could not see at all: it skipped any
+     text node containing a backtick, which silently excluded every sentence whose optional clause
+     is a NESTED template literal — the stamp-gift reversal receipt, the pause reason and actor,
+     the stored-value expiry pair, the blocked-day counts, the spend distribution, the category and
+     identity coverage lines, the invite code's expiry, the permission-template result. A scanner
+     that walks the source instead of matching it found 37 more shapes; the ones where a clause can
+     simply be detached became their own reviewed keys, so the receipt is now five short sentences
+     joined by "·" rather than one sentence with three optional tails and eight shapes to review.
+     The six expiry keys are named literally at the call site rather than built from a prefix,
+     because a key assembled at run time is a key this gate cannot see. 360 + 66 = 426. */
+  assert.equal(keys.length,426,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){
