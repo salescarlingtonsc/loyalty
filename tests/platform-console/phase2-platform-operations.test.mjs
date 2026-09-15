@@ -115,7 +115,16 @@ test('billing, automation and commission views use delegated v89 platform truth'
   assert.match(source, /integer cents/);
   assert.match(source, /failed_event_count/);
   assert.match(source, /billingCommands\(detail\)/);
-  assert.match(source, /sb\.functions\.invoke\('razorpay-billing-command'/);
+  /* nestly_v988: this line used to require the console to invoke 'razorpay-billing-command'. It was
+     asserting the DEFECT — the console kept naming the Razorpay executor after the platform swapped
+     to Stripe, and when those four functions were undeployed on 2026-09-16 every billing action in
+     this console 404'd after already writing an unclaimable pending command. A test that pins a
+     hardcoded provider slug will always outlive the provider; this asserts the CONSTANT instead, so
+     the next switch is one edit in the source and not a hunt through the suite. The slug itself is
+     checked against what this repo ships by
+     tests/platform-console/v988-console-invokes-a-deployed-executor.test.mjs. */
+  assert.match(source, /const BILLING_EXECUTOR_V988='stripe-billing-command';/);
+  assert.match(source, /sb\.functions\.invoke\(BILLING_EXECUTOR_V988,/);
   assert.match(source, /p_confirmation_hash:preview\.confirmation_hash/);
 });
 

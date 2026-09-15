@@ -13873,6 +13873,17 @@
     else if(hasSubscription&&['active','trialing','past_due'].includes(detail.status))commands.push({type:'cancel_at_period_end',label:'Cancel at period end',danger:true});
     return commands;
   }
+  /* nestly_v988: the executor this console hands a command to. It said 'razorpay-billing-command'
+     until 2026-09-16, when the four razorpay-* edge functions were deleted as retired — at which
+     point EVERY billing action in this console 404'd, after request_billing_command_v124 had
+     already written a pending row that nothing could then claim or complete. The console was a
+     factory for exactly the orphaned commands it exists to resolve.
+     app/app.js (the owner's own Billing page) has invoked stripe-billing-command all along; the two
+     surfaces disagreed and only this one was wrong. Named once here so they cannot drift again, and
+     asserted against the deployed function list by
+     tests/platform-console/v988-console-invokes-a-deployed-executor.test.mjs. The DB-side authority
+     for which provider bills today is app.platform_billing_provider_v792(). */
+  const BILLING_EXECUTOR_V988='stripe-billing-command';
   function requestBillingCommand(businessId,type,cadence,customerCapacity,context) {
     const {CUI,sb}=context;
     const label=platformStatus(type);
@@ -13882,11 +13893,11 @@
       let result=requested;
       if(['pending','processing','uncertain'].includes(requested?.status)){
         if(!sb.functions?.invoke)throw new Error(pt('The billing command executor is unavailable.'));
-        const executed=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:requested.command_id}});
+        const executed=await sb.functions.invoke(BILLING_EXECUTOR_V988,{body:{command_id:requested.command_id}});
         if(executed?.error)throw executed.error;
         result=executed?.data||requested;
         if(result?.status==='uncertain'){
-          const recovered=await sb.functions.invoke('razorpay-billing-command',{body:{command_id:requested.command_id}});
+          const recovered=await sb.functions.invoke(BILLING_EXECUTOR_V988,{body:{command_id:requested.command_id}});
           if(recovered?.error)throw recovered.error;
           result=recovered?.data||result;
         }
