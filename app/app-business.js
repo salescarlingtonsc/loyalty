@@ -14141,16 +14141,24 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const birthdayTermsSuggest=$('birthdayTermsSuggest');
     if(birthdayTermsSuggest)birthdayTermsSuggest.onclick=()=>{
       const kind=$('birthdayKind').value;
+      /* nestly_v965: EVERY fragment here is ENGLISH on purpose, and must stay English.
+         This builder does not render copy — it fills the Terms textarea, whose value is saved to
+         birthday_program.customer_terms, a MERCHANT-OWNED column that the tenant's own customers
+         read. Localising a fragment writes the owner's UI language into their business record.
+         Worse, the frame around these fragments ("Get … .", and the three sentences after it) is
+         a plain English literal, so a localised fragment produced a Chinese-English mash — "Get
+         本次到访享 20% 折扣 从生日前 3 天到生日后 3 天." — and SAVED it. See the gate in
+         tests/customer-wallet/v958-business-view-copy-coverage.test.mjs. */
       const benefit=kind==='discount_pct'
-        ?`${workspaceTemplateTextV97('percentOffYourVisit',{percent:Number($('birthdayDiscount').value)||0})}`
+        ?`${Number($('birthdayDiscount').value)||0}% off your visit`
         :($('birthdayItem').value.trim()||'the birthday benefit');
       const when=birthdayMode()==='month'
         ?'during your birthday month'
         :(()=>{
           const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
           if(!before&&!after)return 'on your birthday';
-          if(before&&after)return `${workspaceTemplateTextV97(before===1?(after===1?'birthdayWindowOneBeforeOneAfter':'birthdayWindowOneBeforeManyAfter'):(after===1?'birthdayWindowManyBeforeOneAfter':'birthdayWindowManyBeforeManyAfter'),{before,after})}`;
-          return before?workspaceTemplateTextV97(before===1?'inTheDayBeforeYourBirthdayOne':'inTheDayBeforeYourBirthdayMany',{v1:before}):workspaceTemplateTextV97(after===1?'withinDayAfterYourBirthdayOne':'withinDayAfterYourBirthdayMany',{v1:after});
+          if(before&&after)return `from ${before} ${before===1?'day':'days'} before to ${after} ${after===1?'day':'days'} after your birthday`;
+          return before?`in the ${before} ${before===1?'day':'days'} before your birthday`:`within ${after} ${after===1?'day':'days'} after your birthday`;
         })();
       $('birthdayTerms').value=[
         `Get ${benefit} ${when}.`,
@@ -28192,11 +28200,19 @@ function appointmentWhatsAppUrlV129(options){
     day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true,
     timeZone:'Asia/Singapore'
   }).format(start);
+  /* nestly_v965: these lines are ENGLISH on purpose and must stay English. This is not interface
+     copy — it is the body of a WhatsApp message SENT TO THE CUSTOMER, and the customer's language
+     is not the owner's interface setting. Every other line here ("Hi", "Appointment:", "Where:",
+     "With:", "Status:", the closing sentence) is a plain English literal, so localising one line
+     did not send a Chinese message, it sent an English message with one Chinese line in it. The
+     rule is the same one that governs merchant-owned columns: what leaves the product for someone
+     else to read does not follow the owner's UI locale. Gated in
+     tests/customer-wallet/v958-business-view-copy-coverage.test.mjs. */
   const lines=[
     customerName?`Hi ${String(customerName).trim()},`:'Hello,',
-    `${businessName?workspaceTemplateTextV97('thisIsBusinessAboutYourAppointment',{business:String(businessName).trim()}):workspaceTemplateTextV97('thisIsTheTeamAboutYourAppointment',{})}`,
+    businessName?`This is ${String(businessName).trim()} about your appointment.`:'This is the team about your appointment.',
     `Appointment: ${String(serviceName||'General visit').trim()}`,
-    workspaceTemplateTextV97('whenSingaporeTime',{when:when}),
+    `When: ${when} (Singapore time)`,
     branchName?`Where: ${String(branchName).trim()}`:null,
     staffName?`With: ${String(staffName).trim()}`:null,
     status?`Status: ${String(status).replaceAll('_',' ').trim()}`:null,

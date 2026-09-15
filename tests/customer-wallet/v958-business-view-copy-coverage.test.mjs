@@ -212,6 +212,21 @@ const NOUN_AS_VALUE_REMAINING_V961 = 8;
 
 /* Not copy. Each is a ternary over two English words that never reaches a reader as prose. */
 const NOUN_AS_VALUE_NOT_COPY_V961 = new Map([
+  ['from {} {} before to {} {} after your birthday', 'nestly_v965: SEEDED MERCHANT DATA. This is the birthday Terms SUGGESTION, written into\n'
+    + 'the Terms textarea and saved to birthday_program.customer_terms — a merchant-owned column\n'
+    + 'the tenant\u2019s own customers read. English is deliberate: localising it writes the owner\u2019s UI\n'
+    + 'language into their business record, and the frame around it is a plain English literal, so a\n'
+    + 'localised fragment SAVED a Chinese-English mash. See the builder gate below.'],
+  ['in the {} {} before your birthday', 'nestly_v965: SEEDED MERCHANT DATA. This is the birthday Terms SUGGESTION, written into\n'
+    + 'the Terms textarea and saved to birthday_program.customer_terms — a merchant-owned column\n'
+    + 'the tenant\u2019s own customers read. English is deliberate: localising it writes the owner\u2019s UI\n'
+    + 'language into their business record, and the frame around it is a plain English literal, so a\n'
+    + 'localised fragment SAVED a Chinese-English mash. See the builder gate below.'],
+  ['within {} {} after your birthday', 'nestly_v965: SEEDED MERCHANT DATA. This is the birthday Terms SUGGESTION, written into\n'
+    + 'the Terms textarea and saved to birthday_program.customer_terms — a merchant-owned column\n'
+    + 'the tenant\u2019s own customers read. English is deliberate: localising it writes the owner\u2019s UI\n'
+    + 'language into their business record, and the frame around it is a plain English literal, so a\n'
+    + 'localised fragment SAVED a Chinese-English mash. See the builder gate below.'],
   ['t{}:{}:{}', 'a telemetry token — matched/unmatched is a field value, not a word anyone reads'],
   ['data-stamp-quest-claimed-v323="{}"', 'an HTML data attribute; yes/no is read by code, never rendered'],
   ['{}.{}', 'a file extension — png/jpg is the format, not a word'],
@@ -437,4 +452,68 @@ test('no reviewed template ships its own escape sequence to the reader', () => {
   assert.deepEqual(offenders, [],
     `a template's English still contains a literal escape sequence AFTER parsing, which means the\n`
     + `reader sees the backslash on screen. Write the character itself:\n  ` + offenders.join('\n  '));
+});
+
+/* ── nestly_v965: the one place localising a string is the BUG ───────────────────────────────────
+   Everything else in this file pushes toward translating more. This pushes the other way, because
+   one builder in the app does not render copy at all — it fills a textarea whose value is SAVED to
+   birthday_program.customer_terms, a merchant-owned column that the tenant's own customers read.
+
+   A localised fragment there writes the OWNER's interface language into their business record. And
+   the frame around the fragments is a plain English literal — `Get ${benefit} ${when}.` plus three
+   fixed English sentences — so a localised fragment did not produce Chinese terms, it produced and
+   saved a mash: "Get 本次到访享 20% 折扣 从生日前 3 天到生日后 3 天. Available once per customer each
+   year. …". Two waves had reached into this builder before anyone noticed.
+
+   So: no named template may be called inside it. The fragments stay English on purpose, and the
+   register carries them with that reason. If the product decides a tenant SHOULD get suggested
+   terms in their own language, that is a change to the whole builder — frame included — and this
+   test is where the decision gets recorded, not routed around. */
+test('the birthday Terms suggestion is built from English only — it is saved to a merchant column', () => {
+  const start = app.indexOf("birthdayTermsSuggest.onclick");
+  assert.ok(start > 0, 'the birthday Terms suggestion builder has moved or been renamed');
+  const end = app.indexOf("birthdaySaveDraft.onclick", start);
+  assert.ok(end > start, 'could not find the end of the birthday Terms suggestion builder');
+  const builder = app.slice(start, end);
+
+  /* The builder must still be the thing this test thinks it is: it writes the textarea, and the
+     English frame is still a literal. Without these, the check below could pass on an empty slice. */
+  assert.match(builder, /\$\('birthdayTerms'\)\.value=/,
+    'this builder no longer writes the Terms textarea — re-check what it feeds before trusting the rule below');
+  assert.match(builder, /`Get \$\{benefit\} \$\{when\}\.`/,
+    'the English frame has changed; if the whole builder is being localised deliberately, update this test');
+
+  const calls = builder.match(/workspaceTemplate(?:Text|Html|Attribute)V97\(/g) || [];
+  assert.deepEqual(calls, [],
+    `${calls.length} named template call(s) inside the birthday Terms suggestion. Whatever they\n`
+    + `return is saved to birthday_program.customer_terms — the tenant's own record, read by their\n`
+    + `customers — and lands inside an English frame, so the saved terms come out half-translated.\n`
+    + `Use plain English here and put the string in app/i18n/workspace-not-translated-v958.json.`);
+});
+
+/* nestly_v965: the same rule, the other builder — and this one leaves the product entirely.
+   appointmentWhatsAppUrlV129 composes the body of a WhatsApp message SENT TO THE CUSTOMER. The
+   customer's language is not the owner's interface setting, and every other line in that message
+   is a plain English literal ("Hi", "Appointment:", "Where:", "With:", "Status:", the closing
+   sentence), so localising one line did not send a Chinese message — it sent an English message
+   with one Chinese line dropped into the middle of it. Three keys had reached in before anyone
+   read the whole array. */
+test('the customer WhatsApp message is built from English only — it is sent to the customer', () => {
+  const start = app.indexOf('function appointmentWhatsAppUrlV129(');
+  assert.ok(start > 0, 'the appointment WhatsApp builder has moved or been renamed');
+  const end = app.indexOf('https://wa.me/${mobile}?text=', start);
+  assert.ok(end > start, 'could not find the end of the appointment WhatsApp builder');
+  const builder = app.slice(start, end);
+
+  /* Still the thing this test thinks it is: the English frame around the localisable lines. */
+  assert.match(builder, /`Appointment: \$\{String\(serviceName/, 'the English frame has changed — re-read the whole message before trusting the rule below');
+  assert.match(builder, /'Please reply here if you need help with this appointment\.'/, 'the English closing line has changed');
+
+  const calls = builder.match(/workspaceTemplate(?:Text|Html|Attribute)V97\(/g) || [];
+  assert.deepEqual(calls, [],
+    `${calls.length} named template call(s) inside the customer WhatsApp message. Whatever they\n`
+    + `return is sent to the CUSTOMER, in the OWNER's interface language, inside an English frame.\n`
+    + `Use plain English and register the string. If the product decides these messages should follow\n`
+    + `the customer's own language, that is the whole message — frame included — and a stored\n`
+    + `customer-language preference to read it from, not a template call here.`);
 });

@@ -23295,7 +23295,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   deleteRuleOnlyChangesDraft:Object.freeze({en:"Delete rule \"{name}\"? This only changes the draft.",'zh-CN':"删除规则“{name}”？这只会改动草稿。",ms:"Padam peraturan \"{name}\"? Ini hanya mengubah draf."}),
   addPricedItemForPlanPriceSuggestion:Object.freeze({en:"Add at least one service or product with a price and {product} can suggest a monthly plan price.",'zh-CN':"至少添加一项有价格的服务或产品，{product} 就能为您建议每月计划的价格。",ms:"Tambah sekurang-kurangnya satu perkhidmatan atau produk yang ada harga, dan {product} boleh mencadangkan harga pelan bulanan."}),
   addPricedItemForGiftCardAmountSuggestion:Object.freeze({en:"Add at least one service or product with a price and {product} can suggest gift card amounts.",'zh-CN':"至少添加一项有价格的服务或产品，{product} 就能为您建议礼品卡金额。",ms:"Tambah sekurang-kurangnya satu perkhidmatan atau produk yang ada harga, dan {product} boleh mencadangkan jumlah kad hadiah."}),
-  whenSingaporeTime:Object.freeze({en:"When: {when} (Singapore time)",'zh-CN':"时间：{when}（新加坡时间）",ms:"Bila: {when} (waktu Singapura)"}),
   hideQrCode:Object.freeze({en:"{icon} Hide QR code",'zh-CN':"{icon} 隐藏二维码",ms:"{icon} Sembunyikan kod QR"}),
   noChangeVsPreviousDays:Object.freeze({en:"No change vs previous {periodDays} days",'zh-CN':"与前 {periodDays} 天没有变化",ms:"Tiada perubahan berbanding {periodDays} hari sebelumnya"}),
   noPaymentAndPartPaidOutOfSales:Object.freeze({en:"{unpaidCount} with no payment recorded and {partPaidCount} part paid, out of {salesCount} sales.",'zh-CN':"{salesCount} 笔销售当中，{unpaidCount} 笔没有记录付款，{partPaidCount} 笔只付了一部分。",ms:"{unpaidCount} tanpa bayaran direkodkan dan {partPaidCount} dibayar sebahagian, daripada {salesCount} jualan."}),
@@ -23451,10 +23450,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   theCounterAboveIsAuthoritativeSessionMany:Object.freeze({en:"The counter above is authoritative. {v1} sessions have been used; {v2} matching sales are visible to you here.",'zh-CN':"以上方的计数为准。已使用 {v1} 次；您在这里能看到 {v2} 笔对应的销售。",ms:"Kaunter di atas adalah muktamad. {v1} sesi telah digunakan; {v2} jualan sepadan kelihatan kepada anda di sini."}),
   wasAlreadyGivenNamed:Object.freeze({en:"\"{named}\" was already given",'zh-CN':"「{named}」已经发放过了",ms:"“{named}” telah pun diberikan"}),
   wasAlreadyGivenUnnamed:Object.freeze({en:"\"This reward\" was already given",'zh-CN':"这份奖励已经发放过了",ms:"Ganjaran ini telah pun diberikan"}),
-  inTheDayBeforeYourBirthdayOne:Object.freeze({en:"in the {v1} day before your birthday",'zh-CN':"在生日前的 {v1} 天内",ms:"dalam {v1} hari sebelum hari lahir anda"}),
-  inTheDayBeforeYourBirthdayMany:Object.freeze({en:"in the {v1} days before your birthday",'zh-CN':"在生日前的 {v1} 天内",ms:"dalam {v1} hari sebelum hari lahir anda"}),
-  withinDayAfterYourBirthdayOne:Object.freeze({en:"within {v1} day after your birthday",'zh-CN':"在生日后的 {v1} 天内",ms:"dalam {v1} hari selepas hari lahir anda"}),
-  withinDayAfterYourBirthdayMany:Object.freeze({en:"within {v1} days after your birthday",'zh-CN':"在生日后的 {v1} 天内",ms:"dalam {v1} hari selepas hari lahir anda"}),
   /* nestly_v963: this row shipped its own escape sequence. The en value was double-escaped, so an
      English owner read a literal \u201C on screen while the zh and ms rows had real quotes. The
      key name itself is the fossil of that mangling — uCUD is what "\u201C"/"\u201D" collapsed to.
@@ -23547,11 +23542,10 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   branchIncludedInPlanBillableMany:Object.freeze({en:"{total} branches · {included} included in your plan · {billable} billable",'zh-CN':"{total} 家分店 · 方案内含 {included} 家 · {billable} 家需付费",ms:"{total} cawangan · {included} termasuk dalam pelan anda · {billable} boleh dicaj"}),
   topCustomerEqualsShareOfKnownRevenueOne:Object.freeze({en:"Top {count} customer = {pct}% of known revenue",'zh-CN':"最重要的 {count} 位顾客 = 已知营收的 {pct}%",ms:"{count} pelanggan teratas = {pct}% daripada hasil yang diketahui"}),
   topCustomerEqualsShareOfKnownRevenueMany:Object.freeze({en:"Top {count} customers = {pct}% of known revenue",'zh-CN':"最重要的 {count} 位顾客 = 已知营收的 {pct}%",ms:"{count} pelanggan teratas = {pct}% daripada hasil yang diketahui"}),
-  regularOverdueTheirUsualVisitOne:Object.freeze({en:"{count} regular is overdue their usual visit.",'zh-CN':"{count} 位常客已超过通常的到访间隔。",ms:"{count} pelanggan tetap sudah lewat daripada lawatan biasa mereka."}),
-  regularOverdueTheirUsualVisitMany:Object.freeze({en:"{count} regulars are overdue their usual visit.",'zh-CN':"{count} 位常客已超过通常的到访间隔。",ms:"{count} pelanggan tetap sudah lewat daripada lawatan biasa mereka."}),
-  bringBackListHeaderOne:Object.freeze({en:"Bring-back list — {campaign} ({count} customer)\n{brand} does not message customers automatically. These customers are ready to contact manually on WhatsApp.",'zh-CN':"挽回名单 — {campaign}（{count} 位顾客）\n{brand} 不会自动给顾客发消息。这些顾客可以由您在 WhatsApp 上手动联系。",ms:"Senarai bawa balik — {campaign} ({count} pelanggan)\n{brand} tidak menghantar mesej kepada pelanggan secara automatik. Pelanggan ini sedia untuk dihubungi secara manual di WhatsApp."}),
-  bringBackListHeaderMany:Object.freeze({en:"Bring-back list — {campaign} ({count} customers)\n{brand} does not message customers automatically. These customers are ready to contact manually on WhatsApp.",'zh-CN':"挽回名单 — {campaign}（{count} 位顾客）\n{brand} 不会自动给顾客发消息。这些顾客可以由您在 WhatsApp 上手动联系。",ms:"Senarai bawa balik — {campaign} ({count} pelanggan)\n{brand} tidak menghantar mesej kepada pelanggan secara automatik. Pelanggan ini sedia untuk dihubungi secara manual di WhatsApp."}),
-  percentOffYourVisit:Object.freeze({en:"{percent}% off your visit",'zh-CN':"本次到访享 {percent}% 折扣",ms:"Diskaun {percent}% untuk lawatan anda"}),
+  regularOverdueTheirUsualVisitOne:Object.freeze({en:"{count} regular is overdue their usual visit.",'zh-CN':"{count} 位常客已超过通常的到访间隔。",ms:"{count} pelanggan tetap sudah lewat daripada kunjungan biasa mereka."}),
+  regularOverdueTheirUsualVisitMany:Object.freeze({en:"{count} regulars are overdue their usual visit.",'zh-CN':"{count} 位常客已超过通常的到访间隔。",ms:"{count} pelanggan tetap sudah lewat daripada kunjungan biasa mereka."}),
+  bringBackListHeaderOne:Object.freeze({en:"Bring-back list — {campaign} ({count} customer)\n{brand} does not message customers automatically. These customers are ready to contact manually on WhatsApp.",'zh-CN':"挽回名单 — {campaign}（{count} 位顾客）\n{brand} 不会自动给顾客发消息。这些顾客可以由您在 WhatsApp 上手动联系。",ms:"Senarai bawa kembali — {campaign} ({count} pelanggan)\n{brand} tidak menghantar mesej kepada pelanggan secara automatik. Pelanggan ini sedia untuk dihubungi secara manual di WhatsApp."}),
+  bringBackListHeaderMany:Object.freeze({en:"Bring-back list — {campaign} ({count} customers)\n{brand} does not message customers automatically. These customers are ready to contact manually on WhatsApp.",'zh-CN':"挽回名单 — {campaign}（{count} 位顾客）\n{brand} 不会自动给顾客发消息。这些顾客可以由您在 WhatsApp 上手动联系。",ms:"Senarai bawa kembali — {campaign} ({count} pelanggan)\n{brand} tidak menghantar mesej kepada pelanggan secara automatik. Pelanggan ini sedia untuk dihubungi secara manual di WhatsApp."}),
   youStopPayingForThisBranch:Object.freeze({en:"You stop paying {amount} for this branch.",'zh-CN':"您将不再为这家分店支付 {amount}。",ms:"Anda berhenti membayar {amount} untuk cawangan ini."}),
   roughEstimateAboutPerMonth:Object.freeze({en:"Rough estimate: about {amount} per month",'zh-CN':"粗略估算：每月约 {amount}",ms:"Anggaran kasar: kira-kira {amount} sebulan"}),
   turnOnForCustomers:Object.freeze({en:"Turn {name} on for customers?",'zh-CN':"为顾客开启{name}吗？",ms:"Hidupkan {name} untuk pelanggan?"}),
@@ -23563,8 +23557,6 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   pointsMustBeAPositiveNumber:Object.freeze({en:"Points must be a positive number.",'zh-CN':"积分必须是正数。",ms:"Mata mestilah nombor positif."}),
   stampCardProgrammeNotFound:Object.freeze({en:"The stamp card programme could not be found. Reload and try again.",'zh-CN':"找不到印花卡方案。请重新载入后再试。",ms:"Program kad setem tidak dijumpai. Muat semula dan cuba lagi."}),
   pointsProgrammeNotFound:Object.freeze({en:"The points programme could not be found. Reload and try again.",'zh-CN':"找不到积分方案。请重新载入后再试。",ms:"Program mata tidak dijumpai. Muat semula dan cuba lagi."}),
-  thisIsBusinessAboutYourAppointment:Object.freeze({en:"This is {business} about your appointment.",'zh-CN':"这里是{business}，关于您的预约。",ms:"Ini {business} mengenai temu janji anda."}),
-  thisIsTheTeamAboutYourAppointment:Object.freeze({en:"This is the team about your appointment.",'zh-CN':"这里是本店团队，关于您的预约。",ms:"Ini pasukan kami mengenai temu janji anda."}),
   recordedCurrentBalancePoints:Object.freeze({en:"Recorded — current balance: {balance} points.",'zh-CN':"已记录 — 当前余额：{balance} 积分。",ms:"Direkodkan — baki semasa: {balance} mata."}),
   recordedCurrentBalanceStamps:Object.freeze({en:"Recorded — current balance: {balance} stamps.",'zh-CN':"已记录 — 当前余额：{balance} 张印花。",ms:"Direkodkan — baki semasa: {balance} setem."}),
   nowOfferedForPoints:Object.freeze({en:"now offered for {cost} points",'zh-CN':"现在需 {cost} 积分兑换",ms:"kini ditawarkan dengan {cost} mata"}),
@@ -23572,23 +23564,19 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   publishedSwitchNotAppliedRetryJustTheSwitch:Object.freeze({en:"Published. The programme switch could not be applied — {reason} Press Publish now to retry just the switch.",'zh-CN':"已发布。方案切换未能应用 — {reason} 请按「立即发布」只重试这个切换。",ms:"Diterbitkan. Suis program tidak dapat digunakan — {reason} Tekan Terbitkan sekarang untuk mencuba semula suis itu sahaja."}),
   theDraftCouldNotBeReRead:Object.freeze({en:"the draft could not be re-read.",'zh-CN':"无法重新读取草稿。",ms:"draf tidak dapat dibaca semula."}),
   tryAgainReason:Object.freeze({en:"try again.",'zh-CN':"请再试一次。",ms:"cuba lagi."}),
-  birthdayWindowOneBeforeOneAfter:Object.freeze({en:"from {before} day before to {after} day after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
-  birthdayWindowOneBeforeManyAfter:Object.freeze({en:"from {before} day before to {after} days after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
-  birthdayWindowManyBeforeOneAfter:Object.freeze({en:"from {before} days before to {after} day after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
-  birthdayWindowManyBeforeManyAfter:Object.freeze({en:"from {before} days before to {after} days after your birthday",'zh-CN':"从生日前 {before} 天到生日后 {after} 天",ms:"dari {before} hari sebelum hingga {after} hari selepas hari lahir anda"}),
-  customerHoldsUnusedSessionOneOne:Object.freeze({en:"{holders} customer holds {sessions} unused session",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
-  customerHoldsUnusedSessionOneMany:Object.freeze({en:"{holders} customer holds {sessions} unused sessions",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
-  customerHoldsUnusedSessionManyOne:Object.freeze({en:"{holders} customers hold {sessions} unused session",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
-  customerHoldsUnusedSessionManyMany:Object.freeze({en:"{holders} customers hold {sessions} unused sessions",'zh-CN':"{holders} 位顾客持有 {sessions} 次未使用的配套次数",ms:"{holders} pelanggan memegang {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionOneOne:Object.freeze({en:"{holders} customer holds {sessions} unused session",'zh-CN':"{holders} 位顾客还有 {sessions} 次配套次数未使用",ms:"{holders} pelanggan mempunyai {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionOneMany:Object.freeze({en:"{holders} customer holds {sessions} unused sessions",'zh-CN':"{holders} 位顾客还有 {sessions} 次配套次数未使用",ms:"{holders} pelanggan mempunyai {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionManyOne:Object.freeze({en:"{holders} customers hold {sessions} unused session",'zh-CN':"{holders} 位顾客还有 {sessions} 次配套次数未使用",ms:"{holders} pelanggan mempunyai {sessions} sesi yang belum digunakan"}),
+  customerHoldsUnusedSessionManyMany:Object.freeze({en:"{holders} customers hold {sessions} unused sessions",'zh-CN':"{holders} 位顾客还有 {sessions} 次配套次数未使用",ms:"{holders} pelanggan mempunyai {sessions} sesi yang belum digunakan"}),
   newBillingStartsOnDate:Object.freeze({en:"New billing starts on {startsOn}",'zh-CN':"新的计费从 {startsOn} 开始",ms:"Pengebilan baharu bermula pada {startsOn}"}),
   newBillingStartsOnNextDate:Object.freeze({en:"New billing starts on your next billing date",'zh-CN':"新的计费从您的下一个结算日开始",ms:"Pengebilan baharu bermula pada tarikh pengebilan anda yang seterusnya"}),
   /* nestly_v961: the last one, and the reason it was last — TWO independent plural conditions.
      pluralV774 takes the English noun as an argument, so a value would carry "redemptions"
      verbatim into 中文; the call site picks one of four keys instead. */
-  redemptionsByCustomersOutOfVisitedOneOne:Object.freeze({en:"{redemptions} redemption by {customers} customer, out of {eligible} who visited.",'zh-CN':"{redemptions} 次兑换，由 {customers} 位顾客完成，共 {eligible} 位顾客到访。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
-  redemptionsByCustomersOutOfVisitedOneMany:Object.freeze({en:"{redemptions} redemption by {customers} customers, out of {eligible} who visited.",'zh-CN':"{redemptions} 次兑换，由 {customers} 位顾客完成，共 {eligible} 位顾客到访。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
-  redemptionsByCustomersOutOfVisitedManyOne:Object.freeze({en:"{redemptions} redemptions by {customers} customer, out of {eligible} who visited.",'zh-CN':"{redemptions} 次兑换，由 {customers} 位顾客完成，共 {eligible} 位顾客到访。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
-  redemptionsByCustomersOutOfVisitedManyMany:Object.freeze({en:"{redemptions} redemptions by {customers} customers, out of {eligible} who visited.",'zh-CN':"{redemptions} 次兑换，由 {customers} 位顾客完成，共 {eligible} 位顾客到访。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedOneOne:Object.freeze({en:"{redemptions} redemption by {customers} customer, out of {eligible} who visited.",'zh-CN':"在 {eligible} 位到访顾客中，有 {customers} 位顾客共兑换 {redemptions} 次。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedOneMany:Object.freeze({en:"{redemptions} redemption by {customers} customers, out of {eligible} who visited.",'zh-CN':"在 {eligible} 位到访顾客中，有 {customers} 位顾客共兑换 {redemptions} 次。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedManyOne:Object.freeze({en:"{redemptions} redemptions by {customers} customer, out of {eligible} who visited.",'zh-CN':"在 {eligible} 位到访顾客中，有 {customers} 位顾客共兑换 {redemptions} 次。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
+  redemptionsByCustomersOutOfVisitedManyMany:Object.freeze({en:"{redemptions} redemptions by {customers} customers, out of {eligible} who visited.",'zh-CN':"在 {eligible} 位到访顾客中，有 {customers} 位顾客共兑换 {redemptions} 次。",ms:"{redemptions} penebusan oleh {customers} pelanggan, daripada {eligible} yang melawat."}),
   /* nestly_v961: the cadence is a WORD, so it cannot be a value. billingCadenceWordV764 returns
      'Annual' or 'Monthly' in English and a value is preserved verbatim — an owner reading 中文
      would have had "Annual计费从 … 开始". Six keys, picked by the cadence at the call site. */
@@ -23625,8 +23613,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
   thresholdPointsSuffix:Object.freeze({en:" · {count} points",'zh-CN':" · {count} 积分",ms:" · {count} mata"}),
   tierThresholdVisits:Object.freeze({en:"{threshold} visits",'zh-CN':"{threshold} 次到访",ms:"{threshold} kunjungan"}),
   tierThresholdPoints:Object.freeze({en:"{threshold} points",'zh-CN':"{threshold} 积分",ms:"{threshold} mata"}),
-  soldToOneCustomerSavingApplies:Object.freeze({en:"Sold to {count} customer. Saving applies to packages sold from now on — the customer who already bought keeps the price, sessions and service they paid for.",'zh-CN':"已售给 {count} 位顾客。此优惠仅适用于从现在起售出的配套 — 已经购买的顾客仍保留他们付费时的价格、次数和服务。",ms:"Dijual kepada {count} pelanggan. Penjimatan terpakai untuk pakej yang dijual mulai sekarang — pelanggan yang sudah membeli mengekalkan harga, sesi dan perkhidmatan yang mereka bayar."}),
-  soldToManyCustomersSavingApplies:Object.freeze({en:"Sold to {count} customers. Saving applies to packages sold from now on — the customers who already bought keep the price, sessions and service they paid for.",'zh-CN':"已售给 {count} 位顾客。此优惠仅适用于从现在起售出的配套 — 已经购买的顾客仍保留他们付费时的价格、次数和服务。",ms:"Dijual kepada {count} pelanggan. Penjimatan terpakai untuk pakej yang dijual mulai sekarang — pelanggan yang sudah membeli mengekalkan harga, sesi dan perkhidmatan yang mereka bayar."}),
+  soldToOneCustomerSavingApplies:Object.freeze({en:"Sold to {count} customer. Saving applies to packages sold from now on — the customer who already bought keeps the price, sessions and service they paid for.",'zh-CN':"已售给 {count} 位顾客。此优惠仅适用于从现在起售出的配套 — 已经购买的顾客仍保留他们付费时的价格、次数和服务。",ms:"Dijual kepada {count} pelanggan. Penjimatan terpakai untuk pakej yang dijual mulai sekarang — pelanggan yang sudah membeli mengekalkan harga, sesi dan perkhidmatan yang telah mereka bayar."}),
+  soldToManyCustomersSavingApplies:Object.freeze({en:"Sold to {count} customers. Saving applies to packages sold from now on — the customers who already bought keep the price, sessions and service they paid for.",'zh-CN':"已售给 {count} 位顾客。此优惠仅适用于从现在起售出的配套 — 已经购买的顾客仍保留他们付费时的价格、次数和服务。",ms:"Dijual kepada {count} pelanggan. Penjimatan terpakai untuk pakej yang dijual mulai sekarang — pelanggan yang sudah membeli mengekalkan harga, sesi dan perkhidmatan yang telah mereka bayar."}),
   /* nestly_v963: nine templates that were REVIEWED and still shipped half-English. Each took
      the inflecting word as a VALUE — {saleWord}, {cycle}, {onOff}, {unit} — and a value is
      preserved verbatim, so a zh-CN owner read "显示 3 笔销售sales" and "此容量不提供Annual付款
@@ -23634,8 +23622,8 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      the nine slot-bearing rows are gone so the shape cannot be reintroduced by copying one. */
   deleteCatalogueItemConfirmService:Object.freeze({en:"Delete \"{itemName}\"? If nothing uses it, it is removed. If it appears on a past appointment or sale, or in a package, reward, bundle or tier discount, it is switched off instead and kept — so nothing you have already recorded changes.",'zh-CN':"删除「{itemName}」？如果没有任何地方用到它，就会被移除。如果它出现在过去的预约或销售上，或出现在配套、奖励、捆绑包或等级折扣中，就改为关闭并保留 — 这样您已经记录过的内容都不会改变。",ms:"Padam \"{itemName}\"? Jika tiada apa-apa yang menggunakannya, ia akan dibuang. Jika ia muncul pada janji temu atau jualan lepas, atau dalam pakej, ganjaran, bundel atau diskaun peringkat, ia dimatikan dan dikekalkan — jadi apa yang sudah anda rekodkan tidak berubah."}),
   deleteCatalogueItemConfirmProduct:Object.freeze({en:"Delete \"{itemName}\"? If nothing uses it, it is removed. If it appears on a past sale, or in a package, reward, bundle or tier discount, it is switched off instead and kept — so nothing you have already recorded changes.",'zh-CN':"删除「{itemName}」？如果没有任何地方用到它，就会被移除。如果它出现在过去的销售上，或出现在配套、奖励、捆绑包或等级折扣中，就改为关闭并保留 — 这样您已经记录过的内容都不会改变。",ms:"Padam \"{itemName}\"? Jika tiada apa-apa yang menggunakannya, ia akan dibuang. Jika ia muncul pada jualan lepas, atau dalam pakej, ganjaran, bundel atau diskaun peringkat, ia dimatikan dan dikekalkan — jadi apa yang sudah anda rekodkan tidak berubah."}),
-  annualBillingNotOfferedAtThisCapacity:Object.freeze({en:"Annual billing is not offered at this capacity — contact admin.peekaa@gmail.com.",'zh-CN':"此容量不提供年度付款方式 — 请联系 admin.peekaa@gmail.com。",ms:"Pembayaran tahunan tidak ditawarkan pada kapasiti ini — hubungi admin.peekaa@gmail.com."}),
-  monthlyBillingNotOfferedAtThisCapacity:Object.freeze({en:"Monthly billing is not offered at this capacity — contact admin.peekaa@gmail.com.",'zh-CN':"此容量不提供月度付款方式 — 请联系 admin.peekaa@gmail.com。",ms:"Pembayaran bulanan tidak ditawarkan pada kapasiti ini — hubungi admin.peekaa@gmail.com."}),
+  annualBillingNotOfferedAtThisCapacity:Object.freeze({en:"Annual billing is not offered at this capacity — contact admin.peekaa@gmail.com.",'zh-CN':"此容量不提供年度计费 — 请联系 admin.peekaa@gmail.com。",ms:"Pengebilan tahunan tidak ditawarkan pada kapasiti ini — hubungi admin.peekaa@gmail.com."}),
+  monthlyBillingNotOfferedAtThisCapacity:Object.freeze({en:"Monthly billing is not offered at this capacity — contact admin.peekaa@gmail.com.",'zh-CN':"此容量不提供月度计费 — 请联系 admin.peekaa@gmail.com。",ms:"Pengebilan bulanan tidak ditawarkan pada kapasiti ini — hubungi admin.peekaa@gmail.com."}),
   recordedOneVisitAndRevenueNotEnoughForTrend:Object.freeze({en:"{where} recorded {visits} visit and {amount} in this period — not yet enough to call a trend.",'zh-CN':"{where}在这段期间记录了 {visits} 次到访和 {amount} — 还不足以看出趋势。",ms:"{where} merekod {visits} kunjungan dan {amount} dalam tempoh ini — belum cukup untuk dikira sebagai aliran."}),
   recordedManyVisitsAndRevenueNotEnoughForTrend:Object.freeze({en:"{where} recorded {visits} visits and {amount} in this period — not yet enough to call a trend.",'zh-CN':"{where}在这段期间记录了 {visits} 次到访和 {amount} — 还不足以看出趋势。",ms:"{where} merekod {visits} kunjungan dan {amount} dalam tempoh ini — belum cukup untuk dikira sebagai aliran."}),
   showingOneSalePaymentStateNotApplied:Object.freeze({en:"Showing {count} sale · {period} · payment state could not be read, so it was not applied{workflowNote}",'zh-CN':"显示 {count} 笔销售 · {period} · 读不到付款状态，所以这个筛选没有生效{workflowNote}",ms:"Menunjukkan {count} jualan · {period} · keadaan pembayaran tidak dapat dibaca, jadi ia tidak digunakan{workflowNote}"}),
@@ -23664,24 +23652,24 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      wordV585 is a basis→word map, unitNounV430 a parameter defaulting to 'points', rewardUnit()
      a closure, and unitWord() built "8 stamps" whole. None of them could be seen by scanning
      the call site for a quoted pair; all four put an English noun in a reviewed sentence. */
-  percentChangeUpVersusRange:Object.freeze({en:"{pct}% up versus {from} to {to}",'zh-CN':"较 {from} 至 {to} 上升 {pct}%",ms:"{pct}% naik berbanding {from} hingga {to}"}),
-  percentChangeDownVersusRange:Object.freeze({en:"{pct}% down versus {from} to {to}",'zh-CN':"较 {from} 至 {to} 下降 {pct}%",ms:"{pct}% turun berbanding {from} hingga {to}"}),
-  percentChangeLevelVersusRange:Object.freeze({en:"{pct}% level versus {from} to {to}",'zh-CN':"较 {from} 至 {to} 持平 {pct}%",ms:"{pct}% sama berbanding {from} hingga {to}"}),
+  percentChangeUpVersusRange:Object.freeze({en:"{pct}% up versus {from} to {to}",'zh-CN':"较 {from} 至 {to} 上升 {pct}%",ms:"Naik {pct}% berbanding {from} hingga {to}"}),
+  percentChangeDownVersusRange:Object.freeze({en:"{pct}% down versus {from} to {to}",'zh-CN':"较 {from} 至 {to} 下降 {pct}%",ms:"Turun {pct}% berbanding {from} hingga {to}"}),
+  percentChangeLevelVersusRange:Object.freeze({en:"{pct}% level versus {from} to {to}",'zh-CN':"较 {from} 至 {to} 持平（{pct}%）",ms:"Tiada perubahan ({pct}%) berbanding {from} hingga {to}"}),
   noStampsEarnedForThisPurchase:Object.freeze({en:"No stamps earned for this purchase.",'zh-CN':"本次消费未获得印花。",ms:"Tiada setem diperoleh untuk pembelian ini."}),
   noPointsEarnedForThisPurchase:Object.freeze({en:"No points earned for this purchase.",'zh-CN':"本次消费未获得积分。",ms:"Tiada mata diperoleh untuk pembelian ini."}),
-  tiersAreEarnedByVisitsNow:Object.freeze({en:"Tiers are earned by visits now.",'zh-CN':"等级现在以到访次数计算。",ms:"Peringkat kini diperoleh mengikut kunjungan."}),
-  tiersAreEarnedByDollarsSpentNow:Object.freeze({en:"Tiers are earned by dollars spent now.",'zh-CN':"等级现在以消费金额计算。",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan."}),
-  tiersAreEarnedByPointsEarnedNow:Object.freeze({en:"Tiers are earned by points earned now.",'zh-CN':"等级现在以赚取的积分计算。",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh."}),
+  tiersAreEarnedByVisitsNow:Object.freeze({en:"Tiers are earned by visits now.",'zh-CN':"等级现在以到访次数为依据。",ms:"Peringkat kini diperoleh mengikut kunjungan."}),
+  tiersAreEarnedByDollarsSpentNow:Object.freeze({en:"Tiers are earned by dollars spent now.",'zh-CN':"等级现在以消费金额为依据。",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan."}),
+  tiersAreEarnedByPointsEarnedNow:Object.freeze({en:"Tiers are earned by points earned now.",'zh-CN':"等级现在以赚取的积分为依据。",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh."}),
   enterHowManyStampsThisRewardCosts:Object.freeze({en:"Enter how many stamps this reward costs.",'zh-CN':"请输入此奖励需要多少印花。",ms:"Masukkan berapa banyak setem yang diperlukan untuk ganjaran ini."}),
   enterHowManyPointsThisRewardCosts:Object.freeze({en:"Enter how many points this reward costs.",'zh-CN':"请输入此奖励需要多少积分。",ms:"Masukkan berapa banyak mata yang diperlukan untuk ganjaran ini."}),
-  cardCustomersSeeIsOneStampLong:Object.freeze({en:"The card customers see is {stamps} stamp long — your last milestone.",'zh-CN':"顾客看到的卡片长度是 {stamps} 张印花 — 即您最后一个里程碑。",ms:"Kad yang dilihat pelanggan ialah {stamps} setem panjang — pencapaian terakhir anda."}),
-  cardCustomersSeeIsManyStampsLong:Object.freeze({en:"The card customers see is {stamps} stamps long — your last milestone.",'zh-CN':"顾客看到的卡片长度是 {stamps} 张印花 — 即您最后一个里程碑。",ms:"Kad yang dilihat pelanggan ialah {stamps} setem panjang — pencapaian terakhir anda."}),
-  tiersAreEarnedByVisitsNowYourOne:Object.freeze({en:"Tiers are earned by visits now. Your {rungs} rung kept its number — check it reads right in visits.",'zh-CN':"等级现在以到访次数为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认它以到访次数来读是对的。",ms:"Peringkat kini diperoleh mengikut kunjungan. {rungs} tangga anda mengekalkan nombornya — pastikan ia dibaca dengan betul dalam kunjungan."}),
-  tiersAreEarnedByVisitsNowYourMany:Object.freeze({en:"Tiers are earned by visits now. Your {rungs} rungs kept their number — check they read right in visits.",'zh-CN':"等级现在以到访次数为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认它们以到访次数来读是对的。",ms:"Peringkat kini diperoleh mengikut kunjungan. {rungs} tangga anda mengekalkan nombornya — pastikan ia dibaca dengan betul dalam kunjungan."}),
-  tiersAreEarnedByDollarsSpentNowYourOne:Object.freeze({en:"Tiers are earned by dollars spent now. Your {rungs} rung kept its number — check it reads right in dollars spent.",'zh-CN':"等级现在以消费金额为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认它以消费金额来读是对的。",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan. {rungs} tangga anda mengekalkan nombornya — pastikan ia dibaca dengan betul dalam jumlah perbelanjaan."}),
-  tiersAreEarnedByDollarsSpentNowYourMany:Object.freeze({en:"Tiers are earned by dollars spent now. Your {rungs} rungs kept their number — check they read right in dollars spent.",'zh-CN':"等级现在以消费金额为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认它们以消费金额来读是对的。",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan. {rungs} tangga anda mengekalkan nombornya — pastikan ia dibaca dengan betul dalam jumlah perbelanjaan."}),
-  tiersAreEarnedByPointsEarnedNowYourOne:Object.freeze({en:"Tiers are earned by points earned now. Your {rungs} rung kept its number — check it reads right in points earned.",'zh-CN':"等级现在以赚取的积分为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认它以赚取的积分来读是对的。",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh. {rungs} tangga anda mengekalkan nombornya — pastikan ia dibaca dengan betul dalam mata yang diperoleh."}),
-  tiersAreEarnedByPointsEarnedNowYourMany:Object.freeze({en:"Tiers are earned by points earned now. Your {rungs} rungs kept their number — check they read right in points earned.",'zh-CN':"等级现在以赚取的积分为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认它们以赚取的积分来读是对的。",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh. {rungs} tangga anda mengekalkan nombornya — pastikan ia dibaca dengan betul dalam mata yang diperoleh."}),
+  cardCustomersSeeIsOneStampLong:Object.freeze({en:"The card customers see is {stamps} stamp long — your last milestone.",'zh-CN':"顾客看到的卡片长度是 {stamps} 张印花 — 取自您最后一个里程碑。",ms:"Kad yang dilihat pelanggan mempunyai {stamps} setem — diambil daripada pencapaian terakhir anda."}),
+  cardCustomersSeeIsManyStampsLong:Object.freeze({en:"The card customers see is {stamps} stamps long — your last milestone.",'zh-CN':"顾客看到的卡片长度是 {stamps} 张印花 — 取自您最后一个里程碑。",ms:"Kad yang dilihat pelanggan mempunyai {stamps} setem — diambil daripada pencapaian terakhir anda."}),
+  tiersAreEarnedByVisitsNowYourOne:Object.freeze({en:"Tiers are earned by visits now. Your {rungs} rung kept its number — check it reads right in visits.",'zh-CN':"等级现在以到访次数为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认这个数字换成到访次数后仍然合理。",ms:"Peringkat kini diperoleh mengikut kunjungan. {rungs} tangga anda mengekalkan nombornya — pastikan nombor itu masih munasabah sebagai kunjungan."}),
+  tiersAreEarnedByVisitsNowYourMany:Object.freeze({en:"Tiers are earned by visits now. Your {rungs} rungs kept their number — check they read right in visits.",'zh-CN':"等级现在以到访次数为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认这些数字换成到访次数后仍然合理。",ms:"Peringkat kini diperoleh mengikut kunjungan. {rungs} tangga anda mengekalkan nombornya — pastikan nombor itu masih munasabah sebagai kunjungan."}),
+  tiersAreEarnedByDollarsSpentNowYourOne:Object.freeze({en:"Tiers are earned by dollars spent now. Your {rungs} rung kept its number — check it reads right in dollars spent.",'zh-CN':"等级现在以消费金额为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认这个数字换成消费金额后仍然合理。",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan. {rungs} tangga anda mengekalkan nombornya — pastikan nombor itu masih munasabah sebagai jumlah perbelanjaan."}),
+  tiersAreEarnedByDollarsSpentNowYourMany:Object.freeze({en:"Tiers are earned by dollars spent now. Your {rungs} rungs kept their number — check they read right in dollars spent.",'zh-CN':"等级现在以消费金额为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认这些数字换成消费金额后仍然合理。",ms:"Peringkat kini diperoleh mengikut jumlah perbelanjaan. {rungs} tangga anda mengekalkan nombornya — pastikan nombor itu masih munasabah sebagai jumlah perbelanjaan."}),
+  tiersAreEarnedByPointsEarnedNowYourOne:Object.freeze({en:"Tiers are earned by points earned now. Your {rungs} rung kept its number — check it reads right in points earned.",'zh-CN':"等级现在以赚取的积分为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认这个数字换成赚取的积分后仍然合理。",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh. {rungs} tangga anda mengekalkan nombornya — pastikan nombor itu masih munasabah sebagai mata yang diperoleh."}),
+  tiersAreEarnedByPointsEarnedNowYourMany:Object.freeze({en:"Tiers are earned by points earned now. Your {rungs} rungs kept their number — check they read right in points earned.",'zh-CN':"等级现在以赚取的积分为依据。您的 {rungs} 个层级保留了原来的数字 — 请确认这些数字换成赚取的积分后仍然合理。",ms:"Peringkat kini diperoleh mengikut mata yang diperoleh. {rungs} tangga anda mengekalkan nombornya — pastikan nombor itu masih munasabah sebagai mata yang diperoleh."}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'isSwitchedOffAndKeptRecordOne',
@@ -23724,10 +23712,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'theCounterAboveIsAuthoritativeSessionMany',
   'wasAlreadyGivenNamed',
   'wasAlreadyGivenUnnamed',
-  'inTheDayBeforeYourBirthdayOne',
-  'inTheDayBeforeYourBirthdayMany',
-  'withinDayAfterYourBirthdayOne',
-  'withinDayAfterYourBirthdayMany',
   'uCUDStopsBeingNamed',
   'uCUDStopsBeingUnnamed',
   'useWithinDayOne',
@@ -24002,7 +23986,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'deleteRuleOnlyChangesDraft',
   'addPricedItemForPlanPriceSuggestion',
   'addPricedItemForGiftCardAmountSuggestion',
-  'whenSingaporeTime',
   'hideQrCode',
   'noChangeVsPreviousDays',
   'noPaymentAndPartPaidOutOfSales',
@@ -24270,7 +24253,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'regularOverdueTheirUsualVisitMany',
   'bringBackListHeaderOne',
   'bringBackListHeaderMany',
-  'percentOffYourVisit',
   'youStopPayingForThisBranch',
   'roughEstimateAboutPerMonth',
   'turnOnForCustomers',
@@ -24282,8 +24264,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'pointsMustBeAPositiveNumber',
   'stampCardProgrammeNotFound',
   'pointsProgrammeNotFound',
-  'thisIsBusinessAboutYourAppointment',
-  'thisIsTheTeamAboutYourAppointment',
   'recordedCurrentBalancePoints',
   'recordedCurrentBalanceStamps',
   'nowOfferedForPoints',
@@ -24291,10 +24271,6 @@ const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
   'publishedSwitchNotAppliedRetryJustTheSwitch',
   'theDraftCouldNotBeReRead',
   'tryAgainReason',
-  'birthdayWindowOneBeforeOneAfter',
-  'birthdayWindowOneBeforeManyAfter',
-  'birthdayWindowManyBeforeOneAfter',
-  'birthdayWindowManyBeforeManyAfter',
   'customerHoldsUnusedSessionOneOne',
   'customerHoldsUnusedSessionOneMany',
   'customerHoldsUnusedSessionManyOne',
@@ -34709,16 +34685,24 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
     const birthdayTermsSuggest=$('birthdayTermsSuggest');
     if(birthdayTermsSuggest)birthdayTermsSuggest.onclick=()=>{
       const kind=$('birthdayKind').value;
+      /* nestly_v965: EVERY fragment here is ENGLISH on purpose, and must stay English.
+         This builder does not render copy — it fills the Terms textarea, whose value is saved to
+         birthday_program.customer_terms, a MERCHANT-OWNED column that the tenant's own customers
+         read. Localising a fragment writes the owner's UI language into their business record.
+         Worse, the frame around these fragments ("Get … .", and the three sentences after it) is
+         a plain English literal, so a localised fragment produced a Chinese-English mash — "Get
+         本次到访享 20% 折扣 从生日前 3 天到生日后 3 天." — and SAVED it. See the gate in
+         tests/customer-wallet/v958-business-view-copy-coverage.test.mjs. */
       const benefit=kind==='discount_pct'
-        ?`${workspaceTemplateTextV97('percentOffYourVisit',{percent:Number($('birthdayDiscount').value)||0})}`
+        ?`${Number($('birthdayDiscount').value)||0}% off your visit`
         :($('birthdayItem').value.trim()||'the birthday benefit');
       const when=birthdayMode()==='month'
         ?'during your birthday month'
         :(()=>{
           const before=Number($('birthdayBefore').value)||0,after=Number($('birthdayAfter').value)||0;
           if(!before&&!after)return 'on your birthday';
-          if(before&&after)return `${workspaceTemplateTextV97(before===1?(after===1?'birthdayWindowOneBeforeOneAfter':'birthdayWindowOneBeforeManyAfter'):(after===1?'birthdayWindowManyBeforeOneAfter':'birthdayWindowManyBeforeManyAfter'),{before,after})}`;
-          return before?workspaceTemplateTextV97(before===1?'inTheDayBeforeYourBirthdayOne':'inTheDayBeforeYourBirthdayMany',{v1:before}):workspaceTemplateTextV97(after===1?'withinDayAfterYourBirthdayOne':'withinDayAfterYourBirthdayMany',{v1:after});
+          if(before&&after)return `from ${before} ${before===1?'day':'days'} before to ${after} ${after===1?'day':'days'} after your birthday`;
+          return before?`in the ${before} ${before===1?'day':'days'} before your birthday`:`within ${after} ${after===1?'day':'days'} after your birthday`;
         })();
       $('birthdayTerms').value=[
         `Get ${benefit} ${when}.`,
@@ -49063,11 +49047,19 @@ function appointmentWhatsAppUrlV129(options){
     day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',hour12:true,
     timeZone:'Asia/Singapore'
   }).format(start);
+  /* nestly_v965: these lines are ENGLISH on purpose and must stay English. This is not interface
+     copy — it is the body of a WhatsApp message SENT TO THE CUSTOMER, and the customer's language
+     is not the owner's interface setting. Every other line here ("Hi", "Appointment:", "Where:",
+     "With:", "Status:", the closing sentence) is a plain English literal, so localising one line
+     did not send a Chinese message, it sent an English message with one Chinese line in it. The
+     rule is the same one that governs merchant-owned columns: what leaves the product for someone
+     else to read does not follow the owner's UI locale. Gated in
+     tests/customer-wallet/v958-business-view-copy-coverage.test.mjs. */
   const lines=[
     customerName?`Hi ${String(customerName).trim()},`:'Hello,',
-    `${businessName?workspaceTemplateTextV97('thisIsBusinessAboutYourAppointment',{business:String(businessName).trim()}):workspaceTemplateTextV97('thisIsTheTeamAboutYourAppointment',{})}`,
+    businessName?`This is ${String(businessName).trim()} about your appointment.`:'This is the team about your appointment.',
     `Appointment: ${String(serviceName||'General visit').trim()}`,
-    workspaceTemplateTextV97('whenSingaporeTime',{when:when}),
+    `When: ${when} (Singapore time)`,
     branchName?`Where: ${String(branchName).trim()}`:null,
     staffName?`With: ${String(staffName).trim()}`:null,
     status?`Status: ${String(status).replaceAll('_',' ').trim()}`:null,
