@@ -3466,6 +3466,16 @@ const WORKSPACE_CHROME_TAIL_V939 = [
   "What customers see as you edit",
 ];
 
+/* nestly_v960 — the two strings the audit gap-close batch introduced. Both exist to remove an
+   ambiguity, so English-only would have left the one line a zh-CN or ms owner most needs as the one
+   line they cannot read: the Dashboard brief card's Help row (it names seven COMPLETE days ending on
+   the date printed beneath it, not a calendar week) and the Business Intelligence "New customers"
+   caption (first-ever purchase, as against the Dashboard's customer records created). */
+const GAP_CLOSE_V960 = [
+  'Money recorded, visits and joins for the seven complete days up to the date shown on the card.',
+  'First-ever purchase in this period',
+];
+
 const WAVE1_CHROME_20260915 = [
   "Rewards & Offer",
   "Rewards Programme",
@@ -3566,7 +3576,7 @@ test('the strings came from the reviewed ledger, and the ledger demands a reason
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -3600,7 +3610,7 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 4866);
+  assert.equal(once.keyCount, 4868);
 });
 
 /* nestly_v933. The generator applies `table[locale][entry.source] = value`, which ADDS a key when
@@ -3628,7 +3638,7 @@ test('every ledger entry adds a key — none rewrites a translation the ledger d
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 4866 strings per locale/);
+  assert.match(clean, /up to date: 4868 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

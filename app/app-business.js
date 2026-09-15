@@ -5926,6 +5926,27 @@ function ownerBriefAnswersV828(brief){
 function ownerBriefTileV890(label,value,hint,kind){
   return `<div class="dashboard-metric kpi dashboard-brief-tile-v890${kind?' is-'+esc(kind):''}"><span class="metric-top"><span class="l">${esc(label)}</span></span><div class="v">${esc(value)}</div><p class="hint">${esc(hint)}</p></div>`;
 }
+/* nestly_v960 — the card's window words disagreed with the window it shows. The brief is composed
+   nightly by app.owner_brief_compose_v826 over [sg_today()-7, sg_today()-1] AT COMPOSE TIME: seven
+   COMPLETE days ending the day before the run, never a calendar week (the pinned production payload
+   runs 2026-09-01 -> 2026-09-07, a Tuesday to a Monday). Read the next morning — or off a snapshot
+   the next night's run has not yet replaced — that window ends one or two days before today, so
+   "Last 7 days" (which an owner reads as ending today) and "Customers this week" both named a window
+   the card does not show, while #dashboardBriefWhen printed the true, INCLUSIVE end date beside them.
+   The window is now named ONCE, on the card heading, in the words owner ruling nestly_v902 approved
+   for exactly this window ("past 7 days", BI_WORDING_V892.overnight) — the same thing nestly_v894 did
+   for the Business Intelligence strip — with the end date beneath it. The tiles name their measure
+   instead: "Peekaa recorded revenue" is DASHBOARD_METRIC_DEFINITIONS_V405.revenue's own label for this
+   same get_dashboard_summary_v155 figure, and V694 ruled a bare "Revenue" overclaims. NO WINDOW, NO
+   BASELINE AND NO FIGURE CHANGES — the 8-week baseline is 56 days on the same rolling offsets / 8, so
+   "a normal week" still means an average 7-day block, not a calendar week. NOTE for whoever reads
+   this next: "Past 7 days" is not self-disambiguating — the Appointments filter of the same name
+   (app/app.js:47679, preset 'past7' at 48476) runs to TODAY. It is the "Up to <date>" line directly
+   beneath this heading that pins the end, so those two strings move together or not at all. The
+   Help Centre's Dashboard guide names this card by its heading too (the 'screen' row in the
+   slug:'dashboard' article); its description there still reads "money recorded, visits and joins
+   for the current week", which has been stale since nestly_v890 changed the tiles and is left for a
+   ledger-backed copy pass rather than dropping its zh-CN/ms translation here. */
 function ownerBriefOverviewV890(brief){
   const b=brief&&typeof brief==='object'?brief:{};
   const plural=(n,one,many)=>Number(n)===1?one:many;
@@ -5936,16 +5957,16 @@ function ownerBriefOverviewV890(brief){
       ?`${w.visits||0} ${plural(w.visits,'visit','visits')} · no normal week to compare yet`
       :`${ownerBriefPctV826(Number(w.revenue_delta_pct))} a normal week (${money(w.baseline?.revenue_cents||0)})`;
     const d=Number(w.revenue_delta_pct);
-    tiles.push(ownerBriefTileV890('Last 7 days',money(w.revenue_cents||0),hint,w.revenue_delta_pct==null?'':d<-5?'warn':d>5?'good':''));
+    tiles.push(ownerBriefTileV890('Peekaa recorded revenue',money(w.revenue_cents||0),hint,w.revenue_delta_pct==null?'':d<-5?'warn':d>5?'good':''));
   }else{
-    tiles.push(ownerBriefTileV890('Last 7 days','—','Could not be prepared',''));
+    tiles.push(ownerBriefTileV890('Peekaa recorded revenue','—','Could not be prepared',''));
   }
   const c=b.customers||{};
   if(c.status==='ok'){
     const n=Number(c.new_customers)||0,r=Number(c.returning_customers)||0;
-    tiles.push(ownerBriefTileV890('Customers this week',String(n+r),`${n} new · ${r} returning`,''));
+    tiles.push(ownerBriefTileV890('Customers',String(n+r),`${n} new · ${r} returning`,''));
   }else{
-    tiles.push(ownerBriefTileV890('Customers this week','—','Could not be prepared',''));
+    tiles.push(ownerBriefTileV890('Customers','—','Could not be prepared',''));
   }
   const at=b.at_risk||{};
   if(at.status==='ok'){
@@ -6016,7 +6037,7 @@ async function dashboard(){
          from the same readers Performance and Insights use; read here by get_owner_brief_v1 once
          per session. Nothing on this card is computed in the browser. -->
     <section class="card dashboard-brief-v826" id="dashboardBrief" aria-labelledby="dashboardBriefTitle" aria-busy="true">
-      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">This week</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Past 7 days</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
       <div class="kpis dashboard-brief-tiles-v890" id="dashboardBriefTiles" aria-live="polite"></div>
       <p class="dashboard-brief-foot" id="dashboardBriefFoot"></p>
     </section>
@@ -28332,6 +28353,22 @@ async function appointmentsPage(){
              link points at, drawn on demand rather than on every page load — the QR library is a
              CDN script, so it is fetched only when the owner actually asks for a code. */''}
         <button type="button" class="btn ghost sm" id="apptPortalQrV378">${CUI.icon('scan',{size:16})} Generate QR code</button></p>
+      ${/* nestly_v960: the address inside this link is frozen at signup — businesses.slug is
+           written once (start_self_serve_business_v130, and the v565 application path) and
+           nothing rewrites it when the owner renames the business on Business Profile, so a
+           renamed firm goes on advertising its old name here. This card is the one place that
+           tells an owner to commit the string to a QR code and a bio — material that cannot be
+           recalled once it is printed — so it is where the string has to be called permanent,
+           BEFORE it is printed.
+           It deliberately does NOT offer to change the slug. businesses.slug is UNIQUE and the
+           schema carries no alias or redirect table, so a rename frees the old address the
+           instant it lands and dead-links every printed QR, every bio entry, every customer
+           home-screen shortcut to #/b/ and #/wallet/, every #/workspace/ bookmark a staff member
+           holds, and the ?manage= link on each outstanding guest booking request. That is
+           irreversible and unrecallable; it is not a button on the calendar page.
+           It also does not go back on Business Profile: V385 (owner, photo 8) struck the portal
+           link off that form and customer-enterprise-ui.test.mjs still asserts it stays off. */''}
+      <p class="muted small" style="margin-top:8px">This address does not change when you rename your business — the page itself always shows your current name. If you do need it changed, ask Peekaa: changing it breaks every link and QR code already shared, printed ones included.</p>
       <div id="apptPortalQrHostV378" class="appt-portal-qr-v378" hidden></div></div>
     ${!visibleBranches.length?CUI.card({title:'No appointment access',description:'This account has no active branch where Appointments is enabled.'}):`
     <div class="appointment-layout" id="appointmentLayout">
@@ -36828,6 +36865,13 @@ function biModelV892(bundles){
    THE SNAPSHOT. Four numbers, each from one named server field, each with its own comparison —
    or, when there is no earlier window at all, one quiet line for the whole row rather than the
    same apology four times.
+
+   nestly_v960 — the New customers tile now states its own definition on its second line, the
+   one the Collected tile already uses. The Dashboard's neighbouring tile counts customer RECORDS
+   CREATED (nestly_v879 gave that one its own hint); this one counts customers whose FIRST-EVER
+   purchase falls in the window — get_customer_lifecycle_v107's own rule. Both figures are right
+   and they do not agree, and until this line existed an owner comparing the two screens had no
+   way to tell which question each was answering. No figure and no RPC argument changes here.
    ------------------------------------------------------------------------------------------- */
 function biSnapshotHtmlV892(model){
   const view=biObjectV892(model)||{};
@@ -36855,7 +36899,7 @@ function biSnapshotHtmlV892(model){
       ${tile('Revenue',revenueText,'',revenue.change)}
       ${tile('Collected',collectedText,collected.sharePct===null||collected.sharePct===undefined?'':`${collected.sharePct}% collected`,null)}
       ${tile('Customers',buyers===null?null:String(buyers),'',customers.change)}
-      ${tile('New customers',joined===null?null:String(joined),'',joiners.change)}
+      ${tile('New customers',joined===null?null:String(joined),'First-ever purchase in this period',joiners.change)}
     </div>
     ${anyComparison?'':`<p class="muted small bi-no-compare">${esc(BI_WORDING_V892.noComparison)}</p>`}
   </section>`;
@@ -44521,7 +44565,7 @@ const HELP_TOPICS_V904=Object.freeze([
   keywords:['dashboard','home','today','overview','summary','kpi','numbers','revenue today'],
   what:'The first screen of the workspace. It shows what happened today and this week for the branch selected in the top bar, plus what is scheduled next.',
   can:['See money in, visits and members joined for the period','See what is scheduled today','Open the screen behind any figure'],
-  screen:[['This week','Money recorded, visits and joins for the current week.'],
+  screen:[['Past 7 days','Money recorded, visits and joins for the seven complete days up to the date shown on the card.'],
     ['Today schedule','Appointments or bookings due today.'],
     ['Performance','How the period compares, with the date range you choose.'],
     ['Branch selector (top bar)','Which branch every figure on the screen is for.']],

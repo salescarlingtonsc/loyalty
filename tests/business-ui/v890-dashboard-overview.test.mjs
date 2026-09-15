@@ -33,9 +33,9 @@ const cubbly = {
 test('v890: three tiles, plain words, no sentences', () => {
   const html = tiles(cubbly);
   assert.equal((html.match(/dashboard-brief-tile-v890/g) || []).length, 3);
-  assert.match(html, /Last 7 days<\/span>.*SGD 30\.00/s);
+  assert.match(html, /Peekaa recorded revenue<\/span>.*SGD 30\.00/s);
   assert.match(html, /96% below a normal week \(SGD 831\.66\)/);
-  assert.match(html, /Customers this week<\/span>.*<div class="v">1<\/div>.*0 new · 1 returning/s);
+  assert.match(html, /Customers<\/span>.*<div class="v">1<\/div>.*0 new · 1 returning/s);
   assert.match(html, /Regulars overdue<\/span>.*<div class="v">1<\/div>.*SGD 1457\.06 a month at stake/s);
   assert.match(html, /is-warn/);
   assert.doesNotMatch(html, /Busiest|reward|outlet|Suggested|All answers/i, 'analytics sentences stay off the Dashboard');
@@ -56,7 +56,7 @@ test('v890: the Dashboard card links to Customer intelligence and carries no lis
   assert.match(renderer, /ownerBriefOverviewV890\(response\?\.brief\)/);
   const dash = app.slice(app.indexOf('async function dashboard(){'), app.indexOf('async function dashboard(){') + 6000);
   assert.match(dash, /id="dashboardBriefTiles"/);
-  assert.match(dash, /<h2 class="eyebrow" id="dashboardBriefTitle">This week<\/h2>/);
+  assert.match(dash, /<h2 class="eyebrow" id="dashboardBriefTitle">Past 7 days<\/h2>/);
 });
 test('v890: Business Intelligence composes the nightly brief above Explore, still from one cached read', () => {
   const ci = app.slice(app.indexOf('async function customerIntelligencePage(){'));

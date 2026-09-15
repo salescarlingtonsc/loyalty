@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="059785e8f1073c4b3756675cdf9bfcf221b05d858d43544f266076a3f3444318"><title>Peekaa V141 dashboard acceptance</title>
+  <meta name="production-source-sha256" content="5d70500587d449a4ce336b3fb7879e64337a1cdcf23d96d381a73b0790741fbf"><title>Peekaa V141 dashboard acceptance</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
@@ -7049,7 +7049,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
          from the same readers Performance and Insights use; read here by get_owner_brief_v1 once
          per session. Nothing on this card is computed in the browser. -->
     <section class="card dashboard-brief-v826" id="dashboardBrief" aria-labelledby="dashboardBriefTitle" aria-busy="true">
-      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">This week</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
+      <div class="dashboard-brief-head">${CUI.icon('reports',{size:20})}<div><h2 class="eyebrow" id="dashboardBriefTitle">Past 7 days</h2><p class="muted small" id="dashboardBriefWhen">Preparing…</p></div></div>
       <div class="kpis dashboard-brief-tiles-v890" id="dashboardBriefTiles" aria-live="polite"></div>
       <p class="dashboard-brief-foot" id="dashboardBriefFoot"></p>
     </section>
@@ -7447,6 +7447,6 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
   if(isDashboardCurrent())await load();
 }
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v141DashboardMetrics=()=>({sourceHash:'059785e8f1073c4b3756675cdf9bfcf221b05d858d43544f266076a3f3444318',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
+  window.v141DashboardMetrics=()=>({sourceHash:'5d70500587d449a4ce336b3fb7879e64337a1cdcf23d96d381a73b0790741fbf',role:fixtureRole,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,taskCards:[...document.querySelectorAll('.task-launcher-card')].length,branchInAppbar:!!document.querySelector('.appbar #dashboardBranchWrap select'),metricKeys:[...document.querySelectorAll('[data-dashboard-metric]')].map(item=>item.dataset.dashboardMetric),charts:[...document.querySelectorAll('.dashboard-chart-head b')].map(item=>item.textContent.trim()),saleItemsReads:window.__saleItemsReads,reportReads:window.__dashboardReportReads,inactiveReads:window.__inactiveReads,itemMixUnavailable:document.querySelector('.dashboard-chart-card:last-of-type .empty')?.textContent||'',saleMixValues:S.charts.find(chart=>chart.canvas?.id==='c6')?.data?.datasets?.[0]?.data||[],dashboardStatus:document.getElementById('dashboardStatus')?.innerText||'',modalTitle:document.getElementById('dashboardMetricTitle')?.textContent||'',lastNavigation:window.__lastNavigation||'',errors:window.__consoleErrors});
   dashboard().catch(error=>window.__consoleErrors.push(String(error?.stack||error)));
   </script></body></html>

@@ -20400,6 +20400,18 @@
       "reason": "nestly_v939 — 34 strings of workspace chrome that sit next to customer-app content and were held back by a name-based filter in the previous wave: the account-closure card in the profile menu, the customer-rewards QR dialog, the owner-preview cards and their refusals, the customer-actions save messages, and three nav descriptions. The customer-app content those screens PREVIEW is deliberately not here. The owner preview renders the real customer app inside .main, so the workspace localizer would translate it, but its job is to show the owner what a customer sees, and the customer app has its own copy system that decides that language for itself. Translating the frame and leaving the picture is the honest reading of what the screen is for.",
       "zh-CN": "您编辑时顾客会看到的内容",
       "ms": "Apa yang pelanggan lihat semasa anda menyunting"
+    },
+    {
+      "source": "Money recorded, visits and joins for the seven complete days up to the date shown on the card.",
+      "reason": "nestly_v960 — two strings the gap-close batch introduced, both of which exist precisely to REMOVE an ambiguity, so shipping them English-only would leave the one line a zh-CN or ms owner needs most as the one line they cannot read. (1) the Dashboard brief card names a trailing seven COMPLETE days ending on the date printed beneath it, not a calendar week, so its Help Centre row had to stop saying \"the current week\"; (2) Business Intelligence and the Dashboard both had a tile labelled \"New customers\" meaning two different things — first-ever purchase vs customer records created — and the BI tile now carries its definition as a caption.",
+      "zh-CN": "截至卡片所示日期的七个完整日内记录的收入、到店和新加入。",
+      "ms": "Hasil yang direkodkan, kunjungan dan pendaftaran bagi tujuh hari penuh sehingga tarikh yang ditunjukkan pada kad."
+    },
+    {
+      "source": "First-ever purchase in this period",
+      "reason": "nestly_v960 — two strings the gap-close batch introduced, both of which exist precisely to REMOVE an ambiguity, so shipping them English-only would leave the one line a zh-CN or ms owner needs most as the one line they cannot read. (1) the Dashboard brief card names a trailing seven COMPLETE days ending on the date printed beneath it, not a calendar week, so its Help Centre row had to stop saying \"the current week\"; (2) Business Intelligence and the Dashboard both had a tile labelled \"New customers\" meaning two different things — first-ever purchase vs customer records created — and the BI tile now carries its definition as a caption.",
+      "zh-CN": "首次消费发生在此期间",
+      "ms": "Pembelian pertama mereka dalam tempoh ini"
     }
   ]
 }

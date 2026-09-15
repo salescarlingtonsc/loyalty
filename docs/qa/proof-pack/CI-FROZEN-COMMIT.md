@@ -13,10 +13,10 @@
 
 | | |
 |---|---|
-| HEAD SHA | `a08ec1d70d37e3ef46e6aabb96993db6aacddbad` |
-| Branch | `claude/notif-limit-cap` |
-| Commit date | 2026-09-15T12:37:46+08:00 |
-| Record generated | 2026-09-15T06:05:28.157Z |
+| HEAD SHA | `9a9f6cc2385ddca0a3b96fb2070802a93fea3cc1` |
+| Branch | `HEAD` |
+| Commit date | 2026-09-15T14:10:46+08:00 |
+| Record generated | 2026-09-15T06:20:31.734Z |
 | Postgres (local client) | psql (PostgreSQL) 17.10 (Homebrew) |
 | Harness watermark (`scripts/db-tests/lib.mjs` `SNAPSHOT_WATERMARK_VERSION`) | 422 |
 | Migrations dated 2026-09-02 (`db/migrations/20260902_*.sql`) | 17 |

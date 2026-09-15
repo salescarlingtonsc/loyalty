@@ -271,7 +271,7 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v937: +158 — the workspace helpers the page-by-page sweep never reached. */
         /* nestly_v938: +263 — the long tail across ~150 workspace helpers. */
         /* nestly_v939: +34 — workspace chrome beside the owner preview. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,4866,`${locale} valid visible-literal inventory changed without catalog review`);
+    assert.equal(Object.keys(generatedCopy[locale]).length,4868,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
