@@ -4390,6 +4390,12 @@
       "version": "20261016000000",
       "name": "nestly_v962_stripe_promo_coupons",
       "sourcePath": "db/migrations/20261016_nestly_v962_stripe_promo_coupons.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261016010000",
+      "name": "nestly_v974_template_reconcile_cron",
+      "sourcePath": "db/migrations/20261016_nestly_v974_template_reconcile_cron.sql"
     }
   ]
 }

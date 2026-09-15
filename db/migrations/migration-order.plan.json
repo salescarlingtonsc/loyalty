@@ -4395,6 +4395,12 @@
       "path": "db/migrations/20261016_nestly_v962_stripe_promo_coupons.sql",
       "semanticVersion": "v962",
       "proposedDeployVersion": "20261016000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261016_nestly_v974_template_reconcile_cron.sql",
+      "semanticVersion": "v974",
+      "proposedDeployVersion": "20261016010000"
     }
   ]
 }
