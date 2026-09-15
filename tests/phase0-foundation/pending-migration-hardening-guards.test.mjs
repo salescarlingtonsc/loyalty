@@ -222,6 +222,117 @@ const VIEW_ALTER = /alter\s+view\s+(?:if\s+exists\s+)?(public\.[a-z0-9_]+)\s*(se
  * `alter view ... set/reset (security_invoker = ...)` statements that also change the setting (v66a
  * restored the reloption that way, not by re-creating the view).
  */
+/* ---------------------------------------------------------------- GUARD 4 (nestly_v951/v952)
+ * A caller-supplied page size must be BOUNDED.
+ *
+ * v951 found three SECURITY DEFINER readers clamping with `greatest(coalesce(p_limit, d), 1)` —
+ * a floor with no ceiling. p_limit arrives from the browser over PostgREST, and these run as the
+ * definer, so RLS is not in the way: any signed-in member could ask for a million rows and be
+ * handed one json_agg of everything the gate lets them see. It is not a data-exposure bug, which
+ * is exactly why it survived review for so long — nothing it does is forbidden, only unbounded.
+ *
+ * The estate turned out to be almost entirely bounded already, by one of three shapes, and this
+ * guard accepts all three rather than forcing one house style onto working code:
+ *   1  a ceiling in the expression      — `least(...)` somewhere around p_limit;
+ *   2  an explicit validation           — `if p_limit not between 1 and N then raise`;
+ *   3  delegation                       — p_limit is passed to another function and never reaches
+ *                                          a `limit` clause here, so the callee owns the bound.
+ * What it refuses is the fourth shape: p_limit reaching a `limit` clause with no ceiling anywhere.
+ *
+ * EXEMPT, by name: the cron and service_role sweeps, where p_limit is an OPERATOR'S BATCH SIZE and
+ * not a page size a caller chooses. Capping those would silently change how much work a sweep does
+ * per run — a behaviour change dressed as a security fix. They are unreachable from the browser
+ * (no anon or authenticated EXECUTE), so the exposure this guard exists for does not apply.
+ */
+export const PAGE_SIZE_BOUND_EXEMPT = new Set([
+  // service_role / cron only: p_limit is the batch size an operator picks per run.
+  'app.run_outbox_sweep', 'app.run_referral_shadow', 'app.run_studio_executor',
+  'app.run_sv_expiry_sweep', 'app.run_sv_tender_release', 'app.run_whatsapp_reminder_sweep_v557',
+  'app.support_ingest_status_v535', 'app.support_route_inbound_v531',
+  'app.sweep_stranded_self_serve_activations_v766', 'app.v551_ingest_retention_optout',
+  'app.v551_ingest_retention_status', 'app.apply_due_cadence_changes_v922',
+  'app.migrate_programme_pot_v312', 'app.whatsapp_quarantine_support_v816',
+  'app.whatsapp_quarantine_template_v816', 'app.v89_platform_billing_reconciliation',
+  'app.v89_platform_billing_rows', 'app.v281_redrive_failed_billing_events',
+  'app.v156_replay_blocked_billing_events', 'app.suggest_appointment_reschedule_v48',
+  'public.internal_retention_claim_v551', 'public.internal_support_claim_outbound_v535',
+  'public.internal_whatsapp_claim_template_sends_v557',
+  'public.internal_whatsapp_quarantine_expired_sends_v816',
+  'public.purge_campaign_send_records_v255', 'public.purge_customer_account_open_days_v175',
+  'public.purge_product_adoption_events_v100', 'public.purge_whatsapp_webhook_events_v528',
+  'public.service_claim_growth_deliveries_v110',
+  'public.service_claim_growth_deliveries_v110_v112_inner',
+  'public.service_claim_growth_deliveries_v110_v112_unsafe_row_inner',
+  'public.v156_service_claim_dispatch', 'public.suggest_appointment_staff_v47_v94_base',
+  // not a page size at all: a capability's usage allowance / an evidence-block argument.
+  'public.platform_set_capability_grant_v518', 'app.evidence_block_v1', 'app.v365_benefit_sentence',
+  'public.internal_gateway_rate_limit',
+]);
+
+/** Every `create [or replace] function public.x|app.x (...) ... $tag$ body $tag$` in `sql`. */
+export function functionBodies(sql) {
+  const code = stripSqlComments(sql);
+  const bodies = [];
+  const header = /create\s+(?:or\s+replace\s+)?function\s+((?:public|app)\.[a-z0-9_]+)\s*\(/gi;
+  let match;
+  while ((match = header.exec(code)) !== null) {
+    const tag = /\$([a-z0-9_]*)\$/i.exec(code.slice(match.index));
+    if (!tag) continue;
+    const open = match.index + tag.index + tag[0].length;
+    const close = code.indexOf(tag[0], open);
+    if (close < 0) continue;
+    bodies.push({ name: match[1].toLowerCase(), signature: code.slice(match.index, open), body: code.slice(open, close) });
+    header.lastIndex = close;
+  }
+  return bodies;
+}
+
+/**
+ * The SURVIVING definition of each function across the ordered chain. A migration is a record of
+ * what was true then, not of what is true now: the two v531 support readers really were unbounded
+ * when v531 wrote them, and v951 is the migration that fixed them — judging every historical body
+ * would make the fix itself unshippable. And public.platform_get_crm_v156 is defined unbounded in
+ * v156 and does not exist in production at all, because a later migration dropped it. So: last
+ * definition wins, and a drop removes it.
+ */
+export function survivingFunctionDefinitions(migrations) {
+  const surviving = new Map();
+  for (const migration of migrations) {
+    for (const definition of functionBodies(migration.sql)) {
+      surviving.set(definition.name, { ...definition, migration: migration.name });
+    }
+    for (const dropped of stripSqlComments(migration.sql).matchAll(
+      /drop\s+function\s+(?:if\s+exists\s+)?((?:public|app)\.[a-z0-9_]+)/gi
+    )) surviving.delete(dropped[1].toLowerCase());
+  }
+  return [...surviving.values()];
+}
+
+/** GUARD 4 — a p_limit that reaches a `limit` clause must have a ceiling or a validation. */
+export function pageSizeBoundViolations(sql) {
+  return pageSizeBoundViolationsIn(functionBodies(sql));
+}
+
+/** The same predicate, over already-extracted definitions (so the chain fold can reuse it). */
+export function pageSizeBoundViolationsIn(definitions) {
+  const violations = [];
+  for (const { name, signature, body } of definitions) {
+    if (!/\bp_limit\b/i.test(signature)) continue;          // not a page-size function
+    if (PAGE_SIZE_BOUND_EXEMPT.has(name)) continue;
+    const whole = `${signature}${body}`;
+    // 3 · delegation: p_limit never reaches a limit clause here, so the callee owns the bound.
+    const reachesLimit = /\blimit\b[^;)]{0,120}\bp_limit\b/i.test(body);
+    if (!reachesLimit) continue;
+    // 1 · a ceiling in the expression.
+    if (/\bleast\s*\(/i.test(whole)) continue;
+    // 2 · an explicit validation that raises.
+    if (/\bp_limit\b[\s\S]{0,200}?\braise\b/i.test(whole)
+        && /\bp_limit\b[^;]{0,120}(not\s+between|between|<\s*1|>\s*\d)/i.test(whole)) continue;
+    violations.push({ name, problem: 'p_limit reaches a limit clause with no ceiling and no validation' });
+  }
+  return violations;
+}
+
 export function viewReloptionEvents(sql) {
   const code = stripSqlComments(sql);
   const events = [];
@@ -937,4 +1048,60 @@ test('GUARD 2 fails on a deliberately broken fixture', () => {
     ]),
     []
   );
+});
+
+
+test('GUARD 4 — no pending migration leaves a caller-supplied page size unbounded', async () => {
+  const migrations = (await orderedMigrations()).filter(({ kind }) => kind === 'pending');
+  const surviving = survivingFunctionDefinitions(migrations);
+  const pageSized = surviving.filter(({ signature }) => /\bp_limit\b/i.test(signature));
+  assert.ok(pageSized.length > 40,
+    `the scanner must actually see the page-size functions, saw ${pageSized.length}`);
+  const failures = pageSizeBoundViolationsIn(surviving)
+    .map(({ name, problem }) => `${name} (last defined in ${
+      surviving.find((definition) => definition.name === name).migration}) — ${problem}`);
+  assert.deepEqual(failures, [],
+    'a p_limit that reaches a limit clause needs least(), a validating raise, or delegation — ' +
+    'see nestly_v951. Cron/service_role batch sizes belong in PAGE_SIZE_BOUND_EXEMPT instead.');
+});
+
+test('GUARD 4 fails on a deliberately broken fixture', () => {
+  // The exact shape v951 fixed, and the exact shape this guard exists to refuse.
+  const broken = `create or replace function public.leaky_reader_v0(p_business uuid, p_limit integer default 30)
+    returns json language plpgsql security definer
+    set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
+    as $function$
+    begin
+      return (select json_agg(t) from (select id from public.notifications
+        where business_id = p_business order by created_at desc
+        limit greatest(coalesce(p_limit, 30), 1)) t);
+    end $function$;`;
+  assert.deepEqual(pageSizeBoundViolations(broken).map(({ name }) => name), ['public.leaky_reader_v0']);
+
+  // ...and each of the three accepted bound shapes clears it.
+  const capped = broken.replace('limit greatest(coalesce(p_limit, 30), 1)',
+    'limit least(greatest(coalesce(p_limit, 30), 1), 200)');
+  assert.deepEqual(pageSizeBoundViolations(capped), [], 'a least() ceiling is accepted');
+
+  const validated = broken.replace('begin',
+    "begin if p_limit not between 1 and 200 then raise exception 'bad limit'; end if;");
+  assert.deepEqual(pageSizeBoundViolations(validated), [], 'a validating raise is accepted');
+
+  const delegating = `create or replace function public.wrapper_v0(p_business uuid, p_limit integer default 30)
+    returns json language plpgsql security definer
+    set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
+    as $function$ begin return public.leaky_reader_v0(p_business, p_limit); end $function$;`;
+  assert.deepEqual(pageSizeBoundViolations(delegating), [], 'delegation is accepted — the callee owns the bound');
+});
+
+test('GUARD 4 does not fire on the cron sweeps it deliberately exempts', () => {
+  const sweep = `create or replace function app.run_outbox_sweep(p_limit integer)
+    returns void language plpgsql security definer
+    set search_path to 'pg_catalog', 'public', 'app', 'pg_temp'
+    as $function$ begin
+      for r in select * from app.outbox order by next_attempt_at limit greatest(p_limit, 1) loop
+      end loop; end $function$;`;
+  assert.deepEqual(pageSizeBoundViolations(sweep), [],
+    'an operator batch size is not a caller-supplied page size');
+  assert.ok(PAGE_SIZE_BOUND_EXEMPT.has('app.run_outbox_sweep'));
 });
