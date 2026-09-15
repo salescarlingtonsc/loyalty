@@ -1,0 +1,1325 @@
+{
+ "note": "Business-view strings deliberately left in English, with the reason for each. tests/customer-wallet/v958-business-view-copy-coverage.test.mjs reads this file: every candidate it finds must be translated or listed here. The categories are code values the server sends or receives, strings drawn onto a canvas or sitting in a table DATA cell where no localiser can reach them, and — the one that matters most — default VALUES written into merchant-owned columns, which are that business’s own records and not Peekaa’s words to translate.",
+ "entries": [
+  {
+   "source": ";\n/* Timestamps from two different tables are compared as instants, never as strings: PostgREST is\n   free to render one with fractional seconds and the other without, and",
+   "reason": "Source-code fragment — a stray semicolon plus a developer block comment about PostgREST timestamp rendering; never rendered to any user."
+  },
+  {
+   "source": "sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF",
+   "reason": "Subresource Integrity hash for a CDN script tag — not copy, and altering it breaks the load."
+  },
+  {
+   "source": "Asia/Singapore",
+   "reason": "IANA time zone id passed to toLocaleString — a code value, not copy."
+  },
+  {
+   "source": "business_id=eq.",
+   "reason": "PostgREST filter fragment passed to a realtime subscription, not owner-facing copy."
+  },
+  {
+   "source": "sale.completed",
+   "reason": "Server event code (key of STUDIO_EVENT_LABEL and the stored when_event value), not copy."
+  },
+  {
+   "source": "birthday.activated",
+   "reason": "Server event code stored in when_event, never shown as words."
+  },
+  {
+   "source": "+(data.rule_hash||",
+   "reason": "JavaScript code fragment from the hash line, not a sentence."
+  },
+  {
+   "source": "+JSON.stringify(request));\n      closeDialog();\n      const parked=Number(data?.count)||1;\n      toast(isReplayResult(data)?",
+   "reason": "Not a string: an extractor artifact that captured a run of JavaScript source (quote-boundary slip around the 'park:' key), so there is nothing owner-facing to translate."
+  },
+  {
+   "source": "settings CSV import",
+   "reason": "Value sent to the server as `p_source` on staff_create_client — a stored source code, not screen copy; translating it would fragment source grouping."
+  },
+  {
+   "source": "why can cross out male or female etc? what is it for?",
+   "reason": "Owner quote inside a /* */ code comment at app.js:512 (v188 legend-onClick rationale); never rendered."
+  },
+  {
+   "source": "remove customer action, move its contents\n   into appointment setting tab. (only 1 tab now)",
+   "reason": "Owner ruling quoted inside a /* */ code comment at app.js:763 (nestly_v633 tab merge); never rendered."
+  },
+  {
+   "source": "discount received is capped at $xx. now is very vague",
+   "reason": "Owner quote inside a /* */ code comment at app.js:1134 (nestly_v751 discount-label rationale); never rendered."
+  },
+  {
+   "source": "stamps is not supposed to be able to be live with points and tier. - it is\n   seperate rewards by itself.",
+   "reason": "Owner ruling quoted inside the V322 module-scope /* */ comment block at app.js:1634; never rendered."
+  },
+  {
+   "source": "Add filter time here",
+   "reason": "Owner photo annotation quoted inside a /* */ code comment at app.js:4125 (nestly_v571 waitlist window); never rendered."
+  },
+  {
+   "source": "why cafe/F&B have appointment module? appointment is for a staff to serve\n     the customer for a service. cafe is about bookings / table bookings and reservation -\n     with a waitlist",
+   "reason": "Owner question quoted inside a /* */ code comment at app.js:20779 (V246 sector serving model); never rendered."
+  },
+  {
+   "source": "The shell\n       is about to be rebuilt, so only the STATE has to change here.",
+   "reason": "A comment quoting another comment at app.js:23802 (V452 popover-state note) — developer prose, not UI copy."
+  },
+  {
+   "source": "when replaced to the amended amount - make sure it reflects the\n       corrected amount now in the app, any rewards given must be adjusted ... without user to\n       press refresh",
+   "reason": "Owner quote inside a /* */ code comment at app.js:24362 (nestly_v663 ledger repaint); never rendered."
+  },
+  {
+   "source": "the dashboard's Visits drill-down still lists raw sales in\n   the browser",
+   "reason": "Follow-up note quoted inside a /* */ code comment at app.js:24753 (nestly_v717 owed by v714); never rendered."
+  },
+  {
+   "source": "It needs to be clickable to\n   view what is inside",
+   "reason": "Owner photo annotation quoted inside a /* */ code comment at app.js:24809 (V468 drill-down seams); never rendered."
+  },
+  {
+   "source": "I want have simple glance of calendar",
+   "reason": "Owner instruction quoted inside a /* */ code comment at app.js:25117 (V180 today-schedule strip); never rendered."
+  },
+  {
+   "source": "I want date\n             linked to data below",
+   "reason": "Owner markup quoted inside an HTML <!-- --> comment at app.js:25734 (V294 date picker retarget); never rendered."
+  },
+  {
+   "source": "why is merchant insights different for each branch? would it be\n   confusing why some branch have insights some dont have?",
+   "reason": "Owner question quoted inside a /* */ code comment at app.js:26130 (V214 per-branch insights); never rendered."
+  },
+  {
+   "source": "I cannot allow the list to run\n     forever - maximum 5 transactions and will be next page",
+   "reason": "Owner photo annotation quoted inside a /* */ code comment at app.js:26828 (V468 activity paging); never rendered."
+  },
+  {
+   "source": "why it shows 15 stamps in record sale but customer view shows 5 out\n         of 10 stamps ... I need it to standardise",
+   "reason": "Owner quote inside a /* */ code comment at app.js:27276 (nestly_v474 pot vs card position); never rendered."
+  },
+  {
+   "source": "what is this?",
+   "reason": "Owner reaction quoted inside a /* */ code comment at app.js:22809 (V267 dropped the UUID column); never rendered."
+  },
+  {
+   "source": "what is\n   'quick sale' as the item, you should list down the items like we had in Sales & refunds",
+   "reason": "Owner photo annotation quoted inside a /* */ code comment at app.js:27914 (nestly_v663 revenue drill-down ITEM column); never rendered."
+  },
+  {
+   "source": "Packages Bought / 12/06/26 | Facial | 3/5 used | Details",
+   "reason": "Inside the nestly_v495 block comment at app.js:28422 — the owner's sketched table quoted in source, never rendered; it also carries merchant data (a date, a service name)."
+  },
+  {
+   "source": "why it shows 15 stamps in record sale but customer view shows 5 out of 10\n   stamps? it is way too messy. I need it to standardise",
+   "reason": "Owner quote inside the nestly_v474 block comment at app.js:28705 — developer rationale, not UI copy."
+  },
+  {
+   "source": "now renders Services, Products, Packages and all Diamond benefits vertically\n     on one page, causing endless scrolling",
+   "reason": "Owner quote inside the V374 block comment at app.js:28895 — developer rationale, not UI copy."
+  },
+  {
+   "source": "[Record sale · $21]",
+   "reason": "Inside the V373 block comment at app.js:29818 quoting the owner's screenshot; the real button text and the money are built separately at render time."
+  },
+  {
+   "source": "I need to be able to deduct the quantity or\n     remove entirely in this page",
+   "reason": "Owner quote inside the V468-B block comment at app.js:29971 — developer rationale, not UI copy."
+  },
+  {
+   "source": "Do NOT show the full list of tier benefits. Only show benefits that are\n     eligible for this transaction today. Auto-apply deterministic discounts. Only require staff\n     action for physical rewards",
+   "reason": "Owner quote inside the V373 block comment at app.js:30059 — developer rationale, not UI copy."
+  },
+  {
+   "source": "why is the session charged separately? cannot together?",
+   "reason": "Owner quote inside the V257 block comment at app.js:30745 — developer rationale, not UI copy."
+  },
+  {
+   "source": "dont need reason when add item ... for over sold or ad hoc purchase that\n         need fast transactions (like negative transaction = minus points away, or positive\n         transactions maybe due to under charge)",
+   "reason": "Owner quote inside the V206 block comment at app.js:31206 — developer rationale, not UI copy."
+  },
+  {
+   "source": "allow for QRcode to let user to download or view",
+   "reason": "Owner quote inside the V196 block comment at app.js:31473 — developer rationale, not UI copy."
+  },
+  {
+   "source": "I tried to filter by dates & click apply but\n     cannot, please solve!!!",
+   "reason": "Owner quote inside the V266 block comment at app.js:31626 — a bug report recorded in source, not UI copy."
+  },
+  {
+   "source": "no edit function ... what if i key wrongly, then the service how can i remove\n     the time?",
+   "reason": "Owner quote inside the V183 block comment at app.js:32027 — developer rationale, not UI copy."
+  },
+  {
+   "source": "can just change to Points Redemption / Tiered Membership / stamp card (only 1\n     can be live at any go)",
+   "reason": "Owner quote inside the V230 block comment at app.js:33139 — developer rationale, not UI copy."
+  },
+  {
+   "source": "cost per point is not something that firm can easily change during setting\n     up of certain rewards. it must be at 'point system'",
+   "reason": "Owner quote inside the V262 block comment at app.js:33200 — developer rationale, not UI copy."
+  },
+  {
+   "source": "there should not be points redemption for tiered membership - why can use\n     points for free moisturizer?",
+   "reason": "Owner quote inside the V238 block comment at app.js:33325 — developer rationale, not UI copy."
+  },
+  {
+   "source": "too many red boxes, too many Save buttons, and I still cannot tell what is\n     live",
+   "reason": "Owner quote inside the V235 block comment at app.js:33409 — developer rationale, not UI copy."
+  },
+  {
+   "source": ")return null;\n  /* A hostname with no dot is a word, not a domain.",
+   "reason": "Mis-harvested JavaScript source plus a code comment, never rendered to any user."
+  },
+  {
+   "source": "313 Orchard Road, Singapore 238895",
+   "reason": "Sample address in the WhatsApp confirmation preview standing in for the branch's own Address — merchant data, and addresses are not translated."
+  },
+  {
+   "source": "Free Lotion",
+   "reason": "Appears only inside a source-code comment quoting an owner screenshot, and it is a reward name (merchant data)."
+  },
+  {
+   "source": "Free Facial cream",
+   "reason": "Reward name for the Cubbly demo tenant's preview card — merchant data, not Peekaa's own words."
+  },
+  {
+   "source": "Redemption style",
+   "reason": "Inside a /* */ code comment at app.js:1494 describing a chooser V375 REMOVED; the comment is never rendered."
+  },
+  {
+   "source": "this in tier programme, not here!",
+   "reason": "Owner feedback quoted in the V294 code comment at app.js:916; developer rationale, not UI copy."
+  },
+  {
+   "source": "Allow to add expiry date for each\n            rewards and display in customer view",
+   "reason": "Owner photo-B5 note quoted in the V468 code comment at app.js:34077; comment text, never rendered."
+  },
+  {
+   "source": "why is this static? i already remove 50% benefit - but it still shows",
+   "reason": "Owner bug report quoted in the V237 code comment at app.js:34466; not shown in the app."
+  },
+  {
+   "source": "i need to enable new sign ups redeemption (criteria set by boss): - example minimum\n   spend $5 (get free xx product) - redeem using qrcode for first time sign ups only. or no\n   minimum spend and free xx product.",
+   "reason": "Owner requirement quoted in the v215 code comment at app.js:35244; developer documentation, not UI copy."
+  },
+  {
+   "source": "I can edit but i cannot delete T.T",
+   "reason": "Owner remark quoted in the V183 code comment at app.js:36230; comment text, never rendered."
+  },
+  {
+   "source": "why already active already - but still show inactive?",
+   "reason": "Owner bug report quoted in the V191 code comment at app.js:37154; not shown in the app."
+  },
+  {
+   "source": "which loyalty model is live right now?",
+   "reason": "Owner question quoted in the V235 code comment at app.js:37207; developer rationale, not UI copy."
+  },
+  {
+   "source": "Programmes Overview / Programmes List /\n     Programmes History",
+   "reason": "Owner's drawn destinations quoted in the V271 code comment at app.js:37326; the real nav labels are separate strings."
+  },
+  {
+   "source": "Points redemption",
+   "reason": "This occurrence is inside the V294 code comment at app.js:917 naming a card; the rendered label is a different string elsewhere."
+  },
+  {
+   "source": "remove gift cards from the business UI\n       entirely",
+   "reason": "Owner directive quoted in the V303 note inside a code comment at app.js:37489; never rendered."
+  },
+  {
+   "source": "ongoing program - should follow this UI UX",
+   "reason": "Owner instruction quoted in the V244 code comment at app.js:37530; developer rationale, not UI copy."
+  },
+  {
+   "source": "it still showing gift card and same UI UX",
+   "reason": "Owner feedback quoted in the V302 code comment at app.js:37536; comment text, never rendered."
+  },
+  {
+   "source": "point system there's 4 but why it shows 2?",
+   "reason": "Owner bug report quoted in the V470 code comment at app.js:38390; not shown in the app."
+  },
+  {
+   "source": "Delete is given the same visual importance as Edit",
+   "reason": "Owner review note quoted in the V351 code comment at app.js:38657; developer rationale, not UI copy."
+  },
+  {
+   "source": "what you get ... should be typed in settings",
+   "reason": "Owner ruling quoted in the nestly_v477 code comment at app.js:38729; the rendered label is a separate string."
+  },
+  {
+   "source": "is the customer view vs business set up different?",
+   "reason": "Owner question quoted in the nestly_v473 code comment at app.js:39440; comment text, never rendered."
+  },
+  {
+   "source": "After successful creation, close the form again. Do not keep the form\n     permanently expanded.",
+   "reason": "Owner instruction quoted in the V351 code comment at app.js:39652; developer documentation, not UI copy."
+  },
+  {
+   "source": "remove gift cards from the\n           business UI entirely",
+   "reason": "Owner quotation inside an HTML source comment (line 40217) explaining why a link was removed; never rendered to a merchant."
+  },
+  {
+   "source": "alot of overlapping roles ... i need it more simplified",
+   "reason": "Owner quotation inside a JS block comment (line 40650) recording a design rationale; not UI copy."
+  },
+  {
+   "source": "when click into stamp (when points or tier is on) there is a pop up. vice\n         versa must be true. because now stamp is on but pressing points/tier has no pop up",
+   "reason": "Owner bug report quoted in a JS block comment (line 40831) documenting the V382 fix; not rendered."
+  },
+  {
+   "source": "why does Set up tier still bring me to that page",
+   "reason": "Owner quotation inside a JS block comment (line 41771) explaining the V347 change; developer text only."
+  },
+  {
+   "source": "After successful creation, close the form again. Do not keep the form\n       permanently expanded.",
+   "reason": "Owner directive quoted in a JS block comment (line 42161); not shown in the app."
+  },
+  {
+   "source": "ONE page with step subtabs (Step 1 → 2 → 3 → …), select-and-Next simplicity\n   a layman can complete unaided, publish at completion, no popups.",
+   "reason": "Owner directive quoted in a JS block comment (line 43605) describing the wizard design; not UI copy."
+  },
+  {
+   "source": "the tier BASIS CHOICE survives as a\n     first-class owner setting — a firm may climb its ladder by VISITS or by POINTS EARNED\n     (points-earned stays the default the wizard suggests…)",
+   "reason": "Owner amendment quoted in a JS block comment (line 44599) recording why a control was kept; never rendered."
+  },
+  {
+   "source": "click into points system - it should similarly show 1. publish 2. draft\n       3. history (for point system rewards)",
+   "reason": "Owner quotation inside a JS block comment (line 44949) documenting the V324 build; not UI copy."
+  },
+  {
+   "source": "why after i edited my system point\n           programme, come to this 'tier' page… this in tier programme, not here!",
+   "reason": "Owner bug report quoted in an HTML source comment (line 45148); developer text only."
+  },
+  {
+   "source": "for rewards subtab - i need to be able to add or delete. because now i need to press\n       'next' then press 'back' to view changes",
+   "reason": "Owner request quoted in a JS block comment (line 45418) heading the V304 controls; not rendered."
+  },
+  {
+   "source": "before confirmation... shows urgency",
+   "reason": "Owner quotation inside a JS block comment (line 48098) explaining the V330 date formatter; not UI copy."
+  },
+  {
+   "source": "I also need to be able to block whole day in case of mc or leave. Or off\n       days.",
+   "reason": "Owner request quoted in a JS block comment (line 48528) recording the V468 scope; never rendered."
+  },
+  {
+   "source": "i need to be able to set recurring off days for them. and easily\n             amend the off days if i want to. (like every wednesday & sunday) on top of current ad\n             hoc block time",
+   "reason": "Owner request quoted in an HTML source comment (line 48561) inside the block-time dialog markup; comment text, not visible copy."
+  },
+  {
+   "source": "instead of general visit, put ...",
+   "reason": "Owner quotation inside a JS block comment (line 48906) explaining the dropdown default; not UI copy."
+  },
+  {
+   "source": "Cannot click???",
+   "reason": "Owner bug report quoted in a JS block comment (line 49318) documenting the V248 fix; not rendered."
+  },
+  {
+   "source": "when i click in jeffrey tan meng lee - i need to have pop up to amend and\n       change details. or change staff if needed to",
+   "reason": "Owner quotation in a JS block comment (line 49425); also contains a real customer name — developer text, never shown."
+  },
+  {
+   "source": "it shows appointment must be in the future (but it shows green bar to press?\n     - that is misleading)",
+   "reason": "Owner bug report quoted in a JS block comment (line 49848) explaining the V217 slot fix; not UI copy."
+  },
+  {
+   "source": "photo 1 will then show an appointment yet to confirm at the selected time\n     and date... shows urgency... confirm or reject/shift the schedule",
+   "reason": "Owner's spoken instruction quoted inside the V329 /* */ code comment at app.js:49944 — developer rationale, never rendered in the UI."
+  },
+  {
+   "source": "what is the purpose of\n     re-entry? please remove it",
+   "reason": "Owner directive quoted in a source comment explaining why re-entry was removed; not product copy shown to anyone."
+  },
+  {
+   "source": "isn't waitlist supposed to indicate date & time... so when\n                press book — straight away can push to appointment and minimal clicking",
+   "reason": "Owner's request quoted inside the nestly_v575 comment block; it documents the change, it does not render."
+  },
+  {
+   "source": "i want products (not inventory tracking) - products is like selling\n     1. chicken rice for $5 and cost $2",
+   "reason": "Owner instruction quoted in the V221 comment above the products page code — a rationale note, not screen text."
+  },
+  {
+   "source": "Products & Packages please follow Services format",
+   "reason": "Owner photo annotation quoted in the nestly_v613 comment; developer-only text inside /* */."
+  },
+  {
+   "source": "Add! Date Bought dd/mm/yy  Last Used dd/mm/yy",
+   "reason": "Owner's handwritten column request quoted in the nestly_v603 comment; the real column labels are separate strings."
+  },
+  {
+   "source": "why when add branch = pay for 2 branch? i only added 1 new branch\n   - the older one is manual payment",
+   "reason": "Owner's tenant-side complaint quoted in the V280 comment to explain the billing fix; never displayed."
+  },
+  {
+   "source": "Reminder & Notification move under operations setup",
+   "reason": "Owner mark quoted in the nestly_v606 comment about surface keys; the nav labels themselves are other strings."
+  },
+  {
+   "source": "the wordings too chunky - just indicate this new branch is the\n              second branch - Jess Salon (Tampines) = $1,188 / year and total = $xx / year",
+   "reason": "Owner feedback quoted in the nestly_v666 comment, and it also carries a merchant's own shop name; not UI copy."
+  },
+  {
+   "source": "i want to know if my business is improving?",
+   "reason": "Owner's question quoted in the V297 reports comment as the design brief; it is a comment, not a heading."
+  },
+  {
+   "source": "delete this pop-up when I click Add member",
+   "reason": "Owner instruction quoted in the V439 comment explaining the Add staff button fix; never rendered."
+  },
+  {
+   "source": "It needs to be\n       clickable to view what is inside",
+   "reason": "Owner photo annotation quoted in the V468 comment about drill-down tiles; developer rationale only."
+  },
+  {
+   "source": "delete these from settings, all put inside\n   under Customer Interface",
+   "reason": "Owner directive quoted in the V269 comment about removing pointer tabs; a code comment, not screen text."
+  },
+  {
+   "source": "Drop both",
+   "reason": "Two-word owner instruction quoted in the nestly_v784 comment; it names what was deleted, it is not shown."
+  },
+  {
+   "source": "staff list very messy, no title/subtitle for each category ... make it\n       visually nice",
+   "reason": "Owner feedback quoted in the V209 comment above the staff-list grouping code; never rendered."
+  },
+  {
+   "source": "i need to give app access to staff that i already added — where do I\n         activate it and select the modules?",
+   "reason": "Owner's question quoted in the nestly_v595 comment explaining the App access cell; a comment, not UI copy."
+  },
+  {
+   "source": "I want clear segmentation",
+   "reason": "Owner caption quoted in the V226 comment describing the staff-row grid; developer rationale inside <!-- -->/ /* */."
+  },
+  {
+   "source": "Put here",
+   "reason": "Owner photo annotation quoted in the nestly_v603 inline comment about where Edit goes; not rendered text."
+  },
+  {
+   "source": "Access and status",
+   "reason": "Both occurrences (app/app.js:60767, 61278) are inside /* */ code comments quoting an owner photo annotation; v603 records the wording was removed from the UI, so nothing renders this."
+  },
+  {
+   "source": "dont need to show full amount etc.",
+   "reason": "Owner's verbatim instruction quoted inside the nestly_v784 code comment at app/app.js:61658 — a design rationale note, never shown on screen."
+  },
+  {
+   "source": "5 Mar – 4 Sep 2027",
+   "reason": "An example date range written into the comment at app/app.js:61984 to explain the same-year formatting rule; the real string is built at runtime from billingDateV758."
+  },
+  {
+   "source": "Annual\n       saves SGD 600",
+   "reason": "A quoted old hardcoded value inside the nestly_v653 comment at app/app.js:62404, kept only to record that the figure was wrong; the live card reads the catalogue."
+  },
+  {
+   "source": "now is just one pricing. monthly or yearly",
+   "reason": "Owner's verbatim ruling quoted inside the nestly_v789 code comment at app/app.js:62618 — rationale text, not UI copy."
+  },
+  {
+   "source": "i want a STATIC qrcode ... why the qrcode requires me to generate new\n       one every single time?",
+   "reason": "Owner's complaint quoted inside the V209 code comment at app/app.js:63123 explaining the join-QR fix; never rendered."
+  },
+  {
+   "source": "1. i want to add another segment in customer app, which is editable here — i want to be able\n         to upload menu or other gallery photos to business profile\n      2. add biz social media links",
+   "reason": "Owner's photo-10 request transcribed into the nestly_v418 section-header comment at app/app.js:63464 — a code comment, not product copy."
+  },
+  {
+   "source": "shift it up to Customer Appointment Request",
+   "reason": "Owner instruction quoted in two code comments (app/app.js:63749, 64340) recording why a checkbox moved; no render path."
+  },
+  {
+   "source": "make sure it is a\n   live sync of real customer view, it should not look different. the only differences is their\n   own individual details and rewards and gift",
+   "reason": "Owner ruling of 2026-08-24 quoted inside the nestly_v486 code comment at app/app.js:63994 — engineering rationale, never displayed."
+  },
+  {
+   "source": "there's no rewards in\n         actual customer app — why did you add it in?",
+   "reason": "Owner's photo-2 remark quoted inside the nestly_v541 code comment at app/app.js:64232 explaining a removed preview section; not UI text."
+  },
+  {
+   "source": "data-campaign-prep-v153 data-audience-key=\"inactive_60_plus\" data-audience-label=\"Inactive 60+ customers\" data-audience-count=\"",
+   "reason": "Verdict unchanged (skip) — translating this fragment would corrupt data-audience-key=\"inactive_60_plus\", which openCampaignPrepV153 uses as the audience enum (app.js:26055). ACCEPTED the reviewer's correction to the stated reason: I checked and the claim that 'Inactive 60+ customers' is translated separately is FALSE — it occurs exactly once in app.js (line 26273) and is absent from WORKSPACE_COPY_V97, WORKSPACE_GENERATED_COPY_V97 and app/i18n/workspace-generated-copy-v97.additions.json. It is read back as button.dataset.audienceLabel and rendered as visible owner copy in the campaign-prep dia"
+  },
+  {
+   "source": "Serve & sell",
+   "reason": "CHANGED translate → skip. Verified the mechanics objection: the string is already in the curated WORKSPACE_COPY_V97 at app.js:22156 (zh-CN 服务与销售) and 22385 (ms Khidmat & jualan), and workspaceTranslationV97 (app.js:22603-22605) resolves curated ?? generated ?? source — the additions ledger's own note states the same precedence — so a generated entry here would be permanently shadowed dead weight that can silently diverge. REJECTED the language reviewer's fix as a LEDGER change, but its finding is real and I confirmed the counts myself: the additions ledger holds 7 ms breadcrumbs reading 'Layan"
+  },
+  {
+   "source": "Operations setup",
+   "reason": "CHANGED translate → skip, same duplicate-authority reason: already curated in WORKSPACE_COPY_V97 at app.js:22190 (zh-CN 运营设置) and 22420 (ms Persediaan operasi), and the curated table wins at lookup (app.js:22603-22605). REJECTED the language fix as a ledger change but verified its substance: the additions ledger ships 'Tetapan operasi' in 20 strings (Tetapan operasi → Ahli Kakitangan / Cawangan / Modul …, and 'Sediakan butiran cawangan anda. Tetapan operasi -> Cawangan.') against only 2 uses of 'Persediaan operasi' (both Bottle keep). Persediaan reads as 'getting ready'; the section is where b"
+  },
+  {
+   "source": "the Stamp card",
+   "reason": "CHANGED translate → skip. I verified the whole chain rather than taking the reviewer's word: workspaceTemplateInnerHtmlV97 emits every slot as <span data-workspace-value=\"…\" data-merchant-content> (app.js:23453); isWorkspaceDynamicNodeV97 lists '[data-merchant-content]' (app.js:23482) and the observer guard skips the same subtree (app.js:23616-23619), so workspaceTranslationV97 is never called on the slot text; localizeWorkspaceTemplateV97 (23459-23468) re-renders from the remembered ENGLISH values and does not translate them either. So a filed entry could never fire and a zh-CN owner would st"
+  },
+  {
+   "source": "Customers whose last valid visit was 30 or more complete Singapore days ago. Tapping this tile opens exactly this group. Never-visited customers are counted separately.",
+   "reason": "Overruled all three reviewers — they argued wording (完整日 vs 整日, hari penuh Singapura, 点击 vs 点按) and nobody checked the render path. This is a DEAD KEY. The literal is DASHBOARD_METRIC_DEFINITIONS_V405.inactive.definition (app/app.js:24750). `grep '\\.definition' app.js` returns exactly five readers: app/app.js:26210 (openCampaignPrepV153's own parameter), 26473+26475 (CLIENT_INACTIVE_BUCKETS' bucket.definition) and 59631/59644/59654 (DAILY_REPORT_METRIC_DEFINITIONS_V468). None of them is the V405 table. The only renderer of V405 rows, dashboardMetricTileHtmlV405 (app/app.js:24993-24995), prints"
+  },
+  {
+   "source": "A welcome gift when you reach this tier",
+   "reason": "Accepted reviewer 1's blocker in full after verifying every line it cites; reviewer 2's peringkat-not-tahap point is correct about the app's vocabulary but moot, because this value must not be translated at all. Verified: TIER_BENEFIT_PRESETS_V182 (app/app.js:25211-25217) pairs label 'A welcome gift when they reach this tier' with text 'A welcome gift when you reach this tier'; the checkbox at app/app.js:33365 renders the LABEL in the visible span and the TEXT only into data-tier-benefit=\"...\"; the change handler (app/app.js:34590-34606) pushes that raw text into the #trPerk textarea, and the "
+  },
+  {
+   "source": "View the offer and plan your visit.",
+   "reason": "OVERRODE both reviewers (each only raised a zh register nit and neither checked the render path). Read app/app.js:35733-35781 and 36308-36325: PROMOTION_COPY_POLICY_V104.messageCtas.programme is never rendered as copy. promotionCopyAssistV104 concatenates it — `${messageStart}. Available until ${validUntil}. ${action}` — and applyAssistance writes the result into field('promotionMessage').value, i.e. a seeded default for the merchant's own promotion description, which they then edit and save to their own column. So it is (a) always concatenated with runtime values, never a whole text node, and"
+  },
+  {
+   "source": "Bar / Pub",
+   "reason": "ACCEPTED the blocker and went one step further than its fix, because the code says the whole entry is already handled. Verified at app/app.js:22340-22346: the curated WORKSPACE_COPY_V97 zh-CN block already carries 'Bar / Pub':'酒吧 / 酒馆', with a comment stating that 'Menu' and 'Bar / Pub' are what a Malay speaker says and therefore cannot go in the additions ledger, which refuses a value identical to its source. Confirmed against the ledger file itself: neither 'Bar / Pub' nor 'Menu' has an entry in i18n/workspace-generated-copy-v97.additions.json, for either locale. So ms is dropped — an identi"
+  },
+  {
+   "source": "Free item on a $50+ visit",
+   "reason": "ACCEPTED the blocker after verifying every link in its chain — this is seeded merchant data, not copy. app.js:46514 sets it as make:()=>({name:'Free item on a $50+ visit',…}); that name reaches the DOM only through <input id=\"edName\" value=\"${esc(m.name)}\" placeholder=\"e.g. Double points on Mondays\"> at app.js:46728, and the localiser translates only text nodes plus ['placeholder','title','aria-label','data-label'] (app.js:23515) — 'value' is not among them, so the seed is dead on arrival while it is the placeholder beside it that gets translated. Once saved, the rule name renders as <span dat"
+  },
+  {
+   "source": "Birthday treat — 20% off",
+   "reason": "ACCEPTED the blocker on the same verified chain as 'Free item on a $50+ visit'. Confirmed at app.js:46519: this is the name: seeded by the 'bday' quick-start template (label 'Birthday % off', desc '20% off on a birthday' — those two are the copy). It renders only via <input id=\"edName\" value=…> (app.js:46728), and value is not a localised attribute; after save it renders under [data-merchant-content], which isWorkspaceDynamicNodeV97 excludes. Also checked the ledger: 'Birthday treat' and 'Birthday treat every year' ARE filed (生日礼遇 / 'Layanan hari lahir'), but 'Birthday treat — 20% off' is in n"
+  },
+  {
+   "source": "Awaiting customer",
+   "reason": "CONFIRMED the reviewer's mechanics finding in the source and took it further than they did — this is a DEAD KEY, so it is skipped rather than shipped. SUPPORT_HANDOFF_COPY_V535 (app/app.js:50701-50703) has exactly one render site, app/app.js:50925, where the status is emitted as bare text after a separator inside the same <p>: `· ${esc(SUPPORT_HANDOFF_COPY_V535[thread.handoff_state]||…)}`. The text node is therefore '\\n · Awaiting customer' and the v97 sweep's trimmed key (app/app.js:23525-23528) is '· Awaiting customer', which no ledger entry can ever match — the literal never forms a whole t"
+  },
+  {
+   "source": "the customer withdrew WhatsApp consent",
+   "reason": "OVERTURNED to skip — DEAD KEY. Neither reviewer checked the render path, and their zh fix would have been wasted work. This literal lives in reasonLabelV551 (app.js:58119), whose only consumer is app.js:58120: reasonBits = Object.entries(reasons).map(([k,v])=>`${Number(v)||0} — ${reasonLabelV551[k]||…}`), joined with ' · ' and passed as the {reasons} value of workspaceTemplateHtmlV97('notSentBecause', …) at app.js:58132. workspaceTemplateInnerHtmlV97 (app.js:23447) emits every interpolated value as <span data-workspace-value=\"reasons\" data-merchant-content>. That kills it twice over: data-merc"
+  },
+  {
+   "source": "Peekaa waits 30 days between offers to the same customer",
+   "reason": "OVERTURNED to skip — DEAD KEY, identical mechanism to the entry above: it is the cooldown_active value of the same reasonLabelV551 map (app.js:58119), reaching the DOM only inside the merchant-content-guarded <span data-workspace-value=\"reasons\"> of the notSentBecause template. Both reviewers argued about Chinese word order in a string the localiser will never touch; the clue was in their own quoted context (\"it reads as a reason line after '12 — '\") — that concatenated count is exactly what stops it forming a translatable text node. I did not apply either fix. Note for the ledger: if the owne"
+  },
+  {
+   "source": "you switched this message off in WhatsApp automation",
+   "reason": "REJECTED both reviewers' fixes as moot — neither checked the render path. The literal is one value of reasonLabelV551 (app.js:58119); every value is turned into `${n} — ${label}` (58120), joined with ' · ', and passed as the {reasons} VALUE of workspaceTemplateHtmlV97('notSentBecause', …) at 58132. workspaceTemplateInnerHtmlV97 (app.js:23447) wraps every placeholder value in `<span data-workspace-value=\"…\" data-merchant-content>`, and isWorkspaceDynamicNodeV97 (23479) makes [data-merchant-content] the first thing the localiser refuses. So this text can never be looked up: it is both merchant-c"
+  },
+  {
+   "source": "Copy was blocked. Read the code out instead.",
+   "reason": "Dead key mis-verdicted as translate. The reconciler's own evidence defeats it: at app.js:61419 this literal is the `failure` option of copyTextToClipboard, and copyTextToClipboard's failure branch (app.js:2494) is the one path in that function that does NOT go through toast(). `toast()` (2481-2484)"
+  },
+  {
+   "source": "Publish loyalty earning settings",
+   "reason": "Skip means DROP FROM THE BATCH, not leave untranslated — the key is already translated and shipping. Verified the mechanics objection directly: the key is declared in the curated WORKSPACE_COPY_V97 at app/app.js:22277 (zh) and :22534 (ms) with byte-identical values to the ones returned here, and both are pinned by executable assertions at tests/business-ui/v145-launch-freeze-audit.test.mjs:510-511. I also read the duplicate gate at tests/customer-wallet/v97-workspace-localization-acceptance.test.mjs:961, which asserts the curated entry count equals the surviving key count — so appending a seco"
+  },
+  {
+   "source": "An active published earning programme is available. Add and publish reward milestones separately in Grow.",
+   "reason": "Two findings, both checked in source. (1) REJECTED the translator's 'Grow'→'Pertumbuhan' swap for this batch: app/app.js:22535 ships '...secara berasingan dalam Grow.' and tests/business-ui/v145-launch-freeze-audit.test.mjs:513 asserts that exact string, so emitting the changed value turns the suite red. The reviewer's substantive point is real — the ms nav does render 'Grow' as 'Pertumbuhan' (app.js:22417), and the generated table even has 'dari Pertumbuhan' elsewhere — but that is an in-place edit of line 22535 plus the pinned assertion, raised separately, not a batch translation. (2) Like t"
+  },
+  {
+   "source": "Programme cover image",
+   "reason": "OVERRULED both reviewers — they argued over the wording of a DEAD KEY. The literal has exactly one occurrence in the app (app.js:60297): it is an entry in `entityOptions`, rendered only as an <option> inside `<select id=\"programmeImageEntity\" data-merchant-content>` (app.js:60316). isWorkspaceDynamicNodeV97 (app.js:23478-23484) returns true for anything whose closest('[data-merchant-content]') matches, and localizeWorkspaceSubtreeV97 skips those elements and their text nodes, so this option label can never be localised — the workspace localiser never touches it. Its sibling 'Business logo' is "
+  },
+  {
+   "source": "{} around your birthday.",
+   "reason": "ACCEPTED the objection and overturned the first pass's 'template' verdict — verified the whole path myself. app/app.js:35478-35479 assigns this string to `description`, app/app.js:35491 sends it as payload.customer_description, and app/app.js:39033 renders that column inside `<p ... data-merchant-content>`; isWorkspaceDynamicNodeV97 (app/app.js:23479-23486) and isCustomerDynamicNodeV954 (app/app.js:23557-23563) both list [data-merchant-content] as untouchable, and the mutation observer skips it too (app/app.js:23616-23620). So this is a default VALUE written into a merchant-owned column, not r"
+  },
+  {
+   "source": "{} during your birthday month.",
+   "reason": "ACCEPTED the objection — same overturn as its twin, and the same single expression: this is the month-mode branch of the ternary at app/app.js:35478-35479, saved as customer_description (app/app.js:35491) and rendered to customers under [data-merchant-content] (app/app.js:39033), which every translator entry point deliberately skips (app/app.js:23482, 23560, 23617). Seeded merchant data, not product copy. Note that the phrasing the first pass chose is not lost: the register line it was matching, 'A 10% discount on any visit during your birthday month.', is real screen copy elsewhere and is tra"
+  },
+  {
+   "source": "Stamp {} gives {}. Edit this gift.",
+   "reason": "DEAD KEY given a \"template\" (translate) verdict. The literal has exactly two render paths, app.js:39319 and app.js:39350, and in both it is an aria-label on a button that carries data-merchant-content. localizeWorkspaceSubtreeV97 (app.js:23512) runs `if(isWorkspaceDynamicNodeV97(element))continue;`"
+  },
+  {
+   "source": "superseded v104 promotion photo",
+   "reason": "Code value / internal tag — passed as `reason` to NestlyMediaSyncV95.removeOrQueue, which writes it into a storage-cleanup queue row in the DB; never rendered."
+  },
+  {
+   "source": "v104 promotion photo after definitive finalization failure",
+   "reason": "Code value / internal tag — same `reason` field on removeOrQueue, stored on the cleanup queue row for engineers, not shown to the owner."
+  },
+  {
+   "source": "10% off your next visit",
+   "reason": "Seeded merchant data — a reward template's stored `name`; the same object carries a separate `desc` that is the displayed copy, and this name is handed to pendingGrowSetupRewardV303 to prefill the reward-name input and become the merchant's own loyalty_rewards record."
+  },
+  {
+   "source": "1 free class",
+   "reason": "Seeded merchant data — reward template `name` paired with its own `desc`; the value is written into the merchant's reward record via the wizard's name field."
+  },
+  {
+   "source": "10% off one item",
+   "reason": "Seeded merchant data — reward template `name` paired with its own `desc`; the value becomes the merchant's stored reward name, so translating it would write Chinese into their records."
+  },
+  {
+   "source": "dollars spent",
+   "reason": "Unreachable — always interpolated into a runtime toast sentence (`Tiers are earned by ${wordV585} now…`), so it never forms a whole text node the localiser can reach."
+  },
+  {
+   "source": "[data-v657-kind]",
+   "reason": "CSS attribute selector passed to dialog.querySelector — a data-attribute fragment/code value, never rendered text."
+  },
+  {
+   "source": "tier perk",
+   "reason": "UNREACHABLE — only ever injected as the {kind} value of workspaceTemplateHtmlV97, which wraps every value in [data-merchant-content], a selector the workspace localiser skips; it never forms a whole text node."
+  },
+  {
+   "source": "referral gift",
+   "reason": "UNREACHABLE — same GIFT_UNDO_KIND_LABEL_V665 map, used only as the {kind} template value rendered inside [data-merchant-content], which the localiser never touches."
+  },
+  {
+   "source": "data-insight-inactive=\"60_plus\"",
+   "reason": "Data-attribute fragment holding the audience code key '60_plus' read back via link.dataset — a code value, not copy."
+  },
+  {
+   "source": "text/csv",
+   "reason": "MIME type passed to the Blob constructor."
+  },
+  {
+   "source": "admin add-customer",
+   "reason": "Code value sent to the server as p_source (provenance tag on the create-customer RPC)."
+  },
+  {
+   "source": "business_id,client_id,field_definition_id",
+   "reason": "onConflict column list for a PostgREST upsert — SQL identifiers."
+  },
+  {
+   "source": "admin client page",
+   "reason": "Code value sent to the server as p_source on staff_set_marketing_consent."
+  },
+  {
+   "source": "till quick add",
+   "reason": "Code value sent to the server as p_source (source tag on the till's quick-add RPC)."
+  },
+  {
+   "source": "text/csv;charset=utf-8",
+   "reason": "MIME type passed to the Blob constructor for the sales CSV export."
+  },
+  {
+   "source": "your sector",
+   "reason": "UNREACHABLE — sectorProfile.label is only ever passed as the {sector} value of the 'suggestedRangeForSector' template, rendered inside [data-merchant-content] which the localiser skips."
+  },
+  {
+   "source": "the app",
+   "reason": "UNREACHABLE, not translatable copy. BI_CHANNEL_WORDS_V894's values are only ever interpolated at /tmp/pk-w8/app/app-business.js:36505 into `why:`Your widest permission today is ${channel}.`` and rendered at :37255 as `<p class=\"bi-card-why\">${esc(entry.why)}</p>` — ONE text node holding the whole co"
+  },
+  {
+   "source": "a phone call",
+   "reason": "Same defect as \"the app\": a BI_CHANNEL_WORDS_V894 value that only ever appears inside the runtime-composed sentence `Your widest permission today is ${channel}.` (app-business.js:36505, rendered at :37255 as a single text node). The workspace localiser keys on the whole text node, so this fragment i"
+  },
+  {
+   "source": "[data-bi-explain-cta],[data-bi-explain-close]",
+   "reason": "Code value: a CSS selector of data-attribute fragments passed as initialFocus to activateDialog — never rendered text."
+  },
+  {
+   "source": "messaging is off platform-wide",
+   "reason": "UNREACHABLE. reasonLabelV551 (app-business.js:38126) values are concatenated with a runtime count — `${Number(v)||0} — ${reasonLabelV551[k]}` at :38127 — joined with ' · ', then passed as the `reasons` VALUE of workspaceTemplateHtmlV97('notSentBecause', …) at :38139. workspaceTemplateInnerHtmlV97 (a"
+  },
+  {
+   "source": "demo customers are never messaged",
+   "reason": "Same defect: a reasonLabelV551 value concatenated with a runtime count and interpolated as the `reasons` template VALUE, rendered inside `<span data-workspace-value data-merchant-content>` which isWorkspaceDynamicNodeV97 excludes from localisation. Never forms its own text node, so the ledger row is"
+  },
+  {
+   "source": "the customer has not consented to offers",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content], which the workspace localiser skips by design."
+  },
+  {
+   "source": "the customer opted out",
+   "reason": "Same defect: reasonLabelV551 value (key consent_withdrawn), concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content]; the localiser never reads it as a text node."
+  },
+  {
+   "source": "the customer turned offers off in their app",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content], which localizeWorkspaceSubtreeV97 excludes."
+  },
+  {
+   "source": "no valid mobile number on file",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content]; never its own text node, so the row translates nothing."
+  },
+  {
+   "source": "the offer aged out before sending",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content], excluded from localisation."
+  },
+  {
+   "source": "your workspace is not active",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content], which the localiser skips."
+  },
+  {
+   "source": "demo businesses are never messaged",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content]; never forms its own text node."
+  },
+  {
+   "source": "this is a demo business — never messaged",
+   "reason": "Same defect: reasonLabelV551 value, concatenated with its count and interpolated as the `notSentBecause` template value inside [data-merchant-content], which the workspace localiser is explicitly built to leave verbatim."
+  },
+  {
+   "source": "all rewards and gifts must have a qrcode tagged to it",
+   "reason": "UNREACHABLE: it is an owner quote inside a /* */ code comment at app-business.js:1043 (redemptionPayloadFromQr), never written into the DOM, so the localiser can never reach it."
+  },
+  {
+   "source": "when there's error you need to tell me which area is wrong",
+   "reason": "UNREACHABLE: owner quote inside the /* v770 */ rationale comment at app-business.js:2511, not a rendered string."
+  },
+  {
+   "source": "add branch inside (so can add or manage branches using the module as well)",
+   "reason": "UNREACHABLE: owner quote inside the /* V219 */ comment at app-business.js:2738 above navHtml, not DOM text."
+  },
+  {
+   "source": "waitlist is tagged to bookings (so disable / enable together)",
+   "reason": "UNREACHABLE: owner quote inside the /* V223 */ comment at app-business.js:2744, source commentary only."
+  },
+  {
+   "source": "put inside here",
+   "reason": "UNREACHABLE: owner quote inside an HTML <!-- V225 --> comment at app-business.js:3151, which the browser never renders as text."
+  },
+  {
+   "source": "move out to outside here at upper right and fixed all the\n             way",
+   "reason": "UNREACHABLE: owner screenshot annotation quoted in an HTML <!-- V210 --> comment at app-business.js:3160, never emitted to the page."
+  },
+  {
+   "source": "i need a drop down in the header to select which branch they want to view now",
+   "reason": "UNREACHABLE: owner quote inside the /* V219 */ comment at app-business.js:3307 in wireProfile, not a label."
+  },
+  {
+   "source": "you are not a member of this\n           business",
+   "reason": "UNREACHABLE: it is the SERVER's error wording quoted in a /* */ comment at app-business.js:3360; the shown text comes from ownerErrorText(error) at runtime, so this literal is never rendered."
+  },
+  {
+   "source": "clicking in the specific notification should brings me to the specific page\n       to approve or reject or call customer",
+   "reason": "UNREACHABLE: owner quote inside the /* V206 */ comment at app-business.js:3495, source commentary only."
+  },
+  {
+   "source": "remove this redundant line",
+   "reason": "UNREACHABLE: owner quote inside the /* V200 */ comment at app-business.js:5162 above dashboardRangeLabelV170, not DOM text."
+  },
+  {
+   "source": "it takes forever to load the dashboard",
+   "reason": "UNREACHABLE: owner quote inside the /* V217 */ comment at app-business.js:6283 in dashboard(), not a rendered string."
+  },
+  {
+   "source": "once clicked, straight away go to sales",
+   "reason": "UNREACHABLE: owner quote inside /* V287 */ and /* V225 */ comments at app-business.js:6194 and 6399, commentary only."
+  },
+  {
+   "source": "remove this, cause above have\n         already",
+   "reason": "UNREACHABLE: owner markup annotation quoted in an HTML <!-- V294 --> comment at app-business.js:6729, never rendered."
+  },
+  {
+   "source": "quick sale",
+   "reason": "CODE VALUE (and unreachable): it is the sales.kind enum value the server sends, quoted here only inside the /* nestly_v663 */ comment at app-business.js:8329-8330 explaining why the KIND must not be shown as the item."
+  },
+  {
+   "source": "i do not want spendable credits to\n     exist in the app",
+   "reason": "UNREACHABLE — owner quote inside the V320 block comment at app-business.js:7250; comment text is never emitted to the DOM."
+  },
+  {
+   "source": "too confusing",
+   "reason": "UNREACHABLE — owner markup quoted in the V226 block comment at app-business.js:7518, not rendered copy."
+  },
+  {
+   "source": "i do not want spendable credits to\n             exist in the app",
+   "reason": "UNREACHABLE — same owner quote re-cited inside the `${/* ... */''}` comment at app-business.js:7545, which interpolates an empty string."
+  },
+  {
+   "source": "points not fixed yet - does not sync with actual points",
+   "reason": "UNREACHABLE — owner quote in the V259 block comment at app-business.js:7564; no text node is produced."
+  },
+  {
+   "source": "50% off first prata",
+   "reason": "UNREACHABLE — an example promotion name used only inside V319 block comments (lines 230, 7724, 18463); it is also seeded merchant data, never app copy."
+  },
+  {
+   "source": "click here to see pop-up of timeline details, when bought,\n     when last time used",
+   "reason": "UNREACHABLE — the owner's sketch caption quoted in comments at app-business.js:7936 and 8838; not rendered."
+  },
+  {
+   "source": "not clickable to see where the points came from",
+   "reason": "UNREACHABLE — owner quote in the V259 comment at app-business.js:7970 explaining the fix, not a label."
+  },
+  {
+   "source": "click but nothing happened",
+   "reason": "UNREACHABLE — owner photo markup quoted in the V385 comment at app-business.js:9027."
+  },
+  {
+   "source": "under record sale - i must be able to select who is the sales staff to allocate\n     commissions",
+   "reason": "UNREACHABLE — owner requirement quoted in the V187 comment at app-business.js:9200."
+  },
+  {
+   "source": "latest 2\n     services & products",
+   "reason": "UNREACHABLE — fragment of the owner's V392 request quoted in comments at app-business.js:9326, 9761 and 10929."
+  },
+  {
+   "source": "please confirm the new total",
+   "reason": "UNREACHABLE — this extraction is the comment at app-business.js:9353 describing the staleConfirm lock; the real on-screen sentence is the separate complete node \"Price updated — please confirm the new total.\" at line 10204."
+  },
+  {
+   "source": "i dont see in record sale to sell",
+   "reason": "UNREACHABLE — owner quote in the v187 bundle comment at app-business.js:9900; it is not even a whole sentence in the UI."
+  },
+  {
+   "source": "simplify my record sale, make it easy to use and very\n     clear — current model too crowded and no tabs to consolidate it",
+   "reason": "UNREACHABLE — owner brief quoted in the V373 section-header comment at app-business.js:10242."
+  },
+  {
+   "source": "i need a product modules - instead of just services (because products have no\n     minutes)",
+   "reason": "UNREACHABLE — owner quote in the V216 comment at app-business.js:10428."
+  },
+  {
+   "source": "business_id,staff_id,weekday",
+   "reason": "Code value — an onConflict column list sent to PostgREST."
+  },
+  {
+   "source": "business_id,staff_id,weekday,starts_at,ends_at",
+   "reason": "Code value — an onConflict column list sent to PostgREST."
+  },
+  {
+   "source": "awaiting your confirmation",
+   "reason": "Unreachable — it is passed as `status` into appointmentWhatsAppUrlV129 and encodeURIComponent'd into a wa.me URL query string, never a DOM text node; the visible pill beside it is the separate string 'Awaiting confirmation'."
+  },
+  {
+   "source": "branch_id,weekday",
+   "reason": "Code value — an onConflict column list sent to PostgREST."
+  },
+  {
+   "source": "text message",
+   "reason": "Unreachable — BI_CHANNEL_WORDS_V894 is only ever interpolated into a runtime sentence, `Your widest permission today is ${channel}.` (app-business.js:36509), so the word never forms a whole text node for the whole-node localiser to match."
+  },
+  {
+   "source": "app notification",
+   "reason": "Unreachable — same BI_CHANNEL_WORDS_V894 map, always concatenated into the runtime-built 'Your widest permission today is …' sentence, never its own text node."
+  },
+  {
+   "source": "i still dont see the package here in record sale - not able to use sessions",
+   "reason": "UNREACHABLE — source-code comment, not copy: it is the owner's bug report quoted inside the /* V211 ... */ block above tillOwnedPackagesBlockV373 (app-business.js:10456); it never becomes a DOM text node."
+  },
+  {
+   "source": "charged separately",
+   "reason": "UNREACHABLE — source-code comment: a fragment quoted inside the /* V257 ... */ rationale block at app-business.js:11163 explaining why the wording was changed; the only two occurrences in the file are both inside that comment."
+  },
+  {
+   "source": "it should popup the qrcode for user to screenshot\n         or download",
+   "reason": "UNREACHABLE — source-code comment: the owner's markup quoted in the comment at app-business.js:11902 (\"And the second half of the same mark: ...\"); the leading run of spaces is the comment's own indentation, proving it is not a string literal."
+  },
+  {
+   "source": "can add which branch have only",
+   "reason": "UNREACHABLE — source-code comment: the owner's request quoted in the /* nestly_v613 ... */ block above servicesPage's svCache (app-business.js:12295), not the dialog's own label."
+  },
+  {
+   "source": "bundle does not work",
+   "reason": "UNREACHABLE — source-code comment: the owner's bug report quoted in the /* V183 ... */ block at app-business.js:12800; single occurrence in the file, inside that comment."
+  },
+  {
+   "source": "pressing confirm does no changes",
+   "reason": "UNREACHABLE — source-code comment: the owner's report quoted in the comment above bookingDecisionNotice (app-business.js:12905) explaining the scheduling_conflict wording; the user-visible text is the template literal below it, not this."
+  },
+  {
+   "source": "when clicked into customer's booking should pop up [the appointment detail]",
+   "reason": "UNREACHABLE — source-code comment: the owner's request quoted in the /* V378 ... */ block in bookingsPage (app-business.js:13155), square brackets and all; it is design rationale, never rendered."
+  },
+  {
+   "source": "the stored programme",
+   "reason": "UNREACHABLE — source-code comment: a phrase from the /* V235 */ and /* V314 */ rationale comments at app-business.js:13545/13548 describing where Status is read from; both occurrences are inside comments."
+  },
+  {
+   "source": "expired don't show here, show in own history",
+   "reason": "UNREACHABLE — source-code comment: the owner's 2026-08-12 markup quoted in the /* V294 ... */ blocks at app-business.js:13664 and 18240; both occurrences are comment prose, not the catalogue's own labels."
+  },
+  {
+   "source": "i cannot edit the reward",
+   "reason": "UNREACHABLE — source-code comment: the owner's bug report quoted in the /* V238 ... */ block in loyaltyPage (app-business.js:14609); single occurrence, inside that comment."
+  },
+  {
+   "source": "can i make it easier to just check the box - then can attach the benefits\n     under the tiering",
+   "reason": "UNREACHABLE — source-code comment: the owner's request quoted in the /* V182 ... */ block at app-business.js:14793; the embedded newline plus five-space indent is the comment's own line wrap, not a string."
+  },
+  {
+   "source": "when i press edit tier - it should pop up a box - not me scrolling down",
+   "reason": "UNREACHABLE — source-code comment: the owner's request quoted in the /* V236 ... */ block at app-business.js:14903 explaining the tier form's move into a dialog; never rendered."
+  },
+  {
+   "source": "i already removed gift card - but it keeps appearing",
+   "reason": "UNREACHABLE — source-code comment: the owner's bug report quoted in the /* V301 ... */ blocks at app-business.js:15500 and 18440; both occurrences are comment prose."
+  },
+  {
+   "source": "make it visible",
+   "reason": "UNREACHABLE — source-code comment: a plan-item label quoted in the /* nestly_v521 (plan item C ...) */ comments at app-business.js:15545 and 19194; it names an internal work item, not a button or heading."
+  },
+  {
+   "source": "why inside after edit does not updated",
+   "reason": "UNREACHABLE — this is the owner's bug-report sentence quoted inside a /* V268 */ source comment at app-business.js:15566, not copy; a comment never becomes a text node."
+  },
+  {
+   "source": "all date use\n   dd/mm/yyyy format",
+   "reason": "UNREACHABLE — owner markup quoted inside the wrapped /* V324 */ comment at app-business.js:16135 (the line break plus indentation is the comment wrap); never rendered."
+  },
+  {
+   "source": "promotions loading forever - cannot publish",
+   "reason": "UNREACHABLE — tenant bug report quoted inside the /* V280 */ comment at app-business.js:16219; the localiser can never reach comment text."
+  },
+  {
+   "source": "cannot publish",
+   "reason": "UNREACHABLE — every occurrence (16219, 16294, 17010, 17177) is inside a /* V280 */ comment describing the defect; no UI string says this."
+  },
+  {
+   "source": "i dont see the published marketing content - live sync",
+   "reason": "UNREACHABLE — owner quote inside the /* V186 */ comment at app-business.js:16322, not owner-facing copy."
+  },
+  {
+   "source": "pull from existing products (drop down selection)",
+   "reason": "UNREACHABLE — owner request quoted inside the /* V369 */ comment at app-business.js:17495; the rendered dropdown has its own separate labels."
+  },
+  {
+   "source": "edited name inside but not shown",
+   "reason": "UNREACHABLE — owner quote inside the /* V198 */ comment at app-business.js:17782; the shipped pill is the separate string \"Edited · not live yet\"."
+  },
+  {
+   "source": "turn on / off - no pause",
+   "reason": "UNREACHABLE — owner instruction quoted inside the /* nestly_v558 */ comment at app-business.js:17862; the real buttons are the separate \"Turn on\"/\"Turn off\" strings."
+  },
+  {
+   "source": "remove this programme",
+   "reason": "UNREACHABLE — owner markup quoted inside the /* V294 */ comment at app-business.js:17867; the only occurrence in the file is that comment, no button carries this text."
+  },
+  {
+   "source": "tiered membership / stamps - still not able to build like points",
+   "reason": "UNREACHABLE — owner quote inside /* V303 */ comments at app-business.js:316 and 17930; comment text, not copy."
+  },
+  {
+   "source": "photo 1 change to become photo 2",
+   "reason": "UNREACHABLE — owner screenshot markup quoted inside the /* V343 */ comment at app-business.js:18009; never rendered."
+  },
+  {
+   "source": "when pressing on or off just pop up a confirm or cancel — not\n             refreshing the entire website",
+   "reason": "UNREACHABLE — owner quote inside a ${/* V324 */} comment at app-business.js:18068 (a comment in a template-literal slot emits nothing) and repeated at 22242."
+  },
+  {
+   "source": "why cannot click",
+   "reason": "UNREACHABLE — owner quote inside the /* V357 */ comment at app-business.js:18149 explaining the dead tabs; not a label."
+  },
+  {
+   "source": "firms can only choose 1",
+   "reason": "UNREACHABLE — owner ruling quoted inside the /* V229 */ comment at app-business.js:18180; comment text, not owner-facing copy."
+  },
+  {
+   "source": "there was no revenue in the previous period",
+   "reason": "UNREACHABLE — always interpolated into `Up on ${periodWords} — ${zeroBaselineText}, so there is no percentage to show.` (reportVerdictBandV297, line 38014), so it is only ever part of a text node that also carries a runtime value; the walker keys on the whole trimmed node and can never match this fragment."
+  },
+  {
+   "source": "nothing was booked in the previous period",
+   "reason": "UNREACHABLE — same zeroBaselineText slot: concatenated with the runtime ${periodWords} inside one sentence text node, so this fragment never forms a whole text node the localiser can look up."
+  },
+  {
+   "source": "nobody returned in the previous period",
+   "reason": "UNREACHABLE — same zeroBaselineText slot: concatenated with the runtime ${periodWords} inside one sentence text node, so this fragment never forms a whole text node the localiser can look up."
+  },
+  {
+   "source": "package session",
+   "reason": "UNREACHABLE table DATA cell — itemKindLabelV825 prints it into `<td data-label=\"Item\"><span class=\"muted small\">` (lines 39125/39150), which is not a button/.btn/.pill/[data-workspace-i18n], so isWorkspaceTableDataNodeV97 makes the walker skip the node."
+  },
+  {
+   "source": "staff_id,weekday",
+   "reason": "Code value — a PostgREST select() column list sent to the server (staff_recurring_off_days), never rendered."
+  },
+  {
+   "source": "input,select,button",
+   "reason": "Code value — a CSS selector passed as initialFocus to the dialog activator, never rendered."
+  },
+  {
+   "source": "hide memberships and gift cards until verified",
+   "reason": "Not copy — text inside a JS block comment (V466 owner-ruling quotation at line 55); comments are never in the DOM, so it is unreachable."
+  },
+  {
+   "source": "i dont see the full suite of modules\n   ready for production",
+   "reason": "Not copy — an owner quotation inside the V276 block comment (line 103); never rendered, unreachable."
+  },
+  {
+   "source": "allow firms to reverse the transactions if needed to easily at ease",
+   "reason": "Not copy — an owner quotation inside the V206 block comment (line 270); never rendered, unreachable."
+  },
+  {
+   "source": "i still do not see a column to record transactions of points/stamp collected",
+   "reason": "Not copy — an owner quotation inside the V378 block comment (line 732); never rendered, unreachable."
+  },
+  {
+   "source": "if i unselect the program does not mean i want to turn off (i need a seperate\n   button) — it just means i do not want to edit the rewards at this point in time",
+   "reason": "Not copy — an owner quotation inside the R6/V322 block comments (lines 868 and 18022); never rendered, unreachable."
+  },
+  {
+   "source": "for programme overview, i want a simple glance (column) to see which\n     ongoing programmes is live including details (start date, type, how many programmes used by\n     clients, etc)",
+   "reason": "UNREACHABLE — this is owner annotation text quoted inside the `/* ===== V271 Programmes Overview and History =====` block comment at app-business.js:18284, not a rendered string; a comment never becomes a DOM text node."
+  },
+  {
+   "source": "here are expired programmes launched before",
+   "reason": "UNREACHABLE — same V271 block comment (app-business.js:18286); it records the owner's instruction for the History tab, it is not the copy the History tab prints."
+  },
+  {
+   "source": "if stamp card off, hide this too",
+   "reason": "UNREACHABLE — quoted owner mark inside the V385 comment at app-business.js:18485 explaining a visibility rule; comment text, never rendered."
+  },
+  {
+   "source": "don't need this",
+   "reason": "UNREACHABLE — quoted owner mark inside the V324 comment at app-business.js:18626 justifying the removal of the WHY IT STOPPED column; comment text, never rendered."
+  },
+  {
+   "source": "show the last 1 month, and hide the rest, if not very messy",
+   "reason": "UNREACHABLE — quoted owner instruction inside the V382 comment at app-business.js:18635 explaining the default date filter; comment text, never rendered."
+  },
+  {
+   "source": "the $ symbol makes the reward look like money/cash instead of a redeemable\n       gift",
+   "reason": "UNREACHABLE — quoted owner reasoning inside the V351 comment at app-business.js:19031; comment text, never rendered."
+  },
+  {
+   "source": "for points it would be individual gifts expiry, if dont want to set expiry dont need to\n         indicate",
+   "reason": "UNREACHABLE — quoted owner answer inside the nestly_v520 comment at app-business.js:19121, which sits in a `${/* … */''}` slot that deliberately renders an empty string; nothing reaches the screen."
+  },
+  {
+   "source": "adding or editing the fields will be auto publish (with a save button that\n     already exist) - dont need the wizard go live steps",
+   "reason": "UNREACHABLE — quoted owner instruction inside the V359 comment at app-business.js:19219 explaining auto-publish on save; comment text, never rendered."
+  },
+  {
+   "source": "a separate module for bring back rewards (so we can create customisable marketing\n     vouchers or gifts to customers away for the stated period of time)",
+   "reason": "UNREACHABLE — quoted owner brief inside the bring-back module's header comment at app-business.js:19337; comment text, never rendered."
+  },
+  {
+   "source": "welcome gift programme\n     follow this style",
+   "reason": "UNREACHABLE — quoted owner photo mark inside the nestly_v584 comments at app-business.js:19427 and 21229; both occurrences are comment text, never rendered."
+  },
+  {
+   "source": "do as a field, so can edit number",
+   "reason": "UNREACHABLE — quoted owner mark inside the nestly_v422 comment at app-business.js:19658 explaining why the stamp length became an editable input; comment text, never rendered."
+  },
+  {
+   "source": "should be the same view as\n     customer and business",
+   "reason": "UNREACHABLE — quoted owner batch-11 mark inside the nestly_v472 header comment at app-business.js:19781; comment text, never rendered."
+  },
+  {
+   "source": "change rewards & offer to rewards programme",
+   "reason": "UNREACHABLE — quoted owner instruction inside the V340 comment at app-business.js:20466; the renamed H1 is a separate literal, this line only records why it was renamed."
+  },
+  {
+   "source": "move the point system up to the header",
+   "reason": "UNREACHABLE — quoted owner markup inside the V341 comment at app-business.js:20468 describing the heading change; comment text, never rendered."
+  },
+  {
+   "source": "all points reward in this tab",
+   "reason": "UNREACHABLE — owner-feedback quote inside an HTML comment (`<!-- V227 (owner: \"...\") -->`) in the growPage template at app-business.js:20537; a comment node is never rendered text."
+  },
+  {
+   "source": "pressing add rewards - still brings me to this page",
+   "reason": "UNREACHABLE — owner quote inside the V303 block comment at app-business.js:317 (and 20869, 22664, 22727, 24519); source comment, never emitted to the DOM."
+  },
+  {
+   "source": "you need to ensure programs integrity",
+   "reason": "UNREACHABLE — owner quote inside the V305 block comment at app-business.js:24109; source comment only, no other occurrence in the file."
+  },
+  {
+   "source": "for rewards subtab - i need to be able to add or delete",
+   "reason": "UNREACHABLE — owner quote inside the V304 block comment at app-business.js:24189 (also 24658, 25763); source comment, not copy."
+  },
+  {
+   "source": "pressing add rewards - still brings me to this\n     page",
+   "reason": "UNREACHABLE — the same owner quote line-wrapped across a block comment (the embedded newline + 5-space indent is comment indentation); source comment, never rendered."
+  },
+  {
+   "source": "i don't want credit\n     feature",
+   "reason": "UNREACHABLE — owner quote wrapped across the V375 block comment at app-business.js:705 (also 14480 inside `${/* … */}`, and 24587); source comment."
+  },
+  {
+   "source": "i typed the points or cost needed for points redemption - but not reflected in the system\n        and not auto saved (it needs to reflect as i change it, so will not have confusion)",
+   "reason": "UNREACHABLE — multi-line owner quote inside the V304 \"the Reward and Tiers steps save themselves\" comment header at app-business.js:24655-24656; source comment."
+  },
+  {
+   "source": "not auto saved",
+   "reason": "UNREACHABLE — owner quote inside comments only (app-business.js:24656 and the auto-save comment at 24794); never a DOM string."
+  },
+  {
+   "source": "dont need the wizard go live steps",
+   "reason": "UNREACHABLE — owner quote inside the V359/V360 block comments at app-business.js:19220, 24850, 25460; source comment."
+  },
+  {
+   "source": "selecting or deselecting is not the same as on/off — it\n           is to select what programme to edit",
+   "reason": "UNREACHABLE — owner quote (\"repeated twice\") wrapped across the V324 block comment at app-business.js:24921; source comment."
+  },
+  {
+   "source": "i need to be able to add or delete",
+   "reason": "UNREACHABLE — short form of the same owner quote, present only in comments (app-business.js:24189, 24658, 25287, 25763)."
+  },
+  {
+   "source": "remove this everywhere",
+   "reason": "UNREACHABLE — owner markup note inside the V364 comment at app-business.js:20612 and inside `${/* … */''}` at 25502, which emits an empty string."
+  },
+  {
+   "source": "it needs to reflect as i change it, so will not have confusion",
+   "reason": "UNREACHABLE — owner quote inside block comments at app-business.js:24435, 24656 and 25873; source comment, not the rendered \"· editing\" affix itself."
+  },
+  {
+   "source": "if i unselect the\n     program does not mean i want to turn off (i need a seperate button) — it just means i do not\n     want to edit the rewards at this point in time",
+   "reason": "UNREACHABLE — multi-line owner quote wrapped across the R6 block comments at app-business.js:868, 18022 and 26024; source comment."
+  },
+  {
+   "source": "this draft is so confusing, i do not know what changed",
+   "reason": "UNREACHABLE — this is an owner quotation inside an HTML comment (`<!-- V295 (owner: ...) -->`) in the studioPublishReviewPage template at line 26433; a comment node is never rendered text, so the localiser can never reach it."
+  },
+  {
+   "source": "this draft is so confusing, i do not know what changed - just be straight\n       forward without all unnecessary details",
+   "reason": "UNREACHABLE — same owner quotation recorded in a JS block comment `/* V295 (owner: ...) */` at line 26547; developer changelog prose, never emitted to the DOM."
+  },
+  {
+   "source": "just be straight forward without all unnecessary details",
+   "reason": "UNREACHABLE — owner quotation inside the `/* V295 (owner: ...) */` block comment at line 26639 explaining why the dialog was trimmed; comment text, not screen copy."
+  },
+  {
+   "source": "remove this",
+   "reason": "UNREACHABLE — an owner annotation quoted in the `<!-- V209 (owner annotations): ... -->` comment in profileHtml at line 3182, recording why Team & staff was removed from the menu; never rendered."
+  },
+  {
+   "source": "need the template to include location — exact pull",
+   "reason": "UNREACHABLE — owner quotation inside the `/* V330 (owner: ...) */` comment above DEFAULT_BOOKING_CONFIRMATION_TEMPLATE_V330 at line 28198; it documents the {location} token, it is not the template shown to anyone."
+  },
+  {
+   "source": "need to add some buttons to see appointment requests by customer, when customer\n     book for appointment, need some place to accept / decline",
+   "reason": "UNREACHABLE — owner quotation in the `/* V269 (owner: ...) */` block comment at line 28431; requirement text in a code comment, never rendered."
+  },
+  {
+   "source": "if the timing is clashed, when press book appointment - should pop up\n           prompt to notify user, direct them to change timing / suggest free staff",
+   "reason": "UNREACHABLE — owner quotation in the `/* V220. Owner: ... */` block comment at line 29192 describing the clash prompt; comment text, not the prompt copy itself."
+  },
+  {
+   "source": "not able to click into the calendar details",
+   "reason": "UNREACHABLE — bug report quoted in the `/* V205 (owner, twice: ...) */` comment inside wireAppointmentActions at line 29673; developer comment, never in the DOM."
+  },
+  {
+   "source": "a fixed 7-day window means an owner cannot move an appointment two\n     weeks out",
+   "reason": "UNREACHABLE — a coordinator note quoted in the `/* v760b (coordinator: ...) */` block comment at line 29969; engineering rationale, never rendered."
+  },
+  {
+   "source": "all employees will work on everyday of the working hours -\n       until the owner block the employees schedule",
+   "reason": "UNREACHABLE — an owner ruling quoted in the `/* nestly_v598 (owner ruling: ...) */` block comment at line 29999; policy note in source, not screen copy."
+  },
+  {
+   "source": "boss only cares about service/staff/date+time — these 3 should be bigger\n         font",
+   "reason": "UNREACHABLE — owner quotation in the `/* V330 (owner: ...) */` block comment at line 30048 explaining a type-size decision; comment text only."
+  },
+  {
+   "source": "easier for\n             them to check against the schedule",
+   "reason": "UNREACHABLE — owner photo annotation quoted in the `/* V468 (same owner photo ...) */` block comment at line 30352; comment prose, never rendered."
+  },
+  {
+   "source": "push notification when left 7 days to expiry and left 3 days and\n           today expiry",
+   "reason": "UNREACHABLE — owner quotation inside an inert `${/* nestly_v488 (owner: ...) */''}` comment expression at line 31167; the expression evaluates to an empty string, so nothing reaches the page."
+  },
+  {
+   "source": "deduct what exists, never below zero, never raise",
+   "reason": "UNREACHABLE — a v8 design rule quoted in the block comment inside inventoryPage at line 32692 explaining optional stock keeping; comment text, never rendered."
+  },
+  {
+   "source": "i dont see the full suite of modules ready for\n     production",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:38888 (/* V276 (owner, on a real bar tenant: \"…\") */); a source-code comment never becomes a DOM text node."
+  },
+  {
+   "source": "add staff - only import, cannot manually add staff",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:39273 (/* V190 (owner: \"…\") */), an owner requirement quote in the source, never rendered."
+  },
+  {
+   "source": "staff schedule should not be in bookings - it should be in staff modules",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:39426 (/* V228 (owner: \"…\") */); it is a code comment, not copy."
+  },
+  {
+   "source": "best if can do a pop up — modules / app access all inside the pop up",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:40660 (/* nestly_v595 (owner: \"…\") */), never emitted to the DOM."
+  },
+  {
+   "source": "i need a button to switch on/off all modules, then i manually on those i\n           want, because now default is turn on",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:40792 inside a ${/* V382 (owner: \"…\") */} template hole, which evaluates to nothing and renders no text."
+  },
+  {
+   "source": "there must be a reference code here - example kelvin sign up an account and\n     input the reference code - he will be tagged into the business (so we dont need to duplicate\n     any data over, he can just take over as the staff)",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:41370 (/* V217. Owner: \"…\" */), an owner quote in the source, never rendered."
+  },
+  {
+   "source": "those enabled - i need it green while disabled will be red",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:41500 (/* V382 (owner: \"…\") */); a code comment, not screen copy."
+  },
+  {
+   "source": "a button to switch on/off all modules, then i manually on those i want",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:41512 (/* V382: \"…\" */); the near-identical line 40792 is also a comment, so the string reaches no DOM node."
+  },
+  {
+   "source": "we can have default for the sectors but able to off or on if needed to",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:41605 (/* V184 (owner: \"…\") */), never rendered."
+  },
+  {
+   "source": "make sure the business view also able to see which card they are\n             using",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:41832 inside a ${/* nestly_v798 (owner: \"…\") */} template hole, which emits nothing."
+  },
+  {
+   "source": "website link works but qrcode does not work",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:43031 (/* nestly_v603 (owner: \"…\") */); a source comment, not owner-facing copy."
+  },
+  {
+   "source": "i still not able to scan the qrcode now",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:43061 (/* nestly_v597 (owner, pre-go-live: \"…\") */), never rendered."
+  },
+  {
+   "source": "align the boxes after you have compiled them",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:43748 inside a ${/* nestly_v641 (owner: \"…\") */} template hole, which evaluates to nothing."
+  },
+  {
+   "source": "those auto fill buttons needs to be present, so i can click myself instead of\n       guessing what auto fill buttons we can type",
+   "reason": "UNREACHABLE — sole occurrence is comment text at app-business.js:43890 (/* Owner: \"…\" */), an owner requirement quote in the source, never rendered."
+  },
+  {
+   "source": "scrap the cost - just put selling price for products - if not will be\n     complex",
+   "reason": "UNREACHABLE — not a string literal at all: it is owner-quote prose inside the /* V222 … */ comment block above the product form (app-business.js ~32695); comments are never rendered, so the localiser can never reach it."
+  },
+  {
+   "source": "how to edit and delete pricing or edit information etc",
+   "reason": "UNREACHABLE — owner quote inside the /* V191 (owner: \"…\") */ rationale comment in inventoryPage (line 32727); it sits after the template literal ends and never forms a text node."
+  },
+  {
+   "source": "i need subtab for (all/active/used up) within the module",
+   "reason": "UNREACHABLE — owner quote in the standalone /* nestly_v612 (owner: \"…\"). */ comment line (32906). The shipped copy is the tab labels themselves, not this note."
+  },
+  {
+   "source": "when click\n     this, default page is at this",
+   "reason": "UNREACHABLE — owner photo annotation inside the /* nestly_v654 … */ comment explaining why packageStatusV612 defaults to 'active'; pure code comment, never rendered."
+  },
+  {
+   "source": "some customer need\n             customise package which is not in package list",
+   "reason": "UNREACHABLE — owner quote inside a ${/* … */''} comment-in-template construct: the expression deliberately evaluates to the empty string, so nothing from this text ever reaches the page. The visible copy is the separate \"+ Customise Package\" button."
+  },
+  {
+   "source": "i should be able to edit or delete",
+   "reason": "UNREACHABLE — owner quote inside the /* V193 (owner: \"…\") */ comment in packagesPage (line 33146), among the event-handler wiring; not UI text."
+  },
+  {
+   "source": "can click to see\n         details",
+   "reason": "UNREACHABLE — owner photo annotation inside the /* nestly_v654 … */ comment above the expired-row renderer; code comment, not copy. The row's real label is the aria-label \"Package details\"."
+  },
+  {
+   "source": "i need to have a tab on expiry date (if the package has an expiry)",
+   "reason": "UNREACHABLE — owner quote inside a ${/* … */''} comment-in-template inside the package <tr>; the expression yields '' so the text is never emitted. The shipped copy is the expiry column header."
+  },
+  {
+   "source": "your 2nd branch",
+   "reason": "UNREACHABLE — the phrase appears only in the /* nestly_v666 */ comment justifying the wording choice (line 33690). The string the owner actually sees is built by branchOrdinalWordV666 from 'first'/'second'/…, not from this literal."
+  },
+  {
+   "source": "analytics should not display anything with whatsapp",
+   "reason": "UNREACHABLE — owner quote inside the /* nestly_v768 … */ comment in ciContactabilityGroupMarkupV650 recording why the WhatsApp column was removed; comment prose, never rendered."
+  },
+  {
+   "source": "1 of 6 — too few to say",
+   "reason": "UNREACHABLE — this whole phrase exists only as an illustrative example inside the comment at line 36249. The live string is assembled at runtime as `${base} — too few to say`, so this literal never forms a text node; the reusable fragment is a different source string."
+  },
+  {
+   "source": "it does not work — i need it to lead me to immediate action",
+   "reason": "UNREACHABLE — owner quote inside the /* nestly_v903 (owner: \"…\") */ comment beside the insight CTA in biSelectInsightsV892; the visible copy is the adjacent action: 'Review the open sales and record any payments already received.'"
+  },
+  {
+   "source": "it does not work — i need it to lead me to immediate\n     action",
+   "reason": "UNREACHABLE — the same owner quote re-recorded in a second /* nestly_v903 (owner, three cards: \"…\") */ comment above the explain-dialog CTA wiring; code comment, not copy."
+  },
+  {
+   "source": "which channel reaches most people",
+   "reason": "UNREACHABLE — appears only inside the numbered /* 5. Permission to reach them … */ comment in biIdeasV902, explaining that the ranking comes from the server; no DOM output."
+  },
+  {
+   "source": "must tally 100% if not there will be misalignment and\n   misunderstanding",
+   "reason": "Not owner-facing copy: an owner quote inside a JS block comment at app-business.js:43954 — comment text, never rendered to the DOM."
+  },
+  {
+   "source": "must tally 100%… what happened when customer click into the firm",
+   "reason": "Not owner-facing copy: an owner quote inside the V327 JS block comment at app-business.js:44285 — comment text, never rendered."
+  },
+  {
+   "source": "customer app settings should not be in bookings - it should be in\n         operation set up",
+   "reason": "Not owner-facing copy: an owner quote inside an HTML comment at app-business.js:44345 — a comment node, never displayed."
+  },
+  {
+   "source": "SMS",
+   "reason": "Acronym that is the same worldwide (named in the rule alongside QR); it is also the <option> label paired with the 'sms' code value."
+  },
+  {
+   "source": "Apr",
+   "reason": "UNREACHABLE — the months array in calendarDayLabel is only ever emitted inside the composite `${weekday} ${date} ${month}` string (\"Mon 5 Apr\"), so 'Apr' never forms a whole text node the localiser can reach; single use site, no standalone render."
+  },
+  {
+   "source": "Jun",
+   "reason": "UNREACHABLE — same calendarDayLabel months array, always concatenated with the runtime weekday and day number, never its own text node."
+  },
+  {
+   "source": "Aug",
+   "reason": "UNREACHABLE — same calendarDayLabel months array, always concatenated with a runtime value, never a standalone text node."
+  },
+  {
+   "source": "Oct",
+   "reason": "UNREACHABLE — same calendarDayLabel months array, always concatenated with a runtime value, never a standalone text node."
+  },
+  {
+   "source": "Light",
+   "reason": "Code value — the haptic intensity name passed to the native bridge API, window.NestlyNativeBridge.haptic('Light'); it is never written into the DOM."
+  },
+  {
+   "source": "Feb",
+   "reason": "UNREACHABLE: calendarDayLabel always concatenates it as `${weekday} ${date} ${month}`, so 'Feb' never forms a whole text node the localiser can match."
+  },
+  {
+   "source": "Referred",
+   "reason": "UNREACHABLE: CI_ACQUISITION_VIA_LABELS_V650 is rendered only through ciViaLabelV650 into `<td data-label=\"Source\">` in the Acquisition mix table — a table DATA cell, which the localiser deliberately skips (the <th> headers Source/Evidence/Customers are the translated part)."
+  },
+  {
+   "source": "Campaign",
+   "reason": "UNREACHABLE: same acquisition-source map, same `<td data-label=\"Source\">` data cell in the Acquisition mix table — never a <th> header."
+  },
+  {
+   "source": "Obsidian",
+   "reason": "SEEDED MERCHANT DATA: a sample next-TIER NAME inside the live-preview payload — a tier name is a merchant-owned value rendered through the customer surface as merchant content, so translating it would put Chinese into a merchant's own tier records."
+  },
+  {
+   "source": "VIP",
+   "reason": "Rule 1 — an acronym that is the same worldwide (like SMS/QR): zh-CN and ms merchant UIs both print VIP verbatim, so there is no non-English form to ship."
+  },
+  {
+   "source": "Requests",
+   "reason": "UNREACHABLE — it is only a pagerHtmlV584 label, printed as one esc'd string with runtime numbers ('Requests: 12 · page 1 of 3'), so the bare word never forms a whole text node for the localiser to match."
+  },
+  {
+   "source": "Model",
+   "reason": "UNREACHABLE — the only use is a pending-change diff label rendered as `${label}: ` immediately before the runtime value ('Model: points → stamps'); the text node is 'Model:', never 'Model'."
+  },
+  {
+   "source": "Bring-back",
+   "reason": "Code value — a row-type discriminator and the key of the growOverviewRowMarkV401 icon map; the one place it surfaces (the usage-by-category table/chart) renders it inside [data-merchant-content], which the localiser never touches. The displayed copy for this concept ships separately as 挽回奖励 / Ganjaran bawa kembali."
+  },
+  {
+   "source": "Promotion",
+   "reason": "SEEDED MERCHANT DATA / code value — it is the fallback for the merchant's own promotion name, rendered only inside [data-merchant-content] (programmeRowHtmlV294 and the category table), and otherwise a type discriminator (entry.type==='Promotion') and icon-map key."
+  },
+  {
+   "source": "Offers",
+   "reason": "UNREACHABLE — pagerHtmlV584 label only, concatenated into 'Offers: 24 · page 2 of 3' in a single text node, so the standalone word is never looked up."
+  },
+  {
+   "source": "Can reply for",
+   "reason": "Dead key. supportWindowLabelV531 concatenates it with a live countdown (\"Can reply for 2h 30m\"), so it never forms a whole text node the catalogue can match. It needs a named template with the duration as a slot — tracked with the rest of the JS-built sentences."
+  },
+  {
+   "source": "Why is Peekaa telling me this?",
+   "reason": "Keyed one character short. The button renders ${esc(evidenceSummary)} →, so the text node the localiser sees ends with the arrow; the catalogue holds \"Why is Peekaa telling me this? →\", matching the shipped \"Set up →\" / \"View details →\" convention. This bare form would never fire."
+  },
+  {
+   "source": "English",
+   "reason": "A language picker names every language the way its own speakers write it, in every locale."
+  },
+  {
+   "source": "INSERT",
+   "reason": "Postgres realtime event code compared against payload.eventType, not copy."
+  },
+  {
+   "source": "UPDATE",
+   "reason": "Postgres realtime event code compared against payload.eventType, not copy."
+  },
+  {
+   "source": "DELETE",
+   "reason": "Postgres realtime event code compared against payload.eventType, not copy."
+  },
+  {
+   "source": "Mei",
+   "reason": "An example customer name in a preview fixture — a person's name, never translated."
+  },
+  {
+   "source": "Devi",
+   "reason": "An example staff name in a preview fixture — a person's name, never translated."
+  },
+  {
+   "source": "SGD",
+   "reason": "An ISO currency code."
+  }
+ ]
+}

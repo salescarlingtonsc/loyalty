@@ -1314,7 +1314,14 @@ async function copyTextToClipboard(value,{button=null,success='Copied',failure='
     return true;
   }catch(error){
     console.warn('Clipboard copy failed',error);
-    if(failure){showToast(failure);CUI.announce(failure,{assertive:true})}
+    /* nestly_v958: this branch called showToast directly, which is the one toast path that does NOT
+       go through workspaceTranslationV97 — so every clipboard refusal reached a zh-CN or ms owner
+       in English no matter how complete the catalogue was. toast() cannot be used here because the
+       announcement must stay assertive, so the same lookup toast() performs is done explicitly. */
+    if(failure){
+      const refusal=root.querySelector('.shell')?workspaceTranslationV97(failure):failure;
+      showToast(refusal);CUI.announce(refusal,{assertive:true});
+    }
     return false;
   }finally{
     if(button?.isConnected)button.disabled=false;
