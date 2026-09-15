@@ -4365,6 +4365,12 @@
       "path": "db/migrations/20261012_nestly_v922_scheduled_cadence_switch.sql",
       "semanticVersion": "v922",
       "proposedDeployVersion": "20261012000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261012_nestly_v928_live_client_advisor.sql",
+      "semanticVersion": "v928",
+      "proposedDeployVersion": "20261012010000"
     }
   ]
 }

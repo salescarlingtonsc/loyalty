@@ -4360,6 +4360,12 @@
       "version": "20261012000000",
       "name": "nestly_v922_scheduled_cadence_switch",
       "sourcePath": "db/migrations/20261012_nestly_v922_scheduled_cadence_switch.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261012010000",
+      "name": "nestly_v928_live_client_advisor",
+      "sourcePath": "db/migrations/20261012_nestly_v928_live_client_advisor.sql"
     }
   ]
 }

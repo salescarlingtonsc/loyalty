@@ -9873,7 +9873,18 @@
       controls.close();previewThenConfirm({title:'Confirm lost transition',preview:{prospect:prospectCompany(prospect),from:prospectStage(prospect),to:'lost',...fields},CUI,onConfirm:async(confirmControls)=>{await performStageMove(prospect,'lost',{entryEvidence:fields,nextActionType:null,nextActionAt:null},context);confirmControls.close()}});
     }});
   }
+  /* nestly_v928: a LIVE client is not a lead, and public.sme_prospects proves it — the table
+     trigger app.guard_converted_prospect_v79 refuses any write that moves a converted row's stage,
+     advisor or company, so platform_transfer_lead_v510 (which is a lead-queue verb: ownership
+     state, queue key, first-contact next action) returned 42501 for every one of them. v922
+     un-hid the control without this and the save could not land. The advisor now goes through
+     platform_set_firm_advisor_v928, which changes assigned_consultant_id and nothing else. */
   function saveCanonicalLeadAssignment(sb,prospect,consultant,reason) {
+    if(prospect.converted_business_id){
+      return rpc(sb,'platform_set_firm_advisor_v928',{
+        p_business:prospect.converted_business_id,p_consultant:consultant||null,p_reason:reason
+      });
+    }
     const common={p_prospect:prospect.id||prospect.prospect_id,
       p_expected_version:prospectVersion(prospect),p_reason:reason,p_operation_key:idempotencyKey()};
     return consultant
