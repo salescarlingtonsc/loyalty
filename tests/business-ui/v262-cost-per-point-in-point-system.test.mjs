@@ -29,7 +29,7 @@ function section(start, end) {
 test('the Point system editor carries the cost-per-point control', () => {
   const editor = section('<b>Loyalty model — only one is live at a time</b>',
     '<details class="loyalty-advanced-v235"');
-  assert.match(editor, /<label for="lpc">Cost per point \(\$\{S\.biz\.currency\|\|'SGD'\}\)<\/label>/);
+  assert.match(editor, /<label for="lpc">Cost per point <span>\(\$\{S\.biz\.currency\|\|'SGD'\}\)<\/span><\/label>/);
   assert.match(editor, /<input id="lpc" type="number" min="0\.001" step="0\.001"/);
   // One short help line, in the repo's low-literacy-first register.
   /* V293 (owner confused the three numbers, 2026-08-12): the help line now says what the knob

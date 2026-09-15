@@ -3918,7 +3918,7 @@ function customerWorkspaceSwitchHtml(staffWorkspaces=[]){
     const name=workspace.business_name||workspace.business_slug||'Business';
     return `<a class="btn ghost sm" href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard" aria-label="Open ${esc(name)} staff workspace">${CUI.icon('branch',{size:16})}<span>${esc(name)} workspace</span></a>`;
   }
-  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:16})}<span>Business workspaces (${workspaces.length})</span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
+  return `<details class="customer-workspace-switch"><summary class="btn ghost sm" aria-label="Open ${workspaces.length} authorized staff workspaces">${CUI.icon('branch',{size:16})}<span>Business workspaces <span>(${workspaces.length})</span></span></summary><div class="menu" aria-label="Authorized staff workspaces">${workspaces.map(workspace=>`<a href="#/workspace/${encodeURIComponent(workspace.business_slug)}/dashboard">${esc(workspace.business_name||workspace.business_slug)}</a>`).join('')}</div></details>`;
 }
 function renderNoCustomerDestination(staffWorkspaces=[]){
   const workspaces=sortStaffWorkspaces(staffWorkspaces);
@@ -5696,7 +5696,7 @@ function customerBusinessRelationshipSummaryV346({loyalty={},reward=null,tier={}
            the rings could be drawn. A 40-stamp card is past the ring rail but its length is a
            fact the server stated, and dropping to a bare count threw it away. */
         ?`${stampRingsV386}
-      <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>of ${esc(customerPointTotalV103(stampTargetV386))} stamps</span></b>`
+      <b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(Math.min(balance,stampTargetV386)))}<span>${workspaceTemplateHtmlV97('ofStampsTotal',{total:customerPointTotalV103(stampTargetV386)})}</span></b>`
         :`<b class="customer-business-balance-v347 customer-business-balance-stamps-v386">${esc(customerPointTotalV103(balance))}<span>stamps</span></b>`}</div>`
     :modeV386==='tiers'&&tierBlockV393
       /* nestly_v657 (owner, HENG HENG 888: the list said "2,908 pts" while this card showed the
@@ -6486,7 +6486,7 @@ function staffInvitePreviewMarkupV151(preview){
   if(preview.status==='valid'){
     return `<div class="ok" style="margin-top:10px;background:var(--success-bg);color:var(--green)">
       <b>${esc(preview.business_name||'Business found')}</b>
-      <p class="small" style="margin-top:5px">Role offered: ${esc(role)}</p>
+      <p class="small" style="margin-top:5px">Role offered: <span>${esc(role)}</span></p>
       <p class="small" style="margin-top:5px">${preview.restricted_email?`Restricted to: ${esc(preview.restricted_email)}`:'No email restriction on this invite.'}</p>
     </div>`;
   }
@@ -7786,9 +7786,40 @@ const WORKSPACE_TEMPLATE_COPY_V97=Object.freeze({
      cannot disagree in any locale. */
   joinQrNothingToRevoke:Object.freeze({en:'There is no active QR to revoke yet. Generate one first.','zh-CN':'目前没有可撤销的有效二维码。请先生成一个。',ms:'Tiada kod QR aktif untuk dibatalkan lagi. Jana satu dahulu.'}),
   stampsEligibleEarning:Object.freeze({en:'Eligible customer-linked sales add stamps when this programme is active, published, and available at the selected branch. Define what each milestone is worth — a free item to hand over, or store credit.','zh-CN':'当此方案生效、已发布且在所选分店可用时，合资格且关联顾客的销售会增加印花。请定义每个里程碑的价值，例如可交付的免费商品或店内余额。',ms:'Jualan layak yang dipautkan kepada pelanggan menambah cop apabila program ini aktif, diterbitkan dan tersedia di cawangan yang dipilih. Tetapkan nilai setiap pencapaian — item percuma untuk diserahkan atau kredit kedai.'}),
-  referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'})
+  referralEnabledOutcome:Object.freeze({en:'When the programme is Enabled, the new customer’s first sale above the minimum can add {amount} to the referrer’s account — audited, once only.','zh-CN':'当计划已启用时，新顾客首次达到最低消费的销售可向推荐人账户加入 {amount}；全程审计且仅发放一次。',ms:'Apabila program Dihidupkan, jualan pertama pelanggan baharu yang melebihi minimum boleh menambah {amount} ke akaun perujuk — diaudit, sekali sahaja.'}),
+  /* nestly_v940 — the first wave against interpolation as a class. A sentence that mixes reviewed
+     English with a runtime value renders as ONE text node, and the flat catalogue keys on whole
+     nodes, so it reached a zh-CN or ms reader in English no matter how complete that catalogue
+     became. Most of the wave did not need a template at all: where the value sits at one END of
+     the sentence, wrapping the VALUE in a span leaves the English as a node of its own and the
+     catalogue reaches it — cheaper, and it keeps working in the many harnesses that slice one
+     render function out of app.js and run it without this helper. These fourteen are the ones
+     where the value is genuinely INSIDE the sentence, so only a template can carry the word order
+     each language needs. English inflects a paged count for number and Chinese and Malay do not,
+     which is why the twin keys carry the same sentence in those two locales — the shape
+     switchOtherWorkspace / switchOtherWorkspaces has had since v97. */
+  referralPageCount:Object.freeze({en:"{total} referral · page {page} of {pages}",'zh-CN':"{total} 条推荐 · 第 {page} 页，共 {pages} 页",ms:"{total} rujukan · halaman {page} daripada {pages}"}),
+  referralsPageCount:Object.freeze({en:"{total} referrals · page {page} of {pages}",'zh-CN':"{total} 条推荐 · 第 {page} 页，共 {pages} 页",ms:"{total} rujukan · halaman {page} daripada {pages}"}),
+  membershipPageCount:Object.freeze({en:"{total} membership · page {page} of {pages}",'zh-CN':"{total} 个会籍 · 第 {page} 页，共 {pages} 页",ms:"{total} keahlian · halaman {page} daripada {pages}"}),
+  membershipsPageCount:Object.freeze({en:"{total} memberships · page {page} of {pages}",'zh-CN':"{total} 个会籍 · 第 {page} 页，共 {pages} 页",ms:"{total} keahlian · halaman {page} daripada {pages}"}),
+  giftCardPageCount:Object.freeze({en:"{total} card · page {page} of {pages}",'zh-CN':"{total} 张卡 · 第 {page} 页，共 {pages} 页",ms:"{total} kad · halaman {page} daripada {pages}"}),
+  giftCardsPageCount:Object.freeze({en:"{total} cards · page {page} of {pages}",'zh-CN':"{total} 张卡 · 第 {page} 页，共 {pages} 页",ms:"{total} kad · halaman {page} daripada {pages}"}),
+  appointmentPageCount:Object.freeze({en:"{total} appointment · page {page} of {pages}",'zh-CN':"{total} 个预约 · 第 {page} 页，共 {pages} 页",ms:"{total} janji temu · halaman {page} daripada {pages}"}),
+  appointmentsPageCount:Object.freeze({en:"{total} appointments · page {page} of {pages}",'zh-CN':"{total} 个预约 · 第 {page} 页，共 {pages} 页",ms:"{total} janji temu · halaman {page} daripada {pages}"}),
+  packagesPageCount:Object.freeze({en:"{total} customer packages · page {page} of {pages}",'zh-CN':"{total} 个顾客配套 · 第 {page} 页，共 {pages} 页",ms:"{total} pakej pelanggan · halaman {page} daripada {pages}"}),
+  expensesPageCount:Object.freeze({en:"{total} expenses · page {page} of {pages}",'zh-CN':"{total} 笔支出 · 第 {page} 页，共 {pages} 页",ms:"{total} perbelanjaan · halaman {page} daripada {pages}"}),
+  customersShowing:Object.freeze({en:"{total} customers · showing {shown}",'zh-CN':"{total} 位顾客 · 显示 {shown} 位",ms:"{total} pelanggan · menunjukkan {shown}"}),
+  ofStampsTotal:Object.freeze({en:"of {total} stamps",'zh-CN':"共 {total} 枚印花",ms:"daripada {total} setem"}),
+  upToCustomerProfiles:Object.freeze({en:"Up to {count} customer profiles",'zh-CN':"最多 {count} 个顾客档案",ms:"Sehingga {count} profil pelanggan"}),
+  budgetCapCurrency:Object.freeze({en:"Budget cap ({currency}, 0 = none)",'zh-CN':"预算上限（{currency}，0 = 不设限）",ms:"Had bajet ({currency}, 0 = tiada)"}),
 });
 const WORKSPACE_INTERPOLATED_UI_INVENTORY_V97=Object.freeze([
+  /* nestly_v940 — the first interpolation wave. See the block of the same name in
+     WORKSPACE_TEMPLATE_COPY_V97 for why only these fourteen needed a template. */
+  'referralPageCount','referralsPageCount','membershipPageCount','membershipsPageCount',
+  'giftCardPageCount','giftCardsPageCount','appointmentPageCount','appointmentsPageCount',
+  'packagesPageCount','expensesPageCount','customersShowing','ofStampsTotal',
+  'upToCustomerProfiles','budgetCapCurrency',
   /* nestly_v752: the birthday-editor's derived-sentence preview label. */
   'birthdayBenefitPreview',
   /* nestly_v415: savedNotLive. Save on the Loyalty page publishes now, and publish_loyalty_config

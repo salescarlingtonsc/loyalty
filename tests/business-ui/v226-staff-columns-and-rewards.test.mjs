@@ -64,7 +64,7 @@ test('V226 Customer 360 leads with what this customer can redeem now', () => {
   assert.match(block, /\$\{earnLineV567\}/);
   assert.match(app, /<b>Earn:<\/b>/);
   // Not-yet-earned rewards are secondary, and the empty case still says how far off.
-  assert.match(block, /<summary>Coming up · \$\{pendingRewards\.length\}<\/summary>/);
+  assert.match(block, /<summary><span>Coming up<\/span> · \$\{pendingRewards\.length\}<\/summary>/);
   assert.match(block, /Nothing ready to redeem yet/);
   // The scanner is the action, and only when there is something to scan for.
   // V249: the scan sentence was struck out; the scanner button itself is the action, same gate.

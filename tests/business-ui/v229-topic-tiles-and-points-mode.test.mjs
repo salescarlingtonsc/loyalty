@@ -38,7 +38,7 @@ test('V358 the overview is eight peer topic tiles, and drilling in is the only w
      the strip cannot advertise a number the grid does not contain. */
   assert.match(app, /data-grow-tile-filter-v357="all">All \(\$\{growDisplayTopicsV343\.length\}\)/);
   assert.match(app, /data-grow-tile-filter-v357="live">\$\{STATUS_WORDS\.on\} \(\$\{growDisplayLiveV343\.length\}\)/);
-  assert.match(app, /data-grow-tile-filter-v357="pending">Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
+  assert.match(app, /data-grow-tile-filter-v357="pending">Not set up <span>\(\$\{growDisplayPendingV343\.length\}\)<\/span>/);
   /* nestly_v428 (item 3): History is the one count that could be UNKNOWN — it is read off the
      programme spine, and an unread spine must render no number rather than "(0)", which is what
      it printed for every firm forever. The count is still the length of the list it labels. */

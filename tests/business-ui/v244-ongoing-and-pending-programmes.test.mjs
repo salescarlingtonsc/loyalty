@@ -120,7 +120,7 @@ test('V343 the programme landing renders the owner mockup status strip and five-
   assert.doesNotMatch(stripSetup, /growHistoryRowsV271/);
   assert.match(tiles, /All \(\$\{growDisplayTopicsV343\.length\}\)/);
   assert.match(tiles, /\$\{STATUS_WORDS\.on\} \(\$\{growDisplayLiveV343\.length\}\)/);
-  assert.match(tiles, /Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
+  assert.match(tiles, /Not set up <span>\(\$\{growDisplayPendingV343\.length\}\)<\/span>/);
   /* nestly_v428 (item 3): the number is omitted rather than printed as (0) when the spine is
      unreadable — an unread count is not a zero. */
   assert.match(tiles, /History\$\{growDisplayHistoryCountV343===null\?'':` \(\$\{growDisplayHistoryCountV343\}\)`\}/);

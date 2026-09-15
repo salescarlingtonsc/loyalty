@@ -139,7 +139,7 @@ test('retention UI uses RPC drafts and keeps draft identities out of live reads'
     'new-business guidance must not leave an unguarded missing-button handler');
   assert.match(app, /\.eq\('status','draft'\)\.eq\('based_on_version_id',currentVersion\)/,
     'only a draft based on the active version may be offered for recovery');
-  assert.match(app, /href="#\/retention\/\$\{resumableDraft\.id\}">Resume draft v\$\{resumableDraft\.version_no\}/);
+  assert.match(app, /href="#\/retention\/\$\{resumableDraft\.id\}">Resume draft <span>v\$\{resumableDraft\.version_no\}<\/span>/);
   assert.match(app, /nav\(`#\/retention\/\$\{data\.version_id\}`\)/,
     'new drafts must become refresh-safe routes');
   assert.match(app, /\$\('discardRetentionDraft'\)\.onclick=\(\)=>nav\('#\/retention'\)/);

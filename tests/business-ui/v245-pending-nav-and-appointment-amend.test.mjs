@@ -38,7 +38,7 @@ test('V245 nav row, page heading and tile group all say the same words', () => {
   /* V343/V357 replaced the two fixed sections (Ongoing programmes / Pending setup) with one
      filter strip over the same tiles; "Not set up" is still a first-class view of the list, which
      is what this nav test is about. */
-  assert.match(app, /data-grow-tile-filter-v357="pending">Not set up \(\$\{growDisplayPendingV343\.length\}\)/);
+  assert.match(app, /data-grow-tile-filter-v357="pending">Not set up <span>\(\$\{growDisplayPendingV343\.length\}\)<\/span>/);
   assert.doesNotMatch(app, /growTileSectionV244\(/,
     'the two fixed sections were replaced by the V357 filter strip, not kept alongside it');
   assert.doesNotMatch(app, /programmeView==='available'\?'To set up'/);

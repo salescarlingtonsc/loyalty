@@ -48,6 +48,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v940: the renderers below now carry named templates for the sentences that mix reviewed
+   English with a runtime value — the flat catalogue keys on whole text nodes and can never reach
+   one of those. The real runtime is pulled in rather than stubbed, the same posture this file
+   already takes with the other helpers it slices out of app.js. */
+const templateRuntime = workspaceTemplateRuntime();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const appJs = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -278,7 +284,7 @@ function runBlock(block, exportName, args) {
   }[c]));
   const money = (c) => 'SGD ' + ((Number(c) || 0) / 100).toFixed(2);
   const walletDate = (v) => String(v ?? '');
-  const sandbox = { esc, money, walletDate, console };
+  const sandbox = { ...templateRuntime, esc, money, walletDate, console };
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(`${block}\n__exports.fn = ${exportName};`, context);
@@ -292,7 +298,7 @@ function runV650Block(exportName, closureVars) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
   const walletDate = (v) => String(v ?? '');
-  const sandbox = { esc, walletDate, console, ...closureVars };
+  const sandbox = { ...templateRuntime, esc, walletDate, console, ...closureVars };
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
@@ -425,7 +431,7 @@ test('v723 ciCategoryCustomersRowsMarkupV650 renders the minimal contract fixtur
   const scopeMoney = (c) => 'SGD ' + ((Number(c) || 0) / 100).toFixed(2);
   const walletDate = (v) => String(v ?? '');
   const categoryCustomersCacheV650 = new Map([['node1', { data: fixture }]]);
-  const sandbox = { esc, scopeMoney, walletDate, categoryCustomersCacheV650, console };
+  const sandbox = { ...templateRuntime, esc, scopeMoney, walletDate, categoryCustomersCacheV650, console };
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(`${CATEGORY_CUSTOMERS_ROWS_BLOCK}\n__exports.fn = ciCategoryCustomersRowsMarkupV650;`, context);
@@ -479,7 +485,7 @@ test('v723 categoryMixMarkupV650 renders the minimal contract fixture cleanly', 
   // Real value at app/app.js:49450 — categoryMixMarkupV650 reads it directly (module scope, not
   // passed as a parameter), so the sandbox must supply the same constant.
   const CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650 = 9000;
-  const sandbox = {
+  const sandbox = { ...templateRuntime,
     esc, scopeMoney, walletDate, ciMeasuredSinceV650, CI_CATEGORY_DISTRIBUTION_FLOOR_V704,
     CI_CATEGORY_MIX_READY_THRESHOLD_BPS_V650, console,
   };

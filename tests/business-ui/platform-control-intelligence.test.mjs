@@ -29,7 +29,7 @@ test('workspace switching distinguishes customer view, current firm and other st
   const shell=section('function renderShell(page){','const M=()=>');
   const profile=section('function profileHtml(){','function wireProfile(page){');
   assert.match(customer,/\$\{esc\(name\)\} workspace/);
-  assert.match(customer,/Business workspaces \(\$\{workspaces\.length\}\)/);
+  assert.match(customer,/Business workspaces <span>\(\$\{workspaces\.length\}\)<\/span>/);
   assert.match(business,/workspace\.business_slug!==currentBusinessSlug/);
   assert.match(business,/hasCustomerPersona/);
   assert.match(business,/Customer view/);

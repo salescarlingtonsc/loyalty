@@ -35,6 +35,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { workspaceTemplateRuntime } from '../support/workspace-template-runtime.mjs';
+/* nestly_v940: the renderers below now carry named templates for the sentences that mix reviewed
+   English with a runtime value — the flat catalogue keys on whole text nodes and can never reach
+   one of those. The real runtime is pulled in rather than stubbed, the same posture this file
+   already takes with the other helpers it slices out of app.js. */
+const templateRuntime = workspaceTemplateRuntime();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const app = readFileSync(join(root, 'app', 'app.js'), 'utf8');
@@ -70,7 +76,7 @@ assert.ok(freshnessHelperStart > -1 && freshnessHelperEnd > freshnessHelperStart
 const freshnessHelperBlock = app.slice(freshnessHelperStart, freshnessHelperEnd);
 
 function makePage() {
-  const sandbox = {
+  const sandbox = { ...templateRuntime,
     esc: (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
     walletDate: (v) => `WD:${v}`,
     S: { biz: { currency: 'SGD' } }
@@ -287,6 +293,22 @@ const CATEGORY_MIX_PARITY = {
   observed_since: '2026-08-01T00:00:00Z'
 };
 
+/* nestly_v940: the parity line is a named template now — "{total} customers · showing {shown}" —
+   because it mixes reviewed English with two runtime values, and a sentence like that renders as
+   one text node the flat catalogue can never reach. Its numbers therefore arrive in their own
+   data-workspace-value spans rather than as a contiguous string. Reading them back out of the
+   markup asserts the same parity invariant, and asserts it more precisely than a substring did:
+   it names WHICH number is which, so a render that swapped total and shown could no longer pass. */
+function parityLine(html) {
+  const block = /<span data-workspace-template="customersShowing">([\s\S]*?)<\/span><\/span>/.exec(html);
+  if (!block) return null;
+  const read = (name) => {
+    const m = new RegExp(`data-workspace-value="${name}"[^>]*>([^<]*)<`).exec(block[1] + '</span>');
+    return m ? m[1] : null;
+  };
+  return { total: read('total'), shown: read('shown') };
+}
+
 test('V685 category-mix drill parity: full parity shows "N customers · showing N"', () => {
   const page = makePage();
   page.setCategoryMix(CATEGORY_MIX_PARITY, '');
@@ -296,7 +318,8 @@ test('V685 category-mix drill parity: full parity shows "N customers · showing 
   }));
   page.setCategoryCustomerCache('beauty.facials', { data: { customers: twelveCustomers, suppressed: null } });
   const html = page.categoryMix();
-  assert.ok(html.includes('12 customers · showing 12'), 'full parity: aggregate count equals drilled row count');
+  assert.deepEqual(parityLine(html), { total: '12', shown: '12' },
+    'full parity: aggregate count equals drilled row count');
 });
 
 test('V685 category-mix drill parity: a below-floor node shows the suppressed cohort_size, never 0, and the suppression note', () => {
@@ -310,7 +333,7 @@ test('V685 category-mix drill parity: a below-floor node shows the suppressed co
     }
   });
   const html = page.categoryMix();
-  assert.ok(html.includes('3 customers · showing 3'),
+  assert.deepEqual(parityLine(html), { total: '3', shown: '3' },
     'below the floor, "showing" must read the suppressed cohort_size, not the empty drilled array length');
   assert.ok(html.includes('Naming a cohort this small would identify its members.'));
   assert.ok(!html.includes('No customers in this category yet.'),
@@ -324,7 +347,7 @@ test('V685 category-mix drill parity: a genuinely empty category shows 0 · show
   page.expandNode('beauty.empty');
   page.setCategoryCustomerCache('beauty.empty', { data: { customers: [], suppressed: null } });
   const html = page.categoryMix();
-  assert.ok(html.includes('0 customers · showing 0'));
+  assert.deepEqual(parityLine(html), { total: '0', shown: '0' });
   assert.ok(html.includes('No customers in this category yet.'));
 });
 
@@ -349,7 +372,7 @@ const freshnessBlock = app.slice(freshnessStart, freshnessEnd);
 
 function renderOpportunities(payload) {
   const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const sandbox = {
+  const sandbox = { ...templateRuntime,
     esc,
     walletDate: (v) => `WD:${v}`,
     /* ciEmptyPanelV679 is the real app.js function, defined a little further down the same file

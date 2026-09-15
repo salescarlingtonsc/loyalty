@@ -20412,6 +20412,162 @@
       "reason": "nestly_v960 — two strings the gap-close batch introduced, both of which exist precisely to REMOVE an ambiguity, so shipping them English-only would leave the one line a zh-CN or ms owner needs most as the one line they cannot read. (1) the Dashboard brief card names a trailing seven COMPLETE days ending on the date printed beneath it, not a calendar week, so its Help Centre row had to stop saying \"the current week\"; (2) Business Intelligence and the Dashboard both had a tile labelled \"New customers\" meaning two different things — first-ever purchase vs customer records created — and the BI tile now carries its definition as a caption.",
       "zh-CN": "首次消费发生在此期间",
       "ms": "Pembelian pertama mereka dalam tempoh ini"
+    },
+    {
+      "source": "Fixed commission",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "固定佣金",
+      "ms": "Komisen tetap"
+    },
+    {
+      "source": "Amended amount",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "修改后的金额",
+      "ms": "Amaun dipinda"
+    },
+    {
+      "source": "Amount paid",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "已付金额",
+      "ms": "Amaun dibayar"
+    },
+    {
+      "source": "Bundle price",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "捆绑包价格",
+      "ms": "Harga himpunan"
+    },
+    {
+      "source": "Company cost budget",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "公司成本预算",
+      "ms": "Bajet kos syarikat"
+    },
+    {
+      "source": "Minimum spend",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "最低消费",
+      "ms": "Perbelanjaan minimum"
+    },
+    {
+      "source": "Company cost",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "公司成本",
+      "ms": "Kos syarikat"
+    },
+    {
+      "source": "Credit dropped each period",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "每期发放的额度",
+      "ms": "Kredit dimasukkan setiap tempoh"
+    },
+    {
+      "source": "Business workspaces",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "商户工作区",
+      "ms": "Ruang kerja perniagaan"
+    },
+    {
+      "source": "Margin ok",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "利润空间正常",
+      "ms": "Margin memadai"
+    },
+    {
+      "source": "Role offered:",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "提供的角色：",
+      "ms": "Peranan ditawarkan:"
+    },
+    {
+      "source": "Branch scope:",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "分店范围：",
+      "ms": "Skop cawangan:"
+    },
+    {
+      "source": "Provider reference:",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "服务商参考号：",
+      "ms": "Rujukan penyedia:"
+    },
+    {
+      "source": "Restricted email:",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "限定邮箱：",
+      "ms": "E-mel terhad:"
+    },
+    {
+      "source": "Last run:",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "上次运行：",
+      "ms": "Kali terakhir dijalankan:"
+    },
+    {
+      "source": "Reached at",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "达到条件",
+      "ms": "Dicapai pada"
+    },
+    {
+      "source": "Coming up",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "即将到来",
+      "ms": "Akan datang"
+    },
+    {
+      "source": "Session history",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "次数使用记录",
+      "ms": "Sejarah sesi"
+    },
+    {
+      "source": "Reward history",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "奖励历史",
+      "ms": "Sejarah ganjaran"
+    },
+    {
+      "source": "Resume draft",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "继续草稿",
+      "ms": "Sambung draf"
+    },
+    {
+      "source": "All sales",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "全部交易",
+      "ms": "Semua jualan"
+    },
+    {
+      "source": "Reference code for",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "参考代码：",
+      "ms": "Kod rujukan untuk"
+    },
+    {
+      "source": "Measured since",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "统计起始",
+      "ms": "Diukur sejak"
+    },
+    {
+      "source": "out of 5",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "/ 5 分",
+      "ms": "daripada 5"
+    },
+    {
+      "source": "Points high to low",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "积分由高到低",
+      "ms": "Mata tinggi ke rendah"
+    },
+    {
+      "source": "Stamps high to low",
+      "reason": "nestly_v940 — the English half of an interpolated label, now that the call site wraps the runtime value in a span and leaves these words as a text node of their own. Every one was previously part of a single node that mixed reviewed copy with a value — 'Sell for (SGD)', 'Measured since 3 Aug', 'Restricted email: a@b.com' — which is exactly what a catalogue keyed on whole nodes can never match. Splitting rather than templating was chosen wherever the value sits at one END of the sentence: it needs no reviewed template, no inventory entry and no helper, so the many harnesses that slice one render function out of app.js and run it in a vm keep working. 'Points high to low' and 'Stamps high to low' are the two whole-literal forms of the customer-list sort option, where a span cannot survive inside <option> at all.",
+      "zh-CN": "印花由高到低",
+      "ms": "Setem tinggi ke rendah"
     }
   ]
 }

@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="production-source-sha256" content="bc0f6939b44bde47687e5a4a6968e745af86b38639fee14582b76e3ac1ebecab"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
+  <meta name="production-source-sha256" content="8577395f6062d61abe1a9e05db43796906e7bae6a678648afce3bf8585ad9dff"><link rel="icon" href="data:,"><title>Peekaa V145 launch-freeze browser acceptance</title><style>
 /* ============================================================================
    Frenly design system v2 — "mockup layout, iOS polish" (owner ruling 2026-07-18)
    Principles: 8pt grid · SF-grade type with tight optical tracking · hairline
@@ -6209,7 +6209,7 @@ html[data-customer-theme="dark"] .customer-celebration-icon-v468{background:#4A3
 
   body{padding:20px}.v145-shell{max-width:1280px;margin:auto}.v145-provenance{font-size:11px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:10px}.v145-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   @media(max-width:600px){body{padding:10px}.card{padding:16px}.v145-shell{width:100%}}
-  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · bc0f6939b44bde47687e5a4a6968e745af86b38639fee14582b76e3ac1ebecab</p>
+  </style></head><body><div class="v145-shell"><p class="v145-provenance">Actual production-renderer harness · 8577395f6062d61abe1a9e05db43796906e7bae6a678648afce3bf8585ad9dff</p>
   <nav class="v145-nav" aria-label="V145 acceptance views"><button class="btn" data-view="dashboard">Dashboard</button><button class="btn ghost" data-view="reports">Reports</button><button class="btn ghost" data-view="daily">Daily report</button><button class="btn ghost" data-view="client">Customer 360</button><button class="btn ghost" data-view="expenses">Expenses</button><button class="btn ghost" data-view="pnl">P&amp;L</button><button class="btn ghost" data-view="inbox">Customer inbox</button><button class="btn ghost" data-view="safety">Launch safety evidence</button></nav><main id="main"></main></div><div id="toast"></div><script>
   const $=id=>document.getElementById(id),M=()=>document.getElementById('main');
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -6699,7 +6699,7 @@ function staffCommissionInsightLineV832(insights,formatMoney){
 function commissionInputsHtmlV825({idPrefix,row=null}){
   const pct=row&&row.commission_bps!=null?String(Number(row.commission_bps)/100):'';
   const flat=row&&row.commission_flat_cents!=null?(Number(row.commission_flat_cents)/100).toFixed(2):'';
-  return `<div><label for="${idPrefix}-commission-v825">Commission override %</label><input id="${idPrefix}-commission-v825" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(pct)}"></div><div><label for="${idPrefix}-commission-flat-v825">Fixed commission (${esc(S.biz?.currency||'SGD')})</label><input id="${idPrefix}-commission-flat-v825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${esc(flat)}"></div>`;
+  return `<div><label for="${idPrefix}-commission-v825">Commission override %</label><input id="${idPrefix}-commission-v825" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(pct)}"></div><div><label for="${idPrefix}-commission-flat-v825">Fixed commission <span>(${esc(S.biz?.currency||'SGD')})</span></label><input id="${idPrefix}-commission-flat-v825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${esc(flat)}"></div>`;
 }
 function fillCommissionInputsV825(idPrefix,row){
   const pct=$(`${idPrefix}-commission-v825`),flat=$(`${idPrefix}-commission-flat-v825`);
@@ -7723,7 +7723,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
     const tone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'}[f.recovery_status]||'';
     const resolvedName=f.resolved_by?(staffName[f.resolved_by]||'a teammate'):'';
     const prov=f.recovery_status==='resolved'?`<p class="fb-prov">Resolved${resolvedName?' by '+esc(resolvedName):''}${f.resolved_at?' · '+esc(sgt(f.resolved_at)||''):''}${f.resolution_note?' · '+esc(f.resolution_note):''}</p>`:'';
-    return `<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${tone}">${esc(label)}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(sgt(f.created_at)||'')}</p>${prov}</div>`;
+    return `<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars}</span><span class="sr-only"><span>${f.rating}</span> out of 5</span><span class="spacer"></span><span class="pill ${tone}">${esc(label)}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(sgt(f.created_at)||'')}</p>${prov}</div>`;
   }).join('')}</div>`:'';
   const nowIso=new Date().toISOString();
   /* One unified reverse-chronological timeline. Each source keeps its own date field for sorting
@@ -8063,7 +8063,7 @@ async function renderReportingScopeSelectorV155(onChange,isCurrent=()=>true,targ
       :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
         <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
       ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:16})}<span>Open Record sale scanner</span></a>`:''}
-      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary><span>Coming up</span> · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
     pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
         ${/* V319 put spendable credit here so hiding the zero-value row above never put the figure
@@ -9904,7 +9904,7 @@ function renderHistPage(history,n,offsetV468=0){
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
-      <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
+      <div class="card" style="margin-top:16px"><b><span>All sales</span> — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Item</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total of listed rows (signed)</b></td><td class="num"><b>${money(rows.reduce((a,r)=>a+Number(r.amount_cents||0),0))}</b></td></tr><tr class="total-row"><td colspan="5">Of which revenue (per sale policy)</td><td class="num">${money(revenue)}</td></tr></table></div>`
@@ -10095,7 +10095,7 @@ function renderHistPage(history,n,offsetV468=0){
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td style="white-space:nowrap">${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn danger sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
-        <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
+        <div class="row" style="margin-top:12px"><span class="muted small">${workspaceTemplateHtmlV97('expensesPageCount',{total:total.toLocaleString('en-SG'),page:expensePage+1,pages:totalPages})}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
     const prev=$('expensesPrev'),next=$('expensesNext');
     if(prev)prev.onclick=()=>{expensePage=Math.max(0,expensePage-1);load()};
@@ -10704,7 +10704,7 @@ function studioEmergencyPauseActorLabel(actor){
   }
   document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
   window.addEventListener('error',event=>window.__consoleErrors.push(event.message));
-  window.v145Metrics=()=>({sourceHash:'bc0f6939b44bde47687e5a4a6968e745af86b38639fee14582b76e3ac1ebecab',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
+  window.v145Metrics=()=>({sourceHash:'8577395f6062d61abe1a9e05db43796906e7bae6a678648afce3bf8585ad9dff',view:currentView,width:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,
     text:document.body.innerText,kpis:[...document.querySelectorAll('.kpi')].map(card=>card.innerText.replace(/\n+/g,' · ')),
     chartConfigs:window.__chartConfigs,rpcCalls:window.__rpcCalls,dataCalls:window.__dataCalls,errors:window.__consoleErrors,handledErrors:window.__handledErrors,
     visibleButtonHeights:[...document.querySelectorAll('button')].filter(button=>button.offsetParent!==null).map(button=>button.getBoundingClientRect().height),

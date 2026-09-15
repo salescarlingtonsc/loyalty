@@ -271,7 +271,8 @@ test('v97 generated catalog contains no prompt leakage or executable source frag
         /* nestly_v937: +158 — the workspace helpers the page-by-page sweep never reached. */
         /* nestly_v938: +263 — the long tail across ~150 workspace helpers. */
         /* nestly_v939: +34 — workspace chrome beside the owner preview. */
-    assert.equal(Object.keys(generatedCopy[locale]).length,4868,`${locale} valid visible-literal inventory changed without catalog review`);
+        /* nestly_v940: +26 — the reviewed half of each split interpolated label. */
+    assert.equal(Object.keys(generatedCopy[locale]).length,4894,`${locale} valid visible-literal inventory changed without catalog review`);
   }
 });
 
@@ -466,8 +467,21 @@ test('v97 named templates are an exact reviewed inventory with locale and placeh
      nestly_v904 adds one: helpForSurfaceV904, the accessible name of the app-bar Help control.
      It is contextual — it names the module whose guide it opens — so it interpolates, and an
      interpolated accessible name belongs here rather than in a template literal that would reach
-     zh-CN and ms readers in English. 146 + 1 = 147. */
-  assert.equal(keys.length,147,'mixed-interface interpolation inventory changed without review');
+     zh-CN and ms readers in English. 146 + 1 = 147.
+     nestly_v940 adds 14 in one wave, the first that goes after interpolation as a class rather
+     than one sentence at a time. A sentence mixing reviewed English with a runtime value renders
+     as ONE text node, and the flat catalogue keys on whole nodes, so it reached a zh-CN or ms
+     reader in English however complete that catalogue became. Most of the wave needed no template:
+     where the value sits at one END, the call site now wraps the VALUE in a span and the English
+     is a node of its own, which the catalogue already reaches — cheaper, and it keeps working in
+     the harnesses that slice one render function out of app.js and run it without this helper.
+     These fourteen are the ones where the value is genuinely INSIDE the sentence: the paged counts
+     on Referrals, Memberships, Gift cards, Appointments, Packages and Expenses, the customer-list
+     parity line, "of {total} stamps", "Up to {count} customer profiles" and the playbook budget
+     cap, whose "0 = none" sits after the currency. English inflects a paged count for number and
+     Chinese and Malay do not, so those twin keys carry the same sentence in those two locales —
+     the shape switchOtherWorkspace / switchOtherWorkspaces has had since v97. 147 + 14 = 161. */
+  assert.equal(keys.length,161,'mixed-interface interpolation inventory changed without review');
   assert.deepEqual([...interpolatedInventory].sort(),[...keys].sort());
   assert.equal(new Set(interpolatedInventory).size,interpolatedInventory.length);
   for(const key of interpolatedInventory){

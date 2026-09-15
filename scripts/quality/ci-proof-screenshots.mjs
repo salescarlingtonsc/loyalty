@@ -57,6 +57,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
 import { isDirectCliInvocation } from './is-direct-cli-invocation.mjs';
+import { workspaceTemplateRuntime } from '../../tests/support/workspace-template-runtime.mjs';
+
+/* nestly_v940: the CI renderers carry named templates for the sentences that mix reviewed English
+   with a runtime value — a sentence like that is one text node, which the flat catalogue can never
+   reach. The REAL runtime is pulled in, never stubbed, the same posture this file already takes
+   with ciFreshnessCaptionHtmlV734. */
+const templateRuntime = workspaceTemplateRuntime();
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const P = (...parts) => join(root, ...parts);
@@ -151,7 +158,7 @@ const consoleFreshnessBlock = consoleJs.slice(consoleFreshnessStart, consoleFres
    VM RUNNERS
    --------------------------------------------------------------------------------------------- */
 function runCiClosure() {
-  const sandbox = { esc, walletDate, S: { biz: { currency: 'SGD' } } };
+  const sandbox = { ...templateRuntime, esc, walletDate, S: { biz: { currency: 'SGD' } } };
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
@@ -173,7 +180,7 @@ function runCiClosure() {
 }
 
 function renderV679(payload, which) {
-  const sandbox = {
+  const sandbox = { ...templateRuntime,
     esc, money, walletDate,
     CUI: { icon: () => '', emptyState: ({ title, body }) => `<div class="empty"><b>${title}</b><p>${body}</p></div>` }
   };
@@ -188,7 +195,7 @@ function renderV679(payload, which) {
 }
 
 function renderOpportunities(payload) {
-  const sandbox = {
+  const sandbox = { ...templateRuntime,
     esc, walletDate,
     ciEmptyPanelV679: (headingId, eyebrow, title, message) => `<section class="revenue-truth-section" aria-labelledby="${headingId}">
       <div class="revenue-truth-section-head"><div><span class="revenue-truth-eyebrow">${esc(eyebrow)}</span>
@@ -202,7 +209,7 @@ function renderOpportunities(payload) {
 }
 
 function renderVisitDrilldown(rows) {
-  const sandbox = { money };
+  const sandbox = { ...templateRuntime, money };
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
@@ -215,7 +222,7 @@ function renderVisitDrilldown(rows) {
 }
 
 function renderDashboardTile(key, metric) {
-  const sandbox = { esc, workspaceTemplateAttributeV97: (attribute, keyName, values) => `${attribute}="${esc(JSON.stringify(values))}"` };
+  const sandbox = { ...templateRuntime, esc, workspaceTemplateAttributeV97: (attribute, keyName, values) => `${attribute}="${esc(JSON.stringify(values))}"` };
   const context = vm.createContext(sandbox);
   context.__exports = {};
   vm.runInContext(
@@ -234,7 +241,7 @@ function renderOwnerErrorText(error) {
 }
 
 function renderConsultativeBrief(report, affinity, recommendations) {
-  const sandbox = {
+  const sandbox = { ...templateRuntime,
     escapeHtml: esc,
     asObject: (x) => (x && typeof x === 'object' && !Array.isArray(x)) ? x : {},
     asArray: (x) => Array.isArray(x) ? x : [],

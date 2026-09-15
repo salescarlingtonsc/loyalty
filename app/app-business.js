@@ -2061,7 +2061,7 @@ function staffCommissionInsightLineV832(insights,formatMoney){
 function commissionInputsHtmlV825({idPrefix,row=null}){
   const pct=row&&row.commission_bps!=null?String(Number(row.commission_bps)/100):'';
   const flat=row&&row.commission_flat_cents!=null?(Number(row.commission_flat_cents)/100).toFixed(2):'';
-  return `<div><label for="${idPrefix}-commission-v825">Commission override %</label><input id="${idPrefix}-commission-v825" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(pct)}"></div><div><label for="${idPrefix}-commission-flat-v825">Fixed commission (${esc(S.biz?.currency||'SGD')})</label><input id="${idPrefix}-commission-flat-v825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${esc(flat)}"></div>`;
+  return `<div><label for="${idPrefix}-commission-v825">Commission override %</label><input id="${idPrefix}-commission-v825" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(pct)}"></div><div><label for="${idPrefix}-commission-flat-v825">Fixed commission <span>(${esc(S.biz?.currency||'SGD')})</span></label><input id="${idPrefix}-commission-flat-v825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${esc(flat)}"></div>`;
 }
 function fillCommissionInputsV825(idPrefix,row){
   const pct=$(`${idPrefix}-commission-v825`),flat=$(`${idPrefix}-commission-flat-v825`);
@@ -2564,7 +2564,7 @@ function renderOnboard(){
        stays in the DOM, hidden, holding that one value, because the start RPC still names a capacity. */
     const capacityOptions=signupTiersForV664('annual').map(tier=>Number(tier.capacity_ceiling)).slice(0,1);
     if(!capacityOptions.length)capacityOptions.push(10000);
-    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details, then choose how you want to pay. Paying by card opens your workspace automatically once Stripe confirms payment; paying manually sends the details to Peekaa admin, who opens your workspace after checking payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset id="payMethodChoice" style="border:0;padding:0;margin:22px 0 0"><legend style="font-weight:700">How would you like to pay?</legend><p class="muted small" style="margin-top:4px">Choose one. Nothing is charged until you confirm.</p><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:10px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="stripe"> <strong>Pay by card now</strong><p class="muted small" style="margin-top:5px">Secure Stripe Checkout. Your workspace opens automatically once payment is confirmed.</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="manual"> <strong>Pay manually</strong><p class="muted small" style="margin-top:5px">Bank transfer, cash or another arrangement. Peekaa admin opens your workspace after checking payment.</p></label></div></fieldset><div id="payStripeBlock" hidden><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · <span id="selfServeAnnualPrice">${money(annual.base_amount_cents)}</span>/year</strong><p class="muted small" style="margin-top:5px"><span id="selfServeAnnualEquivalent">${money(Math.round(annual.base_amount_cents/12))}</span>/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · <span id="selfServeMonthlyPrice">${money(monthly.base_amount_cents)}</span>/month</strong><p class="muted small" style="margin-top:5px" id="selfServeMonthlyNote">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity" hidden>Customer capacity</label><select id="customerCapacity" hidden>${capacityOptions.map(value=>`<option value="${value}">Up to ${value.toLocaleString('en-SG')} customer profiles</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p></div><div id="payManualBlock" hidden>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}</div><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
+    root.innerHTML=`<main class="center-wrap" id="main" tabindex="-1"><section class="card" style="width:820px;max-width:100%"><div class="logo">${brandWordmark()}</div><h1 style="font-size:1.7rem;margin-top:18px">Set up your business</h1><p class="muted small" style="margin-top:7px">Enter your business details, then choose how you want to pay. Paying by card opens your workspace automatically once Stripe confirms payment; paying manually sends the details to Peekaa admin, who opens your workspace after checking payment.</p><div class="grid2" style="margin-top:18px"><div><label for="ownerFullName">Your full name</label><input id="ownerFullName" autocomplete="name"></div><div><label for="businessName">Business name</label><input id="businessName" autocomplete="organization"></div><div><label for="businessSector">Business sector</label><select id="businessSector">${sectors.map(sector=>`<option value="${esc(sector.sector_key)}">${esc(sector.label)}</option>`).join('')}</select></div><div><label for="businessRegistration">UEN / registration number (optional)</label><input id="businessRegistration" autocomplete="off"></div></div><label for="businessSlug">Workspace address</label><div class="row"><span class="muted small">peekaa.asia/business/</span><input id="businessSlug" autocomplete="off"></div><fieldset id="payMethodChoice" style="border:0;padding:0;margin:22px 0 0"><legend style="font-weight:700">How would you like to pay?</legend><p class="muted small" style="margin-top:4px">Choose one. Nothing is charged until you confirm.</p><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:10px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="stripe"> <strong>Pay by card now</strong><p class="muted small" style="margin-top:5px">Secure Stripe Checkout. Your workspace opens automatically once payment is confirmed.</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="payMethod" value="manual"> <strong>Pay manually</strong><p class="muted small" style="margin-top:5px">Bank transfer, cash or another arrangement. Peekaa admin opens your workspace after checking payment.</p></label></div></fieldset><div id="payStripeBlock" hidden><fieldset style="border:0;padding:0;margin:20px 0 0"><legend style="font-weight:700">Billing cycle</legend><div class="row" style="align-items:stretch;flex-wrap:wrap;margin-top:8px"><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="annual" checked> <strong>Annual · <span id="selfServeAnnualPrice">${money(annual.base_amount_cents)}</span>/year</strong><p class="muted small" style="margin-top:5px"><span id="selfServeAnnualEquivalent">${money(Math.round(annual.base_amount_cents/12))}</span>/month equivalent · best value</p></label><label class="card" style="flex:1;min-width:220px;cursor:pointer"><input type="radio" name="selfServeCadence" value="monthly"> <strong>Monthly · <span id="selfServeMonthlyPrice">${money(monthly.base_amount_cents)}</span>/month</strong><p class="muted small" style="margin-top:5px" id="selfServeMonthlyNote">Flexible monthly billing</p></label></div></fieldset><label for="customerCapacity" hidden>Customer capacity</label><select id="customerCapacity" hidden>${capacityOptions.map(value=>`<option value="${value}">${workspaceTemplateHtmlV97('upToCustomerProfiles',{count:value.toLocaleString('en-SG')})}</option>`).join('')}</select><p class="muted small" id="selfServeCapacityNote" style="margin-top:6px"></p><div class="card" style="margin-top:16px;background:var(--sand)"><span class="muted small">Amount due</span><div id="selfServeTotal" style="font-size:1.8rem;font-weight:750;margin-top:3px"></div><p class="muted small" style="margin-top:5px">GST not charged · staff access included · Subscription fees are non-refundable after payment, except where required by law</p></div><details style="margin-top:16px"><summary style="font-weight:700;cursor:pointer">What is included</summary><ul class="small" style="columns:2;column-width:240px">${(state.data.included_modules||[]).map(item=>`<li>${esc(item)}</li>`).join('')}</ul></details><label class="checkrow" for="onboardLegalConsent" style="margin-top:18px"><input id="onboardLegalConsent" type="checkbox" aria-label="I agree to the Terms of Service and acknowledge the Privacy Policy"><span>I agree to the <a class="consent-document-link" href="/terms.html?return=business-signup" target="_blank" rel="noopener">Terms of Service</a> and acknowledge the <a class="consent-document-link" href="/privacy.html?return=business-signup" target="_blank" rel="noopener">Privacy Policy</a>.</span></label><div id="onboardError" role="alert"></div><button class="btn" id="startSelfServe" style="width:100%;margin-top:18px">Continue to secure Stripe Checkout</button><p class="muted small" id="onboardStatus" role="status" aria-live="polite" style="margin-top:8px">No payment details are entered in Peekaa.</p></div><div id="payManualBlock" hidden>${manualBusinessApplicationFallbackHtml(sectors,{inline:true})}</div><hr style="border:none;border-top:1px solid var(--line);margin:22px 0 14px"><b>Joining a team instead?</b><div class="row" style="margin-top:10px"><input id="ic" placeholder="Invite code from your boss" style="text-transform:uppercase;max-width:260px"><button class="btn ghost" id="join">Join team</button><span class="spacer"></span><button class="btn ghost sm" id="out">Sign out</button></div>${accountDeletionCardHtml()}${legalLinks()}</section></main>`;
     const setupIntroduction=root.querySelector('main section.card>p');
     if(setupIntroduction)setupIntroduction.insertAdjacentHTML('afterend',businessSetupAccountHtml('businessSetupSignOut'));
     wireBusinessSetupAccount('businessSetupSignOut');wireAccountDeletionButton();
@@ -4709,7 +4709,7 @@ function openSaleAmountCorrectionDialog(item,onDone){
   document.body.insertAdjacentHTML('beforeend',`<div class="modal" id="saleCorrectionModal" role="dialog" aria-modal="true" aria-labelledby="saleCorrectionTitle" tabindex="-1"><div class="modal-card" style="max-width:540px">
     <div class="row"><div><h2 id="saleCorrectionTitle">Amend sale amount</h2><p class="muted small">${esc(item.customer_name||'Walk-in')} · original ${money(Number(item.amount_cents))}</p></div><span class="spacer"></span><button class="btn ghost sm" id="saleCorrectionClose" type="button">Close</button></div>
     <div class="imp-note"><b>The original stays in history.</b> ${esc(BRAND.productName)} reverses it and records a corrected replacement together, so customer points and financial records stay synchronized.</div>
-    <label for="saleCorrectedAmount">Amended amount (${esc(S.biz.currency||'SGD')})</label>
+    <label for="saleCorrectedAmount">Amended amount <span>(${esc(S.biz.currency||'SGD')})</span></label>
     <input id="saleCorrectedAmount" type="number" min="0.01" step="0.01" inputmode="decimal" value="${(Number(item.amount_cents)/100).toFixed(2)}">
     <label for="saleCorrectionNote">Correction note (optional)</label>
     <textarea id="saleCorrectionNote" rows="3" placeholder="Add context only if useful"></textarea>
@@ -6540,7 +6540,7 @@ function openCampaignPrepV153({audienceKey='inactive_60_plus',audienceLabel='Ina
         <div><label for="campaignTypeV153">Campaign type</label><select id="campaignTypeV153"><option value="winback">We miss you</option><option value="birthday">Birthday reward</option><option value="weekend">Weekend promotion</option><option value="new_service">New service or menu</option><option value="flash">Flash promotion</option></select></div>
       </div>
       <div class="campaign-prep-grid">
-        <div class="campaign-prep-panel"><h3>Audience</h3><p><b>${esc(audienceLabel)}</b></p><p class="muted small">${esc(definition||'Customers matching the selected audience rule.')}</p><p class="muted small">Branch scope: ${esc(branchLabel)}</p></div>
+        <div class="campaign-prep-panel"><h3>Audience</h3><p><b>${esc(audienceLabel)}</b></p><p class="muted small">${esc(definition||'Customers matching the selected audience rule.')}</p><p class="muted small">Branch scope: <span>${esc(branchLabel)}</span></p></div>
         <div class="campaign-prep-panel"><h3>Audience preview</h3><p><b>${Number(count)||0}</b> matching customers</p><p class="muted small">${esc(exclusionCopy)}</p></div>
       </div>
       <label for="campaignMessageV153" style="margin-top:12px">Message preview</label><textarea id="campaignMessageV153" rows="4">${esc(campaignTemplateMessageV153('winback',audienceLabel))}</textarea>
@@ -6650,7 +6650,7 @@ async function clientsPage(){
          only the first was ever read by getElementById, so the second was dead UI. One bar now
          renders, carrying the union of both bars' inactivity buckets (incl. all_inactive, which
          the dashboard drill targets). -->
-    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${esc(directoryUnitLabelV378())} high to low</option><option value="spend_desc">Lifetime spend high to low</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div>${/* nestly_v613 (owner photo: the paragraph struck through — "delete this"). The three
+    <div class="card" style="margin-bottom:16px"><div class="v150-filterbar"><div style="flex:1;min-width:min(100%,240px)"><label for="clientSearch">Search customers by name or phone</label><input id="clientSearch" type="search" inputmode="search" autocomplete="off" placeholder="Name or phone number"></div><div style="min-width:min(100%,230px)"><label for="clientInactivity">Show customers by last visit</label><select id="clientInactivity"><option value="">All customers</option><option value="all_inactive">Inactive 30+ days</option><option value="30_59">Inactive 30–59 days</option><option value="60_89">Inactive 60–89 days</option><option value="60_plus">Inactive 60+ days</option><option value="90_plus">Inactive 90+ days</option><option value="never">Never visited</option></select></div><div style="min-width:min(100%,180px)"><label for="clientSort">Sort by</label><select id="clientSort"><option value="name_asc">Name A–Z</option><option value="last_visit_desc">Last visit newest</option><option value="joined_desc">Date joined newest</option><option value="points_desc">${liveBalanceUnitV378()==='stamps'?'Stamps high to low':'Points high to low'}</option><option value="spend_desc">Lifetime spend high to low</option></select></div>${CUI.action({id:'clientSearchGo',label:'Search',iconName:'search',variant:'secondary'})}${CUI.action({id:'clientSearchClear',label:'Clear filters',variant:'secondary'})}</div>${/* nestly_v613 (owner photo: the paragraph struck through — "delete this"). The three
          option labels already say what each bucket is, and the sentence explaining that they do
          not overlap was longer than the filter it described. The select therefore no longer
          describes itself through a removed node — aria-describedby went with the paragraph. */''}</div>
@@ -6891,7 +6891,7 @@ async function clientsPage(){
     const loyaltyAvailable=customerDirectoryLoyaltyAvailableV248(result);
     const total=Number(result?.total)||0,pages=Math.max(1,Math.ceil(total/CLIENT_PAGE_SIZE));
     const sortGlyph='↕';
-    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name ${sortGlyph}</button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit ${sortGlyph}</button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined ${sortGlyph}</button></th><th class="num"><button class="sortable-th" data-sort="points_desc">${esc(directoryUnitLabelV378())} ${sortGlyph}</button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend ${sortGlyph}</button></th></tr>
+    $('list').innerHTML=`${!loyaltyAvailable?'<div class="muted small" role="status" style="margin-bottom:12px">Points are unavailable because complete Loyalty access could not be confirmed. No zero is inferred.</div>':''}<div class="cui-table-wrap" tabindex="0" aria-label="Customer results"><table><tr><th><button class="sortable-th" data-sort="name_asc">Name <span>${sortGlyph}</span></button></th><th>Phone</th><th><button class="sortable-th" data-sort="last_visit_desc">Last visit <span>${sortGlyph}</span></button></th><th><button class="sortable-th" data-sort="joined_desc">Date joined <span>${sortGlyph}</span></button></th><th class="num"><button class="sortable-th" data-sort="points_desc"><span>${esc(directoryUnitLabelV378())}</span> <span>${sortGlyph}</span></button></th>${/* nestly_v629 (owner photo 2: CONSENT struck through, "Lifetime Spend" written above it). Consent was a yes/no that the row could not act on; what an owner reads a customer list for is who is worth their attention. The figure is the server's (staff_list_customers_v155), never re-derived here. Consent itself is not lost — it is on the customer's own record and in both CSV exports, which is where a PDPA question gets answered. */''}<th class="num"><button class="sortable-th" data-sort="spend_desc">Lifetime spend <span>${sortGlyph}</span></button></th></tr>
       ${cl.map(c=>`<tr>
         <td><a class="customer-link" href="#/client/${c.id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:c.full_name})}>${esc(c.full_name)}</a></td><td>${esc(c.phone||'—')}</td><td>${c.last_visit_at?`${esc(new Intl.DateTimeFormat('en-SG',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Singapore'}).format(new Date(c.last_visit_at)))} · ${Number(c.days_since_last_visit)||0} days ago`:'<span class="pill off">Never visited</span>'}</td><td>${esc(formatCustomerJoinedDateV141(c.created_at))}</td>
         <td class="num">${loyaltyAvailable?`${Number(c.points)||0} ${esc(directoryUnitWordV378(Number(c.points)||0))}`:'Unavailable'}</td>
@@ -7117,7 +7117,7 @@ async function clientDetail(id){
     const tone={open:'no',acknowledged:'new',resolved:'on',closed:'ok'}[f.recovery_status]||'';
     const resolvedName=f.resolved_by?(staffName[f.resolved_by]||'a teammate'):'';
     const prov=f.recovery_status==='resolved'?`<p class="fb-prov">Resolved${resolvedName?' by '+esc(resolvedName):''}${f.resolved_at?' · '+esc(sgt(f.resolved_at)||''):''}${f.resolution_note?' · '+esc(f.resolution_note):''}</p>`:'';
-    return `<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars}</span><span class="sr-only">${f.rating} out of 5</span><span class="spacer"></span><span class="pill ${tone}">${esc(label)}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(sgt(f.created_at)||'')}</p>${prov}</div>`;
+    return `<div class="fb-item"><div class="row"><span class="fb-rating" aria-hidden="true">${stars}</span><span class="sr-only"><span>${f.rating}</span> out of 5</span><span class="spacer"></span><span class="pill ${tone}">${esc(label)}</span></div>${f.comment?`<p class="muted small" style="margin-top:5px">${esc(f.comment)}</p>`:''}<p class="muted small" style="margin-top:4px">${esc(sgt(f.created_at)||'')}</p>${prov}</div>`;
   }).join('')}</div>`:'';
   const nowIso=new Date().toISOString();
   /* One unified reverse-chronological timeline. Each source keeps its own date field for sorting
@@ -7457,7 +7457,7 @@ async function clientDetail(id){
       :`<p class="eyebrow" style="margin-top:8px">Nothing ready to redeem yet</p>
         <p class="small" style="margin-top:6px">${esc(nextCopy)}</p>`}
       ${canWriteLoyalty&&redemptionEnabled&&readyRewards.length?`<a class="btn sm" href="#/till" style="margin-top:12px">${CUI.icon('scan',{size:16})}<span>Open Record sale scanner</span></a>`:''}
-      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary>Coming up · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
+      ${pendingRewards.length?`<details class="c360-reward-adjust" style="margin-top:14px"><summary><span>Coming up</span> · ${pendingRewards.length}</summary><div style="margin-top:8px">${pendingRewards.map(reward=>rewardRow(reward,false)).join('')}</div></details>`:''}`;
     pointsPanelDetailsV249=`<details class="c360-reward-adjust"><summary>Balance and earning</summary>
         <p class="small" style="margin-top:7px"><b>Balance:</b> ${pts} ${unit}</p>
         ${/* V319 put spendable credit here so hiding the zero-value row above never put the figure
@@ -8798,10 +8798,10 @@ function packageDetailEntryHtmlV495(entry,{canUse=false,branches=[],branchError=
     </div>
     <p class="small" style="margin-top:8px"><b>${entry.used} of ${entry.sessions} used</b> · ${entry.remaining} left</p>
     <p class="muted small" style="margin-top:4px">${bought?`Bought ${esc(bought)} · `:''}${esc(money(entry.priceCents))}${service?` · ${esc(service)}`:''}</p>
-    <p class="muted small" style="margin-top:4px">Last used ${lastUsedAt?packageUseWhenTextV495({at:lastUsedAt},staffName,branchName):'— never'}</p>
+    <p class="muted small" style="margin-top:4px">Last used <span>${lastUsedAt?packageUseWhenTextV495({at:lastUsedAt},staffName,branchName):'— never'}</span></p>
     ${caveats.map(text=>`<p class="muted small" style="margin-top:6px">${esc(text)}</p>`).join('')}
     ${entry.uses.length
-      ?`<div style="margin-top:12px"><b class="small">Session history · ${entry.uses.length}</b><div style="margin-top:6px">${entry.uses.map(use=>packageUseRowHtmlV495(use,staffName,branchName)).join('')}</div></div>`
+      ?`<div style="margin-top:12px"><b class="small"><span>Session history</span> · ${entry.uses.length}</b><div style="margin-top:6px">${entry.uses.map(use=>packageUseRowHtmlV495(use,staffName,branchName)).join('')}</div></div>`
       :'<p class="muted small" style="margin-top:8px">No session use has been recorded against this package yet.</p>'}
     ${entry.exhausted?''
       :branchError&&canUse
@@ -9569,7 +9569,7 @@ async function tillPage(){
         ${canRecordSales?`${accessibleTillBranches.length>1
           ?`<label for="tBranch">Branch</label><select id="tBranch">${accessibleTillBranches.map(branch=>`<option value="${branch.id}" ${branch.id===tillBranchId?'selected':''}>${esc(branch.name)}</option>`).join('')}</select>`
           :`<p class="muted small" style="margin-bottom:12px"><b>Branch:</b> <span data-merchant-content>${esc(accessibleTillBranches[0].name)}</span></p>`}
-        <label for="tAmt">Amount paid (${S.biz.currency||'SGD'})</label>
+        <label for="tAmt">Amount paid <span>(${S.biz.currency||'SGD'})</span></label>
         <input id="tAmt" inputmode="decimal" placeholder="0.00" style="font-size:28px;text-align:center;height:56px">
         <fieldset style="border:0;padding:0;margin:16px 0 0"><legend style="font-size:13px;font-weight:700">Payment received</legend>
           <div class="frontline-tenders" id="tTenders">
@@ -11783,7 +11783,7 @@ async function tillPage(){
           :''}
         <p class="muted small" style="margin-top:8px">${esc(d.name)} · ${esc(d.tender||'payment')} received</p>
         ${d.pointsTotal!=null?`<p class="small" data-merchant-content style="margin:2px 0 0">${tillUnitNounV430(catalog)==='stamps'?`Total stamps earned to date: <b>${d.pointsTotal}</b>`:`Points balance after this visit: <b>${d.pointsTotal}</b>`}</p>`:''}
-        ${d.paymentReference?`<p class="muted small">Provider reference: ${esc(d.paymentReference)}</p>`:''}
+        ${d.paymentReference?`<p class="muted small">Provider reference: <span>${esc(d.paymentReference)}</span></p>`:''}
         ${anyExtraFailed?`<p class="err" role="alert" style="margin-top:10px">Some items could not be completed. Reopen this customer to try again — the recorded sale will not be charged twice.</p>`:''}
         ${!d.walkin&&canScanRedemption()&&d.saleId?`<button class="btn ghost" id="tRedeemOffer" style="width:100%;margin-top:16px;padding:14px">Redeem customer offer ${CUI.icon('scan',{size:20})}</button>`:''}
         ${d.walkin?'':`<div class="receipt-qr-block" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--hair)">
@@ -12297,7 +12297,7 @@ async function servicesPage(){
             <div><label for="svcEditBufferBefore">Buffer before (minutes)</label><input id="svcEditBufferBefore" type="number" min="0" step="5" value="${Number(s.buffer_before_min)||0}"></div>
             <div><label for="svcEditBufferAfter">Buffer after (minutes)</label><input id="svcEditBufferAfter" type="number" min="0" step="5" value="${Number(s.buffer_after_min)||0}"></div>
             <div><label for="svcEditCommissionV584">Commission override %</label><input id="svcEditCommissionV584" type="number" min="0" max="100" step="0.1" placeholder="blank = the team member's own rate" value="${esc(commissionPctV584(s.commission_bps))}"></div>
-            <div><label for="svcEditCommissionFlatV825">Fixed commission (${esc(S.biz.currency||'SGD')})</label><input id="svcEditCommissionFlatV825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${s.commission_flat_cents==null?'':esc((Number(s.commission_flat_cents)/100).toFixed(2))}"></div>
+            <div><label for="svcEditCommissionFlatV825">Fixed commission <span>(${esc(S.biz.currency||'SGD')})</span></label><input id="svcEditCommissionFlatV825" type="number" min="0" step="0.01" placeholder="blank = use the %" value="${s.commission_flat_cents==null?'':esc((Number(s.commission_flat_cents)/100).toFixed(2))}"></div>
           </div>
           <p class="muted small help">Blank leaves each team member on their own default. 0% is a real setting and means this service pays no commission. A fixed amount is paid per service performed and outranks the %.</p>
           ${/* nestly_v613: only drawn for a firm that HAS more than one branch — a single-branch
@@ -12534,7 +12534,7 @@ async function servicesPage(){
       <section class="modal-card" style="max-width:620px" id="bundleFormCard">
         <div class="v150-soft-head"><b id="bundleFormTitleV285">Add bundle</b><p>Bundle means several services sold together at one combined price. Packages remain separate.</p></div>
         <label for="bnm">Name</label><input id="bnm" placeholder="e.g. Cut + Colour">
-        <label for="bpr">Bundle price (${S.biz.currency||'SGD'})</label><input id="bpr" type="number" min="0" step="0.01">
+        <label for="bpr">Bundle price <span>(${S.biz.currency||'SGD'})</span></label><input id="bpr" type="number" min="0" step="0.01">
         ${/* nestly_v825 (owner photo 2): a bundle can carry its own commission. When set it replaces
              every included service's and product's rate for lines sold through this bundle; a
              fixed amount is paid once per bundle sold. */''}
@@ -13606,7 +13606,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       :`<p class="muted small" style="margin-top:6px">None yet — add your first below.</p>`}</div>
     <div id="rwEditor" aria-live="polite"></div>
     ${canManageLoyalty?'<button class="btn sm" id="rwAdd" style="margin-top:12px">+ Add reward</button>':''}
-    ${historical.length?`<details class="reward-history-v294" id="rwHistoryV294" style="margin-top:16px"><summary>Reward history · ${historical.length}</summary>
+    ${historical.length?`<details class="reward-history-v294" id="rwHistoryV294" style="margin-top:16px"><summary><span>Reward history</span> · ${historical.length}</summary>
       <p class="muted small" style="margin-top:6px">Retired and ended rewards. Customers cannot see them; open one to edit or bring it back.</p>
       <div class="reward-list" id="rwHistoryListV294">${historical.map(r=>rewardItemHtmlV294(r,historyState(r))).join('')}</div></details>`:''}`;
   };
@@ -13794,12 +13794,12 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
              With that retired there is no style left to choose — points buy the rewards the owner
              defines, always — so the control goes rather than becoming a one-option select. */''}
       ${model==='stamps'
-        ?`<label for="lsp">Spend per stamp (${S.biz.currency||'SGD'})</label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
+        ?`<label for="lsp">Spend per stamp <span>(${S.biz.currency||'SGD'})</span></label><input id="lsp" type="number" min="0.5" step="0.5" value="${((p?.stamp_per_cents??500)/100).toFixed(2)}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">e.g. $5 per stamp → a $12 bill earns 2 stamps.</p>
           <p class="muted small" style="margin-top:4px">Stack several milestones below — e.g. 3 stamps = free drink, 8 stamps = $5 credit or a "10% off" benefit. Each is its own reward with its own stamp cost.</p>`
         :`<label for="le">Points earned per $1 spent</label><input id="le" type="number" min="0" step="0.5" value="${p?.earn_points_per_dollar??1}"${loyaltyControlDisabled}>
           <p class="muted small" style="margin-top:4px">How fast customers earn. This is generosity, not a cost — the cost comes from what rewards you give.</p>`}
-      ${model==='stamps'?'':`<label for="lpc">Cost per point (${S.biz.currency||'SGD'})</label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
+      ${model==='stamps'?'':`<label for="lpc">Cost per point <span>(${S.biz.currency||'SGD'})</span></label><input id="lpc" type="number" min="0.001" step="0.001" value="${(programmePointCostCentsV262/100).toFixed(3)}"${loyaltyControlDisabled}>
         <p class="muted small" style="margin-top:4px">What one point is worth when redeemed. Used to price every reward.</p>`}
       <details class="loyalty-advanced-v235" id="loyaltyAdvancedV235" style="margin-top:18px"><summary>Advanced settings</summary>
       ${model==='stamps'
@@ -14377,7 +14377,7 @@ async function loyaltyPage(modelOverride,draftVersionId=null,recommendation=null
       <div class="field-grid">
         <div class="full"><label for="rwCatalogueSource">Start from a product or service</label><select id="rwCatalogueSource"><option value="">Custom reward</option>${rewardCatalogueSources.map(item=>`<option value="${esc(item.type+'|'+item.id)}">${esc(item.type==='product'?'Product':'Service')} · ${esc(item.name)}</option>`).join('')}</select><div id="rwCatalogueEconomics" class="muted small" style="margin-top:6px">Choose an existing product or service to fill the reward, or keep Custom reward.</div></div>
         <div class="full"><label for="rwCustomerName">Reward name customers see *</label><input id="rwCustomerName" value="${esc(r.customer_name||r.name||'')}" placeholder="e.g. Free bowl of noodles"><p class="muted small help">This is the title in the customer reward catalogue.</p></div>
-        <div><label for="rwEstimate">Company cost budget (${S.biz.currency||'SGD'})</label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
+        <div><label for="rwEstimate">Company cost budget <span>(${S.biz.currency||'SGD'})</span></label><input id="rwEstimate" type="number" min="0" step="0.01" value="${r.estimated_cost_cents!=null?(r.estimated_cost_cents/100).toFixed(2):''}" placeholder="e.g. 5.00"><p class="muted small help">The real cost to your business when this reward is used.</p></div>
         <div><label for="rwCost">${model==='stamps'?'Stamps':'Points'} cost *</label><input id="rwCost" type="number" min="1" step="1" value="${r.cost_points??''}" placeholder="e.g. 4">${model==='stamps'?'':'<p class="muted small help" id="rwCostDerivedHelpV293">Auto-calculated from your cost budget — type here to override.</p>'}</div>
         ${model==='stamps'?'':`<div><label>Cost per point</label><output id="rwPointCostV262" style="display:block;margin-top:4px;font-weight:600">${esc(pointCostLabelV262(currentPointCostCentsV262()))}</output><p class="muted small help">Set once for the whole programme. <button class="btn ghost sm" id="rwPointCostEditV262" type="button">Change in Point system</button></p></div><div id="rwPointsMath" class="imp-note" style="align-self:end"></div>`}
       </div>
@@ -15062,7 +15062,7 @@ async function retentionPage(draftVersionId=null,editProgramId=null,stableRefres
     <div class="row"><div><b>${draftVersionId?'Draft — not visible to customers':'Published configuration'}</b>
       <div class="muted small">${draftVersionId?'Nothing changes at the counter until you publish. Every save checks the draft hash.':currentVersion?'Create a draft before changing retention behavior.':'Publish your loyalty foundation first; retention rules are part of the same programme.'}</div></div><span class="spacer"></span>
       ${draftVersionId?`<button class="btn ghost" id="discardRetentionDraft">Leave draft</button><button class="btn" id="publishRetention">Review &amp; publish</button>`
-        :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft v${resumableDraft.version_no}</a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
+        :currentVersion?(resumableDraft?`<a class="btn" href="#/retention/${resumableDraft.id}">Resume draft <span>v${resumableDraft.version_no}</span></a>`:'<button class="btn" id="beginRetentionDraft">Create editing draft</button>')
           :'<a class="btn" href="#/loyalty">Set up loyalty first</a>'}</div>
     ${/* nestly_v567: the "Create rollback draft" control is WITHDRAWN, not restyled. It based a
          draft on a PRIOR version, which nestly_v564's stale-draft guard now refuses to publish —
@@ -15892,7 +15892,7 @@ async function openWelcomeOfferEditorV215(current,onSaved){
              The saved value is unaffected either way: the save handler already reads minCents as 0
              whenever the "none" radio is selected and never looks at this input. */''}
         <div id="welcomeMinWrapV415"${minValue?'':' hidden'}>
-          <label for="welcomeMinAmountV215" style="margin-top:14px">Minimum spend (${esc(S.biz.currency||'SGD')})</label>
+          <label for="welcomeMinAmountV215" style="margin-top:14px">Minimum spend <span>(${esc(S.biz.currency||'SGD')})</span></label>
           <input id="welcomeMinAmountV215" inputmode="decimal" placeholder="e.g. 5.00" value="${minValue?(minValue/100).toFixed(2):''}">
         </div>
       </fieldset>
@@ -18070,7 +18070,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <div class="v150-segment grow-programme-tabs-v343" role="group" aria-label="Programme status">
         <button type="button" aria-pressed="${growTileFilterV357==='all'}" data-grow-tile-filter-v357="all">All (${growDisplayTopicsV343.length})</button>
         <button type="button" aria-pressed="${growTileFilterV357==='live'}" data-grow-tile-filter-v357="live">${STATUS_WORDS.on} (${growDisplayLiveV343.length})</button>
-        <button type="button" aria-pressed="${growTileFilterV357==='pending'}" data-grow-tile-filter-v357="pending">Not set up (${growDisplayPendingV343.length})</button>
+        <button type="button" aria-pressed="${growTileFilterV357==='pending'}" data-grow-tile-filter-v357="pending">Not set up <span>(${growDisplayPendingV343.length})</span></button>
         ${/* nestly_v428 (item 3): no number when the spine could not be read — an unread count is
              not a zero, and printing one is the exact defect this item exists to remove. */''}
         <button type="button" aria-pressed="${growTileFilterV357==='history'}" data-grow-tile-filter-v357="history">History${growDisplayHistoryCountV343===null?'':` (${growDisplayHistoryCountV343})`}</button>
@@ -20232,7 +20232,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
       <p class="grow-setup-sentence-v301" style="margin-top:14px"><label class="welcome-offer-optioncard-v350${growReferralFriendOnV421?' selected':''}" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="growReferralFriendOnV421" ${growReferralFriendOnV421?'checked':''}><span><b>The friend gets it too</b><br><span class="muted small">Paid to both of them on the friend's first qualifying visit.</span></span></label></p>
       <p class="grow-setup-sentence-v301" id="growReferralFriendPointsWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420==='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendPointsV421">${growReferralKindV420==='stamps'?'Stamps':'Points'} for the friend</label><br><input id="growReferralFriendPointsV421" class="grow-setup-input-v301" inputmode="numeric" style="width:100%;max-width:160px" value="${esc(String(growReferralFriendPointsV421))}" placeholder="Same as the referrer"></p>
       <p class="grow-setup-sentence-v301" id="growReferralFriendGiftWrapV421" style="margin-top:10px"${!growReferralFriendOnV421||growReferralKindV420!=='voucher'?' hidden':''}><label class="muted small" for="growReferralFriendGiftV421">The gift the friend receives</label><br><input id="growReferralFriendGiftV421" class="grow-setup-input-v301" style="width:100%;max-width:280px" value="${esc(growReferralFriendGiftV421)}" placeholder="Same as the referrer" maxlength="80"></p>
-      <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least (${esc(S.biz?.currency||'SGD')})</label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
+      <p class="grow-setup-sentence-v301"><label class="muted small" for="growReferralMinV364">Friend must spend at least <span>(${esc(S.biz?.currency||'SGD')})</span></label><br><input id="growReferralMinV364" class="grow-setup-input-v301" inputmode="decimal" style="width:100%;max-width:160px" value="${esc((growReferralMinCentsV364/100).toFixed(2))}" placeholder="e.g. 20.00"></p>
       ${growReferralErrorV364?`<p class="notice warn small" style="margin-top:8px">${esc(growReferralErrorV364)}</p>`:''}
       <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" data-grow-referral-save-v364="1"${growReferralBusyV364?' disabled':''}>Save changes</button><button type="button" class="btn ghost sm" data-grow-referral-cancel-v364="1">Cancel</button></div>
     </div>`;
@@ -20460,7 +20460,7 @@ async function growPage(routedSurface,hashParam,routedFocus=null,{fromRouteV288=
         ${growActiveTopicV229?`<div class="grow-programme-row points-mode-row-v229">${growPointsModeChooserV229()}</div>`:''}
         ${liveLoyaltyModelV235==='tiers'?'<p class="muted small" style="padding:0 14px 4px">Tiers are based on lifetime points — spending points never drops anyone down.</p>':''}
         ${pointsModeV229==='redeem'?`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:20})}</span><div><b>Tier membership is off</b><p class="muted small">Points are redeemed for rewards. Switch above to run tiers instead — tiers you set up earlier stay saved.</p></div><span class="grow-programme-meta"><span class="pill off">Off</span></span></div>`
-          :(growTiersPublishedV331.length?growTiersPublishedV331.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at ${Number(tier.threshold)||0}</p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'&&!tier.paused?'on':'off'}">${pointsModeV229==='tiers'&&!tier.paused?'Live':tier.paused?'Off':'Saved'}</span></span></div>`).join('')
+          :(growTiersPublishedV331.length?growTiersPublishedV331.map((tier,index)=>`<div class="grow-programme-row" style="cursor:default"><span class="reward-milestone-number">${index+1}</span><div><b data-merchant-content>${esc(tier.name)}</b><p class="muted small">Reached at <span>${Number(tier.threshold)||0}</span></p></div><span class="grow-programme-meta"><span class="pill ${pointsModeV229==='tiers'&&!tier.paused?'on':'off'}">${pointsModeV229==='tiers'&&!tier.paused?'Live':tier.paused?'Off':'Saved'}</span></span></div>`).join('')
           :`<div class="grow-programme-row" style="cursor:default"><span class="grow-programme-icon">${CUI.icon('star',{size:20})}</span><div><b>No tiers yet</b><p class="muted small">Create Basic, Gold and Diamond, and what each one unlocks.</p></div></div>`)}
         ${pointsModeV229!=='redeem'?`<div class="row" style="padding:12px 14px">${editorAction('rewards',growTiersPublishedV331.length?'Edit tiers':'Set up tiers','ltb')}</div>`:''}
       </div></div>`:''}
@@ -23229,7 +23229,7 @@ function openPlaybookWizard(ctx){
         <input id="pbHoldout" type="number" min="0" max="90" value="${state.holdout}">
         <p class="muted small" style="margin-top:6px">Held-back customers receive no campaign reward entitlement, so Peekaa can compare observed return rates. This comparison alone does not prove causation. 10% is the recommended default.</p>
         <div class="split" style="margin-top:12px">
-          <div><label for="pbCap">Budget cap (${esc(pbCur())}, 0 = none)</label><input id="pbCap" type="number" min="0" step="0.01" value="${esc(state.capDollars)}"></div>
+          <div><label for="pbCap">${workspaceTemplateHtmlV97('budgetCapCurrency',{currency:pbCur()})}</label><input id="pbCap" type="number" min="0" step="0.01" value="${esc(state.capDollars)}"></div>
           <div><label for="pbWindow">Measure returns for (days)</label><input id="pbWindow" type="number" min="1" max="365" value="${state.windowDays}"></div>
         </div>
         <p class="muted small" style="margin-top:8px">A real visit inside the measurement window is recorded as an observed return.</p>
@@ -25118,7 +25118,7 @@ async function growSetupWizardV301({host,snapshot,isCurrent,startStep=1,liveTier
       <div class="field-grid">
         <div class="full"><label for="growSetupRewardNameV301">Reward name customers see</label>
           <input id="growSetupRewardNameV301" value="${esc(form.name)}" placeholder="e.g. Free drink"></div>
-        <div><label for="growSetupRewardBudgetV301">Company cost (${esc(currency)})</label>
+        <div><label for="growSetupRewardBudgetV301">Company cost <span>(${esc(currency)})</span></label>
           <input id="growSetupRewardBudgetV301" inputmode="decimal" value="${esc(form.budget)}" placeholder="e.g. 3.00"></div>
         <div><label for="growSetupRewardPointsV301">${familyW6I2()==='stamps'?'Stamps needed for it':'Points cost'}</label>
           <input id="growSetupRewardPointsV301" inputmode="numeric" value="${esc(form.points)}" placeholder="e.g. 300"></div>
@@ -27360,7 +27360,7 @@ async function storedValuePage(){
     : (hasRun?`<p class="muted small" style="margin-top:10px">No differences found in the latest run.</p>`:'');
   const snapHtml=snap
     ? `<div class="muted small" style="margin-top:8px;line-height:1.6">
-         <div>Last run: ${svTime(snap.captured_at)}</div>
+         <div>Last run: <span>${svTime(snap.captured_at)}</span></div>
          <div>Gift-card total: <b>${money(Number(snap.legacy_total_cents||0))}</b> · Stored-value total: <b>${money(Number(snap.studio_total_cents||0))}</b></div>
          <div>Differences found: <b>${Number(snap.discrepancy_count||0)}</b></div>
        </div>`
@@ -27658,7 +27658,7 @@ async function referralsPage(){
       ${/* nestly_v429 (B1): the unit follows the programme's declared reward type. */''}
       <td>${r.status==='rewarded'?esc(referralKindV429==='voucher'?(String(p?.reward_label||'').trim()||'A free gift'):growReferralAmountWordV425(referralKindV429,r.reward_points)):'—'}</td>
       <td>${r.qualified_at?r.qualified_at.slice(0,10):'—'}</td></tr>`).join('')}</table>
-      <div class="row" style="margin-top:14px"><span class="muted small">${total} referral${total===1?'':'s'} · page ${referralPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="refPrev" ${referralPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="refNext" ${referralPage+1>=pages?'disabled':''}>Next</button></div>`
+      <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97(total===1?'referralPageCount':'referralsPageCount',{total,page:referralPage+1,pages})}</span><span class="spacer"></span><button class="btn ghost sm" id="refPrev" ${referralPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="refNext" ${referralPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'referrals',title:'No referrals yet',body:'Link a referral with the “Referred by” field when adding a customer.'});
     if($('refPrev'))$('refPrev').onclick=()=>{if(referralPage>0){referralPage--;renderReferrals()}};
     if($('refNext'))$('refNext').onclick=()=>{if(referralPage+1<pages){referralPage++;renderReferrals()}};
@@ -27683,7 +27683,7 @@ async function membershipsPage(){
   const planEditor=canWrite?`<label for="mn">Plan name</label><input id="mn" placeholder="e.g. Glow Monthly">
       <div class="split"><div><label for="mp">Price (${S.biz.currency||'SGD'})</label><input id="mp" type="number" min="0" step="0.01" value="80"></div>
       <div><label for="mc">Billing</label><select id="mc"><option value="monthly">Monthly</option><option value="annual">Annual</option></select></div></div>
-      <label for="mcr">Credit dropped each period (${S.biz.currency||'SGD'})</label><input id="mcr" type="number" min="0" step="0.01" value="60">
+      <label for="mcr">Credit dropped each period <span>(${S.biz.currency||'SGD'})</span></label><input id="mcr" type="number" min="0" step="0.01" value="60">
       <p class="muted small" style="margin-top:8px">Billing is collect-in-person for now (renewal books the charge as a sale). Credits land on the member's account and roll over. Membership charges never earn loyalty points.</p>
       <div style="margin-top:16px">${CUI.action({id:'madd',label:'Create plan',iconName:'add'})}</div>`
     :`<p class="muted small">Plan creation is unavailable with read-only access. Existing prices, cadence, and credits remain visible below.</p>`;
@@ -27838,7 +27838,7 @@ async function membershipsPage(){
       <td data-label="Actions">${canWrite&&m.status==='active'?`<button class="btn ghost sm" onclick="setMs('${m.id}','paused')">Pause</button>
         <button class="btn ghost sm" onclick="setMs('${m.id}','cancel_at_period_end')">Cancel@end</button>`
         :canWrite&&m.status==='paused'?`<button class="btn ghost sm" onclick="setMs('${m.id}','active')">Resume</button>`:''}</td></tr>`).join('')}</tbody></table></div>
-      <div class="row" style="margin-top:14px"><span class="muted small">${total} membership${total===1?'':'s'} · page ${membershipPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="membershipPrev" ${membershipPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="membershipNext" ${membershipPage+1>=pages?'disabled':''}>Next</button></div>`
+      <div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97(total===1?'membershipPageCount':'membershipsPageCount',{total,page:membershipPage+1,pages})}</span><span class="spacer"></span><button class="btn ghost sm" id="membershipPrev" ${membershipPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="membershipNext" ${membershipPage+1>=pages?'disabled':''}>Next</button></div>`
       :'<p class="muted small">No members yet — enroll your first above.</p>';
     if($('membershipPrev'))$('membershipPrev').onclick=()=>{if(membershipPage>0){membershipPage--;renderMemberships()}};
     if($('membershipNext'))$('membershipNext').onclick=()=>{if(membershipPage+1<pages){membershipPage++;renderMemberships()}};
@@ -28051,7 +28051,7 @@ async function giftcardsPage(){
     $('glist').innerHTML=gcs.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Issued gift cards"><table class="cui-table" data-responsive="true"><thead><tr><th>Code</th><th class="num">Value</th><th class="num">Balance</th><th>Status</th><th>Issued</th></tr></thead><tbody>
       ${gcs.map(g=>`<tr><td data-label="Code"><b>•••• ${esc(g.code_suffix)}</b></td><td class="num" data-label="Value">${money(g.initial_cents)}</td><td class="num" data-label="Balance">${money(g.balance_cents)}</td>
       <td data-label="Status"><span class="pill ${g.status==='active'?'on':g.status==='redeemed'?'ok':'no'}">${g.status}</span></td>
-      <td data-label="Issued">${g.created_at.slice(0,10)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} card${total===1?'':'s'} · page ${giftCardPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="giftPrev" ${giftCardPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="giftNext" ${giftCardPage+1>=pages?'disabled':''}>Next</button></div>`
+      <td data-label="Issued">${g.created_at.slice(0,10)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97(total===1?'giftCardPageCount':'giftCardsPageCount',{total,page:giftCardPage+1,pages})}</span><span class="spacer"></span><button class="btn ghost sm" id="giftPrev" ${giftCardPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="giftNext" ${giftCardPage+1>=pages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'giftcard',title:'No gift cards yet',body:canIssue?'Issue the first card from the transaction panel.':'Issued cards will appear here.'});
     if($('giftPrev'))$('giftPrev').onclick=()=>{if(giftCardPage>0){giftCardPage--;loadCards()}};
     if($('giftNext'))$('giftNext').onclick=()=>{if(giftCardPage+1<pages){giftCardPage++;loadCards()}};
@@ -29765,7 +29765,7 @@ async function appointmentsPage(){
     const total=Math.max(0,Number(count||0)),pages=Math.max(1,Math.ceil(total/APPOINTMENT_LIST_PAGE_SIZE));
     if(listPage>=pages&&listPage>0){listPage=pages-1;loadAppointmentsGuardedV288();return}
     $('alist').innerHTML=pendingRequestsBannerHtml()+(calendarItems.length?`<div class="cui-table-wrap" tabindex="0"><table class="cui-table" data-responsive="true"><thead><tr><th>Date & time</th><th>Customer</th><th>Service</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(appointmentServiceNameV884(a)||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}"><span data-workspace-i18n>${esc(statusLabelV288(a.status))}</span></span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${total} appointment${total===1?'':'s'} · page ${listPage+1} of ${pages}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
+      ${calendarItems.map(a=>{const when=sgLedgerDateV154(a.starts_at);return `<tr><td data-label="Date & time"><span class="appointment-list-date"><b>${esc(when.date)}</b><br><span class="small">${esc(appointmentTimeRange(a))} · ${appointmentDuration(a)} <span data-workspace-i18n>min</span></span></span></td><td data-label="Customer"><b>${a.client_id?`<a class="customer-link" href="#/client/${a.client_id}" ${workspaceTemplateAttributeV97('aria-label','openCustomer',{name:a.clients?.full_name||'—'})}>${esc(a.clients?.full_name||'—')}</a>`:esc(a.clients?.full_name||'—')}</b></td><td data-label="Service">${esc(appointmentServiceNameV884(a)||'General visit')}</td><td data-label="Staff"><span class="appointment-staff-name" data-merchant-content title="${esc(staffName[a.staff_id]||'—')}">${esc(staffName[a.staff_id]||'—')}</span></td><td data-label="Status"><span class="pill ${a.status==='completed'?'ok':a.status==='booked'?'new':'off'}"><span data-workspace-i18n>${esc(statusLabelV288(a.status))}</span></span></td><td data-label="Actions"><button type="button" class="btn ghost sm" data-appointment="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','viewAppointmentDetails',{customer:a.clients?.full_name||'—'})}>Details</button>${a.status==='booked'&&canWrite?` <button type="button" class="btn ghost sm" data-appointment-amend="${a.id}" data-appointment-branch="${esc(a.branch_id||'')}" ${workspaceTemplateAttributeV97('aria-label','amendAppointment',{customer:a.clients?.full_name||'—'})}>Amend</button>`:''}${a.status==='booked'&&canComplete&&appointmentOutcomeIsDue(a)?` <button class="btn ghost sm statusAction" data-id="${a.id}" data-status="completed">Complete &amp; checkout</button>`:''}</td></tr>`}).join('')}</tbody></table></div><div class="row" style="margin-top:14px"><span class="muted small">${workspaceTemplateHtmlV97(total===1?'appointmentPageCount':'appointmentsPageCount',{total,page:listPage+1,pages})}</span><span class="spacer"></span><button class="btn ghost sm" id="appointmentPrev" ${listPage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="appointmentNext" ${listPage+1>=pages?'disabled':''}>Next</button></div>`
       :`<div class="cui-empty">${CUI.icon('appointments',{size:32})}<h2>No appointments here</h2><p>Try another staff member or add the first appointment.</p></div>`);
     wireAppointmentActions();
     wirePendingRequestActionsV329();
@@ -32611,7 +32611,7 @@ async function inventoryPage(){
     ${canWrite?'':`<div class="card" role="status" style="margin-bottom:16px"><b>Read-only product access</b><p class="muted small" style="margin-top:5px">You can review products and prices. Ask for Products edit access to add or change them.</p></div>`}
     ${canWrite?`<div class="card" id="productFormCard" style="display:none;margin-bottom:16px"><div class="v150-soft-head"><b>Add product</b><p>Save one thing you sell, then return to the catalogue.</p></div>
       <label for="pn2">Name</label><input id="pn2" placeholder="e.g. Chicken rice"><label for="ps2">SKU (optional)</label><input id="ps2">
-      <label for="pp2">Sell for (${S.biz.currency||'SGD'})</label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00">
+      <label for="pp2">Sell for <span>(${S.biz.currency||'SGD'})</span></label><input id="pp2" type="number" min="0" step="0.01" placeholder="5.00">
       ${/* nestly_v584 (owner photo 9: the whole stock-counting disclosure struck out corner to
            corner and the STOCK column scribbled through — "Remove stock taking feature", confirmed
            as everywhere in the app). Counting stock is gone from the workspace: no batches to
@@ -32758,7 +32758,7 @@ async function inventoryPage(){
           <div class="field-grid">
             <div><label for="prodEditName">Name</label><input id="prodEditName" value="${esc(p.name||'')}"></div>
             <div><label for="prodEditSku">SKU (optional)</label><input id="prodEditSku" value="${esc(p.sku||'')}"></div>
-            <div><label for="prodEditPrice">Sell for (${S.biz.currency||'SGD'})</label><input id="prodEditPrice" type="number" min="0" step="0.01" value="${((p.retail_price_cents||0)/100).toFixed(2)}"></div>
+            <div><label for="prodEditPrice">Sell for <span>(${S.biz.currency||'SGD'})</span></label><input id="prodEditPrice" type="number" min="0" step="0.01" value="${((p.retail_price_cents||0)/100).toFixed(2)}"></div>
             ${commissionInputsHtmlV825({idPrefix:'prodEdit',row:p})}
           </div>
           <p class="muted small help">Commission: blank leaves each team member on their own product rate. 0% means this product pays no commission. A fixed amount is paid per unit sold and outranks the %.</p>
@@ -33340,7 +33340,7 @@ async function packagesPage(options){
       <td><span class="pill ${k.status==='active'?'on':'off'}">${String(k.status||'').replaceAll('_',' ')}</span></td>
       <td><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end">${canWrite&&k.remaining>0&&!expiredV593?`<button class="btn sm" onclick="usePkg('${k.client_package_id}',${esc(JSON.stringify(String(k.plan_name||'')))},${esc(JSON.stringify(String(k.client_name||'')))})">Use</button>`:expiredV593?'<span class="muted small">Expired — sessions can no longer be used</span>':k.remaining>0?'<span class="muted small">View only</span>':''}<button type="button" class="btn ghost sm" data-package-history-v603="${k.client_package_id}" data-package-history-name="${esc(k.plan_name||'this package')}" data-package-history-customer="${esc(k.client_name||'')}">History</button></div></td></tr>`;
     }).join('')}</table>
-      <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} customer packages · page ${packagePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
+      <div class="row" style="margin-top:12px"><span class="muted small">${workspaceTemplateHtmlV97('packagesPageCount',{total:total.toLocaleString('en-SG'),page:packagePage+1,pages:totalPages})}</span><span class="spacer"></span><button class="btn ghost sm" id="packagesPrev" ${packagePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="packagesNext" ${packagePage+1>=totalPages?'disabled':''}>Next</button></div>
       ${/* nestly_v603 (owner: "History" written beside Use session, with a line down to this
            block; asked which was meant and the owner chose per-row History and deleting the
            section). Every row now opens its own history, so a shared list of the whole business's
@@ -34198,7 +34198,7 @@ async function customerIntelligencePage(){
   const ciViaLabelV650=via=>CI_ACQUISITION_VIA_LABELS_V650[String(via||'unknown')]||esc(String(via||'Unknown'));
   const ciQuietErrorV650=(title,message)=>`<section class="card"><div class="err" role="status"><b>${esc(title)}</b> ${esc(message||'Try running the report again.')}</div></section>`;
   const ciMeasuredSinceV650=observedSince=>observedSince
-    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    ?`<p class="muted small" style="margin-top:10px">Measured since <span>${esc(walletDate(observedSince,true))}</span></p>`
     :'';
   function acquisitionMarkupV650(){
     if(lastAcquisitionError)return ciQuietErrorV650('Where customers come from could not load.',lastAcquisitionError);
@@ -34278,7 +34278,7 @@ async function customerIntelligencePage(){
     const customers=Array.isArray(cached.data?.customers)?cached.data.customers:[];
     const suppressed=cached.data?.suppressed||null;
     const shownCount=suppressed?Number(suppressed.cohort_size||0):customers.length;
-    const parityLine=`<p class="muted small" style="margin:8px 0 0">${Number(expectedCustomerCount||0)} customers · showing ${shownCount}</p>`;
+    const parityLine=`<p class="muted small" style="margin:8px 0 0">${workspaceTemplateHtmlV97('customersShowing',{total:Number(expectedCustomerCount||0),shown:shownCount})}</p>`;
     if(suppressed){
       return `<tr><td colspan="4"><div class="empty">${esc(suppressed.note||'Too few customers to name without identifying them.')}</div>${parityLine}</td></tr>`;
     }
@@ -35112,7 +35112,7 @@ function ciOpportunityMarginHtmlV716(marginGuard,currency){
   const g=marginGuard&&typeof marginGuard==='object'?marginGuard:null;
   if(!g||!g.status)return '';
   if(g.status==='ok')
-    return `<div><span>Margin</span><strong>Margin ok (${esc(scopeMoneyV685(g.margin_cents,currency))})</strong></div>`;
+    return `<div><span>Margin</span><strong>Margin ok <span>(${esc(scopeMoneyV685(g.margin_cents,currency))})</span></strong></div>`;
   if(g.status==='blocked')
     return `<div><span>Margin</span><strong>Blocked: ${esc(g.reason||'')}</strong></div>`;
   return `<div><span>Margin</span><strong>Enter costs in Settings</strong></div>`;
@@ -35255,7 +35255,7 @@ function opportunitiesPanelHtmlV685(payload){
 }
 function ciMeasuredSinceInlineV685(observedSince){
   return observedSince
-    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    ?`<p class="muted small" style="margin-top:10px">Measured since <span>${esc(walletDate(observedSince,true))}</span></p>`
     :'';
 }
 
@@ -35270,7 +35270,7 @@ function ciMeasuredSinceInlineV685(observedSince){
    page already does — never a zero-stuffed table pretending to be a real answer. */
 function ciMeasuredSinceInlineV679(observedSince){
   return observedSince
-    ?`<p class="muted small" style="margin-top:10px">Measured since ${esc(walletDate(observedSince,true))}</p>`
+    ?`<p class="muted small" style="margin-top:10px">Measured since <span>${esc(walletDate(observedSince,true))}</span></p>`
     :'';
 }
 /* nestly_v734 (check 97): every CI reader's shared envelope (app.ci_envelope_v680, v722) now
@@ -39493,7 +39493,7 @@ async function dailyReportPage(){
       </div>
       <div class="charts"><div class="card"><b>Revenue by staff</b>${rows.length?'<div class="chart-frame"><canvas id="drC1"></canvas></div>':CUI.emptyState({iconName:'staff',title:'No sales this day',body:'Staff revenue draws here once a sale is recorded for the date.'})}</div>
         <div class="card"><b>Signed revenue by kind</b>${rows.length?'<div class="chart-frame"><canvas id="drC2"></canvas></div>':CUI.emptyState({iconName:'reports',title:'No sales this day',body:'The revenue mix draws here once a sale is recorded for the date.'})}</div></div>
-      <div class="card" style="margin-top:16px"><b>All sales — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
+      <div class="card" style="margin-top:16px"><b><span>All sales</span> — ${esc(day)}</b><p class="muted small" style="margin-top:4px">Amounts are signed. Valid visits count only original visit rows that have not been fully reversed; immutable reversal records remain visible below.</p>
         ${rows.length?`<div class="cui-table-wrap" tabindex="0" role="region" aria-label="Daily sales detail" style="margin-top:8px"><table data-responsive="true" class="cui-table"><tr><th>Time</th><th>Customer</th><th>Phone</th><th>Item</th><th>Relationship</th><th class="num">Signed amount</th><th>Staff</th></tr>
           ${rows.map(r=>`<tr><td>${(sgt(r.occurred_at)||'').slice(11)}</td><td><b>${esc(r.custName)}</b></td><td class="small">${esc(r.custPhone)}</td>
             <td>${esc(r.label)}</td><td>${r.reversal_of?`<span class="pill no"><span data-workspace-i18n>reversal of an earlier sale</span></span>`:'<span class="pill ok">original</span>'}</td><td class="num">${money(r.amount_cents)}</td><td class="muted">${esc(r.staffName)}</td></tr>`).join('')}<tr class="total-row"><td colspan="5"><b>Total of listed rows (signed)</b></td><td class="num"><b>${money(rows.reduce((a,r)=>a+Number(r.amount_cents||0),0))}</b></td></tr><tr class="total-row"><td colspan="5">Of which revenue (per sale policy)</td><td class="num">${money(revenue)}</td></tr></table></div>`
@@ -39686,7 +39686,7 @@ async function expensesPage(){
         <td class="small">${esc(e.supplier||'—')}</td><td class="small">${esc(e.description||'—')}</td>
         <td>${amount.valid?`<b>${esc(amount.originalLabel)}</b>${amount.showBase?`<br><span class="muted small">${esc(amount.baseLabel)} used in P&amp;L</span>`:''}`:'<span class="err small">Unavailable — invalid currency conversion metadata</span>'}</td><td>${e.voided_at?'<span class="pill no">Voided</span>':'<span class="pill ok">Active</span>'}</td>
         <td style="white-space:nowrap">${e.voided_at?'':canWrite?`<button class="btn ghost sm" onclick="editExpenseV285('${e.id}')">Edit</button> <button class="btn danger sm" onclick="voidExp('${e.id}')">Void</button>`:'<span class="muted small">View only</span>'}</td></tr>`}).join('')}</table></div>
-        <div class="row" style="margin-top:12px"><span class="muted small">${total.toLocaleString('en-SG')} expenses · page ${expensePage+1} of ${totalPages}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
+        <div class="row" style="margin-top:12px"><span class="muted small">${workspaceTemplateHtmlV97('expensesPageCount',{total:total.toLocaleString('en-SG'),page:expensePage+1,pages:totalPages})}</span><span class="spacer"></span><button class="btn ghost sm" id="expensesPrev" ${expensePage===0?'disabled':''}>Previous</button><button class="btn ghost sm" id="expensesNext" ${expensePage+1>=totalPages?'disabled':''}>Next</button></div>`
       :CUI.emptyState({iconName:'expenses',title:'No expenses recorded yet',body:'Record business expenses to keep your P&L accurate.'});
     const prev=$('expensesPrev'),next=$('expensesNext');
     if(prev)prev.onclick=()=>{expensePage=Math.max(0,expensePage-1);load()};
@@ -41088,7 +41088,7 @@ async function settingsPage(){
       const link=staffInviteLinkV151(code);
       return `<article class="staff-invite-card">
         <div class="row"><div class="staff-invite-main"><span class="pill new">Invite pending</span> <span class="staff-invite-code">${esc(code)}</span></div><span class="spacer"></span><span class="pill off">${esc(ROLE_LABELS[i.role]||i.role)}</span></div>
-        <div class="staff-invite-meta"><span>Role offered: ${esc(ROLE_LABELS[i.role]||i.role)}</span>${i.email?`<span>Restricted email: ${esc(i.email)}</span>`:'<span>Restricted email: any authenticated user with this invite</span>'}<span>Invite link opens the staff join flow directly.</span></div>
+        <div class="staff-invite-meta"><span>Role offered: ${esc(ROLE_LABELS[i.role]||i.role)}</span>${i.email?`<span>Restricted email: <span>${esc(i.email)}</span></span>`:'<span>Restricted email: any authenticated user with this invite</span>'}<span>Invite link opens the staff join flow directly.</span></div>
         <div class="staff-invite-actions">
           <button class="btn ghost sm" onclick="cpInv('${esc(code)}')">Copy code</button>
           <button class="btn ghost sm" onclick="cpInvLink('${esc(code)}')">Copy invite link</button>
@@ -41293,7 +41293,7 @@ async function settingsPage(){
       const reusedNote=payload?.reused?`<p class="muted small" style="margin-top:8px">This is the code you already created — it still works${payload?.expires_at?`, until ${esc(walletDate(payload.expires_at,true))}`:''}.</p>`:'';
       const restrictedNote=payload?.restricted_to_email?`<p class="muted small" style="margin-top:4px">This code only works for ${esc(payload.restricted_to_email)}.</p>`:'';
       dialog.querySelector('.modal-card').innerHTML=`
-        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for ${esc(name)}</h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
+        <div class="row"><div><p class="eyebrow">App access</p><h2 id="staffReferenceTitleV217" style="margin-top:4px">Reference code for <span>${esc(name)}</span></h2></div><span class="spacer"></span><button type="button" class="btn ghost sm" id="staffReferenceCloseV217" aria-label="Close reference code">Close</button></div>
         <p class="staff-reference-code-v217" data-merchant-content>${esc(code)}</p>
         ${reusedNote}${restrictedNote}
         <ol class="small" style="margin:14px 0 0;padding-left:20px;line-height:1.7">
@@ -42452,7 +42452,7 @@ async function loadBillingConfig(){
            checked:chosen==='monthly',available:monthlyCents>0}
         ],
         cycle_note:hasSub&&!sameCad?`${billingCadenceWordV764(chosen)} billing starts on the renewal date.`:'',
-        capacities:ladder.map(value=>({value,label:`Up to ${value.toLocaleString('en-SG')} customer profiles`,selected:value===selectedCapacity})),
+        capacities:ladder.map(value=>({value,label:`${workspaceTemplateHtmlV97('upToCustomerProfiles',{count:value.toLocaleString('en-SG')})}`,selected:value===selectedCapacity})),
         capacity_note:'',
         now_line:unit>0?`${effectiveText}: ${moneyShortV758(total)} / ${period}${own?'':` for ${units} ${units===1?'branch':'branches'}`}`:'',
         primary:primaryLabel?{label:primaryLabel,disabled:!!blockedReason,reason:blockedReason}:null,
