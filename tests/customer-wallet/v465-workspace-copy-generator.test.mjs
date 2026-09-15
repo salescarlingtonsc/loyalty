@@ -3947,13 +3947,63 @@ const CUSTOMER_WALLET_V955 = [
   "Open messages",
 ];
 
+/* nestly_v956. The rest of the customer surface: the 42 sentences that live in the shared CORE
+   chunk rather than the customer one — the tier panel and ladder, the points panel and its paused
+   state, the claimable-reward banner, the offer landing and share sheet, the member QR, the
+   referral and gallery cards. Which chunk a string lands in is a build decision about what a
+   merchant downloads; it says nothing about who reads the words. Same walker, same ledger. */
+const CUSTOMER_CORE_V956 = [
+  "This offer has ended",
+  "The link you followed is for an offer that is no longer running.",
+  "Businesses you join keep their current offers on your Home.",
+  "Shared offer",
+  "Your code could not be loaded.",
+  "Your QR could not be drawn on this device.",
+  "Sign out",
+  ". Available until",
+  "View more",
+  "Limited-time offer",
+  "Show these details to the team when you visit.",
+  "No offers right now. New offers from this business appear here first.",
+  "Latest offers",
+  "This business is not running a tier programme at the moment. Your points and rewards are unaffected.",
+  "Your tier could not be checked just now. Nothing has changed — reload to try again.",
+  "This business has not set up tiers yet.",
+  "You're now at",
+  "Top tier",
+  "All tiers and what they unlock",
+  "Benefits not published yet.",
+  "Programme paused",
+  "This business isn’t running its rewards programme at the moment, so nothing is being counted. Anything you already earned is kept — it reappears here when the programme restarts.",
+  "Rewards from this business appear below as you earn.",
+  "Loading rewards…",
+  "Reward points",
+  "You have a reward ready!",
+  "Show this at the counter to claim it.",
+  "Claim reward ›",
+  "Refer a friend",
+  "Share this business and your referral code.",
+  "Ready rewards, catalogue and ways to earn.",
+  "Featured services and products will appear here after this business publishes them.",
+  "Follow us here",
+  "Account & privacy",
+  "Sign out instead",
+  "Authorized staff workspaces",
+  "Share this offer",
+  "Every tier and what it unlocks",
+  "Your tier",
+  "Tier and reward points",
+  "Membership summary",
+  "Business shortcuts",
+];
+
 test('the strings came from the reviewed ledger, and the ledger demands a reason', () => {
   const entries = readAdditions(additionsSource);
   /* nestly_v825 adds 'Staff commission' through the same ledger; nestly_v892 adds the renamed
      module's label and its page subtitle through it too. */
   assert.deepEqual(entries.map(entry => entry.source).sort(), [...STAMP_ROWS, ...COPY_FIXES_20260823,
     'Staff commission', 'Business Intelligence', 'Know what happened. See what to do next.',
-    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941, ...SPLIT_LABELS_V951, ...SPLIT_LABELS_V952, ...SPLIT_LABELS_V953, ...CUSTOMER_WALLET_V955].sort());
+    ...WAVE1_CHROME_20260915, ...WAVE2_HELP_PROSE_20260915, ...WAVE3_HELP_PROSE_20260915, ...WAVE4_HELP_PROSE_20260915, ...WAVE5_HELP_PROSE_20260915, ...WAVE6_HELP_PROSE_20260915, ...WAVE7_MODULE_20260915, ...WAVE8_HELP_PROSE_20260915, ...WAVE9_HELP_PROSE_20260915, ...HELP_TAIL_V927, ...BOTTLE_PILLS_V927, ...TILL_V928, ...APPOINTMENTS_V929, ...BOTTLES_V930, ...CATALOGUE_V931, ...CUSTOMERS_MONEY_V932, ...SETTINGS_OPS_V933, ...PROGRAMMES_AND_LONG_COPY_V934, ...LOYALTY_EDITOR_V935, ...WORKSPACE_TAIL_V936, ...WORKSPACE_HELPERS_V937, ...WORKSPACE_LONGTAIL_V938, ...WORKSPACE_CHROME_TAIL_V939, ...GAP_CLOSE_V960, ...SPLIT_LABELS_V940, ...SPLIT_LABELS_V941, ...SPLIT_LABELS_V951, ...SPLIT_LABELS_V952, ...SPLIT_LABELS_V953, ...CUSTOMER_WALLET_V955, ...CUSTOMER_CORE_V956].sort());
   for (const entry of entries) {
     assert.ok(entry.reason.trim().length > 20, `${entry.source} must say why it was added`);
     for (const locale of ['zh-CN', 'ms']) assert.equal(table[locale][entry.source], entry[locale]);
@@ -3987,7 +4037,7 @@ test('the generator is idempotent, and app.js already equals what it produces', 
      decision from filling a gap.
      nestly_v907 wave 2 adds the 113 Help article strings in WAVE2_HELP_PROSE_20260915: 1543 ->
      1656. */
-  assert.equal(once.keyCount, 5201);
+  assert.equal(once.keyCount, 5243);
 });
 
 /* nestly_v933. The generator applies `table[locale][entry.source] = value`, which ADDS a key when
@@ -4015,7 +4065,7 @@ test('every ledger entry adds a key — none rewrites a translation the ledger d
 test('--check exits non-zero when the table drifts from the ledger', () => {
   /* Executed as the CLI, because that is how a human and a CI step will meet it. */
   const clean = execFileSync(process.execPath, [generatorPath], {cwd: root, encoding: 'utf8'});
-  assert.match(clean, /up to date: 5201 strings per locale/);
+  assert.match(clean, /up to date: 5243 strings per locale/);
 
   /* And the same code path, given a table with one string removed, must report drift. */
   const stripped = appSource.replaceAll('"Stamps expired":', '"Stamps expired ":');

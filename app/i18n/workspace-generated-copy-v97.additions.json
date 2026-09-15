@@ -22410,6 +22410,258 @@
    "reason": "nestly_v955 — the signed-in customer wallet, now that v954 gave it a walker. These are the sentences the customer reads: the redemption QR flow, bookings, the inbox and its reminder settings, the profile with its biometric and notification switches, the reward and tier copy, and the account-deletion disclosure. Until v954 nothing walked this surface at all, so choosing 简体中文 changed the picker and left the page in English. Two strings the wallet shares with the workspace ('Date & time', 'New date & time') are already in this ledger and are not repeated — one catalogue, keyed on the English, serves both sides of the counter. 'Face ID', 'Touch ID' and 'Peekaa' are product names and stay as they are; 'Type DELETE to confirm' keeps DELETE verbatim, because it is the word the customer has to type.",
    "zh-CN": "打开消息",
    "ms": "Buka mesej"
+  },
+  {
+   "source": "This offer has ended",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "此优惠已结束",
+   "ms": "Tawaran ini telah tamat"
+  },
+  {
+   "source": "The link you followed is for an offer that is no longer running.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您点开的链接指向一个已经不再进行的优惠。",
+   "ms": "Pautan yang anda ikuti adalah untuk tawaran yang tidak lagi berjalan."
+  },
+  {
+   "source": "Businesses you join keep their current offers on your Home.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您加入的商户会把它们当前的优惠放在您的首页上。",
+   "ms": "Perniagaan yang anda sertai mengekalkan tawaran semasa mereka di Laman Utama anda."
+  },
+  {
+   "source": "Shared offer",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "分享的优惠",
+   "ms": "Tawaran dikongsi"
+  },
+  {
+   "source": "Your code could not be loaded.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您的代码未能载入。",
+   "ms": "Kod anda tidak dapat dimuatkan."
+  },
+  {
+   "source": "Your QR could not be drawn on this device.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您的二维码无法在这台设备上生成。",
+   "ms": "QR anda tidak dapat dilukis pada peranti ini."
+  },
+  {
+   "source": "Sign out",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "退出登录",
+   "ms": "Log keluar"
+  },
+  {
+   "source": ". Available until",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "。有效期至",
+   "ms": ". Tersedia sehingga"
+  },
+  {
+   "source": "View more",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "查看更多",
+   "ms": "Lihat lagi"
+  },
+  {
+   "source": "Limited-time offer",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "限时优惠",
+   "ms": "Tawaran masa terhad"
+  },
+  {
+   "source": "Show these details to the team when you visit.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "到访时把这些详情出示给团队看。",
+   "ms": "Tunjukkan butiran ini kepada pasukan semasa anda datang."
+  },
+  {
+   "source": "No offers right now. New offers from this business appear here first.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "目前没有优惠。这家商户推出新优惠时，会先出现在这里。",
+   "ms": "Tiada tawaran buat masa ini. Tawaran baharu daripada perniagaan ini muncul di sini dahulu."
+  },
+  {
+   "source": "Latest offers",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "最新优惠",
+   "ms": "Tawaran terkini"
+  },
+  {
+   "source": "This business is not running a tier programme at the moment. Your points and rewards are unaffected.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "这家商户目前没有在运行等级方案。您的积分和奖励不受影响。",
+   "ms": "Perniagaan ini tidak menjalankan program peringkat buat masa ini. Mata dan ganjaran anda tidak terjejas."
+  },
+  {
+   "source": "Your tier could not be checked just now. Nothing has changed — reload to try again.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "刚才无法确认您的等级。没有任何内容被更改 — 请重新载入再试一次。",
+   "ms": "Peringkat anda tidak dapat disemak sebentar tadi. Tiada apa-apa yang berubah — muat semula untuk mencuba lagi."
+  },
+  {
+   "source": "This business has not set up tiers yet.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "这家商户还没有设置等级。",
+   "ms": "Perniagaan ini belum menyediakan peringkat lagi."
+  },
+  {
+   "source": "You're now at",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您现在处于",
+   "ms": "Anda kini berada di"
+  },
+  {
+   "source": "Top tier",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "最高等级",
+   "ms": "Peringkat tertinggi"
+  },
+  {
+   "source": "All tiers and what they unlock",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "所有等级及其解锁的内容",
+   "ms": "Semua peringkat dan apa yang dibukanya"
+  },
+  {
+   "source": "Benefits not published yet.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "福利尚未发布。",
+   "ms": "Faedah belum diterbitkan."
+  },
+  {
+   "source": "Programme paused",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "方案已暂停",
+   "ms": "Program dijeda"
+  },
+  {
+   "source": "This business isn’t running its rewards programme at the moment, so nothing is being counted. Anything you already earned is kept — it reappears here when the programme restarts.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "这家商户目前没有在运行它的奖励方案，所以什么都不会被计入。您已经赚到的一切都会保留 — 方案重新开始时会再出现在这里。",
+   "ms": "Perniagaan ini tidak menjalankan program ganjarannya buat masa ini, jadi tiada apa-apa yang dikira. Apa-apa yang anda sudah peroleh dikekalkan — ia muncul semula di sini apabila program itu bermula semula."
+  },
+  {
+   "source": "Rewards from this business appear below as you earn.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "随着您不断累积，这家商户的奖励会显示在下方。",
+   "ms": "Ganjaran daripada perniagaan ini muncul di bawah sambil anda mengumpul."
+  },
+  {
+   "source": "Loading rewards…",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "正在载入奖励…",
+   "ms": "Memuatkan ganjaran…"
+  },
+  {
+   "source": "Reward points",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "奖励积分",
+   "ms": "Mata ganjaran"
+  },
+  {
+   "source": "You have a reward ready!",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您有一份奖励可以领取了！",
+   "ms": "Anda ada ganjaran yang sedia!"
+  },
+  {
+   "source": "Show this at the counter to claim it.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "在柜台出示即可领取。",
+   "ms": "Tunjukkan ini di kaunter untuk menuntutnya."
+  },
+  {
+   "source": "Claim reward ›",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "领取奖励 ›",
+   "ms": "Tuntut ganjaran ›"
+  },
+  {
+   "source": "Refer a friend",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "推荐朋友",
+   "ms": "Rujuk rakan"
+  },
+  {
+   "source": "Share this business and your referral code.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "分享这家商户和您的推荐码。",
+   "ms": "Kongsi perniagaan ini dan kod rujukan anda."
+  },
+  {
+   "source": "Ready rewards, catalogue and ways to earn.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "可领取的奖励、商品目录与赚取方式。",
+   "ms": "Ganjaran sedia, katalog dan cara memperoleh."
+  },
+  {
+   "source": "Featured services and products will appear here after this business publishes them.",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "这家商户发布精选服务和产品后，会显示在这里。",
+   "ms": "Perkhidmatan dan produk pilihan akan muncul di sini selepas perniagaan ini menerbitkannya."
+  },
+  {
+   "source": "Follow us here",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "在这里关注我们",
+   "ms": "Ikuti kami di sini"
+  },
+  {
+   "source": "Account & privacy",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "账户与隐私",
+   "ms": "Akaun & privasi"
+  },
+  {
+   "source": "Sign out instead",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "改为退出登录",
+   "ms": "Log keluar sebaliknya"
+  },
+  {
+   "source": "Authorized staff workspaces",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "已授权的员工工作区",
+   "ms": "Ruang kerja kakitangan yang dibenarkan"
+  },
+  {
+   "source": "Share this offer",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "分享此优惠",
+   "ms": "Kongsi tawaran ini"
+  },
+  {
+   "source": "Every tier and what it unlocks",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "每个等级及其解锁的内容",
+   "ms": "Setiap peringkat dan apa yang dibukanya"
+  },
+  {
+   "source": "Your tier",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "您的等级",
+   "ms": "Peringkat anda"
+  },
+  {
+   "source": "Tier and reward points",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "等级与奖励积分",
+   "ms": "Peringkat dan mata ganjaran"
+  },
+  {
+   "source": "Membership summary",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "会员概览",
+   "ms": "Ringkasan keahlian"
+  },
+  {
+   "source": "Business shortcuts",
+   "reason": "nestly_v956 — the customer-surface copy that lives in the shared core chunk rather than the customer one: the tier panel and ladder, the points panel and its paused state, the claimable-reward banner, the offer landing and share sheet, the member QR, the referral and gallery cards, and the account-and-privacy heading. Same walker, same ledger as v955 — the split between chunks is a build decision about what a merchant downloads, not a statement about who reads the words.",
+   "zh-CN": "商户快捷入口",
+   "ms": "Pintasan perniagaan"
   }
  ]
 }
