@@ -14,10 +14,23 @@
 // of this request, roughly 3.4k input and 200 output tokens per receipt, it costs
 // about 0.03 US cents against Haiku's 0.44.
 //
-// MODEL is env-overridable precisely BECAUSE this is the cheapest tier: if it
-// misreads Singapore receipts, set RECEIPT_OCR_MODEL=gemini-3.5-flash-lite and the
-// worker picks it up with no redeploy. Cost is not the reason to stay put — at this
-// volume every option is under a dollar a month — legibility is.
+// NOT the cheapest tier, and here is the receipt that settled it. gemini-2.5-flash-lite
+// ($0.10/$0.40) was tried first and failed on the only field that really matters. Given a
+// real Koufu food-court receipt — TOTAL 16.57, CDCVoucher 15.00, VISAMASTER 1.57 — it
+// returned total_cents 157: the card payment, not the bill. Its own gst_cents of 137 was
+// arithmetically impossible against that (GST cannot be 87% of a total), and it called
+// itself 90% confident. It also dropped a digit from the receipt number and named the food
+// court instead of the GST-registered entity.
+//
+// The SPLIT TENDER and GST self-check rules below were written for that failure and did fix
+// the total on 2.5 — but it still lost the digit. gemini-3.5-flash-lite ($0.30/$2.50) read
+// the same photo perfectly first time, every field, needing no prompt crutch: still about a
+// quarter of Haiku 4.5's price, a tenth of a US cent per receipt.
+//
+// So the default is the model that read the receipt correctly, and RECEIPT_OCR_MODEL exists
+// to go cheaper only if someone can show 2.5 is good enough on a real sample. The whole
+// spread here is under a dollar a month at this volume; legibility is the only thing worth
+// choosing on, and an OCR that is confidently wrong about a total is worse than none.
 //
 // maxOutputTokens is generous rather than tight: on models that think before
 // answering, a tight cap is spent reasoning and the response comes back truncated
@@ -33,7 +46,7 @@ import {
   authenticatedUserId,
 } from '../_shared/billing-service.ts';
 
-const MODEL = Deno.env.get('RECEIPT_OCR_MODEL') || 'gemini-2.5-flash-lite';
+const MODEL = Deno.env.get('RECEIPT_OCR_MODEL') || 'gemini-3.5-flash-lite';
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 const MAX_RECEIPTS_PER_INVOCATION = 10;
 const MAX_OUTPUT_TOKENS = 2048;
@@ -56,6 +69,14 @@ const SYSTEM_PROMPT = [
   '- total_cents is the amount actually payable, after discounts, including GST.',
   '- Do not use subtotal, amount before tax, cash tendered, change, balance carried',
   '  forward, or a line-item price as total_cents.',
+  '- SPLIT TENDER. The TOTAL line is what was spent, even when it was settled in',
+  '  parts. A CDC voucher, card, cash, NETS or points line UNDER the total is HOW it',
+  '  was paid, not what it cost. A receipt reading TOTAL 16.57 / CDCVoucher 15.00 /',
+  '  VISAMASTER 1.57 has total_cents 1657 — never 157.',
+  '- CHECK YOURSELF AGAINST THE GST LINE before you answer. Singapore GST is 9%, so',
+  '  a GST-inclusive total satisfies gst_cents ~= total_cents * 9 / 109. If the GST',
+  '  printed on the receipt is far larger than that, you have taken a payment line as',
+  '  the total. Re-read the TOTAL line.',
   '- gst_cents is the GST/tax line only, null when the receipt does not show one.',
   '- document_date is the transaction date in YYYY-MM-DD. Singapore receipts are',
   '  usually DD/MM/YYYY, so 03/08/2026 is 2026-08-03, not 8 March.',
