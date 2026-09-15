@@ -140,7 +140,16 @@ test('dashboard and report layouts collapse to one column on narrow phones', () 
 
 test('appointment actions use branch-projected permissions and expose a truthful zero-access state', () => {
   const appointments = section('async function appointmentsPage(){', '/* ---------- waitlist');
-  assert.match(appointments, /loadBranchModuleProjection\(branch\.id\)/);
+  /* nestly_v948: the page no longer calls loadBranchModuleProjection inline after its branch
+     list — that inline call WAS the second round trip (Appointments 409ms and the loading screen
+     on every visit, measured). It now starts the same per-branch projection above its own reads
+     and settles it here. What this test protects is unchanged and is asserted directly: the
+     projection is still obtained per branch, and still the thing the permission checks below
+     read. */
+  assert.match(appointments, /startBranchProjectionsV948\(\)/,
+    'the per-branch projection must still be obtained, just not last');
+  assert.match(appointments, /projectionPairs=settledV948\.map\(entry=>\[entry\.branchId,entry\.data\]\)/,
+    'and it must still be what branchProjection is built from');
   assert.match(appointments, /projectionCanRead\(branchProjection\[branch\.id\],'appointments'\)/);
   assert.match(appointments, /projectionCanWrite\(selectedProjection,'appointments'\)/);
   assert.match(appointments, /projectionCanWrite\(selectedProjection,'till'\)/);

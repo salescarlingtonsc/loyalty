@@ -51,7 +51,17 @@ test('Quick Earn resolves every assigned branch before showing write controls',a
     app.indexOf('async function tillPage()'),
     app.indexOf('/* ---------- sales ---------- */')
   );
-  assert.match(till,/sb\.rpc\('get_my_modules_at_v115'/);
+  /* nestly_v948: the till no longer issues get_my_modules_at_v115 inline after its branch read —
+     that inline call WAS the second round trip (Record sale 412ms with the loading screen on every
+     visit, measured; 243ms and no loading screen after). The same projection is now started above
+     the till's own reads and settled here. The property this test is named for is unchanged and is
+     asserted directly: EVERY assigned branch is resolved before the write controls are drawn. */
+  assert.match(till,/startBranchProjectionsV948\(\)/,
+    'the per-branch projection must still be obtained');
+  assert.match(till,/tillProjectionsV948\.settle\(assignedTillBranches\.map\(branch=>branch\.id\)\)/,
+    'and it must be settled for EVERY assigned branch, not a subset');
+  assert.match(till,/branchModuleFailure/,
+    'and a branch whose access could not be checked must still block the write controls');
   assert.match(till,/branchModulePermsById=new Map/);
   assert.match(till,/branchCanWrite\(branch\.id,'till'\)&&branchCanRead\(branch\.id,'clients'\)/);
   assert.doesNotMatch(till,/giftcardsReadable|giftcardsWritable/,

@@ -70,10 +70,29 @@ test('capacity arithmetic merges overlapping breaks and allows honest utilizatio
 });
 
 test('branch module projections are fetched fresh so another session sees role downgrade',async()=>{
-  const loader=sliceFunction('async function loadBranchModuleProjection','const projectionCanRead');
+  /* nestly_v948 narrowed this from the whole region to the LOADER ITSELF, and made the rule for
+     what sits beside it explicit rather than a text proxy.
+     The rule being protected is v370's: the per-branch projection is never cached, because it
+     carries permission state another session can revoke. The old assertion enforced that by
+     refusing Map(/.has(/.set( anywhere between the loader and projectionCanRead — a proxy that
+     was right until something legitimately non-caching moved in next door. v948 added
+     startBranchProjectionsV948, which keeps a Map of requests ALREADY IN FLIGHT for one page load
+     so the projection can overlap the page's own reads instead of following them. It is rebuilt
+     on every call and discarded when the page function returns; a second page load re-reads every
+     projection, which tests/business-ui/v948-branch-projection-overlap.test.mjs proves by
+     EXECUTING it twice and counting the reads.
+     So: the loader must still hold no store of any kind, and the starter's registry must be
+     constructed INSIDE the function — module scope is where a cache would have to live to survive
+     a page load, and that is the thing to refuse. */
+  const region=sliceFunction('async function loadBranchModuleProjection','const projectionCanRead');
+  const loader=region.slice(0,region.indexOf('\n}\n')+3);
   assert.match(loader,/sb\.rpc\('get_my_modules_at_v115'/);
   assert.doesNotMatch(loader,/Map\(|\.has\(|\.set\(/,
     'effective identity must not live in an indefinite browser cache');
+  assert.doesNotMatch(loader,/return\s+\w+\.get\(|if\s*\(\s*\w+\.has\(/,
+    'the loader must never answer from a store instead of the server');
+  assert.match(region,/function startBranchProjectionsV948\(\)\{\s*const started=new Map\(\);/,
+    'the in-flight registry must be created per call — a module-scope one would be a cache');
 
   let role='frontdesk',calls=0;
   const serverProjection=async()=>{calls++;return {role,modules:role==='frontdesk'?['appointments']:[]}};

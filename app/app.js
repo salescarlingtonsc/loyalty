@@ -2422,6 +2422,47 @@ async function loadBranchModuleProjection(branchId,{force=false}={}){
   if(error)throw error;
   return data||null;
 }
+/* nestly_v948 — the per-branch projection stays UNCACHED, and stops being LAST.
+   v370 was explicit that this projection must never be cached: it carries permission state
+   another session can revoke, and a cached copy would let a teammate whose access was just
+   removed keep it until a TTL expired. That decision is untouched here. What was conflated with
+   it is the ORDER: Record sale and Appointments both read their branch list, and only THEN asked
+   for one projection per branch — so the projection was a second round trip stacked behind the
+   first. Measured against the real bundles at 150ms per read: Record sale 410ms and Appointments
+   439ms, both showing the loading screen on every single visit, while every page that reads in
+   ONE wave lands at ~125ms and never shows it.
+   The projection does not have to WAIT. Which branches this person can see is already known —
+   v370 caches the branch scope for 120s, the top bar reads it on every render (wireProfile runs
+   before the page function), and that list is already filtered to this user. So the requests are
+   STARTED from it at T=0, in parallel with the page's own reads, and RECONCILED against the
+   authoritative list when that lands: a branch the seed did not know about is fetched then, which
+   is exactly today's behaviour for that branch. Nothing new is cached, every projection is still
+   a live read, and a cold scope cache simply falls back to today's timing rather than issuing a
+   duplicate branch read to warm it. */
+function startBranchProjectionsV948(){
+  const started=new Map();
+  const begin=branchId=>{
+    if(started.has(branchId))return started.get(branchId);
+    /* Settled into a value rather than left as a rejecting promise. These are started before
+       anything awaits them, so a seeded branch the page then discards would otherwise surface as
+       an unhandled rejection for a request nobody asked for. settle() re-raises. */
+    const pending=loadBranchModuleProjection(branchId)
+      .then(data=>({data,error:null}),error=>({data:null,error}));
+    started.set(branchId,pending);
+    return pending;
+  };
+  const scopeKeyV948=`${S.biz?.id||''}:${S.user?.id||''}:${S.myRole||''}`;
+  if(bootstrapCacheFreshV370(branchScopeCacheV370,scopeKeyV948,BOOTSTRAP_CACHE_TTL_V370.branches)){
+    for(const branch of activeBranchesForScopeV217(branchScopeCacheV370.result?.branches||[])){
+      if(branch?.id)begin(branch.id);
+    }
+  }
+  return {
+    seeded:started.size,
+    settle:branchIds=>Promise.all((branchIds||[]).map(async branchId=>
+      ({branchId,...await begin(branchId)}))),
+  };
+}
 const projectionCanRead=(projection,module)=>Array.isArray(projection?.modules)
   &&projection.modules.includes(module)
   &&roleCanUseModule(projection?.role||S.myRole,module);
@@ -28313,6 +28354,9 @@ async function tillPage(){
     return;
   }
   routeMain.innerHTML=CUI.loadingState({title:'Record sale',iconName:'till'});
+  /* nestly_v948: started HERE, not after the branch read below, so the projection overlaps the
+     roster/branch/assignment reads instead of following them. */
+  const tillProjectionsV948=startBranchProjectionsV948();
   const [
     {data:tillStaff,error:tillStaffError},{data:tillBranches,error:tillBranchError},
     {data:tillStaffBranches,error:tillStaffBranchError}
@@ -28346,12 +28390,11 @@ async function tillPage(){
   const canSeeAllTillBranches=S.myRole==='owner'||S.myRole==='manager';
   const tillAssignedBranchIds=new Set((tillStaffBranches||[]).filter(row=>row.staff_id===tillStaffId).map(row=>row.branch_id));
   const assignedTillBranches=(tillBranches||[]).filter(branch=>canSeeAllTillBranches||tillAssignedBranchIds.has(branch.id));
-  const branchModuleResults=await Promise.all(assignedTillBranches.map(async branch=>{
-    const result=await sb.rpc('get_my_modules_at_v115',{
-      p_business:S.biz.id,p_branch:branch.id
-    });
-    return {branch,result};
-  }));
+  /* Already in flight since the top of the function; this only waits for what is left, and tops
+     up any branch the seed did not cover. Same {branch,result} shape as before. */
+  const branchModuleSettledV948=await tillProjectionsV948.settle(assignedTillBranches.map(branch=>branch.id));
+  const branchModuleResults=branchModuleSettledV948.map(({branchId,data,error})=>(
+    {branch:assignedTillBranches.find(branch=>branch.id===branchId),result:{data,error}}));
   if(!isTillCurrent())return;
   const branchModuleFailure=branchModuleResults.find(item=>item.result.error||!item.result.data);
   if(branchModuleFailure){
@@ -47693,6 +47736,9 @@ async function appointmentsPage(){
   const apptOpenFormV217=pendingOpenApptFormV217;pendingOpenApptFormV217=false;
   let canWrite=false,canComplete=false;
   routeMain.innerHTML=CUI.loadingState({title:'Appointments',iconName:'appointments'});
+  /* nestly_v948: started HERE, above the page's own reads, so the per-branch projection overlaps
+     them instead of following them. Settled where the second wave used to be. */
+  const apptProjectionsV948=startBranchProjectionsV948();
   const [
     {data:cl,error:clientError},{data:sv,error:serviceError},{data:stf,error:staffError},
     {data:branches,error:branchError},{data:staffBranches,error:staffBranchError},
@@ -47797,9 +47843,12 @@ async function appointmentsPage(){
   const assignedBranches=(branches||[]).filter(b=>canSeeAll||myBranchIds.has(b.id));
   let projectionPairs;
   try{
-    projectionPairs=await Promise.all(assignedBranches.map(async branch=>[
-      branch.id,await loadBranchModuleProjection(branch.id)
-    ]));
+    /* Already in flight since the top of the function. settle() re-raises the first error so
+       this catch, and the retry card it draws, behave exactly as they did. */
+    const settledV948=await apptProjectionsV948.settle(assignedBranches.map(branch=>branch.id));
+    const failedV948=settledV948.find(entry=>entry.error);
+    if(failedV948)throw failedV948.error;
+    projectionPairs=settledV948.map(entry=>[entry.branchId,entry.data]);
   }catch(error){
     if(!isCurrent())return;
     routeMain.innerHTML=CUI.errorState({title:'Appointments unavailable',message:'Branch access could not be loaded. Your settings were not changed.'});
