@@ -4420,6 +4420,12 @@
       "version": "20261017030000",
       "name": "nestly_v966_promo_release",
       "sourcePath": "db/migrations/20261016_nestly_v966_promo_release.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261017040000",
+      "name": "nestly_v967_manual_payment_consumes_promo",
+      "sourcePath": "db/migrations/20261016_nestly_v967_manual_payment_consumes_promo.sql"
     }
   ]
 }
