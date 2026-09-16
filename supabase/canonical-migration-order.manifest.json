@@ -6,8 +6,8 @@
   "catalogRecoveryManifest": "supabase/migrations/catalog-recovery.manifest.json",
   "hashAlgorithm": "sha256-raw-bytes",
   "catalogAppliedCount": 45,
-  "pendingCount": 696,
-  "itemCount": 741,
+  "pendingCount": 698,
+  "itemCount": 743,
   "items": [
     {
       "order": 1,
@@ -7417,6 +7417,26 @@
       "path": "supabase/migrations/20261019010000_nestly_v987_the_ledger_can_post_a_discount.sql",
       "octetLength": 14276,
       "sha256": "3cceca060f69ea2ca94e62ea2ce8d261b54d87124601d0818302d1c433abadf7",
+      "provenance": "local-source"
+    },
+    {
+      "order": 742,
+      "kind": "pending",
+      "version": "20261019020000",
+      "name": "nestly_v989_the_ledger_only_records_live_money",
+      "path": "supabase/migrations/20261019020000_nestly_v989_the_ledger_only_records_live_money.sql",
+      "octetLength": 6576,
+      "sha256": "68544300d6ccb2a8faa676e0f341d0b68ccb8a50bccb817e96888e3af00bf19a",
+      "provenance": "local-source"
+    },
+    {
+      "order": 743,
+      "kind": "pending",
+      "version": "20261019030000",
+      "name": "nestly_v990_provider_cash_must_prove_it_is_live",
+      "path": "supabase/migrations/20261019030000_nestly_v990_provider_cash_must_prove_it_is_live.sql",
+      "octetLength": 5128,
+      "sha256": "62816dec91b46794bbf0ba241db131cc0fa92d3a6937a60ffb38111790512fab",
       "provenance": "local-source"
     }
   ]

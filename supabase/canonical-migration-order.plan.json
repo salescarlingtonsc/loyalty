@@ -4450,6 +4450,18 @@
       "version": "20261019010000",
       "name": "nestly_v987_the_ledger_can_post_a_discount",
       "sourcePath": "db/migrations/20261019_nestly_v987_the_ledger_can_post_a_discount.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261019020000",
+      "name": "nestly_v989_the_ledger_only_records_live_money",
+      "sourcePath": "db/migrations/20261019_nestly_v989_the_ledger_only_records_live_money.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261019030000",
+      "name": "nestly_v990_provider_cash_must_prove_it_is_live",
+      "sourcePath": "db/migrations/20261019_nestly_v990_provider_cash_must_prove_it_is_live.sql"
     }
   ]
 }

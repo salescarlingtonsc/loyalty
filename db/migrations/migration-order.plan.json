@@ -4455,6 +4455,18 @@
       "path": "db/migrations/20261019_nestly_v987_the_ledger_can_post_a_discount.sql",
       "semanticVersion": "v987",
       "proposedDeployVersion": "20261019010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261019_nestly_v989_the_ledger_only_records_live_money.sql",
+      "semanticVersion": "v989",
+      "proposedDeployVersion": "20261019020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261019_nestly_v990_provider_cash_must_prove_it_is_live.sql",
+      "semanticVersion": "v990",
+      "proposedDeployVersion": "20261019030000"
     }
   ]
 }
