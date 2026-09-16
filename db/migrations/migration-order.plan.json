@@ -4485,6 +4485,12 @@
       "path": "db/migrations/20261020_nestly_v993_the_reader_is_asked_once_not_once_per_row.sql",
       "semanticVersion": "v993",
       "proposedDeployVersion": "20261020020000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261020_nestly_v994_the_super_admin_arm_is_preserved_not_reasoned_about.sql",
+      "semanticVersion": "v994",
+      "proposedDeployVersion": "20261020030000"
     }
   ]
 }

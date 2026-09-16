@@ -142,15 +142,21 @@ begin
         || ' of ' || n_clients || ' diverge' || chr(10);
   end if;
 
-  -- The policy set the migration leaves behind.
-  if (select count(*) from pg_policies
-       where schemaname='public' and tablename='sales' and cmd='SELECT') = 1 then
-    out := out || '  PASS  one SELECT policy on sales' || chr(10);
+  -- The policy set on sales. v993 left exactly one (sales_select); nestly_v994 then put the
+  -- super-admin arm back as a second, hoisted policy rather than leave it resting on the scope
+  -- reader's construction alone. Both are expected, and nothing else is.
+  if (select coalesce(array_agg(policyname::text order by policyname), '{}'::text[])
+        from pg_policies
+       where schemaname='public' and tablename='sales' and cmd='SELECT')
+     = array['sales_sa_read','sales_select'] then
+    out := out || '  PASS  sales SELECT policies are exactly {sales_sa_read, sales_select}' || chr(10);
   else
     fails := fails + 1;
-    out := out || '  FAIL  sales SELECT policy count is '
-        || (select count(*) from pg_policies
-             where schemaname='public' and tablename='sales' and cmd='SELECT') || chr(10);
+    out := out || '  FAIL  sales SELECT policies are '
+        || (select coalesce(array_agg(policyname::text order by policyname), '{}'::text[])::text
+              from pg_policies
+             where schemaname='public' and tablename='sales' and cmd='SELECT')
+        || ', expected {sales_sa_read, sales_select}' || chr(10);
   end if;
 
   raise exception E'nestly_v993 rollback suite — % failure(s), % sales evals + % client evals\n%',

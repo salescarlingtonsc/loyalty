@@ -4480,6 +4480,12 @@
       "version": "20261020020000",
       "name": "nestly_v993_the_reader_is_asked_once_not_once_per_row",
       "sourcePath": "db/migrations/20261020_nestly_v993_the_reader_is_asked_once_not_once_per_row.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261020030000",
+      "name": "nestly_v994_the_super_admin_arm_is_preserved_not_reasoned_about",
+      "sourcePath": "db/migrations/20261020_nestly_v994_the_super_admin_arm_is_preserved_not_reasoned_about.sql"
     }
   ]
 }
