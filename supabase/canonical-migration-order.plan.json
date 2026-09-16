@@ -4468,6 +4468,12 @@
       "version": "20261020000000",
       "name": "nestly_v991_no_hours_does_not_mean_closed",
       "sourcePath": "db/migrations/20261020_nestly_v991_no_hours_does_not_mean_closed.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261020010000",
+      "name": "nestly_v992_approval_is_tested_by_every_guard",
+      "sourcePath": "db/migrations/20261020_nestly_v992_approval_is_tested_by_every_guard.sql"
     }
   ]
 }

@@ -4473,6 +4473,12 @@
       "path": "db/migrations/20261020_nestly_v991_no_hours_does_not_mean_closed.sql",
       "semanticVersion": "v991",
       "proposedDeployVersion": "20261020000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261020_nestly_v992_approval_is_tested_by_every_guard.sql",
+      "semanticVersion": "v992",
+      "proposedDeployVersion": "20261020010000"
     }
   ]
 }
