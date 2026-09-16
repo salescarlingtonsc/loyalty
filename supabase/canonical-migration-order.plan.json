@@ -4462,6 +4462,12 @@
       "version": "20261019030000",
       "name": "nestly_v990_provider_cash_must_prove_it_is_live",
       "sourcePath": "db/migrations/20261019_nestly_v990_provider_cash_must_prove_it_is_live.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261020000000",
+      "name": "nestly_v991_no_hours_does_not_mean_closed",
+      "sourcePath": "db/migrations/20261020_nestly_v991_no_hours_does_not_mean_closed.sql"
     }
   ]
 }

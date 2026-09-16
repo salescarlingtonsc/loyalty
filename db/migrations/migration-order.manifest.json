@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 742,
-  "executableCount": 728,
+  "itemCount": 743,
+  "executableCount": 729,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -7012,7 +7012,7 @@
       "path": "db/migrations/20261019_nestly_v989_the_ledger_only_records_live_money.sql",
       "semanticVersion": "v989",
       "proposedDeployVersion": "20261019020000",
-      "sha256": "68544300d6ccb2a8faa676e0f341d0b68ccb8a50bccb817e96888e3af00bf19a"
+      "sha256": "64b43f907dc8337a4b5f95f4218a23c3939198c6fe1e43a741c6adfa4656c7fe"
     },
     {
       "order": 742,
@@ -7020,7 +7020,15 @@
       "path": "db/migrations/20261019_nestly_v990_provider_cash_must_prove_it_is_live.sql",
       "semanticVersion": "v990",
       "proposedDeployVersion": "20261019030000",
-      "sha256": "62816dec91b46794bbf0ba241db131cc0fa92d3a6937a60ffb38111790512fab"
+      "sha256": "c95c9fccdd2c1794cc80a7e6715b70df0cbdaa83d607ab6f0d26863355439eb7"
+    },
+    {
+      "order": 743,
+      "kind": "executable",
+      "path": "db/migrations/20261020_nestly_v991_no_hours_does_not_mean_closed.sql",
+      "semanticVersion": "v991",
+      "proposedDeployVersion": "20261020000000",
+      "sha256": "ef1e798b0457c672197fd538cb18dae3776110fc6fc9339d12ba4a1fe98eb4bc"
     }
   ]
 }
