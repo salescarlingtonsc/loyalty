@@ -48,6 +48,23 @@
 -- function is the invariant itself: this ledger holds real money, and it says so in the code that
 -- would otherwise post.
 --
+--
+-- REPLAY NOTE (added after this migration failed its first clean rebuild). The original version
+-- patched all three functions by extracting the live body and replacing a multi-line anchor taken
+-- from production. That is not replayable: production's copy of app.v200_recognize_due_months was
+-- applied through a path that strips SQL comments, so its stored body reads
+--
+--     and m.month_start <= v_today
+--     and p.cash_journal_entry_id is not null
+--
+-- while the repo's own v200 migration - the text a fresh database is built from - carries a comment
+-- line between those two. The anchor matched prod and could never match a rebuild, and the scratch
+-- cluster refused the migration with "expected exactly 1 anchor ... found 0".
+--
+-- So this migration now does ONE thing, guarded by a single line that exists in both worlds, and it
+-- is idempotent. The two v200 revenue functions are restated outright by nestly_v990, which is
+-- deterministic in a way that patching a body of unknown provenance is not.
+--
 -- A MANUAL firm has no provider invoice at all - it is invoiced by hand and pays by bank transfer,
 -- which is real money. The guards below therefore only reject a period or an invoice that IS
 -- provider-billed and IS sandbox; absence of a provider invoice is not evidence of fakeness.
@@ -59,53 +76,27 @@ begin;
 do $patch$
 declare
   v_def text;
+  v_old text := 'if p_invoice.currency<>''SGD'' or p_invoice.status=''draft'' or p_invoice.total_cents<=0 then return;end if;';
+  v_new text := 'if p_invoice.currency<>''SGD'' or p_invoice.status=''draft'' or p_invoice.total_cents<=0'
+                || ' or not coalesce(p_invoice.livemode,false) then return;end if;';
   v_hits integer;
-  v_target text;
-  v_old text;
-  v_new text;
-  v_targets text[] := array[
-    'app.platform_sync_provider_invoice_v147',
-    'app.v200_recognize_due_months',
-    'app.v200_capture_paid_periods'
-  ];
-  v_olds text[] := array[
-    'if p_invoice.currency<>''SGD'' or p_invoice.status=''draft'' or p_invoice.total_cents<=0 then return;end if;',
-    E'     where m.journal_entry_id is null\n       and m.month_start <= v_today\n       and p.cash_journal_entry_id is not null',
-    E'            and p.period_end = (s.current_period_end at time zone ''Asia/Singapore'')::date)'
-  ];
-  v_news text[] := array[
-    /* nestly_v989: sandbox money is not this company's money. */
-    'if p_invoice.currency<>''SGD'' or p_invoice.status=''draft'' or p_invoice.total_cents<=0'
-      || ' or not coalesce(p_invoice.livemode,false) then return;end if;',
-    E'     where m.journal_entry_id is null\n'
-      || E'       and m.month_start <= v_today\n'
-      || E'       and p.cash_journal_entry_id is not null\n'
-      || E'       /* nestly_v989: a slice whose period was paid by a TEST-mode invoice is not revenue.\n'
-      || E'          66 such slices were queued to 2027-08-05 when this guard was written. */\n'
-      || E'       and not exists (select 1 from public.billing_provider_invoices bad\n'
-      || E'                        where bad.provider_invoice_id = p.invoice_reference\n'
-      || E'                          and not coalesce(bad.livemode,false))',
-    E'            and p.period_end = (s.current_period_end at time zone ''Asia/Singapore'')::date)\n'
-      || E'       /* nestly_v989: never capture a period settled by a TEST-mode invoice. A manual firm\n'
-      || E'          has no provider invoice at all and is unaffected - absence is not fakeness. */\n'
-      || E'       and not exists (select 1 from public.billing_provider_invoices bad\n'
-      || E'                        where bad.provider_invoice_id = nullif(btrim(coalesce(s.last_paid_invoice_id,'''')),'''')\n'
-      || E'                          and not coalesce(bad.livemode,false))'
-  ];
-  i integer;
 begin
-  for i in 1 .. array_length(v_targets,1) loop
-    v_target := v_targets[i]; v_old := v_olds[i]; v_new := v_news[i];
-    select pg_get_functiondef(p.oid) into v_def
-      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-     where n.nspname = split_part(v_target,'.',1) and p.proname = split_part(v_target,'.',2);
-    if v_def is null then raise exception 'v989: % does not exist', v_target; end if;
-    v_hits := (length(v_def) - length(replace(v_def, v_old, ''))) / length(v_old);
-    if v_hits <> 1 then
-      raise exception 'v989: expected exactly 1 anchor in %, found %', v_target, v_hits;
-    end if;
-    execute replace(v_def, v_old, v_new);
-  end loop;
+  select pg_get_functiondef(p.oid) into v_def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'app' and p.proname = 'platform_sync_provider_invoice_v147';
+  if v_def is null then
+    raise exception 'v989: app.platform_sync_provider_invoice_v147 does not exist';
+  end if;
+  /* Idempotent: on a database that already carries the guard there is nothing to do, and saying so
+     is better than failing a rebuild over work that is already done. */
+  if position('coalesce(p_invoice.livemode,false)' in v_def) > 0 then
+    return;
+  end if;
+  v_hits := (length(v_def) - length(replace(v_def, v_old, ''))) / length(v_old);
+  if v_hits <> 1 then
+    raise exception 'v989: expected exactly 1 screening guard in app.platform_sync_provider_invoice_v147, found %', v_hits;
+  end if;
+  execute replace(v_def, v_old, v_new);
 end
 $patch$;
 
