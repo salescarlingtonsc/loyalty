@@ -26,7 +26,8 @@ import {
   requireOrigin,
   sha256Hex,
 } from '../_shared/gateway.ts';
-import { classifyMetaResponse, sendPath } from '../_shared/whatsapp-send-boundaries.mjs';
+import { classifyMetaResponse } from '../_shared/whatsapp-send-boundaries.mjs';
+import { describeTransport, resolveWhatsappTransport } from '../_shared/whatsapp-transport-boundaries.mjs';
 import {
   buildOtpTemplateSend,
   generateOtpCode,
@@ -36,7 +37,10 @@ import {
   templateSendable,
 } from '../_shared/whatsapp-otp-boundaries.mjs';
 
-const GRAPH_HOST = 'https://graph.facebook.com';
+/* nestly_v995: no host lives here any more. Which wire the code goes out on — Meta's Cloud API
+   or a Business Solution Provider — is decided by WHATSAPP_TRANSPORT in the environment, through
+   resolveWhatsappTransport, so that changing provider is a secret change and not a deployment.
+   The message body is the same on every wire; only the URL and the auth header differ. */
 const TEMPLATE_KEY = 'signup_otp';
 const TTL_SECONDS = 300;
 
@@ -82,11 +86,9 @@ Deno.serve(async (req) => {
        says the same thing, so a widened client cannot quietly start using this. */
     if (body?.purpose !== 'signup') return publicError(req);
 
-    const token = env('WHATSAPP_ACCESS_TOKEN');
-    const phoneNumberId = env('WHATSAPP_PHONE_NUMBER_ID');
+    const transport = resolveWhatsappTransport(Deno.env.toObject());
     const pepper = env('WHATSAPP_OTP_PEPPER');
-    const path = sendPath(phoneNumberId);
-    if (!token || !path) return unavailable(req, 'send_credentials_unconfigured');
+    if (!transport.ok) return unavailable(req, transport.reason);
     if (pepper.length < 32) return unavailable(req, 'otp_pepper_unconfigured');
 
     const admin = adminClient();
@@ -140,9 +142,9 @@ Deno.serve(async (req) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
     try {
-      response = await fetch(`${GRAPH_HOST}${path}`, {
+      response = await fetch(transport.url, {
         method: 'POST',
-        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        headers: transport.headers,
         body: JSON.stringify(send.body),
         signal: controller.signal,
       });
@@ -175,7 +177,7 @@ Deno.serve(async (req) => {
     await admin.rpc('internal_whatsapp_otp_record_send_v894', {
       p_challenge_id: challengeId, p_status: 'sent', p_error_code: null,
     });
-    log('sent', { challenge_id: challengeId });
+    log('sent', { challenge_id: challengeId, ...describeTransport(transport) });
 
     const answer = publicStartResponse({
       ok: true, challenge_id: challengeId, expires_in: issued.expires_in ?? TTL_SECONDS,
