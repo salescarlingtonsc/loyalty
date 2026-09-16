@@ -4479,6 +4479,12 @@
       "path": "db/migrations/20261020_nestly_v992_approval_is_tested_by_every_guard.sql",
       "semanticVersion": "v992",
       "proposedDeployVersion": "20261020010000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261020_nestly_v993_the_reader_is_asked_once_not_once_per_row.sql",
+      "semanticVersion": "v993",
+      "proposedDeployVersion": "20261020020000"
     }
   ]
 }

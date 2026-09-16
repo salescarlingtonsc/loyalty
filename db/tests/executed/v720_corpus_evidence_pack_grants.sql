@@ -335,6 +335,13 @@ declare
     'can_module','can_module_read','can_module_write',
     'can_module_read_at_v94','can_module_write_at_v94', -- staff module mode for auth.uid()'s staff row
     'can_see_branch','staff_can_see_branch',            -- auth.uid() null/SA/staff-branch checks inline
+    -- nestly_v993 scope readers. Not new authority: each enumerates only the (business, branch)
+    -- pairs the caller already passes has_perm / can_see_branch / can_module_read_at_v94 for, and
+    -- calls those same three functions to decide. They exist so row-level security asks the
+    -- question once per statement instead of once per row. Proven equivalent to the predicate
+    -- they replace across 2912 sales and 624 client evaluations (db/tests/v993_*.sql).
+    'sales_read_scope_v993',     -- (business, branch) pairs readable for module 'sales'
+    'client_read_scope_v993',    -- businesses readable for module 'clients'
     'role_class','role_perms',   -- pure role-name -> static permission-set lookup, no row data
     -- v176 firm-report authority chain
     'v176_can_read_firm_report', -- auth.uid() not null AND (is_super_admin OR platform_firm_report_access_v94)

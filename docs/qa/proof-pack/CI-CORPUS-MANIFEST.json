@@ -573,7 +573,7 @@
       "checks": [],
       "businesses_seeded": 1,
       "clients_seeded": 0,
-      "sha256": "8706339ae10ed6bf707484a4e2e50cc213224da97f257be439c3ffec951089bb",
+      "sha256": "fe338bc62ae8d955c47cca1001402ef9921cf765e840adebaa20b55944efced5",
       "harness_command": "LC_ALL=C node scripts/db-tests/run.mjs --filter=v720_corpus_evidence_pack_grants --migrated-only"
     },
     {

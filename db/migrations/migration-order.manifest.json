@@ -3,8 +3,8 @@
   "status": "planning_only_not_deployable",
   "sourcePlan": "db/migrations/migration-order.plan.json",
   "hashAlgorithm": "sha256-raw-bytes",
-  "itemCount": 744,
-  "executableCount": 730,
+  "itemCount": 745,
+  "executableCount": 731,
   "reservationCount": 14,
   "sourceCollisionsResolved": false,
   "sourceDeployVersionCollisions": [
@@ -1086,10 +1086,11 @@
     },
     {
       "sourceDeployVersion": "20261020",
-      "count": 2,
+      "count": 3,
       "paths": [
         "db/migrations/20261020_nestly_v991_no_hours_does_not_mean_closed.sql",
-        "db/migrations/20261020_nestly_v992_approval_is_tested_by_every_guard.sql"
+        "db/migrations/20261020_nestly_v992_approval_is_tested_by_every_guard.sql",
+        "db/migrations/20261020_nestly_v993_the_reader_is_asked_once_not_once_per_row.sql"
       ]
     }
   ],
@@ -7045,6 +7046,14 @@
       "semanticVersion": "v992",
       "proposedDeployVersion": "20261020010000",
       "sha256": "995c0fca3441d828611d4c0f91174c733ef60967eb26b6e6afb82ed7396014c7"
+    },
+    {
+      "order": 745,
+      "kind": "executable",
+      "path": "db/migrations/20261020_nestly_v993_the_reader_is_asked_once_not_once_per_row.sql",
+      "semanticVersion": "v993",
+      "proposedDeployVersion": "20261020020000",
+      "sha256": "c86c499e3c398936759b9fb3346fa98b216c7775b4cd782e2fd7cacfb6db27cd"
     }
   ]
 }

@@ -4474,6 +4474,12 @@
       "version": "20261020010000",
       "name": "nestly_v992_approval_is_tested_by_every_guard",
       "sourcePath": "db/migrations/20261020_nestly_v992_approval_is_tested_by_every_guard.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261020020000",
+      "name": "nestly_v993_the_reader_is_asked_once_not_once_per_row",
+      "sourcePath": "db/migrations/20261020_nestly_v993_the_reader_is_asked_once_not_once_per_row.sql"
     }
   ]
 }
