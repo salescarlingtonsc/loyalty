@@ -12,7 +12,7 @@
  * deployment. This module is that config change.
  *
  * Every transport yields the SAME message body. buildOtpTemplateSend (v894) produces Meta's
- * Cloud API JSON, and 360dialog's /messages endpoint accepts it verbatim — that is the whole
+ * Cloud API JSON, and 360dialog's /messages endpoint and Gupshup's Partner v3 endpoint accept it verbatim — that is the whole
  * reason it is first. What differs is only the URL and the auth header, so that is all this
  * module decides.
  *
@@ -21,10 +21,15 @@
  */
 import { sendPath } from './whatsapp-send-boundaries.mjs';
 
-export const WHATSAPP_TRANSPORTS = Object.freeze(['meta_cloud', '360dialog']);
+export const WHATSAPP_TRANSPORTS = Object.freeze(['meta_cloud', '360dialog', 'gupshup']);
 
 const META_CLOUD_HOST = 'https://graph.facebook.com';
 const DIALOG360_URL = 'https://waba-v2.360dialog.io/messages';
+/* nestly_v996 — Gupshup's Partner v3 endpoint takes the Cloud API body verbatim too. The app
+ * token is a non-expiring `sk_…` credential sent RAW in Authorization (no Bearer prefix — their
+ * docs, 2026-09-16). The app id is a path segment, so it is validated as one. */
+const GUPSHUP_HOST = 'https://partner.gupshup.io';
+const GUPSHUP_APP_ID = /^[A-Za-z0-9-]{8,64}$/;
 
 /* Resolve the outbound transport from an environment-shaped object ({ NAME: value }).
  *
@@ -59,6 +64,18 @@ export function resolveWhatsappTransport(env) {
       transport,
       url: DIALOG360_URL,
       headers: { 'D360-API-KEY': key, 'content-type': 'application/json' },
+    };
+  }
+
+  if (transport === 'gupshup') {
+    const appId = read('GUPSHUP_APP_ID');
+    const token = read('GUPSHUP_APP_TOKEN');
+    if (!token || !GUPSHUP_APP_ID.test(appId)) return { ok: false, reason: 'send_credentials_unconfigured' };
+    return {
+      ok: true,
+      transport,
+      url: `${GUPSHUP_HOST}/partner/app/${appId}/v3/message`,
+      headers: { authorization: token, accept: 'application/json', 'content-type': 'application/json' },
     };
   }
 

@@ -69,11 +69,11 @@ test('a missing credential is refused by name, for every transport', () => {
 test('an unrecognised transport is refused, never defaulted to Meta', () => {
   // A typo in a secret must not route production traffic to graph.facebook.com by surprise —
   // least of all while that account is disabled.
-  const r = resolveWhatsappTransport({ ...META, WHATSAPP_TRANSPORT: 'gupshup' });
+  const r = resolveWhatsappTransport({ ...META, WHATSAPP_TRANSPORT: 'twilio' });
   assert.deepEqual(r, { ok: false, reason: 'transport_unrecognised' });
   assert.deepEqual(resolveWhatsappTransport({ ...META, WHATSAPP_TRANSPORT: 'meta-cloud' }),
     { ok: false, reason: 'transport_unrecognised' }, 'close is not equal');
-  assert.deepEqual([...WHATSAPP_TRANSPORTS], ['meta_cloud', '360dialog']);
+  assert.deepEqual([...WHATSAPP_TRANSPORTS], ['meta_cloud', '360dialog', 'gupshup']);
 });
 
 test('describeTransport is the only loggable shape and it carries no credential', () => {
