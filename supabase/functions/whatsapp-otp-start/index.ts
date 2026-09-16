@@ -26,7 +26,6 @@ import {
   requireOrigin,
   sha256Hex,
 } from '../_shared/gateway.ts';
-import { classifyMetaResponse } from '../_shared/whatsapp-send-boundaries.mjs';
 import { describeTransport, resolveWhatsappTransport } from '../_shared/whatsapp-transport-boundaries.mjs';
 import {
   buildOtpTemplateSend,
@@ -138,6 +137,15 @@ Deno.serve(async (req) => {
       return unavailable(req, send.reason);
     }
 
+    /* nestly_v997: the wire encodes the body and reads the reply; the sender does neither. */
+    const wireBody = transport.encodeBody(send.body);
+    if (!wireBody) {
+      await admin.rpc('internal_whatsapp_otp_record_send_v894', {
+        p_challenge_id: challengeId, p_status: 'failed', p_error_code: 'encode_failed',
+      });
+      return unavailable(req, 'send_failed');
+    }
+
     let response: Response;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8000);
@@ -145,7 +153,7 @@ Deno.serve(async (req) => {
       response = await fetch(transport.url, {
         method: 'POST',
         headers: transport.headers,
-        body: JSON.stringify(send.body),
+        body: wireBody,
         signal: controller.signal,
       });
     } catch {
@@ -162,7 +170,7 @@ Deno.serve(async (req) => {
 
     let payload: unknown = null;
     try { payload = await response.json(); } catch { payload = null; }
-    const outcome = classifyMetaResponse(response.status, payload, response.headers);
+    const outcome = transport.readReply(response.status, payload, response.headers);
 
     if (outcome.disposition !== 'sent') {
       /* record_send also expires the challenge: an undelivered code must not stay
