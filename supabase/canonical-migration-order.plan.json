@@ -4492,6 +4492,12 @@
       "version": "20261021000000",
       "name": "nestly_v998_erasure_reaches_the_booking_records",
       "sourcePath": "db/migrations/20261021_nestly_v998_erasure_reaches_the_booking_records.sql"
+    },
+    {
+      "kind": "pending",
+      "version": "20261022000000",
+      "name": "nestly_v999_the_attention_list_forgets_erased_people",
+      "sourcePath": "db/migrations/20261022_nestly_v999_the_attention_list_forgets_erased_people.sql"
     }
   ]
 }

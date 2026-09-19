@@ -4497,6 +4497,12 @@
       "path": "db/migrations/20261021_nestly_v998_erasure_reaches_the_booking_records.sql",
       "semanticVersion": "v998",
       "proposedDeployVersion": "20261021000000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261022_nestly_v999_the_attention_list_forgets_erased_people.sql",
+      "semanticVersion": "v999",
+      "proposedDeployVersion": "20261022000000"
     }
   ]
 }
