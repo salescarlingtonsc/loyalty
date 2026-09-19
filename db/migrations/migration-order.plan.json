@@ -4491,6 +4491,12 @@
       "path": "db/migrations/20261020_nestly_v994_the_super_admin_arm_is_preserved_not_reasoned_about.sql",
       "semanticVersion": "v994",
       "proposedDeployVersion": "20261020030000"
+    },
+    {
+      "kind": "executable",
+      "path": "db/migrations/20261021_nestly_v998_erasure_reaches_the_booking_records.sql",
+      "semanticVersion": "v998",
+      "proposedDeployVersion": "20261021000000"
     }
   ]
 }
